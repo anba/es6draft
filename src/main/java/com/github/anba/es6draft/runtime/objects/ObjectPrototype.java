@@ -1,0 +1,193 @@
+/**
+ * Copyright (c) 2012-2013 André Bargull
+ * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+ *
+ * <https://github.com/anba/es6draft>
+ */
+package com.github.anba.es6draft.runtime.objects;
+
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.Symbol;
+import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+
+/**
+ * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
+ * <h2>15.2 Object Objects</h2>
+ * <ul>
+ * <li>15.2.4 Properties of the Object Prototype Object
+ * <li>15.2.5 Properties of Object Instances
+ * </ul>
+ */
+public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+    public ObjectPrototype(Realm realm) {
+        super(realm);
+    }
+
+    @Override
+    public void initialise(Realm realm) {
+        createProperties(this, realm, Properties.class);
+    }
+
+    public enum Properties {
+        ;
+
+        @Prototype
+        public static final Scriptable __proto__ = null;
+
+        /**
+         * 15.2.4.1 Object.prototype.constructor
+         */
+        @Value(name = "constructor")
+        public static final Intrinsics constructor = Intrinsics.Object;
+
+        /**
+         * 15.2.4.2 Object.prototype.toString ( )
+         */
+        @Function(name = "toString", arity = 0)
+        public static Object toString(Realm realm, Object thisValue) {
+            if (Type.isUndefined(thisValue)) {
+                return "[object Undefined]";
+            }
+            if (Type.isNull(thisValue)) {
+                return "[object Null]";
+            }
+            Scriptable o = ToObject(realm, thisValue);
+            CharSequence tag;
+            if (o instanceof ExoticSymbolObject) {
+                tag = "Symbol";
+            } else if (o.getBuiltinBrand() != null) {
+                tag = builtinTagValues.get(o.getBuiltinBrand());
+                assert tag != null;
+            } else {
+                boolean hasTag = HasProperty(o, BuiltinSymbol.toStringTag.get());
+                if (!hasTag) {
+                    tag = "Object";
+                } else {
+                    tag = "???";
+                    try {
+                        Object ttag = Get(o, BuiltinSymbol.toStringTag.get());
+                        if (Type.isString(ttag)) {
+                            tag = Type.stringValue(ttag);
+                        }
+                    } catch (ScriptException e) {
+                    }
+                    if (censoredNames.contains(tag)) {
+                        tag = "~" + tag;
+                    }
+                }
+            }
+            return "[object " + tag + "]";
+        }
+
+        private static final EnumMap<BuiltinBrand, String> builtinTagValues;
+        static {
+            EnumMap<BuiltinBrand, String> tagValues = new EnumMap<>(BuiltinBrand.class);
+            tagValues.put(BuiltinBrand.BuiltinFunction, "Function");
+            tagValues.put(BuiltinBrand.BuiltinArray, "Array");
+            tagValues.put(BuiltinBrand.BuiltinStringWrapper, "String");
+            tagValues.put(BuiltinBrand.BuiltinBooleanWrapper, "Boolean");
+            tagValues.put(BuiltinBrand.BuiltinNumberWrapper, "Number");
+            tagValues.put(BuiltinBrand.BuiltinMath, "Math");
+            tagValues.put(BuiltinBrand.BuiltinDate, "Date");
+            tagValues.put(BuiltinBrand.BuiltinRegExp, "RegExp");
+            tagValues.put(BuiltinBrand.BuiltinError, "Error");
+            tagValues.put(BuiltinBrand.BuiltinJSON, "JSON");
+            tagValues.put(BuiltinBrand.BuiltinArguments, "Arguments");
+            builtinTagValues = tagValues;
+        }
+
+        private static final Set<String> censoredNames;
+        static {
+            Set<String> names = new HashSet<>();
+            names.addAll(builtinTagValues.values());
+            // FIXME: spec bug (Object shouldn't be censored?!) (Bug 1148)
+            names.add("Object");
+            censoredNames = names;
+        }
+
+        /**
+         * 15.2.4.3 Object.prototype.toLocaleString ( )
+         */
+        @Function(name = "toLocaleString", arity = 0)
+        public static Object toLocaleString(Realm realm, Object thisValue) {
+            return Invoke(realm, thisValue, "toString");
+        }
+
+        /**
+         * 15.2.4.4 Object.prototype.valueOf ( )
+         */
+        @Function(name = "valueOf", arity = 0)
+        public static Object valueOf(Realm realm, Object thisValue) {
+            Scriptable o = ToObject(realm, thisValue);
+            return o;
+        }
+
+        /**
+         * 15.2.4.5 Object.prototype.hasOwnProperty (V)
+         */
+        @Function(name = "hasOwnProperty", arity = 1)
+        public static Object hasOwnProperty(Realm realm, Object thisValue, Object v) {
+            Object p = ToPropertyKey(realm, v);
+            Scriptable o = ToObject(realm, thisValue);
+            if (p instanceof String) {
+                return o.hasOwnProperty((String) p);
+            } else {
+                return o.hasOwnProperty((Symbol) p);
+            }
+        }
+
+        /**
+         * 15.2.4.6 Object.prototype.isPrototypeOf (V)
+         */
+        @Function(name = "isPrototypeOf", arity = 1)
+        public static Object isPrototypeOf(Realm realm, Object thisValue, Object v) {
+            if (!Type.isObject(v)) {
+                return false;
+            }
+            Scriptable w = Type.objectValue(v);
+            Scriptable o = ToObject(realm, thisValue);
+            for (;;) {
+                w = w.getPrototype();
+                if (w == null) {
+                    return false;
+                }
+                if (o == w) {
+                    return true;
+                }
+            }
+        }
+
+        /**
+         * 15.2.4.7 Object.prototype.propertyIsEnumerable (V)
+         */
+        @Function(name = "propertyIsEnumerable", arity = 1)
+        public static Object propertyIsEnumerable(Realm realm, Object thisValue, Object v) {
+            String p = ToFlatString(realm, v);
+            Scriptable o = ToObject(realm, thisValue);
+            Property desc = o.getOwnProperty(p);
+            if (desc == null) {
+                return false;
+            }
+            return desc.isEnumerable();
+        }
+    }
+}

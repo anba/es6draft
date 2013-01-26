@@ -1,0 +1,750 @@
+/**
+ * Copyright (c) 2012-2013 André Bargull
+ * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+ *
+ * <https://github.com/anba/es6draft>
+ */
+package com.github.anba.es6draft.runtime.objects;
+
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
+import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
+import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.TestInitialisedOrThrow;
+import static com.github.anba.es6draft.runtime.objects.RegExpPrototype.RegExpExec;
+import static com.github.anba.es6draft.runtime.objects.RegExpPrototype.getMatcherOrNull;
+import static com.github.anba.es6draft.runtime.objects.RegExpPrototype.newGroupIterator;
+import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+
+import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.Strings;
+import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
+
+/**
+ * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
+ * <h2>15.5 String Objects</h2>
+ * <ul>
+ * <li>15.5.4 Properties of the String Prototype Object
+ * <li>15.5.5 Properties of String Instances
+ * </ul>
+ */
+public class StringPrototype extends ExoticString implements Scriptable, Initialisable {
+    public StringPrototype(Realm realm) {
+        super(realm, "");
+    }
+
+    @Override
+    public void initialise(Realm realm) {
+        createProperties(this, realm, Properties.class);
+    }
+
+    /**
+     * 15.5.4 Properties of the String Prototype Object
+     */
+    public enum Properties {
+        ;
+
+        private static CharSequence stringValue(Realm realm, Object object) {
+            if (Type.isString(object)) {
+                return Type.stringValue(object);
+            }
+            if (object instanceof ExoticString) {
+                return ((ExoticString) object).getStringData();
+            }
+            throw throwTypeError(realm, "incompatible object");
+        }
+
+        @Prototype
+        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+
+        /**
+         * 15.5.4.1 String.prototype.constructor
+         */
+        @Value(name = "constructor")
+        public static final Intrinsics constructor = Intrinsics.String;
+
+        /**
+         * 15.5.4.2 String.prototype.toString ( )
+         */
+        @Function(name = "toString", arity = 0)
+        public static Object toString(Realm realm, Object thisValue) {
+            return stringValue(realm, thisValue);
+        }
+
+        /**
+         * 15.5.4.3 String.prototype.valueOf ( )
+         */
+        @Function(name = "valueOf", arity = 0)
+        public static Object valueOf(Realm realm, Object thisValue) {
+            return stringValue(realm, thisValue);
+        }
+
+        /**
+         * 15.5.4.4 String.prototype.charAt (pos)
+         */
+        @Function(name = "charAt", arity = 1)
+        public static Object charAt(Realm realm, Object thisValue, Object pos) {
+            CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, thisValue);
+            double position = ToInteger(realm, pos);
+            int size = s.length();
+            if (position < 0 || position >= size) {
+                return "";
+            }
+            return String.valueOf(s.charAt((int) position));
+        }
+
+        /**
+         * 15.5.4.5 String.prototype.charCodeAt (pos)
+         */
+        @Function(name = "charCodeAt", arity = 1)
+        public static Object charCodeAt(Realm realm, Object thisValue, Object pos) {
+            CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, thisValue);
+            double position = ToInteger(realm, pos);
+            int size = s.length();
+            if (position < 0 || position >= size) {
+                return Double.NaN;
+            }
+            return (int) s.charAt((int) position);
+        }
+
+        /**
+         * 15.5.4.6 String.prototype.concat ( ...args )
+         */
+        @Function(name = "concat", arity = 1)
+        public static Object concat(Realm realm, Object thisValue, Object... args) {
+            CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, thisValue);
+            StringBuilder r = new StringBuilder(s);
+            for (int i = 0; i < args.length; ++i) {
+                Object next = args[i];
+                CharSequence nextString = ToString(realm, next);
+                r.append(nextString);
+            }
+            return r.toString();
+        }
+
+        /**
+         * 15.5.4.7 String.prototype.indexOf (searchString, position)
+         */
+        @Function(name = "indexOf", arity = 1)
+        public static Object indexOf(Realm realm, Object thisValue, Object searchString,
+                Object position) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            String searchStr = ToFlatString(realm, searchString);
+            double pos = ToInteger(realm, position);
+            int len = s.length();
+            int start = (int) Math.min(Math.max(pos, 0), len);
+            return s.indexOf(searchStr, start);
+        }
+
+        /**
+         * 15.5.4.8 String.prototype.lastIndexOf (searchString, position)
+         */
+        @Function(name = "lastIndexOf", arity = 1)
+        public static Object lastIndexOf(Realm realm, Object thisValue, Object searchString,
+                Object position) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            String searchStr = ToFlatString(realm, searchString);
+            double numPos = ToNumber(realm, position);
+            double pos = Double.isNaN(numPos) ? Double.POSITIVE_INFINITY : ToInteger(realm,
+                    position);
+            int len = s.length();
+            int start = (int) Math.min(Math.max(pos, 0), len);
+            return s.lastIndexOf(searchStr, start);
+        }
+
+        /**
+         * 15.5.4.9 String.prototype.localeCompare (that)
+         */
+        @Function(name = "localeCompare", arity = 1)
+        public static Object localeCompare(Realm realm, Object thisValue, Object that) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            String t = ToFlatString(realm, that);
+            return realm.getCollator().compare(s, t);
+        }
+
+        /**
+         * 15.5.4.10 String.prototype.match (regexp)
+         */
+        @Function(name = "match", arity = 1)
+        public static Object match(Realm realm, Object thisValue, Object regexp) {
+            CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, thisValue);
+            RegExpObject rx;
+            if (Type.isObject(regexp)
+                    && Type.objectValue(regexp).getBuiltinBrand() == BuiltinBrand.BuiltinRegExp) {
+                assert regexp instanceof RegExpObject;
+                rx = TestInitialisedOrThrow(realm, (RegExpObject) regexp);
+            } else {
+                rx = RegExpCreate(realm, regexp, UNDEFINED);
+            }
+            boolean global = ToBoolean(Get(rx, "global"));
+            if (!global) {
+                return RegExpExec(realm, rx, s);
+            } else {
+                Put(realm, rx, "lastIndex", 0, true);
+                Scriptable array = ArrayCreate(realm, 0);
+                int previousLastIndex = 0;
+                int n = 0;
+                boolean lastMatch = true;
+                while (lastMatch) {
+                    // Object result = RegExpExec(realm, rx, s);
+                    Matcher result = getMatcherOrNull(realm, rx, s);
+                    if (result == null) {
+                        lastMatch = false;
+                    } else {
+                        int thisIndex = (int) ToInteger(realm, Get(rx, "lastIndex"));
+                        if (thisIndex == previousLastIndex) {
+                            Put(realm, rx, "lastIndex", thisIndex + 1, true);
+                            previousLastIndex = thisIndex + 1;
+                        } else {
+                            previousLastIndex = thisIndex;
+                        }
+                        // Object matchStr = Get(Type.objectValue(result), "0");
+                        CharSequence matchStr = s.subSequence(result.start(), result.end());
+                        array.defineOwnProperty(ToString(n), new PropertyDescriptor(matchStr, true,
+                                true, true));
+                        n += 1;
+                    }
+                }
+                if (n == 0) {
+                    return NULL;
+                }
+                return array;
+            }
+        }
+
+        /**
+         * 15.5.4.11 String.prototype.replace (searchValue, replaceValue)
+         */
+        @Function(name = "replace", arity = 2)
+        public static Object replace(Realm realm, Object thisValue, Object searchValue,
+                Object replaceValue) {
+            CheckObjectCoercible(realm, thisValue);
+            String string = ToFlatString(realm, thisValue);
+            if (Type.isObject(searchValue)
+                    && Type.objectValue(searchValue).getBuiltinBrand() == BuiltinBrand.BuiltinRegExp) {
+                assert searchValue instanceof RegExpObject;
+                RegExpObject rx = TestInitialisedOrThrow(realm, (RegExpObject) searchValue);
+
+                List<MatchResult> matches = new ArrayList<>();
+                // cf. String.prototype.match
+                boolean global = ToBoolean(Get(rx, "global"));
+                if (!global) {
+                    // cf. RegExpExec
+                    Object lastIndex = Get(rx, "lastIndex");
+                    // call ToInteger(realm,) in order to trigger possible side-effects...
+                    ToInteger(realm, lastIndex);
+                    Matcher m = rx.getMatch().matcher(string);
+                    boolean matchSucceeded = m.find(0);
+                    if (!matchSucceeded) {
+                        Put(realm, rx, "lastIndex", 0, true);
+                        return string;
+                    }
+                    matches.add(m.toMatchResult());
+                } else {
+                    // cf. RegExpExec
+                    Put(realm, rx, "lastIndex", 0, true);
+                    int previousLastIndex = 0;
+                    int n = 0;
+                    boolean lastMatch = true;
+                    while (lastMatch) {
+                        // Object result = RegExpExec(realm, rx, s);
+                        Matcher result = getMatcherOrNull(realm, rx, string);
+                        if (result == null) {
+                            lastMatch = false;
+                        } else {
+                            int thisIndex = (int) ToInteger(realm, Get(rx, "lastIndex"));
+                            if (thisIndex == previousLastIndex) {
+                                Put(realm, rx, "lastIndex", thisIndex + 1, true);
+                                previousLastIndex = thisIndex + 1;
+                            } else {
+                                previousLastIndex = thisIndex;
+                            }
+                            matches.add(result.toMatchResult());
+                            n += 1;
+                        }
+                    }
+                    if (n == 0) {
+                        return string;
+                    }
+                }
+
+                if (IsCallable(replaceValue)) {
+                    StringBuilder result = new StringBuilder();
+                    int lastMatch = 0;
+                    Callable fun = (Callable) replaceValue;
+                    for (MatchResult matchResult : matches) {
+                        int m = matchResult.groupCount();
+                        Object[] arguments = new Object[m + 3];
+                        arguments[0] = matchResult.group();
+                        Iterator<Object> iterator = newGroupIterator(rx, matchResult);
+                        for (int i = 1; iterator.hasNext(); ++i) {
+                            Object group = iterator.next();
+                            arguments[i] = group;
+                        }
+                        arguments[m + 1] = matchResult.start();
+                        arguments[m + 2] = string;
+
+                        CharSequence replacement = ToString(realm, fun.call(UNDEFINED, arguments));
+                        result.append(string, lastMatch, matchResult.start());
+                        result.append(replacement);
+                        lastMatch = matchResult.end();
+                    }
+                    result.append(string, lastMatch, string.length());
+                    return result.toString();
+                } else {
+                    CharSequence newstring = ToString(realm, replaceValue);
+                    StringBuilder result = new StringBuilder();
+                    int lastMatch = 0;
+                    for (MatchResult matchResult : matches) {
+                        int m = matchResult.groupCount();
+                        Object[] groups = null;
+                        StringBuilder replacement = new StringBuilder();
+                        for (int cursor = 0, len = newstring.length(); cursor < len;) {
+                            char c = newstring.charAt(cursor++);
+                            if (c == '$' && cursor < len) {
+                                c = newstring.charAt(cursor++);
+                                switch (c) {
+                                case '0':
+                                case '1':
+                                case '2':
+                                case '3':
+                                case '4':
+                                case '5':
+                                case '6':
+                                case '7':
+                                case '8':
+                                case '9': {
+                                    int n = c - '0';
+                                    if (cursor < len) {
+                                        char d = newstring.charAt(cursor);
+                                        if ((n == 0 ? d >= '1' : d >= '0') && d <= '9') {
+                                            cursor += 1;
+                                            n = n * 10 + (d - '0');
+                                        }
+                                    }
+                                    if (n == 0) {
+                                        replacement.append("$0");
+                                    } else {
+                                        assert n >= 1 && n <= 99;
+                                        if (n <= m) {
+                                            if (groups == null) {
+                                                groups = RegExpPrototype.groups(rx, matchResult);
+                                            }
+                                            Object group = groups[n];
+                                            if (group != UNDEFINED) {
+                                                replacement.append((String) group);
+                                            }
+                                        } else {
+                                            // TODO: implementation defined behaviour!
+                                            // Common browser behaviour:
+                                            // "AaBb".replace(/([A-Z])[a-z]/g, "$9")
+                                            // => "$9$9"
+                                            // "AaBb".replace(/([A-Z])[a-z]/g, "$10")
+                                            // => "A0B0"
+                                            replacement.append("");
+                                        }
+                                    }
+                                    break;
+                                }
+                                case '&':
+                                    replacement.append(matchResult.group());
+                                    break;
+                                case '`':
+                                    replacement.append(string, 0, matchResult.start());
+                                    break;
+                                case '\'':
+                                    replacement.append(string, matchResult.end(), string.length());
+                                    break;
+                                case '$':
+                                    replacement.append('$');
+                                    break;
+                                default:
+                                    replacement.append('$').append(c);
+                                    break;
+                                }
+                            } else {
+                                replacement.append(c);
+                            }
+                        }
+                        result.append(string, lastMatch, matchResult.start());
+                        result.append(replacement);
+                        lastMatch = matchResult.end();
+                    }
+                    result.append(string, lastMatch, string.length());
+                    return result.toString();
+                }
+            } else {
+                String searchString = ToFlatString(realm, searchValue);
+                int index = string.indexOf(searchString);
+                if (index < 0) {
+                    return string;
+                }
+                if (IsCallable(replaceValue)) {
+                    Callable fun = (Callable) replaceValue;
+                    CharSequence replacement = ToString(realm,
+                            fun.call(UNDEFINED, searchString, index, string));
+                    return string.substring(0, index) + replacement
+                            + string.substring(index + searchString.length());
+                } else {
+                    CharSequence newstring = ToString(realm, replaceValue);
+                    StringBuilder replacement = new StringBuilder();
+                    for (int cursor = 0, len = newstring.length(); cursor < len;) {
+                        char c = newstring.charAt(cursor++);
+                        if (c == '$' && cursor < len) {
+                            c = newstring.charAt(cursor++);
+                            switch (c) {
+                            case '&':
+                                replacement.append(searchString);
+                                break;
+                            case '`':
+                                replacement.append(searchString, 0, index);
+                                break;
+                            case '\'':
+                                replacement.append(searchString, index, searchString.length());
+                                break;
+                            case '$':
+                            default:
+                                replacement.append('$').append(c);
+                                break;
+                            }
+                        } else {
+                            replacement.append(c);
+                        }
+                    }
+                    return string.substring(0, index) + replacement.toString()
+                            + string.substring(index + searchString.length());
+                }
+            }
+        }
+
+        /**
+         * 15.5.4.12 String.prototype.search (regexp)
+         */
+        @Function(name = "search", arity = 1)
+        public static Object search(Realm realm, Object thisValue, Object regexp) {
+            CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, thisValue);
+            RegExpObject rx;
+            if (Type.isObject(regexp)
+                    && Type.objectValue(regexp).getBuiltinBrand() == BuiltinBrand.BuiltinRegExp) {
+                assert regexp instanceof RegExpObject;
+                rx = TestInitialisedOrThrow(realm, (RegExpObject) regexp);
+            } else {
+                rx = RegExpCreate(realm, regexp, UNDEFINED);
+            }
+            Matcher matcher = rx.getMatch().matcher(s);
+            if (matcher.find()) {
+                return matcher.start();
+            }
+            return -1;
+        }
+
+        /**
+         * 15.5.4.13 String.prototype.slice (start, end)
+         */
+        @Function(name = "slice", arity = 2)
+        public static Object slice(Realm realm, Object thisValue, Object start, Object end) {
+            CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, thisValue);
+            int len = s.length();
+            double intStart = ToInteger(realm, start);
+            double intEnd = (Type.isUndefined(end) ? len : ToInteger(realm, end));
+            int from = (int) (intStart < 0 ? Math.max(len + intStart, 0) : Math.min(intStart, len));
+            int to = (int) (intEnd < 0 ? Math.max(len + intEnd, 0) : Math.min(intEnd, len));
+            int span = Math.max(to - from, 0);
+            return s.subSequence(from, from + span);
+        }
+
+        /**
+         * 15.5.4.14 String.prototype.split (separator, limit)
+         */
+        @Function(name = "split", arity = 2)
+        public static Object split(Realm realm, Object thisValue, Object separator, Object limit) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            Scriptable a = ArrayCreate(realm, 0);
+            // FIXME: minor spec issue -> lengthA should be declared later (step 14?)
+            int lengthA = 0;
+            long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(realm, limit);
+            int size = s.length();
+            // FIXME: minor spec issue -> p should be declared later (step 14?)
+            int p = 0;
+            Object r;
+            if (BuiltinBrand.hasBuiltinBrand(separator, BuiltinBrand.BuiltinRegExp)) {
+                r = separator;
+            } else {
+                r = ToFlatString(realm, separator);
+            }
+            if (lim == 0) {
+                return a;
+            }
+            if (Type.isUndefined(separator)) {
+                a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
+                return a;
+            }
+            if (BuiltinBrand.hasBuiltinBrand(r, BuiltinBrand.BuiltinRegExp)) {
+                // regexp case
+                RegExpObject rx = TestInitialisedOrThrow(realm, (RegExpObject) r);
+                Matcher matcher = rx.getMatch().matcher(s);
+                if (size == 0) {
+                    if (matcher.find()) {
+                        return a;
+                    }
+                    a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
+                    return a;
+                }
+                // Note: omitted index q in the following code
+                int lastStart = -1;
+                while (matcher.find()) {
+                    int e = matcher.end();
+                    if (e != p) {
+                        String t = s.substring(p, lastStart = matcher.start());
+                        a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true,
+                                true, true));
+                        lengthA += 1;
+                        if (lengthA == lim) {
+                            return a;
+                        }
+                        // FIXME: minor spec issue (move step 6 before step 9 to keep things local)
+                        p = e;
+                        Iterator<Object> iterator = newGroupIterator(rx, matcher);
+                        while (iterator.hasNext()) {
+                            Object cap = iterator.next();
+                            a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(cap,
+                                    true, true, true));
+                            lengthA += 1;
+                            if (lengthA == lim) {
+                                return a;
+                            }
+                        }
+                    }
+                }
+                if (p == lastStart) {
+                    return a;
+                }
+                String t = s.substring(p, size);
+                a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true, true));
+                return a;
+            } else {
+                // string case
+                String sep = (String) r;
+                if (size == 0) {
+                    if (s.startsWith(sep)) {
+                        return a;
+                    }
+                    a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
+                    return a;
+                }
+                int q = p;
+                while (q != size) {
+                    int z = s.indexOf(sep, q);
+                    if (z == -1) {
+                        break;
+                    } else {
+                        int e = z + sep.length();
+                        if (e == p) {
+                            q = q + 1;
+                        } else {
+                            String t = s.substring(p, z);
+                            a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true,
+                                    true, true));
+                            lengthA += 1;
+                            if (lengthA == lim) {
+                                return a;
+                            }
+                            p = e;
+                            q = p;
+                        }
+                    }
+                }
+                String t = s.substring(p, size);
+                a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true, true));
+                return a;
+            }
+        }
+
+        /**
+         * 15.5.4.15 String.prototype.substring (start, end)
+         */
+        @Function(name = "substring", arity = 2)
+        public static Object substring(Realm realm, Object thisValue, Object start, Object end) {
+            CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, thisValue);
+            int len = s.length();
+            double intStart = ToInteger(realm, start);
+            double intEnd = (Type.isUndefined(end) ? len : ToInteger(realm, end));
+            int finalStart = (int) Math.min(Math.max(intStart, 0), len);
+            int finalEnd = (int) Math.min(Math.max(intEnd, 0), len);
+            int from = Math.min(finalStart, finalEnd);
+            int to = Math.max(finalStart, finalEnd);
+            return s.subSequence(from, to);
+        }
+
+        /**
+         * 15.5.4.16 String.prototype.toLowerCase ( )
+         */
+        @Function(name = "toLowerCase", arity = 0)
+        public static Object toLowerCase(Realm realm, Object thisValue) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            return s.toLowerCase(Locale.ROOT);
+        }
+
+        /**
+         * 15.5.4.17 String.prototype.toLocaleLowerCase ( )
+         */
+        @Function(name = "toLocaleLowerCase", arity = 0)
+        public static Object toLocaleLowerCase(Realm realm, Object thisValue) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            return s.toLowerCase(realm.getLocale());
+        }
+
+        /**
+         * 15.5.4.18 String.prototype.toUpperCase ( )
+         */
+        @Function(name = "toUpperCase", arity = 0)
+        public static Object toUpperCase(Realm realm, Object thisValue) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            return s.toUpperCase(Locale.ROOT);
+        }
+
+        /**
+         * 15.5.4.19 String.prototype.toLocaleUpperCase ( )
+         */
+        @Function(name = "toLocaleUpperCase", arity = 0)
+        public static Object toLocaleUpperCase(Realm realm, Object thisValue) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            return s.toUpperCase(realm.getLocale());
+        }
+
+        /**
+         * 15.5.4.20 String.prototype.trim ( )
+         */
+        @Function(name = "trim", arity = 0)
+        public static Object trim(Realm realm, Object thisValue) {
+            CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, thisValue);
+            return Strings.trim(s);
+        }
+
+        /**
+         * 15.5.4.21 String.prototype.repeat (count)
+         */
+        @Function(name = "repeat", arity = 1)
+        public static Object repeat(Realm realm, Object thisValue, Object count) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            double n = ToInteger(realm, count);
+            if (n <= 0 || n == Double.POSITIVE_INFINITY) {
+                throw throwRangeError(realm, "");
+            }
+            StringBuilder t = new StringBuilder(s.length() * (int) n);
+            for (int c = (int) n; c > 0; --c) {
+                t.append(s);
+            }
+            return t.toString();
+        }
+
+        /**
+         * 15.5.4.22 String.prototype.startsWith (searchString [, position ] )
+         */
+        @Function(name = "startsWith", arity = 1)
+        public static Object startsWith(Realm realm, Object thisValue, Object searchString,
+                Object position) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            String searchStr = ToFlatString(realm, searchString);
+            double pos = ToInteger(realm, position);
+            int len = s.length();
+            int start = (int) Math.min(Math.max(pos, 0), len);
+            int searchLength = searchStr.length();
+            if (searchLength + start > len) {
+                return false;
+            }
+            return s.startsWith(searchStr, start);
+        }
+
+        /**
+         * 15.5.4.23 String.prototype.endsWith (searchString [, endPosition] )
+         */
+        @Function(name = "endsWith", arity = 1)
+        public static Object endsWith(Realm realm, Object thisValue, Object searchString,
+                Object endPosition) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            String searchStr = ToFlatString(realm, searchString);
+            int len = s.length();
+            double pos = Type.isUndefined(endPosition) ? len : ToInteger(realm, endPosition);
+            int end = (int) Math.min(Math.max(pos, 0), len);
+            int searchLength = searchStr.length();
+            int start = end - searchLength;
+            if (start < 0) {
+                return false;
+            }
+            return s.startsWith(searchStr, end);
+        }
+
+        /**
+         * 15.5.4.24 String.prototype.contains (searchString, position = 0 )
+         */
+        @Function(name = "contains", arity = 1)
+        public static Object contains(Realm realm, Object thisValue, Object searchString,
+                Object position /* = 0 */) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            String searchStr = ToFlatString(realm, searchString);
+            double pos = ToInteger(realm, position);
+            int len = s.length();
+            int start = (int) Math.min(Math.max(pos, 0), len);
+            // int searchLen = searchStr.length();
+            return s.indexOf(searchStr, start) != -1;
+        }
+
+        /**
+         * 15.5.4.25 String.prototype.codePointAt (pos)
+         */
+        @Function(name = "codePointAt", arity = 1)
+        public static Object codePointAt(Realm realm, Object thisValue, Object pos) {
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            double position = ToInteger(realm, pos);
+            int size = s.length();
+            if (position < 0 || position >= size) {
+                // FIXME: spec bug undefined /= NaN (Bug 1153)
+                return UNDEFINED;
+            }
+            /* step 8-12 */
+            return s.codePointAt((int) position);
+        }
+    }
+}
