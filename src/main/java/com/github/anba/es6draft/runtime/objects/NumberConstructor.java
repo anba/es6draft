@@ -155,9 +155,7 @@ public class NumberConstructor extends OrdinaryObject implements Scriptable, Cal
          */
         @Function(name = "parseInt", arity = 2)
         public static Object parseInt(Realm realm, Object thisValue, Object string, Object radix) {
-            // TODO: implement
-            assert false : "NYI";
-            return 0;
+            return GlobalObject.FunctionProperties.parseInt(realm, thisValue, string, radix);
         }
 
         /**
@@ -165,9 +163,7 @@ public class NumberConstructor extends OrdinaryObject implements Scriptable, Cal
          */
         @Function(name = "parseFloat", arity = 1)
         public static Object parseFloat(Realm realm, Object thisValue, Object string) {
-            // TODO: implement
-            assert false : "NYI";
-            return 0;
+            return GlobalObject.FunctionProperties.parseFloat(realm, thisValue, string);
         }
 
         /**
