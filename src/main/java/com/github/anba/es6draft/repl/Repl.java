@@ -6,19 +6,23 @@
  */
 package com.github.anba.es6draft.repl;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.EvaluateConstructorCall;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.strictEqualityComparison;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
@@ -28,7 +32,6 @@ import com.github.anba.es6draft.parser.ParserEOFException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
-import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
@@ -68,7 +71,7 @@ public class Repl {
     private final EnumSet<Options> options;
     private final Console console;
 
-    public Repl(EnumSet<Options> options, Console console) {
+    private Repl(EnumSet<Options> options, Console console) {
         this.options = options;
         this.console = console;
     }
@@ -156,10 +159,12 @@ public class Repl {
         return JSONObject.ToSource(realm, val);
     }
 
-    private Object loadFile(Realm realm, Path path) throws IOException {
+    private String loadFile(Path path) throws IOException {
         byte[] bytes = Files.readAllBytes(path);
-        String sourceName = path.getFileName().toString();
-        String source = new String(bytes, "UTF-8");
+        return new String(bytes, "UTF-8");
+    }
+
+    private Object evaluate(Realm realm, String source, String sourceName) {
         try {
             Script script = script(sourceName, source);
             return ScriptLoader.ScriptEvaluation(script, realm, false);
@@ -186,6 +191,8 @@ public class Repl {
     }
 
     public static class ReplGlobalObject extends GlobalObject {
+        private final long startMilli = System.currentTimeMillis();
+        private final long startNano = System.nanoTime();
         private final Repl repl;
 
         public ReplGlobalObject(Realm realm, Repl repl) {
@@ -193,22 +200,84 @@ public class Repl {
             this.repl = repl;
         }
 
-        @Function(name = "print", arity = 1, attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
+        private static ScriptException throwError(Realm realm, String message) {
+            Object error = EvaluateConstructorCall(realm.getIntrinsic(Intrinsics.Error),
+                    new Object[] { message }, realm);
+            return _throw(error);
+        }
+
+        @Function(name = "options", arity = 0)
+        public String options() {
+            StringBuilder opts = new StringBuilder();
+            for (Options opt : this.repl.options) {
+                opts.append(opt).append(",");
+            }
+            if (opts.length() != 0) {
+                opts.setLength(opts.length() - 1);
+            }
+            return opts.toString();
+        }
+
+        @Function(name = "load", arity = 1)
+        public Object load(String file) {
+            try {
+                Path path = Paths.get(file);
+                String source = repl.loadFile(path);
+                return repl.evaluate(realm(), source, path.getFileName().toString());
+            } catch (IOException e) {
+                throw throwError(realm(), e.getMessage());
+            }
+        }
+
+        @Function(name = "evaluate", arity = 1)
+        public Object evaluate(String source) {
+            return repl.evaluate(realm(), source, "string");
+        }
+
+        @Function(name = "run", arity = 1)
+        public double run(String file) {
+            long start = System.nanoTime();
+            load(file);
+            long end = System.nanoTime();
+            return (double) TimeUnit.NANOSECONDS.toMillis(end - start);
+        }
+
+        @Function(name = "readline", arity = 0)
+        public String readline() {
+            return repl.console.readLine();
+        }
+
+        @Function(name = "print", arity = 1)
         public void print(String message) {
             repl.console.writer().println(message);
         }
 
-        @Function(name = "options", arity = 0, attributes = @Attributes(writable = true,
-                enumerable = false, configurable = true))
-        public void options() {
-            repl.console.writer().println(this.repl.options.toString());
+        @Function(name = "printErr", arity = 1)
+        public void printErr(String message) {
+            System.err.println(message);
         }
 
-        @Function(name = "assertEq", arity = 2, attributes = @Attributes(writable = true,
-                enumerable = false, configurable = true))
+        @Function(name = "putstr", arity = 1)
+        public void putstr(String message) {
+            repl.console.writer().print(message);
+        }
+
+        @Function(name = "dateNow", arity = 0)
+        public double dateNow() {
+            long elapsed = TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - startNano);
+            double date = startMilli + TimeUnit.MICROSECONDS.toMillis(elapsed);
+            double subdate = (elapsed % 1000) / 1000d;
+            return date + subdate;
+        }
+
+        @Function(name = "quit", arity = 0)
+        public void quit() {
+            System.exit(0);
+        }
+
+        @Function(name = "assertEq", arity = 2)
         public void assertEq(Object actual, Object expected, Object message) {
-            if (!strictEqualityComparison(actual, expected)) {
+            if (!SameValue(actual, expected)) {
                 Realm realm = realm();
                 StringBuilder msg = new StringBuilder();
                 msg.append(String.format("Assertion failed: got %s, expected %s",
@@ -216,24 +285,60 @@ public class Repl {
                 if (!Type.isUndefined(message)) {
                     msg.append(": ").append(ToFlatString(realm, message));
                 }
-                Object error = EvaluateConstructorCall(realm.getIntrinsic(Intrinsics.Error),
-                        new Object[] { msg.toString() }, realm);
-                _throw(error);
-            } else {
-                System.out.println("pass");
+                throwError(realm, msg.toString());
             }
         }
 
-        @Function(name = "load", arity = 1, attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
-        public Object load(String file) throws IOException {
-            return repl.loadFile(realm(), Paths.get(file));
+        @Function(name = "setDebug", arity = 1)
+        public void setDebug(boolean debug) {
+            if (debug) {
+                repl.options.add(Options.Debug);
+            } else {
+                repl.options.remove(Options.Debug);
+            }
         }
 
-        @Function(name = "quit", arity = 0, attributes = @Attributes(writable = false,
-                enumerable = false, configurable = false))
-        public void quit() {
-            System.exit(0);
+        @Function(name = "throwError", arity = 0)
+        public void throwError() {
+            throwError(realm(), "This is an error");
+        }
+
+        @Function(name = "build", arity = 0)
+        public String build() {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    Repl.class.getResourceAsStream("/build-date"), "UTF-8"))) {
+                return reader.readLine();
+            } catch (IOException e) {
+                throw throwError(realm(), "could not read build-date file");
+            }
+        }
+
+        @Function(name = "sleep", arity = 1)
+        public void sleep(double dt) {
+            try {
+                TimeUnit.SECONDS.sleep(ToUint32(dt));
+            } catch (InterruptedException e) {
+                throwError(realm(), e.getMessage());
+            }
+        }
+
+        @Function(name = "snarf", arity = 1)
+        public Object snarf(String file) {
+            try {
+                return repl.loadFile(Paths.get(file));
+            } catch (IOException e) {
+                throw throwError(realm(), e.getMessage());
+            }
+        }
+
+        @Function(name = "read", arity = 1)
+        public Object read(String file) {
+            return snarf(file);
+        }
+
+        @Function(name = "elapsed", arity = 0)
+        public double elapsed() {
+            return (double) TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - startNano);
         }
     }
 }
