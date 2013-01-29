@@ -28,6 +28,11 @@ final class DateAbstractOperations {
         defaultTimeZone = TimeZone.getDefault();
     }
 
+    private static final double modulo(double dividend, double divisor) {
+        double remainder = dividend % divisor;
+        return (remainder >= 0 ? remainder : remainder + divisor);
+    }
+
     /**
      * 15.9.1.2 Day Number and Time within Day
      */
@@ -44,7 +49,7 @@ final class DateAbstractOperations {
      * 15.9.1.2 Day Number and Time within Day
      */
     public static double TimeWithinDay(double t) {
-        return t % msPerDay;
+        return modulo(t, msPerDay);
     }
 
     /**
@@ -198,8 +203,7 @@ final class DateAbstractOperations {
      * 15.9.1.6 Week Day
      */
     public static double WeekDay(double t) {
-        double weekday = (Day(t) + 4) % 7;
-        return (weekday >= 0 ? weekday : weekday + 7);
+        return modulo(Day(t) + 4, 7);
     }
 
     /**
@@ -249,28 +253,28 @@ final class DateAbstractOperations {
      * 15.9.1.10 Hours, Minutes, Second, and Milliseconds
      */
     public static double HourFromTime(double t) {
-        return Math.floor(t / msPerHour) % HoursPerDay;
+        return modulo(Math.floor(t / msPerHour), HoursPerDay);
     }
 
     /**
      * 15.9.1.10 Hours, Minutes, Second, and Milliseconds
      */
     public static double MinFromTime(double t) {
-        return Math.floor(t / msPerMinute) % MinutesPerHour;
+        return modulo(Math.floor(t / msPerMinute), MinutesPerHour);
     }
 
     /**
      * 15.9.1.10 Hours, Minutes, Second, and Milliseconds
      */
     public static double SecFromTime(double t) {
-        return Math.floor(t / msPerSecond) % SecondsPerMinute;
+        return modulo(Math.floor(t / msPerSecond), SecondsPerMinute);
     }
 
     /**
      * 15.9.1.10 Hours, Minutes, Second, and Milliseconds
      */
     public static double msFromTime(double t) {
-        return t % msPerSecond;
+        return modulo(t, msPerSecond);
     }
 
     private static boolean isFinite(double d) {
@@ -303,7 +307,7 @@ final class DateAbstractOperations {
         double m = ToInteger(month);
         double dt = ToInteger(date);
         double ym = y + Math.floor(m / 12);
-        double mn = m % 12;
+        double mn = modulo(m, 12);
 
         double[] monthStart = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
         double day = Math.floor(TimeFromYear(ym) / msPerDay) + monthStart[(int) mn];
