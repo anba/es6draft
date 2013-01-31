@@ -324,7 +324,11 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
     public static String JO(Realm realm, Set<Scriptable> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, Scriptable value, boolean isJSON) {
         if (stack.contains(value)) {
-            throw throwTypeError(realm, "");
+            if (isJSON) {
+                throw throwTypeError(realm, "");
+            } else {
+                return "« ... »";
+            }
         }
         stack.add(value);
         String stepback = indent;
@@ -381,7 +385,11 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
     public static String JA(Realm realm, Set<Scriptable> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, Scriptable value, boolean isJSON) {
         if (stack.contains(value)) {
-            throw throwTypeError(realm, "");
+            if (isJSON) {
+                throw throwTypeError(realm, "");
+            } else {
+                return "« ... »";
+            }
         }
         stack.add(value);
         String stepback = indent;
