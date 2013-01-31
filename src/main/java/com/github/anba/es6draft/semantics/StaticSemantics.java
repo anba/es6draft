@@ -8,12 +8,12 @@ package com.github.anba.es6draft.semantics;
 
 import static com.github.anba.es6draft.semantics.StaticSemanticsVisitor.forEach;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.runtime.internal.SmallArrayList;
 
 /**
  * <h1>Static Semantics</h1>
@@ -43,35 +43,35 @@ public final class StaticSemantics {
      * Static Semantics: BoundNames
      */
     public static List<String> BoundNames(Binding node) {
-        return node.accept(BoundNames.INSTANCE, new ArrayList<String>());
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
     }
 
     /**
      * Static Semantics: BoundNames
      */
     public static List<String> BoundNames(FormalParameter node) {
-        return node.accept(BoundNames.INSTANCE, new ArrayList<String>());
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
     }
 
     /**
      * Static Semantics: BoundNames
      */
     public static List<String> BoundNames(Declaration node) {
-        return node.accept(BoundNames.INSTANCE, new ArrayList<String>());
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
     }
 
     /**
      * Static Semantics: BoundNames
      */
     public static List<String> BoundNames(StatementListItem node) {
-        return node.accept(BoundNames.INSTANCE, new ArrayList<String>());
+        return node.accept(BoundNames.INSTANCE, new SmallArrayList<String>());
     }
 
     /**
      * Static Semantics: BoundNames<br>
      */
     public static List<String> BoundNames(List<FormalParameter> formals) {
-        List<String> result = new ArrayList<>();
+        List<String> result = new SmallArrayList<>();
         forEach(BoundNames.INSTANCE, formals, result);
         return result;
     }

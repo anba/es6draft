@@ -8,7 +8,10 @@ package com.github.anba.es6draft.runtime.internal;
 
 import java.util.AbstractList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.RandomAccess;
 
@@ -16,9 +19,9 @@ import java.util.RandomAccess;
  * Simple list implementation with three fixed slots to avoid array allocation
  */
 public final class SmallArrayList<E> extends AbstractList<E> implements List<E>, RandomAccess {
-    private static final int OFFSET = 3;
     private static final int INIT_SIZE = 10;
 
+    private int capacity = 3;
     private int size = 0;
     private E fst = null;
     private E snd = null;
@@ -35,23 +38,30 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
     }
 
     private void ensureCapacity(int c) {
-        if (c > OFFSET) {
-            if (extended == null) {
-                extended = newArray(Math.max(c, INIT_SIZE));
-                extended[0] = fst;
-                extended[1] = snd;
-                extended[2] = thd;
+        if (c > capacity) {
+            E[] ext = this.extended;
+            if (ext == null) {
+                int len = Math.max(c, INIT_SIZE);
+                E[] array = newArray(len);
+                array[0] = fst;
+                array[1] = snd;
+                array[2] = thd;
+                capacity = len;
+                extended = array;
                 fst = snd = thd = null;
-            } else if (c > extended.length) {
-                extended = Arrays.copyOf(extended,
-                        Math.max(c, extended.length + (extended.length >> 1)));
+            } else {
+                int len = Math.max(c, ext.length + (ext.length >> 1));
+                E[] array = Arrays.copyOf(ext, len);
+                capacity = len;
+                extended = array;
             }
         }
     }
 
     private E uncheckedGet(int index) {
-        if (extended != null) {
-            return extended[index];
+        E[] ext = this.extended;
+        if (ext != null) {
+            return ext[index];
         }
         switch (index) {
         case 0:
@@ -66,8 +76,9 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
     }
 
     private void uncheckedSet(int index, E e) {
-        if (extended != null) {
-            extended[index] = e;
+        E[] ext = this.extended;
+        if (ext != null) {
+            ext[index] = e;
             return;
         }
         switch (index) {
@@ -97,6 +108,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
 
     @Override
     public void clear() {
+        modCount++;
         size = 0;
         fst = null;
         snd = null;
@@ -124,6 +136,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
         int size = this.size;
         ensureCapacity(size + 1);
         uncheckedSet(size, e);
+        modCount++;
         this.size += 1;
         return true;
     }
@@ -148,8 +161,9 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
         if (index < 0 || index > size)
             throw new IndexOutOfBoundsException();
         ensureCapacity(size + 1);
-        if (extended != null) {
-            System.arraycopy(extended, index, extended, index + 1, size - index);
+        E[] ext = this.extended;
+        if (ext != null) {
+            System.arraycopy(ext, index, ext, index + 1, size - index);
         } else {
             switch (index) {
             case 0:
@@ -166,6 +180,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
             }
         }
         uncheckedSet(index, element);
+        modCount++;
         this.size += 1;
     }
 
@@ -173,12 +188,13 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
     public E remove(int index) {
         E prev = get(index);
         int size = this.size;
-        if (extended != null) {
+        E[] ext = this.extended;
+        if (ext != null) {
             int shift = size - index - 1;
             if (shift > 0) {
-                System.arraycopy(extended, index + 1, extended, index, shift);
+                System.arraycopy(ext, index + 1, ext, index, shift);
             }
-            extended[size - 1] = null;
+            ext[size - 1] = null;
         } else {
             switch (index) {
             case 0:
@@ -192,6 +208,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
                 throw new IllegalStateException();
             }
         }
+        modCount++;
         this.size -= 1;
         return prev;
     }
@@ -199,9 +216,10 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
     @Override
     public int indexOf(Object o) {
         int size = this.size;
-        if (extended != null) {
+        E[] ext = this.extended;
+        if (ext != null) {
             for (int i = 0; i < size; ++i) {
-                if (eq(extended[i], o))
+                if (eq(ext[i], o))
                     return i;
             }
         } else {
@@ -218,9 +236,10 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
     @Override
     public int lastIndexOf(Object o) {
         int size = this.size;
-        if (extended != null) {
+        E[] ext = this.extended;
+        if (ext != null) {
             for (int i = size - 1; i >= 0; --i) {
-                if (eq(extended[i], o))
+                if (eq(ext[i], o))
                     return i;
             }
         } else {
@@ -232,5 +251,75 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
                 return 0;
         }
         return -1;
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        if (extended == null) {
+            return new SimpleIterator();
+        } else {
+            return new ExtendedIterator();
+        }
+    }
+
+    private final class SimpleIterator implements Iterator<E> {
+        private final int expectedModCount = SmallArrayList.this.modCount;
+        private int cursor = 0;
+
+        @Override
+        public boolean hasNext() {
+            return (cursor < size);
+        }
+
+        @Override
+        public E next() {
+            if (expectedModCount != SmallArrayList.this.modCount) {
+                throw new ConcurrentModificationException();
+            }
+            if (cursor >= size) {
+                throw new NoSuchElementException();
+            }
+            switch (cursor++) {
+            case 0:
+                return fst;
+            case 1:
+                return snd;
+            case 2:
+                return thd;
+            default:
+                throw new IllegalStateException();
+            }
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private final class ExtendedIterator implements Iterator<E> {
+        private final int expectedModCount = SmallArrayList.this.modCount;
+        private int cursor = 0;
+
+        @Override
+        public boolean hasNext() {
+            return (cursor < size);
+        }
+
+        @Override
+        public E next() {
+            if (expectedModCount != SmallArrayList.this.modCount) {
+                throw new ConcurrentModificationException();
+            }
+            if (cursor >= size) {
+                throw new NoSuchElementException();
+            }
+            return extended[cursor++];
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 }
