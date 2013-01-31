@@ -15,11 +15,18 @@ import java.util.List;
  * <li>12.1 Block
  * </ul>
  */
-public class BlockStatement extends Statement {
+public class BlockStatement extends Statement implements ScopedNode {
+    private Scope scope;
     private List<StatementListItem> statements = new ArrayList<>();
 
-    public BlockStatement(List<StatementListItem> statements) {
+    public BlockStatement(Scope scope, List<StatementListItem> statements) {
+        this.scope = scope;
         this.statements = statements;
+    }
+
+    @Override
+    public Scope getScope() {
+        return scope;
     }
 
     public List<StatementListItem> getStatements() {

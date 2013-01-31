@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * <h1>13 Functions and Generators</h1>
  */
-public interface FunctionNode extends Node {
+public interface FunctionNode extends ScopedNode {
     List<FormalParameter> getParameters();
 
     List<StatementListItem> getStatements();

@@ -15,6 +15,7 @@ import java.util.List;
  * </ul>
  */
 public class MethodDefinition extends PropertyDefinition implements FunctionNode {
+    private Scope scope;
     private MethodType type;
     private PropertyName propertyName;
     private List<FormalParameter> parameters;
@@ -27,15 +28,21 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
         Function, Generator, Getter, Setter
     }
 
-    public MethodDefinition(String source, MethodType type, PropertyName propertyName,
+    public MethodDefinition(Scope scope, MethodType type, PropertyName propertyName,
             List<FormalParameter> parameters, List<StatementListItem> statements,
-            boolean superReference) {
-        this.source = source;
+            boolean superReference, String source) {
+        this.scope = scope;
         this.type = type;
         this.propertyName = propertyName;
         this.parameters = parameters;
         this.statements = statements;
         this.superReference = superReference;
+        this.source = source;
+    }
+
+    @Override
+    public Scope getScope() {
+        return scope;
     }
 
     public MethodType getType() {

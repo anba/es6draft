@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.SpecialMethod;
 import static java.util.Collections.emptyList;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -76,6 +77,7 @@ public class Parser {
         LabelContext labels = null;
 
         BlockContext blockContext = new BlockContext(null);
+        final BlockContext funContext = blockContext;
 
         ParseContext() {
             // assert Parser.this.context == null;
@@ -92,6 +94,10 @@ public class Parser {
             }
         }
 
+        Scope scope() {
+            return funContext;
+        }
+
         void setReferencesSuper() {
             ParseContext cx = this;
             while (cx.kind == ContextKind.ArrowFunction) {
@@ -105,18 +111,50 @@ public class Parser {
         }
     }
 
-    private static class BlockContext {
+    private static class BlockContext implements Scope {
         final BlockContext parent;
         HashSet<String> varDeclaredNames = null;
         HashSet<String> lexDeclaredNames = null;
+        List<StatementListItem> varScopedDeclarations = null;
+        List<Declaration> lexScopedDeclarations = null;
 
         BlockContext(BlockContext parent) {
             this.parent = parent;
         }
 
-        boolean isTopLevel() {
+        // Scope interface
+
+        @Override
+        public Scope getParent() {
+            return parent;
+        }
+
+        @Override
+        public boolean isTopLevel() {
             return parent == null;
         }
+
+        @Override
+        public Collection<String> varDeclaredNames() {
+            return varDeclaredNames;
+        }
+
+        @Override
+        public Collection<String> lexicallyDeclaredNames() {
+            return lexDeclaredNames;
+        }
+
+        @Override
+        public Collection<StatementListItem> varScopedDeclarations() {
+            return varScopedDeclarations;
+        }
+
+        @Override
+        public Collection<Declaration> lexicallyScopedDeclarations() {
+            return lexScopedDeclarations;
+        }
+
+        //
 
         boolean addVarDeclaredName(String name) {
             if (varDeclaredNames == null) {
@@ -132,6 +170,20 @@ public class Parser {
             }
             return lexDeclaredNames.add(name)
                     && (varDeclaredNames == null || !varDeclaredNames.contains(name));
+        }
+
+        void addVarScopedDeclaration(StatementListItem decl) {
+            if (varScopedDeclarations == null) {
+                varScopedDeclarations = newSmallList();
+            }
+            varScopedDeclarations.add(decl);
+        }
+
+        void addLexScopedDeclaration(Declaration decl) {
+            if (lexScopedDeclarations == null) {
+                lexScopedDeclarations = newSmallList();
+            }
+            lexScopedDeclarations.add(decl);
         }
     }
 
@@ -181,27 +233,56 @@ public class Parser {
         if (varDeclaredNames != null) {
             BlockContext parent = context.blockContext.parent;
             for (String name : varDeclaredNames) {
-                if (!parent.addVarDeclaredName(name)) {
-                    reportSyntaxError(String.format("invalid var-declared name '%s'", name));
-                }
+                addVarDeclaredName(parent, name);
             }
         }
         return context.blockContext = context.blockContext.parent;
     }
 
-    private void addFunctionDecl(BindingIdentifier bindingIdentifier) {
+    private void addFunctionDecl(FunctionDeclaration funDecl) {
+        addFunctionDecl(funDecl, funDecl.getIdentifier());
+    }
+
+    private void addGeneratorDecl(GeneratorDeclaration genDecl) {
+        // TODO: for now same rules as function declaration
+        addFunctionDecl(genDecl, genDecl.getIdentifier());
+    }
+
+    private void addFunctionDecl(Declaration decl, BindingIdentifier bindingIdentifier) {
         String name = BoundName(bindingIdentifier);
         BlockContext parentBlock = context.parent.blockContext;
         if (parentBlock.isTopLevel()) {
             // top-level function declaration
+            parentBlock.addVarScopedDeclaration(decl);
             if (!parentBlock.addVarDeclaredName(name)) {
                 reportSyntaxError(String.format("invalid function declaration '%s'", name));
             }
         } else {
             // block-scoped function declaration
+            parentBlock.addLexScopedDeclaration(decl);
             if (!parentBlock.addLexDeclaredName(name)) {
                 reportSyntaxError(String.format("invalid function declaration '%s'", name));
             }
+        }
+    }
+
+    private void addLexScopedDeclaration(Declaration decl) {
+        context.blockContext.addLexScopedDeclaration(decl);
+    }
+
+    private void addVarScopedDeclaration(VariableStatement decl) {
+        context.funContext.addVarScopedDeclaration(decl);
+    }
+
+    private void addVarDeclaredName(BlockContext block, String name) {
+        if (!block.addVarDeclaredName(name)) {
+            reportSyntaxError(String.format("invalid var-declared name '%s'", name));
+        }
+    }
+
+    private void addLexDeclaredName(BlockContext block, String name) {
+        if (!block.addLexDeclaredName(name)) {
+            reportSyntaxError(String.format("invalid lex-declared name '%s'", name));
         }
     }
 
@@ -226,16 +307,12 @@ public class Parser {
 
     private void addVarDeclaredName(BindingIdentifier bindingIdentifier) {
         String name = BoundName(bindingIdentifier);
-        if (!context.blockContext.addVarDeclaredName(name)) {
-            reportSyntaxError(String.format("invalid var-declared name '%s'", name));
-        }
+        addVarDeclaredName(context.blockContext, name);
     }
 
     private void addVarDeclaredName(BindingPattern bindingPattern) {
         for (String name : BoundNames(bindingPattern)) {
-            if (!context.blockContext.addVarDeclaredName(name)) {
-                reportSyntaxError(String.format("invalid var-declared name '%s'", name));
-            }
+            addVarDeclaredName(context.blockContext, name);
         }
     }
 
@@ -261,16 +338,12 @@ public class Parser {
 
     private void addLexDeclaredName(BindingIdentifier bindingIdentifier) {
         String name = BoundName(bindingIdentifier);
-        if (!context.blockContext.addLexDeclaredName(name)) {
-            reportSyntaxError(String.format("invalid lex-declared name '%s'", name));
-        }
+        addLexDeclaredName(context.blockContext, name);
     }
 
     private void addLexDeclaredName(BindingPattern bindingPattern) {
         for (String name : BoundNames(bindingPattern)) {
-            if (!context.blockContext.addLexDeclaredName(name)) {
-                reportSyntaxError(String.format("invalid lex-declared name '%s'", name));
-            }
+            addLexDeclaredName(context.blockContext, name);
         }
     }
 
@@ -486,8 +559,8 @@ public class Parser {
 
                 formalParameterList_StaticSemantics(parameters);
 
-                function = inheritStrictness(new FunctionExpression(source, identifier, parameters,
-                        statements));
+                function = inheritStrictness(new FunctionExpression(context.scope(), identifier,
+                        parameters, statements, source));
             } finally {
                 restoreContext();
             }
@@ -495,7 +568,7 @@ public class Parser {
             boolean strict = (context.strictMode == StrictMode.Strict);
             List<StatementListItem> body = newSmallList();
             body.add(new ExpressionStatement(function));
-            script = new Script(sourceFile, body, strict, true);
+            script = new Script(sourceFile, context.scope(), body, strict, true);
         } finally {
             restoreContext();
         }
@@ -522,7 +595,7 @@ public class Parser {
             List<StatementListItem> body = outerStatementList();
             boolean strict = (context.strictMode == StrictMode.Strict);
             boolean global = context.parent.global;
-            return new Script(sourceFile, merge(prologue, body), strict, global);
+            return new Script(sourceFile, context.scope(), merge(prologue, body), strict, global);
         } finally {
             restoreContext();
         }
@@ -1000,12 +1073,14 @@ public class Parser {
             // TODO: insert 'use strict' if in strict-mode
             String source = ts.range(start, ts.position());
 
-            addFunctionDecl(identifier);
-
             formalParameterList_StaticSemantics(parameters);
 
-            return inheritStrictness(new FunctionDeclaration(source, identifier, parameters,
-                    statements));
+            FunctionDeclaration function = new FunctionDeclaration(context.scope(), identifier,
+                    parameters, statements, source);
+
+            addFunctionDecl(function);
+
+            return inheritStrictness(function);
         } finally {
             restoreContext();
         }
@@ -1041,8 +1116,8 @@ public class Parser {
 
             formalParameterList_StaticSemantics(parameters);
 
-            return inheritStrictness(new FunctionExpression(source, identifier, parameters,
-                    statements));
+            return inheritStrictness(new FunctionExpression(context.scope(), identifier,
+                    parameters, statements, source));
         } finally {
             restoreContext();
         }
@@ -1205,8 +1280,8 @@ public class Parser {
 
                 formalParameterList_StaticSemantics(parameters);
 
-                return inheritStrictness(new ArrowFunction(source.toString(), parameters,
-                        statements));
+                return inheritStrictness(new ArrowFunction(context.scope(), parameters, statements,
+                        source.toString()));
             } else {
                 // need to call manually b/c functionBody() isn't used here
                 applyStrictMode(false);
@@ -1218,214 +1293,8 @@ public class Parser {
 
                 formalParameterList_StaticSemantics(parameters);
 
-                return inheritStrictness(new ArrowFunction(source.toString(), parameters,
-                        expression));
-            }
-        } finally {
-            restoreContext();
-        }
-    }
-
-    /**
-     * Static Semantics: CoveredFormalsList
-     * 
-     * @see #arrowFunction()
-     */
-    private List<FormalParameter> CoveredFormalsList(Expression head) {
-        // ArrowParameters : BindingIdentifier
-        // ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList
-
-        // Static Semantics: Early Errors
-        if (head.getParentheses() == 0) {
-            if (!(head instanceof Identifier)) {
-                reportArrowSyntaxError(head);
-            }
-            String name = ((Identifier) head).getName();
-            if ("arguments".equals(name) || "eval".equals(name)) {
-                reportArrowSyntaxError(head);
-            }
-        } else if (head.getParentheses() > 1) {
-            reportArrowSyntaxError(head);
-        }
-
-        List<FormalParameter> parameters = newSmallList();
-        if (head instanceof EmptyExpression) {
-            return parameters;
-        } else if (head instanceof CommaExpression) {
-            for (Expression c : ((CommaExpression) head).getOperands()) {
-                // `((c)) => c` is invalid
-                if (c.isParenthesised()) {
-                    reportArrowSyntaxError(c);
-                }
-                parameters.add(CoveredFormal(c));
-            }
-            return parameters;
-        } else {
-            parameters.add(CoveredFormal(head));
-            return parameters;
-        }
-    }
-
-    private ParserException reportArrowSyntaxError(Node node) {
-        throw reportSyntaxError("invalid arrow-function parameter list", node.getLine());
-    }
-
-    /**
-     * Static Semantics: CoveredFormalsList
-     * 
-     * @see #arrowFunction()
-     */
-    private FormalParameter CoveredFormal(Expression node) {
-        return node.accept(ToFormalParameter.INSTANCE, null);
-    }
-
-    private static class ToFormalParameter extends DefaultNodeVisitor<FormalParameter, Parser> {
-        private static NodeVisitor<FormalParameter, Parser> INSTANCE = new ToFormalParameter();
-        private static final Expression NO_INITIALISER = null;
-
-        @Override
-        protected FormalParameter visit(Node node, Parser parser) {
-            throw parser.reportArrowSyntaxError(node);
-        }
-
-        @Override
-        public FormalParameter visit(Identifier node, Parser parser) {
-            Binding binding = node.accept(ToBinding.INSTANCE, parser);
-            return new BindingElement(binding, NO_INITIALISER);
-        }
-
-        @Override
-        public FormalParameter visit(ArrayLiteral node, Parser parser) {
-            Binding binding = parser.toDestructuring(node).accept(ToBinding.INSTANCE, parser);
-            return new BindingElement(binding, NO_INITIALISER);
-        }
-
-        @Override
-        public FormalParameter visit(ObjectLiteral node, Parser parser) {
-            Binding binding = parser.toDestructuring(node).accept(ToBinding.INSTANCE, parser);
-            return new BindingElement(binding, NO_INITIALISER);
-        }
-
-        @Override
-        public FormalParameter visit(AssignmentExpression node, Parser parser) {
-            if (node.getOperator() != AssignmentExpression.Operator.ASSIGN) {
-                parser.reportArrowSyntaxError(node);
-            }
-            LeftHandSideExpression lhs = node.getLeft();
-            if (lhs.isParenthesised()) {
-                parser.reportArrowSyntaxError(node);
-            }
-            Binding binding = lhs.accept(ToBinding.INSTANCE, parser);
-            return new BindingElement(binding, node.getRight());
-        }
-
-        @Override
-        public FormalParameter visit(SpreadElement node, Parser parser) {
-            // FunctionRestParameter : ... BindingIdentifier
-            // cf. arrowFunctionRestParameter()
-            assert node.getExpression() instanceof Identifier;
-            String name = ((Identifier) node.getExpression()).getName();
-            return new BindingRestElement(new BindingIdentifier(name));
-        }
-    }
-
-    private static class ToBinding extends DefaultNodeVisitor<Binding, Parser> {
-        private static NodeVisitor<Binding, Parser> INSTANCE = new ToBinding();
-
-        @Override
-        protected Binding visit(Node node, Parser parser) {
-            throw parser.reportArrowSyntaxError(node);
-        }
-
-        @Override
-        public Binding visit(Identifier node, Parser parser) {
-            return new BindingIdentifier(node.getName());
-        }
-
-        @Override
-        public Binding visit(ArrayAssignmentPattern node, Parser parser) {
-            List<BindingElementItem> elements = newSmallList();
-            for (AssignmentElementItem item : node.getElements()) {
-                BindingElementItem bindingElement;
-                if (item instanceof Elision) {
-                    bindingElement = new BindingElision();
-                } else if (item instanceof AssignmentElement) {
-                    AssignmentElement element = (AssignmentElement) item;
-                    LeftHandSideExpression target = element.getTarget();
-                    if (target.isParenthesised()) {
-                        parser.reportArrowSyntaxError(node);
-                    }
-                    Binding binding = target.accept(this, parser);
-                    bindingElement = new BindingElement(binding, element.getInitialiser());
-                } else {
-                    assert item instanceof AssignmentRestElement;
-                    AssignmentRestElement element = (AssignmentRestElement) item;
-                    LeftHandSideExpression target = element.getTarget();
-                    if (target.isParenthesised() || !(target instanceof Identifier)) {
-                        parser.reportArrowSyntaxError(node);
-                    }
-                    Binding binding = target.accept(this, parser);
-                    bindingElement = new BindingRestElement((BindingIdentifier) binding);
-                }
-                elements.add(bindingElement);
-            }
-            return new ArrayBindingPattern(elements);
-        }
-
-        @Override
-        public Binding visit(ObjectAssignmentPattern node, Parser parser) {
-            List<BindingProperty> properties = newSmallList();
-            for (AssignmentProperty property : node.getProperties()) {
-                BindingProperty bindingProperty;
-                LeftHandSideExpression target = property.getTarget();
-                if (target.isParenthesised()) {
-                    parser.reportArrowSyntaxError(node);
-                }
-                if (property.getPropertyName() != null) {
-                    Binding binding = target.accept(this, parser);
-                    bindingProperty = new BindingProperty(property.getPropertyName(), binding,
-                            property.getInitialiser());
-                } else {
-                    assert target instanceof Identifier;
-                    Binding binding = target.accept(this, parser);
-                    bindingProperty = new BindingProperty((BindingIdentifier) binding,
-                            property.getInitialiser());
-                }
-                properties.add(bindingProperty);
-            }
-            return new ObjectBindingPattern(properties);
-        }
-    }
-
-    /**
-     * @see #arrowFunction()
-     */
-    @SuppressWarnings("unused")
-    private ArrowFunction arrowFunctionTail(Expression head) {
-        newContext(ContextKind.ArrowFunction);
-        try {
-            List<FormalParameter> parameters = CoveredFormalsList(head);
-            consume(Token.ARROW);
-            if (token() == Token.LC) {
-                consume(Token.LC);
-                List<StatementListItem> statements = functionBody(Token.RC);
-                consume(Token.RC);
-
-                String source = "";
-
-                formalParameterList_StaticSemantics(parameters);
-
-                return inheritStrictness(new ArrowFunction(source, parameters, statements));
-            } else {
-                // need to call manually b/c functionBody() isn't used here
-                applyStrictMode(false);
-
-                String source = "";
-
-                formalParameterList_StaticSemantics(parameters);
-
-                Expression expression = assignmentExpression(true);
-                return inheritStrictness(new ArrowFunction(source, parameters, expression));
+                return inheritStrictness(new ArrowFunction(context.scope(), parameters, expression,
+                        source.toString()));
             }
         } finally {
             restoreContext();
@@ -1506,8 +1375,8 @@ public class Parser {
 
             formalParameterList_StaticSemantics(parameters);
 
-            return inheritStrictness(new MethodDefinition(source.toString(), type, propertyName,
-                    parameters, statements, context.hasSuperReference()));
+            return inheritStrictness(new MethodDefinition(context.scope(), type, propertyName,
+                    parameters, statements, context.hasSuperReference(), source.toString()));
         } finally {
             restoreContext();
         }
@@ -1557,13 +1426,14 @@ public class Parser {
             // TODO: insert 'use strict' if in strict-mode
             String source = ts.range(start, ts.position());
 
-            // TODO: for now same rules as FunctionDeclaration
-            addFunctionDecl(identifier);
-
             formalParameterList_StaticSemantics(parameters);
 
-            return inheritStrictness(new GeneratorDeclaration(source, identifier, parameters,
-                    statements));
+            GeneratorDeclaration generator = new GeneratorDeclaration(context.scope(), identifier,
+                    parameters, statements, source);
+
+            addGeneratorDecl(generator);
+
+            return inheritStrictness(generator);
         } finally {
             restoreContext();
         }
@@ -1600,8 +1470,8 @@ public class Parser {
 
             formalParameterList_StaticSemantics(parameters);
 
-            return inheritStrictness(new GeneratorExpression(source, identifier, parameters,
-                    statements));
+            return inheritStrictness(new GeneratorExpression(context.scope(), identifier,
+                    parameters, statements, source));
         } finally {
             restoreContext();
         }
@@ -1670,7 +1540,9 @@ public class Parser {
 
         addLexDeclaredName(name);
 
-        return new ClassDeclaration(name, heritage, body);
+        ClassDeclaration decl = new ClassDeclaration(name, heritage, body);
+        addLexScopedDeclaration(decl);
+        return decl;
     }
 
     /**
@@ -1841,7 +1713,7 @@ public class Parser {
      */
     private BlockStatement block(Binding inherited) {
         consume(Token.LC);
-        enterBlockContext();
+        BlockContext scope = enterBlockContext();
         if (inherited != null) {
             addLexDeclaredName(inherited);
         }
@@ -1849,7 +1721,7 @@ public class Parser {
         exitBlockContext();
         consume(Token.RC);
 
-        return new BlockStatement(list);
+        return new BlockStatement(scope, list);
     }
 
     /**
@@ -1928,7 +1800,9 @@ public class Parser {
             semicolon();
         }
 
-        return new LexicalDeclaration(type, list);
+        LexicalDeclaration decl = new LexicalDeclaration(type, list);
+        addLexScopedDeclaration(decl);
+        return decl;
     }
 
     /**
@@ -2056,7 +1930,9 @@ public class Parser {
         List<VariableDeclaration> decls = variableDeclarationList(true);
         semicolon();
 
-        return new VariableStatement(decls);
+        VariableStatement varStmt = new VariableStatement(decls);
+        addVarScopedDeclaration(varStmt);
+        return varStmt;
     }
 
     /**
@@ -2531,7 +2407,9 @@ public class Parser {
         switch (token()) {
         case VAR:
             consume(Token.VAR);
-            head = new VariableStatement(variableDeclarationList(false));
+            VariableStatement varStmt = new VariableStatement(variableDeclarationList(false));
+            addVarScopedDeclaration(varStmt);
+            head = varStmt;
             break;
         case LET:
         case CONST:
@@ -2563,11 +2441,13 @@ public class Parser {
             LabelContext labelCx = enterIteration(labelSet);
             Statement stmt = statement();
             exitIteration();
+
             if (lexBlockContext != null) {
                 exitBlockContext();
             }
 
-            return new ForStatement(labelCx.abrupts, labelCx.labelSet, head, test, step, stmt);
+            return new ForStatement(lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, test,
+                    step, stmt);
         } else if (token() == Token.IN) {
             head = validateForInOf(head, "for-in");
             consume(Token.IN);
@@ -2577,11 +2457,13 @@ public class Parser {
             LabelContext labelCx = enterIteration(labelSet);
             Statement stmt = statement();
             exitIteration();
+
             if (lexBlockContext != null) {
                 exitBlockContext();
             }
 
-            return new ForInStatement(labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
+            return new ForInStatement(lexBlockContext, labelCx.abrupts, labelCx.labelSet, head,
+                    expr, stmt);
         } else {
             head = validateForInOf(head, "for-of");
             consume("of");
@@ -2591,11 +2473,13 @@ public class Parser {
             LabelContext labelCx = enterIteration(labelSet);
             Statement stmt = statement();
             exitIteration();
+
             if (lexBlockContext != null) {
                 exitBlockContext();
             }
 
-            return new ForOfStatement(labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
+            return new ForOfStatement(lexBlockContext, labelCx.abrupts, labelCx.labelSet, head,
+                    expr, stmt);
         }
     }
 
@@ -2981,7 +2865,7 @@ public class Parser {
 
         consume(Token.LC);
         LabelContext labelCx = enterBreakable(labelSet);
-        enterBlockContext();
+        BlockContext scope = enterBlockContext();
         boolean hasDefault = false;
         for (;;) {
             Expression caseExpr;
@@ -3015,7 +2899,7 @@ public class Parser {
         exitBreakable();
         consume(Token.RC);
 
-        return new SwitchStatement(labelCx.abrupts, labelCx.labelSet, expr, clauses);
+        return new SwitchStatement(scope, labelCx.abrupts, labelCx.labelSet, expr, clauses);
     }
 
     /**

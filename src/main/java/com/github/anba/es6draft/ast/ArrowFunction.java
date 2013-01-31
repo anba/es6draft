@@ -15,25 +15,34 @@ import java.util.List;
  * </ul>
  */
 public class ArrowFunction extends Expression implements FunctionNode {
+    private Scope scope;
     private List<FormalParameter> parameters;
     private List<StatementListItem> statements;
     private Expression expression;
     private boolean strict;
     private String source;
 
-    public ArrowFunction(String source, List<FormalParameter> parameters,
-            List<StatementListItem> statements) {
-        this.source = source;
+    public ArrowFunction(Scope scope, List<FormalParameter> parameters,
+            List<StatementListItem> statements, String source) {
+        this.scope = scope;
         this.parameters = parameters;
         this.statements = statements;
         this.expression = null;
+        this.source = source;
     }
 
-    public ArrowFunction(String source, List<FormalParameter> parameters, Expression expression) {
-        this.source = source;
+    public ArrowFunction(Scope scope, List<FormalParameter> parameters, Expression expression,
+            String source) {
+        this.scope = scope;
         this.parameters = parameters;
         this.statements = null;
         this.expression = expression;
+        this.source = source;
+    }
+
+    @Override
+    public Scope getScope() {
+        return scope;
     }
 
     @Override

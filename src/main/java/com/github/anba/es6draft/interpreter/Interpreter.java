@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.VarDeclaredNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclarations;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
@@ -675,11 +676,12 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         ScriptBodyImpl(Script parsedScript) {
             this.parsedScript = parsedScript;
             this.varDeclaredNames = VarDeclaredNames(parsedScript).toArray(new String[0]);
-            List<StatementListItem> varScopedDeclarations = VarScopedDeclarations(parsedScript);
+            Collection<StatementListItem> varScopedDeclarations = VarScopedDeclarations(parsedScript);
             int size = varScopedDeclarations.size();
             RuntimeInfo.Declaration[] decl = new RuntimeInfo.Declaration[size];
-            for (int i = 0; i < size; ++i) {
-                decl[i] = new VarDeclarationImpl(varScopedDeclarations.get(i));
+            int index = 0;
+            for (StatementListItem node : varScopedDeclarations) {
+                decl[index++] = new VarDeclarationImpl(node);
             }
             this.varScopedDeclarations = decl;
         }

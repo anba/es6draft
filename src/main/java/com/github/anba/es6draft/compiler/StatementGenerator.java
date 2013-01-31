@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -64,7 +65,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     /**
      * 10.5.4 Block Declaration Instantiation
      */
-    private void BlockDeclarationInstantiation(List<Declaration> declarations, MethodGenerator mv) {
+    private void BlockDeclarationInstantiation(Collection<Declaration> declarations,
+            MethodGenerator mv) {
         // stack: [env] -> [env, envRec]
         mv.dup();
         mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
@@ -155,7 +157,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
             return null;
         }
 
-        List<Declaration> declarations = LexicalDeclarations(node);
+        Collection<Declaration> declarations = LexicalDeclarations(node);
         if (!declarations.isEmpty()) {
             newDeclarativeEnvironment(mv);
             BlockDeclarationInstantiation(declarations, mv);
@@ -631,7 +633,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
         node.getExpression().accept(this, mv);
         invokeGetValue(node.getExpression(), mv);
 
-        List<Declaration> declarations = LexicalDeclarations(node);
+        Collection<Declaration> declarations = LexicalDeclarations(node);
         if (!declarations.isEmpty()) {
             newDeclarativeEnvironment(mv);
             BlockDeclarationInstantiation(declarations, mv);

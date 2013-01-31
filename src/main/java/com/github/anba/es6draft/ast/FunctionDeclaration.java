@@ -15,18 +15,25 @@ import java.util.List;
  * </ul>
  */
 public class FunctionDeclaration extends Declaration implements FunctionDefinition {
+    private Scope scope;
     private BindingIdentifier identifier;
     private List<FormalParameter> parameters;
     private List<StatementListItem> statements;
     private boolean strict;
     private String source;
 
-    public FunctionDeclaration(String source, BindingIdentifier identifier,
-            List<FormalParameter> parameters, List<StatementListItem> statements) {
-        this.source = source;
+    public FunctionDeclaration(Scope scope, BindingIdentifier identifier,
+            List<FormalParameter> parameters, List<StatementListItem> statements, String source) {
+        this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;
         this.statements = statements;
+        this.source = source;
+    }
+
+    @Override
+    public Scope getScope() {
+        return scope;
     }
 
     @Override
@@ -57,6 +64,11 @@ public class FunctionDeclaration extends Declaration implements FunctionDefiniti
     @Override
     public String getSource() {
         return source;
+    }
+
+    @Override
+    public boolean isConstDeclaration() {
+        return false;
     }
 
     @Override

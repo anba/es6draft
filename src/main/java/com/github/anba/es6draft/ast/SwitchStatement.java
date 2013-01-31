@@ -16,18 +16,25 @@ import java.util.Set;
  * <li>12.11 The switch Statement
  * </ul>
  */
-public class SwitchStatement extends BreakableStatement {
+public class SwitchStatement extends BreakableStatement implements ScopedNode {
+    private Scope scope;
     private EnumSet<Abrupt> abrupt;
     private Set<String> labelSet;
     private Expression expression;
     private List<SwitchClause> clauses;
 
-    public SwitchStatement(EnumSet<Abrupt> abrupt, Set<String> labelSet, Expression expression,
-            List<SwitchClause> clauses) {
+    public SwitchStatement(Scope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet,
+            Expression expression, List<SwitchClause> clauses) {
+        this.scope = scope;
         this.abrupt = abrupt;
         this.labelSet = labelSet;
         this.expression = expression;
         this.clauses = clauses;
+    }
+
+    @Override
+    public Scope getScope() {
+        return scope;
     }
 
     @Override

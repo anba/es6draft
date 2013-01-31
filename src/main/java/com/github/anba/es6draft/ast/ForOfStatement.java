@@ -16,20 +16,26 @@ import java.util.Set;
  * <li>12.6.4 The for-in and for-of Statements
  * </ul>
  */
-public class ForOfStatement extends IterationStatement {
+public class ForOfStatement extends IterationStatement implements ScopedNode {
+    private Scope scope;
     private EnumSet<Abrupt> abrupt;
     private Node head;
     private Expression expression;
     private Statement statement;
     private Set<String> labelSet;
 
-    public ForOfStatement(EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head,
+    public ForOfStatement(Scope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head,
             Expression expression, Statement stmt) {
         this.abrupt = abrupt;
         this.labelSet = labelSet;
         this.head = head;
         this.expression = expression;
         this.statement = stmt;
+    }
+
+    @Override
+    public Scope getScope() {
+        return scope;
     }
 
     @Override

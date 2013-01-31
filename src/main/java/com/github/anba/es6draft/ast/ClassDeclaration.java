@@ -41,6 +41,11 @@ public class ClassDeclaration extends Declaration implements ClassDefinition {
     }
 
     @Override
+    public boolean isConstDeclaration() {
+        return false;
+    }
+
+    @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
     }

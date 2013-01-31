@@ -14,15 +14,17 @@ import java.util.List;
  * <li>14.1 Script
  * </ul>
  */
-public class Script extends AstNode {
+public class Script extends AstNode implements ScopedNode {
     private String sourceFile;
+    private Scope scope;
     private List<StatementListItem> statements;
     private boolean strict;
     private boolean global;
 
-    public Script(String sourceFile, List<StatementListItem> statements, boolean strict,
-            boolean global) {
+    public Script(String sourceFile, Scope scope, List<StatementListItem> statements,
+            boolean strict, boolean global) {
         this.sourceFile = sourceFile;
+        this.scope = scope;
         this.statements = statements;
         this.strict = strict;
         this.global = global;
@@ -30,6 +32,11 @@ public class Script extends AstNode {
 
     public String getSourceFile() {
         return sourceFile;
+    }
+
+    @Override
+    public Scope getScope() {
+        return scope;
     }
 
     public List<StatementListItem> getStatements() {

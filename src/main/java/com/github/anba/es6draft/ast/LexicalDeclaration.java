@@ -37,6 +37,11 @@ public class LexicalDeclaration extends Declaration {
     }
 
     @Override
+    public boolean isConstDeclaration() {
+        return (type == Type.Const);
+    }
+
+    @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
     }

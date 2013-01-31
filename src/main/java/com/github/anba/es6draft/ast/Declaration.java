@@ -15,4 +15,6 @@ package com.github.anba.es6draft.ast;
 public abstract class Declaration extends StatementListItem {
     protected Declaration() {
     }
+
+    public abstract boolean isConstDeclaration();
 }

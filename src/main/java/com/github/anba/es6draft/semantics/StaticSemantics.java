@@ -9,6 +9,8 @@ package com.github.anba.es6draft.semantics;
 import static com.github.anba.es6draft.semantics.StaticSemanticsVisitor.forEach;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
@@ -54,6 +56,13 @@ public final class StaticSemantics {
     /**
      * Static Semantics: BoundNames
      */
+    public static List<String> BoundNames(Declaration node) {
+        return node.accept(BoundNames.INSTANCE, new ArrayList<String>());
+    }
+
+    /**
+     * Static Semantics: BoundNames
+     */
     public static List<String> BoundNames(StatementListItem node) {
         return node.accept(BoundNames.INSTANCE, new ArrayList<String>());
     }
@@ -77,20 +86,6 @@ public final class StaticSemantics {
             }
         }
         return null;
-    }
-
-    /**
-     * Static Semantics: Elision Width
-     */
-    public static int ElisionWidth(List<? extends Node> elements, int startIndex) {
-        int width = 0;
-        for (int i = startIndex, size = elements.size(); i < size; ++i) {
-            if (!(elements.get(i) instanceof Elision)) {
-                break;
-            }
-            width += 1;
-        }
-        return width;
     }
 
     /**
@@ -120,7 +115,7 @@ public final class StaticSemantics {
      * Static Semantics: IsConstantDeclaration
      */
     public static boolean IsConstantDeclaration(Declaration node) {
-        return node.accept(IsConstantDeclaration.INSTANCE, null);
+        return node.isConstDeclaration();
     }
 
     /**
@@ -145,78 +140,17 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: IsValidSimpleAssignmentTarget
-     */
-    public static boolean IsValidSimpleAssignmentTarget(Expression node, boolean strict) {
-        return node.accept(IsValidSimpleAssignmentTarget.INSTANCE, strict);
-    }
-
-    // LexicalDeclarations
-
-    /**
      * Static Semantics: LexicalDeclarations
      */
-    public static List<Declaration> LexicalDeclarations(BlockStatement node) {
-        return LexicalDeclarations(node.getStatements());
+    public static Collection<Declaration> LexicalDeclarations(BlockStatement node) {
+        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
     /**
      * Static Semantics: LexicalDeclarations
      */
-    public static List<Declaration> LexicalDeclarations(SwitchStatement node) {
-        return caseBlock(LexicalDeclarations.INSTANCE, node.getClauses(),
-                new ArrayList<Declaration>());
-    }
-
-    /**
-     * Static Semantics: LexicalDeclarations
-     */
-    public static List<Declaration> LexicalDeclarations(FunctionNode node) {
-        return LexicalDeclarations(node.getStatements());
-    }
-
-    /**
-     * Static Semantics: LexicalDeclarations
-     */
-    public static List<Declaration> LexicalDeclarations(Script node) {
-        return LexicalDeclarations(node.getStatements());
-    }
-
-    /**
-     * Static Semantics: LexicalDeclarations
-     */
-    private static List<Declaration> LexicalDeclarations(List<StatementListItem> statementlist) {
-        return statementList(LexicalDeclarations.INSTANCE, statementlist,
-                new ArrayList<Declaration>());
-    }
-
-    // LexicallyDeclaredNames
-
-    /**
-     * Static Semantics: LexicallyDeclaredNames
-     */
-    public static List<String> LexicallyDeclaredNames(BlockStatement node) {
-        return LexicallyDeclaredNames(node.getStatements());
-    }
-
-    /**
-     * Static Semantics: LexicallyDeclaredNames
-     */
-    public static List<String> LexicallyDeclaredNames(SwitchStatement node) {
-        return caseBlock(LexicallyDeclaredNames.INSTANCE, node.getClauses(),
-                new ArrayList<String>());
-    }
-
-    /**
-     * 13.1 Function Definitions<br>
-     * 13.2 Arrow Function Definitions
-     * <p>
-     * Static Semantics: LexicallyDeclaredNames (FunctionBody -> StatementList)<br>
-     * Static Semantics: LexicallyDeclaredNames (FunctionBody -> StatementList)<br>
-     * Static Semantics: LexicallyDeclaredNames ([LA &#x2209; { <b>{</b> }] AssignmentExpression)
-     */
-    public static List<String> LexicallyDeclaredNames(FunctionNode node) {
-        return TopLevelLexicallyDeclaredNames(node.getStatements());
+    public static Collection<Declaration> LexicalDeclarations(SwitchStatement node) {
+        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
     /**
@@ -224,37 +158,17 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: LexicallyDeclaredNames
      */
-    public static List<String> LexicallyDeclaredNames(Script node) {
-        // TODO: ModuleDeclaration | ImportDeclaration
-        return TopLevelLexicallyDeclaredNames(node.getStatements());
+    public static Collection<String> LexicallyDeclaredNames(Script node) {
+        return emptyIfNull(node.getScope().lexicallyDeclaredNames());
     }
-
-    /**
-     * Static Semantics: LexicallyDeclaredNames
-     */
-    private static List<String> LexicallyDeclaredNames(List<StatementListItem> statementlist) {
-        return statementList(LexicallyDeclaredNames.INSTANCE, statementlist,
-                new ArrayList<String>());
-    }
-
-    /**
-     * Static Semantics: TopLevelLexicallyDeclaredNames
-     */
-    private static List<String> TopLevelLexicallyDeclaredNames(List<StatementListItem> statementlist) {
-        return statementList(TopLevelLexicallyDeclaredNames.INSTANCE, statementlist,
-                new ArrayList<String>());
-    }
-
-    // LexicallyScopedDeclarations
 
     /**
      * 13.1 Function Definitions
      * <p>
      * Static Semantics: LexicallyScopedDeclarations (FIXME: missing in spec!)
      */
-    public static List<Declaration> LexicallyScopedDeclarations(FunctionNode node) {
-        // FIXME: spec uses LexicalDeclarations on FunctionBody -> nonsense?!
-        return TopLevelLexicallyScopedDeclarations(node.getStatements());
+    public static Collection<Declaration> LexicallyScopedDeclarations(FunctionNode node) {
+        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
     /**
@@ -262,34 +176,8 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: LexicallyScopedDeclarations
      */
-    public static List<Declaration> LexicallyScopedDeclarations(Script node) {
-        // TODO: ModuleDeclaration | ImportDeclaration
-        return TopLevelLexicallyScopedDeclarations(node.getStatements());
-    }
-
-    /**
-     * Static Semantics: TopLevelLexicallyScopedDeclarations
-     */
-    private static List<Declaration> TopLevelLexicallyScopedDeclarations(
-            List<StatementListItem> statementlist) {
-        return statementList(TopLevelLexicallyScopedDeclarations.INSTANCE, statementlist,
-                new ArrayList<Declaration>());
-    }
-
-    // VarDeclaredNames
-
-    /**
-     * Static Semantics: VarDeclaredNames
-     */
-    public static List<String> VarDeclaredNames(BlockStatement node) {
-        return VarDeclaredNames(node.getStatements());
-    }
-
-    /**
-     * Static Semantics: VarDeclaredNames
-     */
-    public static List<String> VarDeclaredNames(SwitchStatement node) {
-        return caseBlock(VarDeclaredNames.INSTANCE, node.getClauses(), new ArrayList<String>());
+    public static Collection<Declaration> LexicallyScopedDeclarations(Script node) {
+        return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
     /**
@@ -297,8 +185,8 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: VarDeclaredNames (FunctionBody -> StatementList)
      */
-    public static List<String> VarDeclaredNames(FunctionNode node) {
-        return TopLevelVarDeclaredNames(node.getStatements());
+    public static Collection<String> VarDeclaredNames(FunctionNode node) {
+        return emptyIfNull(node.getScope().varDeclaredNames());
     }
 
     /**
@@ -306,35 +194,17 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: VarDeclaredNames
      */
-    public static List<String> VarDeclaredNames(Script node) {
-        // TODO: ModuleDeclaration | ImportDeclaration
-        return TopLevelVarDeclaredNames(node.getStatements());
+    public static Collection<String> VarDeclaredNames(Script node) {
+        return emptyIfNull(node.getScope().varDeclaredNames());
     }
-
-    /**
-     * Static Semantics: VarDeclaredNames
-     */
-    private static List<String> VarDeclaredNames(List<StatementListItem> statementlist) {
-        return statementList(VarDeclaredNames.INSTANCE, statementlist, new ArrayList<String>());
-    }
-
-    /**
-     * Static Semantics: TopLevelVarDeclaredNames
-     */
-    private static List<String> TopLevelVarDeclaredNames(List<StatementListItem> statementlist) {
-        return statementList(TopLevelVarDeclaredNames.INSTANCE, statementlist,
-                new ArrayList<String>());
-    }
-
-    // VarScopedDeclarations
 
     /**
      * 13.1 Function Definitions
      * <p>
      * Static Semantics: VarScopedDeclarations (FIXME: missing in spec!)
      */
-    public static List<StatementListItem> VarScopedDeclarations(FunctionNode node) {
-        return TopLevelVarScopedDeclarations(node.getStatements());
+    public static Collection<StatementListItem> VarScopedDeclarations(FunctionNode node) {
+        return emptyIfNull(node.getScope().varScopedDeclarations());
     }
 
     /**
@@ -342,21 +212,9 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: VarScopedDeclarations
      */
-    public static List<StatementListItem> VarScopedDeclarations(Script node) {
-        // TODO: ModuleDeclaration | ImportDeclaration
-        return TopLevelVarScopedDeclarations(node.getStatements());
+    public static Collection<StatementListItem> VarScopedDeclarations(Script node) {
+        return emptyIfNull(node.getScope().varScopedDeclarations());
     }
-
-    /**
-     * Static Semantics: TopLevelVarScopedDeclarations
-     */
-    private static List<StatementListItem> TopLevelVarScopedDeclarations(
-            List<StatementListItem> statementlist) {
-        return statementList(TopLevelVarScopedDeclarations.INSTANCE, statementlist,
-                new ArrayList<StatementListItem>());
-    }
-
-    //
 
     /**
      * Static Semantics: MethodDefinitions
@@ -394,17 +252,6 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: PropertyNameList
-     */
-    public static List<String> PropertyNameList(List<PropertyDefinition> list) {
-        List<String> result = new ArrayList<>();
-        for (PropertyDefinition def : list) {
-            result.add(PropName(def));
-        }
-        return result;
-    }
-
-    /**
      * Static Semantics: SpecialMethod
      */
     public static boolean SpecialMethod(MethodDefinition node) {
@@ -421,17 +268,7 @@ public final class StaticSemantics {
 
     //
 
-    private static <T> T statementList(NodeVisitor<T, T> visitor,
-            List<StatementListItem> statementlist, T result) {
-        if (statementlist != null) {
-            forEach(visitor, statementlist, result);
-        }
-        return result;
+    private static <T> Collection<T> emptyIfNull(Collection<T> collection) {
+        return (collection != null ? collection : Collections.<T> emptyList());
     }
-
-    private static <T> T caseBlock(NodeVisitor<T, T> visitor, List<SwitchClause> clauses, T result) {
-        forEach(visitor, clauses, result);
-        return result;
-    }
-
 }

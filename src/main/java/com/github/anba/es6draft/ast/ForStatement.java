@@ -16,7 +16,8 @@ import java.util.Set;
  * <li>12.6.3 The for Statement
  * </ul>
  */
-public class ForStatement extends IterationStatement {
+public class ForStatement extends IterationStatement implements ScopedNode {
+    private Scope scope;
     private EnumSet<Abrupt> abrupt;
     private Set<String> labelSet;
     private Node head;
@@ -24,14 +25,20 @@ public class ForStatement extends IterationStatement {
     private Expression step;
     private Statement statement;
 
-    public ForStatement(EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head, Expression test,
-            Expression step, Statement statement) {
+    public ForStatement(Scope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head,
+            Expression test, Expression step, Statement statement) {
+        this.scope = scope;
         this.abrupt = abrupt;
         this.labelSet = labelSet;
         this.head = head;
         this.test = test;
         this.step = step;
         this.statement = statement;
+    }
+
+    @Override
+    public Scope getScope() {
+        return scope;
     }
 
     @Override

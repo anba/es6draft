@@ -8,6 +8,7 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -200,15 +201,16 @@ public class RuntimeInfoGenerator {
         }
     }
 
-    private void astore_declarations(InstructionVisitor mv, List<? extends StatementListItem> list) {
+    private void astore_declarations(InstructionVisitor mv,
+            Collection<? extends StatementListItem> list) {
         String className = codegen.getClassName();
         mv.iconst(list.size());
         mv.newarray(Types.RuntimeInfo$Declaration);
-        for (int i = 0, size = list.size(); i < size; ++i) {
-            StatementListItem node = list.get(i);
+        int index = 0;
+        for (StatementListItem node : list) {
             boolean funDecl = isFunctionDecl(node);
             mv.dup();
-            mv.iconst(i);
+            mv.iconst(index++);
             astore_string(mv, BoundNames(node));
             mv.iconst(node instanceof Declaration && IsConstantDeclaration((Declaration) node));
             mv.iconst(funDecl);
@@ -233,13 +235,14 @@ public class RuntimeInfoGenerator {
         }
     }
 
-    private void astore_string(InstructionVisitor mv, List<String> list) {
+    private void astore_string(InstructionVisitor mv, Collection<String> list) {
         mv.iconst(list.size());
         mv.newarray(Types.String);
-        for (int i = 0, size = list.size(); i < size; ++i) {
+        int index = 0;
+        for (String string : list) {
             mv.dup();
-            mv.iconst(i);
-            mv.aconst(list.get(i));
+            mv.iconst(index++);
+            mv.aconst(string);
             mv.astore(Types.String);
         }
     }
