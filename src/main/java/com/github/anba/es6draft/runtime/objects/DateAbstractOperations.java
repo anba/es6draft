@@ -11,6 +11,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import java.util.Date;
 import java.util.TimeZone;
 
+import com.github.anba.es6draft.runtime.Realm;
+
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.9 Date Objects</h2>
@@ -20,12 +22,6 @@ import java.util.TimeZone;
  */
 final class DateAbstractOperations {
     private DateAbstractOperations() {
-    }
-
-    private static TimeZone defaultTimeZone;
-    static {
-        // TODO: move into Realm class
-        defaultTimeZone = TimeZone.getDefault();
     }
 
     private static final double modulo(double dividend, double divisor) {
@@ -209,17 +205,17 @@ final class DateAbstractOperations {
     /**
      * 15.9.1.7 Local Time Zone Adjustment
      */
-    public static double LocalTZA() {
-        return defaultTimeZone.getRawOffset();
+    public static double LocalTZA(Realm realm) {
+        return realm.getTimezone().getRawOffset();
     }
 
     /**
      * 15.9.1.8 Daylight Saving Time Adjustment
      */
-    public static double DaylightSavingTA(double t) {
-        long time = (long) t;
-        if (defaultTimeZone.inDaylightTime(new Date(time))) {
-            return defaultTimeZone.getDSTSavings();
+    public static double DaylightSavingTA(Realm realm, double t) {
+        TimeZone tz = realm.getTimezone();
+        if (tz.inDaylightTime(new Date((long) t))) {
+            return tz.getDSTSavings();
         }
         return 0;
     }
@@ -227,15 +223,15 @@ final class DateAbstractOperations {
     /**
      * 15.9.1.9 Local Time
      */
-    public static double LocalTime(double t) {
-        return t + LocalTZA() + DaylightSavingTA(t);
+    public static double LocalTime(Realm realm, double t) {
+        return t + LocalTZA(realm) + DaylightSavingTA(realm, t);
     }
 
     /**
      * 15.9.1.9 Local Time
      */
-    public static double UTC(double t) {
-        return t - LocalTZA() - DaylightSavingTA(t - LocalTZA());
+    public static double UTC(Realm realm, double t) {
+        return t - LocalTZA(realm) - DaylightSavingTA(realm, t - LocalTZA(realm));
     }
 
     /**
@@ -356,7 +352,7 @@ final class DateAbstractOperations {
      * <li>or <code>YYYY-MM-DD'T'HH:mm:ss.sss[+-]hh:mm</code></li>
      * </ul>
      */
-    public static double parseISOString(CharSequence s, boolean lenient) {
+    public static double parseISOString(Realm realm, CharSequence s, boolean lenient) {
         // use a simple state machine to parse the input string
         final int ERROR = -1;
         final int YEAR = 0, MONTH = 1, DAY = 2;
@@ -487,7 +483,7 @@ final class DateAbstractOperations {
                     MakeTime(hour, min, sec, msec));
             if (tzhour == -1) {
                 // if time zone offset absent, interpret date-time as a local time
-                date = UTC(date);
+                date = UTC(realm, date);
             } else {
                 date -= (tzhour * 60 + tzmin) * msPerMinute * tzmod;
             }

@@ -13,6 +13,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.runtime.modules.Loader;
@@ -64,8 +65,10 @@ public class Realm {
      */
     private Callable throwTypeError;
 
-    private Locale locale = Locale.getDefault();
     private Callable builtinEval;
+
+    private Locale locale = Locale.getDefault();
+    private TimeZone timezone = TimeZone.getDefault();
 
     // TODO: move into function source object
     private Map<String, Scriptable> templateCallSites = new HashMap<>();
@@ -101,6 +104,14 @@ public class Realm {
         return loader;
     }
 
+    /**
+     * [[ThrowTypeError]]
+     */
+    public Callable getThrowTypeError() {
+        assert throwTypeError != null : "throwTypeError not yet initialized";
+        return throwTypeError;
+    }
+
     private AtomicInteger evalCounter = new AtomicInteger(0);
     private AtomicInteger functionCounter = new AtomicInteger(0);
 
@@ -120,12 +131,8 @@ public class Realm {
         return locale;
     }
 
-    /**
-     * [[ThrowTypeError]]
-     */
-    public Callable getThrowTypeError() {
-        assert throwTypeError != null : "throwTypeError not yet initialized";
-        return throwTypeError;
+    public TimeZone getTimezone() {
+        return timezone;
     }
 
     public Callable getBuiltinEval() {

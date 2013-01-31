@@ -222,7 +222,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
-            return YearFromTime(LocalTime(t));
+            return YearFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -246,7 +246,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
-            return MonthFromTime(LocalTime(t));
+            return MonthFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -270,7 +270,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
-            return DateFromTime(LocalTime(t));
+            return DateFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -294,7 +294,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
-            return WeekDay(LocalTime(t));
+            return WeekDay(LocalTime(realm, t));
         }
 
         /**
@@ -318,7 +318,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
-            return HourFromTime(LocalTime(t));
+            return HourFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -342,7 +342,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
-            return MinFromTime(LocalTime(t));
+            return MinFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -366,7 +366,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
-            return SecFromTime(LocalTime(t));
+            return SecFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -390,7 +390,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
-            return msFromTime(LocalTime(t));
+            return msFromTime(LocalTime(realm, t));
         }
 
         /**
@@ -414,7 +414,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
-            return (t - LocalTime(t)) / msPerMinute;
+            return (t - LocalTime(realm, t)) / msPerMinute;
         }
 
         /**
@@ -433,10 +433,10 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
          */
         @Function(name = "setMilliseconds", arity = 1)
         public static Object setMilliseconds(Realm realm, Object thisValue, Object ms) {
-            double t = LocalTime(date(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, date(realm, thisValue).getDateValue());
             double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t),
                     ToNumber(realm, ms));
-            double u = TimeClip(UTC(MakeDate(Day(t), time)));
+            double u = TimeClip(UTC(realm, MakeDate(Day(t), time)));
             date(realm, thisValue).setDateValue(u);
             return u;
         }
@@ -460,11 +460,11 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
         @Function(name = "setSeconds", arity = 2)
         public static Object setSeconds(Realm realm, Object thisValue, Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            double t = LocalTime(date(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, date(realm, thisValue).getDateValue());
             double s = ToNumber(realm, sec);
             double milli = (ms == null ? msFromTime(t) : ToNumber(realm, ms));
             double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
-            double u = TimeClip(UTC(date));
+            double u = TimeClip(UTC(realm, date));
             date(realm, thisValue).setDateValue(u);
             return u;
         }
@@ -491,12 +491,12 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
         public static Object setMinutes(Realm realm, Object thisValue, Object min,
                 @Optional(Optional.Default.NONE) Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            double t = LocalTime(date(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, date(realm, thisValue).getDateValue());
             double m = ToNumber(realm, min);
             double s = (sec == null ? SecFromTime(t) : ToNumber(realm, sec));
             double milli = (ms == null ? msFromTime(t) : ToNumber(realm, ms));
             double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
-            double u = TimeClip(UTC(date));
+            double u = TimeClip(UTC(realm, date));
             date(realm, thisValue).setDateValue(u);
             return u;
         }
@@ -526,13 +526,13 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
                 @Optional(Optional.Default.NONE) Object min,
                 @Optional(Optional.Default.NONE) Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            double t = LocalTime(date(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, date(realm, thisValue).getDateValue());
             double h = ToNumber(realm, hour);
             double m = (min == null ? MinFromTime(t) : ToNumber(realm, min));
             double s = (sec == null ? SecFromTime(t) : ToNumber(realm, sec));
             double milli = (ms == null ? msFromTime(t) : ToNumber(realm, ms));
             double date = MakeDate(Day(t), MakeTime(h, m, s, milli));
-            double u = TimeClip(UTC(date));
+            double u = TimeClip(UTC(realm, date));
             date(realm, thisValue).setDateValue(u);
             return u;
         }
@@ -561,11 +561,11 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
          */
         @Function(name = "setDate", arity = 1)
         public static Object setDate(Realm realm, Object thisValue, Object date) {
-            double t = LocalTime(date(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, date(realm, thisValue).getDateValue());
             double dt = ToNumber(realm, date);
             double newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), dt),
                     TimeWithinDay(t));
-            double u = TimeClip(UTC(newDate));
+            double u = TimeClip(UTC(realm, newDate));
             date(realm, thisValue).setDateValue(u);
             return u;
         }
@@ -590,11 +590,11 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
         @Function(name = "setMonth", arity = 2)
         public static Object setMonth(Realm realm, Object thisValue, Object month,
                 @Optional(Optional.Default.NONE) Object date) {
-            double t = LocalTime(date(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, date(realm, thisValue).getDateValue());
             double m = ToNumber(realm, month);
             double dt = (date == null ? DateFromTime(t) : ToNumber(realm, date));
             double newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
-            double u = TimeClip(UTC(newDate));
+            double u = TimeClip(UTC(realm, newDate));
             date(realm, thisValue).setDateValue(u);
             return u;
         }
@@ -622,12 +622,12 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
                 @Optional(Optional.Default.NONE) Object month,
                 @Optional(Optional.Default.NONE) Object date) {
             double t = date(realm, thisValue).getDateValue();
-            t = Double.isNaN(t) ? +0 : LocalTime(t);
+            t = Double.isNaN(t) ? +0 : LocalTime(realm, t);
             double y = ToNumber(realm, year);
             double m = (month == null ? MonthFromTime(t) : ToNumber(realm, month));
             double dt = (date == null ? DateFromTime(t) : ToNumber(realm, date));
             double newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
-            double u = TimeClip(UTC(newDate));
+            double u = TimeClip(UTC(realm, newDate));
             date(realm, thisValue).setDateValue(u);
             return u;
         }

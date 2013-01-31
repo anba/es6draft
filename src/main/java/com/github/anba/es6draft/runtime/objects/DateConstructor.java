@@ -95,7 +95,7 @@ public class DateConstructor extends OrdinaryObject implements Scriptable, Calla
                 year = 1900 + ToInteger(realm, year);
             }
             double finalDate = MakeDate(MakeDay(year, month, date), MakeTime(hour, min, sec, ms));
-            dateValue = TimeClip(UTC(finalDate));
+            dateValue = TimeClip(UTC(realm, finalDate));
         } else if (args.length == 1) {
             // 15.9.3.2
             Object v = ToPrimitive(realm, args[0]);
@@ -141,7 +141,7 @@ public class DateConstructor extends OrdinaryObject implements Scriptable, Calla
         @Function(name = "parse", arity = 1)
         public static Object parse(Realm realm, Object thisValue, Object string) {
             CharSequence s = ToString(realm, string);
-            double d = parseISOString(s, true);
+            double d = parseISOString(realm, s, true);
             return d;
         }
 
