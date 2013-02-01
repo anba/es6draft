@@ -10,8 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
-import java.util.List;
-
 import org.objectweb.asm.Label;
 
 import com.github.anba.es6draft.ast.*;
@@ -35,7 +33,7 @@ class BindingInitialisationGenerator {
         // (ExecutionContext, Scriptable, LexicalEnvironment) -> void
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
                 EnvironmentType.NoEnvironment);
-        node.accept(init, null);
+        node.getParameters().accept(init, null);
     }
 
     public void generate(Binding node, MethodGenerator mv) {
@@ -112,53 +110,7 @@ class BindingInitialisationGenerator {
         }
 
         @Override
-        public Void visit(ArrowFunction node, Void _) {
-            // actually: visit(List<FormalParameter> formals)
-            mv.load(1, Types.Scriptable);
-            IndexedBindingInitialisation(node, 0);
-
-            return null;
-        }
-
-        @Override
-        public Void visit(FunctionDeclaration node, Void _) {
-            // actually: visit(List<FormalParameter> formals)
-            mv.load(1, Types.Scriptable);
-            IndexedBindingInitialisation(node, 0);
-
-            return null;
-        }
-
-        @Override
-        public Void visit(FunctionExpression node, Void _) {
-            // actually: visit(List<FormalParameter> formals)
-            mv.load(1, Types.Scriptable);
-            IndexedBindingInitialisation(node, 0);
-
-            return null;
-        }
-
-        @Override
-        public Void visit(GeneratorDeclaration node, Void _) {
-            // actually: visit(List<FormalParameter> formals)
-            mv.load(1, Types.Scriptable);
-            IndexedBindingInitialisation(node, 0);
-
-            return null;
-        }
-
-        @Override
-        public Void visit(GeneratorExpression node, Void _) {
-            // actually: visit(List<FormalParameter> formals)
-            mv.load(1, Types.Scriptable);
-            IndexedBindingInitialisation(node, 0);
-
-            return null;
-        }
-
-        @Override
-        public Void visit(MethodDefinition node, Void _) {
-            // actually: visit(List<FormalParameter> formals)
+        public Void visit(FormalParameterList node, Void value) {
             mv.load(1, Types.Scriptable);
             IndexedBindingInitialisation(node, 0);
 
@@ -274,11 +226,12 @@ class BindingInitialisationGenerator {
             super(codegen, mv, environment);
         }
 
-        private Void visit(List<FormalParameter> formals, Integer index) {
+        @Override
+        public Void visit(FormalParameterList node, Integer index) {
             assert environment != EnvironmentType.EnvironmentFromStack;
 
             // stack: [value]
-            for (FormalParameter formal : formals) {
+            for (FormalParameter formal : node) {
                 // stack: [value] -> [value, value]
                 mv.dup();
                 // stack: [value, value] -> [value]
@@ -289,42 +242,6 @@ class BindingInitialisationGenerator {
             mv.pop();
 
             return null;
-        }
-
-        @Override
-        public Void visit(ArrowFunction node, Integer index) {
-            // actually: visit(List<FormalParameter> formals)
-            return visit(node.getParameters(), index);
-        }
-
-        @Override
-        public Void visit(FunctionDeclaration node, Integer index) {
-            // actually: visit(List<FormalParameter> formals)
-            return visit(node.getParameters(), index);
-        }
-
-        @Override
-        public Void visit(FunctionExpression node, Integer index) {
-            // actually: visit(List<FormalParameter> formals)
-            return visit(node.getParameters(), index);
-        }
-
-        @Override
-        public Void visit(GeneratorDeclaration node, Integer index) {
-            // actually: visit(List<FormalParameter> formals)
-            return visit(node.getParameters(), index);
-        }
-
-        @Override
-        public Void visit(GeneratorExpression node, Integer index) {
-            // actually: visit(List<FormalParameter> formals)
-            return visit(node.getParameters(), index);
-        }
-
-        @Override
-        public Void visit(MethodDefinition node, Integer index) {
-            // actually: visit(List<FormalParameter> formals)
-            return visit(node.getParameters(), index);
         }
 
         @Override

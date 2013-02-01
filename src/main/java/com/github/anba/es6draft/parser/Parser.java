@@ -11,9 +11,9 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsSimpleParamet
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 import static com.github.anba.es6draft.semantics.StaticSemantics.SpecialMethod;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -135,22 +135,22 @@ public class Parser {
         }
 
         @Override
-        public Collection<String> varDeclaredNames() {
+        public Set<String> varDeclaredNames() {
             return varDeclaredNames;
         }
 
         @Override
-        public Collection<String> lexicallyDeclaredNames() {
+        public Set<String> lexicallyDeclaredNames() {
             return lexDeclaredNames;
         }
 
         @Override
-        public Collection<StatementListItem> varScopedDeclarations() {
+        public List<StatementListItem> varScopedDeclarations() {
             return varScopedDeclarations;
         }
 
         @Override
-        public Collection<Declaration> lexicallyScopedDeclarations() {
+        public List<Declaration> lexicallyScopedDeclarations() {
             return lexScopedDeclarations;
         }
 
@@ -542,7 +542,7 @@ public class Parser {
                 BindingIdentifier identifier = new BindingIdentifier("anonymous");
 
                 ts = new TokenStream(this, new StringTokenStreamInput(formals), sourceLine);
-                List<FormalParameter> parameters = formalParameterList(Token.EOF);
+                FormalParameterList parameters = formalParameterList(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError("invalid formal parameters");
                 }
@@ -1064,7 +1064,7 @@ public class Parser {
 
             BindingIdentifier identifier = bindingIdentifier();
             consume(Token.LP);
-            List<FormalParameter> parameters = formalParameterList(Token.RP);
+            FormalParameterList parameters = formalParameterList(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
             List<StatementListItem> statements = functionBody(Token.RC);
@@ -1105,7 +1105,7 @@ public class Parser {
                 identifier = bindingIdentifier();
             }
             consume(Token.LP);
-            List<FormalParameter> parameters = formalParameterList(Token.RP);
+            FormalParameterList parameters = formalParameterList(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
             List<StatementListItem> statements = functionBody(Token.RC);
@@ -1141,8 +1141,8 @@ public class Parser {
      *     BindingElement
      * </pre>
      */
-    private List<FormalParameter> formalParameterList(Token end) {
-        List<FormalParameter> parameters = newSmallList();
+    private FormalParameterList formalParameterList(Token end) {
+        List<FormalParameter> formals = newSmallList();
         boolean needComma = false;
         while (token() != end) {
             if (needComma) {
@@ -1150,18 +1150,18 @@ public class Parser {
                 needComma = false;
             } else if (token() == Token.TRIPLE_DOT) {
                 consume(Token.TRIPLE_DOT);
-                parameters.add(new BindingRestElement(bindingIdentifierStrict()));
+                formals.add(new BindingRestElement(bindingIdentifierStrict()));
                 break;
             } else {
-                parameters.add(bindingElement());
+                formals.add(bindingElement());
                 needComma = true;
             }
         }
 
-        return parameters;
+        return new FormalParameterList(formals);
     }
 
-    private void formalParameterList_StaticSemantics(List<FormalParameter> parameters) {
+    private void formalParameterList_StaticSemantics(FormalParameterList parameters) {
         // TODO: Early Error if intersection of BoundNames(FormalParameterList) and
         // VarDeclaredNames(FunctionBody) is not the empty set
         // => only for non-simple parameter list?
@@ -1254,7 +1254,7 @@ public class Parser {
             StringBuilder source = new StringBuilder();
             source.append("function anonymous");
 
-            List<FormalParameter> parameters;
+            FormalParameterList parameters;
             if (token() == Token.LP) {
                 consume(Token.LP);
                 int start = ts.position() - "(".length();
@@ -1264,8 +1264,8 @@ public class Parser {
                 source.append(ts.range(start, ts.position()));
             } else {
                 BindingIdentifier identifier = bindingIdentifier();
-                parameters = newSmallList();
-                parameters.add(new BindingElement(identifier, null));
+                FormalParameter parameter = new BindingElement(identifier, null);
+                parameters = new FormalParameterList(singletonList(parameter));
 
                 source.append('(').append(identifier.getName()).append(')');
             }
@@ -1320,7 +1320,7 @@ public class Parser {
         newContext(type != MethodType.Generator ? ContextKind.Function : ContextKind.Generator);
         try {
             PropertyName propertyName;
-            List<FormalParameter> parameters;
+            FormalParameterList parameters;
             List<StatementListItem> statements;
 
             int start;
@@ -1330,7 +1330,7 @@ public class Parser {
                 propertyName = propertyName();
                 consume(Token.LP);
                 start = ts.position() - "(".length();
-                parameters = newSmallList();
+                parameters = new FormalParameterList(Collections.<FormalParameter> emptyList());
                 consume(Token.RP);
                 consume(Token.LC);
                 statements = functionBody(Token.RC);
@@ -1341,9 +1341,8 @@ public class Parser {
                 propertyName = propertyName();
                 consume(Token.LP);
                 start = ts.position() - "(".length();
-                Binding setParameter = binding();
-                parameters = newSmallList();
-                parameters.add(new BindingElement(setParameter, null));
+                FormalParameter setParameter = new BindingElement(binding(), null);
+                parameters = new FormalParameterList(singletonList(setParameter));
                 consume(Token.RP);
                 consume(Token.LC);
                 statements = functionBody(Token.RC);
@@ -1417,7 +1416,7 @@ public class Parser {
             consume(Token.MUL);
             BindingIdentifier identifier = bindingIdentifier();
             consume(Token.LP);
-            List<FormalParameter> parameters = formalParameterList(Token.RP);
+            FormalParameterList parameters = formalParameterList(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
             List<StatementListItem> statements = functionBody(Token.RC);
@@ -1459,7 +1458,7 @@ public class Parser {
                 identifier = bindingIdentifier();
             }
             consume(Token.LP);
-            List<FormalParameter> parameters = formalParameterList(Token.RP);
+            FormalParameterList parameters = formalParameterList(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
             List<StatementListItem> statements = functionBody(Token.RC);

@@ -17,13 +17,13 @@ import java.util.List;
 public class FunctionExpression extends Expression implements FunctionDefinition {
     private Scope scope;
     private BindingIdentifier identifier;
-    private List<FormalParameter> parameters;
+    private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private boolean strict;
     private String source;
 
     public FunctionExpression(Scope scope, BindingIdentifier identifier,
-            List<FormalParameter> parameters, List<StatementListItem> statements, String source) {
+            FormalParameterList parameters, List<StatementListItem> statements, String source) {
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;
@@ -42,7 +42,7 @@ public class FunctionExpression extends Expression implements FunctionDefinition
     }
 
     @Override
-    public List<FormalParameter> getParameters() {
+    public FormalParameterList getParameters() {
         return parameters;
     }
 

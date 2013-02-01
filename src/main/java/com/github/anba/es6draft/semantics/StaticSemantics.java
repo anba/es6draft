@@ -70,7 +70,7 @@ public final class StaticSemantics {
     /**
      * Static Semantics: BoundNames<br>
      */
-    public static List<String> BoundNames(List<FormalParameter> formals) {
+    public static List<String> BoundNames(FormalParameterList formals) {
         List<String> result = new SmallArrayList<>();
         forEach(BoundNames.INSTANCE, formals, result);
         return result;
@@ -91,7 +91,7 @@ public final class StaticSemantics {
     /**
      * Static Semantics: ExpectedArgumentCount
      */
-    public static int ExpectedArgumentCount(List<FormalParameter> formals) {
+    public static int ExpectedArgumentCount(FormalParameterList formals) {
         int count = 0;
         for (FormalParameter formal : formals) {
             if (formal instanceof BindingRestElement) {
@@ -121,7 +121,7 @@ public final class StaticSemantics {
     /**
      * Static Semantics: IsSimpleParameterList
      */
-    public static boolean IsSimpleParameterList(List<FormalParameter> formals) {
+    public static boolean IsSimpleParameterList(FormalParameterList formals) {
         return StaticSemanticsVisitor.every(IsSimpleParameterList.INSTANCE, formals, null);
     }
 
@@ -226,7 +226,7 @@ public final class StaticSemantics {
     /**
      * Static Semantics: NumberOfParameters (FIXME: not yet defined in spec!)
      */
-    public static int NumberOfParameters(List<FormalParameter> formals) {
+    public static int NumberOfParameters(FormalParameterList formals) {
         int count = 0;
         for (FormalParameter formal : formals) {
             if (formal instanceof BindingRestElement) {

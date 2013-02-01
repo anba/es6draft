@@ -6,7 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -16,11 +17,11 @@ public interface Scope {
 
     boolean isTopLevel();
 
-    Collection<String> varDeclaredNames();
+    Set<String> varDeclaredNames();
 
-    Collection<String> lexicallyDeclaredNames();
+    Set<String> lexicallyDeclaredNames();
 
-    Collection<StatementListItem> varScopedDeclarations();
+    List<StatementListItem> varScopedDeclarations();
 
-    Collection<Declaration> lexicallyScopedDeclarations();
+    List<Declaration> lexicallyScopedDeclarations();
 }

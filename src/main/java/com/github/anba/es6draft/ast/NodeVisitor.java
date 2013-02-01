@@ -52,7 +52,11 @@ public interface NodeVisitor<R, V> {
 
     R visit(ClassExpression node, V value);
 
+    R visit(CommaExpression node, V value);
+
     R visit(ComprehensionFor node, V value);
+
+    R visit(ConditionalExpression node, V value);
 
     R visit(ContinueStatement node, V value);
 
@@ -69,6 +73,8 @@ public interface NodeVisitor<R, V> {
     R visit(ExpressionStatement node, V value);
 
     R visit(ForInStatement node, V value);
+
+    R visit(FormalParameterList node, V value);
 
     R visit(ForOfStatement node, V value);
 
@@ -108,23 +114,17 @@ public interface NodeVisitor<R, V> {
 
     R visit(ObjectLiteral node, V value);
 
-    R visit(CommaExpression node, V value);
-
-    R visit(Script node, V value);
-
     R visit(PropertyAccessor node, V value);
 
-    R visit(TemplateCallExpression node, V value);
+    R visit(PropertyNameDefinition node, V value);
 
-    R visit(TemplateLiteral node, V value);
+    R visit(PropertyValueDefinition node, V value);
 
     R visit(RegularExpressionLiteral node, V value);
 
     R visit(ReturnStatement node, V value);
 
-    R visit(PropertyNameDefinition node, V value);
-
-    R visit(PropertyValueDefinition node, V value);
+    R visit(Script node, V value);
 
     R visit(SpreadElement node, V value);
 
@@ -136,7 +136,9 @@ public interface NodeVisitor<R, V> {
 
     R visit(SwitchStatement node, V value);
 
-    R visit(ConditionalExpression node, V value);
+    R visit(TemplateCallExpression node, V value);
+
+    R visit(TemplateLiteral node, V value);
 
     R visit(ThisExpression node, V value);
 

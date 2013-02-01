@@ -231,6 +231,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(FormalParameterList node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
     public R visit(ForStatement node, V value) {
         return visit((Statement) node, value);
     }

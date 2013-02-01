@@ -16,13 +16,13 @@ import java.util.List;
  */
 public class ArrowFunction extends Expression implements FunctionNode {
     private Scope scope;
-    private List<FormalParameter> parameters;
+    private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private Expression expression;
     private boolean strict;
     private String source;
 
-    public ArrowFunction(Scope scope, List<FormalParameter> parameters,
+    public ArrowFunction(Scope scope, FormalParameterList parameters,
             List<StatementListItem> statements, String source) {
         this.scope = scope;
         this.parameters = parameters;
@@ -31,7 +31,7 @@ public class ArrowFunction extends Expression implements FunctionNode {
         this.source = source;
     }
 
-    public ArrowFunction(Scope scope, List<FormalParameter> parameters, Expression expression,
+    public ArrowFunction(Scope scope, FormalParameterList parameters, Expression expression,
             String source) {
         this.scope = scope;
         this.parameters = parameters;
@@ -46,7 +46,7 @@ public class ArrowFunction extends Expression implements FunctionNode {
     }
 
     @Override
-    public List<FormalParameter> getParameters() {
+    public FormalParameterList getParameters() {
         return parameters;
     }
 

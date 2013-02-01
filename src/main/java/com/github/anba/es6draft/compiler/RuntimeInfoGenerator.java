@@ -130,13 +130,13 @@ public class RuntimeInfoGenerator {
         mv.iconst(IsStrict(node));
         {
             // FormalParameterList
-            List<FormalParameter> parameters = node.getParameters();
+            FormalParameterList parameters = node.getParameters();
             astore_string(mv, BoundNames(parameters));
             mv.iconst(ExpectedArgumentCount(parameters));
             mv.iconst(NumberOfParameters(parameters));
             {
                 // FormalParameter
-                astore_parameters(mv, parameters);
+                astore_parameters(mv, parameters.getFormals());
             }
             mv.invokeStaticMH(className, methodName + "_binding", Methods.binding);
             mv.invokestatic(Methods.RTI_newFormalParameterList);

@@ -18,7 +18,7 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
     private Scope scope;
     private MethodType type;
     private PropertyName propertyName;
-    private List<FormalParameter> parameters;
+    private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private boolean strict;
     private boolean superReference;
@@ -29,7 +29,7 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
     }
 
     public MethodDefinition(Scope scope, MethodType type, PropertyName propertyName,
-            List<FormalParameter> parameters, List<StatementListItem> statements,
+            FormalParameterList parameters, List<StatementListItem> statements,
             boolean superReference, String source) {
         this.scope = scope;
         this.type = type;
@@ -55,7 +55,7 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
     }
 
     @Override
-    public List<FormalParameter> getParameters() {
+    public FormalParameterList getParameters() {
         return parameters;
     }
 
