@@ -97,7 +97,6 @@ public class GeneratorObject extends OrdinaryObject implements Scriptable, Initi
             public Object call() throws Exception {
                 Object result;
                 try {
-                    // FIXME: tail-call result object?
                     result = code.evaluate(context);
                 } catch (ScriptException | CloseGenerator e) {
                     result = e;

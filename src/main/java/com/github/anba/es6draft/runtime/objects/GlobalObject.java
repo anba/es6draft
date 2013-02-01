@@ -352,6 +352,11 @@ public class GlobalObject extends OrdinaryObject implements Scriptable, Initiali
         @Value(name = "Set")
         public static final Intrinsics Set = Intrinsics.Set;
 
+        // TODO: StopIteration object
+
+        @Value(name = "StopIteration")
+        public static final Intrinsics StopIteration = Intrinsics.StopIteration;
+
         // TODO: binary module intrinsics
 
         @Value(name = "ArrayBuffer")
