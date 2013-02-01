@@ -179,27 +179,25 @@ public class ExoticArguments extends OrdinaryObject implements Scriptable {
         // added ToInt32()
         int len = ToInt32(realm, Get(obj, "length"));
         Set<String> mappedNames = new HashSet<>();
+        boolean hasMapped = false;
         int numberOfNonRestFormals = formals.numberOfParameters();
         // Scriptable map = ObjectCreate(realm);
         ParameterMap map = new ParameterMap(env, len);
-        for (int index = len - 1; index >= 0; --index) {
-            if (index < numberOfNonRestFormals) {
-                RuntimeInfo.FormalParameter param = formals.getParameter(index);
-                if (param.isBindingIdentifier()) {
-                    String name = param.boundNames()[0];
-                    if (!mappedNames.contains(name)) {
-                        mappedNames.add(name);
-                        // Callable g = MakeArgGetter(name, env);
-                        // Callable p = MakeArgSetter(name, env);
-                        // map.defineOwnProperty(ToString(index), new PropertyDescriptor(g, p,
-                        // false,
-                        // true));
+        // FIXME: spec bug duplicate arguments vs mapped arguments (bug 1240)
+        for (int index = numberOfNonRestFormals - 1; index >= 0; --index) {
+            RuntimeInfo.FormalParameter param = formals.getParameter(index);
+            if (param.isBindingIdentifier()) {
+                String name = param.boundNames()[0];
+                if (!mappedNames.contains(name)) {
+                    mappedNames.add(name);
+                    if (index < len) {
+                        hasMapped = true;
                         map.defineOwnProperty(index, name);
                     }
                 }
             }
         }
-        if (!mappedNames.isEmpty()) {
+        if (hasMapped) {
             obj.parameterMap = map;
         }
         /*  step 9  */
