@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.RandomAccess;
@@ -255,14 +256,22 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
 
     @Override
     public Iterator<E> iterator() {
-        if (extended == null) {
-            return new SimpleIterator();
-        } else {
-            return new ExtendedIterator();
-        }
+        return new IteratorImpl();
     }
 
-    private final class SimpleIterator implements Iterator<E> {
+    @Override
+    public ListIterator<E> listIterator() {
+        return new ListIteratorImpl(0);
+    }
+
+    @Override
+    public ListIterator<E> listIterator(int index) {
+        if (index < 0 || index >= size)
+            throw new IndexOutOfBoundsException();
+        return new ListIteratorImpl(index);
+    }
+
+    private final class IteratorImpl implements Iterator<E> {
         private final int expectedModCount = SmallArrayList.this.modCount;
         private int cursor = 0;
 
@@ -279,16 +288,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
             if (cursor >= size) {
                 throw new NoSuchElementException();
             }
-            switch (cursor++) {
-            case 0:
-                return fst;
-            case 1:
-                return snd;
-            case 2:
-                return thd;
-            default:
-                throw new IllegalStateException();
-            }
+            return uncheckedGet(cursor++);
         }
 
         @Override
@@ -297,9 +297,13 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
         }
     }
 
-    private final class ExtendedIterator implements Iterator<E> {
+    private final class ListIteratorImpl implements ListIterator<E> {
         private final int expectedModCount = SmallArrayList.this.modCount;
-        private int cursor = 0;
+        private int cursor;
+
+        ListIteratorImpl(int cursor) {
+            this.cursor = cursor;
+        }
 
         @Override
         public boolean hasNext() {
@@ -314,11 +318,47 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
             if (cursor >= size) {
                 throw new NoSuchElementException();
             }
-            return extended[cursor++];
+            return uncheckedGet(cursor++);
+        }
+
+        @Override
+        public boolean hasPrevious() {
+            return (cursor > 0);
+        }
+
+        @Override
+        public E previous() {
+            if (expectedModCount != SmallArrayList.this.modCount) {
+                throw new ConcurrentModificationException();
+            }
+            if (cursor <= 0) {
+                throw new NoSuchElementException();
+            }
+            return uncheckedGet(--cursor);
+        }
+
+        @Override
+        public int nextIndex() {
+            return cursor;
+        }
+
+        @Override
+        public int previousIndex() {
+            return cursor - 1;
         }
 
         @Override
         public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void set(E e) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void add(E e) {
             throw new UnsupportedOperationException();
         }
     }
