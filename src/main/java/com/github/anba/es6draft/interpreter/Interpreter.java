@@ -12,16 +12,13 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.VarDeclaredNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclarations;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BinaryExpression.Operator;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
@@ -640,50 +637,11 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         return cx.thisResolution();
     }
 
-    private static class VarDeclarationImpl implements RuntimeInfo.Declaration {
-        String[] boundNames;
-
-        VarDeclarationImpl(StatementListItem statement) {
-            boundNames = BoundNames(statement).toArray(new String[0]);
-        }
-
-        @Override
-        public String[] boundNames() {
-            return boundNames;
-        }
-
-        @Override
-        public boolean isConstDeclaration() {
-            return false;
-        }
-
-        @Override
-        public boolean isFunctionDeclaration() {
-            return false;
-        }
-
-        @Override
-        public boolean isVariableStatement() {
-            return true;
-        }
-    }
-
-    private static class ScriptBodyImpl implements RuntimeInfo.ScriptBody {
+    static class ScriptBodyImpl implements RuntimeInfo.ScriptBody {
         private Script parsedScript;
-        private RuntimeInfo.Declaration[] varScopedDeclarations;
-        private String[] varDeclaredNames;
 
         ScriptBodyImpl(Script parsedScript) {
             this.parsedScript = parsedScript;
-            this.varDeclaredNames = VarDeclaredNames(parsedScript).toArray(new String[0]);
-            Collection<StatementListItem> varScopedDeclarations = VarScopedDeclarations(parsedScript);
-            int size = varScopedDeclarations.size();
-            RuntimeInfo.Declaration[] decl = new RuntimeInfo.Declaration[size];
-            int index = 0;
-            for (StatementListItem node : varScopedDeclarations) {
-                decl[index++] = new VarDeclarationImpl(node);
-            }
-            this.varScopedDeclarations = decl;
         }
 
         @Override
@@ -692,28 +650,17 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
 
         @Override
-        public String[] lexicallyDeclaredNames() {
-            return new String[] {};
+        public void globalDeclarationInstantiation(Realm realm, LexicalEnvironment globalEnv,
+                boolean deletableBindings) {
+            DeclarationBindingInstantiation.GlobalDeclarationInstantiation(realm, globalEnv,
+                    parsedScript, deletableBindings);
         }
 
         @Override
-        public RuntimeInfo.Declaration[] lexicallyScopedDeclarations() {
-            return new RuntimeInfo.Declaration[] {};
-        }
-
-        @Override
-        public String[] varDeclaredNames() {
-            return varDeclaredNames;
-        }
-
-        @Override
-        public RuntimeInfo.Declaration[] varScopedDeclarations() {
-            return varScopedDeclarations;
-        }
-
-        @Override
-        public RuntimeInfo.Function getFunction(RuntimeInfo.Declaration d) {
-            return null;
+        public void evalDeclarationInstantiation(Realm realm, LexicalEnvironment lexEnv,
+                LexicalEnvironment varEnv, boolean deletableBindings) {
+            DeclarationBindingInstantiation.EvalDeclarationInstantiation(realm, lexEnv, varEnv,
+                    parsedScript, deletableBindings);
         }
 
         @Override

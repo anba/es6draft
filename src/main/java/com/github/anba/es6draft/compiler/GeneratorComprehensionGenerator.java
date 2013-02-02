@@ -15,7 +15,7 @@ import org.objectweb.asm.Label;
 import com.github.anba.es6draft.ast.ComprehensionFor;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
 import com.github.anba.es6draft.ast.Node;
-import com.github.anba.es6draft.compiler.CodeGenerator.Register;
+import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 
 /**
  * TODO: current draft [rev. 13] does not specify the runtime semantics for

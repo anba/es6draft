@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.DeclarationBindingInstantiation.FunctionDeclarationInstantiation;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
@@ -27,8 +26,7 @@ import com.github.anba.es6draft.runtime.types.*;
  * </ul>
  */
 public class OrdinaryFunction extends OrdinaryObject implements Function {
-    private RuntimeInfo.FormalParameterList parameters;
-    private RuntimeInfo.Code code;
+    private RuntimeInfo.Function function;
     private LexicalEnvironment scope;
     private boolean strict;
     private Scriptable home;
@@ -66,8 +64,6 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
             Scriptable homeObject, String methodName) {
         assert !function.isGenerator();
 
-        RuntimeInfo.FormalParameterList parameters = function.formals();
-        RuntimeInfo.Code body = function.code();
         boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
         /* step 1 */
         OrdinaryFunction f = new OrdinaryFunction(realm);
@@ -80,10 +76,8 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
         f.setPrototype(prototype);
         /* step 7 */
         f.scope = scope;
-        /* step 8 */
-        f.parameters = parameters;
-        /* step 9 */
-        f.code = body;
+        /* step 8-9 */
+        f.function = function;
         /* step 10 */
         // f.[[Extensible]] = true (implicit)
         /* step 11 */
@@ -103,7 +97,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
             f.thisMode = ThisMode.Global;
         }
         /*  step 18 */
-        int len = parameters.expectedArgumentCount();
+        int len = function.expectedArgumentCount();
         /* step 19 */
         f.defineOwnProperty("length", new PropertyDescriptor(len, false, false, false));
         String name = function.functionName() != null ? function.functionName() : "";
@@ -236,7 +230,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     public String toSource() {
         String source = this.source;
         if (source == null) {
-            String src = code.source();
+            String src = function.source();
             if (src != null) {
                 try {
                     source = SourceCompressor.decompress(src).call();
@@ -260,7 +254,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
                 thisValue);
         /* step 12-13 */
-        FunctionDeclarationInstantiation(calleeContext, this, args);
+        getFunction().functionDeclarationInstantiation(calleeContext, this, args);
         /* step 14-15 */
         Object result = getCode().evaluate(calleeContext);
         /* step 16 */
@@ -333,6 +327,11 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
         return v instanceof Function && ((Function) v).isStrict();
     }
 
+    @Override
+    public RuntimeInfo.Function getFunction() {
+        return function;
+    }
+
     /**
      * [[Scope]]
      */
@@ -342,19 +341,11 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     }
 
     /**
-     * [[FormalParameters]]
-     */
-    @Override
-    public RuntimeInfo.FormalParameterList getParameterList() {
-        return parameters;
-    }
-
-    /**
      * [[Code]]
      */
     @Override
     public RuntimeInfo.Code getCode() {
-        return code;
+        return function;
     }
 
     /**

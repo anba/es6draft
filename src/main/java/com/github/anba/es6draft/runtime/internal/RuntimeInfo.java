@@ -6,14 +6,11 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import static com.github.anba.es6draft.runtime.DeclarationBindingInstantiation.FunctionDeclarationInstantiation;
-
 import java.lang.invoke.MethodHandle;
-import java.util.Map;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
 /**
@@ -24,41 +21,36 @@ public final class RuntimeInfo {
     private RuntimeInfo() {
     }
 
-    public static Code newCode(final String source, final Declaration[] lexicalDeclarations,
-            final String[] varDeclaredNames, final Declaration[] varScopedDeclarations,
-            final Map<Declaration, MethodHandle> functions, final MethodHandle handle) {
+    private static Object evaluateCode(ExecutionContext cx, Code code) {
+        try {
+            Object result = code.handle().invokeExact(cx);
+            // tail-call with trampoline
+            while (result instanceof Object[]) {
+                // <func(Callable), thisValue, args>
+                Object[] h = (Object[]) result;
+                OrdinaryFunction f = (OrdinaryFunction) h[0];
+                Object thisValue = h[1];
+                Object[] args = (Object[]) h[2];
+
+                // see OrdinaryFunction#call()
+                /* step 1-11 */
+                ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(f,
+                        thisValue);
+                /* step 12-13 */
+                f.getFunction().functionDeclarationInstantiation(calleeContext, f, args);
+
+                result = f.getCode().handle().invokeExact(calleeContext);
+            }
+            return result;
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Code newCode(final MethodHandle handle) {
         return new Code() {
-            @Override
-            public String source() {
-                return source;
-            }
-
-            @Override
-            public Declaration[] lexicalDeclarations() {
-                return lexicalDeclarations;
-            }
-
-            @Override
-            public String[] varDeclaredNames() {
-                return varDeclaredNames;
-            }
-
-            @Override
-            public Declaration[] varScopedDeclarations() {
-                return varScopedDeclarations;
-            }
-
-            @Override
-            public Function getFunction(Declaration d) {
-                try {
-                    return (Function) functions.get(d).invokeExact();
-                } catch (RuntimeException | Error e) {
-                    throw e;
-                } catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
             @Override
             public MethodHandle handle() {
                 return handle;
@@ -66,92 +58,15 @@ public final class RuntimeInfo {
 
             @Override
             public Object evaluate(ExecutionContext cx) {
-                try {
-                    MethodHandle mh = handle();
-                    Object result = mh.invokeExact(cx);
-                    // tail-call with trampoline
-                    while (result instanceof Object[]) {
-                        // <func(Callable), thisValue, args>
-                        Object[] h = (Object[]) result;
-                        OrdinaryFunction f = (OrdinaryFunction) h[0];
-                        Object thisValue = h[1];
-                        Object[] args = (Object[]) h[2];
-
-                        // see OrdinaryFunction#call()
-                        /* step 1-11 */
-                        ExecutionContext calleeContext = ExecutionContext
-                                .newFunctionExecutionContext(f, thisValue);
-                        /* step 12-13 */
-                        FunctionDeclarationInstantiation(calleeContext, f, args);
-
-                        result = f.getCode().handle().invokeExact(calleeContext);
-                    }
-                    return result;
-                } catch (RuntimeException | Error e) {
-                    throw e;
-                } catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-    }
-
-    public static FormalParameter newFormalParameter(final String[] boundNames,
-            final boolean isBindingIdentifier) {
-        return new FormalParameter() {
-            @Override
-            public String[] boundNames() {
-                return boundNames;
-            }
-
-            @Override
-            public boolean isBindingIdentifier() {
-                return isBindingIdentifier;
-            }
-        };
-    }
-
-    public static FormalParameterList newFormalParameterList(final String[] boundNames,
-            final int expectedArgumentCount, final int numberOfParameters,
-            final FormalParameter[] parameters, final MethodHandle bindingInitialisation) {
-        return new FormalParameterList() {
-            @Override
-            public String[] boundNames() {
-                return boundNames;
-            }
-
-            @Override
-            public int expectedArgumentCount() {
-                return expectedArgumentCount;
-            }
-
-            @Override
-            public int numberOfParameters() {
-                return numberOfParameters;
-            }
-
-            @Override
-            public FormalParameter getParameter(int index) {
-                return parameters[index];
-            }
-
-            @Override
-            public void bindingInitialisation(ExecutionContext cx, Scriptable ao,
-                    LexicalEnvironment env) {
-                try {
-                    bindingInitialisation.invokeExact(cx, ao, env);
-                } catch (RuntimeException | Error e) {
-                    throw e;
-                } catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
+                return evaluateCode(cx, this);
             }
         };
     }
 
     public static Function newFunction(final String functionName, final boolean isGenerator,
             final boolean hasSuperReference, final boolean isStrict,
-            final FormalParameterList formals, final Code code) {
+            final int expectedArgumentCount, final MethodHandle initialisation,
+            final MethodHandle handle, final String source) {
         return new Function() {
             @Override
             public String functionName() {
@@ -174,77 +89,67 @@ public final class RuntimeInfo {
             }
 
             @Override
-            public FormalParameterList formals() {
-                return formals;
+            public int expectedArgumentCount() {
+                return expectedArgumentCount;
             }
 
             @Override
-            public Code code() {
-                return code;
-            }
-        };
-    }
-
-    public static Declaration newDeclaration(final String[] boundNames,
-            final boolean isConstDeclaration, final boolean isFunctionDeclaration,
-            final boolean isVariableStatement) {
-        return new Declaration() {
-            @Override
-            public String[] boundNames() {
-                return boundNames;
+            public void functionDeclarationInstantiation(ExecutionContext cx,
+                    com.github.anba.es6draft.runtime.types.Function function, Object[] args) {
+                try {
+                    initialisation.invokeExact(cx, function, args);
+                } catch (RuntimeException | Error e) {
+                    throw e;
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             @Override
-            public boolean isConstDeclaration() {
-                return isConstDeclaration;
+            public MethodHandle handle() {
+                return handle;
             }
 
             @Override
-            public boolean isFunctionDeclaration() {
-                return isFunctionDeclaration;
+            public Object evaluate(ExecutionContext cx) {
+                return evaluateCode(cx, this);
             }
 
             @Override
-            public boolean isVariableStatement() {
-                return isVariableStatement;
+            public String source() {
+                return source;
             }
         };
     }
 
     public static ScriptBody newScriptBody(final boolean isStrict,
-            final String[] lexicallyDeclaredNames, final Declaration[] lexicallyScopedDeclarations,
-            final String[] varDeclaredNames, final Declaration[] varScopedDeclarations,
-            final Map<Declaration, MethodHandle> functions, final MethodHandle handle) {
+            final MethodHandle initialisation, final MethodHandle evalinitialisation,
+            final MethodHandle handle) {
         return new ScriptBody() {
             @Override
             public boolean isStrict() {
                 return isStrict;
             }
 
-            @Override
-            public String[] lexicallyDeclaredNames() {
-                return lexicallyDeclaredNames;
-            }
+            // TODO: create ScriptBody and EvalScriptBody interfaces
 
             @Override
-            public Declaration[] lexicallyScopedDeclarations() {
-                return lexicallyScopedDeclarations;
-            }
-
-            @Override
-            public String[] varDeclaredNames() {
-                return varDeclaredNames;
-            }
-
-            @Override
-            public Declaration[] varScopedDeclarations() {
-                return varScopedDeclarations;
-            }
-
-            @Override
-            public Function getFunction(Declaration d) {
+            public void globalDeclarationInstantiation(Realm realm, LexicalEnvironment globalEnv,
+                    boolean deletableBindings) {
                 try {
-                    return (Function) functions.get(d).invokeExact();
+                    initialisation.invokeExact(realm, globalEnv, deletableBindings);
+                } catch (RuntimeException | Error e) {
+                    throw e;
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public void evalDeclarationInstantiation(Realm realm, LexicalEnvironment lexEnv,
+                    LexicalEnvironment varEnv, boolean deletableBindings) {
+                try {
+                    evalinitialisation.invokeExact(realm, lexEnv, varEnv, deletableBindings);
                 } catch (RuntimeException | Error e) {
                     throw e;
                 } catch (Throwable e) {
@@ -271,36 +176,19 @@ public final class RuntimeInfo {
     public static interface ScriptBody {
         boolean isStrict();
 
-        String[] lexicallyDeclaredNames();
+        void globalDeclarationInstantiation(Realm realm, LexicalEnvironment globalEnv,
+                boolean deletableBindings);
 
-        Declaration[] lexicallyScopedDeclarations();
-
-        String[] varDeclaredNames();
-
-        Declaration[] varScopedDeclarations();
-
-        Function getFunction(Declaration d);
+        void evalDeclarationInstantiation(Realm realm, LexicalEnvironment lexEnv,
+                LexicalEnvironment varEnv, boolean deletableBindings);
 
         Object evaluate(ExecutionContext cx);
     }
 
     /**
-     * Compiled declaration information
-     */
-    public static interface Declaration {
-        String[] boundNames();
-
-        boolean isConstDeclaration();
-
-        boolean isFunctionDeclaration();
-
-        boolean isVariableStatement();
-    }
-
-    /**
      * Compiled function information
      */
-    public static interface Function {
+    public static interface Function extends Code {
         String functionName();
 
         boolean isGenerator();
@@ -309,49 +197,20 @@ public final class RuntimeInfo {
 
         boolean isStrict();
 
-        FormalParameterList formals();
-
-        Code code();
-    }
-
-    /**
-     * Compiled formal parameter information
-     */
-    public static interface FormalParameter {
-        String[] boundNames();
-
-        boolean isBindingIdentifier();
-    }
-
-    /**
-     * Compiled formal parameter list information
-     */
-    public static interface FormalParameterList {
-        String[] boundNames();
-
         int expectedArgumentCount();
 
-        int numberOfParameters();
+        void functionDeclarationInstantiation(ExecutionContext cx,
+                com.github.anba.es6draft.runtime.types.Function function, Object[] args);
 
-        FormalParameter getParameter(int index);
+        MethodHandle handle();
 
-        void bindingInitialisation(ExecutionContext cx, Scriptable ao, LexicalEnvironment env);
+        String source();
     }
 
     /**
      * Compiled function code information
      */
     public static interface Code {
-        String source();
-
-        Declaration[] lexicalDeclarations();
-
-        String[] varDeclaredNames();
-
-        Declaration[] varScopedDeclarations();
-
-        Function getFunction(Declaration d);
-
         MethodHandle handle();
 
         Object evaluate(ExecutionContext cx);

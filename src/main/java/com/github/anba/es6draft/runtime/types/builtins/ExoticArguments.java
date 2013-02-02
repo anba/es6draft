@@ -12,12 +12,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Function;
@@ -174,26 +170,18 @@ public class ExoticArguments extends OrdinaryObject implements Scriptable {
      * [10.6 Arguments Object] CompleteMappedArgumentsObject
      */
     public static void CompleteMappedArgumentsObject(Realm realm, ExoticArguments obj,
-            Function func, RuntimeInfo.FormalParameterList formals, LexicalEnvironment env) {
+            Function func, String[] formals, LexicalEnvironment env) {
         // added ToInt32()
         int len = ToInt32(realm, Get(obj, "length"));
-        Set<String> mappedNames = new HashSet<>();
         boolean hasMapped = false;
-        int numberOfNonRestFormals = formals.numberOfParameters();
-        // Scriptable map = ObjectCreate(realm);
+        int numberOfNonRestFormals = formals.length;
         ParameterMap map = new ParameterMap(env, len);
         // FIXME: spec bug duplicate arguments vs mapped arguments (bug 1240)
         for (int index = numberOfNonRestFormals - 1; index >= 0; --index) {
-            RuntimeInfo.FormalParameter param = formals.getParameter(index);
-            if (param.isBindingIdentifier()) {
-                String name = param.boundNames()[0];
-                if (!mappedNames.contains(name)) {
-                    mappedNames.add(name);
-                    if (index < len) {
-                        hasMapped = true;
-                        map.defineOwnProperty(index, name);
-                    }
-                }
+            String name = formals[index];
+            if (name != null && index < len) {
+                hasMapped = true;
+                map.defineOwnProperty(index, name);
             }
         }
         if (hasMapped) {

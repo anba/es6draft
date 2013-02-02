@@ -27,6 +27,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.InstructionAdapter;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 
 /**
@@ -291,6 +292,9 @@ class CodeGenerator extends DefaultCodeGenerator<Void> {
             // binding method
             visitFunctionBinding(node, methodName(node));
 
+            // initialisation method
+            visitFunctionDeclInit(node, methodName(node));
+
             // runtime method
             visitFunctionBody(functionGenerator(node), node);
 
@@ -306,12 +310,38 @@ class CodeGenerator extends DefaultCodeGenerator<Void> {
             // binding method
             visitFunctionBinding(node, methodName(node));
 
+            // initialisation method
+            visitFunctionDeclInit(node, methodName(node));
+
             // runtime method
             visitFunctionBody(functionGenerator(node), node);
 
             // runtime-info method
             new RuntimeInfoGenerator(this).runtimeInfo(node, source);
         }
+    }
+
+    private void visitFunctionDeclInit(FunctionNode node, String name) {
+        String methodName = name + "_init";
+        String desc = Type.getMethodDescriptor(Type.VOID_TYPE, Types.ExecutionContext,
+                Types.Function, Types.Object_);
+        MethodVisitor mv = publicStaticMethod(methodName, desc);
+        MethodGenerator declinit = new FunctionDeclInitMethodGenerator(mv, methodName, desc,
+                node.isStrict());
+        declinit.initVariable(0, Types.ExecutionContext);
+        declinit.initVariable(1, Types.Function);
+        declinit.initVariable(2, Types.Object_);
+        declinit.initVariable(3, Types.Realm);
+        declinit.visitCode();
+        // - start -
+        declinit.load(Register.ExecutionContext);
+        declinit.invokevirtual(Methods.ExecutionContext_getRealm);
+        declinit.store(Register.Realm);
+        new FunctionDeclarationInstantiationGenerator(this).generate(node, declinit);
+        declinit.areturn(Type.VOID_TYPE);
+        // - end -
+        declinit.visitMaxs(0, 0);
+        declinit.visitEnd();
     }
 
     private void visitFunctionBinding(FunctionNode node, String name) {
@@ -381,15 +411,6 @@ class CodeGenerator extends DefaultCodeGenerator<Void> {
         // - end -
         body.visitMaxs(0, 0);
         body.visitEnd();
-    }
-
-    enum Register {
-        ExecutionContext(Types.ExecutionContext), Realm(Types.Realm), CompletionValue(Types.Object);
-        final Type type;
-
-        Register(Type type) {
-            this.type = type;
-        }
     }
 
     private static class ScriptMethodGenerator extends MethodGenerator {
@@ -471,6 +492,29 @@ class CodeGenerator extends DefaultCodeGenerator<Void> {
                 return 0;
                 // 1 = Scriptable
                 // 2 = LexicalEnvironment
+            case Realm:
+                return 3;
+            case CompletionValue:
+            default:
+                assert false : reg;
+                return -1;
+            }
+        }
+    }
+
+    private static class FunctionDeclInitMethodGenerator extends MethodGenerator {
+        private FunctionDeclInitMethodGenerator(MethodVisitor mv, String methodName,
+                String methodDescriptor, boolean strict) {
+            super(mv, methodName, methodDescriptor, strict, false, false);
+        }
+
+        @Override
+        protected int var(Register reg) {
+            switch (reg) {
+            case ExecutionContext:
+                return 0;
+                // 1 = Function
+                // 2 = Object[]
             case Realm:
                 return 3;
             case CompletionValue:

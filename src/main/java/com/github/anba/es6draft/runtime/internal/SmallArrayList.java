@@ -266,7 +266,7 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
 
     @Override
     public ListIterator<E> listIterator(int index) {
-        if (index < 0 || index >= size)
+        if (index < 0 || index > size)
             throw new IndexOutOfBoundsException();
         return new ListIteratorImpl(index);
     }

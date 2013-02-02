@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.ConditionalExpression;
 import com.github.anba.es6draft.ast.DefaultNodeVisitor;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
-import com.github.anba.es6draft.compiler.CodeGenerator.Register;
+import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 
 /**
  *

@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.DeclarationBindingInstantiation.FunctionDeclarationInstantiation;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -26,8 +25,7 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * TODO: for now basically a copy of {@link OrdinaryFunction}
  */
 public class OrdinaryGenerator extends OrdinaryObject implements Generator {
-    private RuntimeInfo.FormalParameterList parameters;
-    private RuntimeInfo.Code code;
+    private RuntimeInfo.Function function;
     private LexicalEnvironment scope;
     private boolean strict;
     private Scriptable home;
@@ -56,54 +54,49 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
             RuntimeInfo.Function function, LexicalEnvironment scope, Scriptable prototype,
             Scriptable homeObject, String methodName) {
         assert function.isGenerator();
+        assert kind != FunctionKind.Arrow;
 
-        RuntimeInfo.FormalParameterList parameters = function.formals();
-        RuntimeInfo.Code body = function.code();
         boolean strict = function.isStrict();
-        /* Note: [13.6 FunctionCreate] steps 2,3,6,7 are methods */
-        /* [13.6 FunctionCreate] step 1 */
+        /* step 1 */
         OrdinaryGenerator f = new OrdinaryGenerator(realm);
-        /* [13.6 FunctionCreate] step 4 */
+        /* step 2-4 (implicit) */
+        /* step 5 */
         if (prototype == null) {
             prototype = realm.getIntrinsic(Intrinsics.FunctionPrototype);
         }
-        /* [13.6 FunctionCreate] step 5 */
+        /* step 6 */
         f.setPrototype(prototype);
-        /* [13.6 FunctionCreate] step 8 */
+        /* step 7 */
         f.scope = scope;
-        /* [13.6 FunctionCreate] step 9 */
-        f.parameters = parameters;
-        /* [13.6 FunctionCreate] step 10 */
-        f.code = body;
-        /* [13.6 FunctionCreate] step 11 */
+        /* step 8-9 */
+        f.function = function;
+        /* step 10 */
         // f.[[Extensible]] = true (implicit)
-        /* [13.6 FunctionCreate] step 12 */
+        /* step 11 */
         f.realm = realm;
-        /* [13.6 FunctionCreate] step 13 */
+        /* step 12 */
         f.home = homeObject;
-        /* [13.6 FunctionCreate] step 14 */
+        /* step 13 */
         f.methodName = methodName;
-        /* [13.6 FunctionCreate] step 15-17 */
-        if (kind == FunctionKind.Arrow) {
-            f.thisMode = ThisMode.Lexical;
-        } else if (strict) {
+        /* step 14 */
+        f.strict = strict;
+        /* step 15-17 */
+        if (strict) {
             f.thisMode = ThisMode.Strict;
         } else {
             f.thisMode = ThisMode.Global;
         }
-        /* [13.6 FunctionCreate] step 18 */
-        int len = parameters.expectedArgumentCount();
-        /* [13.6 FunctionCreate] step 19 */
+        /*  step 18 */
+        int len = function.expectedArgumentCount();
+        /* step 19 */
         f.defineOwnProperty("length", new PropertyDescriptor(len, false, false, false));
         String name = function.functionName() != null ? function.functionName() : "";
         f.defineOwnProperty("name", new PropertyDescriptor(name, false, false, false));
-        /* [13.6 FunctionCreate] step 20 */
-        if (kind == FunctionKind.Normal && strict) {
+        /* step 20 */
+        if (strict) {
             AddRestrictedFunctionProperties(realm, f);
         }
-        /* [13.6 FunctionCreate] step 21 */
-        f.strict = strict;
-        /* [13.6 FunctionCreate] step 22 */
+        /* step 21 */
         return f;
     }
 
@@ -133,7 +126,7 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
     public String toSource() {
         String source = this.source;
         if (source == null) {
-            String src = code.source();
+            String src = function.source();
             if (src != null) {
                 try {
                     source = SourceCompressor.decompress(src).call();
@@ -157,7 +150,7 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
                 thisValue);
         /* step 12-13 */
-        FunctionDeclarationInstantiation(calleeContext, this, args);
+        getFunction().functionDeclarationInstantiation(calleeContext, this, args);
         /* step 14-15 */
         GeneratorObject result = new GeneratorObject(getRealm(), this, calleeContext);
         result.initialise(getRealm());
@@ -173,6 +166,10 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
         return OrdinaryConstruct(realm, this, args);
     }
 
+    public RuntimeInfo.Function getFunction() {
+        return function;
+    }
+
     /**
      * [[Scope]]
      */
@@ -182,19 +179,11 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
     }
 
     /**
-     * [[FormalParameters]]
-     */
-    @Override
-    public RuntimeInfo.FormalParameterList getParameterList() {
-        return parameters;
-    }
-
-    /**
      * [[Code]]
      */
     @Override
     public RuntimeInfo.Code getCode() {
-        return code;
+        return function;
     }
 
     /**

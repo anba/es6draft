@@ -19,7 +19,7 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
-import com.github.anba.es6draft.compiler.CodeGenerator.Register;
+import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 
 /**
  *

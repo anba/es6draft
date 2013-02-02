@@ -131,17 +131,25 @@ final class Methods {
 
     // class: EnvironmentRecord
 
-    static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
-            Types.EnvironmentRecord, "createImmutableBinding",
-            Type.getMethodType(Type.VOID_TYPE, Types.String));
+    static final MethodDesc EnvironmentRecord_hasBinding = MethodDesc.create(
+            Types.EnvironmentRecord, "hasBinding",
+            Type.getMethodType(Type.BOOLEAN_TYPE, Types.String));
 
     static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
             Types.EnvironmentRecord, "createMutableBinding",
             Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
+    static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
+            Types.EnvironmentRecord, "createImmutableBinding",
+            Type.getMethodType(Type.VOID_TYPE, Types.String));
+
     static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
             Types.EnvironmentRecord, "initializeBinding",
             Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
+
+    static final MethodDesc EnvironmentRecord_setMutableBinding = MethodDesc.create(
+            Types.EnvironmentRecord, "setMutableBinding",
+            Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
 
     /* ----------------------------------------------------------------------------------------- */
 
@@ -158,6 +166,10 @@ final class Methods {
     // {get,push,pop,restore}LexicalEnvironment()
     static final MethodDesc ExecutionContext_getLexicalEnvironment = MethodDesc.create(
             Types.ExecutionContext, "getLexicalEnvironment",
+            Type.getMethodType(Types.LexicalEnvironment));
+
+    static final MethodDesc ExecutionContext_getVariableEnvironment = MethodDesc.create(
+            Types.ExecutionContext, "getVariableEnvironment",
             Type.getMethodType(Types.LexicalEnvironment));
 
     static final MethodDesc ExecutionContext_pushLexicalEnvironment = MethodDesc.create(
@@ -207,7 +219,24 @@ final class Methods {
 
     /* ----------------------------------------------------------------------------------------- */
 
-    // class: OrdinaryObject
+    // class: ExoticArguments
+
+    static final MethodDesc ExoticArguments_InstantiateArgumentsObject = MethodDesc.create(
+            Types.ExoticArguments, "InstantiateArgumentsObject",
+            Type.getMethodType(Types.ExoticArguments, Types.Realm, Types.Object_));
+
+    static final MethodDesc ExoticArguments_CompleteStrictArgumentsObject = MethodDesc.create(
+            Types.ExoticArguments, "CompleteStrictArgumentsObject",
+            Type.getMethodType(Type.VOID_TYPE, Types.Realm, Types.ExoticArguments));
+
+    static final MethodDesc ExoticArguments_CompleteMappedArgumentsObject = MethodDesc.create(
+            Types.ExoticArguments, "CompleteMappedArgumentsObject", Type.getMethodType(
+                    Type.VOID_TYPE, Types.Realm, Types.ExoticArguments, Types.Function,
+                    Types.String_, Types.LexicalEnvironment));
+
+    /* ----------------------------------------------------------------------------------------- */
+
+    // class: ExoticArray
 
     static final MethodDesc ExoticArray_ArrayCreate = MethodDesc.create(Types.ExoticArray,
             "ArrayCreate", Type.getMethodType(Types.Scriptable, Types.Realm, Type.LONG_TYPE));

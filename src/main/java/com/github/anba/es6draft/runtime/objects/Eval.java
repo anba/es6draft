@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.ScriptLoader.ScriptEvaluation;
-import static com.github.anba.es6draft.runtime.DeclarationBindingInstantiation.EvalDeclarationInstantiation;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwReferenceError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -97,7 +96,7 @@ public final class Eval {
             varEnv = strictVarEnv;
         }
         /* step 15-16 */
-        EvalDeclarationInstantiation(evalRealm, lexEnv, varEnv, script.getScriptBody(), true);
+        script.getScriptBody().evalDeclarationInstantiation(evalRealm, lexEnv, varEnv, true);
         /* step 17-20 */
         ExecutionContext evalCxt = ExecutionContext.newEvalExecutionContext(evalRealm, lexEnv,
                 varEnv);

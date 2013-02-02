@@ -18,7 +18,7 @@ import com.github.anba.es6draft.ast.PropertyDefinition;
 import com.github.anba.es6draft.ast.PropertyName;
 import com.github.anba.es6draft.ast.PropertyNameDefinition;
 import com.github.anba.es6draft.ast.PropertyValueDefinition;
-import com.github.anba.es6draft.compiler.CodeGenerator.Register;
+import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 
 /**
  *

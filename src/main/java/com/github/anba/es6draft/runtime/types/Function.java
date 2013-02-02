@@ -27,14 +27,14 @@ public interface Function extends Scriptable, Callable, Constructor {
     }
 
     /**
+     * Compiled function object
+     */
+    RuntimeInfo.Function getFunction();
+
+    /**
      * [[Scope]]
      */
     LexicalEnvironment getScope();
-
-    /**
-     * [[FormalParameters]]
-     */
-    RuntimeInfo.FormalParameterList getParameterList();
 
     /**
      * [[Code]]

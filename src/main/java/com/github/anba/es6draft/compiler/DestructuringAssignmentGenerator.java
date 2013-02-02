@@ -12,8 +12,8 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 import org.objectweb.asm.Label;
 
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.compiler.CodeGenerator.Register;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 
 /**
  * <h1>11 Expressions</h1><br>

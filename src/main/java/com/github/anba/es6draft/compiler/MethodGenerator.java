@@ -17,15 +17,15 @@ import java.util.Set;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.BreakStatement;
 import com.github.anba.es6draft.ast.BreakableStatement;
+import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
 import com.github.anba.es6draft.ast.ContinueStatement;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.IterationStatement;
 import com.github.anba.es6draft.ast.LabelledStatement;
-import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
-import com.github.anba.es6draft.compiler.CodeGenerator.Register;
 
 /**
  * 
@@ -132,6 +132,15 @@ abstract class MethodGenerator extends InstructionVisitor {
         this.completionValue = completionValue;
         // no return in script code
         this.labels.returnLabel = !completionValue ? new Label() : null;
+    }
+
+    enum Register {
+        ExecutionContext(Types.ExecutionContext), Realm(Types.Realm), CompletionValue(Types.Object);
+        final Type type;
+
+        Register(Type type) {
+            this.type = type;
+        }
     }
 
     abstract protected int var(Register reg);

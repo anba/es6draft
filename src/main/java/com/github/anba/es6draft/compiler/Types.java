@@ -18,6 +18,7 @@ import org.objectweb.asm.Type;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -31,6 +32,7 @@ import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
@@ -72,6 +74,7 @@ final class Types {
     static Type AbstractOperations = Type.getType(AbstractOperations.class);
     static Type EnvironmentRecord = Type.getType(EnvironmentRecord.class);
     static Type ExecutionContext = Type.getType(ExecutionContext.class);
+    static Type GlobalEnvironmentRecord = Type.getType(GlobalEnvironmentRecord.class);
     static Type LexicalEnvironment = Type.getType(LexicalEnvironment.class);
     static Type Realm = Type.getType(Realm.class);
     static Type ScriptRuntime = Type.getType(ScriptRuntime.class);
@@ -91,6 +94,7 @@ final class Types {
     static Type Undefined = Type.getType(Undefined.class);
 
     // es6draft.runtime.types.builtins
+    static Type ExoticArguments = Type.getType(ExoticArguments.class);
     static Type ExoticArray = Type.getType(ExoticArray.class);
     static Type OrdinaryGenerator = Type.getType(OrdinaryGenerator.class);
     static Type OrdinaryFunction = Type.getType(OrdinaryFunction.class);
@@ -99,12 +103,6 @@ final class Types {
     // es6draft.runtime.internal
     static Type RuntimeInfo = Type.getType(RuntimeInfo.class);
     static Type RuntimeInfo$Code = Type.getType(RuntimeInfo.Code.class);
-    static Type RuntimeInfo$Declaration = Type.getType(RuntimeInfo.Declaration.class);
-    static Type RuntimeInfo$Declaration_ = Type.getType(RuntimeInfo.Declaration[].class);
-    static Type RuntimeInfo$FormalParameter = Type.getType(RuntimeInfo.FormalParameter.class);
-    static Type RuntimeInfo$FormalParameter_ = Type.getType(RuntimeInfo.FormalParameter[].class);
-    static Type RuntimeInfo$FormalParameterList = Type
-            .getType(RuntimeInfo.FormalParameterList.class);
     static Type RuntimeInfo$Function = Type.getType(RuntimeInfo.Function.class);
     static Type RuntimeInfo$ScriptBody = Type.getType(RuntimeInfo.ScriptBody.class);
     static Type ScriptException = Type.getType(ScriptException.class);

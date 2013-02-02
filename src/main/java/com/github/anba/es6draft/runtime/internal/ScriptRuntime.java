@@ -9,6 +9,8 @@ package com.github.anba.es6draft.runtime.internal;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteMappedArgumentsObject;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.InstantiateArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
@@ -18,7 +20,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
-import java.util.Collections;
 import java.util.Iterator;
 
 import org.mozilla.javascript.ConsString;
@@ -27,12 +28,14 @@ import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.NativeError;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.Function.FunctionKind;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
@@ -92,6 +95,60 @@ public final class ScriptRuntime {
     }
 
     /**
+     * EvalDeclarationInstantiation
+     */
+    public static void bindingNotPresentOrThrow(Realm realm, EnvironmentRecord envRec, String name) {
+        if (envRec.hasBinding(name)) {
+            throw throwSyntaxError(realm, String.format("re-declaration of var '%s'", name));
+        }
+    }
+
+    /**
+     * GlobalDeclarationInstantiation
+     */
+    public static void canDeclareLexicalScopedOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
+            String name) {
+        if (envRec.hasVarDeclaration(name)) {
+            throw throwSyntaxError(realm, String.format("re-declaration of var '%s'", name));
+        }
+        if (envRec.hasLexicalDeclaration(name)) {
+            throw throwSyntaxError(realm, String.format("re-declaration of var '%s'", name));
+        }
+    }
+
+    /**
+     * GlobalDeclarationInstantiation
+     */
+    public static void canDeclareVarScopedOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
+            String name) {
+        if (envRec.hasLexicalDeclaration(name)) {
+            throw throwSyntaxError(realm, String.format("re-declaration of var '%s'", name));
+        }
+    }
+
+    /**
+     * GlobalDeclarationInstantiation
+     */
+    public static void canDeclareGlobalFunctionOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
+            String fn) {
+        boolean fnDefinable = envRec.canDeclareGlobalFunction(fn);
+        if (!fnDefinable) {
+            throw throwTypeError(realm, String.format("cannot declare function '%s'", fn));
+        }
+    }
+
+    /**
+     * GlobalDeclarationInstantiation
+     */
+    public static void canDeclareGlobalVarOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
+            String vn) {
+        boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
+        if (!vnDefinable) {
+            throw throwTypeError(realm, String.format("cannot declare var '%s'", vn));
+        }
+    }
+
+    /**
      * 11.1.7 Generator Comprehensions
      * <p>
      * Runtime Semantics: Evaluation<br>
@@ -100,7 +157,7 @@ public final class ScriptRuntime {
     public static Scriptable EvaluateGeneratorComprehension(MethodHandle handle, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         ExecutionContext calleeContext = ExecutionContext.newGeneratorComprehensionContext(cx);
-        RuntimeInfo.Code newCode = RuntimeInfo.newCode("", null, null, null, null, handle);
+        RuntimeInfo.Code newCode = RuntimeInfo.newCode(handle);
         GeneratorObject result = new GeneratorObject(realm, newCode, calleeContext);
         result.initialise(realm);
         return result;
@@ -200,29 +257,20 @@ public final class ScriptRuntime {
     public static RuntimeInfo.Function CreateDefaultConstructor() {
         String source = "constructor(...args) { super.constructor(...args); }";
 
-        RuntimeInfo.FormalParameter parameter = RuntimeInfo.newFormalParameter(
-                new String[] { "args" }, false);
-        RuntimeInfo.FormalParameterList parameterList = RuntimeInfo.newFormalParameterList(
-                new String[] { "args" }, 0, 0, new RuntimeInfo.FormalParameter[] { parameter },
-                DefaultConstructorBindingMH);
-        RuntimeInfo.Code code = RuntimeInfo.newCode(source, new RuntimeInfo.Declaration[0],
-                new String[0], new RuntimeInfo.Declaration[0],
-                Collections.<RuntimeInfo.Declaration, MethodHandle> emptyMap(),
-                DefaultConstructorMH);
         RuntimeInfo.Function function = RuntimeInfo.newFunction("constructor", false, true, false,
-                parameterList, code);
+                0, DefaultConstructorInitMH, DefaultConstructorMH, source);
 
         return function;
     }
 
-    private static final MethodHandle DefaultConstructorBindingMH;
+    private static final MethodHandle DefaultConstructorInitMH;
     private static final MethodHandle DefaultConstructorMH;
     static {
         Lookup lookup = MethodHandles.publicLookup();
         try {
-            DefaultConstructorBindingMH = lookup.findStatic(ScriptRuntime.class,
-                    "DefaultConstructorBinding", MethodType.methodType(Void.TYPE,
-                            ExecutionContext.class, Scriptable.class, LexicalEnvironment.class));
+            DefaultConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
+                    "DefaultConstructorInit", MethodType.methodType(Void.TYPE,
+                            ExecutionContext.class, Function.class, Object[].class));
             DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
                     MethodType.methodType(Object.class, ExecutionContext.class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
@@ -230,10 +278,21 @@ public final class ScriptRuntime {
         }
     }
 
-    public static void DefaultConstructorBinding(ExecutionContext cx, Scriptable ao,
-            LexicalEnvironment env) {
-        cx.identifierResolution("args", false).PutValue(createRestArray(ao, 0, cx.getRealm()),
-                cx.getRealm());
+    public static void DefaultConstructorInit(ExecutionContext cx, Function f, Object[] args) {
+        Realm realm = cx.getRealm();
+        LexicalEnvironment env = cx.getVariableEnvironment();
+        EnvironmentRecord envRec = env.getEnvRec();
+
+        envRec.createMutableBinding("args", false);
+        envRec.initializeBinding("args", UNDEFINED);
+
+        envRec.createMutableBinding("arguments", false);
+        ExoticArguments ao = InstantiateArgumentsObject(realm, args);
+
+        cx.identifierResolution("args", false).PutValue(createRestArray(ao, 0, realm), realm);
+
+        CompleteMappedArgumentsObject(realm, ao, f, new String[] { "args" }, env);
+        envRec.initializeBinding("arguments", ao);
     }
 
     public static Object DefaultConstructor(ExecutionContext cx) {

@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 import org.objectweb.asm.Label;
 
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.compiler.CodeGenerator.Register;
+import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 
 /**
  * <h1>13 Functions and Generators</h1><br>
@@ -33,6 +33,15 @@ class BindingInitialisationGenerator {
         // (ExecutionContext, Scriptable, LexicalEnvironment) -> void
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
                 EnvironmentType.NoEnvironment);
+
+        mv.load(1, Types.Scriptable);
+        node.getParameters().accept(init, null);
+    }
+
+    public void generateEmbedded(FunctionNode node, MethodGenerator mv) {
+        BindingInitialisation init = new BindingInitialisation(codegen, mv,
+                EnvironmentType.NoEnvironment);
+
         node.getParameters().accept(init, null);
     }
 
@@ -111,7 +120,6 @@ class BindingInitialisationGenerator {
 
         @Override
         public Void visit(FormalParameterList node, Void value) {
-            mv.load(1, Types.Scriptable);
             IndexedBindingInitialisation(node, 0);
 
             return null;
@@ -178,6 +186,8 @@ class BindingInitialisationGenerator {
         public Void visit(BindingIdentifier node, Void _) {
             if (environment == EnvironmentType.EnvironmentFromParameter) {
                 // stack: [value] -> [value, envRec, id]
+                assert false : "unused";
+
                 mv.load(2, Types.LexicalEnvironment);
                 mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
                 mv.aconst(node.getName());

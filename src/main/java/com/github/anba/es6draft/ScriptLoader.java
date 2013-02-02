@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft;
 
-import static com.github.anba.es6draft.runtime.DeclarationBindingInstantiation.GlobalDeclarationInstantiation;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
 
 import com.github.anba.es6draft.compiler.CompiledScript;
@@ -40,7 +39,7 @@ public class ScriptLoader {
         /* step 3 */
         LexicalEnvironment globalEnv = realm.getGlobalEnv();
         /* step 4-5 */
-        GlobalDeclarationInstantiation(realm, globalEnv, scriptBody, deletableBindings);
+        scriptBody.globalDeclarationInstantiation(realm, globalEnv, deletableBindings);
         /* step 6-9 */
         ExecutionContext progCxt = newScriptExecutionContext(realm);
         /* step 10-14 */

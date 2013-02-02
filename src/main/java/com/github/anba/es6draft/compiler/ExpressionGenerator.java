@@ -14,8 +14,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.compiler.CodeGenerator.Register;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 import com.github.anba.es6draft.runtime.internal.SimpleBootstrap;
 import com.github.anba.es6draft.semantics.ObjectLiteralStaticSemantics;
 
@@ -75,6 +75,14 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 PutValue(mv);
             }
         }
+    }
+
+    private static final Object[] EMPTY_BSM_ARGS = new Object[] {};
+
+    private void invokeDynamicOperator(BinaryExpression.Operator operator, MethodGenerator mv) {
+        mv.invokedynamic(SimpleBootstrap.getName(operator),
+                SimpleBootstrap.getMethodDescriptor(operator),
+                SimpleBootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
     }
 
     private void EvaluateCall(Expression call, Expression base, ValType type,
@@ -715,9 +723,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.toBoxed(rtype);
 
             mv.load(Register.Realm);
-            mv.invokedynamic(SimpleBootstrap.getName(node.getOperator()),
-                    SimpleBootstrap.getMethodDescriptor(node.getOperator()),
-                    SimpleBootstrap.getBootstrap(node.getOperator()), new Object[] {});
+            invokeDynamicOperator(node.getOperator(), mv);
 
             return ValType.Any;
         }
@@ -799,9 +805,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.toBoxed(rtype);
 
             mv.load(Register.Realm);
-            mv.invokedynamic(SimpleBootstrap.getName(node.getOperator()),
-                    SimpleBootstrap.getMethodDescriptor(node.getOperator()),
-                    SimpleBootstrap.getBootstrap(node.getOperator()), new Object[] {});
+            invokeDynamicOperator(node.getOperator(), mv);
 
             {
                 Label lbl1 = new Label(), lbl2 = new Label();
@@ -824,9 +828,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.swap();
 
             mv.load(Register.Realm);
-            mv.invokedynamic(SimpleBootstrap.getName(node.getOperator()),
-                    SimpleBootstrap.getMethodDescriptor(node.getOperator()),
-                    SimpleBootstrap.getBootstrap(node.getOperator()), new Object[] {});
+            invokeDynamicOperator(node.getOperator(), mv);
 
             {
                 Label lbl1 = new Label(), lbl2 = new Label();
@@ -848,9 +850,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.swap();
 
             mv.load(Register.Realm);
-            mv.invokedynamic(SimpleBootstrap.getName(node.getOperator()),
-                    SimpleBootstrap.getMethodDescriptor(node.getOperator()),
-                    SimpleBootstrap.getBootstrap(node.getOperator()), new Object[] {});
+            invokeDynamicOperator(node.getOperator(), mv);
 
             {
                 Label lbl1 = new Label(), lbl2 = new Label();
@@ -871,9 +871,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.toBoxed(rtype);
 
             mv.load(Register.Realm);
-            mv.invokedynamic(SimpleBootstrap.getName(node.getOperator()),
-                    SimpleBootstrap.getMethodDescriptor(node.getOperator()),
-                    SimpleBootstrap.getBootstrap(node.getOperator()), new Object[] {});
+            invokeDynamicOperator(node.getOperator(), mv);
 
             {
                 Label lbl1 = new Label(), lbl2 = new Label();
@@ -918,9 +916,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.toBoxed(rtype);
 
             mv.load(Register.Realm);
-            mv.invokedynamic(SimpleBootstrap.getName(node.getOperator()),
-                    SimpleBootstrap.getMethodDescriptor(node.getOperator()),
-                    SimpleBootstrap.getBootstrap(node.getOperator()), new Object[] {});
+            invokeDynamicOperator(node.getOperator(), mv);
 
             return ValType.Boolean;
         }
@@ -933,9 +929,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.toBoxed(rtype);
 
             mv.load(Register.Realm);
-            mv.invokedynamic(SimpleBootstrap.getName(node.getOperator()),
-                    SimpleBootstrap.getMethodDescriptor(node.getOperator()),
-                    SimpleBootstrap.getBootstrap(node.getOperator()), new Object[] {});
+            invokeDynamicOperator(node.getOperator(), mv);
 
             mv.iconst(1);
             mv.xor(Type.INT_TYPE);
@@ -949,10 +943,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             ValType rtype = evalAndGetValue(right, mv);
             mv.toBoxed(rtype);
 
-            // mv.invokestatic(Methods.ScriptRuntime_strictEqualityComparison);
-            mv.invokedynamic(SimpleBootstrap.getName(node.getOperator()),
-                    SimpleBootstrap.getMethodDescriptor(node.getOperator()),
-                    SimpleBootstrap.getBootstrap(node.getOperator()), new Object[] {});
+            invokeDynamicOperator(node.getOperator(), mv);
 
             return ValType.Boolean;
         }
@@ -964,10 +955,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             ValType rtype = evalAndGetValue(right, mv);
             mv.toBoxed(rtype);
 
-            // mv.invokestatic(Methods.ScriptRuntime_strictEqualityComparison);
-            mv.invokedynamic(SimpleBootstrap.getName(node.getOperator()),
-                    SimpleBootstrap.getMethodDescriptor(node.getOperator()),
-                    SimpleBootstrap.getBootstrap(node.getOperator()), new Object[] {});
+            invokeDynamicOperator(node.getOperator(), mv);
 
             mv.iconst(1);
             mv.xor(Type.INT_TYPE);
@@ -1379,7 +1367,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.dupX(type, ValType.Number);
             mv.dconst(1d);
             mv.add(Type.DOUBLE_TYPE);
-            mv.toBoxed(Type.DOUBLE_TYPE);
+            mv.toBoxed(ValType.Number);
             PutValue(expr, type, mv);
             return ValType.Number;
         }
@@ -1394,7 +1382,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.dupX(type, ValType.Number);
             mv.dconst(1d);
             mv.sub(Type.DOUBLE_TYPE);
-            mv.toBoxed(Type.DOUBLE_TYPE);
+            mv.toBoxed(ValType.Number);
             PutValue(expr, type, mv);
             return ValType.Number;
         }
@@ -1435,7 +1423,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.dconst(1d);
             mv.add(Type.DOUBLE_TYPE);
             mv.dupX(type, ValType.Number);
-            mv.toBoxed(Type.DOUBLE_TYPE);
+            mv.toBoxed(ValType.Number);
             PutValue(expr, type, mv);
             return ValType.Number;
         }
@@ -1450,7 +1438,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.dconst(1d);
             mv.sub(Type.DOUBLE_TYPE);
             mv.dupX(type, ValType.Number);
-            mv.toBoxed(Type.DOUBLE_TYPE);
+            mv.toBoxed(ValType.Number);
             PutValue(expr, type, mv);
             return ValType.Number;
         }

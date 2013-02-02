@@ -8,9 +8,9 @@ package com.github.anba.es6draft.semantics;
 
 import static com.github.anba.es6draft.semantics.StaticSemanticsVisitor.forEach;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.runtime.internal.SmallArrayList;
@@ -142,14 +142,14 @@ public final class StaticSemantics {
     /**
      * Static Semantics: LexicalDeclarations
      */
-    public static Collection<Declaration> LexicalDeclarations(BlockStatement node) {
+    public static List<Declaration> LexicalDeclarations(BlockStatement node) {
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
     /**
      * Static Semantics: LexicalDeclarations
      */
-    public static Collection<Declaration> LexicalDeclarations(SwitchStatement node) {
+    public static List<Declaration> LexicalDeclarations(SwitchStatement node) {
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
@@ -158,7 +158,7 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: LexicallyDeclaredNames
      */
-    public static Collection<String> LexicallyDeclaredNames(Script node) {
+    public static Set<String> LexicallyDeclaredNames(Script node) {
         return emptyIfNull(node.getScope().lexicallyDeclaredNames());
     }
 
@@ -167,7 +167,7 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: LexicallyScopedDeclarations (FIXME: missing in spec!)
      */
-    public static Collection<Declaration> LexicallyScopedDeclarations(FunctionNode node) {
+    public static List<Declaration> LexicallyScopedDeclarations(FunctionNode node) {
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
@@ -176,7 +176,7 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: LexicallyScopedDeclarations
      */
-    public static Collection<Declaration> LexicallyScopedDeclarations(Script node) {
+    public static List<Declaration> LexicallyScopedDeclarations(Script node) {
         return emptyIfNull(node.getScope().lexicallyScopedDeclarations());
     }
 
@@ -185,7 +185,7 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: VarDeclaredNames (FunctionBody -> StatementList)
      */
-    public static Collection<String> VarDeclaredNames(FunctionNode node) {
+    public static Set<String> VarDeclaredNames(FunctionNode node) {
         return emptyIfNull(node.getScope().varDeclaredNames());
     }
 
@@ -194,7 +194,7 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: VarDeclaredNames
      */
-    public static Collection<String> VarDeclaredNames(Script node) {
+    public static Set<String> VarDeclaredNames(Script node) {
         return emptyIfNull(node.getScope().varDeclaredNames());
     }
 
@@ -203,7 +203,7 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: VarScopedDeclarations (FIXME: missing in spec!)
      */
-    public static Collection<StatementListItem> VarScopedDeclarations(FunctionNode node) {
+    public static List<StatementListItem> VarScopedDeclarations(FunctionNode node) {
         return emptyIfNull(node.getScope().varScopedDeclarations());
     }
 
@@ -212,7 +212,7 @@ public final class StaticSemantics {
      * <p>
      * Static Semantics: VarScopedDeclarations
      */
-    public static Collection<StatementListItem> VarScopedDeclarations(Script node) {
+    public static List<StatementListItem> VarScopedDeclarations(Script node) {
         return emptyIfNull(node.getScope().varScopedDeclarations());
     }
 
@@ -268,7 +268,11 @@ public final class StaticSemantics {
 
     //
 
-    private static <T> Collection<T> emptyIfNull(Collection<T> collection) {
-        return (collection != null ? collection : Collections.<T> emptyList());
+    private static <T> Set<T> emptyIfNull(Set<T> list) {
+        return (list != null ? list : Collections.<T> emptySet());
+    }
+
+    private static <T> List<T> emptyIfNull(List<T> list) {
+        return (list != null ? list : Collections.<T> emptyList());
     }
 }

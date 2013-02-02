@@ -15,8 +15,8 @@ import org.objectweb.asm.Label;
 import com.github.anba.es6draft.ast.ArrayComprehension;
 import com.github.anba.es6draft.ast.ComprehensionFor;
 import com.github.anba.es6draft.ast.Node;
-import com.github.anba.es6draft.compiler.CodeGenerator.Register;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 
 /**
  * TODO: current draft [rev. 13] does not specify the runtime semantics for array-comprehensions,
