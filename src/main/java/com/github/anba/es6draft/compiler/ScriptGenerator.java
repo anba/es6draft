@@ -49,6 +49,8 @@ class ScriptGenerator extends DefaultNodeVisitor<Void, MethodGenerator> {
 
         // initialisation method
         scriptInit(node);
+
+        // TODO: only generate eval-script-init when requested
         evalScriptInit(node);
 
         // runtime method
