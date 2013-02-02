@@ -175,7 +175,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     private void BindingInitialisation(FunctionNode node, MethodGenerator mv) {
         // stack: [ao] -> [ao]
         mv.dup();
-        new BindingInitialisationGenerator(codegen).generateEmbedded(node, mv);
+        new BindingInitialisationGenerator(codegen).generate(node, mv);
     }
 
     private void CompleteStrictArgumentsObject(MethodGenerator mv) {

@@ -30,15 +30,6 @@ class BindingInitialisationGenerator {
     }
 
     public void generate(FunctionNode node, MethodGenerator mv) {
-        // (ExecutionContext, Scriptable, LexicalEnvironment) -> void
-        BindingInitialisation init = new BindingInitialisation(codegen, mv,
-                EnvironmentType.NoEnvironment);
-
-        mv.load(1, Types.Scriptable);
-        node.getParameters().accept(init, null);
-    }
-
-    public void generateEmbedded(FunctionNode node, MethodGenerator mv) {
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
                 EnvironmentType.NoEnvironment);
 

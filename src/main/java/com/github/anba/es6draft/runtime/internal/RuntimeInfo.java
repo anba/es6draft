@@ -202,8 +202,6 @@ public final class RuntimeInfo {
         void functionDeclarationInstantiation(ExecutionContext cx,
                 com.github.anba.es6draft.runtime.types.Function function, Object[] args);
 
-        MethodHandle handle();
-
         String source();
     }
 

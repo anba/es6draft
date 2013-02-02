@@ -289,9 +289,6 @@ class CodeGenerator extends DefaultCodeGenerator<Void> {
         if (!isCompiled(node)) {
             Future<String> source = compressed(node.getSource());
 
-            // binding method
-            visitFunctionBinding(node, methodName(node));
-
             // initialisation method
             visitFunctionDeclInit(node, methodName(node));
 
@@ -306,9 +303,6 @@ class CodeGenerator extends DefaultCodeGenerator<Void> {
     void compile(FunctionNode node) {
         if (!isCompiled(node)) {
             Future<String> source = compressed(node.getSource());
-
-            // binding method
-            visitFunctionBinding(node, methodName(node));
 
             // initialisation method
             visitFunctionDeclInit(node, methodName(node));
@@ -342,28 +336,6 @@ class CodeGenerator extends DefaultCodeGenerator<Void> {
         // - end -
         declinit.visitMaxs(0, 0);
         declinit.visitEnd();
-    }
-
-    private void visitFunctionBinding(FunctionNode node, String name) {
-        String methodName = name + "_binding";
-        String desc = Type.getMethodDescriptor(Type.VOID_TYPE, Types.ExecutionContext,
-                Types.Scriptable, Types.LexicalEnvironment);
-        MethodVisitor mv = publicStaticMethod(methodName, desc);
-        MethodGenerator binding = new BindingMethodGenerator(mv, methodName, desc, node.isStrict());
-        binding.initVariable(0, Types.ExecutionContext);
-        binding.initVariable(1, Types.Scriptable);
-        binding.initVariable(2, Types.LexicalEnvironment);
-        binding.initVariable(3, Types.Realm);
-        binding.visitCode();
-        // - start -
-        binding.load(Register.ExecutionContext);
-        binding.invokevirtual(Methods.ExecutionContext_getRealm);
-        binding.store(Register.Realm);
-        BindingInitialisation(node, binding);
-        binding.areturn(Type.VOID_TYPE);
-        // - end -
-        binding.visitMaxs(0, 0);
-        binding.visitEnd();
     }
 
     private void visitFunctionBody(MethodGenerator body, ArrowFunction node) {
@@ -479,29 +451,6 @@ class CodeGenerator extends DefaultCodeGenerator<Void> {
         }
     }
 
-    private static class BindingMethodGenerator extends MethodGenerator {
-        private BindingMethodGenerator(MethodVisitor mv, String methodName,
-                String methodDescriptor, boolean strict) {
-            super(mv, methodName, methodDescriptor, strict, false, false);
-        }
-
-        @Override
-        protected int var(Register reg) {
-            switch (reg) {
-            case ExecutionContext:
-                return 0;
-                // 1 = Scriptable
-                // 2 = LexicalEnvironment
-            case Realm:
-                return 3;
-            case CompletionValue:
-            default:
-                assert false : reg;
-                return -1;
-            }
-        }
-    }
-
     private static class FunctionDeclInitMethodGenerator extends MethodGenerator {
         private FunctionDeclInitMethodGenerator(MethodVisitor mv, String methodName,
                 String methodDescriptor, boolean strict) {
@@ -561,10 +510,6 @@ class CodeGenerator extends DefaultCodeGenerator<Void> {
     }
 
     /* ----------------------------------------------------------------------------------------- */
-
-    void BindingInitialisation(FunctionNode node, MethodGenerator mv) {
-        new BindingInitialisationGenerator(this).generate(node, mv);
-    }
 
     void BindingInitialisation(Binding node, MethodGenerator mv) {
         new BindingInitialisationGenerator(this).generate(node, mv);
