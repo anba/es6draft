@@ -81,6 +81,7 @@ public abstract class OrdinaryObject implements Scriptable {
     /**
      * [[BuiltinBrand]]
      */
+    @Override
     public BuiltinBrand getBuiltinBrand() {
         return null;
     }

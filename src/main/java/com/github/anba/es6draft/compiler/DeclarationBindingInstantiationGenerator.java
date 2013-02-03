@@ -90,25 +90,14 @@ abstract class DeclarationBindingInstantiationGenerator {
 
     protected void InstantiateGeneratorObject(int realm, int env, GeneratorDeclaration f,
             InstructionVisitor mv) {
+        codegen.compile(f);
+
         mv.load(realm, Types.Realm);
         mv.load(env, Types.LexicalEnvironment);
-
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
         mv.invokestatic(Methods.OrdinaryGenerator_InstantiateGeneratorObject);
-    }
-
-    protected void astore_string(InstructionVisitor mv, String[] strings) {
-        mv.iconst(strings.length);
-        mv.newarray(Types.String);
-        int index = 0;
-        for (String string : strings) {
-            mv.dup();
-            mv.iconst(index++);
-            mv.aconst(string);
-            mv.astore(Types.String);
-        }
     }
 
     protected static String BoundName(Declaration d) {

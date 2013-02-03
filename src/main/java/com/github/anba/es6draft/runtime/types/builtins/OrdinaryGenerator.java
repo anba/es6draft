@@ -166,6 +166,7 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
         return OrdinaryConstruct(realm, this, args);
     }
 
+    @Override
     public RuntimeInfo.Function getFunction() {
         return function;
     }

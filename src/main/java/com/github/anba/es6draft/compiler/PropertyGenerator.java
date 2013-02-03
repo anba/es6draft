@@ -14,7 +14,6 @@ import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Identifier;
 import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.ast.Node;
-import com.github.anba.es6draft.ast.PropertyDefinition;
 import com.github.anba.es6draft.ast.PropertyName;
 import com.github.anba.es6draft.ast.PropertyNameDefinition;
 import com.github.anba.es6draft.ast.PropertyValueDefinition;
@@ -23,25 +22,24 @@ import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 /**
  *
  */
-class PropertyGenerator extends DefaultCodeGenerator<Void> {
+class PropertyGenerator extends DefaultCodeGenerator<Void, MethodGenerator> {
 
     /* ----------------------------------------------------------------------------------------- */
 
-    private CodeGenerator codegen;
-
     public PropertyGenerator(CodeGenerator codegen) {
-        this.codegen = codegen;
+        super(codegen);
     }
 
     @Override
     protected Void visit(Node node, MethodGenerator mv) {
-        node.accept(codegen, mv);
-        return null;
+        throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     @Override
-    protected Void visit(PropertyDefinition node, MethodGenerator mv) {
-        throw new IllegalStateException(String.format("property-class: %s", node.getClass()));
+    protected Void visit(Expression node, MethodGenerator mv) {
+        ValType type = codegen.expression(node, mv);
+        mv.toBoxed(type);
+        return null;
     }
 
     /* ----------------------------------------------------------------------------------------- */

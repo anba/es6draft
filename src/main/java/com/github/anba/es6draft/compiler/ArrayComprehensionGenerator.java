@@ -14,6 +14,7 @@ import org.objectweb.asm.Label;
 
 import com.github.anba.es6draft.ast.ArrayComprehension;
 import com.github.anba.es6draft.ast.ComprehensionFor;
+import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.MethodGenerator.Register;
@@ -23,16 +24,14 @@ import com.github.anba.es6draft.compiler.MethodGenerator.Register;
  * therefore the translation from
  * http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions is used
  */
-class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType> {
-    private final CodeGenerator codegen;
-
+class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator> {
     ArrayComprehensionGenerator(CodeGenerator codegen) {
-        this.codegen = codegen;
+        super(codegen);
     }
 
     @Override
-    protected ValType visit(Node node, MethodGenerator value) {
-        throw new IllegalStateException();
+    protected ValType visit(Node node, MethodGenerator mv) {
+        throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     @Override
@@ -54,17 +53,21 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType> {
         return ValType.Object;
     }
 
+    private ValType expression(Expression node, MethodGenerator mv) {
+        return codegen.expression(node, mv);
+    }
+
     private void visitArrayComprehension(ArrayComprehension node, int result, MethodGenerator mv) {
         Label l0 = null;
         if (node.getTest() != null) {
             l0 = new Label();
-            node.getTest().accept(codegen, mv);
+            ValType type = expression(node.getTest(), mv);
             invokeGetValue(node.getTest(), mv);
-            ToBoolean(ValType.Any, mv);
+            ToBoolean(type, mv);
             mv.ifeq(l0);
         }
 
-        node.getExpression().accept(codegen, mv);
+        expression(node.getExpression(), mv);
         invokeGetValue(node.getExpression(), mv);
         mv.load(result, Types.List);
         mv.swap();
@@ -84,7 +87,7 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType> {
         assert iterator.hasNext();
         ComprehensionFor comprehensionFor = iterator.next();
 
-        comprehensionFor.getExpression().accept(codegen, mv);
+        expression(comprehensionFor.getExpression(), mv);
         invokeGetValue(comprehensionFor.getExpression(), mv);
 
         // FIXME: translation into for-of per
@@ -136,7 +139,7 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType> {
             // FIXME: spec bug (missing ToObject() call?)
 
             // stack: [iterEnv, iterEnv, nextValue] -> [iterEnv]
-            codegen.BindingInitialisationWithEnvironment(comprehensionFor.getBinding(), mv);
+            BindingInitialisationWithEnvironment(comprehensionFor.getBinding(), mv);
         }
         // stack: [iterEnv] -> []
         pushLexicalEnvironment(mv);

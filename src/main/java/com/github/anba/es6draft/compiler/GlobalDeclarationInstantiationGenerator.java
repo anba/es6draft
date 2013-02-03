@@ -62,14 +62,23 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     private static final int GLOBALENV = 1;
     private static final int DELETABLE_BINDINGS = 2;
 
+    private static final String methodName = "script_init";
+    private static final Type methodType = Type.getMethodType(Type.VOID_TYPE, Types.Realm,
+            Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
+
     GlobalDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
-    void generate(Script script, InstructionVisitor mv) {
-        // (Realm realm, LexicalEnvironment globalEnv, LexicalEnvironment globalEnv, boolean
-        // deletableBindings) -> Void
+    void generate(Script script) {
+        InstructionVisitor init = codegen.publicStaticMethod(methodName, methodType);
+        init.begin();
+        generate(script, init);
+        init.areturn();
+        init.end();
+    }
 
+    private void generate(Script script, InstructionVisitor mv) {
         int realm = REALM;
         int env = GLOBALENV;
         int deletableBindings = DELETABLE_BINDINGS;

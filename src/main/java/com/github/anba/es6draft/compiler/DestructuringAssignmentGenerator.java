@@ -81,6 +81,16 @@ class DestructuringAssignmentGenerator {
         protected final R visit(Node node, V value) {
             throw new IllegalStateException();
         }
+
+        /**
+         * Calls <code>GetValue(o)</code> if the expression could possibly be a reference
+         */
+        protected final void invokeGetValue(Expression node, MethodGenerator mv) {
+            if (node.accept(IsReference.INSTANCE, null)) {
+                mv.load(Register.Realm);
+                mv.invokestatic(Methods.Reference_GetValue);
+            }
+        }
     }
 
     private static final class DestructuringAssignmentEvaluation extends
@@ -158,6 +168,7 @@ class DestructuringAssignmentGenerator {
         public Void visit(AssignmentRestElement node, Integer index) {
             // stack: [obj] -> [lref, obj]
             ValType valType = codegen.expression(node.getTarget(), mv);
+            assert !valType.isPrimitive() : "lhs is primitive";
             mv.swap();
 
             mv.iconst(index);
@@ -208,6 +219,8 @@ class DestructuringAssignmentGenerator {
                     mv.pop();
                     ValType type = codegen.expression(initialiser, mv);
                     mv.toBoxed(type);
+                    // FIXME: spec bug - missing GetValue() call (Bug 1242)
+                    invokeGetValue(initialiser, mv);
                 }
                 mv.mark(undef);
             }
@@ -223,11 +236,12 @@ class DestructuringAssignmentGenerator {
                 DestructuringAssignmentEvaluation(target);
             } else {
                 // stack: [v'] -> [lref, 'v]
-                ValType valType = codegen.expression(target, mv);
+                ValType refType = codegen.expression(target, mv);
+                assert !refType.isPrimitive() : "lhs is primitive";
                 mv.swap();
 
                 // stack: [lref, 'v] -> []
-                PutValue(target, valType, mv);
+                PutValue(target, refType, mv);
             }
         }
     }

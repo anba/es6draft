@@ -8,6 +8,7 @@ package com.github.anba.es6draft.semantics;
 
 import static com.github.anba.es6draft.semantics.StaticSemanticsVisitor.forEach;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -264,6 +265,42 @@ public final class StaticSemantics {
         default:
             return false;
         }
+    }
+
+    /**
+     * Static Semantics: TemplateStrings
+     */
+    public static List<TemplateCharacters> TemplateStrings(TemplateLiteral node) {
+        List<Expression> elements = node.getElements();
+        assert (elements.size() & 1) == 1;
+        int numChars = ((elements.size() / 2) + 1);
+        List<TemplateCharacters> strings = new ArrayList<>(numChars);
+        for (int i = 0, size = elements.size(); i < size; ++i) {
+            if ((i & 1) == 1) {
+                assert !(elements.get(i) instanceof TemplateCharacters);
+                continue;
+            }
+            strings.add((TemplateCharacters) elements.get(i));
+        }
+        return strings;
+    }
+
+    /**
+     * Static Semantics: Substitutions (not in spec)
+     */
+    public static List<Expression> Substitutions(TemplateLiteral node) {
+        List<Expression> elements = node.getElements();
+        assert (elements.size() & 1) == 1;
+        int numSubst = (elements.size() / 2);
+        List<Expression> substitutions = new ArrayList<>(numSubst);
+        for (int i = 0, size = elements.size(); i < size; ++i) {
+            if ((i & 1) == 0) {
+                assert (elements.get(i) instanceof TemplateCharacters);
+                continue;
+            }
+            substitutions.add(elements.get(i));
+        }
+        return substitutions;
     }
 
     //

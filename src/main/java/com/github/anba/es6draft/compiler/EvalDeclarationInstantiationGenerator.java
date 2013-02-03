@@ -47,10 +47,19 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
     private static final int VAR_ENV = 2;
     private static final int DELETABLE_BINDINGS = 3;
 
-    void generate(Script evalScript, InstructionVisitor mv) {
-        // (Realm realm, LexicalEnvironment lexEnv, LexicalEnvironment varEnv, boolean
-        // deletableBindings) -> Void
+    private static final String methodName = "script_evalinit";
+    private static final Type methodType = Type.getMethodType(Type.VOID_TYPE, Types.Realm,
+            Types.LexicalEnvironment, Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
 
+    void generate(Script evalScript) {
+        InstructionVisitor init = codegen.publicStaticMethod(methodName, methodType);
+        init.begin();
+        generate(evalScript, init);
+        init.areturn();
+        init.end();
+    }
+
+    private void generate(Script evalScript, InstructionVisitor mv) {
         // FIXME: spec incomplete (using modified ES5.1 algorithm for now...)
 
         int realm = REALM;

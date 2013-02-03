@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -21,17 +22,14 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
  *
  */
 class InstructionVisitor extends InstructionAdapter {
-    final String methodName;
-    final String methodDescriptor;
-    final Variables variables = new Variables();
-
     private static class Variables {
         private static final int INITIAL_SIZE = 8;
         private final BitSet variables = new BitSet();
         private Type[] types = new Type[INITIAL_SIZE];
 
-        void init(int var, Type type) {
+        void reserveFixedSlot(int var, Type type) {
             assert var < INITIAL_SIZE;
+            assert types[var] == null || types[var].equals(type);
             types[var] = type;
             variables.set(var);
         }
@@ -91,14 +89,26 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
-    protected InstructionVisitor(MethodVisitor mv, String methodName, String methodDescriptor) {
+    final String methodName;
+    final Type methodDescriptor;
+    final Variables variables = new Variables();
+
+    protected InstructionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor) {
         super(Opcodes.ASM4, mv);
         this.methodName = methodName;
         this.methodDescriptor = methodDescriptor;
+        initParams(methodDescriptor);
     }
 
-    public void initVariable(int var, Type type) {
-        variables.init(var, type);
+    private void initParams(Type methodType) {
+        Type[] argumentTypes = methodType.getArgumentTypes();
+        for (int i = 0, len = argumentTypes.length; i < len; ++i) {
+            reserveFixedSlot(i, argumentTypes[i]);
+        }
+    }
+
+    protected void reserveFixedSlot(int var, Type type) {
+        variables.reserveFixedSlot(var, type);
     }
 
     public int newVariable(Type type) {
@@ -111,6 +121,46 @@ class InstructionVisitor extends InstructionAdapter {
 
     public void iconst(boolean b) {
         iconst(b ? 1 : 0);
+    }
+
+    public void begin() {
+        visitCode();
+    }
+
+    public void end() {
+        visitMaxs(0, 0);
+        visitEnd();
+    }
+
+    public void lineInfo(int line) {
+        Label start = new Label();
+        mv.visitLabel(start);
+        mv.visitLineNumber(line, start);
+    }
+
+    /**
+     * value → &#x2205;
+     */
+    public void areturn() {
+        areturn(methodDescriptor.getReturnType());
+    }
+
+    /**
+     * &#x2205; → array
+     */
+    public void newarray(int length, Type type) {
+        iconst(length);
+        newarray(type);
+    }
+
+    /**
+     * array → array
+     */
+    public void astore(int index, Object element, Type type) {
+        dup();
+        iconst(index);
+        aconst(element);
+        astore(type);
     }
 
     /**

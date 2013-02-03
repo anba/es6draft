@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.FunctionNode;
@@ -25,8 +24,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 /**
  * 
  */
-public class RuntimeInfoGenerator {
-
+class RuntimeInfoGenerator {
     private static class Methods {
         // class: RuntimeInfo
         static MethodDesc RTI_newScriptBody = MethodDesc.create(Types.RuntimeInfo, "newScriptBody",
@@ -49,8 +47,9 @@ public class RuntimeInfoGenerator {
 
         static String functionCode = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
         static String scriptCode = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
-        static String returnsFunction = Type.getMethodDescriptor(Types.RuntimeInfo$Function);
-        static String returnsScriptBody = Type.getMethodDescriptor(Types.RuntimeInfo$ScriptBody);
+
+        static Type functionRTI = Type.getMethodType(Types.RuntimeInfo$Function);
+        static Type scriptRTI = Type.getMethodType(Types.RuntimeInfo$ScriptBody);
     }
 
     private final CodeGenerator codegen;
@@ -92,13 +91,10 @@ public class RuntimeInfoGenerator {
 
         String className = codegen.getClassName();
         String methodName = codegen.methodName(node);
+        InstructionVisitor mv = codegen
+                .publicStaticMethod(methodName + "_rti", Methods.functionRTI);
 
-        MethodVisitor rti = codegen
-                .publicStaticMethod(methodName + "_rti", Methods.returnsFunction);
-        InstructionVisitor mv = new InstructionVisitor(rti, methodName + "_rti",
-                Methods.returnsFunction);
-
-        mv.visitCode();
+        mv.begin();
         // -start-
 
         mv.aconst(name);
@@ -111,30 +107,26 @@ public class RuntimeInfoGenerator {
         mv.aconst(get(source));
         mv.invokestatic(Methods.RTI_newFunction);
 
-        mv.areturn(Types.Object);
+        mv.areturn();
         // -end-
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
+        mv.end();
     }
 
     void runtimeInfo(Script node) {
         String className = codegen.getClassName();
-        MethodVisitor rti = codegen.publicStaticMethod("script_rti", Methods.returnsScriptBody);
-        InstructionVisitor mv = new InstructionVisitor(rti, "script_rti", Methods.returnsScriptBody);
+        InstructionVisitor mv = codegen.publicStaticMethod("script_rti", Methods.scriptRTI);
 
-        mv.visitCode();
+        mv.begin();
         // -start-
 
         mv.iconst(IsStrict(node));
         mv.invokeStaticMH(className, "script_init", Methods.globalInit);
         mv.invokeStaticMH(className, "script_evalinit", Methods.evalInit);
         mv.invokeStaticMH(className, "script", Methods.scriptCode);
-
         mv.invokestatic(Methods.RTI_newScriptBody);
 
-        mv.areturn(Types.Object);
+        mv.areturn();
         // -end-
-        mv.visitMaxs(1, 1);
-        mv.visitEnd();
+        mv.end();
     }
 }

@@ -167,6 +167,8 @@ public final class Reference {
      * [8.2.4.1] PutValue (V, W)
      */
     public void PutValue(Object w, Realm realm) {
+        assert Type.of(w) != null : "invalid value type";
+
         Object base = getBase();
         if (isUnresolvableReference()) {
             if (isStrictReference()) {

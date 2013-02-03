@@ -13,6 +13,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
+
 import com.github.anba.es6draft.ast.BindingElement;
 import com.github.anba.es6draft.ast.BindingIdentifier;
 import com.github.anba.es6draft.ast.Declaration;
@@ -32,16 +35,60 @@ import com.github.anba.es6draft.compiler.MethodGenerator.Register;
  * </ul>
  */
 class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
+    private static class FunctionDeclInitMethodGenerator extends MethodGenerator {
+        private FunctionDeclInitMethodGenerator(MethodVisitor mv, String methodName,
+                Type methodDescriptor, boolean strict) {
+            super(mv, methodName, methodDescriptor, strict, false, false);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            load(Register.ExecutionContext);
+            invokevirtual(Methods.ExecutionContext_getRealm);
+            store(Register.Realm);
+        }
+
+        @Override
+        protected int var(Register reg) {
+            switch (reg) {
+            case ExecutionContext:
+                return 0;
+                // 1 = Function
+                // 2 = Object[]
+            case Realm:
+                return 3;
+            default:
+                assert false : reg;
+                return -1;
+            }
+        }
+    }
+
     private static final int FUNCTION = 1;
     private static final int ARGUMENTS = 2;
+
+    private static final Type methodType = Type.getMethodType(Type.VOID_TYPE,
+            Types.ExecutionContext, Types.Function, Types.Object_);
 
     FunctionDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
-    void generate(FunctionNode func, MethodGenerator mv) {
-        // (ExecutionContext, Function, Object[]) -> Void
+    void generate(FunctionNode func) {
+        String methodName = codegen.methodName(func) + "_init";
 
+        MethodVisitor mv = codegen.publicStaticMethod(methodName, methodType.getInternalName());
+        MethodGenerator declinit = new FunctionDeclInitMethodGenerator(mv, methodName, methodType,
+                func.isStrict());
+
+        declinit.begin();
+        generate(func, declinit);
+        declinit.areturn();
+        declinit.end();
+    }
+
+    private void generate(FunctionNode func, MethodGenerator mv) {
         int realm = mv.var(Register.Realm);
 
         int env = mv.newVariable(Types.LexicalEnvironment);
@@ -221,4 +268,11 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         return names;
     }
 
+    private void astore_string(InstructionVisitor mv, String[] strings) {
+        mv.newarray(strings.length, Types.String);
+        int index = 0;
+        for (String string : strings) {
+            mv.astore(index++, string, Types.String);
+        }
+    }
 }

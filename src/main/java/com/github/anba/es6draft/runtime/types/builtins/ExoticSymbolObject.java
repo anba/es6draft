@@ -50,6 +50,7 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
     /**
      * [[BuiltinBrand]]
      */
+    @Override
     public BuiltinBrand getBuiltinBrand() {
         return null;
     }

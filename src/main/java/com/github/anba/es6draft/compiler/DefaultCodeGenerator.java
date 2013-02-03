@@ -6,32 +6,27 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
+
 import java.util.List;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.CallExpression;
-import com.github.anba.es6draft.ast.CommaExpression;
-import com.github.anba.es6draft.ast.ConditionalExpression;
-import com.github.anba.es6draft.ast.DefaultNodeVisitor;
-import com.github.anba.es6draft.ast.Expression;
-import com.github.anba.es6draft.ast.Node;
+import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 
 /**
  *
  */
-abstract class DefaultCodeGenerator<R> extends DefaultNodeVisitor<R, MethodGenerator> {
+abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends DefaultNodeVisitor<R, V> {
+    protected final CodeGenerator codegen;
 
-    protected final void lineInfo(Node node, MethodGenerator mv) {
-        // add line information
-        Label start = new Label();
-        mv.visitLabel(start);
-        mv.visitLineNumber(node.getLine(), start);
+    protected DefaultCodeGenerator(CodeGenerator codegen) {
+        this.codegen = codegen;
     }
 
-    protected final void tailCall(Expression expr, MethodGenerator mv) {
+    protected static final void tailCall(Expression expr, MethodGenerator mv) {
         while (expr instanceof CommaExpression) {
             List<Expression> list = ((CommaExpression) expr).getOperands();
             expr = list.get(list.size() - 1);
@@ -40,7 +35,7 @@ abstract class DefaultCodeGenerator<R> extends DefaultNodeVisitor<R, MethodGener
             tailCall(((ConditionalExpression) expr).getThen(), mv);
             tailCall(((ConditionalExpression) expr).getOtherwise(), mv);
         } else if (expr instanceof CallExpression) {
-            mv.setTailCall(expr);
+            mv.setTailCall((CallExpression) expr);
         }
     }
 
@@ -414,5 +409,111 @@ abstract class DefaultCodeGenerator<R> extends DefaultNodeVisitor<R, MethodGener
         mv.load(Register.Realm);
         mv.swap();
         mv.invokestatic(Methods.AbstractOperations_ToObject);
+    }
+
+    protected void BindingInitialisation(Binding node, MethodGenerator mv) {
+        new BindingInitialisationGenerator(codegen).generate(node, mv);
+    }
+
+    protected void BindingInitialisationWithEnvironment(Binding node, MethodGenerator mv) {
+        new BindingInitialisationGenerator(codegen).generateWithEnvironment(node, mv);
+    }
+
+    protected void DestructuringAssignment(AssignmentPattern node, MethodGenerator mv) {
+        new DestructuringAssignmentGenerator(codegen).generate(node, mv);
+    }
+
+    protected void ClassDefinitionEvaluation(ClassDefinition def, String className,
+            MethodGenerator mv) {
+        // stack: [] -> [<proto,ctor>]
+        if (def.getHeritage() == null) {
+            mv.load(Register.Realm);
+            mv.invokestatic(Methods.ScriptRuntime_getDefaultClassProto);
+        } else {
+            // FIXME: spec bug (ClassHeritage runtime evaluation not defined)
+            ValType type = codegen.expression(def.getHeritage(), mv);
+            mv.toBoxed(type);
+            invokeGetValue(def.getHeritage(), mv);
+            mv.load(Register.Realm);
+            mv.invokestatic(Methods.ScriptRuntime_getClassProto);
+        }
+
+        // stack: [<proto,ctor>] -> [ctor, proto]
+        mv.dup();
+        mv.iconst(1);
+        mv.aload(Types.Scriptable_);
+        mv.swap();
+        mv.iconst(0);
+        mv.aload(Types.Scriptable_);
+
+        // steps 4-5
+        if (className != null) {
+            // stack: [ctor, proto] -> [ctor, proto, scope]
+            newDeclarativeEnvironment(mv);
+
+            // stack: [ctor, proto, scope] -> [ctor, proto, scope, proto, scope]
+            mv.dup2();
+
+            // stack: [ctor, proto, scope, proto, scope] -> [ctor, proto, scope, proto, envRec]
+            mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+
+            // stack: [ctor, proto, scope, proto, envRec] -> [ctor, proto, scope, proto, envRec]
+            mv.dup();
+            mv.aconst(className);
+            mv.invokeinterface(Methods.EnvironmentRecord_createImmutableBinding);
+
+            // stack: [ctor, proto, scope, proto, envRec] -> [ctor, proto, scope]
+            mv.swap();
+            mv.aconst(className);
+            mv.swap();
+            mv.invokeinterface(Methods.EnvironmentRecord_initializeBinding);
+
+            // stack: [ctor, proto, scope] -> [ctor, proto]
+            pushLexicalEnvironment(mv);
+        }
+
+        // steps 6-12
+        MethodDefinition constructor = ConstructorMethod(def);
+        if (constructor != null) {
+            codegen.compile(constructor);
+
+            // Runtime Semantics: Evaluation -> MethodDefinition
+            // stack: [ctor, proto] -> [proto, F]
+            mv.dupX1();
+            mv.invokestatic(codegen.getClassName(), codegen.methodName(constructor) + "_rti",
+                    Type.getMethodDescriptor(Types.RuntimeInfo$Function));
+            mv.load(Register.ExecutionContext);
+            mv.invokestatic(Methods.ScriptRuntime_EvaluateConstructorMethod);
+        } else {
+            // default constructor
+            // stack: [ctor, proto] -> [proto, F]
+            mv.dupX1();
+            mv.invokestatic(Methods.ScriptRuntime_CreateDefaultConstructor);
+            mv.load(Register.ExecutionContext);
+            mv.invokestatic(Methods.ScriptRuntime_EvaluateConstructorMethod);
+        }
+
+        // stack: [proto, F] -> [F, proto]
+        mv.swap();
+
+        // steps 13-14
+        List<MethodDefinition> methods = def.getBody();
+        for (MethodDefinition method : methods) {
+            if (method == constructor) {
+                // FIXME: spec bug? (not handled in draft)
+                continue;
+            }
+            mv.dup();
+            codegen.propertyDefinition(method, mv);
+        }
+
+        // step 15
+        if (className != null) {
+            // restore previous lexical environment
+            popLexicalEnvironment(mv);
+        }
+
+        // stack: [F, proto] -> [F]
+        mv.pop();
     }
 }

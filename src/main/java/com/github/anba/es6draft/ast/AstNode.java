@@ -12,13 +12,16 @@ package com.github.anba.es6draft.ast;
 abstract class AstNode implements Node {
     private int line = 0;
 
+    @Override
     public int getLine() {
         return line;
     }
 
+    @Override
     public void setLine(int line) {
         this.line = line;
     }
 
+    @Override
     public abstract <R, V> R accept(NodeVisitor<R, V> visitor, V value);
 }

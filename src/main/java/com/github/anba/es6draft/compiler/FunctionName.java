@@ -22,6 +22,16 @@ class FunctionName extends DefaultNodeVisitor<String, String> {
     }
 
     @Override
+    public String visit(GeneratorComprehension node, String defaultValue) {
+        return defaultValue;
+    }
+
+    @Override
+    public String visit(TemplateLiteral node, String defaultValue) {
+        return defaultValue;
+    }
+
+    @Override
     public String visit(ArrowFunction node, String defaultValue) {
         return defaultValue;
     }

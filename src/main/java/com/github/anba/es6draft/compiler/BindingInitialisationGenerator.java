@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 import org.objectweb.asm.Label;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 
 /**
@@ -84,6 +85,16 @@ class BindingInitialisationGenerator {
         @Override
         protected final R visit(Node node, V value) {
             throw new IllegalStateException();
+        }
+
+        /**
+         * Calls <code>GetValue(o)</code> if the expression could possibly be a reference
+         */
+        protected final void invokeGetValue(Expression node, MethodGenerator mv) {
+            if (node.accept(IsReference.INSTANCE, null)) {
+                mv.load(Register.Realm);
+                mv.invokestatic(Methods.Reference_GetValue);
+            }
         }
 
         protected final void dupArgs() {
@@ -271,7 +282,10 @@ class BindingInitialisationGenerator {
                     mv.ifeq(undef);
                     {
                         mv.pop();
-                        initialiser.accept(codegen, mv);
+                        ValType type = codegen.expression(initialiser, mv);
+                        mv.toBoxed(type);
+                        // FIXME: spec bug - missing GetValue() call (Bug 1242)
+                        invokeGetValue(initialiser, mv);
                         mv.load(Register.Realm);
                         mv.swap();
                         mv.invokestatic(Methods.AbstractOperations_ToObject);
@@ -352,7 +366,10 @@ class BindingInitialisationGenerator {
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    initialiser.accept(codegen, mv);
+                    ValType type = codegen.expression(initialiser, mv);
+                    mv.toBoxed(type);
+                    // FIXME: spec bug - missing GetValue() call (Bug 1242)
+                    invokeGetValue(initialiser, mv);
                     if (binding instanceof BindingPattern) {
                         mv.load(Register.Realm);
                         mv.swap();

@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.Substitutions;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -22,7 +24,7 @@ import com.github.anba.es6draft.semantics.ObjectLiteralStaticSemantics;
 /**
  *
  */
-class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
+class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator> {
 
     /* ----------------------------------------------------------------------------------------- */
 
@@ -85,19 +87,21 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 SimpleBootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
     }
 
+    /**
+     * [11.2.3 EvaluateCall Abstract Operation]
+     */
     private void EvaluateCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, MethodGenerator mv) {
         // stack: [ref] -> [ref, ref]
         mv.dup();
-        /* [11.2.3 EvaluateCall Abstract Operation] step 1-2 */
+        /* step 1-2 */
         GetValue(base, type, mv);
-        /* [11.2.3 EvaluateCall Abstract Operation] step 3-4 */
+        /* step 3-4 */
         boolean hasSpread = false;
         if (arguments.isEmpty()) {
             mv.getstatic(Fields.ScriptRuntime_EMPTY_ARRAY);
         } else {
-            mv.iconst(arguments.size());
-            mv.newarray(Types.Object);
+            mv.newarray(arguments.size(), Types.Object);
             for (int i = 0, size = arguments.size(); i < size; ++i) {
                 mv.dup();
                 mv.iconst(i);
@@ -113,7 +117,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             }
         }
         // stack: ref func args
-        lineInfo(call, mv);
+        mv.lineInfo(call);
 
         // stack: [ref, func, args] -> [args, ref, func]
         mv.dupX2();
@@ -169,7 +173,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.mark(notEval);
         }
 
-        if (mv.isTailCall(call)) {
+        // TODO: tail-call for SuperExpression(call) or TemplateCallExpression?
+        if (call instanceof CallExpression && mv.isTailCall((CallExpression) call)) {
             Label noTailCall = new Label();
             mv.dup();
             mv.instanceOf(Types.OrdinaryFunction);
@@ -181,8 +186,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.invokestatic(Methods.ScriptRuntime_GetCallThisValue);
             mv.swap();
 
-            mv.iconst(3);
-            mv.newarray(Types.Object);
+            mv.newarray(3, Types.Object);
 
             // store func(Callable)
             mv.dupX1();
@@ -206,7 +210,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.astore(Types.Object);
 
             // stack: [<func(Callable), thisValue, args>]
-            mv.areturn(Types.Object);
+            mv.areturn(Types.Object_);
 
             mv.mark(noTailCall);
         }
@@ -230,23 +234,16 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
 
     /* ----------------------------------------------------------------------------------------- */
 
-    private final CodeGenerator codegen;
     private final ArrayComprehensionGenerator arraycomprgen;
 
     public ExpressionGenerator(CodeGenerator codegen) {
-        this.codegen = codegen;
+        super(codegen);
         this.arraycomprgen = new ArrayComprehensionGenerator(codegen);
     }
 
     @Override
     protected ValType visit(Node node, MethodGenerator mv) {
-        node.accept(codegen, mv);
-        return null;
-    }
-
-    @Override
-    protected ValType visit(Expression node, MethodGenerator mv) {
-        throw new IllegalStateException(String.format("expression-class: %s", node.getClass()));
+        throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -377,7 +374,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 ToObject(rtype, mv);
 
                 mv.dup();
-                codegen.DestructuringAssignment((AssignmentPattern) left, mv);
+                DestructuringAssignment((AssignmentPattern) left, mv);
 
                 return ValType.Object;
             } else {
@@ -1059,7 +1056,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
     @Override
     public ValType visit(ClassExpression node, MethodGenerator mv) {
         String className = (node.getName() != null ? node.getName().getName() : null);
-        codegen.ClassDefinitionEvaluation(node, className, mv);
+        ClassDefinitionEvaluation(node, className, mv);
 
         return ValType.Object;
     }
@@ -1169,8 +1166,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
             mv.getstatic(Fields.ScriptRuntime_EMPTY_ARRAY);
         } else {
             boolean hasSpread = false;
-            mv.iconst(arguments.size());
-            mv.newarray(Types.Object);
+            mv.newarray(arguments.size(), Types.Object);
             for (int i = 0, size = arguments.size(); i < size; ++i) {
                 mv.dup();
                 mv.iconst(i);
@@ -1185,7 +1181,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
                 mv.invokestatic(Methods.ScriptRuntime_toFlatArray);
             }
         }
-        lineInfo(node, mv);
+        mv.lineInfo(node);
         mv.load(Register.Realm);
         mv.invokestatic(Methods.ScriptRuntime_EvaluateConstructorCall);
 
@@ -1220,7 +1216,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         mv.invokestatic(Methods.OrdinaryObject_ObjectCreate);
         for (PropertyDefinition property : node.getProperties()) {
             mv.dup();
-            property.accept(this, mv);
+            codegen.propertyDefinition(property, mv);
         }
 
         return ValType.Object;
@@ -1297,16 +1293,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
         codegen.compile(node.getTemplate());
 
         TemplateLiteral template = node.getTemplate();
-        List<Expression> elements = template.getElements();
-        int numSubst = (elements.size() / 2);
-        List<Expression> arguments = new ArrayList<>(numSubst + 1);
+        List<Expression> substitutions = Substitutions(template);
+        List<Expression> arguments = new ArrayList<>(substitutions.size() + 1);
         arguments.add(template);
-        for (int i = 0, size = elements.size(); i < size; ++i) {
-            if ((i & 1) == 0) {
-                continue;
-            }
-            arguments.add(elements.get(i));
-        }
+        arguments.addAll(substitutions);
 
         ValType type = node.getBase().accept(this, mv);
         mv.toBoxed(type);
@@ -1492,10 +1482,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType> {
 
         mv.load(Register.ExecutionContext);
         if (node.isDelegatedYield()) {
-            lineInfo(node, mv);
+            mv.lineInfo(node);
             mv.invokestatic(Methods.ScriptRuntime_delegatedYield);
         } else {
-            lineInfo(node, mv);
+            mv.lineInfo(node);
             mv.invokestatic(Methods.ScriptRuntime_yield);
         }
 

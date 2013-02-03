@@ -46,7 +46,7 @@ public class Compiler {
 
         // generate actual code
         CodeGenerator codegen = new CodeGenerator(cw, className);
-        script.accept(codegen, null);
+        codegen.compile(script);
         codegen.close();
 
         // finalize

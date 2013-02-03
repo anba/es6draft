@@ -24,9 +24,9 @@ import com.github.anba.es6draft.compiler.MethodGenerator.Register;
 /**
  *
  */
-class StatementGenerator extends DefaultCodeGenerator<Void> {
+class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGenerator> {
 
-    private int saveEnvironment(MethodGenerator mv) {
+    private int saveEnvironment(StatementMethodGenerator mv) {
         int savedEnv = mv.newVariable(Types.LexicalEnvironment);
         mv.load(Register.ExecutionContext);
         mv.invokevirtual(Methods.ExecutionContext_getLexicalEnvironment);
@@ -34,7 +34,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
         return savedEnv;
     }
 
-    private void restoreEnvironment(MethodGenerator mv, int savedEnv) {
+    private void restoreEnvironment(StatementMethodGenerator mv, int savedEnv) {
         mv.load(Register.ExecutionContext);
         mv.load(savedEnv, Types.LexicalEnvironment);
         mv.invokevirtual(Methods.ExecutionContext_restoreLexicalEnvironment);
@@ -42,22 +42,20 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
 
     /* ----------------------------------------------------------------------------------------- */
 
-    private final CodeGenerator codegen;
-
     public StatementGenerator(CodeGenerator codegen) {
-        this.codegen = codegen;
+        super(codegen);
     }
 
     @Override
-    protected Void visit(Node node, MethodGenerator mv) {
-        node.accept(codegen, mv);
+    protected Void visit(Node node, StatementMethodGenerator mv) {
+        throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
+    }
+
+    @Override
+    protected Void visit(Expression node, StatementMethodGenerator mv) {
+        ValType type = codegen.expression(node, mv);
+        mv.toBoxed(type);
         return null;
-    }
-
-    @Override
-    public Void visit(StatementListItem node, MethodGenerator mv) {
-        throw new IllegalStateException(String.format("statement/declaration-class: %s",
-                node.getClass()));
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -150,7 +148,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(BlockStatement node, MethodGenerator mv) {
+    public Void visit(BlockStatement node, StatementMethodGenerator mv) {
         if (node.getStatements().isEmpty()) {
             // Block : { }
             // -> Return NormalCompletion(empty)
@@ -177,37 +175,37 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(BreakStatement node, MethodGenerator mv) {
+    public Void visit(BreakStatement node, StatementMethodGenerator mv) {
         mv.goTo(mv.breakLabel(node));
         return null;
     }
 
     @Override
-    public Void visit(ClassDeclaration node, MethodGenerator mv) {
-        codegen.ClassDefinitionEvaluation(node, null, mv);
+    public Void visit(ClassDeclaration node, StatementMethodGenerator mv) {
+        ClassDefinitionEvaluation(node, null, mv);
 
         // stack: [lex, value] -> []
         getLexicalEnvironment(mv);
         mv.swap();
-        codegen.BindingInitialisationWithEnvironment(node.getName(), mv);
+        BindingInitialisationWithEnvironment(node.getName(), mv);
 
         return null;
     }
 
     @Override
-    public Void visit(ContinueStatement node, MethodGenerator mv) {
+    public Void visit(ContinueStatement node, StatementMethodGenerator mv) {
         mv.goTo(mv.continueLabel(node));
         return null;
     }
 
     @Override
-    public Void visit(DebuggerStatement node, MethodGenerator mv) {
+    public Void visit(DebuggerStatement node, StatementMethodGenerator mv) {
         // no debugging facility supported
         return null;
     }
 
     @Override
-    public Void visit(DoWhileStatement node, MethodGenerator mv) {
+    public Void visit(DoWhileStatement node, StatementMethodGenerator mv) {
         Label l0 = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
 
@@ -246,19 +244,19 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(EmptyStatement node, MethodGenerator mv) {
+    public Void visit(EmptyStatement node, StatementMethodGenerator mv) {
         // nothing to do!
         return null;
     }
 
     @Override
-    public Void visit(ExpressionStatement node, MethodGenerator mv) {
+    public Void visit(ExpressionStatement node, StatementMethodGenerator mv) {
         Expression expr = node.getExpression();
         expr.accept(this, mv);
         invokeGetValue(expr, mv);
         if (mv.isCompletionValue()) {
             mv.checkcast(Types.Object);
-            mv.store(Register.CompletionValue);
+            mv.storeCompletionValue();
         } else {
             mv.pop();
         }
@@ -270,21 +268,21 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(ForInStatement node, MethodGenerator mv) {
+    public Void visit(ForInStatement node, StatementMethodGenerator mv) {
         visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
                 IterationKind.Enumerate, mv);
         return null;
     }
 
     @Override
-    public Void visit(ForOfStatement node, MethodGenerator mv) {
+    public Void visit(ForOfStatement node, StatementMethodGenerator mv) {
         visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
                 IterationKind.Iterate, mv);
         return null;
     }
 
     private void visitForInOfLoop(IterationStatement node, Expression expr, Node lhs,
-            Statement stmt, IterationKind iterationKind, MethodGenerator mv) {
+            Statement stmt, IterationKind iterationKind, StatementMethodGenerator mv) {
         Label lblContinue = new Label(), lblBreak = new Label();
         Label loopstart = new Label();
 
@@ -330,7 +328,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
             assert lhs instanceof LeftHandSideExpression;
             if (lhs instanceof AssignmentPattern) {
                 ToObject(ValType.Any, mv);
-                codegen.DestructuringAssignment((AssignmentPattern) lhs, mv);
+                DestructuringAssignment((AssignmentPattern) lhs, mv);
             } else {
                 lhs.accept(this, mv);
                 mv.swap();
@@ -339,7 +337,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
         } else if (lhs instanceof VariableStatement) {
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             Binding binding = varDecl.getBinding();
-            codegen.BindingInitialisation(binding, mv);
+            BindingInitialisation(binding, mv);
         } else {
             assert lhs instanceof LexicalDeclaration;
             LexicalDeclaration lexDecl = (LexicalDeclaration) lhs;
@@ -376,7 +374,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
                 // FIXME: spec bug (missing ToObject() call?)
 
                 // stack: [iterEnv, iterEnv, nextValue] -> [iterEnv]
-                codegen.BindingInitialisationWithEnvironment(lexicalBinding.getBinding(), mv);
+                BindingInitialisationWithEnvironment(lexicalBinding.getBinding(), mv);
             }
             // stack: [iterEnv] -> []
             pushLexicalEnvironment(mv);
@@ -405,7 +403,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(ForStatement node, MethodGenerator mv) {
+    public Void visit(ForStatement node, StatementMethodGenerator mv) {
         Node head = node.getHead();
         if (head == null) {
             // empty
@@ -497,7 +495,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(FunctionDeclaration node, MethodGenerator mv) {
+    public Void visit(FunctionDeclaration node, StatementMethodGenerator mv) {
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> FunctionDeclaration
@@ -507,7 +505,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(GeneratorDeclaration node, MethodGenerator mv) {
+    public Void visit(GeneratorDeclaration node, StatementMethodGenerator mv) {
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> GeneratorDeclaration
@@ -517,7 +515,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(IfStatement node, MethodGenerator mv) {
+    public Void visit(IfStatement node, StatementMethodGenerator mv) {
         Label l0 = new Label(), l1 = new Label();
 
         ValType type = codegen.expression(node.getTest(), mv);
@@ -537,7 +535,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(LabelledStatement node, MethodGenerator mv) {
+    public Void visit(LabelledStatement node, StatementMethodGenerator mv) {
         int savedEnv = -1;
         EnumSet<Abrupt> abrupt = node.getAbrupt();
         if (abrupt.contains(Abrupt.Break)) {
@@ -561,7 +559,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(LexicalDeclaration node, MethodGenerator mv) {
+    public Void visit(LexicalDeclaration node, StatementMethodGenerator mv) {
         for (LexicalBinding binding : node.getElements()) {
             binding.accept(this, mv);
         }
@@ -570,7 +568,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(LexicalBinding node, MethodGenerator mv) {
+    public Void visit(LexicalBinding node, StatementMethodGenerator mv) {
         Binding binding = node.getBinding();
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
@@ -589,13 +587,13 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
         mv.invokevirtual(Methods.ExecutionContext_getLexicalEnvironment);
         mv.swap();
 
-        codegen.BindingInitialisationWithEnvironment(binding, mv);
+        BindingInitialisationWithEnvironment(binding, mv);
 
         return null;
     }
 
     @Override
-    public Void visit(ReturnStatement node, MethodGenerator mv) {
+    public Void visit(ReturnStatement node, StatementMethodGenerator mv) {
         Expression expr = node.getExpression();
         if (expr != null) {
             if (!mv.isWrapped()) {
@@ -606,19 +604,19 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
         } else {
             mv.getstatic(Fields.Undefined_UNDEFINED);
         }
-        mv.store(Register.CompletionValue);
+        mv.storeCompletionValue();
         mv.goTo(mv.returnLabel());
         return null;
     }
 
     @Override
-    public Void visit(SwitchClause node, MethodGenerator mv) {
+    public Void visit(SwitchClause node, StatementMethodGenerator mv) {
         // see SwitchStatement
         throw new IllegalStateException();
     }
 
     @Override
-    public Void visit(SwitchStatement node, MethodGenerator mv) {
+    public Void visit(SwitchStatement node, StatementMethodGenerator mv) {
         Label defaultClause = null;
         Label lblBreak = new Label();
         List<SwitchClause> clauses = node.getClauses();
@@ -697,7 +695,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(ThrowStatement node, MethodGenerator mv) {
+    public Void visit(ThrowStatement node, StatementMethodGenerator mv) {
         node.getExpression().accept(this, mv);
         invokeGetValue(node.getExpression(), mv);
         mv.invokestatic(Methods.ScriptRuntime_throw);
@@ -706,7 +704,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(TryStatement node, MethodGenerator mv) {
+    public Void visit(TryStatement node, StatementMethodGenerator mv) {
         // NB: nop() instruction are inserted to ensure no empty blocks will be generated
 
         BlockStatement tryBlock = node.getTryBlock();
@@ -870,7 +868,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     private void catchClauseEvaluation(BlockStatement catchBlock, Binding catchParameter,
-            MethodGenerator mv) {
+            StatementMethodGenerator mv) {
         mv.invokevirtual(Methods.ScriptException_getValue);
 
         // create new declarative lexical environment
@@ -898,7 +896,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
             }
 
             // stack: [catchEnv, catchEnv, ex] -> [catchEnv]
-            codegen.BindingInitialisationWithEnvironment(catchParameter, mv);
+            BindingInitialisationWithEnvironment(catchParameter, mv);
         }
         // stack: [catchEnv] -> []
         pushLexicalEnvironment(mv);
@@ -910,7 +908,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(VariableDeclaration node, MethodGenerator mv) {
+    public Void visit(VariableDeclaration node, StatementMethodGenerator mv) {
         Binding binding = node.getBinding();
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
@@ -920,7 +918,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
                 // ToObject(...)
                 ToObject(ValType.Any, mv);
             }
-            codegen.BindingInitialisation(binding, mv);
+            BindingInitialisation(binding, mv);
         } else {
             assert binding instanceof BindingIdentifier;
         }
@@ -928,7 +926,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(VariableStatement node, MethodGenerator mv) {
+    public Void visit(VariableStatement node, StatementMethodGenerator mv) {
         for (VariableDeclaration decl : node.getElements()) {
             decl.accept(this, mv);
         }
@@ -936,7 +934,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(WhileStatement node, MethodGenerator mv) {
+    public Void visit(WhileStatement node, StatementMethodGenerator mv) {
         Label lblNext = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
 
@@ -973,7 +971,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void> {
     }
 
     @Override
-    public Void visit(WithStatement node, MethodGenerator mv) {
+    public Void visit(WithStatement node, StatementMethodGenerator mv) {
         // with(<Expression>)
         node.getExpression().accept(this, mv);
         invokeGetValue(node.getExpression(), mv);
