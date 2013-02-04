@@ -255,16 +255,15 @@ public final class ScriptRuntime {
      * Runtime Semantics: ClassDefinitionEvaluation
      */
     public static RuntimeInfo.Function CreateDefaultConstructor() {
-        String source = "constructor(...args) { super.constructor(...args); }";
-
         RuntimeInfo.Function function = RuntimeInfo.newFunction("constructor", false, true, false,
-                0, DefaultConstructorInitMH, DefaultConstructorMH, source);
+                0, DefaultConstructorInitMH, DefaultConstructorMH, DefaultConstructorSource);
 
         return function;
     }
 
     private static final MethodHandle DefaultConstructorInitMH;
     private static final MethodHandle DefaultConstructorMH;
+    private static final String DefaultConstructorSource;
     static {
         Lookup lookup = MethodHandles.publicLookup();
         try {
@@ -274,6 +273,12 @@ public final class ScriptRuntime {
             DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
                     MethodType.methodType(Object.class, ExecutionContext.class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+        try {
+            String source = "constructor(...args) { super.constructor(...args); }";
+            DefaultConstructorSource = SourceCompressor.compress(source).call();
+        } catch (Exception e) {
             throw new IllegalStateException(e);
         }
     }
