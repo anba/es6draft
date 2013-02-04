@@ -280,9 +280,7 @@ public class RegExpParser {
                 case '4':
                 case '5':
                 case '6':
-                case '7':
-                case '8':
-                case '9': {
+                case '7': {
                     int num = get() - '0';
                     while (num <= 037) {
                         int d = peek(0);
@@ -292,6 +290,11 @@ public class RegExpParser {
                         num = num * 8 + (get() - '0');
                     }
                     out.append("\\0").append(Integer.toOctalString(num));
+                    break classatom;
+                }
+                case '8':
+                case '9': {
+                    out.append("\\\\").append((char) get());
                     break classatom;
                 }
 
