@@ -58,7 +58,7 @@ final class GeneratorComprehensionGenerator extends DefaultCodeGenerator<ValType
         invokeGetValue(node.getExpression(), mv);
         mv.load(Register.ExecutionContext);
         mv.lineInfo(node);
-        mv.invokestatic(Methods.ScriptRuntime_yield);
+        mv.invoke(Methods.ScriptRuntime_yield);
         mv.pop();
 
         if (node.getTest() != null) {
@@ -88,17 +88,17 @@ final class GeneratorComprehensionGenerator extends DefaultCodeGenerator<ValType
         mv.goTo(lblBreak);
         mv.mark(loopstart);
         mv.load(Register.Realm);
-        mv.invokestatic(Methods.ScriptRuntime_iterate);
+        mv.invoke(Methods.ScriptRuntime_iterate);
 
         int var = mv.newVariable(Types.Iterator);
         mv.store(var, Types.Iterator);
 
         mv.mark(lblContinue);
         mv.load(var, Types.Iterator);
-        mv.invokeinterface(Methods.Iterator_hasNext);
+        mv.invoke(Methods.Iterator_hasNext);
         mv.ifeq(lblBreak);
         mv.load(var, Types.Iterator);
-        mv.invokeinterface(Methods.Iterator_next);
+        mv.invoke(Methods.Iterator_next);
 
         // FIXME: translation into for-of per
         // http://wiki.ecmascript.org/doku.php?id=harmony:generator_expressions means using a fresh
@@ -112,14 +112,14 @@ final class GeneratorComprehensionGenerator extends DefaultCodeGenerator<ValType
             // stack: [nextValue, iterEnv] -> [iterEnv, iterEnv, nextValue, envRec]
             mv.dupX1();
             mv.dupX1();
-            mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
             // stack: [iterEnv, iterEnv, nextValue, envRec] -> [iterEnv, iterEnv, nextValue]
             for (String name : BoundNames(comprehensionFor.getBinding())) {
                 mv.dup();
                 mv.aconst(name);
                 mv.iconst(false);
-                mv.invokeinterface(Methods.EnvironmentRecord_createMutableBinding);
+                mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
             }
             mv.pop();
 

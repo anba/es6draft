@@ -29,7 +29,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
     private int saveEnvironment(StatementMethodGenerator mv) {
         int savedEnv = mv.newVariable(Types.LexicalEnvironment);
         mv.load(Register.ExecutionContext);
-        mv.invokevirtual(Methods.ExecutionContext_getLexicalEnvironment);
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.store(savedEnv, Types.LexicalEnvironment);
         return savedEnv;
     }
@@ -37,7 +37,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
     private void restoreEnvironment(StatementMethodGenerator mv, int savedEnv) {
         mv.load(Register.ExecutionContext);
         mv.load(savedEnv, Types.LexicalEnvironment);
-        mv.invokevirtual(Methods.ExecutionContext_restoreLexicalEnvironment);
+        mv.invoke(Methods.ExecutionContext_restoreLexicalEnvironment);
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -67,7 +67,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             MethodGenerator mv) {
         // stack: [env] -> [env, envRec]
         mv.dup();
-        mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
         for (Declaration d : declarations) {
             for (String dn : BoundNames(d)) {
@@ -75,13 +75,13 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
                     mv.dup();
                     mv.aconst(dn);
                     // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
-                    mv.invokeinterface(Methods.EnvironmentRecord_createImmutableBinding);
+                    mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
                 } else {
                     mv.dup();
                     mv.aconst(dn);
                     mv.iconst(false);
                     // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
-                    mv.invokeinterface(Methods.EnvironmentRecord_createMutableBinding);
+                    mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
                 }
             }
         }
@@ -103,12 +103,12 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
                         Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
                 // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]
-                mv.invokestatic(Methods.OrdinaryFunction_InstantiateFunctionObject);
+                mv.invoke(Methods.OrdinaryFunction_InstantiateFunctionObject);
 
                 // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
                 mv.aconst(fn);
                 mv.swap();
-                mv.invokeinterface(Methods.EnvironmentRecord_initializeBinding);
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             } else if (d instanceof GeneratorDeclaration) {
                 // TODO: for now same rules as FunctionDeclaration
                 GeneratorDeclaration f = (GeneratorDeclaration) d;
@@ -123,12 +123,12 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
                         Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
                 // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]
-                mv.invokestatic(Methods.OrdinaryGenerator_InstantiateGeneratorObject);
+                mv.invoke(Methods.OrdinaryGenerator_InstantiateGeneratorObject);
 
                 // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
                 mv.aconst(fn);
                 mv.swap();
-                mv.invokeinterface(Methods.EnvironmentRecord_initializeBinding);
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             }
         }
 
@@ -305,10 +305,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
         mv.mark(loopstart);
         mv.load(Register.Realm);
         if (iterationKind == IterationKind.Enumerate) {
-            mv.invokestatic(Methods.ScriptRuntime_enumerate);
+            mv.invoke(Methods.ScriptRuntime_enumerate);
         } else {
             assert iterationKind == IterationKind.Iterate;
-            mv.invokestatic(Methods.ScriptRuntime_iterate);
+            mv.invoke(Methods.ScriptRuntime_iterate);
         }
 
         int var = mv.newVariable(Types.Iterator);
@@ -319,10 +319,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             restoreEnvironment(mv, savedEnv);
         }
         mv.load(var, Types.Iterator);
-        mv.invokeinterface(Methods.Iterator_hasNext);
+        mv.invoke(Methods.Iterator_hasNext);
         mv.ifeq(lblBreak);
         mv.load(var, Types.Iterator);
-        mv.invokeinterface(Methods.Iterator_next);
+        mv.invoke(Methods.Iterator_next);
 
         if (lhs instanceof Expression) {
             assert lhs instanceof LeftHandSideExpression;
@@ -351,7 +351,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
                 // stack: [nextValue, iterEnv] -> [iterEnv, iterEnv, nextValue, envRec]
                 mv.dupX1();
                 mv.dupX1();
-                mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
                 // stack: [iterEnv, iterEnv, nextValue, envRec] -> [iterEnv, iterEnv, nextValue]
                 for (String name : BoundNames(lexicalBinding.getBinding())) {
@@ -359,13 +359,13 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
                         mv.dup();
                         mv.aconst(name);
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
-                        mv.invokeinterface(Methods.EnvironmentRecord_createImmutableBinding);
+                        mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
                     } else {
                         mv.dup();
                         mv.aconst(name);
                         mv.iconst(false);
                         // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
-                        mv.invokeinterface(Methods.EnvironmentRecord_createMutableBinding);
+                        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
                     }
 
                 }
@@ -421,7 +421,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             {
                 // stack: [loopEnv] -> [loopEnv, envRec]
                 mv.dup();
-                mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
                 boolean isConst = IsConstantDeclaration(lexDecl);
                 for (String dn : BoundNames(lexDecl)) {
@@ -429,13 +429,13 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
                         mv.dup();
                         mv.aconst(dn);
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `loopEnv`)
-                        mv.invokeinterface(Methods.EnvironmentRecord_createImmutableBinding);
+                        mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
                     } else {
                         mv.dup();
                         mv.aconst(dn);
                         mv.iconst(false);
                         // FIXME: spec bug (CreateMutableBinding concrete method of `loopEnv`)
-                        mv.invokeinterface(Methods.EnvironmentRecord_createMutableBinding);
+                        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
                     }
                 }
                 mv.pop();
@@ -580,11 +580,11 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             }
         } else {
             assert binding instanceof BindingIdentifier;
-            mv.getstatic(Fields.Undefined_UNDEFINED);
+            mv.get(Fields.Undefined_UNDEFINED);
         }
 
         mv.load(Register.ExecutionContext);
-        mv.invokevirtual(Methods.ExecutionContext_getLexicalEnvironment);
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.swap();
 
         BindingInitialisationWithEnvironment(binding, mv);
@@ -602,7 +602,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             expr.accept(this, mv);
             invokeGetValue(expr, mv);
         } else {
-            mv.getstatic(Fields.Undefined_UNDEFINED);
+            mv.get(Fields.Undefined_UNDEFINED);
         }
         mv.storeCompletionValue();
         mv.goTo(mv.returnLabel());
@@ -651,7 +651,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
                 mv.dup();
                 expr.accept(this, mv);
                 invokeGetValue(expr, mv);
-                mv.invokestatic(Methods.ScriptRuntime_strictEqualityComparison);
+                mv.invoke(Methods.ScriptRuntime_strictEqualityComparison);
                 mv.ifeq(next);
                 mv.pop(); // remove dup'ed entry
                 mv.goTo(stmtLabel);
@@ -698,7 +698,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
     public Void visit(ThrowStatement node, StatementMethodGenerator mv) {
         node.getExpression().accept(this, mv);
         invokeGetValue(node.getExpression(), mv);
-        mv.invokestatic(Methods.ScriptRuntime_throw);
+        mv.invoke(Methods.ScriptRuntime_throw);
         mv.pop(); // explicit pop required
         return null;
     }
@@ -869,7 +869,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
 
     private void catchClauseEvaluation(BlockStatement catchBlock, Binding catchParameter,
             StatementMethodGenerator mv) {
-        mv.invokevirtual(Methods.ScriptException_getValue);
+        mv.invoke(Methods.ScriptException_getValue);
 
         // create new declarative lexical environment
         // stack: [ex] -> [ex, catchEnv]
@@ -878,7 +878,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             // stack: [ex, catchEnv] -> [catchEnv, catchEnv, ex, envRec]
             mv.dupX1();
             mv.dupX1();
-            mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
             // [catchEnv, catchEnv, ex, envRec] -> [catchEnv, catchEnv, ex]
@@ -886,7 +886,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
                 mv.dup();
                 mv.aconst(name);
                 mv.iconst(false);
-                mv.invokeinterface(Methods.EnvironmentRecord_createMutableBinding);
+                mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
             }
             mv.pop();
 

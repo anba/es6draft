@@ -23,6 +23,7 @@ import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -34,8 +35,9 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static class InternMethods {
         static final MethodDesc ScriptRuntime_bindingNotPresentOrThrow = MethodDesc.create(
-                Types.ScriptRuntime, "bindingNotPresentOrThrow", Type.getMethodType(Type.VOID_TYPE,
-                        Types.Realm, Types.EnvironmentRecord, Types.String));
+                MethodType.Static, Types.ScriptRuntime, "bindingNotPresentOrThrow", Type
+                        .getMethodType(Type.VOID_TYPE, Types.Realm, Types.EnvironmentRecord,
+                                Types.String));
     }
 
     EvalDeclarationInstantiationGenerator(CodeGenerator codegen) {
@@ -70,12 +72,12 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         int env = varEnv;
         int envRec = mv.newVariable(Types.EnvironmentRecord);
         mv.load(env, Types.LexicalEnvironment);
-        mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.store(envRec, Types.EnvironmentRecord);
 
         int lexEnvRec = mv.newVariable(Types.EnvironmentRecord);
         mv.load(lexEnv, Types.LexicalEnvironment);
-        mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.store(lexEnvRec, Types.EnvironmentRecord);
 
         // begin-modification
@@ -83,7 +85,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
             mv.load(realm, Types.Realm);
             mv.load(lexEnvRec, Types.EnvironmentRecord);
             mv.aconst(name);
-            mv.invokestatic(InternMethods.ScriptRuntime_bindingNotPresentOrThrow);
+            mv.invoke(InternMethods.ScriptRuntime_bindingNotPresentOrThrow);
         }
         // end-modification
 
@@ -126,7 +128,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
                     Label varAlreadyDeclared = new Label();
                     mv.ifne(varAlreadyDeclared);
                     createMutableBinding(envRec, dn, deletableBindings, mv);
-                    mv.getstatic(Fields.Undefined_UNDEFINED);
+                    mv.get(Fields.Undefined_UNDEFINED);
                     setMutableBinding(envRec, dn, strict, mv);
                     mv.mark(varAlreadyDeclared);
                 }

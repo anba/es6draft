@@ -39,7 +39,7 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGe
         int result = mv.newVariable(Types.List);
         mv.anew(Types.ArrayList);
         mv.dup();
-        mv.invokespecial(Methods.ArrayList_init);
+        mv.invoke(Methods.ArrayList_init);
         mv.store(result, Types.List);
 
         visitArrayComprehension(node, result, node.getList().iterator(), mv);
@@ -48,7 +48,7 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGe
         mv.freeVariable(result);
         mv.load(Register.Realm);
         mv.swap();
-        mv.invokestatic(Methods.AbstractOperations_CreateArrayFromList);
+        mv.invoke(Methods.AbstractOperations_CreateArrayFromList);
 
         return ValType.Object;
     }
@@ -71,7 +71,7 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGe
         invokeGetValue(node.getExpression(), mv);
         mv.load(result, Types.List);
         mv.swap();
-        mv.invokeinterface(Methods.List_add);
+        mv.invoke(Methods.List_add);
         mv.pop();
 
         if (node.getTest() != null) {
@@ -101,17 +101,17 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGe
         mv.goTo(lblBreak);
         mv.mark(loopstart);
         mv.load(Register.Realm);
-        mv.invokestatic(Methods.ScriptRuntime_iterate);
+        mv.invoke(Methods.ScriptRuntime_iterate);
 
         int var = mv.newVariable(Types.Iterator);
         mv.store(var, Types.Iterator);
 
         mv.mark(lblContinue);
         mv.load(var, Types.Iterator);
-        mv.invokeinterface(Methods.Iterator_hasNext);
+        mv.invoke(Methods.Iterator_hasNext);
         mv.ifeq(lblBreak);
         mv.load(var, Types.Iterator);
-        mv.invokeinterface(Methods.Iterator_next);
+        mv.invoke(Methods.Iterator_next);
 
         // FIXME: translation into for-of per
         // http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions means using a fresh
@@ -125,14 +125,14 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGe
             // stack: [nextValue, iterEnv] -> [iterEnv, iterEnv, nextValue, envRec]
             mv.dupX1();
             mv.dupX1();
-            mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
             // stack: [iterEnv, iterEnv, nextValue, envRec] -> [iterEnv, iterEnv, nextValue]
             for (String name : BoundNames(comprehensionFor.getBinding())) {
                 mv.dup();
                 mv.aconst(name);
                 mv.iconst(false);
-                mv.invokeinterface(Methods.EnvironmentRecord_createMutableBinding);
+                mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
             }
             mv.pop();
 

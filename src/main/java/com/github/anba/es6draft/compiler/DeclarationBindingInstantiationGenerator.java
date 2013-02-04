@@ -32,7 +32,7 @@ abstract class DeclarationBindingInstantiationGenerator {
     protected void hasBinding(int envRec, String name, InstructionVisitor mv) {
         mv.load(envRec, Types.EnvironmentRecord);
         mv.aconst(name);
-        mv.invokeinterface(Methods.EnvironmentRecord_hasBinding);
+        mv.invoke(Methods.EnvironmentRecord_hasBinding);
     }
 
     protected void createMutableBinding(int envRec, String name, boolean deletable,
@@ -40,7 +40,7 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.load(envRec, Types.EnvironmentRecord);
         mv.aconst(name);
         mv.iconst(deletable);
-        mv.invokeinterface(Methods.EnvironmentRecord_createMutableBinding);
+        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
 
     protected void createMutableBinding(int envRec, String name, int deletable,
@@ -48,13 +48,13 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.load(envRec, Types.EnvironmentRecord);
         mv.aconst(name);
         mv.load(deletable, Type.BOOLEAN_TYPE);
-        mv.invokeinterface(Methods.EnvironmentRecord_createMutableBinding);
+        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
 
     protected void createImmutableBinding(int envRec, String name, InstructionVisitor mv) {
         mv.load(envRec, Types.EnvironmentRecord);
         mv.aconst(name);
-        mv.invokeinterface(Methods.EnvironmentRecord_createImmutableBinding);
+        mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
     }
 
     protected void initializeBinding(int envRec, String name, InstructionVisitor mv) {
@@ -63,7 +63,7 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.swap();
         mv.aconst(name);
         mv.swap();
-        mv.invokeinterface(Methods.EnvironmentRecord_initializeBinding);
+        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
     }
 
     protected void setMutableBinding(int envRec, String name, boolean strict, InstructionVisitor mv) {
@@ -73,7 +73,7 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.aconst(name);
         mv.swap();
         mv.iconst(strict);
-        mv.invokeinterface(Methods.EnvironmentRecord_setMutableBinding);
+        mv.invoke(Methods.EnvironmentRecord_setMutableBinding);
     }
 
     protected void InstantiateFunctionObject(int realm, int env, FunctionDeclaration f,
@@ -85,7 +85,7 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
-        mv.invokestatic(Methods.OrdinaryFunction_InstantiateFunctionObject);
+        mv.invoke(Methods.OrdinaryFunction_InstantiateFunctionObject);
     }
 
     protected void InstantiateGeneratorObject(int realm, int env, GeneratorDeclaration f,
@@ -97,7 +97,7 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
-        mv.invokestatic(Methods.OrdinaryGenerator_InstantiateGeneratorObject);
+        mv.invoke(Methods.OrdinaryGenerator_InstantiateGeneratorObject);
     }
 
     protected static String BoundName(Declaration d) {

@@ -17,9 +17,9 @@ import org.objectweb.asm.Type;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.ast.MethodDefinition;
-import com.github.anba.es6draft.ast.MethodDefinition.MethodType;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
  * 
@@ -27,14 +27,15 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 class RuntimeInfoGenerator {
     private static class Methods {
         // class: RuntimeInfo
-        static MethodDesc RTI_newScriptBody = MethodDesc.create(Types.RuntimeInfo, "newScriptBody",
-                Type.getMethodType(Types.RuntimeInfo$ScriptBody, Type.BOOLEAN_TYPE,
-                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
+        static MethodDesc RTI_newScriptBody = MethodDesc.create(MethodType.Static,
+                Types.RuntimeInfo, "newScriptBody", Type.getMethodType(
+                        Types.RuntimeInfo$ScriptBody, Type.BOOLEAN_TYPE, Types.MethodHandle,
+                        Types.MethodHandle, Types.MethodHandle));
 
-        static MethodDesc RTI_newFunction = MethodDesc.create(Types.RuntimeInfo, "newFunction",
-                Type.getMethodType(Types.RuntimeInfo$Function, Types.String, Type.BOOLEAN_TYPE,
-                        Type.BOOLEAN_TYPE, Type.BOOLEAN_TYPE, Type.INT_TYPE, Types.MethodHandle,
-                        Types.MethodHandle, Types.String));
+        static MethodDesc RTI_newFunction = MethodDesc.create(MethodType.Static, Types.RuntimeInfo,
+                "newFunction", Type.getMethodType(Types.RuntimeInfo$Function, Types.String,
+                        Type.BOOLEAN_TYPE, Type.BOOLEAN_TYPE, Type.BOOLEAN_TYPE, Type.INT_TYPE,
+                        Types.MethodHandle, Types.MethodHandle, Types.String));
 
         // Method descriptors
 
@@ -62,7 +63,7 @@ class RuntimeInfoGenerator {
         if (node instanceof GeneratorDefinition) {
             return true;
         } else if (node instanceof MethodDefinition) {
-            return ((MethodDefinition) node).getType() == MethodType.Generator;
+            return ((MethodDefinition) node).getType() == MethodDefinition.MethodType.Generator;
         } else {
             return false;
         }
@@ -105,7 +106,7 @@ class RuntimeInfoGenerator {
         mv.invokeStaticMH(className, methodName + "_init", Methods.functionInit);
         mv.invokeStaticMH(className, methodName, Methods.functionCode);
         mv.aconst(get(source));
-        mv.invokestatic(Methods.RTI_newFunction);
+        mv.invoke(Methods.RTI_newFunction);
 
         mv.areturn();
         // -end-
@@ -123,7 +124,7 @@ class RuntimeInfoGenerator {
         mv.invokeStaticMH(className, "script_init", Methods.globalInit);
         mv.invokeStaticMH(className, "script_evalinit", Methods.evalInit);
         mv.invokeStaticMH(className, "script", Methods.scriptCode);
-        mv.invokestatic(Methods.RTI_newScriptBody);
+        mv.invoke(Methods.RTI_newScriptBody);
 
         mv.areturn();
         // -end-

@@ -93,7 +93,7 @@ class BindingInitialisationGenerator {
         protected final void invokeGetValue(Expression node, MethodGenerator mv) {
             if (node.accept(IsReference.INSTANCE, null)) {
                 mv.load(Register.Realm);
-                mv.invokestatic(Methods.Reference_GetValue);
+                mv.invoke(Methods.Reference_GetValue);
             }
         }
 
@@ -137,7 +137,7 @@ class BindingInitialisationGenerator {
             mv.instanceOf(Types.Scriptable);
             mv.ifne(assertion);
             mv.aconst("Type(value) is Object");
-            mv.invokestatic(Methods.ScriptRuntime_throw);
+            mv.invoke(Methods.ScriptRuntime_throw);
             mv.pop(); // explicit pop required
             mv.mark(assertion);
 
@@ -158,7 +158,7 @@ class BindingInitialisationGenerator {
             mv.instanceOf(Types.Scriptable);
             mv.ifne(assertion);
             mv.aconst("Type(value) is Object");
-            mv.invokestatic(Methods.ScriptRuntime_throw);
+            mv.invoke(Methods.ScriptRuntime_throw);
             mv.pop(); // explicit pop required
             mv.mark(assertion);
 
@@ -191,7 +191,7 @@ class BindingInitialisationGenerator {
                 assert false : "unused";
 
                 mv.load(2, Types.LexicalEnvironment);
-                mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
                 mv.aconst(node.getName());
 
                 // [value, envRec, id] -> [envRec, id, value]
@@ -199,11 +199,11 @@ class BindingInitialisationGenerator {
                 mv.pop2();
 
                 // stack: [envRec, id, value] -> []
-                mv.invokeinterface(Methods.EnvironmentRecord_initializeBinding);
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             } else if (environment == EnvironmentType.EnvironmentFromStack) {
                 // stack: [env, value] -> [value, envRec, id]
                 mv.swap();
-                mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
                 mv.aconst(node.getName());
 
                 // [value, envRec, id] -> [envRec, id, value]
@@ -211,21 +211,21 @@ class BindingInitialisationGenerator {
                 mv.pop2();
 
                 // stack: [envRec, id, value] -> []
-                mv.invokeinterface(Methods.EnvironmentRecord_initializeBinding);
+                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             } else {
                 assert environment == EnvironmentType.NoEnvironment;
                 // stack: [value] -> [ref, value]
                 mv.load(Register.ExecutionContext);
                 mv.aconst(node.getName());
                 if (mv.isStrict()) {
-                    mv.invokevirtual(Methods.ExecutionContext_strictIdentifierResolution);
+                    mv.invoke(Methods.ExecutionContext_strictIdentifierResolution);
                 } else {
-                    mv.invokevirtual(Methods.ExecutionContext_nonstrictIdentifierResolution);
+                    mv.invoke(Methods.ExecutionContext_nonstrictIdentifierResolution);
                 }
                 mv.swap();
                 // stack: [ref, value] -> []
                 mv.load(Register.Realm);
-                mv.invokevirtual(Methods.Reference_PutValue_);
+                mv.invoke(Methods.Reference_PutValue_);
             }
 
             return null;
@@ -271,14 +271,14 @@ class BindingInitialisationGenerator {
                 // stack: [(env), value] -> [(env), v]
                 String name = ToString(index);
                 mv.aconst(name);
-                mv.invokestatic(Methods.AbstractOperations_Get);
+                mv.invoke(Methods.AbstractOperations_Get);
 
                 // step 4-5:
                 // stack: [(env), v] -> [(env), v']
                 if (initialiser != null) {
                     Label undef = new Label();
                     mv.dup();
-                    mv.invokestatic(Methods.Type_isUndefined);
+                    mv.invoke(Methods.Type_isUndefined);
                     mv.ifeq(undef);
                     {
                         mv.pop();
@@ -288,7 +288,7 @@ class BindingInitialisationGenerator {
                         invokeGetValue(initialiser, mv);
                         mv.load(Register.Realm);
                         mv.swap();
-                        mv.invokestatic(Methods.AbstractOperations_ToObject);
+                        mv.invoke(Methods.AbstractOperations_ToObject);
                     }
                     mv.mark(undef);
                 }
@@ -305,7 +305,7 @@ class BindingInitialisationGenerator {
             mv.iconst(index);
             mv.load(Register.Realm);
             // stack: [(env), value, index, cx] -> [(env), rest]
-            mv.invokestatic(Methods.ScriptRuntime_createRestArray);
+            mv.invoke(Methods.ScriptRuntime_createRestArray);
 
             // stack: [(env), rest] -> []
             BindingInitialisation(node.getBindingIdentifier());
@@ -355,14 +355,14 @@ class BindingInitialisationGenerator {
             // step 1-2:
             // stack: [(env), value] -> [(env), v]
             mv.aconst(propertyName);
-            mv.invokestatic(Methods.AbstractOperations_Get);
+            mv.invoke(Methods.AbstractOperations_Get);
 
             // step 3-4:
             // stack: [(env), value] -> [(env), v']
             if (initialiser != null) {
                 Label undef = new Label();
                 mv.dup();
-                mv.invokestatic(Methods.Type_isUndefined);
+                mv.invoke(Methods.Type_isUndefined);
                 mv.ifeq(undef);
                 {
                     mv.pop();
@@ -373,7 +373,7 @@ class BindingInitialisationGenerator {
                     if (binding instanceof BindingPattern) {
                         mv.load(Register.Realm);
                         mv.swap();
-                        mv.invokestatic(Methods.AbstractOperations_ToObject);
+                        mv.invoke(Methods.AbstractOperations_ToObject);
                     }
                 }
                 mv.mark(undef);

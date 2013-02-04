@@ -42,10 +42,10 @@ class DestructuringAssignmentGenerator {
         if (node.accept(IsReference.INSTANCE, null)) {
             if (type == ValType.Reference) {
                 mv.load(Register.Realm);
-                mv.invokevirtual(Methods.Reference_PutValue_);
+                mv.invoke(Methods.Reference_PutValue_);
             } else {
                 mv.load(Register.Realm);
-                mv.invokestatic(Methods.Reference_PutValue);
+                mv.invoke(Methods.Reference_PutValue);
             }
         }
     }
@@ -88,7 +88,7 @@ class DestructuringAssignmentGenerator {
         protected final void invokeGetValue(Expression node, MethodGenerator mv) {
             if (node.accept(IsReference.INSTANCE, null)) {
                 mv.load(Register.Realm);
-                mv.invokestatic(Methods.Reference_GetValue);
+                mv.invoke(Methods.Reference_GetValue);
             }
         }
     }
@@ -174,7 +174,7 @@ class DestructuringAssignmentGenerator {
             mv.iconst(index);
             mv.load(Register.Realm);
             // stack: [lref, obj, index, cx] -> [lref, rest]
-            mv.invokestatic(Methods.ScriptRuntime_createRestArray);
+            mv.invoke(Methods.ScriptRuntime_createRestArray);
 
             // stack: [lref, rest] -> []
             PutValue(node.getTarget(), valType, mv);
@@ -206,14 +206,14 @@ class DestructuringAssignmentGenerator {
             // step 1-2:
             // stack: [obj] -> [v]
             mv.aconst(propertyName);
-            mv.invokestatic(Methods.AbstractOperations_Get);
+            mv.invoke(Methods.AbstractOperations_Get);
 
             // step 3:
             // stack: [v] -> [v']
             if (initialiser != null) {
                 Label undef = new Label();
                 mv.dup();
-                mv.invokestatic(Methods.Type_isUndefined);
+                mv.invoke(Methods.Type_isUndefined);
                 mv.ifeq(undef);
                 {
                     mv.pop();
@@ -230,7 +230,7 @@ class DestructuringAssignmentGenerator {
                 // stack: [v'] -> [vObj]
                 mv.load(Register.Realm);
                 mv.swap();
-                mv.invokestatic(Methods.AbstractOperations_ToObject);
+                mv.invoke(Methods.AbstractOperations_ToObject);
 
                 // stack: [vObj] -> []
                 DestructuringAssignmentEvaluation(target);

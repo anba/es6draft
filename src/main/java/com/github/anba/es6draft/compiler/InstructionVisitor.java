@@ -57,35 +57,47 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
+    enum MethodType {
+        Interface, Virtual, Special, Static
+    }
+
     static final class MethodDesc {
+        final MethodType type;
         final String owner;
         final String name;
         final String desc;
 
-        private MethodDesc(String owner, String name, String desc) {
+        private MethodDesc(MethodType type, String owner, String name, String desc) {
+            this.type = type;
             this.owner = owner;
             this.name = name;
             this.desc = desc;
         }
 
-        static MethodDesc create(Type owner, String name, Type desc) {
-            return new MethodDesc(owner.getInternalName(), name, desc.getDescriptor());
+        static MethodDesc create(MethodType type, Type owner, String name, Type desc) {
+            return new MethodDesc(type, owner.getInternalName(), name, desc.getDescriptor());
         }
     }
 
+    enum FieldType {
+        Instance, Static
+    }
+
     static final class FieldDesc {
+        final FieldType type;
         final String owner;
         final String name;
         final String desc;
 
-        private FieldDesc(String owner, String name, String desc) {
+        private FieldDesc(FieldType type, String owner, String name, String desc) {
+            this.type = type;
             this.owner = owner;
             this.name = name;
             this.desc = desc;
         }
 
-        static FieldDesc create(Type owner, String name, Type desc) {
-            return new FieldDesc(owner.getInternalName(), name, desc.getDescriptor());
+        static FieldDesc create(FieldType type, Type owner, String name, Type desc) {
+            return new FieldDesc(type, owner.getInternalName(), name, desc.getDescriptor());
         }
     }
 
@@ -226,24 +238,49 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
-    public void getstatic(FieldDesc field) {
-        getstatic(field.owner, field.name, field.desc);
+    public void get(FieldDesc field) {
+        switch (field.type) {
+        case Instance:
+            getfield(field.owner, field.name, field.desc);
+            break;
+        case Static:
+            getstatic(field.owner, field.name, field.desc);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
     }
 
-    public void invokeinterface(MethodDesc method) {
-        invokeinterface(method.owner, method.name, method.desc);
+    public void put(FieldDesc field) {
+        switch (field.type) {
+        case Instance:
+            putfield(field.owner, field.name, field.desc);
+            break;
+        case Static:
+            putstatic(field.owner, field.name, field.desc);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
     }
 
-    public void invokespecial(MethodDesc method) {
-        invokespecial(method.owner, method.name, method.desc);
-    }
-
-    public void invokestatic(MethodDesc method) {
-        invokestatic(method.owner, method.name, method.desc);
-    }
-
-    public void invokevirtual(MethodDesc method) {
-        invokevirtual(method.owner, method.name, method.desc);
+    public void invoke(MethodDesc method) {
+        switch (method.type) {
+        case Interface:
+            invokeinterface(method.owner, method.name, method.desc);
+            break;
+        case Special:
+            invokespecial(method.owner, method.name, method.desc);
+            break;
+        case Static:
+            invokestatic(method.owner, method.name, method.desc);
+            break;
+        case Virtual:
+            invokevirtual(method.owner, method.name, method.desc);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
     }
 
     public void invokeStaticMH(String className, String name, String desc) {

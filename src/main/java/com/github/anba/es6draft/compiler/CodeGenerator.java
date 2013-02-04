@@ -151,7 +151,7 @@ class CodeGenerator {
         mv.aconst(templateKey(node));
         mv.invokeStaticMH(className, methodName, desc);
         mv.load(Register.ExecutionContext);
-        mv.invokestatic(Methods.ScriptRuntime_GetTemplateCallSite);
+        mv.invoke(Methods.ScriptRuntime_GetTemplateCallSite);
     }
 
     void compile(TemplateLiteral node) {
@@ -256,7 +256,7 @@ class CodeGenerator {
 
             new GeneratorComprehensionGenerator(this).visit(node, body);
 
-            body.getstatic(Fields.Undefined_UNDEFINED);
+            body.get(Fields.Undefined_UNDEFINED);
             body.areturn();
             body.end();
         }
@@ -315,7 +315,7 @@ class CodeGenerator {
     private void invokeGetValue(Expression node, MethodGenerator mv) {
         if (node.accept(IsReference.INSTANCE, null)) {
             mv.load(Register.Realm);
-            mv.invokestatic(Methods.Reference_GetValue);
+            mv.invoke(Methods.Reference_GetValue);
         }
     }
 
@@ -364,11 +364,11 @@ class CodeGenerator {
         public void begin() {
             super.begin();
             if (initCompletionValue) {
-                getstatic(Fields.Undefined_UNDEFINED);
+                get(Fields.Undefined_UNDEFINED);
                 storeCompletionValue();
             }
             load(Register.ExecutionContext);
-            invokevirtual(Methods.ExecutionContext_getRealm);
+            invoke(Methods.ExecutionContext_getRealm);
             store(Register.Realm);
         }
 
@@ -398,7 +398,7 @@ class CodeGenerator {
         public void begin() {
             super.begin();
             load(Register.ExecutionContext);
-            invokevirtual(Methods.ExecutionContext_getRealm);
+            invoke(Methods.ExecutionContext_getRealm);
             store(Register.Realm);
         }
 

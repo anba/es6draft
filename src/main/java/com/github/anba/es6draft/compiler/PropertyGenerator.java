@@ -57,16 +57,16 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, MethodGenerator> {
 
         switch (node.getType()) {
         case Function:
-            mv.invokestatic(Methods.ScriptRuntime_EvaluatePropertyDefinition);
+            mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition);
             break;
         case Generator:
-            mv.invokestatic(Methods.ScriptRuntime_EvaluatePropertyDefinitionGenerator);
+            mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionGenerator);
             break;
         case Getter:
-            mv.invokestatic(Methods.ScriptRuntime_EvaluatePropertyDefinitionGetter);
+            mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionGetter);
             break;
         case Setter:
-            mv.invokestatic(Methods.ScriptRuntime_EvaluatePropertyDefinitionSetter);
+            mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionSetter);
             break;
         default:
             assert false : "invalid method type";
@@ -85,7 +85,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, MethodGenerator> {
         // performs "Identifier Resolution" automatically
         propertyName.accept(this, mv);
         invokeGetValue(propertyName, mv);
-        mv.invokestatic(Methods.ScriptRuntime_defineProperty);
+        mv.invoke(Methods.ScriptRuntime_defineProperty);
 
         return null;
     }
@@ -99,7 +99,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, MethodGenerator> {
         mv.aconst(propName);
         propertyValue.accept(this, mv);
         invokeGetValue(propertyValue, mv);
-        mv.invokestatic(Methods.ScriptRuntime_defineProperty);
+        mv.invoke(Methods.ScriptRuntime_defineProperty);
 
         return null;
     }

@@ -37,9 +37,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             mv.load(Register.ExecutionContext);
             mv.aconst(((Identifier) node).getName());
             if (mv.isStrict()) {
-                mv.invokevirtual(Methods.ExecutionContext_strictIdentifierValue);
+                mv.invoke(Methods.ExecutionContext_strictIdentifierValue);
             } else {
-                mv.invokevirtual(Methods.ExecutionContext_nonstrictIdentifierValue);
+                mv.invoke(Methods.ExecutionContext_nonstrictIdentifierValue);
             }
             return ValType.Any;
         } else {
@@ -57,7 +57,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         if (node.accept(IsReference.INSTANCE, null)) {
             if (type == ValType.Reference) {
                 mv.load(Register.Realm);
-                mv.invokevirtual(Methods.Reference_GetValue_);
+                mv.invoke(Methods.Reference_GetValue_);
             } else {
                 GetValue(mv);
             }
@@ -72,7 +72,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         if (node.accept(IsReference.INSTANCE, null)) {
             if (type == ValType.Reference) {
                 mv.load(Register.Realm);
-                mv.invokevirtual(Methods.Reference_PutValue_);
+                mv.invoke(Methods.Reference_PutValue_);
             } else {
                 PutValue(mv);
             }
@@ -99,7 +99,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         /* step 3-4 */
         boolean hasSpread = false;
         if (arguments.isEmpty()) {
-            mv.getstatic(Fields.ScriptRuntime_EMPTY_ARRAY);
+            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
         } else {
             mv.newarray(arguments.size(), Types.Object);
             for (int i = 0, size = arguments.size(); i < size; ++i) {
@@ -113,7 +113,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                 mv.astore(Types.Object);
             }
             if (hasSpread) {
-                mv.invokestatic(Methods.ScriptRuntime_toFlatArray);
+                mv.invoke(Methods.ScriptRuntime_toFlatArray);
             }
         }
         // stack: ref func args
@@ -125,7 +125,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
 
         // stack: [args, ref, func] -> [args, ref, func(Callable)]
         mv.load(Register.Realm);
-        mv.invokestatic(Methods.ScriptRuntime_CheckCallable);
+        mv.invoke(Methods.ScriptRuntime_CheckCallable);
 
         Label notEval = null, afterCall = null;
         if (directEval) {
@@ -136,7 +136,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             // stack: [args, ref, func(Callable)] -> [args, ref, func(Callable), isDirectEval]
             mv.dup2();
             mv.load(Register.Realm);
-            mv.invokestatic(Methods.ScriptRuntime_IsBuiltinEval);
+            mv.invoke(Methods.ScriptRuntime_IsBuiltinEval);
             mv.ifeq(notEval);
 
             // stack: [args, ref, func(Callable)] -> [args]
@@ -153,11 +153,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                 mv.goTo(after);
                 mv.mark(isEmpty);
                 mv.pop();
-                mv.getstatic(Fields.Undefined_UNDEFINED);
+                mv.get(Fields.Undefined_UNDEFINED);
                 mv.mark(after);
             } else if (arguments.isEmpty()) {
                 mv.pop();
-                mv.getstatic(Fields.Undefined_UNDEFINED);
+                mv.get(Fields.Undefined_UNDEFINED);
             } else {
                 mv.iconst(0);
                 mv.aload(Types.Object);
@@ -167,7 +167,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             mv.load(Register.ExecutionContext);
             mv.iconst(mv.isStrict());
             mv.iconst(mv.isGlobal());
-            mv.invokestatic(Methods.Eval_directEval);
+            mv.invoke(Methods.Eval_directEval);
 
             mv.goTo(afterCall);
             mv.mark(notEval);
@@ -183,7 +183,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             // stack: [args, ref, func(Callable)] -> [args, thisValue, func(Callable)]
             mv.swap();
             mv.load(Register.Realm);
-            mv.invokestatic(Methods.ScriptRuntime_GetCallThisValue);
+            mv.invoke(Methods.ScriptRuntime_GetCallThisValue);
             mv.swap();
 
             mv.newarray(3, Types.Object);
@@ -218,14 +218,14 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         // stack: [args, ref, func(Callable)] -> [args, func(Callable), thisValue]
         mv.swap();
         mv.load(Register.Realm);
-        mv.invokestatic(Methods.ScriptRuntime_GetCallThisValue);
+        mv.invoke(Methods.ScriptRuntime_GetCallThisValue);
 
         // stack: [args, func(Callable), thisValue] -> [func(Callable), thisValue, args]
         mv.dup2X1();
         mv.pop2();
 
         // stack: [func(Callable), thisValue, args] -> [result]
-        mv.invokeinterface(Methods.Callable_call);
+        mv.invoke(Methods.Callable_call);
 
         if (afterCall != null) {
             mv.mark(afterCall);
@@ -265,7 +265,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
 
         mv.load(Register.Realm);
         mv.lconst(0);
-        mv.invokestatic(Methods.ExoticArray_ArrayCreate);
+        mv.invoke(Methods.ExoticArray_ArrayCreate);
         if (!hasSpread) {
             int nextIndex = 0;
             for (Expression element : node.getElements()) {
@@ -276,7 +276,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                     mv.iconst(nextIndex);
                     ValType type = evalAndGetValue(element, mv);
                     mv.toBoxed(type);
-                    mv.invokestatic(Methods.ScriptRuntime_defineProperty__int);
+                    mv.invoke(Methods.ScriptRuntime_defineProperty__int);
                 }
                 nextIndex += 1;
             }
@@ -287,7 +287,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             mv.iconst(nextIndex);
             mv.toBoxed(Type.INT_TYPE);
             mv.iconst(0);
-            mv.invokestatic(Methods.AbstractOperations_Put);
+            mv.invoke(Methods.AbstractOperations_Put);
         } else {
             // stack: [array, nextIndex]
             mv.iconst(0); // nextIndex
@@ -310,7 +310,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                     ValType type = evalAndGetValue(spread, mv);
                     mv.toBoxed(type);
                     mv.load(Register.Realm);
-                    mv.invokestatic(Methods.ScriptRuntime_ArrayAccumulationSpreadElement);
+                    mv.invoke(Methods.ScriptRuntime_ArrayAccumulationSpreadElement);
                     // stack: ... -> [array, nextIndex]
                     mv.swap();
                     mv.pop();
@@ -320,7 +320,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                     ValType type = evalAndGetValue(element, mv);
                     mv.toBoxed(type);
                     // stack: [array, nextIndex, array, nextIndex, obj] -> [array, nextIndex]
-                    mv.invokestatic(Methods.ScriptRuntime_defineProperty__int);
+                    mv.invoke(Methods.ScriptRuntime_defineProperty__int);
                     elisionWidth += 1;
                 }
             }
@@ -342,7 +342,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             mv.aconst("length");
             mv.swap();
             mv.iconst(0);
-            mv.invokestatic(Methods.AbstractOperations_Put);
+            mv.invoke(Methods.AbstractOperations_Put);
         }
 
         return ValType.Object;
@@ -356,7 +356,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         mv.invokestatic(codegen.getClassName(), codegen.methodName(node) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
         mv.load(Register.ExecutionContext);
-        mv.invokestatic(Methods.ScriptRuntime_EvaluateArrowFunction);
+        mv.invoke(Methods.ScriptRuntime_EvaluateArrowFunction);
 
         return ValType.Object;
     }
@@ -460,7 +460,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                     ToString(ltype, mv);
                     if (!((StringLiteral) right).getValue().isEmpty()) {
                         right.accept(this, mv);
-                        mv.invokestatic(Methods.ScriptRuntime_add_str);
+                        mv.invoke(Methods.ScriptRuntime_add_str);
                     }
                     // r lref r
                     mv.dupX1();
@@ -476,7 +476,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                 mv.toBoxed(rtype);
                 // lref lval rval
                 mv.load(Register.Realm);
-                mv.invokestatic(Methods.ScriptRuntime_add);
+                mv.invoke(Methods.ScriptRuntime_add);
                 // r lref r
                 mv.dupX1();
                 PutValue(left, ltype, mv);
@@ -695,7 +695,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                     ValType rtype = evalAndGetValue(right, mv);
                     rtype = ToPrimitive(rtype, null, mv);
                     ToString(rtype, mv);
-                    mv.invokestatic(Methods.ScriptRuntime_add_str);
+                    mv.invoke(Methods.ScriptRuntime_add_str);
                 }
                 return ValType.String;
             } else if (right instanceof StringLiteral) {
@@ -709,7 +709,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                     ltype = ToPrimitive(ltype, null, mv);
                     ToString(ltype, mv);
                     right.accept(this, mv);
-                    mv.invokestatic(Methods.ScriptRuntime_add_str);
+                    mv.invoke(Methods.ScriptRuntime_add_str);
                 }
                 return ValType.String;
             }
@@ -889,7 +889,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             mv.toBoxed(rtype);
 
             mv.load(Register.Realm);
-            mv.invokestatic(Methods.ScriptRuntime_instanceOfOperator);
+            mv.invoke(Methods.ScriptRuntime_instanceOfOperator);
             return ValType.Boolean;
         }
         case IN: {
@@ -901,7 +901,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             mv.toBoxed(rtype);
 
             mv.load(Register.Realm);
-            mv.invokestatic(Methods.ScriptRuntime_in);
+            mv.invoke(Methods.ScriptRuntime_in);
             return ValType.Boolean;
         }
         case EQ: {
@@ -1101,7 +1101,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         mv.toBoxed(elementType);
         mv.load(Register.Realm);
         mv.iconst(mv.isStrict());
-        mv.invokestatic(Methods.ScriptRuntime_getElement);
+        mv.invoke(Methods.ScriptRuntime_getElement);
 
         return ValType.Reference;
     }
@@ -1114,7 +1114,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         mv.invokestatic(codegen.getClassName(), codegen.methodName(node) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
         mv.load(Register.ExecutionContext);
-        mv.invokestatic(Methods.ScriptRuntime_EvaluateFunctionExpression);
+        mv.invoke(Methods.ScriptRuntime_EvaluateFunctionExpression);
 
         return ValType.Object;
     }
@@ -1126,7 +1126,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
         mv.invokeStaticMH(codegen.getClassName(), codegen.methodName(node), desc);
         mv.load(Register.ExecutionContext);
-        mv.invokestatic(Methods.ScriptRuntime_EvaluateGeneratorComprehension);
+        mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorComprehension);
 
         return ValType.Object;
     }
@@ -1139,7 +1139,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         mv.invokestatic(codegen.getClassName(), codegen.methodName(node) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
         mv.load(Register.ExecutionContext);
-        mv.invokestatic(Methods.ScriptRuntime_EvaluateGeneratorExpression);
+        mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorExpression);
 
         return ValType.Object;
     }
@@ -1149,9 +1149,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         mv.load(Register.ExecutionContext);
         mv.aconst(node.getName());
         if (mv.isStrict()) {
-            mv.invokevirtual(Methods.ExecutionContext_strictIdentifierResolution);
+            mv.invoke(Methods.ExecutionContext_strictIdentifierResolution);
         } else {
-            mv.invokevirtual(Methods.ExecutionContext_nonstrictIdentifierResolution);
+            mv.invoke(Methods.ExecutionContext_nonstrictIdentifierResolution);
         }
 
         return ValType.Reference;
@@ -1163,7 +1163,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         mv.toBoxed(type);
         List<Expression> arguments = node.getArguments();
         if (arguments.isEmpty()) {
-            mv.getstatic(Fields.ScriptRuntime_EMPTY_ARRAY);
+            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
         } else {
             boolean hasSpread = false;
             mv.newarray(arguments.size(), Types.Object);
@@ -1178,19 +1178,19 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
                 mv.astore(Types.Object);
             }
             if (hasSpread) {
-                mv.invokestatic(Methods.ScriptRuntime_toFlatArray);
+                mv.invoke(Methods.ScriptRuntime_toFlatArray);
             }
         }
         mv.lineInfo(node);
         mv.load(Register.Realm);
-        mv.invokestatic(Methods.ScriptRuntime_EvaluateConstructorCall);
+        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
 
         return ValType.Any;
     }
 
     @Override
     public ValType visit(NullLiteral node, MethodGenerator mv) {
-        mv.getstatic(Fields.Null_NULL);
+        mv.get(Fields.Null_NULL);
 
         return ValType.Null;
     }
@@ -1213,7 +1213,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         ObjectLiteralStaticSemantics.validate(node, mv.isStrict());
 
         mv.load(Register.Realm);
-        mv.invokestatic(Methods.OrdinaryObject_ObjectCreate);
+        mv.invoke(Methods.OrdinaryObject_ObjectCreate);
         for (PropertyDefinition property : node.getProperties()) {
             mv.dup();
             codegen.propertyDefinition(property, mv);
@@ -1229,7 +1229,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         mv.aconst(node.getName());
         mv.load(Register.Realm);
         mv.iconst(mv.isStrict());
-        mv.invokestatic(Methods.ScriptRuntime_getProperty);
+        mv.invoke(Methods.ScriptRuntime_getProperty);
 
         return ValType.Reference;
     }
@@ -1239,7 +1239,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         mv.load(Register.Realm);
         mv.aconst(node.getRegexp());
         mv.aconst(node.getFlags());
-        mv.invokestatic(Methods.ScriptRuntime_RegExp);
+        mv.invoke(Methods.ScriptRuntime_RegExp);
 
         return ValType.Object;
     }
@@ -1249,7 +1249,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         ValType type = evalAndGetValue(node.getExpression(), mv);
         mv.toBoxed(type);
         mv.load(Register.Realm);
-        mv.invokestatic(Methods.ScriptRuntime_SpreadArray);
+        mv.invoke(Methods.ScriptRuntime_SpreadArray);
 
         return ValType.Any; // actually Object[]
     }
@@ -1264,23 +1264,23 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     @Override
     public ValType visit(SuperExpression node, MethodGenerator mv) {
         mv.load(Register.ExecutionContext);
-        mv.invokestatic(Methods.ScriptRuntime_GetThisEnvironmentOrThrow);
+        mv.invoke(Methods.ScriptRuntime_GetThisEnvironmentOrThrow);
         if (node.getName() != null) {
             mv.aconst(node.getName());
             mv.iconst(mv.isStrict());
-            mv.invokestatic(Methods.ScriptRuntime_getSuperProperty);
+            mv.invoke(Methods.ScriptRuntime_getSuperProperty);
             return ValType.Reference;
         } else if (node.getExpression() != null) {
             ValType type = evalAndGetValue(node.getExpression(), mv);
             mv.toBoxed(type);
             mv.load(Register.Realm);
             mv.iconst(mv.isStrict());
-            mv.invokestatic(Methods.ScriptRuntime_getSuperElement);
+            mv.invoke(Methods.ScriptRuntime_getSuperElement);
             return ValType.Reference;
         } else {
             assert node.getArguments() != null;
             mv.iconst(mv.isStrict());
-            mv.invokestatic(Methods.ScriptRuntime_getSuperMethod);
+            mv.invoke(Methods.ScriptRuntime_getSuperMethod);
 
             EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
 
@@ -1314,23 +1314,23 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
 
         mv.anew(Types.StringBuilder);
         mv.dup();
-        mv.invokespecial(Methods.StringBuilder_init);
+        mv.invoke(Methods.StringBuilder_init);
 
         boolean chars = true;
         for (Expression expr : node.getElements()) {
             assert chars == (expr instanceof TemplateCharacters);
             if (chars) {
                 mv.aconst(((TemplateCharacters) expr).getValue());
-                mv.invokevirtual(Methods.StringBuilder_append_String);
+                mv.invoke(Methods.StringBuilder_append_String);
             } else {
                 ValType type = evalAndGetValue(expr, mv);
                 ToString(type, mv);
-                mv.invokevirtual(Methods.StringBuilder_append_Charsequence);
+                mv.invoke(Methods.StringBuilder_append_Charsequence);
             }
             chars = !chars;
         }
 
-        mv.invokevirtual(Methods.StringBuilder_toString);
+        mv.invoke(Methods.StringBuilder_toString);
 
         return ValType.String;
     }
@@ -1338,7 +1338,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     @Override
     public ValType visit(ThisExpression node, MethodGenerator mv) {
         mv.load(Register.ExecutionContext);
-        mv.invokevirtual(Methods.ExecutionContext_thisResolution);
+        mv.invoke(Methods.ExecutionContext_thisResolution);
 
         return ValType.Any;
     }
@@ -1382,7 +1382,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             ValType type = expr.accept(this, mv);
             mv.toBoxed(type);
             mv.load(Register.Realm);
-            mv.invokestatic(Methods.ScriptRuntime_delete);
+            mv.invoke(Methods.ScriptRuntime_delete);
             return ValType.Boolean;
         }
         case VOID: {
@@ -1390,7 +1390,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             mv.pop(type);
-            mv.getstatic(Fields.Undefined_UNDEFINED);
+            mv.get(Fields.Undefined_UNDEFINED);
             return ValType.Undefined;
         }
         case TYPEOF: {
@@ -1399,7 +1399,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             ValType type = expr.accept(this, mv);
             mv.toBoxed(type);
             mv.load(Register.Realm);
-            mv.invokestatic(Methods.ScriptRuntime_typeof);
+            mv.invoke(Methods.ScriptRuntime_typeof);
             return ValType.String;
         }
         case PRE_INC: {
@@ -1477,16 +1477,16 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             ValType type = evalAndGetValue(expr, mv);
             mv.toBoxed(type);
         } else {
-            mv.getstatic(Fields.Undefined_UNDEFINED);
+            mv.get(Fields.Undefined_UNDEFINED);
         }
 
         mv.load(Register.ExecutionContext);
         if (node.isDelegatedYield()) {
             mv.lineInfo(node);
-            mv.invokestatic(Methods.ScriptRuntime_delegatedYield);
+            mv.invoke(Methods.ScriptRuntime_delegatedYield);
         } else {
             mv.lineInfo(node);
-            mv.invokestatic(Methods.ScriptRuntime_yield);
+            mv.invoke(Methods.ScriptRuntime_yield);
         }
 
         return ValType.Any;

@@ -44,7 +44,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
      */
     protected final void getLexicalEnvironment(MethodGenerator mv) {
         mv.load(Register.ExecutionContext);
-        mv.invokevirtual(Methods.ExecutionContext_getLexicalEnvironment);
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
     }
 
     /**
@@ -52,9 +52,9 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
      */
     protected final void newObjectEnvironment(MethodGenerator mv, boolean withEnvironment) {
         mv.load(Register.ExecutionContext);
-        mv.invokevirtual(Methods.ExecutionContext_getLexicalEnvironment);
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.iconst(withEnvironment);
-        mv.invokestatic(Methods.LexicalEnvironment_newObjectEnvironment);
+        mv.invoke(Methods.LexicalEnvironment_newObjectEnvironment);
     }
 
     /**
@@ -62,8 +62,8 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
      */
     protected final void newDeclarativeEnvironment(MethodGenerator mv) {
         mv.load(Register.ExecutionContext);
-        mv.invokevirtual(Methods.ExecutionContext_getLexicalEnvironment);
-        mv.invokestatic(Methods.LexicalEnvironment_newDeclarativeEnvironment);
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
+        mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
     }
 
     /**
@@ -72,7 +72,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     protected final void pushLexicalEnvironment(MethodGenerator mv) {
         mv.load(Register.ExecutionContext);
         mv.swap();
-        mv.invokevirtual(Methods.ExecutionContext_pushLexicalEnvironment);
+        mv.invoke(Methods.ExecutionContext_pushLexicalEnvironment);
     }
 
     /**
@@ -80,7 +80,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
      */
     protected final void popLexicalEnvironment(MethodGenerator mv) {
         mv.load(Register.ExecutionContext);
-        mv.invokevirtual(Methods.ExecutionContext_popLexicalEnvironment);
+        mv.invoke(Methods.ExecutionContext_popLexicalEnvironment);
     }
 
     /**
@@ -96,7 +96,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
      * stack: [object] -> [boolean]
      */
     protected final void isUndefinedOrNull(MethodGenerator mv) {
-        mv.invokestatic(Methods.Type_isUndefinedOrNull);
+        mv.invoke(Methods.Type_isUndefinedOrNull);
     }
 
     enum ValType {
@@ -162,7 +162,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
      */
     protected final void GetValue(MethodGenerator mv) {
         mv.load(Register.Realm);
-        mv.invokestatic(Methods.Reference_GetValue);
+        mv.invoke(Methods.Reference_GetValue);
     }
 
     /**
@@ -170,7 +170,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
      */
     protected final void PutValue(MethodGenerator mv) {
         mv.load(Register.Realm);
-        mv.invokestatic(Methods.Reference_PutValue);
+        mv.invoke(Methods.Reference_PutValue);
     }
 
     /**
@@ -194,7 +194,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
             mv.swap();
             assert preferredType == null : "NYI"; // TODO: load enum value?
             mv.aconst(null);
-            mv.invokestatic(Methods.AbstractOperations_ToPrimitive);
+            mv.invoke(Methods.AbstractOperations_ToPrimitive);
             return ValType.Any;
         }
     }
@@ -205,15 +205,15 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     protected final void ToBoolean(ValType from, MethodGenerator mv) {
         switch (from) {
         case Number:
-            mv.invokestatic(Methods.AbstractOperations_ToBoolean_double);
+            mv.invoke(Methods.AbstractOperations_ToBoolean_double);
             return;
         case Number_int:
             mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
-            mv.invokestatic(Methods.AbstractOperations_ToBoolean_double);
+            mv.invoke(Methods.AbstractOperations_ToBoolean_double);
             return;
         case Number_uint:
             mv.cast(Type.LONG_TYPE, Type.DOUBLE_TYPE);
-            mv.invokestatic(Methods.AbstractOperations_ToBoolean_double);
+            mv.invoke(Methods.AbstractOperations_ToBoolean_double);
             return;
         case Undefined:
         case Null:
@@ -224,7 +224,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
             return;
         case String: {
             Label l0 = new Label(), l1 = new Label();
-            mv.invokeinterface(Methods.CharSequence_length);
+            mv.invoke(Methods.CharSequence_length);
             mv.ifeq(l0);
             mv.iconst(true);
             mv.goTo(l1);
@@ -236,7 +236,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
         case Object:
         case Any:
         default:
-            mv.invokestatic(Methods.AbstractOperations_ToBoolean);
+            mv.invoke(Methods.AbstractOperations_ToBoolean);
             return;
         }
     }
@@ -256,7 +256,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
             return;
         case Undefined:
             mv.pop();
-            mv.getstatic(Fields.Double_NaN);
+            mv.get(Fields.Double_NaN);
             return;
         case Null:
             mv.pop();
@@ -266,14 +266,14 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
             mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
             return;
         case String:
-            mv.invokestatic(Methods.AbstractOperations_ToNumber_CharSequence);
+            mv.invoke(Methods.AbstractOperations_ToNumber_CharSequence);
             return;
         case Object:
         case Any:
         default:
             mv.load(Register.Realm);
             mv.swap();
-            mv.invokestatic(Methods.AbstractOperations_ToNumber);
+            mv.invoke(Methods.AbstractOperations_ToNumber);
             return;
         }
     }
@@ -284,7 +284,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     protected final void ToInt32(ValType from, MethodGenerator mv) {
         switch (from) {
         case Number:
-            mv.invokestatic(Methods.AbstractOperations_ToInt32_double);
+            mv.invoke(Methods.AbstractOperations_ToInt32_double);
             return;
         case Number_int:
             return;
@@ -299,15 +299,15 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
         case Boolean:
             return;
         case String:
-            mv.invokestatic(Methods.AbstractOperations_ToNumber_CharSequence);
-            mv.invokestatic(Methods.AbstractOperations_ToInt32_double);
+            mv.invoke(Methods.AbstractOperations_ToNumber_CharSequence);
+            mv.invoke(Methods.AbstractOperations_ToInt32_double);
             return;
         case Object:
         case Any:
         default:
             mv.load(Register.Realm);
             mv.swap();
-            mv.invokestatic(Methods.AbstractOperations_ToInt32);
+            mv.invoke(Methods.AbstractOperations_ToInt32);
             return;
         }
     }
@@ -318,7 +318,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     protected final void ToUint32(ValType from, MethodGenerator mv) {
         switch (from) {
         case Number:
-            mv.invokestatic(Methods.AbstractOperations_ToUint32_double);
+            mv.invoke(Methods.AbstractOperations_ToUint32_double);
             return;
         case Number_int:
             mv.cast(Type.INT_TYPE, Type.LONG_TYPE);
@@ -334,15 +334,15 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
             mv.cast(Type.INT_TYPE, Type.LONG_TYPE);
             return;
         case String:
-            mv.invokestatic(Methods.AbstractOperations_ToNumber_CharSequence);
-            mv.invokestatic(Methods.AbstractOperations_ToUint32_double);
+            mv.invoke(Methods.AbstractOperations_ToNumber_CharSequence);
+            mv.invoke(Methods.AbstractOperations_ToUint32_double);
             return;
         case Object:
         case Any:
         default:
             mv.load(Register.Realm);
             mv.swap();
-            mv.invokestatic(Methods.AbstractOperations_ToUint32);
+            mv.invoke(Methods.AbstractOperations_ToUint32);
             return;
         }
     }
@@ -353,15 +353,15 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     protected final void ToString(ValType from, MethodGenerator mv) {
         switch (from) {
         case Number:
-            mv.invokestatic(Methods.AbstractOperations_ToString_double);
+            mv.invoke(Methods.AbstractOperations_ToString_double);
             return;
         case Number_int:
             mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
-            mv.invokestatic(Methods.AbstractOperations_ToString_double);
+            mv.invoke(Methods.AbstractOperations_ToString_double);
             return;
         case Number_uint:
             mv.cast(Type.LONG_TYPE, Type.DOUBLE_TYPE);
-            mv.invokestatic(Methods.AbstractOperations_ToString_double);
+            mv.invoke(Methods.AbstractOperations_ToString_double);
             return;
         case Undefined:
             mv.pop();
@@ -372,7 +372,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
             mv.aconst("null");
             return;
         case Boolean:
-            mv.invokestatic(Methods.Boolean_toString);
+            mv.invoke(Methods.Boolean_toString);
             return;
         case String:
             return;
@@ -381,7 +381,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
         default:
             mv.load(Register.Realm);
             mv.swap();
-            mv.invokestatic(Methods.AbstractOperations_ToString);
+            mv.invoke(Methods.AbstractOperations_ToString);
             return;
         }
     }
@@ -408,7 +408,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
 
         mv.load(Register.Realm);
         mv.swap();
-        mv.invokestatic(Methods.AbstractOperations_ToObject);
+        mv.invoke(Methods.AbstractOperations_ToObject);
     }
 
     protected void BindingInitialisation(Binding node, MethodGenerator mv) {
@@ -428,14 +428,14 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
         // stack: [] -> [<proto,ctor>]
         if (def.getHeritage() == null) {
             mv.load(Register.Realm);
-            mv.invokestatic(Methods.ScriptRuntime_getDefaultClassProto);
+            mv.invoke(Methods.ScriptRuntime_getDefaultClassProto);
         } else {
             // FIXME: spec bug (ClassHeritage runtime evaluation not defined)
             ValType type = codegen.expression(def.getHeritage(), mv);
             mv.toBoxed(type);
             invokeGetValue(def.getHeritage(), mv);
             mv.load(Register.Realm);
-            mv.invokestatic(Methods.ScriptRuntime_getClassProto);
+            mv.invoke(Methods.ScriptRuntime_getClassProto);
         }
 
         // stack: [<proto,ctor>] -> [ctor, proto]
@@ -455,18 +455,18 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
             mv.dup2();
 
             // stack: [ctor, proto, scope, proto, scope] -> [ctor, proto, scope, proto, envRec]
-            mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
             // stack: [ctor, proto, scope, proto, envRec] -> [ctor, proto, scope, proto, envRec]
             mv.dup();
             mv.aconst(className);
-            mv.invokeinterface(Methods.EnvironmentRecord_createImmutableBinding);
+            mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
 
             // stack: [ctor, proto, scope, proto, envRec] -> [ctor, proto, scope]
             mv.swap();
             mv.aconst(className);
             mv.swap();
-            mv.invokeinterface(Methods.EnvironmentRecord_initializeBinding);
+            mv.invoke(Methods.EnvironmentRecord_initializeBinding);
 
             // stack: [ctor, proto, scope] -> [ctor, proto]
             pushLexicalEnvironment(mv);
@@ -483,14 +483,14 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
             mv.invokestatic(codegen.getClassName(), codegen.methodName(constructor) + "_rti",
                     Type.getMethodDescriptor(Types.RuntimeInfo$Function));
             mv.load(Register.ExecutionContext);
-            mv.invokestatic(Methods.ScriptRuntime_EvaluateConstructorMethod);
+            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
         } else {
             // default constructor
             // stack: [ctor, proto] -> [proto, F]
             mv.dupX1();
-            mv.invokestatic(Methods.ScriptRuntime_CreateDefaultConstructor);
+            mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
             mv.load(Register.ExecutionContext);
-            mv.invokestatic(Methods.ScriptRuntime_EvaluateConstructorMethod);
+            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
         }
 
         // stack: [proto, F] -> [F, proto]

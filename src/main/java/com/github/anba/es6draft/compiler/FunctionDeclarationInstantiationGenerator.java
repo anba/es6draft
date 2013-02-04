@@ -45,7 +45,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         public void begin() {
             super.begin();
             load(Register.ExecutionContext);
-            invokevirtual(Methods.ExecutionContext_getRealm);
+            invoke(Methods.ExecutionContext_getRealm);
             store(Register.Realm);
         }
 
@@ -93,12 +93,12 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
 
         int env = mv.newVariable(Types.LexicalEnvironment);
         mv.load(Register.ExecutionContext);
-        mv.invokevirtual(Methods.ExecutionContext_getVariableEnvironment);
+        mv.invoke(Methods.ExecutionContext_getVariableEnvironment);
         mv.store(env, Types.LexicalEnvironment);
 
         int envRec = mv.newVariable(Types.EnvironmentRecord);
         mv.load(env, Types.LexicalEnvironment);
-        mv.invokevirtual(Methods.LexicalEnvironment_getEnvRec);
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.store(envRec, Types.EnvironmentRecord);
 
         Set<String> bindings = new HashSet<>();
@@ -144,7 +144,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 bindings.add(paramName);
                 createMutableBinding(envRec, paramName, false, mv);
                 // stack: [undefined] -> []
-                mv.getstatic(Fields.Undefined_UNDEFINED);
+                mv.get(Fields.Undefined_UNDEFINED);
                 initializeBinding(envRec, paramName, mv);
             }
         }
@@ -216,7 +216,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     private void InstantiateArgumentsObject(MethodGenerator mv) {
         mv.load(Register.Realm);
         mv.load(ARGUMENTS, Types.Object_);
-        mv.invokestatic(Methods.ExoticArguments_InstantiateArgumentsObject);
+        mv.invoke(Methods.ExoticArguments_InstantiateArgumentsObject);
     }
 
     private void BindingInitialisation(FunctionNode node, MethodGenerator mv) {
@@ -230,7 +230,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.dup();
         mv.load(Register.Realm);
         mv.swap();
-        mv.invokestatic(Methods.ExoticArguments_CompleteStrictArgumentsObject);
+        mv.invoke(Methods.ExoticArguments_CompleteStrictArgumentsObject);
     }
 
     private void CompleteMappedArgumentsObject(int env, FormalParameterList formals,
@@ -242,7 +242,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.load(FUNCTION, Types.Function);
         astore_string(mv, mappedNames(formals));
         mv.load(env, Types.LexicalEnvironment);
-        mv.invokestatic(Methods.ExoticArguments_CompleteMappedArgumentsObject);
+        mv.invoke(Methods.ExoticArguments_CompleteMappedArgumentsObject);
     }
 
     private String[] mappedNames(FormalParameterList formals) {
