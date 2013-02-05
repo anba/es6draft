@@ -120,7 +120,7 @@ public class StringConstructor extends OrdinaryObject implements Scriptable, Cal
         /**
          * 15.5.3.3 String.fromCodePoint ( ...codePoints)
          */
-        @Function(name = "fromCodePoint", arity = 1)
+        @Function(name = "fromCodePoint", arity = 0)
         public static Object fromCodePoint(Realm realm, Object thisValue, Object... codePoints) {
             int length = codePoints.length;
             int elements[] = new int[length];
