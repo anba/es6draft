@@ -186,6 +186,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
         /* step 5-8 (implicit) */
         /* step 9 */
         f.defineOwnProperty("length", new PropertyDescriptor(0, false, false, false));
+        f.defineOwnProperty("name", new PropertyDescriptor("ThrowTypeError", false, false, false));
         /* step 10 */
         f.preventExtensions();
 
