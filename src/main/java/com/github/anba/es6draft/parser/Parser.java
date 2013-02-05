@@ -80,13 +80,11 @@ public class Parser {
         final BlockContext funContext = blockContext;
 
         ParseContext() {
-            // assert Parser.this.context == null;
             this.parent = null;
             this.kind = null;
         }
 
         ParseContext(ParseContext parent, ContextKind kind) {
-            // assert Parser.this.context == parent;
             this.parent = parent;
             this.kind = kind;
             if (parent.strictMode == StrictMode.Strict) {
@@ -3119,14 +3117,7 @@ public class Parser {
         consume(Token.LP);
         Expression expr = expression(true, true);
         if (token() == Token.FOR) {
-            List<ComprehensionFor> list = comprehensionForList();
-            Expression test = null;
-            if (token() == Token.IF) {
-                consume(Token.IF);
-                test = expression(true);
-            }
-            consume(Token.RP);
-            return new GeneratorComprehension(expr, list, test);
+            return generatorComprehensionTail(expr);
         } else {
             consume(Token.RP);
             expr.addParentheses();
@@ -3254,6 +3245,7 @@ public class Parser {
      * </pre>
      */
     private List<ComprehensionFor> comprehensionForList() {
+        // create new blockContext for each comprehensionFor element?
         List<ComprehensionFor> list = newSmallList();
         while (token() == Token.FOR) {
             consume(Token.FOR);
@@ -3371,21 +3363,16 @@ public class Parser {
      * 
      * @see #groupingOperatorOrGeneratorComprehension()
      */
-    @SuppressWarnings("unused")
-    private void generatorComprehension() {
-        consume(Token.LP);
-        expression(true);
-        do {
-            consume(Token.FOR);
-            binding();
-            consume("of");
-            expression(true);
-        } while (token() == Token.FOR);
+    private GeneratorComprehension generatorComprehensionTail(Expression head) {
+        List<ComprehensionFor> list = comprehensionForList();
+        Expression test = null;
         if (token() == Token.IF) {
             consume(Token.IF);
-            expression(true);
+            test = expression(true);
         }
         consume(Token.RP);
+
+        return new GeneratorComprehension(head, list, test);
     }
 
     /**
