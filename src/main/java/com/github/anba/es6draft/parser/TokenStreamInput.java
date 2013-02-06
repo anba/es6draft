@@ -37,7 +37,7 @@ public interface TokenStreamInput {
     void reset(int pos);
 
     /**
-     * Return the source characters from position {@code from} to position {@code to} (exclusive)
+     * Returns the source characters from position {@code from} to position {@code to} (exclusive)
      */
     String range(int from, int to);
 }

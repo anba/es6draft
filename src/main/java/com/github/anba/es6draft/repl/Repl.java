@@ -18,6 +18,7 @@ import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -161,7 +162,7 @@ public class Repl {
 
     private String loadFile(Path path) throws IOException {
         byte[] bytes = Files.readAllBytes(path);
-        return new String(bytes, "UTF-8");
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private Object evaluate(Realm realm, String source, String sourceName) {
@@ -306,7 +307,7 @@ public class Repl {
         @Function(name = "build", arity = 0)
         public String build() {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    Repl.class.getResourceAsStream("/build-date"), "UTF-8"))) {
+                    Repl.class.getResourceAsStream("/build-date"), StandardCharsets.UTF_8))) {
                 return reader.readLine();
             } catch (IOException e) {
                 throw throwError(realm(), "could not read build-date file");

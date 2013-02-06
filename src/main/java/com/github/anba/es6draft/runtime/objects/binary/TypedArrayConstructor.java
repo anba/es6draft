@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.AllocateArrayBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CloneArrayBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetArrayBufferData;
@@ -20,7 +20,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -131,14 +131,14 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         ElementKind elementType = elementKind;
         Object obj = thisValue;
         if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
-            throw ScriptRuntime.throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         if (Type.isUndefined(obj) || !(obj instanceof TypedArrayObject)) {
             return OrdinaryConstruct(realm, this, args);
         }
         TypedArrayObject array = (TypedArrayObject) obj;
         if (array.getData() != null) {
-            throwTypeError(realm, "incompatible object");
+            throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         long elementLength = ToUint32(realm, length);
         ArrayBufferObject data = AllocateArrayBuffer(realm,
@@ -163,14 +163,14 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         ElementKind elementType = elementKind;
         Object obj = thisValue;
         if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
-            throw ScriptRuntime.throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         if (Type.isUndefined(obj) || !(obj instanceof TypedArrayObject)) {
             return OrdinaryConstruct(realm, this, args);
         }
         TypedArrayObject array = (TypedArrayObject) obj;
         if (array.getData() != null) {
-            throwTypeError(realm, "incompatible object");
+            throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         long elementLength = srcArray.getArrayLength();
         ElementKind srcType = srcArray.getElementKind();
@@ -195,7 +195,7 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
     private Object callWithArray(Realm realm, Object thisValue, Scriptable _array, Object[] args) {
         Object obj = thisValue;
         if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
-            throw ScriptRuntime.throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         // FIXME: spec bug (variable srcArray unused)
         @SuppressWarnings("unused")
@@ -206,7 +206,7 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         }
         TypedArrayObject array = (TypedArrayObject) obj;
         if (array.getData() != null) {
-            throwTypeError(realm, "incompatible object");
+            throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         Object arrayLength = Get(_array, "length");
         long elementLength = ToUint32(realm, arrayLength);
@@ -240,7 +240,7 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
 
         Object obj = thisValue;
         if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
-            throw ScriptRuntime.throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         {
             // FIXME: spec bug (this check is not in spec)
@@ -253,25 +253,25 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         int elementSize = elementType.size();
         long offset = ToUint32(realm, byteOffset);
         if (offset % elementSize != 0) {
-            throwRangeError(realm, "invalid offset");
+            throwRangeError(realm, Messages.Key.InvalidByteOffset);
         }
         long bufferByteLength = buffer.getByteLength();
         long newByteLength;
         if (Type.isUndefined(length)) {
             if (bufferByteLength % elementSize != 0) {
-                throwRangeError(realm, "invalid length");
+                throwRangeError(realm, Messages.Key.InvalidBufferSize);
             }
             newByteLength = bufferByteLength - offset;
         } else {
             long newLength = ToUint32(realm, length);
             newByteLength = newLength * elementSize;
             if (newByteLength > bufferByteLength) {
-                throwRangeError(realm, "invalid length");
+                throwRangeError(realm, Messages.Key.InvalidBufferSize);
             }
         }
         TypedArrayObject array = (TypedArrayObject) obj;
         if (array.getData() != null) {
-            throwTypeError(realm, "incompatible object");
+            throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         array.setData(buffer);
         array.setElementKind(elementType);
@@ -296,7 +296,7 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
             Intrinsics prototype) {
         Object f = thisValue;
         if (!IsConstructor(f)) {
-            throwTypeError(realm, "invalid constructor");
+            throwTypeError(realm, Messages.Key.NotConstructor);
         }
         // handle different realm case early
         if (f instanceof com.github.anba.es6draft.runtime.types.Function) {

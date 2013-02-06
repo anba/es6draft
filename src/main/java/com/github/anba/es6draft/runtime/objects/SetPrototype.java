@@ -9,8 +9,8 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.SetIteratorPrototype.CreateSetIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -67,7 +68,7 @@ public class SetPrototype extends OrdinaryObject implements Scriptable, Initiali
             if (m instanceof SetObject) {
                 return (SetObject) m;
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -122,7 +123,7 @@ public class SetPrototype extends OrdinaryObject implements Scriptable, Initiali
             Scriptable s = ToObject(realm, thisValue);
             LinkedMap<Object, Void> entries = SetObject(realm, s).getSetData();
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             for (Iterator<Entry<Object, Void>> itr = entries.iterator(); itr.hasNext();) {

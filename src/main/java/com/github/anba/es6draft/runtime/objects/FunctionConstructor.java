@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.Script;
@@ -116,9 +116,9 @@ public class FunctionConstructor extends OrdinaryObject implements Scriptable, C
             return ScriptLoader.load(className, parsedScript);
         } catch (ParserException e) {
             if (e.getExceptionType() == ExceptionType.ReferenceError) {
-                throw throwReferenceError(realm, e.getMessage());
+                throw throwReferenceError(realm, e.getMessageKey(), e.getMessageArguments());
             }
-            throw throwSyntaxError(realm, e.getMessage());
+            throw throwSyntaxError(realm, e.getMessageKey(), e.getMessageArguments());
         }
     }
 

@@ -9,11 +9,12 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Function;
@@ -219,7 +220,7 @@ public class ExoticArguments extends OrdinaryObject implements Scriptable {
         if (!isMapped) {
             Object v = super.get(propertyKey, accessorThisValue);
             if ("caller".equals(propertyKey) && v instanceof Function && ((Function) v).isStrict()) {
-                throw throwTypeError(realm(), "poison pill caller");
+                throw throwTypeError(realm(), Messages.Key.StrictModePoisonPill);
             }
             return v;
         }

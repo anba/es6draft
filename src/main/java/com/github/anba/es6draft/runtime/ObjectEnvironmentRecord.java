@@ -10,9 +10,10 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.DefineProperty
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 
@@ -92,7 +93,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
             if (!strict) {
                 return UNDEFINED;
             }
-            throw throwReferenceError(realm, "");
+            throw throwReferenceError(realm, Messages.Key.UnresolvableReference, name);
         }
         return Get(bindings, name);
     }

@@ -7,15 +7,16 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -51,7 +52,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable, 
         long totalOffset = byteOffset + ToUint32(realm, Get(view, "byteOffset"));
         long byteLength = ToUint32(realm, Get(view, "byteLength"));
         if (totalOffset >= byteLength) {
-            throwRangeError(realm, "invalid length");
+            throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
         }
         ArrayBufferObject buffer = (ArrayBufferObject) Get(view, "buffer");
         return GetValueFromBuffer(buffer, totalOffset, type, !isLittleEndian);
@@ -67,7 +68,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable, 
         long totalOffset = byteOffset + ToUint32(realm, Get(view, "byteOffset"));
         long byteLength = ToUint32(realm, Get(view, "byteLength"));
         if (totalOffset >= byteLength) {
-            throwRangeError(realm, "invalid length");
+            throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
         }
         ArrayBufferObject buffer = (ArrayBufferObject) Get(view, "buffer");
         SetValueInBuffer(buffer, totalOffset, type, value, !isLittleEndian);
@@ -83,7 +84,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable, 
             if (m instanceof DataViewObject) {
                 return (DataViewObject) m;
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype

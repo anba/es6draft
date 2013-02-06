@@ -10,12 +10,13 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyBlockElements;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -61,7 +62,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, 
             if (m instanceof ArrayBufferObject) {
                 return (ArrayBufferObject) m;
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -101,7 +102,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, 
             double newLen = _final - first;
             Callable ctor = GetMethod(realm, obj, "constructor");
             if (ctor == null || !IsConstructor(ctor)) {
-                throwTypeError(realm, "invalid constructor");
+                throwTypeError(realm, Messages.Key.NotConstructor);
             }
             ArrayBufferObject _new = ArrayBufferObject(realm,
                     ToObject(realm, ((Constructor) ctor).construct(newLen)));

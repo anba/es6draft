@@ -7,14 +7,15 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.DateAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -105,7 +106,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (object instanceof DateObject) {
                 return (DateObject) object;
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -671,7 +672,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
         public static Object toISOString(Realm realm, Object thisValue) {
             double dateValue = date(realm, thisValue).getDateValue();
             if (!isFinite(dateValue)) {
-                throw throwRangeError(realm, "");
+                throw throwRangeError(realm, Messages.Key.InvalidDateValue);
             }
             return DatePrototype.toISOString(dateValue);
         }
@@ -688,7 +689,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             }
             Object toISO = Get(o, "toISOString");
             if (!IsCallable(toISO)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             return ((Callable) toISO).call(o);
         }
@@ -699,15 +700,20 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
         @Function(name = "@@ToPrimitive", arity = 1, symbol = BuiltinSymbol.ToPrimitive)
         public static Object ToPrimitive(Realm realm, Object thisValue, Object hint) {
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
+            // FIXME: spec bug (missing argument type check)
             Type tryFirst;
-            if ("string".equals(hint) || "default".equals(hint)) {
+            if (!Type.isString(hint)) {
+                throw throwTypeError(realm, Messages.Key.InvalidToPrimitiveHint, "?");
+            }
+            String _hint = Type.stringValue(hint).toString();
+            if ("string".equals(_hint) || "default".equals(_hint)) {
                 tryFirst = Type.String;
-            } else if ("number".equals(hint)) {
+            } else if ("number".equals(_hint)) {
                 tryFirst = Type.Number;
             } else {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.InvalidToPrimitiveHint, _hint);
             }
             return OrdinaryToPrimitive(realm, Type.objectValue(thisValue), tryFirst);
         }

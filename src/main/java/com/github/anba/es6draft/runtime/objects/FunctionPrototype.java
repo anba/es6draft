@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.BuiltinBrand.hasBuiltinBrand;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionCreate;
@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -95,7 +96,7 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
             if (!(thisValue instanceof Callable)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             return ((Callable) thisValue).toSource();
         }
@@ -107,13 +108,13 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
         public static Object apply(Realm realm, Object thisValue, Object thisArg, Object argArray) {
             Object func = thisValue;
             if (!IsCallable(func)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             if (Type.isUndefinedOrNull(argArray)) {
                 return ((Callable) func).call(thisArg);
             }
             if (!Type.isObject(argArray)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             Scriptable argarray = Type.objectValue(argArray);
             Object len = Get(argarray, "length");
@@ -135,7 +136,7 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
         public static Object call(Realm realm, Object thisValue, Object thisArg, Object... args) {
             Object func = thisValue;
             if (!IsCallable(func)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             return ((Callable) func).call(thisArg, args);
         }
@@ -147,7 +148,7 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
         public static Object bind(Realm realm, Object thisValue, Object thisArg, Object... args) {
             Object target = thisValue;
             if (!IsCallable(target)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             ExoticBoundFunction f = BoundFunctionCreate(realm, (Callable) target, thisArg, args);
             int l;

@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.parser;
 
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
 /**
@@ -13,7 +14,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
  */
 @SuppressWarnings("serial")
 public class ParserEOFException extends ParserException {
-    public ParserEOFException(String message, int line) {
-        super(message, line, ExceptionType.SyntaxError);
+    public ParserEOFException(Messages.Key messageKey, int line, String... args) {
+        super(ExceptionType.SyntaxError, line, messageKey, args);
     }
 }

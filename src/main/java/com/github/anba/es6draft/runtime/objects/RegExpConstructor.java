@@ -8,9 +8,9 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwSyntaxError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Strings.isLineTerminator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -23,6 +23,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.parser.RegExpParser;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -108,14 +109,14 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
 
     public static RegExpObject TestNotInitialisedOrThrow(Realm realm, RegExpObject regexp) {
         if (regexp.isInitialised()) {
-            throwTypeError(realm, "RegExp already initialised");
+            throwTypeError(realm, Messages.Key.RegExpAlreadyInitialised);
         }
         return regexp;
     }
 
     public static RegExpObject TestInitialisedOrThrow(Realm realm, RegExpObject regexp) {
         if (!regexp.isInitialised()) {
-            throwTypeError(realm, "uninitialised RegExp object");
+            throwTypeError(realm, Messages.Key.RegExpNotInitialised);
         }
         return regexp;
     }
@@ -132,7 +133,7 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
             assert pattern instanceof RegExpObject;
             RegExpObject regexp = TestInitialisedOrThrow(realm, (RegExpObject) pattern);
             if (!Type.isUndefined(flags)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotUndefined);
             }
             // FIXME: spec bug (font type for `pattern`) (Bug 1149)
             p = regexp.getPattern();
@@ -153,24 +154,25 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
             switch (f.charAt(i)) {
             case 'g':
                 if (global) {
-                    throw throwSyntaxError(realm, "");
+                    throw throwSyntaxError(realm, Messages.Key.DuplicateRegExpFlag, "global");
                 }
                 global = true;
                 break;
             case 'i':
                 if (ignoreCase) {
-                    throw throwSyntaxError(realm, "");
+                    throw throwSyntaxError(realm, Messages.Key.DuplicateRegExpFlag, "ignoreCase");
                 }
                 ignoreCase = true;
                 break;
             case 'm':
                 if (multiline) {
-                    throw throwSyntaxError(realm, "");
+                    throw throwSyntaxError(realm, Messages.Key.DuplicateRegExpFlag, "multiline");
                 }
                 multiline = true;
                 break;
             default:
-                throw throwSyntaxError(realm, String.format("invalid flag: '%s'", f.charAt(i)));
+                throw throwSyntaxError(realm, Messages.Key.InvalidRegExpFlag,
+                        String.valueOf(f.charAt(i)));
             }
         }
 
@@ -191,7 +193,7 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
             match = Pattern.compile(regexp, iflags);
             negativeLAGroups = parser.negativeLookaheadGroups();
         } catch (ParserException | PatternSyntaxException e) {
-            throw throwSyntaxError(realm, e.getMessage());
+            throw throwSyntaxError(realm, Messages.Key.InvalidRegExpPattern, e.getMessage());
         }
 
         StringBuilder sb = new StringBuilder(p.length());
@@ -262,7 +264,7 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
             hasRestricted |= obj.hasOwnProperty("multiline");
             hasRestricted |= obj.hasOwnProperty("lastIndex");
             if (hasRestricted) {
-                throwTypeError(realm, "RegExp object has restricted property");
+                throwTypeError(realm, Messages.Key.RegExpHasRestricted);
             }
             assert !obj.isInitialised();
             obj.initialise(p, f, match, negativeLAGroups);

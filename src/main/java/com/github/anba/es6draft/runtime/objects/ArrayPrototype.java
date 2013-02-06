@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.strictEqualityComparison;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.CreateArrayIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -323,9 +324,11 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
                 boolean kpresent = HasProperty(o, pk);
                 if (kpresent) {
                     Object kvalue = Get(o, pk);
-                    boolean status = CreateOwnDataProperty(a, ToString(n), kvalue);
+                    String p = ToString(n);
+                    boolean status = CreateOwnDataProperty(a, p, kvalue);
                     if (!status) {
-                        throw throwTypeError(realm, "");
+                        // FIXME: spec bug? (Assert instead of throw TypeError?)
+                        throw throwTypeError(realm, Messages.Key.PropertyNotCreatable, p);
                     }
                 }
             }
@@ -396,7 +399,7 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
                 Comparator<Object> comparator;
                 if (!Type.isUndefined(comparefn)) {
                     if (!IsCallable(comparefn)) {
-                        throw throwTypeError(realm, "");
+                        throw throwTypeError(realm, Messages.Key.NotCallable);
                     }
                     comparator = new FunctionComparator(realm, (Callable) comparefn);
                 } else {
@@ -406,13 +409,15 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
             }
 
             for (int i = 0, offset = 0; i < count; ++i) {
-                if (!obj.set(ToString(offset + i), elements.get(i), obj)) {
-                    throw throwTypeError(realm, "");
+                String p = ToString(offset + i);
+                if (!obj.set(p, elements.get(i), obj)) {
+                    throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, p);
                 }
             }
             for (int i = 0, offset = count; i < undefCount; ++i) {
-                if (!obj.set(ToString(offset + i), UNDEFINED, obj)) {
-                    throw throwTypeError(realm, "");
+                String p = ToString(offset + i);
+                if (!obj.set(p, UNDEFINED, obj)) {
+                    throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, p);
                 }
             }
             for (int i = 0, offset = count + undefCount; i < emptyCount; ++i) {
@@ -607,7 +612,7 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             for (long k = 0; k < len; ++k) {
@@ -633,7 +638,7 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             for (long k = 0; k < len; ++k) {
@@ -660,7 +665,7 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             for (long k = 0; k < len; ++k) {
@@ -683,7 +688,7 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             Scriptable a = ArrayCreate(realm, len);
@@ -708,7 +713,7 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             Scriptable a = ArrayCreate(realm, 0);
@@ -738,11 +743,11 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             if (len == 0 && initialValue == null) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ReduceInitialValue);
             }
             long k = 0;
             Object accumulator = null;
@@ -758,7 +763,7 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
                     }
                 }
                 if (!kpresent) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ReduceInitialValue);
                 }
             }
             for (; k < len; ++k) {
@@ -782,11 +787,11 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             if (len == 0 && initialValue == null) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ReduceInitialValue);
             }
             long k = (len - 1);
             Object accumulator = null;
@@ -802,7 +807,7 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
                     }
                 }
                 if (!kpresent) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ReduceInitialValue);
                 }
             }
             for (; k >= 0; --k) {

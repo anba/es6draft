@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -29,8 +30,8 @@ import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -131,7 +132,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(Realm realm, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             Scriptable proto = Type.objectValue(o).getPrototype();
             if (proto != null) {
@@ -147,7 +148,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         public static Object getOwnPropertyDescriptor(Realm realm, Object thisValue, Object o,
                 Object p) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             Object key = ToPropertyKey(realm, p);
             Property desc;
@@ -165,7 +166,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "getOwnPropertyNames", arity = 1)
         public static Object getOwnPropertyNames(Realm realm, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             List<String> nameList = GetOwnPropertyNames(realm, Type.objectValue(o));
             return CreateArrayFromList(realm, nameList);
@@ -177,7 +178,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "create", arity = 2)
         public static Object create(Realm realm, Object thisValue, Object o, Object properties) {
             if (!(Type.isObject(o) || Type.isNull(o))) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectOrNull);
             }
             Scriptable proto = Type.isObject(o) ? Type.objectValue(o) : null;
             Scriptable obj = ObjectCreate(realm, proto);
@@ -194,7 +195,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         public static Object defineProperty(Realm realm, Object thisValue, Object o, Object p,
                 Object attributes) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             Object key = ToPropertyKey(realm, p);
             PropertyDescriptor desc = ToPropertyDescriptor(realm, attributes);
@@ -221,7 +222,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "seal", arity = 1)
         public static Object seal(Realm realm, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             // FIXME: spec bug (bug 1056)
             MakeObjectSecure(realm, Type.objectValue(o), false);
@@ -234,7 +235,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "freeze", arity = 1)
         public static Object freeze(Realm realm, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             // FIXME: spec bug (bug 1056)
             MakeObjectSecure(realm, Type.objectValue(o), true);
@@ -247,7 +248,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(Realm realm, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             Type.objectValue(o).preventExtensions();
             return o;
@@ -259,7 +260,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "isSealed", arity = 1)
         public static Object isSealed(Realm realm, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             return TestIfSecureObject(realm, Type.objectValue(o), false);
         }
@@ -270,7 +271,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "isFrozen", arity = 1)
         public static Object isFrozen(Realm realm, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             return TestIfSecureObject(realm, Type.objectValue(o), true);
         }
@@ -281,7 +282,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(Realm realm, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             return Type.objectValue(o).isExtensible();
         }
@@ -293,7 +294,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
         public static Object keys(Realm realm, Object thisValue, Object o) {
             // FIXME: spec bug - steps start at 8
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             List<String> nameList = GetOwnPropertyKeys(realm, Type.objectValue(o));
             return CreateArrayFromList(realm, nameList);
@@ -307,7 +308,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
      */
     public static Scriptable ObjectDefineProperties(Realm realm, Object o, Object properties) {
         if (!Type.isObject(o)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         Scriptable obj = Type.objectValue(o);
         Scriptable props = ToObject(realm, properties);

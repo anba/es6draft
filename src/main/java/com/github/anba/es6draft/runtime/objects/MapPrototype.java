@@ -9,8 +9,8 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.MapIteratorPrototype.CreateMapIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -68,7 +69,7 @@ public class MapPrototype extends OrdinaryObject implements Scriptable, Initiali
             if (m instanceof MapObject) {
                 return (MapObject) m;
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -112,7 +113,7 @@ public class MapPrototype extends OrdinaryObject implements Scriptable, Initiali
             Scriptable m = ToObject(realm, thisValue);
             LinkedMap<Object, Object> entries = MapObject(realm, m).getMapData();
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             for (Iterator<Entry<Object, Object>> itr = entries.iterator(); itr.hasNext();) {

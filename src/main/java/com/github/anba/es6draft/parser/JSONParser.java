@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.Obj
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 
@@ -36,8 +37,8 @@ public class JSONParser {
         ts = new JSONTokenStream(new StringTokenStreamInput(source));
     }
 
-    private void reportParseError(String error) {
-        throw new ParserException(error, -1, ExceptionType.SyntaxError);
+    private void reportParseError(Messages.Key messageKey, String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, -1, messageKey, args);
     }
 
     /**
@@ -52,7 +53,7 @@ public class JSONParser {
      */
     private void consume(Token tok) {
         if (tok != token())
-            reportParseError("Expected token -> " + tok.getName());
+            reportParseError(Messages.Key.UnexpectedToken, token().toString(), tok.toString());
         Token next = ts.nextToken();
         if (DEBUG)
             System.out.printf("consume(%s) -> %s\n", tok, next);
@@ -113,7 +114,7 @@ public class JSONParser {
         case LB:
             return jsonArray();
         default:
-            reportParseError("invalid JSON literal");
+            reportParseError(Messages.Key.InvalidToken, tok.toString());
             return null;
         }
     }

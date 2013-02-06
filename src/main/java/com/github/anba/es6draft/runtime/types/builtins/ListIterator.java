@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.MakeObjectSecure;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -17,6 +17,7 @@ import java.util.NoSuchElementException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -71,7 +72,7 @@ public class ListIterator<T> extends OrdinaryObject implements Scriptable {
             if (object instanceof ListIterator) {
                 return (ListIterator<?>) object;
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype

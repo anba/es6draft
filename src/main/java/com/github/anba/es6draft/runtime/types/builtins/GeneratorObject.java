@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.concurrent.Callable;
@@ -20,6 +20,7 @@ import java.util.concurrent.SynchronousQueue;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -158,12 +159,12 @@ public class GeneratorObject extends OrdinaryObject implements Scriptable, Initi
         GeneratorState state = this.state;
         switch (state) {
         case Executing:
-            throw throwTypeError(realm(), "already executing generator");
+            throw throwTypeError(realm(), Messages.Key.GeneratorExecuting);
         case Closed:
-            throw throwTypeError(realm(), "generator is closed");
+            throw throwTypeError(realm(), Messages.Key.GeneratorClosed);
         case Newborn: {
             if (value != UNDEFINED) {
-                throw throwTypeError(realm(), "newborn generator with non-undefined argument");
+                throw throwTypeError(realm(), Messages.Key.GeneratorNewbornSend);
             }
             start0();
             return execute0();
@@ -183,9 +184,9 @@ public class GeneratorObject extends OrdinaryObject implements Scriptable, Initi
         GeneratorState state = this.state;
         switch (state) {
         case Executing:
-            throw throwTypeError(realm(), "already executing generator");
+            throw throwTypeError(realm(), Messages.Key.GeneratorExecuting);
         case Closed:
-            throw throwTypeError(realm(), "generator is closed");
+            throw throwTypeError(realm(), Messages.Key.GeneratorClosed);
         case Newborn: {
             this.state = GeneratorState.Closed;
             throw ScriptRuntime._throw(value);
@@ -205,7 +206,7 @@ public class GeneratorObject extends OrdinaryObject implements Scriptable, Initi
         GeneratorState state = this.state;
         switch (state) {
         case Executing:
-            throw throwTypeError(realm(), "already executing generator");
+            throw throwTypeError(realm(), Messages.Key.GeneratorExecuting);
         case Closed:
             return UNDEFINED;
         case Newborn: {
@@ -248,7 +249,7 @@ public class GeneratorObject extends OrdinaryObject implements Scriptable, Initi
             if (object instanceof GeneratorObject) {
                 return (GeneratorObject) object;
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype

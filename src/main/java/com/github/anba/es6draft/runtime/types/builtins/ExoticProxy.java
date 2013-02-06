@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.CompletePropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
@@ -16,10 +16,11 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.IsCompatiblePropertyDescriptor;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -149,7 +150,7 @@ public class ExoticProxy implements Scriptable {
         Object handlerProto = trap.call(handler, target);
         Scriptable targetProto = target.getPrototype();
         if (!SameValue(handlerProto, maskNull(targetProto))) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ProxySameValue);
         }
         assert (Type.isNull(handlerProto) || Type.isObject(handlerProto));
         return (Scriptable) unmaskNull(handlerProto);
@@ -175,7 +176,7 @@ public class ExoticProxy implements Scriptable {
         Object getProtoResult = getProtoTrap.call(handler, target);
         Scriptable targetProto = target.getPrototype();
         if (!SameValue(getProtoResult, maskNull(targetProto))) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ProxySameValue);
         }
         return trapResult;
     }
@@ -195,7 +196,7 @@ public class ExoticProxy implements Scriptable {
         boolean proxyIsExtensible = ToBoolean(trapResult);
         boolean targetIsExtensible = target.isExtensible();
         if (proxyIsExtensible != targetIsExtensible) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
         }
         return proxyIsExtensible;
     }
@@ -222,7 +223,7 @@ public class ExoticProxy implements Scriptable {
         boolean proxyIsExtensible = ToBoolean(isTrapResult);
         boolean targetIsExtensible = target.isExtensible();
         if (proxyIsExtensible != targetIsExtensible) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
         }
     }
 
@@ -258,11 +259,11 @@ public class ExoticProxy implements Scriptable {
             Property targetDesc = __getOwnProperty(target, propertyKey);
             if (targetDesc != null) {
                 if (!targetDesc.isConfigurable()) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
                 }
                 boolean extensibleTarget = target.isExtensible();
                 if (!extensibleTarget) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
                 }
             }
         } else {
@@ -272,7 +273,7 @@ public class ExoticProxy implements Scriptable {
             }
             Property targetDesc = __getOwnProperty(target, propertyKey);
             if (targetDesc == null) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ProxyNoOwnProperty);
             }
         }
         return success;
@@ -306,7 +307,7 @@ public class ExoticProxy implements Scriptable {
         }
         Object trapResultObj = trap.call(handler, target, propertyKey);
         if (!(Type.isObject(trapResultObj) || Type.isUndefined(trapResultObj))) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ProxyNotObjectOrUndefined);
         }
         // TODO: need copy b/c of side-effects?
         Property targetDesc = __getOwnProperty(target, propertyKey);
@@ -315,11 +316,11 @@ public class ExoticProxy implements Scriptable {
                 return null;
             }
             if (!targetDesc.isConfigurable()) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
             }
             boolean extensibleTarget = target.isExtensible();
             if (!extensibleTarget) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
             }
             return null;
         }
@@ -329,11 +330,11 @@ public class ExoticProxy implements Scriptable {
         CompletePropertyDescriptor(resultDesc, targetDesc);
         boolean valid = IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc);
         if (!valid) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ProxyIncompatibleDescriptor);
         }
         if (!resultDesc.isConfigurable()) {
             if (targetDesc != null && targetDesc.isConfigurable()) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
             }
         }
         // TODO: [[Origin]] ???
@@ -377,17 +378,17 @@ public class ExoticProxy implements Scriptable {
         boolean extensibleTarget = target.isExtensible();
         if (targetDesc == null) {
             if (!extensibleTarget) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
             }
             if (!desc.isConfigurable()) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
             }
         } else {
             if (!IsCompatiblePropertyDescriptor(extensibleTarget, desc, targetDesc)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ProxyIncompatibleDescriptor);
             }
             if (!desc.isConfigurable() && targetDesc.isConfigurable()) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
             }
         }
         return true;
@@ -425,11 +426,11 @@ public class ExoticProxy implements Scriptable {
             Property targetDesc = __getOwnProperty(target, propertyKey);
             if (targetDesc != null) {
                 if (!targetDesc.isConfigurable()) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
                 }
                 boolean extensibleTarget = target.isExtensible();
                 if (!extensibleTarget) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
                 }
             }
         }
@@ -468,13 +469,13 @@ public class ExoticProxy implements Scriptable {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
                     && !targetDesc.isWritable()) {
                 if (!SameValue(trapResult, targetDesc.getValue())) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ProxySameValue);
                 }
             }
             if (targetDesc.isAccessorDescriptor() && !targetDesc.isConfigurable()
                     && targetDesc.getGetter() == null) {
                 if (trapResult != UNDEFINED) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ProxyNoGetter);
                 }
             }
         }
@@ -516,12 +517,12 @@ public class ExoticProxy implements Scriptable {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
                     && !targetDesc.isWritable()) {
                 if (!SameValue(value, targetDesc.getValue())) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ProxySameValue);
                 }
             }
             if (targetDesc.isAccessorDescriptor() && !targetDesc.isConfigurable()) {
                 if (targetDesc.getSetter() == null) {
-                    throw throwTypeError(realm, "");
+                    throw throwTypeError(realm, Messages.Key.ProxyNoSetter);
                 }
             }
         }
@@ -563,7 +564,7 @@ public class ExoticProxy implements Scriptable {
             return true;
         }
         if (!targetDesc.isConfigurable()) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
         }
         return true;
     }
@@ -581,7 +582,7 @@ public class ExoticProxy implements Scriptable {
         }
         Object trapResult = trap.call(handler, target);
         if (!Type.isObject(trapResult)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ProxyNotObject);
         }
         return Type.objectValue(trapResult);
     }
@@ -599,7 +600,7 @@ public class ExoticProxy implements Scriptable {
         }
         Object trapResult = trap.call(handler, target);
         if (!Type.isObject(trapResult)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ProxyNotObject);
         }
         return Type.objectValue(trapResult);
     }

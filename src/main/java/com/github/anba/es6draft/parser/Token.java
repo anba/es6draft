@@ -14,9 +14,7 @@ public enum Token {
     BREAK("break"), CASE("case"), CATCH("catch"), CLASS("class"), CONTINUE("continue"), CONST(
             "const"), DEBUGGER("debugger"), DEFAULT("default"), DELETE("delete"), DO("do"), ELSE(
             "else"), EXPORT("export"), FINALLY("finally"), FOR("for"), FUNCTION("function"), IF(
-            "if"), IMPORT("import"), IN("in"), INSTANCEOF("instanceof"),
-    LET("let"),
-    NEW("new"),
+            "if"), IMPORT("import"), IN("in"), INSTANCEOF("instanceof"), LET("let"), NEW("new"),
     RETURN("return"),
     SUPER("super"),
     SWITCH("switch"),
@@ -32,8 +30,7 @@ public enum Token {
     ENUM("enum"),
     EXTENDS("extends"),
     // FutureReservedWord (strict) -> 7.6.1.2
-    IMPLEMENTS("implements"), INTERFACE("interface"),
-    PACKAGE("package"),
+    IMPLEMENTS("implements"), INTERFACE("interface"), PACKAGE("package"),
     PRIVATE("private"),
     PROTECTED("protected"),
     PUBLIC("public"),
@@ -52,16 +49,16 @@ public enum Token {
     // DivPunctuator -> 7.7
     DIV("/"), ASSIGN_DIV("/="),
     // Literal
-    NULL("null"), TRUE("true"), FALSE("false"), NUMBER("number"), STRING("string"),
-    REGEXP("regexp"),
+    NULL("null"), TRUE("true"), FALSE("false"), NUMBER("<number>"), STRING("<string>"), REGEXP(
+            "<regexp>"),
     // Template
     TEMPLATE("`"),
     // Comment
-    COMMENT("comment"),
+    COMMENT("<comment>"),
     // Identifier
-    NAME("name"),
+    NAME("<name>"),
     // EOF, Error
-    EOF("eof"), ERROR("error");
+    EOF("<eof>"), ERROR("<error>");
 
     private final String name;
 
@@ -70,6 +67,11 @@ public enum Token {
     }
 
     public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
         return name;
     }
 }

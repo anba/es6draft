@@ -9,9 +9,9 @@ package com.github.anba.es6draft.runtime.objects.binary;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwInternalError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -21,6 +21,7 @@ import java.nio.ByteOrder;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -71,13 +72,13 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
     public static ByteBuffer CreateByteArrayBlock(Realm realm, long bytes) {
         // assert (bytes >= 0 && bytes <= Integer.MAX_VALUE);
         if (bytes > Integer.MAX_VALUE) {
-            throwInternalError(realm, "Out of memory");
+            throwInternalError(realm, Messages.Key.OutOfMemory);
         }
         try {
             // default byte-order is little-endian
             return ByteBuffer.allocate((int) bytes).order(ByteOrder.LITTLE_ENDIAN);
         } catch (OutOfMemoryError e) {
-            throw throwInternalError(realm, "Out of memory (vm)");
+            throw throwInternalError(realm, Messages.Key.OutOfMemoryVM);
         }
     }
 
@@ -251,14 +252,14 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
     public Object call(Object thisValue, Object... args) {
         Object length = args.length > 0 ? args[0] : UNDEFINED;
         if (!(Type.isUndefined(thisValue) || Type.isObject(thisValue))) {
-            throwTypeError(realm(), "incompatible object");
+            throwTypeError(realm(), Messages.Key.IncompatibleObject);
         }
         if (Type.isUndefined(thisValue) || !(thisValue instanceof ArrayBufferObject)) {
             return OrdinaryConstruct(realm(), this, args);
         }
         ArrayBufferObject buf = (ArrayBufferObject) thisValue;
         if (buf.getData() != null) {
-            throwTypeError(realm(), "incompatible object");
+            throwTypeError(realm(), Messages.Key.IncompatibleObject);
         }
         // FIXME: spec bug (check for negative, cf. SpiderMonkey/V8)
         long byteLength = ToUint32(realm(), length);
@@ -300,7 +301,7 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
         public static Object create(Realm realm, Object thisValue) {
             Object f = thisValue;
             if (!IsConstructor(f)) {
-                throwTypeError(realm, "invalid constructor");
+                throwTypeError(realm, Messages.Key.NotConstructor);
             }
             return AllocateArrayBuffer(realm, (Constructor) f);
         }

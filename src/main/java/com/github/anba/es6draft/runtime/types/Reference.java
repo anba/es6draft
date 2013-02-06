@@ -8,12 +8,13 @@ package com.github.anba.es6draft.runtime.types;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 
 /**
@@ -109,7 +110,7 @@ public final class Reference {
     public Object GetValue(Realm realm) {
         Object base = getBase();
         if (isUnresolvableReference()) {
-            throw throwReferenceError(realm, String.format("'%s' is not defined", referencedName));
+            throw throwReferenceError(realm, Messages.Key.UnresolvableReference, referencedName);
         } else if (isPropertyReference()) {
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
@@ -158,7 +159,7 @@ public final class Reference {
      */
     public static void PutValue(Object v, Object w, Realm realm) {
         if (!(v instanceof Reference)) {
-            throw throwReferenceError(realm, String.format("value is not a reference"));
+            throw throwReferenceError(realm, Messages.Key.InvalidReference);
         }
         ((Reference) v).PutValue(w, realm);
     }
@@ -172,8 +173,7 @@ public final class Reference {
         Object base = getBase();
         if (isUnresolvableReference()) {
             if (isStrictReference()) {
-                throw throwReferenceError(realm,
-                        String.format("'%s' is not defined", referencedName));
+                throw throwReferenceError(realm, Messages.Key.UnresolvableReference, referencedName);
             }
             Scriptable globalObj = realm.getGlobalThis(); // = GetGlobalObject()
             Put(realm, globalObj, getReferencedName(), w, false);
@@ -184,7 +184,7 @@ public final class Reference {
             boolean succeeded = ((Scriptable) base)
                     .set(getReferencedName(), w, GetThisValue(realm));
             if (!succeeded && isStrictReference()) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, referencedName);
             }
         } else {
             ((EnvironmentRecord) base).setMutableBinding(getReferencedName(), w,
@@ -206,7 +206,7 @@ public final class Reference {
      */
     public Object GetThisValue(Realm realm) {
         if (isUnresolvableReference()) {
-            throw throwReferenceError(realm, String.format("'%s' is not defined", referencedName));
+            throw throwReferenceError(realm, Messages.Key.UnresolvableReference, referencedName);
         }
         if (isSuperReference()) {
             return thisValue;

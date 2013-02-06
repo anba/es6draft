@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.StopIterationObject.IteratorComplete;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -65,14 +66,14 @@ public class MapConstructor extends OrdinaryObject implements Scriptable, Callab
      * 15.14.1.1 MapInitialisation
      */
     public static Scriptable MapInitialisation(Realm realm, Scriptable obj, Object iterable) {
-        if (Type.isObject(obj)) {
-            throw throwTypeError(realm, "");
+        if (!Type.isObject(obj)) {
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         if (!(obj instanceof MapObject)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         if (!obj.isExtensible()) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotExtensible);
         }
         if (!Type.isUndefined(iterable)) {
             Scriptable _iterable = ToObject(realm, iterable);
@@ -80,7 +81,7 @@ public class MapConstructor extends OrdinaryObject implements Scriptable, Callab
             Object itr = Invoke(realm, _iterable, iterator);
             Object adder = Get(obj, "set");
             if (!IsCallable(adder)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             for (;;) {
                 Object next;

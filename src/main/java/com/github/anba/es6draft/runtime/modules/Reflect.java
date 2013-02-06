@@ -8,13 +8,14 @@ package com.github.anba.es6draft.runtime.modules;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -67,7 +68,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
                 Object proto) {
             Scriptable obj = ToObject(realm, target);
             if (!(Type.isObject(proto) || Type.isNull(proto))) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectOrNull);
             }
             Scriptable p = Type.isObject(proto) ? Type.objectValue(proto) : null;
             return obj.setPrototype(p);

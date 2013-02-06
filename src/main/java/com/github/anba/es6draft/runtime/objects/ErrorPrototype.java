@@ -8,11 +8,12 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -70,7 +71,7 @@ public class ErrorPrototype extends ErrorObject implements Scriptable, Initialis
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
             if (!Type.isObject(thisValue)) {
-                throw ScriptRuntime.throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             Scriptable o = Type.objectValue(thisValue);
             Object name = Get(o, "name");

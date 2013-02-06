@@ -6,6 +6,11 @@
  */
 package com.github.anba.es6draft.parser;
 
+import java.text.MessageFormat;
+import java.util.Locale;
+
+import com.github.anba.es6draft.runtime.internal.Messages;
+
 /**
  * {@link RuntimeException} subclass for parser exceptions
  */
@@ -15,29 +20,51 @@ public class ParserException extends RuntimeException {
         SyntaxError, ReferenceError
     }
 
+    private final Messages.Key messageKey;
     private final int line;
     private final ExceptionType type;
+    private final String[] messageArguments;
 
-    public ParserException(String message, int line, ExceptionType type) {
-        super(message);
-        this.line = line;
+    public ParserException(ExceptionType type, int line, Messages.Key messageKey, String... args) {
+        super(messageKey.name());
         this.type = type;
+        this.line = line;
+        this.messageKey = messageKey;
+        this.messageArguments = args;
     }
 
     @Override
     public String getMessage() {
-        String message = super.getMessage();
+        String message = getFormattedMessage();
         if (line != -1) {
-            message += " (@" + line + ")";
+            message += " (line " + line + ")";
         }
         return message;
     }
 
-    public String getPlainMessage() {
-        return super.getMessage();
+    public String getFormattedMessage() {
+        return getFormattedMessage(Locale.getDefault());
+    }
+
+    public String getFormattedMessage(Locale locale) {
+        String pattern = Messages.create(locale).getString(messageKey);
+        MessageFormat format = new MessageFormat(pattern, locale);
+        return format.format(messageArguments);
     }
 
     public ExceptionType getExceptionType() {
         return type;
+    }
+
+    public int getLine() {
+        return line;
+    }
+
+    public Messages.Key getMessageKey() {
+        return messageKey;
+    }
+
+    public String[] getMessageArguments() {
+        return messageArguments;
     }
 }

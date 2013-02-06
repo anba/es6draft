@@ -6,8 +6,9 @@
  */
 package com.github.anba.es6draft.runtime;
 
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.Scriptable;
@@ -70,7 +71,7 @@ public final class LexicalEnvironment {
         if (envRec != null) {
             return envRec.getBindingValue(name, strict);
         }
-        throw throwReferenceError(realm, String.format("'%s' is not defined", name));
+        throw throwReferenceError(realm, Messages.Key.UnresolvableReference, name);
     }
 
     /**

@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.ScriptLoader.ScriptEvaluation;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwSyntaxError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.Script;
@@ -117,9 +117,9 @@ public final class Eval {
             return ScriptLoader.load(className, parsedScript);
         } catch (ParserException e) {
             if (e.getExceptionType() == ExceptionType.ReferenceError) {
-                throw throwReferenceError(realm, e.getMessage());
+                throw throwReferenceError(realm, e.getMessageKey(), e.getMessageArguments());
             }
-            throw throwSyntaxError(realm, e.getMessage());
+            throw throwSyntaxError(realm, e.getMessageKey(), e.getMessageArguments());
         }
     }
 }

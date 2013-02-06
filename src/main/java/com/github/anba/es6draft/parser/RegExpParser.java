@@ -9,6 +9,7 @@ package com.github.anba.es6draft.parser;
 import java.util.BitSet;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
+import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -20,7 +21,7 @@ import com.github.anba.es6draft.parser.ParserException.ExceptionType;
  */
 public class RegExpParser {
     private static final int BACKREF_LIMIT = 0xffff;
-    private static final char[] hexdigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F' };
 
     // CharacterClass \s
@@ -65,8 +66,8 @@ public class RegExpParser {
         return (BitSet) negativeLAGroups.clone();
     }
 
-    private ParserException error(String message) {
-        throw new ParserException(message, -1, ExceptionType.SyntaxError);
+    private ParserException error(Messages.Key messageKey, String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, -1, messageKey, args);
     }
 
     private int peek(int i) {
@@ -91,7 +92,7 @@ public class RegExpParser {
 
     private int mustMatch(char c) {
         if (c != get()) {
-            throw error("");
+            throw error(Messages.Key.RegExpUnexpectedCharacter, String.valueOf((char) c));
         }
         return c;
     }
@@ -132,7 +133,7 @@ public class RegExpParser {
             num = num * 10 + (get() - '0');
             if (num < 0) {
                 // overflow
-                throw error("invalid qualifier");
+                throw error(Messages.Key.RegExpInvalidQualifier);
             }
         }
         return num;
@@ -180,7 +181,7 @@ public class RegExpParser {
         boolean inrange = false;
         charclass: for (;;) {
             if (eof()) {
-                throw error("unmatched '('");
+                throw error(Messages.Key.RegExpUnmatchedCharacter, "[");
             }
 
             int c = get();
@@ -196,20 +197,20 @@ public class RegExpParser {
                 case 'W':
                     // class escape (cannot start/end range)
                     if (inrange)
-                        throw error("invalid range");
+                        throw error(Messages.Key.RegExpInvalidCharacterRange);
                     out.append('\\').append((char) get());
                     continue charclass;
                 case 's':
                     // class escape (cannot start/end range)
                     if (inrange)
-                        throw error("invalid range");
+                        throw error(Messages.Key.RegExpInvalidCharacterRange);
                     mustMatch('s');
                     out.append(characterClass_s);
                     continue charclass;
                 case 'S':
                     // class escape (cannot start/end range)
                     if (inrange)
-                        throw error("invalid range");
+                        throw error(Messages.Key.RegExpInvalidCharacterRange);
                     mustMatch('S');
                     out.append(characterClass_S);
                     continue charclass;
@@ -249,8 +250,8 @@ public class RegExpParser {
                     int start = pos;
                     int x = (hexDigit(get()) << 4) | hexDigit(get());
                     if (x >= 0x00 && x <= 0xff) {
-                        out.append("\\x").append(hexdigits[(x >> 4) & 0xf])
-                                .append(hexdigits[x & 0xf]);
+                        out.append("\\x").append(HEXDIGITS[(x >> 4) & 0xf])
+                                .append(HEXDIGITS[x & 0xf]);
                     } else {
                         // invalid hex escape sequence, use "x"
                         pos = start;
@@ -301,7 +302,7 @@ public class RegExpParser {
                 default: {
                     int d = get();
                     if (d == -1) {
-                        throw error("trailing \\");
+                        throw error(Messages.Key.RegExpTrailingSlash);
                     } else if ((d >= 'a' && d <= 'z') || (d >= 'A' && d <= 'Z')) {
                         // don't escape alpha chars
                         out.append((char) d);
@@ -365,13 +366,13 @@ public class RegExpParser {
      */
     private void disjunction(int depth, int negativedepth) {
         if (depth > 0xffff) {
-            throw error("RegExp too big");
+            throw error(Messages.Key.RegExpPatternTooComplex);
         }
 
         term: for (;;) {
             if (eof()) {
                 if (depth > 0) {
-                    throw error("unmatched '('");
+                    throw error(Messages.Key.RegExpUnmatchedCharacter, "(");
                 }
                 return;
             }
@@ -429,8 +430,8 @@ public class RegExpParser {
                     int start = pos;
                     int x = (hexDigit(get()) << 4) | hexDigit(get());
                     if (x >= 0x00 && x <= 0xff) {
-                        out.append("\\x").append(hexdigits[(x >> 4) & 0xf])
-                                .append(hexdigits[x & 0xf]);
+                        out.append("\\x").append(HEXDIGITS[(x >> 4) & 0xf])
+                                .append(HEXDIGITS[x & 0xf]);
                     } else {
                         // invalid hex escape sequence, use "x"
                         pos = start;
@@ -549,7 +550,7 @@ public class RegExpParser {
                     // CharacterEscape :: IdentityEscape
                     int d = get();
                     if (d == -1) {
-                        throw error("trailing \\");
+                        throw error(Messages.Key.RegExpTrailingSlash);
                     } else if ((d >= 'a' && d <= 'z') || (d >= 'A' && d <= 'Z')) {
                         // don't escape alpha chars
                         out.append((char) d);
@@ -579,7 +580,7 @@ public class RegExpParser {
                         out.append("(?").append((char) d);
                         break;
                     default:
-                        throw error("invalid quantifier");
+                        throw error(Messages.Key.RegExpInvalidQualifier);
                     }
                 } else {
                     groups += 1;
@@ -608,7 +609,7 @@ public class RegExpParser {
                     pos -= 1;
                     return;
                 }
-                throw error("unmatched ')'");
+                throw error(Messages.Key.RegExpUnmatchedCharacter, ")");
             }
 
             case '[': {
@@ -638,7 +639,7 @@ public class RegExpParser {
                 // hasAtom = false;
                 // break atom;
                 // FIXME: web reality
-                throw error("invalid quantifier");
+                throw error(Messages.Key.RegExpInvalidQualifier);
 
             case ']':
             case '}':
@@ -687,7 +688,7 @@ public class RegExpParser {
                     continue term;
                 }
                 if (max != -1 && min > max) {
-                    throw error("invalid quantifier");
+                    throw error(Messages.Key.RegExpInvalidQualifier);
                 }
 
                 // output result
@@ -718,7 +719,7 @@ public class RegExpParser {
             }
 
             // parsed quantifier, but there was no applicable atom -> error!
-            throw error("invalid quantifier");
+            throw error(Messages.Key.RegExpInvalidQualifier);
         }
     }
 }

@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwSyntaxError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
@@ -23,6 +23,7 @@ import com.github.anba.es6draft.parser.JSONParser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
@@ -77,7 +78,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
                 JSONParser parser = new JSONParser(realm, jtext);
                 unfiltered = parser.parse();
             } catch (ParserException e) {
-                throw throwSyntaxError(realm, "invalid JSON literal");
+                throw throwSyntaxError(realm, Messages.Key.InvalidJSONLiteral);
             }
             if (IsCallable(reviver)) {
                 Scriptable root = ObjectCreate(realm);
@@ -325,7 +326,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
             Callable replacerFunction, String indent, String gap, Scriptable value, boolean isJSON) {
         if (stack.contains(value)) {
             if (isJSON) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.CyclicValue);
             } else {
                 return "« ... »";
             }
@@ -386,7 +387,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
             Callable replacerFunction, String indent, String gap, Scriptable value, boolean isJSON) {
         if (stack.contains(value)) {
             if (isJSON) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.CyclicValue);
             } else {
                 return "« ... »";
             }

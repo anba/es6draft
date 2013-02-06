@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.Iterator;
@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -71,7 +72,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Scriptable, 
         if (m instanceof SetObject) {
             return (SetObject) m;
         }
-        throw throwTypeError(realm, "incompatible object");
+        throw throwTypeError(realm, Messages.Key.IncompatibleObject);
     }
 
     /**
@@ -113,11 +114,11 @@ public class SetIteratorPrototype extends OrdinaryObject implements Scriptable, 
         @Function(name = "next", arity = 0)
         public static Object next(Realm realm, Object thisValue) {
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             Scriptable o = ToObject(realm, thisValue);
             if (!(o instanceof SetIterator)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             // Scriptable m = ((SetIterator) o).set;
             // int index = ((SetIterator) o).nextIndex;

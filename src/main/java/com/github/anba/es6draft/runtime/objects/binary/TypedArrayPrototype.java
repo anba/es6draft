@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CloneArrayBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
@@ -17,7 +17,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -79,7 +79,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         if (m instanceof TypedArrayObject) {
             return (TypedArrayObject) m;
         }
-        throw throwTypeError(realm, "incompatible object");
+        throw throwTypeError(realm, Messages.Key.IncompatibleObject);
     }
 
     private static Object __buffer(Realm realm, Object thisValue) {
@@ -87,7 +87,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
-            throw ScriptRuntime.throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         return buffer;
     }
@@ -97,7 +97,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
-            throw ScriptRuntime.throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         return array.getByteLength();
     }
@@ -107,7 +107,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
-            throw ScriptRuntime.throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         return array.getByteOffset();
     }
@@ -117,7 +117,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
-            throw ScriptRuntime.throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         return array.getArrayLength();
     }
@@ -127,7 +127,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         TypedArrayObject target = TypedArrayObject(realm, obj);
         ArrayBufferObject targetBuffer = target.getData();
         if (targetBuffer == null) {
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         long targetLength = target.getArrayLength();
         long targetOffset = ToUint32(realm, offset);
@@ -141,7 +141,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
             Object srcLen = Get(src, "length");
             long srcLength = ToUint32(realm, srcLen);
             if (srcLength + targetOffset > targetLength) {
-                throwRangeError(realm, "array too big");
+                throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
             }
             long targetByteIndex = targetOffset * targetElementSize + targetByteOffset;
             long limit = targetByteIndex + targetElementSize
@@ -159,14 +159,14 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
             TypedArrayObject src = (TypedArrayObject) array;
             ArrayBufferObject srcBuffer = src.getData();
             if (srcBuffer == null) {
-                throw throwTypeError(realm, "incompatible object");
+                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             ElementKind srcType = src.getElementKind();
             int srcElementSize = srcType.size();
             long srcLength = src.getArrayLength();
             long srcByteOffset = src.getByteOffset();
             if (srcLength + targetOffset > targetLength) {
-                throwRangeError(realm, "array too big");
+                throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
             }
             if (SameValue(srcBuffer, targetBuffer)) {
                 // FIXME: spec bug (variable srcData not defined)
@@ -189,7 +189,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         long srcLength = array.getArrayLength();
         long beginInt = ToInt32(realm, begin);
@@ -212,7 +212,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         long beginByteOffset = srcByteOffset + beginIndex * elementSize;
         Object constructor = Get(array, "constructor");
         if (!IsConstructor(constructor)) {
-            throwTypeError(realm, "invalid constructor");
+            throwTypeError(realm, Messages.Key.NotConstructor);
         }
         return ((Constructor) constructor).construct(buffer, beginByteOffset, newLength);
     }
@@ -222,7 +222,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         long length = array.getArrayLength();
         long intIndex = ToUint32(realm, index);
@@ -242,7 +242,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         long length = array.getArrayLength();
         long intIndex = ToUint32(realm, index);

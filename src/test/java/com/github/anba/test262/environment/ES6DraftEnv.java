@@ -61,7 +61,7 @@ abstract class ES6DraftEnv<GLOBAL extends Scriptable & GlobalObject> implements 
                         name = "";
                     }
                 } else if (error instanceof ParserException) {
-                    name = ((ParserException) error).getPlainMessage();
+                    name = ((ParserException) error).getFormattedMessage();
                 } else {
                     name = "";
                 }

@@ -6,9 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -76,7 +77,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Scriptable, C
     public String toSource() {
         return "function BoundFunction() { /* native code */ }";
     }
-    
+
     /**
      * 8.4.1.1 [[Call]]
      */
@@ -105,7 +106,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Scriptable, C
         Callable target = boundTargetFunction;
         /* step 2 */
         if (!(target instanceof Constructor)) {
-            throw throwTypeError(realm(), "");
+            throw throwTypeError(realm(), Messages.Key.NotConstructor);
         }
         /* step 3 */
         Object[] boundArgs = boundArguments;

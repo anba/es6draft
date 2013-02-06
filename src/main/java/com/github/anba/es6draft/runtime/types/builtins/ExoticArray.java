@@ -9,16 +9,17 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 
 /**
@@ -153,7 +154,7 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
         PropertyDescriptor newLenDesc = new PropertyDescriptor(desc);
         long newLen = ToUint32(realm, desc.getValue());
         if (newLen != ToNumber(realm, desc.getValue())) {
-            throw throwRangeError(realm, "");
+            throw throwRangeError(realm, Messages.Key.InvalidArrayLength);
         }
         newLenDesc.setValue(newLen);
         Property oldLenDesc = array.getOwnProperty("length");

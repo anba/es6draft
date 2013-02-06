@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.lang.ref.WeakReference;
@@ -16,6 +16,7 @@ import java.util.WeakHashMap;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -57,7 +58,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Scriptable, Init
             if (m instanceof WeakMapObject) {
                 return (WeakMapObject) m;
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -121,7 +122,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Scriptable, Init
             Scriptable m = ToObject(realm, thisValue);
             WeakHashMap<Object, Object> entries = WeakMap(realm, m).getWeakMapData();
             if (!Type.isObject(key)) {
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             entries.put(key, new WeakReference<>(value));
             return UNDEFINED;

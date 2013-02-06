@@ -7,13 +7,14 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -106,7 +107,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
             long intLen = ToUint32(realm(), len);
             /* step 3 */
             if (intLen != Type.numberValue(len)) {
-                throw throwRangeError(realm(), "");
+                throw throwRangeError(realm(), Messages.Key.InvalidArrayLength);
             }
             /* step 4 */
             Scriptable array = ArrayCreate(realm(), intLen);

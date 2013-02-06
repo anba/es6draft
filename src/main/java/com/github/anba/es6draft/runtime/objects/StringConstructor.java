@@ -7,13 +7,14 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -128,10 +129,10 @@ public class StringConstructor extends OrdinaryObject implements Scriptable, Cal
                 Object next = codePoints[nextIndex];
                 double nextCP = ToNumber(realm, next);
                 if (!SameValue(nextCP, ToInteger(realm, nextCP))) {
-                    throw throwRangeError(realm, "");
+                    throw throwRangeError(realm, Messages.Key.InvalidCodePoint);
                 }
                 if (nextCP < 0 || nextCP > 0x10FFFF) {
-                    throw throwRangeError(realm, "");
+                    throw throwRangeError(realm, Messages.Key.InvalidCodePoint);
                 }
                 elements[nextIndex] = (int) nextCP;
             }

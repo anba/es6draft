@@ -9,14 +9,15 @@ package com.github.anba.es6draft.runtime.objects.binary;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -80,13 +81,13 @@ public class DataViewConstructor extends OrdinaryObject implements Callable, Con
         Object buffer = args.length > 0 ? args[0] : UNDEFINED;
         Scriptable obj = ToObject(realm, buffer);
         if (!(obj instanceof ArrayBufferObject)) {
-            throwTypeError(realm, "incompatible object");
+            throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         long byteOffset = args.length > 1 ? ToUint32(realm, args[1]) : 0;
         long bufferLength = ToUint32(realm, Get(obj, "byteLength"));
         long byteLength = args.length > 2 ? ToUint32(realm, args[2]) : (bufferLength - byteOffset);
         if (byteOffset + byteLength > bufferLength) {
-            throwRangeError(realm, "invalid length");
+            throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
         }
 
         DataViewObject view = new DataViewObject(realm);

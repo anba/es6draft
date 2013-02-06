@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.instanceOfOperator;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
@@ -20,6 +20,7 @@ import org.mozilla.javascript.DToA;
 import org.mozilla.javascript.StringToNumber;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.BooleanObject;
@@ -69,7 +70,7 @@ public final class AbstractOperations {
         Object exoticToPrim = Get(argument, BuiltinSymbol.ToPrimitive.get());
         if (!Type.isUndefined(exoticToPrim)) {
             if (!IsCallable(exoticToPrim))
-                throw throwTypeError(realm, "@@ToPrimitive is not callable");
+                throw throwTypeError(realm, Messages.Key.NotCallable);
             String hint;
             if (preferredType == null) {
                 hint = "default";
@@ -83,7 +84,7 @@ public final class AbstractOperations {
             if (!Type.isObject(result)) {
                 return result;
             }
-            throw throwTypeError(realm, "@@ToPrimitive returned non-primitive type");
+            throw throwTypeError(realm, Messages.Key.NotPrimitiveType);
         }
         if (preferredType == null) {
             preferredType = Type.Number;
@@ -122,7 +123,7 @@ public final class AbstractOperations {
             }
             // FIXME: spec bug!
         }
-        throw throwTypeError(realm, "can't convert object to primitive type");
+        throw throwTypeError(realm, Messages.Key.NoPrimitiveRepresentation);
     }
 
     /**
@@ -313,7 +314,7 @@ public final class AbstractOperations {
         switch (Type.of(val)) {
         case Undefined:
         case Null:
-            throw throwTypeError(realm, "ToObject() on undefined/null");
+            throw throwTypeError(realm, Messages.Key.UndefinedOrNull);
         case Boolean: {
             BooleanObject obj = new BooleanObject(realm, Type.booleanValue(val));
             obj.setPrototype(realm.getIntrinsic(Intrinsics.BooleanPrototype));
@@ -353,7 +354,7 @@ public final class AbstractOperations {
      */
     public static Object CheckObjectCoercible(Realm realm, Object val) {
         if (Type.isUndefinedOrNull(val)) {
-            throw throwTypeError(realm, "CheckObjectCoercible() on undefined/null");
+            throw throwTypeError(realm, Messages.Key.UndefinedOrNull);
         }
         return val;
     }
@@ -440,7 +441,7 @@ public final class AbstractOperations {
             boolean _throw) {
         boolean success = object.set(propertyKey, value, object);
         if (!success && _throw) {
-            throw throwTypeError(realm, "invalid Put()");
+            throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, propertyKey);
         }
     }
 
@@ -451,7 +452,7 @@ public final class AbstractOperations {
             boolean _throw) {
         boolean success = object.set(propertyKey, value, object);
         if (!success && _throw) {
-            throw throwTypeError(realm, "invalid Put()");
+            throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, propertyKey.toString());
         }
     }
 
@@ -486,7 +487,7 @@ public final class AbstractOperations {
             PropertyDescriptor desc) {
         boolean success = object.defineOwnProperty(propertyKey, desc);
         if (!success) {
-            throw throwTypeError(realm, "invalid DefinePropertyOrThrow()");
+            throw throwTypeError(realm, Messages.Key.PropertyNotCreatable, propertyKey);
         }
     }
 
@@ -497,7 +498,7 @@ public final class AbstractOperations {
             PropertyDescriptor desc) {
         boolean success = object.defineOwnProperty(propertyKey, desc);
         if (!success) {
-            throw throwTypeError(realm, "invalid DefinePropertyOrThrow()");
+            throw throwTypeError(realm, Messages.Key.PropertyNotCreatable, propertyKey.toString());
         }
     }
 
@@ -507,7 +508,7 @@ public final class AbstractOperations {
     public static void DeletePropertyOrThrow(Realm realm, Scriptable object, String propertyKey) {
         boolean success = object.delete(propertyKey);
         if (!success) {
-            throw throwTypeError(realm, "invalid DeletePropertyOrThrow()");
+            throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, propertyKey);
         }
     }
 
@@ -517,7 +518,7 @@ public final class AbstractOperations {
     public static void DeletePropertyOrThrow(Realm realm, Scriptable object, Symbol propertyKey) {
         boolean success = object.delete(propertyKey);
         if (!success) {
-            throw throwTypeError(realm, "invalid DeletePropertyOrThrow()");
+            throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, propertyKey.toString());
         }
     }
 
@@ -544,7 +545,7 @@ public final class AbstractOperations {
             return null;
         }
         if (!IsCallable(func)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotCallable);
         }
         return (Callable) func;
     }
@@ -558,7 +559,7 @@ public final class AbstractOperations {
             return null;
         }
         if (!IsCallable(func)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotCallable);
         }
         return (Callable) func;
     }
@@ -577,7 +578,7 @@ public final class AbstractOperations {
         Scriptable obj = ToObject(realm, object);
         Callable func = GetMethod(realm, obj, propertyKey);
         if (func == null) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.MethodNotFound, propertyKey);
         }
         return func.call(object, args);
     }
@@ -596,7 +597,7 @@ public final class AbstractOperations {
         Scriptable obj = ToObject(realm, object);
         Callable func = GetMethod(realm, obj, propertyKey);
         if (func == null) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.MethodNotFound, propertyKey.toString());
         }
         return func.call(object, args);
     }
@@ -773,7 +774,7 @@ public final class AbstractOperations {
         assert c instanceof Scriptable;
         Object p = Get((Scriptable) c, "prototype");
         if (!Type.isObject(p)) {
-            throw throwTypeError(realm, ".prototype not object");
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         /* step 7 */
         for (Scriptable obj = Type.objectValue(o);;) {
@@ -793,7 +794,7 @@ public final class AbstractOperations {
     public static Scriptable OrdinaryCreateFromConstructor(Realm realm, Object constructor,
             Intrinsics intrinsicDefaultProto) {
         if (!Type.isObject(constructor)) {
-            throw throwTypeError(realm, "object is not constructor");
+            throw throwTypeError(realm, Messages.Key.NotConstructor);
         }
         // handle different realms early
         if (constructor instanceof Function) {

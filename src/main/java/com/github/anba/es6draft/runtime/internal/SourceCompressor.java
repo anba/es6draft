@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -17,7 +18,7 @@ import java.util.zip.GZIPOutputStream;
  */
 public final class SourceCompressor {
     private static final int BUFFER_SIZE = 256;
-    private static final String ENCODING = "ISO-8859-1";
+    private static final String ENCODING = StandardCharsets.ISO_8859_1.name();
 
     private SourceCompressor() {
     }

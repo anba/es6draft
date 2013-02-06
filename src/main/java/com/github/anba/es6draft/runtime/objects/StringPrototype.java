@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.TestInitialisedOrThrow;
 import static com.github.anba.es6draft.runtime.objects.RegExpPrototype.RegExpExec;
@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -71,7 +72,7 @@ public class StringPrototype extends ExoticString implements Scriptable, Initial
             if (object instanceof ExoticString) {
                 return ((ExoticString) object).getStringData();
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -665,10 +666,13 @@ public class StringPrototype extends ExoticString implements Scriptable, Initial
             CheckObjectCoercible(realm, thisValue);
             String s = ToFlatString(realm, thisValue);
             double n = ToInteger(realm, count);
-            if (n <= 0 || n == Double.POSITIVE_INFINITY) {
-                throw throwRangeError(realm, "");
+            if (n == 0) {
+                return "";
+            } else if (n < 0 || n == Double.POSITIVE_INFINITY) {
+                throw throwRangeError(realm, Messages.Key.InvalidStringRepeat);
             }
-            StringBuilder t = new StringBuilder(s.length() * (int) n);
+            int capacity = Math.max(s.length() * (int) n, 0);
+            StringBuilder t = new StringBuilder(capacity);
             for (int c = (int) n; c > 0; --c) {
                 t.append(s);
             }

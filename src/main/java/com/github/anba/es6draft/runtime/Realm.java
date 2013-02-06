@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
@@ -69,6 +70,7 @@ public class Realm {
 
     private Locale locale = Locale.getDefault();
     private TimeZone timezone = TimeZone.getDefault();
+    private Messages messages = Messages.create(locale);
 
     // TODO: move into function source object
     private Map<String, Scriptable> templateCallSites = new HashMap<>();
@@ -133,6 +135,10 @@ public class Realm {
 
     public TimeZone getTimezone() {
         return timezone;
+    }
+
+    public String message(Messages.Key key) {
+        return messages.getString(key);
     }
 
     public Callable getBuiltinEval() {

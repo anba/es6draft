@@ -7,6 +7,9 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteMappedArgumentsObject;
@@ -32,7 +35,6 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.Eval;
-import com.github.anba.es6draft.runtime.objects.NativeError;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.Function.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
@@ -50,42 +52,6 @@ public final class ScriptRuntime {
     private ScriptRuntime() {
     }
 
-    public static ScriptException throwInternalError(Realm realm, String message) {
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.InternalError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
-    }
-
-    public static ScriptException throwTypeError(Realm realm, String message) {
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.TypeError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
-    }
-
-    public static ScriptException throwReferenceError(Realm realm, String message) {
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.ReferenceError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
-    }
-
-    public static ScriptException throwSyntaxError(Realm realm, String message) {
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.SyntaxError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
-    }
-
-    public static ScriptException throwRangeError(Realm realm, String message) {
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.RangeError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
-    }
-
-    public static ScriptException throwURIError(Realm realm, String message) {
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.URIError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
-    }
-
     /**
      * 8.2.4.2 PutValue (V, W)
      */
@@ -99,7 +65,7 @@ public final class ScriptRuntime {
      */
     public static void bindingNotPresentOrThrow(Realm realm, EnvironmentRecord envRec, String name) {
         if (envRec.hasBinding(name)) {
-            throw throwSyntaxError(realm, String.format("re-declaration of var '%s'", name));
+            throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -109,10 +75,10 @@ public final class ScriptRuntime {
     public static void canDeclareLexicalScopedOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
             String name) {
         if (envRec.hasVarDeclaration(name)) {
-            throw throwSyntaxError(realm, String.format("re-declaration of var '%s'", name));
+            throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
         }
         if (envRec.hasLexicalDeclaration(name)) {
-            throw throwSyntaxError(realm, String.format("re-declaration of var '%s'", name));
+            throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -122,7 +88,7 @@ public final class ScriptRuntime {
     public static void canDeclareVarScopedOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
             String name) {
         if (envRec.hasLexicalDeclaration(name)) {
-            throw throwSyntaxError(realm, String.format("re-declaration of var '%s'", name));
+            throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -133,7 +99,7 @@ public final class ScriptRuntime {
             String fn) {
         boolean fnDefinable = envRec.canDeclareGlobalFunction(fn);
         if (!fnDefinable) {
-            throw throwTypeError(realm, String.format("cannot declare function '%s'", fn));
+            throw throwTypeError(realm, Messages.Key.InvalidDeclaration, fn);
         }
     }
 
@@ -144,7 +110,7 @@ public final class ScriptRuntime {
             String vn) {
         boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
         if (!vnDefinable) {
-            throw throwTypeError(realm, String.format("cannot declare var '%s'", vn));
+            throw throwTypeError(realm, Messages.Key.InvalidDeclaration, vn);
         }
     }
 
@@ -231,7 +197,7 @@ public final class ScriptRuntime {
             protoParent = null;
             constructorParent = realm.getIntrinsic(Intrinsics.FunctionPrototype);
         } else if (!Type.isObject(superClass)) {
-            throw throwTypeError(realm, "invalid super-class");
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
         } else if (!IsConstructor(superClass)) {
             // FIXME: spec bug (should use IsConstructor() instead of [[Construct]])
             protoParent = Type.objectValue(superClass);
@@ -239,7 +205,7 @@ public final class ScriptRuntime {
         } else {
             Object p = Get(Type.objectValue(superClass), "prototype");
             if (!(Type.isObject(p) || Type.isNull(p))) {
-                throw throwTypeError(realm, "invalid super-class prototype");
+                throw throwTypeError(realm, Messages.Key.NotObjectOrNull);
             }
             protoParent = (Type.isNull(p) ? null : Type.objectValue(p));
             constructorParent = Type.objectValue(superClass);
@@ -562,11 +528,11 @@ public final class ScriptRuntime {
         /* step 1-3 (generated code) */
         /* step 4/6 */
         if (!Type.isObject(constructor)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         /* step 5/7 */
         if (!(constructor instanceof Constructor)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotConstructor);
         }
         /* step 6/8 */
         return ((Constructor) constructor).construct(args);
@@ -578,11 +544,11 @@ public final class ScriptRuntime {
     public static Callable CheckCallable(Object func, Realm realm) {
         /* step 5 */
         if (!Type.isObject(func)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         /* step 6 */
         if (!IsCallable(func)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotCallable);
         }
         return (Callable) func;
     }
@@ -669,7 +635,7 @@ public final class ScriptRuntime {
     public static EnvironmentRecord GetThisEnvironmentOrThrow(ExecutionContext cx) {
         EnvironmentRecord envRec = cx.getThisEnvironment();
         if (!envRec.hasSuperBinding()) {
-            throwReferenceError(cx.getRealm(), "no super binding found");
+            throwReferenceError(cx.getRealm(), Messages.Key.MissingSuperBinding);
         }
         return envRec;
     }
@@ -735,20 +701,21 @@ public final class ScriptRuntime {
         /* step 4 */
         if (ref.isUnresolvableReference()) {
             if (ref.isStrictReference()) {
-                throw throwSyntaxError(realm, "");
+                throw throwSyntaxError(realm, Messages.Key.UnqualifiedDelete);
             }
             return true;
         }
         /* step 5 */
         if (ref.isPropertyReference()) {
             if (ref.isSuperReference()) {
-                throw throwReferenceError(realm, "");
+                throw throwReferenceError(realm, Messages.Key.SuperDelete);
             }
             Scriptable obj = AbstractOperations.ToObject(realm, ref.getBase());
             boolean deleteStatus = obj.delete(ref.getReferencedName());
             if (!deleteStatus && ref.isStrictReference()) {
                 // FIXME: spec bug (typing 'typeError')
-                throw throwTypeError(realm, "");
+                throw throwTypeError(realm, Messages.Key.PropertyNotDeletable,
+                        ref.getReferencedName());
             }
             // FIXME: spec bug (return value)
             return deleteStatus;
@@ -868,7 +835,7 @@ public final class ScriptRuntime {
      */
     public static boolean in(Object lval, Object rval, Realm realm) {
         if (!Type.isObject(rval)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         Object p = ToPropertyKey(realm, lval);
         if (p instanceof String) {
@@ -884,7 +851,7 @@ public final class ScriptRuntime {
      */
     public static boolean instanceOfOperator(Object obj, Object constructor, Realm realm) {
         if (!Type.isObject(constructor)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         Callable instOfHandler = GetMethod(realm, Type.objectValue(constructor),
                 BuiltinSymbol.hasInstance.get());
@@ -894,7 +861,7 @@ public final class ScriptRuntime {
             return ToBoolean(result);
         }
         if (!IsCallable(constructor)) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.NotCallable);
         }
         return OrdinaryHasInstance(realm, constructor, obj);
     }

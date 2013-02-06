@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.parser.NumberParser.parseOctal;
 import java.util.Arrays;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
+import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
  * Lexer for ECMAScript6 source code
@@ -194,7 +195,7 @@ public class TokenStream {
         } else {
             int c = peek();
             if (c == '/' || c == '*') {
-                throw error("invalid regular expression literal");
+                throw error(Messages.Key.InvalidRegExpLiteral);
             }
         }
         boolean inClass = false;
@@ -212,7 +213,7 @@ public class TokenStream {
                 break;
             }
             if (c == EOF || isLineTerminator(c)) {
-                throw error("unterminated regular expression literal");
+                throw error(Messages.Key.UnterminatedRegExpLiteral);
             }
             buffer.add(c);
         }
@@ -273,7 +274,7 @@ public class TokenStream {
         for (;;) {
             int c = input.get();
             if (c == EOF) {
-                throw error("unterminated template literal");
+                throw error(Messages.Key.UnterminatedTemplateLiteral);
             }
             if (c == '`') {
                 current = Token.TEMPLATE;
@@ -333,14 +334,14 @@ public class TokenStream {
                 break;
             case '0':
                 if (isDigit(peek())) {
-                    throw error("invalid NULL escape sequence");
+                    throw error(Messages.Key.InvalidNULLEscape);
                 }
                 c = '\0';
                 break;
             case 'x':
                 c = (hexDigit(input.get()) << 4) | hexDigit(input.get());
                 if (c < 0) {
-                    throw error("invalid hex escape sequence");
+                    throw error(Messages.Key.InvalidHexEscape);
                 }
                 break;
             case 'u':
@@ -353,7 +354,7 @@ public class TokenStream {
             case '5':
             case '6':
             case '7':
-                parser.reportStrictModeSyntaxError("invalid octal-escape in strict-mode");
+                parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
                 // fall-through
             case '"':
             case '\'':
@@ -766,6 +767,7 @@ public class TokenStream {
 
     private Token readMultiComment() {
         final int EOF = TokenStreamInput.EOF;
+        @SuppressWarnings("unused")
         int start = line;
         TokenStreamInput input = this.input;
         loop: for (;;) {
@@ -783,7 +785,7 @@ public class TokenStream {
                 hasLineTerminator = true;
             }
             if (c == EOF) {
-                throw error("unterminated comment: start@" + start);
+                throw error(Messages.Key.UnterminatedComment);
             }
         }
         return Token.COMMENT;
@@ -803,7 +805,7 @@ public class TokenStream {
                 mustMatch('u');
                 c = readUnicode();
                 if (!isIdentifierPart(c)) {
-                    throw error("invalid character");
+                    throw error(Messages.Key.InvalidUnicodeEscapedIdentifierPart);
                 }
                 buffer.addCodepoint(c);
                 continue;
@@ -839,7 +841,7 @@ public class TokenStream {
                     | hexDigit(input.get());
         }
         if (c < 0 || c > 0x10FFFF) {
-            throw error("invalid unicode escape sequence");
+            throw error(Messages.Key.InvalidUnicodeEscape);
         }
         return c;
     }
@@ -996,13 +998,13 @@ public class TokenStream {
         for (;;) {
             int c = input.get();
             if (c == EOF) {
-                throw error("unterminated string literal");
+                throw error(Messages.Key.UnterminatedStringLiteral);
             }
             if (c == quoteChar) {
                 break;
             }
             if (isLineTerminator(c)) {
-                throw error("unterminated string literal");
+                throw error(Messages.Key.UnterminatedStringLiteral);
             }
             if (c != '\\') {
                 // TODO: add substring range
@@ -1041,14 +1043,14 @@ public class TokenStream {
                 break;
             case '0':
                 if (isDigit(peek())) {
-                    throw error("invalid NULL escape sequence");
+                    throw error(Messages.Key.InvalidNULLEscape);
                 }
                 c = '\0';
                 break;
             case 'x':
                 c = (hexDigit(input.get()) << 4) | hexDigit(input.get());
                 if (c < 0) {
-                    throw error("invalid hex escape sequence");
+                    throw error(Messages.Key.InvalidHexEscape);
                 }
                 break;
             case 'u':
@@ -1061,7 +1063,7 @@ public class TokenStream {
             case '5':
             case '6':
             case '7':
-                parser.reportStrictModeSyntaxError("invalid octal-escape in strict-mode");
+                parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
                 // fall-through
             case '"':
             case '\'':
@@ -1085,7 +1087,7 @@ public class TokenStream {
             } else if (d == 'o' || d == 'O') {
                 number = readOctalIntegerLiteral();
             } else if (isDigit(d)) {
-                parser.reportStrictModeSyntaxError("octal literal in strict-mode");
+                parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalIntegerLiteral);
                 input.unget(d);
                 number = readOctalIntegerLiteral();
             } else {
@@ -1107,7 +1109,7 @@ public class TokenStream {
         }
         input.unget(c);
         if (buffer.length == 0) {
-            throw error("invalid hex-integer literal");
+            throw error(Messages.Key.InvalidHexIntegerLiteral);
         }
         return parseHex(buffer.cbuf, buffer.length);
     }
@@ -1121,7 +1123,7 @@ public class TokenStream {
         }
         input.unget(c);
         if (buffer.length == 0) {
-            throw error("invalid binary-integer literal");
+            throw error(Messages.Key.InvalidBinaryIntegerLiteral);
         }
         return parseBinary(buffer.cbuf, buffer.length);
     }
@@ -1135,7 +1137,7 @@ public class TokenStream {
         }
         input.unget(c);
         if (buffer.length == 0) {
-            throw error("invalid octal-integer literal");
+            throw error(Messages.Key.InvalidOctalIntegerLiteral);
         }
         return parseOctal(buffer.cbuf, buffer.length);
     }
@@ -1167,7 +1169,7 @@ public class TokenStream {
                 c = input.get();
             }
             if (!isDigit(c)) {
-                throw error("invalid exponent part");
+                throw error(Messages.Key.InvalidNumberLiteral);
             }
             buffer.add(c);
             while (isDigit(c = input.get())) {
@@ -1205,8 +1207,8 @@ public class TokenStream {
         return -1;
     }
 
-    private ParserException error(String messageId) {
-        throw new ParserException(messageId, line, ExceptionType.SyntaxError);
+    private ParserException error(Messages.Key messageKey, String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, line, messageKey, args);
     }
 
     private boolean match(int c) {
@@ -1220,7 +1222,7 @@ public class TokenStream {
 
     private void mustMatch(int c) {
         if (!match(c)) {
-            throw error("invalid character");
+            throw error(Messages.Key.UnexpectedCharacter, String.valueOf((char) c));
         }
     }
 

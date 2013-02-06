@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.parser.NumberParser.parseDecimal;
 import java.util.Arrays;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
+import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -164,13 +165,13 @@ public class JSONTokenStream {
         for (;;) {
             int c = input.get();
             if (c == EOF) {
-                throw error("unterminated string literal");
+                throw error(Messages.Key.JSONUnterminatedStringLiteral);
             }
             if (c == quoteChar) {
                 break;
             }
             if (c >= 0 && c <= 0x1F) {
-                throw error("invalid string literal");
+                throw error(Messages.Key.JSONInvalidStringLiteral);
             }
             if (c != '\\') {
                 // TODO: add substring range
@@ -199,7 +200,7 @@ public class JSONTokenStream {
                 c = (hexDigit(input.get()) << 12) | (hexDigit(input.get()) << 8)
                         | (hexDigit(input.get()) << 4) | hexDigit(input.get());
                 if (c < 0) {
-                    throw error("invalid unicode escape sequence");
+                    throw error(Messages.Key.JSONInvalidUnicodeEscape);
                 }
                 break;
             case '"':
@@ -239,7 +240,7 @@ public class JSONTokenStream {
         buffer.add(c);
         if (c == '-') {
             if (!isDigit(c = input.get())) {
-                throw error("invalid number literal");
+                throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
         }
         if (c != '0') {
@@ -251,7 +252,7 @@ public class JSONTokenStream {
         }
         if (c == '.') {
             if (!isDigit(c = input.get())) {
-                throw error("invalid fraction");
+                throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
             buffer.add(c);
             while (isDigit(c = input.get())) {
@@ -265,7 +266,7 @@ public class JSONTokenStream {
                 c = input.get();
             }
             if (!isDigit(c)) {
-                throw error("invalid exponent part");
+                throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
             buffer.add(c);
             while (isDigit(c = input.get())) {
@@ -297,7 +298,7 @@ public class JSONTokenStream {
         return -1;
     }
 
-    private ParserException error(String messageId) {
-        throw new ParserException(messageId, -1, ExceptionType.SyntaxError);
+    private ParserException error(Messages.Key messageKey, String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, -1, messageKey, args);
     }
 }

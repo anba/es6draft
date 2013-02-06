@@ -9,8 +9,8 @@ package com.github.anba.es6draft.runtime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 
 /**

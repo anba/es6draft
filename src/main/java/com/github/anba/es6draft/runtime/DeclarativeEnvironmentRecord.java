@@ -6,13 +6,14 @@
  */
 package com.github.anba.es6draft.runtime;
 
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 
 /**
@@ -98,9 +99,9 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         if (b.mutable) {
             b.value = value;
         } else if (b.value == null) {
-            throw throwReferenceError(realm, "");
+            throw throwReferenceError(realm, Messages.Key.UninitialisedBinding, name);
         } else if (strict) {
-            throw throwTypeError(realm, "");
+            throw throwTypeError(realm, Messages.Key.ImmutableBinding, name);
         }
     }
 
@@ -117,7 +118,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             if (!strict) {
                 return UNDEFINED;
             }
-            throw throwReferenceError(realm, "");
+            throw throwReferenceError(realm, Messages.Key.UninitialisedBinding, name);
         }
         return b.value;
     }

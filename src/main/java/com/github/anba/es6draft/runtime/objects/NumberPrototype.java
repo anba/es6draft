@@ -9,15 +9,16 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import org.mozilla.javascript.DToA;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -55,7 +56,7 @@ public class NumberPrototype extends NumberObject implements Scriptable, Initial
             if (object instanceof NumberObject) {
                 return ((NumberObject) object).getNumberData();
             }
-            throw throwTypeError(realm, "incompatible object");
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -77,7 +78,7 @@ public class NumberPrototype extends NumberObject implements Scriptable, Initial
                 r = ToInteger(realm, radix);
             }
             if (r < 2 || r > 36) {
-                throw throwRangeError(realm, "invalid radix");
+                throw throwRangeError(realm, Messages.Key.InvalidRadix);
             }
             if (r == 10) {
                 return ToString(numberValue(realm, thisValue));
@@ -122,7 +123,7 @@ public class NumberPrototype extends NumberObject implements Scriptable, Initial
         public static Object toFixed(Realm realm, Object thisValue, Object fractionDigits) {
             double f = ToInteger(realm, fractionDigits);
             if (f < 0 || f > 20) {
-                throw throwRangeError(realm, "");
+                throw throwRangeError(realm, Messages.Key.InvalidPrecision);
             }
             double x = numberValue(realm, thisValue);
             if (x != x) {
@@ -148,7 +149,7 @@ public class NumberPrototype extends NumberObject implements Scriptable, Initial
                 return "-Infinity";
             }
             if (f < 0 || f > 20) {
-                throw throwRangeError(realm, "");
+                throw throwRangeError(realm, Messages.Key.InvalidPrecision);
             }
             StringBuilder sb = new StringBuilder();
             if (fractionDigits == UNDEFINED) {
@@ -177,7 +178,7 @@ public class NumberPrototype extends NumberObject implements Scriptable, Initial
                 return "-Infinity";
             }
             if (p < 1 || p > 21) {
-                throw throwRangeError(realm, "");
+                throw throwRangeError(realm, Messages.Key.InvalidPrecision);
             }
             StringBuilder sb = new StringBuilder();
             DToA.JS_dtostr(sb, DToA.DTOSTR_PRECISION, (int) p, x);

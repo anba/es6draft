@@ -6,11 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -66,7 +67,7 @@ public class BooleanPrototype extends BooleanObject implements Scriptable, Initi
                 b = ((BooleanObject) thisValue).getBooleanData();
             } else {
                 /* step 4 */
-                throw throwTypeError(realm, "incompatible object");
+                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             /* step 5 */
             return (b ? "true" : "false");
@@ -88,7 +89,7 @@ public class BooleanPrototype extends BooleanObject implements Scriptable, Initi
                 b = ((BooleanObject) thisValue).getBooleanData();
             } else {
                 /* step 4 */
-                throw throwTypeError(realm, "incompatible object");
+                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             /* step 5 */
             return b;

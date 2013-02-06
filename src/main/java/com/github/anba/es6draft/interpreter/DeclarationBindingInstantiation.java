@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.interpreter;
 
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwSyntaxError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.VarDeclaredNames;
@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -46,7 +47,7 @@ final class DeclarationBindingInstantiation {
 
         for (String name : VarDeclaredNames(script)) {
             if (envRec.hasLexicalDeclaration(name)) {
-                throw throwSyntaxError(realm, String.format("re-declaration of var '%s'", name));
+                throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
             }
         }
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
@@ -55,7 +56,7 @@ final class DeclarationBindingInstantiation {
             for (String vn : BoundNames(d)) {
                 boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
                 if (!vnDefinable) {
-                    throw throwTypeError(realm, String.format("cannot declare var '%s'", vn));
+                    throw throwTypeError(realm, Messages.Key.InvalidDeclaration, vn);
                 }
                 if (!declaredVarNames.contains(vn)) {
                     declaredVarNames.add(vn);

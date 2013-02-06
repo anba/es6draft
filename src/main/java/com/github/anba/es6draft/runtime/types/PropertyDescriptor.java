@@ -7,11 +7,12 @@
 package com.github.anba.es6draft.runtime.types;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
  * <h1>8 Types</h1><br>
@@ -278,7 +279,7 @@ public final class PropertyDescriptor {
     public static PropertyDescriptor ToPropertyDescriptor(Realm realm, Object object) {
         /* step 1-2 */
         if (!Type.isObject(object)) {
-            throwTypeError(realm, "expected object");
+            throwTypeError(realm, Messages.Key.NotObjectType);
         }
         Scriptable obj = Type.objectValue(object);
         /* step 3-9 */
@@ -302,20 +303,20 @@ public final class PropertyDescriptor {
         if (HasProperty(obj, "get")) {
             Object getter = Get(obj, "get");
             if (!(IsCallable(getter) || Type.isUndefined(getter))) {
-                throwTypeError(realm, "getter is not a function");
+                throwTypeError(realm, Messages.Key.InvalidGetter);
             }
             desc.setGetter(callableOrNull(getter));
         }
         if (HasProperty(obj, "set")) {
             Object setter = Get(obj, "set");
             if (!(IsCallable(setter) || Type.isUndefined(setter))) {
-                throwTypeError(realm, "setter is not a function");
+                throwTypeError(realm, Messages.Key.InvalidSetter);
             }
             desc.setSetter(callableOrNull(setter));
         }
         /* step 10 */
         if ((desc.present & (GET | SET)) != 0 && (desc.present & (VALUE | WRITABLE)) != 0) {
-            throwTypeError(realm, "invalid property descriptor");
+            throwTypeError(realm, Messages.Key.InvalidDescriptor);
         }
         /* step 11 */
         desc.origin = obj;

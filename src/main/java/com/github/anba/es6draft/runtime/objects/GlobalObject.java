@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwURIError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.Eval.indirectEval;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -18,7 +19,7 @@ import org.mozilla.javascript.StringToNumber;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -192,7 +193,7 @@ public class GlobalObject extends OrdinaryObject implements Scriptable, Initiali
             String uriString = ToFlatString(realm, encodedURI);
             String decoded = URIFunctions.decodeURI(uriString);
             if (decoded == null) {
-                throw ScriptRuntime.throwURIError(realm, "");
+                throw throwURIError(realm, Messages.Key.MalformedURI);
             }
             return decoded;
         }
@@ -206,7 +207,7 @@ public class GlobalObject extends OrdinaryObject implements Scriptable, Initiali
             String componentString = ToFlatString(realm, encodedURIComponent);
             String decoded = URIFunctions.decodeURIComponent(componentString);
             if (decoded == null) {
-                throw ScriptRuntime.throwURIError(realm, "");
+                throw throwURIError(realm, Messages.Key.MalformedURI);
             }
             return decoded;
         }
@@ -219,7 +220,7 @@ public class GlobalObject extends OrdinaryObject implements Scriptable, Initiali
             String uriString = ToFlatString(realm, uri);
             String encoded = URIFunctions.encodeURI(uriString);
             if (encoded == null) {
-                throw ScriptRuntime.throwURIError(realm, "");
+                throw throwURIError(realm, Messages.Key.MalformedURI);
             }
             return encoded;
         }
@@ -232,7 +233,7 @@ public class GlobalObject extends OrdinaryObject implements Scriptable, Initiali
             String componentString = ToFlatString(realm, uriComponent);
             String encoded = URIFunctions.encodeURIComponent(componentString);
             if (encoded == null) {
-                throw ScriptRuntime.throwURIError(realm, "");
+                throw throwURIError(realm, Messages.Key.MalformedURI);
             }
             return encoded;
         }
