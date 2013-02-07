@@ -262,6 +262,9 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
             // "4294967295".length == 10
             return -1;
         }
+        if (p.charAt(0) == '0') {
+            return (length == 1 ? 0 : -1);
+        }
         long acc = 0L;
         for (int i = 0; i < length; ++i) {
             char c = p.charAt(i);
