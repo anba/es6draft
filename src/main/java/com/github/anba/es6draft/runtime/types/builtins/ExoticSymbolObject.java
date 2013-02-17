@@ -32,9 +32,17 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
 
     private final boolean isPrivate;
 
-    public ExoticSymbolObject(Object _private) {
+    private final String name;
+
+    public ExoticSymbolObject(String name, Object _private) {
+        this.name = name;
         this._private = _private;
         this.isPrivate = true;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
     @Override

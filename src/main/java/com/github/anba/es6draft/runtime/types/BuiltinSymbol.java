@@ -68,7 +68,8 @@ public enum BuiltinSymbol {
         EnumMap<BuiltinSymbol, Symbol> map = new EnumMap<>(BuiltinSymbol.class);
         for (BuiltinSymbol builtin : values()) {
             if (builtin != NONE) {
-                map.put(builtin, new ExoticSymbolObject(new Object()));
+                String name = "@@" + builtin.name();
+                map.put(builtin, new ExoticSymbolObject(name, new Object()));
             }
         }
         symbols = map;
