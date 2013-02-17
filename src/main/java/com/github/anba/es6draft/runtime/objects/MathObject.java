@@ -425,8 +425,8 @@ public class MathObject extends OrdinaryObject implements Scriptable, Initialisa
          */
         @Function(name = "trunc", arity = 1)
         public static Object trunc(Realm realm, Object thisValue, Object x) {
-            // TODO: sign?
-            return Math.rint(ToNumber(realm, x));
+            double d = ToNumber(realm, x);
+            return d < 0 ? Math.ceil(d) : Math.floor(d);
         }
 
         /**
