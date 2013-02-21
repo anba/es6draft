@@ -201,9 +201,11 @@ class CodeGenerator {
         mv.lineInfo(node);
         mv.begin();
 
+        mv.enterScope(node);
         for (StatementListItem stmt : node.getStatements()) {
             statement(stmt, mv);
         }
+        mv.exitScope();
 
         mv.loadCompletionValue();
         mv.areturn();
@@ -223,9 +225,11 @@ class CodeGenerator {
             mv.lineInfo(statements.get(start));
             mv.begin();
 
+            mv.enterScope(node);
             for (StatementListItem stmt : statements.subList(start, end)) {
                 statement(stmt, mv);
             }
+            mv.exitScope();
 
             mv.loadCompletionValue();
             mv.areturn();
@@ -254,6 +258,7 @@ class CodeGenerator {
             body.lineInfo(node);
             body.begin();
 
+            body.setScope(mv.getScope());
             new GeneratorComprehensionGenerator(this).visit(node, body);
 
             body.get(Fields.Undefined_UNDEFINED);
@@ -289,9 +294,11 @@ class CodeGenerator {
         // call expression in concise function is always in tail-call position
         tailCall(node.getExpression(), body);
 
+        body.enterScope(node);
         ValType type = expression(node.getExpression(), body);
         body.toBoxed(type);
         invokeGetValue(node.getExpression(), body);
+        body.exitScope();
 
         body.areturn();
         body.end();
@@ -302,9 +309,11 @@ class CodeGenerator {
         body.lineInfo(node);
         body.begin();
 
+        body.enterScope(node);
         for (StatementListItem stmt : node.getStatements()) {
             statement(stmt, body);
         }
+        body.exitScope();
 
         body.mark(body.returnLabel());
         body.loadCompletionValue();
@@ -342,10 +351,10 @@ class CodeGenerator {
         private final boolean initCompletionValue;
 
         protected StatementMethodGeneratorImpl(CodeGenerator codegen, String methodName,
-                Type methodDescriptor, boolean strict, boolean global, boolean completionValue,
+                Type methodDescriptor, boolean strict, boolean globalCode, boolean completionValue,
                 boolean initCompletionValue) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, global, completionValue);
+                    methodName, methodDescriptor, strict, globalCode, completionValue);
             this.initCompletionValue = initCompletionValue;
             reserveFixedSlot(COMPLETION_SLOT, COMPLETION_TYPE);
         }
@@ -389,9 +398,9 @@ class CodeGenerator {
 
     private abstract static class ExpressionMethodGeneratorImpl extends MethodGenerator {
         protected ExpressionMethodGeneratorImpl(CodeGenerator codegen, String methodName,
-                Type methodDescriptor, boolean strict, boolean global) {
+                Type methodDescriptor, boolean strict, boolean globalCode) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, global, false);
+                    methodName, methodDescriptor, strict, globalCode, false);
         }
 
         @Override
@@ -422,8 +431,8 @@ class CodeGenerator {
                 Types.ExecutionContext);
 
         private ScriptMethodGenerator(CodeGenerator codegen, Script node) {
-            super(codegen, methodName, methodDescriptor, node.isStrict(), node.isGlobal(), true,
-                    true);
+            super(codegen, methodName, methodDescriptor, node.isStrict(), node.isGlobalCode(),
+                    true, true);
         }
     }
 
@@ -433,8 +442,8 @@ class CodeGenerator {
                 Types.ExecutionContext, Types.Object);
 
         private ScriptChunkMethodGenerator(CodeGenerator codegen, Script node, int index) {
-            super(codegen, methodName + index, methodDescriptor, node.isStrict(), node.isGlobal(),
-                    true, false);
+            super(codegen, methodName + index, methodDescriptor, node.isStrict(), node
+                    .isGlobalCode(), true, false);
         }
     }
 
@@ -465,7 +474,7 @@ class CodeGenerator {
         private GeneratorComprehensionMethodGenerator(CodeGenerator codegen,
                 GeneratorComprehension node, MethodGenerator parent) {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
-                    .isGlobal());
+                    .isGlobalCode());
         }
     }
 }

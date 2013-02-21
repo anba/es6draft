@@ -97,7 +97,7 @@ public class FunctionConstructor extends OrdinaryObject implements Scriptable, C
             bodyText = ToString(realm(), args[k - 1]);
         }
 
-        Script script = script(realm(), p, bodyText, false);
+        Script script = script(realm(), p, bodyText);
         return evaluate(realm(), script);
     }
 
@@ -108,9 +108,9 @@ public class FunctionConstructor extends OrdinaryObject implements Scriptable, C
         return script.evaluate(evalCxt);
     }
 
-    private static Script script(Realm realm, CharSequence p, CharSequence bodyText, boolean strict) {
+    private static Script script(Realm realm, CharSequence p, CharSequence bodyText) {
         try {
-            Parser parser = new Parser("<Function>", 1, strict, true);
+            Parser parser = new Parser("<Function>", 1);
             com.github.anba.es6draft.ast.Script parsedScript = parser.parse(p, bodyText);
             String className = realm.nextFunctionName();
             return ScriptLoader.load(className, parsedScript);

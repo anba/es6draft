@@ -48,6 +48,13 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     }
 
     /**
+     * stack: [env] -> [envRec]
+     */
+    protected final void getEnvironmentRecord(MethodGenerator mv) {
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+    }
+
+    /**
      * stack: [obj] -> [lexEnv]
      */
     protected final void newObjectEnvironment(MethodGenerator mv, boolean withEnvironment) {
@@ -415,6 +422,9 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
         new BindingInitialisationGenerator(codegen).generate(node, mv);
     }
 
+    /**
+     * stack: [envRec, value] -> []
+     */
     protected void BindingInitialisationWithEnvironment(Binding node, MethodGenerator mv) {
         new BindingInitialisationGenerator(codegen).generateWithEnvironment(node, mv);
     }
@@ -449,6 +459,8 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
         // steps 4-5
         if (className != null) {
             // stack: [ctor, proto] -> [ctor, proto, scope]
+            // TODO: make explicit...
+            // implicit: mv.enterScope(def)
             newDeclarativeEnvironment(mv);
 
             // stack: [ctor, proto, scope] -> [ctor, proto, scope, proto, scope]
@@ -511,6 +523,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
         if (className != null) {
             // restore previous lexical environment
             popLexicalEnvironment(mv);
+            // implicit: mv.exitScope()
         }
 
         // stack: [F, proto] -> [F]

@@ -47,6 +47,7 @@ public class Parser {
 
     private final String sourceFile;
     private final int sourceLine;
+    private final EnumSet<Option> options;
     private TokenStream ts;
     private ParseContext context;
 
@@ -66,7 +67,6 @@ public class Parser {
         final ParseContext parent;
         final ContextKind kind;
 
-        boolean global = false;
         boolean superReference = false;
         boolean yieldAllowed = false;
 
@@ -77,24 +77,23 @@ public class Parser {
         Map<String, LabelContext> labelSet = null;
         LabelContext labels = null;
 
-        BlockContext blockContext = new BlockContext(null);
-        final BlockContext funContext = blockContext;
+        ScopeContext scopeContext;
+        final FunctionContext funContext;
 
         ParseContext() {
             this.parent = null;
             this.kind = null;
+            this.funContext = null;
         }
 
         ParseContext(ParseContext parent, ContextKind kind) {
             this.parent = parent;
             this.kind = kind;
+            this.funContext = new FunctionContext(this);
+            this.scopeContext = funContext;
             if (parent.strictMode == StrictMode.Strict) {
                 this.strictMode = parent.strictMode;
             }
-        }
-
-        Scope scope() {
-            return funContext;
         }
 
         void setReferencesSuper() {
@@ -110,32 +109,38 @@ public class Parser {
         }
     }
 
-    private static class BlockContext implements Scope {
-        final BlockContext parent;
-        HashSet<String> varDeclaredNames = null;
-        HashSet<String> lexDeclaredNames = null;
-        List<StatementListItem> varScopedDeclarations = null;
-        List<Declaration> lexScopedDeclarations = null;
+    private static class FunctionContext extends ScopeContext implements FunctionScope {
+        final ScopeContext enclosing;
+        Set<String> parameterNames = null;
+        boolean directEval = false;
 
-        BlockContext(BlockContext parent) {
-            this.parent = parent;
+        FunctionContext(ParseContext context) {
+            super(null);
+            this.enclosing = context.parent.scopeContext;
         }
 
-        // Scope interface
-
-        @Override
-        public Scope getParent() {
-            return parent;
-        }
-
-        @Override
-        public boolean isTopLevel() {
-            return parent == null;
+        private boolean isStrict() {
+            if (node instanceof FunctionNode) {
+                return ((FunctionNode) node).isStrict();
+            } else {
+                assert node instanceof Script;
+                return ((Script) node).isStrict();
+            }
         }
 
         @Override
-        public Set<String> varDeclaredNames() {
-            return varDeclaredNames;
+        public ScopeContext getEnclosingScope() {
+            return enclosing;
+        }
+
+        @Override
+        public boolean isDynamic() {
+            return directEval && !isStrict();
+        }
+
+        @Override
+        public Set<String> parameterNames() {
+            return parameterNames;
         }
 
         @Override
@@ -144,8 +149,32 @@ public class Parser {
         }
 
         @Override
+        public List<Declaration> lexicallyScopedDeclarations() {
+            return lexScopedDeclarations;
+        }
+
+        @Override
+        public Set<String> varDeclaredNames() {
+            return varDeclaredNames;
+        }
+
+        @Override
         public List<StatementListItem> varScopedDeclarations() {
             return varScopedDeclarations;
+        }
+    }
+
+    private static class BlockContext extends ScopeContext implements BlockScope {
+        final boolean dynamic;
+
+        BlockContext(ScopeContext parent, boolean dynamic) {
+            super(parent);
+            this.dynamic = dynamic;
+        }
+
+        @Override
+        public Set<String> lexicallyDeclaredNames() {
+            return lexDeclaredNames;
         }
 
         @Override
@@ -153,7 +182,47 @@ public class Parser {
             return lexScopedDeclarations;
         }
 
-        //
+        @Override
+        public boolean isDynamic() {
+            return dynamic;
+        }
+    }
+
+    private abstract static class ScopeContext implements Scope {
+        final ScopeContext parent;
+        ScopedNode node = null;
+
+        HashSet<String> varDeclaredNames = null;
+        HashSet<String> lexDeclaredNames = null;
+        List<StatementListItem> varScopedDeclarations = null;
+        List<Declaration> lexScopedDeclarations = null;
+
+        ScopeContext(ScopeContext parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public Scope getParent() {
+            return parent;
+        }
+
+        @Override
+        public ScopedNode getNode() {
+            return node;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("var: ").append(varDeclaredNames != null ? varDeclaredNames : "<null>");
+            sb.append("\t");
+            sb.append("lex: ").append(lexDeclaredNames != null ? lexDeclaredNames : "<null>");
+            return sb.toString();
+        }
+
+        boolean isTopLevel() {
+            return (parent == null);
+        }
 
         boolean addVarDeclaredName(String name) {
             if (varDeclaredNames == null) {
@@ -203,12 +272,21 @@ public class Parser {
         }
     }
 
-    public Parser(String sourceFile, int sourceLine, boolean strict, boolean global) {
+    public enum Option {
+        Strict, FunctionCode, LocalScope, DirectEval, EvalScript
+    }
+
+    public Parser(String sourceFile, int sourceLine) {
+        this(sourceFile, sourceLine, EnumSet.noneOf(Option.class));
+    }
+
+    public Parser(String sourceFile, int sourceLine, EnumSet<Option> options) {
         this.sourceFile = sourceFile;
         this.sourceLine = sourceLine;
+        this.options = options;
         context = new ParseContext();
-        context.strictMode = strict ? StrictMode.Strict : StrictMode.NonStrict;
-        context.global = global;
+        context.strictMode = options.contains(Option.Strict) ? StrictMode.Strict
+                : StrictMode.NonStrict;
     }
 
     private ParseContext newContext(ContextKind kind) {
@@ -222,20 +300,38 @@ public class Parser {
         return context = context.parent;
     }
 
-    private BlockContext enterBlockContext() {
-        return context.blockContext = new BlockContext(context.blockContext);
+    private BlockContext enterWithContext() {
+        BlockContext cx = new BlockContext(context.scopeContext, true);
+        context.scopeContext = cx;
+        return cx;
     }
 
-    private BlockContext exitBlockContext() {
-        assert context.blockContext.parent != null : "exitBlockContext() on top-level";
-        HashSet<String> varDeclaredNames = context.blockContext.varDeclaredNames;
+    private ScopeContext exitWithContext() {
+        return exitScopeContext();
+    }
+
+    private BlockContext enterBlockContext() {
+        BlockContext cx = new BlockContext(context.scopeContext, false);
+        context.scopeContext = cx;
+        return cx;
+    }
+
+    private ScopeContext exitBlockContext() {
+        return exitScopeContext();
+    }
+
+    private ScopeContext exitScopeContext() {
+        ScopeContext scope = context.scopeContext;
+        ScopeContext parent = scope.parent;
+        assert parent != null : "exitScopeContext() on top-level";
+        HashSet<String> varDeclaredNames = scope.varDeclaredNames;
         if (varDeclaredNames != null) {
-            BlockContext parent = context.blockContext.parent;
+            scope.varDeclaredNames = null;
             for (String name : varDeclaredNames) {
                 addVarDeclaredName(parent, name);
             }
         }
-        return context.blockContext = context.blockContext.parent;
+        return context.scopeContext = parent;
     }
 
     private void addFunctionDecl(FunctionDeclaration funDecl) {
@@ -249,38 +345,38 @@ public class Parser {
 
     private void addFunctionDecl(Declaration decl, BindingIdentifier bindingIdentifier) {
         String name = BoundName(bindingIdentifier);
-        BlockContext parentBlock = context.parent.blockContext;
-        if (parentBlock.isTopLevel()) {
+        ScopeContext parentScope = context.parent.scopeContext;
+        if (parentScope.isTopLevel()) {
             // top-level function declaration
-            parentBlock.addVarScopedDeclaration(decl);
-            if (!parentBlock.addVarDeclaredName(name)) {
+            parentScope.addVarScopedDeclaration(decl);
+            if (!parentScope.addVarDeclaredName(name)) {
                 reportSyntaxError(Messages.Key.VariableRedeclaration, name);
             }
         } else {
             // block-scoped function declaration
-            parentBlock.addLexScopedDeclaration(decl);
-            if (!parentBlock.addLexDeclaredName(name)) {
+            parentScope.addLexScopedDeclaration(decl);
+            if (!parentScope.addLexDeclaredName(name)) {
                 reportSyntaxError(Messages.Key.VariableRedeclaration, name);
             }
         }
     }
 
     private void addLexScopedDeclaration(Declaration decl) {
-        context.blockContext.addLexScopedDeclaration(decl);
+        context.scopeContext.addLexScopedDeclaration(decl);
     }
 
     private void addVarScopedDeclaration(VariableStatement decl) {
         context.funContext.addVarScopedDeclaration(decl);
     }
 
-    private void addVarDeclaredName(BlockContext block, String name) {
-        if (!block.addVarDeclaredName(name)) {
+    private void addVarDeclaredName(ScopeContext scope, String name) {
+        if (!scope.addVarDeclaredName(name)) {
             reportSyntaxError(Messages.Key.VariableRedeclaration, name);
         }
     }
 
-    private void addLexDeclaredName(BlockContext block, String name) {
-        if (!block.addLexDeclaredName(name)) {
+    private void addLexDeclaredName(ScopeContext scope, String name) {
+        if (!scope.addLexDeclaredName(name)) {
             reportSyntaxError(Messages.Key.VariableRedeclaration, name);
         }
     }
@@ -306,12 +402,12 @@ public class Parser {
 
     private void addVarDeclaredName(BindingIdentifier bindingIdentifier) {
         String name = BoundName(bindingIdentifier);
-        addVarDeclaredName(context.blockContext, name);
+        addVarDeclaredName(context.scopeContext, name);
     }
 
     private void addVarDeclaredName(BindingPattern bindingPattern) {
         for (String name : BoundNames(bindingPattern)) {
-            addVarDeclaredName(context.blockContext, name);
+            addVarDeclaredName(context.scopeContext, name);
         }
     }
 
@@ -337,12 +433,27 @@ public class Parser {
 
     private void addLexDeclaredName(BindingIdentifier bindingIdentifier) {
         String name = BoundName(bindingIdentifier);
-        addLexDeclaredName(context.blockContext, name);
+        addLexDeclaredName(context.scopeContext, name);
     }
 
     private void addLexDeclaredName(BindingPattern bindingPattern) {
         for (String name : BoundNames(bindingPattern)) {
-            addLexDeclaredName(context.blockContext, name);
+            addLexDeclaredName(context.scopeContext, name);
+        }
+    }
+
+    private void removeLexDeclaredName(ScopeContext scope, Binding binding) {
+        HashSet<String> lexDeclaredNames = scope.lexDeclaredNames;
+        if (binding instanceof BindingIdentifier) {
+            BindingIdentifier bindingIdentifier = (BindingIdentifier) binding;
+            String name = BoundName(bindingIdentifier);
+            lexDeclaredNames.remove(name);
+        } else {
+            assert binding instanceof BindingPattern;
+            BindingPattern bindingPattern = (BindingPattern) binding;
+            for (String name : BoundNames(bindingPattern)) {
+                lexDeclaredNames.remove(name);
+            }
         }
     }
 
@@ -536,7 +647,6 @@ public class Parser {
         if (ts != null)
             throw new IllegalStateException();
 
-        Script script;
         newContext(ContextKind.Script);
         try {
             applyStrictMode(false);
@@ -564,8 +674,11 @@ public class Parser {
 
                 formalParameterList_StaticSemantics(parameters);
 
-                function = inheritStrictness(new FunctionExpression(context.scope(), identifier,
-                        parameters, statements, source));
+                FunctionContext scope = context.funContext;
+                function = new FunctionExpression(scope, identifier, parameters, statements, source);
+                scope.node = function;
+
+                function = inheritStrictness(function);
             } finally {
                 restoreContext();
             }
@@ -573,12 +686,15 @@ public class Parser {
             boolean strict = (context.strictMode == StrictMode.Strict);
             List<StatementListItem> body = newSmallList();
             body.add(new ExpressionStatement(function));
-            script = new Script(sourceFile, context.scope(), body, strict, true);
+
+            FunctionContext scope = context.funContext;
+            Script script = new Script(sourceFile, scope, body, options, strict);
+            scope.node = script;
+
+            return script;
         } finally {
             restoreContext();
         }
-
-        return script;
     }
 
     /* ***************************************************************************************** */
@@ -599,8 +715,12 @@ public class Parser {
             List<StatementListItem> prologue = directivePrologue();
             List<StatementListItem> body = outerStatementList();
             boolean strict = (context.strictMode == StrictMode.Strict);
-            boolean global = context.parent.global;
-            return new Script(sourceFile, context.scope(), merge(prologue, body), strict, global);
+
+            FunctionContext scope = context.funContext;
+            Script script = new Script(sourceFile, scope, merge(prologue, body), options, strict);
+            scope.node = script;
+
+            return script;
         } finally {
             restoreContext();
         }
@@ -1080,8 +1200,10 @@ public class Parser {
 
             formalParameterList_StaticSemantics(parameters);
 
-            FunctionDeclaration function = new FunctionDeclaration(context.scope(), identifier,
-                    parameters, statements, source);
+            FunctionContext scope = context.funContext;
+            FunctionDeclaration function = new FunctionDeclaration(scope, identifier, parameters,
+                    statements, source);
+            scope.node = function;
 
             addFunctionDecl(function);
 
@@ -1121,8 +1243,12 @@ public class Parser {
 
             formalParameterList_StaticSemantics(parameters);
 
-            return inheritStrictness(new FunctionExpression(context.scope(), identifier,
-                    parameters, statements, source));
+            FunctionContext scope = context.funContext;
+            FunctionExpression function = new FunctionExpression(scope, identifier, parameters,
+                    statements, source);
+            scope.node = function;
+
+            return inheritStrictness(function);
         } finally {
             restoreContext();
         }
@@ -1166,29 +1292,40 @@ public class Parser {
         return new FormalParameterList(formals);
     }
 
+    private static <T> T containsAny(Set<T> set, List<T> list) {
+        for (T element : list) {
+            if (set.contains(element)) {
+                return element;
+            }
+        }
+        return null;
+    }
+
     private void formalParameterList_StaticSemantics(FormalParameterList parameters) {
         // TODO: Early Error if intersection of BoundNames(FormalParameterList) and
         // VarDeclaredNames(FunctionBody) is not the empty set
         // => only for non-simple parameter list?
         // => doesn't quite follow the current Function Declaration Instantiation algorithm
+        assert context.scopeContext == context.funContext;
 
-        HashSet<String> lexDeclaredNames = context.blockContext.lexDeclaredNames;
+        FunctionContext scope = context.funContext;
+        HashSet<String> lexDeclaredNames = scope.lexDeclaredNames;
+        List<String> boundNames = BoundNames(parameters);
+        HashSet<String> names = new HashSet<>(boundNames);
+        scope.parameterNames = names;
+
         boolean hasLexDeclaredNames = !(lexDeclaredNames == null || lexDeclaredNames.isEmpty());
         boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
         if (!strict && simple) {
             if (hasLexDeclaredNames) {
-                Set<String> names = new HashSet<>(BoundNames(parameters));
-                names.retainAll(lexDeclaredNames);
-                if (!names.isEmpty()) {
-                    String name = names.iterator().next();
-                    reportSyntaxError(Messages.Key.FormalParameterRedeclaration, name);
+                String redeclared = containsAny(lexDeclaredNames, boundNames);
+                if (redeclared != null) {
+                    reportSyntaxError(Messages.Key.FormalParameterRedeclaration, redeclared);
                 }
             }
             return;
         }
-        List<String> boundNames = BoundNames(parameters);
-        Set<String> names = new HashSet<>(boundNames);
         boolean hasDuplicates = (boundNames.size() != names.size());
         boolean hasEvalOrArguments = (names.contains("eval") || names.contains("arguments"));
         if (strict) {
@@ -1208,10 +1345,9 @@ public class Parser {
             }
         }
         if (hasLexDeclaredNames) {
-            names.retainAll(lexDeclaredNames);
-            if (!names.isEmpty()) {
-                String name = names.iterator().next();
-                reportSyntaxError(Messages.Key.FormalParameterRedeclaration, name);
+            String redeclared = containsAny(lexDeclaredNames, boundNames);
+            if (redeclared != null) {
+                reportSyntaxError(Messages.Key.FormalParameterRedeclaration, redeclared);
             }
         }
     }
@@ -1285,8 +1421,12 @@ public class Parser {
 
                 formalParameterList_StaticSemantics(parameters);
 
-                return inheritStrictness(new ArrowFunction(context.scope(), parameters, statements,
-                        source.toString()));
+                FunctionContext scope = context.funContext;
+                ArrowFunction function = new ArrowFunction(scope, parameters, statements,
+                        source.toString());
+                scope.node = function;
+
+                return inheritStrictness(function);
             } else {
                 // need to call manually b/c functionBody() isn't used here
                 applyStrictMode(false);
@@ -1298,8 +1438,12 @@ public class Parser {
 
                 formalParameterList_StaticSemantics(parameters);
 
-                return inheritStrictness(new ArrowFunction(context.scope(), parameters, expression,
-                        source.toString()));
+                FunctionContext scope = context.funContext;
+                ArrowFunction function = new ArrowFunction(scope, parameters, expression,
+                        source.toString());
+                scope.node = function;
+
+                return inheritStrictness(function);
             }
         } finally {
             restoreContext();
@@ -1368,7 +1512,6 @@ public class Parser {
                 break;
             }
 
-            // TODO: source
             StringBuilder source = new StringBuilder();
             if (type != MethodType.Generator) {
                 source.append("function ");
@@ -1379,8 +1522,12 @@ public class Parser {
 
             formalParameterList_StaticSemantics(parameters);
 
-            return inheritStrictness(new MethodDefinition(context.scope(), type, propertyName,
-                    parameters, statements, context.hasSuperReference(), source.toString()));
+            FunctionContext scope = context.funContext;
+            MethodDefinition method = new MethodDefinition(scope, type, propertyName, parameters,
+                    statements, context.hasSuperReference(), source.toString());
+            scope.node = method;
+
+            return inheritStrictness(method);
         } finally {
             restoreContext();
         }
@@ -1432,8 +1579,10 @@ public class Parser {
 
             formalParameterList_StaticSemantics(parameters);
 
-            GeneratorDeclaration generator = new GeneratorDeclaration(context.scope(), identifier,
+            FunctionContext scope = context.funContext;
+            GeneratorDeclaration generator = new GeneratorDeclaration(scope, identifier,
                     parameters, statements, source);
+            scope.node = generator;
 
             addGeneratorDecl(generator);
 
@@ -1474,8 +1623,12 @@ public class Parser {
 
             formalParameterList_StaticSemantics(parameters);
 
-            return inheritStrictness(new GeneratorExpression(context.scope(), identifier,
-                    parameters, statements, source));
+            FunctionContext scope = context.funContext;
+            GeneratorExpression generator = new GeneratorExpression(scope, identifier, parameters,
+                    statements, source);
+            scope.node = generator;
+
+            return inheritStrictness(generator);
         } finally {
             restoreContext();
         }
@@ -1573,7 +1726,14 @@ public class Parser {
             heritage = assignmentExpression(true);
         }
         consume(Token.LC);
+        if (name != null) {
+            enterBlockContext();
+            addLexDeclaredName(name);
+        }
         List<MethodDefinition> body = classBody();
+        if (name != null) {
+            exitBlockContext();
+        }
         consume(Token.RC);
 
         return new ClassExpression(name, heritage, body);
@@ -1725,7 +1885,9 @@ public class Parser {
         exitBlockContext();
         consume(Token.RC);
 
-        return new BlockStatement(scope, list);
+        BlockStatement block = new BlockStatement(scope, list);
+        scope.node = block;
+        return block;
     }
 
     /**
@@ -2452,10 +2614,14 @@ public class Parser {
                 exitBlockContext();
             }
 
-            return new ForStatement(lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, test,
-                    step, stmt);
+            ForStatement iteration = new ForStatement(lexBlockContext, labelCx.abrupts,
+                    labelCx.labelSet, head, test, step, stmt);
+            if (lexBlockContext != null) {
+                lexBlockContext.node = iteration;
+            }
+            return iteration;
         } else if (token() == Token.IN) {
-            head = validateForInOf(head, "for-in");
+            head = validateForInOf(head);
             consume(Token.IN);
             Expression expr = expression(true);
             consume(Token.RP);
@@ -2468,10 +2634,14 @@ public class Parser {
                 exitBlockContext();
             }
 
-            return new ForInStatement(lexBlockContext, labelCx.abrupts, labelCx.labelSet, head,
-                    expr, stmt);
+            ForInStatement iteration = new ForInStatement(lexBlockContext, labelCx.abrupts,
+                    labelCx.labelSet, head, expr, stmt);
+            if (lexBlockContext != null) {
+                lexBlockContext.node = iteration;
+            }
+            return iteration;
         } else {
-            head = validateForInOf(head, "for-of");
+            head = validateForInOf(head);
             consume("of");
             Expression expr = expression(true);
             consume(Token.RP);
@@ -2484,8 +2654,12 @@ public class Parser {
                 exitBlockContext();
             }
 
-            return new ForOfStatement(lexBlockContext, labelCx.abrupts, labelCx.labelSet, head,
-                    expr, stmt);
+            ForOfStatement iteration = new ForOfStatement(lexBlockContext, labelCx.abrupts,
+                    labelCx.labelSet, head, expr, stmt);
+            if (lexBlockContext != null) {
+                lexBlockContext.node = iteration;
+            }
+            return iteration;
         }
     }
 
@@ -2516,7 +2690,7 @@ public class Parser {
     /**
      * @see #forStatement()
      */
-    private Node validateForInOf(Node head, String kind) {
+    private Node validateForInOf(Node head) {
         if (head instanceof VariableStatement) {
             // expected: single variable declaration with no initialiser
             List<VariableDeclaration> elements = ((VariableStatement) head).getElements();
@@ -2833,13 +3007,19 @@ public class Parser {
      */
     private WithStatement withStatement() {
         reportStrictModeSyntaxError(Messages.Key.StrictModeWithStatement);
+
         consume(Token.WITH);
         consume(Token.LP);
         Expression expr = expression(true);
         consume(Token.RP);
-        Statement stmt = statement();
 
-        return new WithStatement(expr, stmt);
+        BlockContext scope = enterWithContext();
+        Statement stmt = statement();
+        exitWithContext();
+
+        WithStatement withStatement = new WithStatement(scope, expr, stmt);
+        scope.node = withStatement;
+        return withStatement;
     }
 
     /**
@@ -2903,7 +3083,10 @@ public class Parser {
         exitBreakable();
         consume(Token.RC);
 
-        return new SwitchStatement(scope, labelCx.abrupts, labelCx.labelSet, expr, clauses);
+        SwitchStatement switchStatement = new SwitchStatement(scope, labelCx.abrupts,
+                labelCx.labelSet, expr, clauses);
+        scope.node = switchStatement;
+        return switchStatement;
     }
 
     /**
@@ -2995,17 +3178,28 @@ public class Parser {
      * </pre>
      */
     private TryStatement tryStatement() {
-        BlockStatement tryBlock, catchBlock = null, finallyBlock = null;
-        Binding catchParameter = null;
+        BlockStatement tryBlock, finallyBlock = null;
+        CatchNode catchNode = null;
         consume(Token.TRY);
         tryBlock = block(NO_INHERITED_BINDING);
         Token tok = token();
         if (tok == Token.CATCH) {
             consume(Token.CATCH);
+            BlockContext catchScope = enterBlockContext();
+
             consume(Token.LP);
-            catchParameter = binding();
+            Binding catchParameter = binding();
+            addLexDeclaredName(catchParameter);
             consume(Token.RP);
-            catchBlock = block(catchParameter);
+
+            // catch-block receives a blacklist of forbidden lexical declarable names
+            BlockStatement catchBlock = block(catchParameter);
+            removeLexDeclaredName((ScopeContext) catchBlock.getScope(), catchParameter);
+
+            exitBlockContext();
+            catchNode = new CatchNode(catchScope, catchParameter, catchBlock);
+            catchScope.node = catchNode;
+
             if (token() == Token.FINALLY) {
                 consume(Token.FINALLY);
                 finallyBlock = block(NO_INHERITED_BINDING);
@@ -3015,7 +3209,7 @@ public class Parser {
             finallyBlock = block(NO_INHERITED_BINDING);
         }
 
-        return new TryStatement(tryBlock, catchParameter, catchBlock, finallyBlock);
+        return new TryStatement(tryBlock, catchNode, finallyBlock);
     }
 
     /**
@@ -3251,14 +3445,18 @@ public class Parser {
      * </pre>
      */
     private List<ComprehensionFor> comprehensionForList() {
-        // create new blockContext for each comprehensionFor element?
         List<ComprehensionFor> list = newSmallList();
         while (token() == Token.FOR) {
+            BlockContext scope = enterBlockContext();
             consume(Token.FOR);
             Binding b = binding();
+            addLexDeclaredName(b);
             consume("of");
             Expression e = expression(true);
-            list.add(new ComprehensionFor(b, e));
+            list.add(new ComprehensionFor(scope, b, e));
+        }
+        for (int i = list.size(); i > 0; --i) {
+            exitBlockContext();
         }
         return list;
     }
@@ -3397,7 +3595,7 @@ public class Parser {
      * </pre>
      */
     private TemplateLiteral templateLiteral(boolean tagged) {
-        List<Expression> elements = newSmallList();
+        List<Expression> elements = newList();
 
         String[] values = ts.readTemplateLiteral(Token.TEMPLATE);
         elements.add(new TemplateCharacters(values[0], values[1]));
@@ -3452,7 +3650,7 @@ public class Parser {
             }
             lhs = new NewExpression(expr, args);
         } else if (token() == Token.SUPER) {
-            if (context.kind == ContextKind.Script && context.parent.global) {
+            if (context.kind == ContextKind.Script && !options.contains(Option.FunctionCode)) {
                 reportSyntaxError(Messages.Key.InvalidSuperExpression);
             }
             context.setReferencesSuper();
@@ -3502,6 +3700,9 @@ public class Parser {
             case LP:
                 if (!allowCall) {
                     return lhs;
+                }
+                if (lhs instanceof Identifier && "eval".equals(((Identifier) lhs).getName())) {
+                    context.funContext.directEval = true;
                 }
                 List<Expression> args = arguments();
                 lhs = new CallExpression(lhs, args);

@@ -95,7 +95,7 @@ abstract class ES6DraftEnv<GLOBAL extends Scriptable & GlobalObject> implements 
     public Script script(String sourceName, InputStream source) throws IOException {
         String className = nextScriptName();
         Reader reader = newReader(source, getCharsetName());
-        return ScriptLoader.load(sourceName, className, IOUtils.toString(reader), false);
+        return ScriptLoader.load(sourceName, className, IOUtils.toString(reader));
     }
 
     /**

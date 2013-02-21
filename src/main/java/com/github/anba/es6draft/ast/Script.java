@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.EnumSet;
 import java.util.List;
+
+import com.github.anba.es6draft.parser.Parser;
 
 /**
  * <h1>14 Scripts and Modules</h1>
@@ -16,18 +19,18 @@ import java.util.List;
  */
 public class Script extends AstNode implements ScopedNode {
     private String sourceFile;
-    private Scope scope;
+    private FunctionScope scope;
     private List<StatementListItem> statements;
+    private EnumSet<Parser.Option> options;
     private boolean strict;
-    private boolean global;
 
-    public Script(String sourceFile, Scope scope, List<StatementListItem> statements,
-            boolean strict, boolean global) {
+    public Script(String sourceFile, FunctionScope scope, List<StatementListItem> statements,
+            EnumSet<Parser.Option> options, boolean strict) {
         this.sourceFile = sourceFile;
         this.scope = scope;
         this.statements = statements;
+        this.options = options;
         this.strict = strict;
-        this.global = global;
     }
 
     public String getSourceFile() {
@@ -35,7 +38,7 @@ public class Script extends AstNode implements ScopedNode {
     }
 
     @Override
-    public Scope getScope() {
+    public FunctionScope getScope() {
         return scope;
     }
 
@@ -47,8 +50,20 @@ public class Script extends AstNode implements ScopedNode {
         return strict;
     }
 
-    public boolean isGlobal() {
-        return global;
+    public boolean isEvalScript() {
+        return options.contains(Parser.Option.EvalScript);
+    }
+
+    public boolean isDirectEval() {
+        return options.contains(Parser.Option.DirectEval);
+    }
+
+    public boolean isGlobalScope() {
+        return !options.contains(Parser.Option.LocalScope);
+    }
+
+    public boolean isGlobalCode() {
+        return !options.contains(Parser.Option.FunctionCode);
     }
 
     @Override

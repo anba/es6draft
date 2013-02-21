@@ -15,14 +15,14 @@ import java.util.List;
  * </ul>
  */
 public class GeneratorDeclaration extends Declaration implements GeneratorDefinition {
-    private Scope scope;
+    private FunctionScope scope;
     private BindingIdentifier identifier;
     private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private boolean strict;
     private String source;
 
-    public GeneratorDeclaration(Scope scope, BindingIdentifier identifier,
+    public GeneratorDeclaration(FunctionScope scope, BindingIdentifier identifier,
             FormalParameterList parameters, List<StatementListItem> statements, String source) {
         this.scope = scope;
         this.identifier = identifier;
@@ -32,7 +32,7 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     }
 
     @Override
-    public Scope getScope() {
+    public FunctionScope getScope() {
         return scope;
     }
 

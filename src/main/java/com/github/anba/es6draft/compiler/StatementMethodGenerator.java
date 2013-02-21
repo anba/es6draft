@@ -118,8 +118,8 @@ abstract class StatementMethodGenerator extends MethodGenerator {
     private int wrapped = 0;
 
     protected StatementMethodGenerator(MethodVisitor mv, String methodName, Type methodDescriptor,
-            boolean strict, boolean global, boolean completionValue) {
-        super(mv, methodName, methodDescriptor, strict, global, completionValue);
+            boolean strict, boolean globalCode, boolean completionValue) {
+        super(mv, methodName, methodDescriptor, strict, globalCode, completionValue);
         this.completionValue = completionValue;
         // no return in script code
         this.labels.returnLabel = !completionValue ? new Label() : null;

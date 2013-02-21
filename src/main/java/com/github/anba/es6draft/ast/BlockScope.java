@@ -6,13 +6,14 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  *
  */
-public interface Scope {
-    Scope getParent();
+public interface BlockScope extends Scope {
+    Set<String> lexicallyDeclaredNames();
 
-    ScopedNode getNode();
-
-    boolean isDynamic();
+    List<Declaration> lexicallyScopedDeclarations();
 }

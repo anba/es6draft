@@ -34,14 +34,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
      */
     private ValType evalAndGetValue(Expression node, MethodGenerator mv) {
         if (node instanceof Identifier) {
-            mv.load(Register.ExecutionContext);
-            mv.aconst(((Identifier) node).getName());
-            if (mv.isStrict()) {
-                mv.invoke(Methods.ExecutionContext_strictIdentifierValue);
-            } else {
-                mv.invoke(Methods.ExecutionContext_nonstrictIdentifierValue);
-            }
-            return ValType.Any;
+            return identifierResolution.resolveValue((Identifier) node, mv);
         } else {
             ValType type = node.accept(this, mv);
             GetValue(node, type, mv);
@@ -166,7 +159,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
             // stack: [args0] -> [result]
             mv.load(Register.ExecutionContext);
             mv.iconst(mv.isStrict());
-            mv.iconst(mv.isGlobal());
+            mv.iconst(mv.isGlobalCode());
             mv.invoke(Methods.Eval_directEval);
 
             mv.goTo(afterCall);
@@ -235,10 +228,12 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     /* ----------------------------------------------------------------------------------------- */
 
     private final ArrayComprehensionGenerator arraycomprgen;
+    private final IdentifierResolution identifierResolution;
 
     public ExpressionGenerator(CodeGenerator codegen) {
         super(codegen);
         this.arraycomprgen = new ArrayComprehensionGenerator(codegen);
+        this.identifierResolution = new IdentifierResolution();
     }
 
     @Override
@@ -1146,15 +1141,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
 
     @Override
     public ValType visit(Identifier node, MethodGenerator mv) {
-        mv.load(Register.ExecutionContext);
-        mv.aconst(node.getName());
-        if (mv.isStrict()) {
-            mv.invoke(Methods.ExecutionContext_strictIdentifierResolution);
-        } else {
-            mv.invoke(Methods.ExecutionContext_nonstrictIdentifierResolution);
-        }
-
-        return ValType.Reference;
+        return identifierResolution.resolve(node, mv);
     }
 
     @Override

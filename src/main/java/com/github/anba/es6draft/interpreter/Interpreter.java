@@ -41,11 +41,11 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     private boolean strict;
-    private boolean global;
+    private boolean globalCode;
 
     public Interpreter(Script parsedScript) {
         this.strict = parsedScript.isStrict();
-        this.global = parsedScript.isGlobal();
+        this.globalCode = parsedScript.isGlobalCode();
     }
 
     public Object evaluate(ExecutionContext cx, Script parsedScript) {
@@ -583,7 +583,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
             args[i] = GetValue(arg, cx);
         }
         if (directEval(node)) {
-            return ScriptRuntime.EvaluateEvalCall(ref, func, args, cx, strict, global);
+            return ScriptRuntime.EvaluateEvalCall(ref, func, args, cx, strict, globalCode);
         } else {
             return ScriptRuntime.EvaluateCall(ref, func, args, cx.getRealm());
         }

@@ -17,7 +17,7 @@ import java.util.Set;
  * </ul>
  */
 public class ForStatement extends IterationStatement implements ScopedNode {
-    private Scope scope;
+    private BlockScope scope;
     private EnumSet<Abrupt> abrupt;
     private Set<String> labelSet;
     private Node head;
@@ -25,7 +25,7 @@ public class ForStatement extends IterationStatement implements ScopedNode {
     private Expression step;
     private Statement statement;
 
-    public ForStatement(Scope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head,
+    public ForStatement(BlockScope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head,
             Expression test, Expression step, Statement statement) {
         this.scope = scope;
         this.abrupt = abrupt;
@@ -37,7 +37,7 @@ public class ForStatement extends IterationStatement implements ScopedNode {
     }
 
     @Override
-    public Scope getScope() {
+    public BlockScope getScope() {
         return scope;
     }
 

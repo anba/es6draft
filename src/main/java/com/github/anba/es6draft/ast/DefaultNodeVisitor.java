@@ -161,6 +161,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(CatchNode node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
     public R visit(ClassDeclaration node, V value) {
         return visit((Declaration) node, value);
     }

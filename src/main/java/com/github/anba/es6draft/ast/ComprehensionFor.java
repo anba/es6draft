@@ -14,13 +14,20 @@ package com.github.anba.es6draft.ast;
  * <li>11.1.4.2 Array Comprehension
  * </ul>
  */
-public class ComprehensionFor extends AstNode {
+public class ComprehensionFor extends AstNode implements ScopedNode {
+    private BlockScope scope;
     private Binding binding;
     private Expression expression;
 
-    public ComprehensionFor(Binding binding, Expression expression) {
+    public ComprehensionFor(BlockScope scope, Binding binding, Expression expression) {
+        this.scope = scope;
         this.binding = binding;
         this.expression = expression;
+    }
+
+    @Override
+    public BlockScope getScope() {
+        return scope;
     }
 
     public Binding getBinding() {

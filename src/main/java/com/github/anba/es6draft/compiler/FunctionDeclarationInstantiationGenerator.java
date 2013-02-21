@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.BindingElement;
@@ -36,9 +35,13 @@ import com.github.anba.es6draft.compiler.MethodGenerator.Register;
  */
 class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static class FunctionDeclInitMethodGenerator extends MethodGenerator {
-        private FunctionDeclInitMethodGenerator(MethodVisitor mv, String methodName,
-                Type methodDescriptor, boolean strict) {
-            super(mv, methodName, methodDescriptor, strict, false, false);
+        static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.Function, Types.Object_);
+
+        private FunctionDeclInitMethodGenerator(CodeGenerator codegen, String methodName,
+                boolean strict) {
+            super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
+                    methodName, methodDescriptor, strict, false, false);
         }
 
         @Override
@@ -68,24 +71,21 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     private static final int FUNCTION = 1;
     private static final int ARGUMENTS = 2;
 
-    private static final Type methodType = Type.getMethodType(Type.VOID_TYPE,
-            Types.ExecutionContext, Types.Function, Types.Object_);
-
     FunctionDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
     void generate(FunctionNode func) {
         String methodName = codegen.methodName(func) + "_init";
-
-        MethodVisitor mv = codegen.publicStaticMethod(methodName, methodType.getInternalName());
-        MethodGenerator declinit = new FunctionDeclInitMethodGenerator(mv, methodName, methodType,
+        MethodGenerator mv = new FunctionDeclInitMethodGenerator(codegen, methodName,
                 func.isStrict());
 
-        declinit.begin();
-        generate(func, declinit);
-        declinit.areturn();
-        declinit.end();
+        mv.begin();
+        mv.enterScope(func);
+        generate(func, mv);
+        mv.exitScope();
+        mv.areturn();
+        mv.end();
     }
 
     private void generate(FunctionNode func, MethodGenerator mv) {

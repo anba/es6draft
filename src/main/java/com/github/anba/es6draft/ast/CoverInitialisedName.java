@@ -33,6 +33,6 @@ public class CoverInitialisedName extends PropertyDefinition {
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
-        throw new IllegalArgumentException();
+        throw new IllegalStateException();
     }
 }

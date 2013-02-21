@@ -15,14 +15,14 @@ import java.util.List;
  * </ul>
  */
 public class FunctionDeclaration extends Declaration implements FunctionDefinition {
-    private Scope scope;
+    private FunctionScope scope;
     private BindingIdentifier identifier;
     private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private boolean strict;
     private String source;
 
-    public FunctionDeclaration(Scope scope, BindingIdentifier identifier,
+    public FunctionDeclaration(FunctionScope scope, BindingIdentifier identifier,
             FormalParameterList parameters, List<StatementListItem> statements, String source) {
         this.scope = scope;
         this.identifier = identifier;
@@ -32,7 +32,7 @@ public class FunctionDeclaration extends Declaration implements FunctionDefiniti
     }
 
     @Override
-    public Scope getScope() {
+    public FunctionScope getScope() {
         return scope;
     }
 

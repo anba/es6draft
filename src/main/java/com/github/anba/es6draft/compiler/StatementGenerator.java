@@ -155,6 +155,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             return null;
         }
 
+        mv.enterScope(node);
         Collection<Declaration> declarations = LexicalDeclarations(node);
         if (!declarations.isEmpty()) {
             newDeclarativeEnvironment(mv);
@@ -170,6 +171,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
         if (!declarations.isEmpty()) {
             popLexicalEnvironment(mv);
         }
+        mv.exitScope();
 
         return null;
     }
@@ -186,6 +188,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
 
         // stack: [lex, value] -> []
         getLexicalEnvironment(mv);
+        getEnvironmentRecord(mv);
         mv.swap();
         BindingInitialisationWithEnvironment(node.getName(), mv);
 
@@ -281,8 +284,9 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
         return null;
     }
 
-    private void visitForInOfLoop(IterationStatement node, Expression expr, Node lhs,
-            Statement stmt, IterationKind iterationKind, StatementMethodGenerator mv) {
+    private <FORSTATEMENT extends IterationStatement & ScopedNode> void visitForInOfLoop(
+            FORSTATEMENT node, Expression expr, Node lhs, Statement stmt,
+            IterationKind iterationKind, StatementMethodGenerator mv) {
         Label lblContinue = new Label(), lblBreak = new Label();
         Label loopstart = new Label();
 
@@ -346,14 +350,14 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
 
             // create new declarative lexical environment
             // stack: [nextValue] -> [nextValue, iterEnv]
+            mv.enterScope(node);
             newDeclarativeEnvironment(mv);
             {
-                // stack: [nextValue, iterEnv] -> [iterEnv, iterEnv, nextValue, envRec]
-                mv.dupX1();
+                // stack: [nextValue, iterEnv] -> [iterEnv, nextValue, envRec]
                 mv.dupX1();
                 mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
-                // stack: [iterEnv, iterEnv, nextValue, envRec] -> [iterEnv, iterEnv, nextValue]
+                // stack: [iterEnv, nextValue, envRec] -> [iterEnv, envRec, nextValue]
                 for (String name : BoundNames(lexicalBinding.getBinding())) {
                     if (IsConstantDeclaration(lexDecl)) {
                         mv.dup();
@@ -369,11 +373,11 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
                     }
 
                 }
-                mv.pop();
+                mv.swap();
 
                 // FIXME: spec bug (missing ToObject() call?)
 
-                // stack: [iterEnv, iterEnv, nextValue] -> [iterEnv]
+                // stack: [iterEnv, envRec, nextValue] -> [iterEnv]
                 BindingInitialisationWithEnvironment(lexicalBinding.getBinding(), mv);
             }
             // stack: [iterEnv] -> []
@@ -389,6 +393,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
         if (lhs instanceof LexicalDeclaration) {
             // restore previous lexical environment
             popLexicalEnvironment(mv);
+            mv.exitScope();
         }
 
         mv.goTo(lblContinue);
@@ -417,6 +422,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             assert head instanceof LexicalDeclaration;
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
 
+            mv.enterScope(node);
             newDeclarativeEnvironment(mv);
             {
                 // stack: [loopEnv] -> [loopEnv, envRec]
@@ -489,6 +495,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
 
         if (head instanceof LexicalDeclaration) {
             popLexicalEnvironment(mv);
+            mv.exitScope();
         }
 
         return null;
@@ -583,10 +590,9 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             mv.get(Fields.Undefined_UNDEFINED);
         }
 
-        mv.load(Register.ExecutionContext);
-        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
+        getLexicalEnvironment(mv);
+        getEnvironmentRecord(mv);
         mv.swap();
-
         BindingInitialisationWithEnvironment(binding, mv);
 
         return null;
@@ -631,6 +637,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
         node.getExpression().accept(this, mv);
         invokeGetValue(node.getExpression(), mv);
 
+        mv.enterScope(node);
         Collection<Declaration> declarations = LexicalDeclarations(node);
         if (!declarations.isEmpty()) {
             newDeclarativeEnvironment(mv);
@@ -683,6 +690,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
         if (!declarations.isEmpty()) {
             popLexicalEnvironment(mv);
         }
+        mv.exitScope();
 
         if (abrupt.contains(Abrupt.Break)) {
             restoreEnvironment(mv, savedEnv);
@@ -708,11 +716,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
         // NB: nop() instruction are inserted to ensure no empty blocks will be generated
 
         BlockStatement tryBlock = node.getTryBlock();
-        BlockStatement catchBlock = node.getCatchBlock();
-        Binding catchParameter = node.getCatchParameter();
+        CatchNode catchNode = node.getCatchNode();
         BlockStatement finallyBlock = node.getFinallyBlock();
 
-        if (catchBlock != null && finallyBlock != null) {
+        if (catchNode != null && finallyBlock != null) {
             Label startCatch = new Label();
             Label endCatch = new Label(), handlerCatch = new Label();
             Label endFinally = new Label(), handlerFinally = new Label();
@@ -733,7 +740,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             mv.mark(handlerCatch);
             restoreEnvironment(mv, savedEnv);
             mv.enterWrapped();
-            catchClauseEvaluation(catchBlock, catchParameter, mv);
+            catchNode.accept(this, mv);
             mv.exitWrapped();
             mv.mark(endFinally);
 
@@ -785,7 +792,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             mv.visitTryCatchBlock(startCatch, endCatch, handlerCatch,
                     Types.ScriptException.getInternalName());
             mv.visitTryCatchBlock(startCatch, endFinally, handlerFinally, null);
-        } else if (catchBlock != null) {
+        } else if (catchNode != null) {
             Label startCatch = new Label(), endCatch = new Label(), handlerCatch = new Label();
             Label exceptionHandled = new Label();
 
@@ -799,7 +806,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
             mv.goTo(exceptionHandled);
             mv.mark(handlerCatch);
             restoreEnvironment(mv, savedEnv);
-            catchClauseEvaluation(catchBlock, catchParameter, mv);
+            catchNode.accept(this, mv);
             mv.mark(exceptionHandled);
 
             mv.freeVariable(savedEnv);
@@ -867,35 +874,39 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
         return null;
     }
 
-    private void catchClauseEvaluation(BlockStatement catchBlock, Binding catchParameter,
-            StatementMethodGenerator mv) {
+    @Override
+    public Void visit(CatchNode node, StatementMethodGenerator mv) {
+        Binding catchParameter = node.getCatchParameter();
+        BlockStatement catchBlock = node.getCatchBlock();
+
+        // stack: [e] -> [ex]
         mv.invoke(Methods.ScriptException_getValue);
 
         // create new declarative lexical environment
         // stack: [ex] -> [ex, catchEnv]
+        mv.enterScope(node);
         newDeclarativeEnvironment(mv);
         {
-            // stack: [ex, catchEnv] -> [catchEnv, catchEnv, ex, envRec]
-            mv.dupX1();
+            // stack: [ex, catchEnv] -> [catchEnv, ex, envRec]
             mv.dupX1();
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
-            // [catchEnv, catchEnv, ex, envRec] -> [catchEnv, catchEnv, ex]
+            // [catchEnv, ex, envRec] -> [catchEnv, envRec, ex]
             for (String name : BoundNames(catchParameter)) {
                 mv.dup();
                 mv.aconst(name);
                 mv.iconst(false);
                 mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
             }
-            mv.pop();
+            mv.swap();
 
             if (catchParameter instanceof BindingPattern) {
                 // ToObject(...)
                 ToObject(ValType.Any, mv);
             }
 
-            // stack: [catchEnv, catchEnv, ex] -> [catchEnv]
+            // stack: [catchEnv, envRec, ex] -> [catchEnv]
             BindingInitialisationWithEnvironment(catchParameter, mv);
         }
         // stack: [catchEnv] -> []
@@ -905,6 +916,9 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
 
         // restore previous lexical environment
         popLexicalEnvironment(mv);
+        mv.exitScope();
+
+        return null;
     }
 
     @Override
@@ -980,6 +994,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
         ToObject(ValType.Any, mv);
 
         // create new object lexical environment (withEnvironment-flag = true)
+        mv.enterScope(node);
         newObjectEnvironment(mv, true); // withEnvironment-flag = true
         pushLexicalEnvironment(mv);
 
@@ -987,6 +1002,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementMethodGener
 
         // restore previous lexical environment
         popLexicalEnvironment(mv);
+        mv.exitScope();
 
         return null;
     }

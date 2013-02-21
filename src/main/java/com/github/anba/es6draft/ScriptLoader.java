@@ -48,9 +48,9 @@ public class ScriptLoader {
         return result;
     }
 
-    public static Script load(String sourceFile, String className, String source, boolean strict)
+    public static Script load(String sourceFile, String className, String source)
             throws ParserException {
-        Parser parser = new Parser(sourceFile, 1, strict, true);
+        Parser parser = new Parser(sourceFile, 1);
         com.github.anba.es6draft.ast.Script parsedScript = parser.parse(source);
         Script script = compile(className, parsedScript, false);
         return script;

@@ -17,15 +17,16 @@ import java.util.Set;
  * </ul>
  */
 public class ForOfStatement extends IterationStatement implements ScopedNode {
-    private Scope scope;
+    private BlockScope scope;
     private EnumSet<Abrupt> abrupt;
     private Node head;
     private Expression expression;
     private Statement statement;
     private Set<String> labelSet;
 
-    public ForOfStatement(Scope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head,
-            Expression expression, Statement stmt) {
+    public ForOfStatement(BlockScope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet,
+            Node head, Expression expression, Statement stmt) {
+        this.scope = scope;
         this.abrupt = abrupt;
         this.labelSet = labelSet;
         this.head = head;
@@ -34,7 +35,7 @@ public class ForOfStatement extends IterationStatement implements ScopedNode {
     }
 
     @Override
-    public Scope getScope() {
+    public BlockScope getScope() {
         return scope;
     }
 

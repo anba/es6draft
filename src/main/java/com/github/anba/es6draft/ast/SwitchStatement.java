@@ -17,13 +17,13 @@ import java.util.Set;
  * </ul>
  */
 public class SwitchStatement extends BreakableStatement implements ScopedNode {
-    private Scope scope;
+    private BlockScope scope;
     private EnumSet<Abrupt> abrupt;
     private Set<String> labelSet;
     private Expression expression;
     private List<SwitchClause> clauses;
 
-    public SwitchStatement(Scope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet,
+    public SwitchStatement(BlockScope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet,
             Expression expression, List<SwitchClause> clauses) {
         this.scope = scope;
         this.abrupt = abrupt;
@@ -33,7 +33,7 @@ public class SwitchStatement extends BreakableStatement implements ScopedNode {
     }
 
     @Override
-    public Scope getScope() {
+    public BlockScope getScope() {
         return scope;
     }
 

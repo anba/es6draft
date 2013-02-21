@@ -14,15 +14,12 @@ package com.github.anba.es6draft.ast;
  */
 public class TryStatement extends Statement {
     private BlockStatement tryBlock;
-    private Binding catchParameter;
-    private BlockStatement catchBlock;
+    private CatchNode catchNode;
     private BlockStatement finallyBlock;
 
-    public TryStatement(BlockStatement tryBlock, Binding catchParameter, BlockStatement catchBlock,
-            BlockStatement finallyBlock) {
+    public TryStatement(BlockStatement tryBlock, CatchNode catchNode, BlockStatement finallyBlock) {
         this.tryBlock = tryBlock;
-        this.catchParameter = catchParameter;
-        this.catchBlock = catchBlock;
+        this.catchNode = catchNode;
         this.finallyBlock = finallyBlock;
     }
 
@@ -30,12 +27,8 @@ public class TryStatement extends Statement {
         return tryBlock;
     }
 
-    public Binding getCatchParameter() {
-        return catchParameter;
-    }
-
-    public BlockStatement getCatchBlock() {
-        return catchBlock;
+    public CatchNode getCatchNode() {
+        return catchNode;
     }
 
     public BlockStatement getFinallyBlock() {

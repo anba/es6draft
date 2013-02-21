@@ -64,14 +64,12 @@ public final class LexicalEnvironment {
         return new Reference(envRec, name, strict);
     }
 
-    public static Object getIdentifierValueOrThrow(LexicalEnvironment lex, String name,
-            boolean strict) {
-        Realm realm = lex.realm;
+    static Object getIdentifierValueOrThrow(LexicalEnvironment lex, String name, boolean strict) {
         EnvironmentRecord envRec = getIdentifierRecord(lex, name);
         if (envRec != null) {
             return envRec.getBindingValue(name, strict);
         }
-        throw throwReferenceError(realm, Messages.Key.UnresolvableReference, name);
+        throw throwReferenceError(lex.realm, Messages.Key.UnresolvableReference, name);
     }
 
     /**

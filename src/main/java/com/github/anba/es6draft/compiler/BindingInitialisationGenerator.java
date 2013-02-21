@@ -115,6 +115,8 @@ class BindingInitialisationGenerator {
     }
 
     private static final class BindingInitialisation extends RuntimeSemantics<Void, Void> {
+        private static IdentifierResolution identifierResolution = new IdentifierResolution();
+
         protected BindingInitialisation(CodeGenerator codegen, MethodGenerator mv,
                 EnvironmentType environment) {
             super(codegen, mv, environment);
@@ -201,27 +203,16 @@ class BindingInitialisationGenerator {
                 // stack: [envRec, id, value] -> []
                 mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             } else if (environment == EnvironmentType.EnvironmentFromStack) {
-                // stack: [env, value] -> [value, envRec, id]
-                mv.swap();
-                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+                // stack: [envRec, value] -> [envRec, id, value]
                 mv.aconst(node.getName());
-
-                // [value, envRec, id] -> [envRec, id, value]
-                mv.dup2X1();
-                mv.pop2();
+                mv.swap();
 
                 // stack: [envRec, id, value] -> []
                 mv.invoke(Methods.EnvironmentRecord_initializeBinding);
             } else {
                 assert environment == EnvironmentType.NoEnvironment;
                 // stack: [value] -> [ref, value]
-                mv.load(Register.ExecutionContext);
-                mv.aconst(node.getName());
-                if (mv.isStrict()) {
-                    mv.invoke(Methods.ExecutionContext_strictIdentifierResolution);
-                } else {
-                    mv.invoke(Methods.ExecutionContext_nonstrictIdentifierResolution);
-                }
+                identifierResolution.resolve(node, mv);
                 mv.swap();
                 // stack: [ref, value] -> []
                 mv.load(Register.Realm);

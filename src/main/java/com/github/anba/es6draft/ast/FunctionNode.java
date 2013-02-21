@@ -21,4 +21,7 @@ public interface FunctionNode extends ScopedNode {
     void setStrict(boolean strict);
 
     String getSource();
+
+    @Override
+    FunctionScope getScope();
 }

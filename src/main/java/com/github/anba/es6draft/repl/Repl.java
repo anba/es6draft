@@ -90,7 +90,7 @@ public class Repl {
                 }
                 source.append(s).append('\n');
                 try {
-                    Parser parser = new Parser("typein", line, false, true);
+                    Parser parser = new Parser("typein", line);
                     return parser.parse(source);
                 } catch (ParserEOFException e) {
                     continue;
@@ -188,7 +188,7 @@ public class Repl {
 
     private Script script(String sourceName, String source) throws ParserException {
         String className = "typein_" + scriptCounter.incrementAndGet();
-        return ScriptLoader.load(sourceName, className, source, false);
+        return ScriptLoader.load(sourceName, className, source);
     }
 
     public static class ReplGlobalObject extends GlobalObject {

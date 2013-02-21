@@ -54,7 +54,8 @@ final class GeneratorComprehensionGenerator extends DefaultCodeGenerator<ValType
             mv.ifeq(l0);
         }
 
-        expression(node.getExpression(), mv);
+        ValType type = expression(node.getExpression(), mv);
+        mv.toBoxed(type);
         invokeGetValue(node.getExpression(), mv);
         mv.load(Register.ExecutionContext);
         mv.lineInfo(node);
@@ -107,25 +108,25 @@ final class GeneratorComprehensionGenerator extends DefaultCodeGenerator<ValType
 
         // create new declarative lexical environment
         // stack: [nextValue] -> [nextValue, iterEnv]
+        mv.enterScope(comprehensionFor);
         newDeclarativeEnvironment(mv);
         {
-            // stack: [nextValue, iterEnv] -> [iterEnv, iterEnv, nextValue, envRec]
-            mv.dupX1();
+            // stack: [nextValue, iterEnv] -> [iterEnv, nextValue, envRec]
             mv.dupX1();
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
-            // stack: [iterEnv, iterEnv, nextValue, envRec] -> [iterEnv, iterEnv, nextValue]
+            // stack: [iterEnv, nextValue, envRec] -> [iterEnv, envRec, nextValue]
             for (String name : BoundNames(comprehensionFor.getBinding())) {
                 mv.dup();
                 mv.aconst(name);
                 mv.iconst(false);
                 mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
             }
-            mv.pop();
+            mv.swap();
 
             // FIXME: spec bug (missing ToObject() call?)
 
-            // stack: [iterEnv, iterEnv, nextValue] -> [iterEnv]
+            // stack: [iterEnv, envRec, nextValue] -> [iterEnv]
             BindingInitialisationWithEnvironment(comprehensionFor.getBinding(), mv);
         }
         // stack: [iterEnv] -> []
@@ -139,6 +140,7 @@ final class GeneratorComprehensionGenerator extends DefaultCodeGenerator<ValType
 
         // restore previous lexical environment
         popLexicalEnvironment(mv);
+        mv.exitScope();
 
         mv.goTo(lblContinue);
         mv.mark(lblBreak);

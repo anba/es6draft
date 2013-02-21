@@ -11,9 +11,6 @@ import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarative
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnvironment;
 import static java.util.Objects.requireNonNull;
 
-import java.util.List;
-
-import com.github.anba.es6draft.runtime.internal.SmallArrayList;
 import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Function.ThisMode;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -28,8 +25,6 @@ import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
  * </ul>
  */
 public final class ExecutionContext {
-    private List<LexicalEnvironment> lexEnvs = new SmallArrayList<>();
-
     private Realm realm;
     private LexicalEnvironment lexEnv;
     private LexicalEnvironment varEnv;
@@ -52,21 +47,18 @@ public final class ExecutionContext {
 
     // Helper
     public void pushLexicalEnvironment(LexicalEnvironment lexEnv) {
-        lexEnvs.add(this.lexEnv);
+        assert lexEnv.getOuter() == this.lexEnv;
         this.lexEnv = lexEnv;
     }
 
     // Helper
     public void popLexicalEnvironment() {
-        assert lexEnvs.size() != 0;
-        this.lexEnv = lexEnvs.remove(lexEnvs.size() - 1);
+        this.lexEnv = lexEnv.getOuter();
     }
 
     // Helper
     public void restoreLexicalEnvironment(LexicalEnvironment lexEnv) {
-        while (this.lexEnv != lexEnv) {
-            popLexicalEnvironment();
-        }
+        this.lexEnv = lexEnv;
     }
 
     /**
@@ -156,24 +148,8 @@ public final class ExecutionContext {
         return LexicalEnvironment.getIdentifierReference(lexEnv, name, strict);
     }
 
-    public Reference strictIdentifierResolution(String name) {
-        return LexicalEnvironment.getIdentifierReference(lexEnv, name, true);
-    }
-
-    public Reference nonstrictIdentifierResolution(String name) {
-        return LexicalEnvironment.getIdentifierReference(lexEnv, name, false);
-    }
-
     public Object identifierValue(String name, boolean strict) {
         return LexicalEnvironment.getIdentifierValueOrThrow(lexEnv, name, strict);
-    }
-
-    public Object strictIdentifierValue(String name) {
-        return LexicalEnvironment.getIdentifierValueOrThrow(lexEnv, name, true);
-    }
-
-    public Object nonstrictIdentifierValue(String name) {
-        return LexicalEnvironment.getIdentifierValueOrThrow(lexEnv, name, false);
     }
 
     /**

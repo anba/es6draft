@@ -12,13 +12,20 @@ package com.github.anba.es6draft.ast;
  * <li>12.10 The with Statement
  * </ul>
  */
-public class WithStatement extends Statement {
+public class WithStatement extends Statement implements ScopedNode {
+    private BlockScope scope;
     private Expression expression;
     private Statement statement;
 
-    public WithStatement(Expression expression, Statement statement) {
+    public WithStatement(BlockScope scope, Expression expression, Statement statement) {
+        this.scope = scope;
         this.expression = expression;
         this.statement = statement;
+    }
+
+    @Override
+    public BlockScope getScope() {
+        return scope;
     }
 
     public Expression getExpression() {

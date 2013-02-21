@@ -191,32 +191,6 @@ final class Methods {
     static final MethodDesc ExecutionContext_getRealm = MethodDesc.create(MethodType.Virtual,
             Types.ExecutionContext, "getRealm", Type.getMethodType(Types.Realm));
 
-    // identifierResolution()
-    static final MethodDesc ExecutionContext_identifierResolution = MethodDesc.create(
-            MethodType.Virtual, Types.ExecutionContext, "identifierResolution",
-            Type.getMethodType(Types.Reference, Types.String, Type.BOOLEAN_TYPE));
-
-    static final MethodDesc ExecutionContext_strictIdentifierResolution = MethodDesc.create(
-            MethodType.Virtual, Types.ExecutionContext, "strictIdentifierResolution",
-            Type.getMethodType(Types.Reference, Types.String));
-
-    static final MethodDesc ExecutionContext_nonstrictIdentifierResolution = MethodDesc.create(
-            MethodType.Virtual, Types.ExecutionContext, "nonstrictIdentifierResolution",
-            Type.getMethodType(Types.Reference, Types.String));
-
-    // identifierValue()
-    static final MethodDesc ExecutionContext_identifierValue = MethodDesc.create(
-            MethodType.Virtual, Types.ExecutionContext, "identifierValue",
-            Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
-
-    static final MethodDesc ExecutionContext_strictIdentifierValue = MethodDesc.create(
-            MethodType.Virtual, Types.ExecutionContext, "strictIdentifierValue",
-            Type.getMethodType(Types.Object, Types.String));
-
-    static final MethodDesc ExecutionContext_nonstrictIdentifierValue = MethodDesc.create(
-            MethodType.Virtual, Types.ExecutionContext, "nonstrictIdentifierValue",
-            Type.getMethodType(Types.Object, Types.String));
-
     // thisResolution()
     static final MethodDesc ExecutionContext_thisResolution = MethodDesc.create(MethodType.Virtual,
             Types.ExecutionContext, "thisResolution", Type.getMethodType(Types.Object));

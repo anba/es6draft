@@ -6,22 +6,21 @@
  */
 package com.github.anba.es6draft.ast;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * <h1>12 Statements and Declarations</h1>
  * <ul>
- * <li>12.1 Block
+ * <li>12.14 The try Statement
  * </ul>
  */
-public class BlockStatement extends Statement implements ScopedNode {
+public class CatchNode extends AstNode implements ScopedNode {
     private BlockScope scope;
-    private List<StatementListItem> statements = new ArrayList<>();
+    private Binding catchParameter;
+    private BlockStatement catchBlock;
 
-    public BlockStatement(BlockScope scope, List<StatementListItem> statements) {
+    public CatchNode(BlockScope scope, Binding catchParameter, BlockStatement catchBlock) {
         this.scope = scope;
-        this.statements = statements;
+        this.catchParameter = catchParameter;
+        this.catchBlock = catchBlock;
     }
 
     @Override
@@ -29,8 +28,12 @@ public class BlockStatement extends Statement implements ScopedNode {
         return scope;
     }
 
-    public List<StatementListItem> getStatements() {
-        return statements;
+    public Binding getCatchParameter() {
+        return catchParameter;
+    }
+
+    public BlockStatement getCatchBlock() {
+        return catchBlock;
     }
 
     @Override

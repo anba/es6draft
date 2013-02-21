@@ -14,22 +14,24 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.CallExpression;
 import com.github.anba.es6draft.ast.Node;
+import com.github.anba.es6draft.ast.Scope;
+import com.github.anba.es6draft.ast.ScopedNode;
 
 /**
  * 
  */
 abstract class MethodGenerator extends InstructionVisitor {
     private final boolean strict;
-    private final boolean global;
-
+    private final boolean globalCode;
+    private Scope scope;
     // tail-call support
     private Set<CallExpression> tail = null;
 
     protected MethodGenerator(MethodVisitor mv, String methodName, Type methodDescriptor,
-            boolean strict, boolean global, boolean completionValue) {
+            boolean strict, boolean globalCode, boolean completionValue) {
         super(mv, methodName, methodDescriptor);
         this.strict = strict;
-        this.global = global;
+        this.globalCode = globalCode;
         reserveFixedSlot(Register.Realm);
         reserveFixedSlot(Register.ExecutionContext);
     }
@@ -61,8 +63,25 @@ abstract class MethodGenerator extends InstructionVisitor {
         return strict;
     }
 
-    boolean isGlobal() {
-        return global;
+    boolean isGlobalCode() {
+        return globalCode;
+    }
+
+    Scope getScope() {
+        return scope;
+    }
+
+    void setScope(Scope scope) {
+        this.scope = scope;
+    }
+
+    Scope enterScope(ScopedNode node) {
+        assert node.getScope().getParent() == this.scope;
+        return this.scope = node.getScope();
+    }
+
+    Scope exitScope() {
+        return scope = scope.getParent();
     }
 
     void lineInfo(Node node) {
