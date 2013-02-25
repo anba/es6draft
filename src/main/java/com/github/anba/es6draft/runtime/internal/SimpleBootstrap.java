@@ -336,13 +336,6 @@ public class SimpleBootstrap {
         // System.out.printf("type: %s\n", type);
         MutableCallSite callsite = new MutableCallSite(type);
 
-        try {
-            Class.forName("com.github.anba.es6draft.runtime.Realm", true,
-                    SimpleBootstrap.class.getClassLoader());
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
         MethodHandle target;
         switch (name) {
         case "expression::add":

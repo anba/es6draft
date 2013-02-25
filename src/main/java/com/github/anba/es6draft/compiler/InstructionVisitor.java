@@ -158,6 +158,13 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
+     * &#x2205; → this
+     */
+    public void loadThis() {
+        load(0, Types.Object);
+    }
+
+    /**
      * &#x2205; → array
      */
     public void newarray(int length, Type type) {

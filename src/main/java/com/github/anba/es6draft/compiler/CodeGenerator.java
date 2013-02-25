@@ -25,7 +25,11 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 
@@ -33,6 +37,28 @@ import com.github.anba.es6draft.runtime.internal.SourceCompressor;
  * 
  */
 class CodeGenerator {
+    private static class Fields {
+        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
+                Types.Undefined, "UNDEFINED", Types.Undefined);
+    }
+
+    private static class Methods {
+        // class: ExecutionContext
+        static final MethodDesc ExecutionContext_getRealm = MethodDesc.create(MethodType.Virtual,
+                Types.ExecutionContext, "getRealm", Type.getMethodType(Types.Realm));
+
+        // class: Reference
+        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
+                Types.Reference, "GetValue",
+                Type.getMethodType(Types.Object, Types.Object, Types.Realm));
+
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc
+                .create(MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type
+                        .getMethodType(Types.Scriptable, Types.String, Types.MethodHandle,
+                                Types.ExecutionContext));
+    }
+
     private static final boolean INCLUDE_SOURCE = true;
     private static final Future<String> NO_SOURCE = new ImmediateFuture<>(null);
 
@@ -142,7 +168,7 @@ class CodeGenerator {
     /**
      * [11.1.9] Runtime Semantics: GetTemplateCallSite Abstract Operation
      */
-    void GetTemplateCallSite(TemplateLiteral node, MethodGenerator mv) {
+    void GetTemplateCallSite(TemplateLiteral node, ExpressionVisitor mv) {
         assert isCompiled(node);
         String methodName = methodName(node);
         String desc = Type.getMethodDescriptor(Types.String_);
@@ -197,7 +223,7 @@ class CodeGenerator {
     private static final int STATEMENTS_THRESHOLD = 300;
 
     private void singleScript(Script node) {
-        StatementMethodGenerator mv = new ScriptMethodGenerator(this, node);
+        StatementVisitor mv = new ScriptStatementVisitor(this, node);
         mv.lineInfo(node);
         mv.begin();
 
@@ -214,14 +240,14 @@ class CodeGenerator {
 
     private void multiScript(Script node) {
         // split script into several parts to pass all test262 test cases
-        String desc = ScriptChunkMethodGenerator.methodDescriptor.getInternalName();
+        String desc = ScriptChunkStatementVisitor.methodDescriptor.getInternalName();
 
         List<StatementListItem> statements = node.getStatements();
         int num = statements.size();
         int index = 0;
         for (int end = 0, start = 0; end < num; start += STATEMENTS_THRESHOLD, ++index) {
             end = Math.min(start + STATEMENTS_THRESHOLD, num);
-            StatementMethodGenerator mv = new ScriptChunkMethodGenerator(this, node, index);
+            StatementVisitor mv = new ScriptChunkStatementVisitor(this, node, index);
             mv.lineInfo(statements.get(start));
             mv.begin();
 
@@ -236,7 +262,7 @@ class CodeGenerator {
             mv.end();
         }
 
-        StatementMethodGenerator mv = new ScriptMethodGenerator(this, node);
+        StatementVisitor mv = new ScriptStatementVisitor(this, node);
         mv.lineInfo(node);
         mv.begin();
 
@@ -252,9 +278,9 @@ class CodeGenerator {
         mv.end();
     }
 
-    void compile(GeneratorComprehension node, MethodGenerator mv) {
+    void compile(GeneratorComprehension node, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
-            MethodGenerator body = new GeneratorComprehensionMethodGenerator(this, node, mv);
+            ExpressionVisitor body = new GeneratorComprehensionVisitor(this, node, mv);
             body.lineInfo(node);
             body.begin();
 
@@ -287,7 +313,7 @@ class CodeGenerator {
     }
 
     private void conciseFunctionBody(ArrowFunction node) {
-        MethodGenerator body = new ArrowFunctionMethodGenerator(this, node);
+        ExpressionVisitor body = new ArrowFunctionVisitor(this, node);
         body.lineInfo(node);
         body.begin();
 
@@ -305,7 +331,7 @@ class CodeGenerator {
     }
 
     private void functionBody(FunctionNode node) {
-        StatementMethodGenerator body = new FunctionMethodGenerator(this, node);
+        StatementVisitor body = new FunctionStatementVisitor(this, node);
         body.lineInfo(node);
         body.begin();
 
@@ -321,36 +347,34 @@ class CodeGenerator {
         body.end();
     }
 
-    private void invokeGetValue(Expression node, MethodGenerator mv) {
+    private void invokeGetValue(Expression node, ExpressionVisitor mv) {
         if (node.accept(IsReference.INSTANCE, null)) {
             mv.load(Register.Realm);
             mv.invoke(Methods.Reference_GetValue);
         }
     }
 
-    /* ----------------------------------------------------------------------------------------- */
-
-    ValType expression(Expression node, MethodGenerator mv) {
+    ValType expression(Expression node, ExpressionVisitor mv) {
         return node.accept(exprgen, mv);
     }
 
-    void propertyDefinition(PropertyDefinition node, MethodGenerator mv) {
+    void propertyDefinition(PropertyDefinition node, ExpressionVisitor mv) {
         node.accept(propgen, mv);
     }
 
-    void statement(StatementListItem node, StatementMethodGenerator mv) {
+    void statement(StatementListItem node, StatementVisitor mv) {
         node.accept(stmtgen, mv);
     }
 
     /* ----------------------------------------------------------------------------------------- */
 
-    private abstract static class StatementMethodGeneratorImpl extends StatementMethodGenerator {
+    private abstract static class StatementVisitorImpl extends StatementVisitor {
         private static final int COMPLETION_SLOT = 1;
         private static final Type COMPLETION_TYPE = Types.Object;
 
         private final boolean initCompletionValue;
 
-        protected StatementMethodGeneratorImpl(CodeGenerator codegen, String methodName,
+        protected StatementVisitorImpl(CodeGenerator codegen, String methodName,
                 Type methodDescriptor, boolean strict, boolean globalCode, boolean completionValue,
                 boolean initCompletionValue) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
@@ -396,8 +420,8 @@ class CodeGenerator {
         }
     }
 
-    private abstract static class ExpressionMethodGeneratorImpl extends MethodGenerator {
-        protected ExpressionMethodGeneratorImpl(CodeGenerator codegen, String methodName,
+    private abstract static class ExpressionVisitorImpl extends ExpressionVisitor {
+        protected ExpressionVisitorImpl(CodeGenerator codegen, String methodName,
                 Type methodDescriptor, boolean strict, boolean globalCode) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
                     methodName, methodDescriptor, strict, globalCode, false);
@@ -425,54 +449,53 @@ class CodeGenerator {
         }
     }
 
-    private static class ScriptMethodGenerator extends StatementMethodGeneratorImpl {
+    private static class ScriptStatementVisitor extends StatementVisitorImpl {
         static final String methodName = "script";
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
-        private ScriptMethodGenerator(CodeGenerator codegen, Script node) {
+        private ScriptStatementVisitor(CodeGenerator codegen, Script node) {
             super(codegen, methodName, methodDescriptor, node.isStrict(), node.isGlobalCode(),
                     true, true);
         }
     }
 
-    private static class ScriptChunkMethodGenerator extends StatementMethodGeneratorImpl {
+    private static class ScriptChunkStatementVisitor extends StatementVisitorImpl {
         static final String methodName = "script_";
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext, Types.Object);
 
-        private ScriptChunkMethodGenerator(CodeGenerator codegen, Script node, int index) {
+        private ScriptChunkStatementVisitor(CodeGenerator codegen, Script node, int index) {
             super(codegen, methodName + index, methodDescriptor, node.isStrict(), node
                     .isGlobalCode(), true, false);
         }
     }
 
-    private static class FunctionMethodGenerator extends StatementMethodGeneratorImpl {
+    private static class FunctionStatementVisitor extends StatementVisitorImpl {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
-        private FunctionMethodGenerator(CodeGenerator codegen, FunctionNode node) {
+        private FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
             super(codegen, codegen.methodName(node), methodDescriptor, node.isStrict(), false,
                     false, true);
         }
     }
 
-    private static class ArrowFunctionMethodGenerator extends ExpressionMethodGeneratorImpl {
+    private static class ArrowFunctionVisitor extends ExpressionVisitorImpl {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
-        private ArrowFunctionMethodGenerator(CodeGenerator codegen, ArrowFunction node) {
+        private ArrowFunctionVisitor(CodeGenerator codegen, ArrowFunction node) {
             super(codegen, codegen.methodName(node), methodDescriptor, node.isStrict(), false);
         }
     }
 
-    private static class GeneratorComprehensionMethodGenerator extends
-            ExpressionMethodGeneratorImpl {
+    private static class GeneratorComprehensionVisitor extends ExpressionVisitorImpl {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
-        private GeneratorComprehensionMethodGenerator(CodeGenerator codegen,
-                GeneratorComprehension node, MethodGenerator parent) {
+        private GeneratorComprehensionVisitor(CodeGenerator codegen, GeneratorComprehension node,
+                ExpressionVisitor parent) {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .isGlobalCode());
         }

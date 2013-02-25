@@ -22,6 +22,8 @@ import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -33,7 +35,18 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * </ul>
  */
 class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
-    private static class InternMethods {
+    private static class Fields {
+        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
+                Types.Undefined, "UNDEFINED", Types.Undefined);
+    }
+
+    private static class Methods {
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
+
+        // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_bindingNotPresentOrThrow = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "bindingNotPresentOrThrow", Type
                         .getMethodType(Type.VOID_TYPE, Types.Realm, Types.EnvironmentRecord,
@@ -85,7 +98,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
             mv.load(realm, Types.Realm);
             mv.load(lexEnvRec, Types.EnvironmentRecord);
             mv.aconst(name);
-            mv.invoke(InternMethods.ScriptRuntime_bindingNotPresentOrThrow);
+            mv.invoke(Methods.ScriptRuntime_bindingNotPresentOrThrow);
         }
         // end-modification
 

@@ -11,10 +11,13 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  * <h1>13 Functions and Generators</h1><br>
@@ -24,26 +27,69 @@ import com.github.anba.es6draft.compiler.MethodGenerator.Register;
  * </ul>
  */
 class BindingInitialisationGenerator {
+    private static class Methods {
+        // class: AbstractOperations
+        static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "Get",
+                Type.getMethodType(Types.Object, Types.Scriptable, Types.String));
+
+        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToObject",
+                Type.getMethodType(Types.Scriptable, Types.Realm, Types.Object));
+
+        // class: EnvironmentRecord
+        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
+
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
+
+        // class: Reference
+        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
+                Types.Reference, "GetValue",
+                Type.getMethodType(Types.Object, Types.Object, Types.Realm));
+
+        static final MethodDesc Reference_PutValue_ = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "PutValue",
+                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Realm));
+
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "createRestArray",
+                Type.getMethodType(Types.Scriptable, Types.Scriptable, Type.INT_TYPE, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_throw = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "_throw",
+                Type.getMethodType(Types.ScriptException, Types.Object));
+
+        // class: Type
+        static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
+                Types._Type, "isUndefined", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+    }
+
     private final CodeGenerator codegen;
 
     BindingInitialisationGenerator(CodeGenerator codegen) {
         this.codegen = codegen;
     }
 
-    public void generate(FunctionNode node, MethodGenerator mv) {
+    void generate(FunctionNode node, ExpressionVisitor mv) {
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
                 EnvironmentType.NoEnvironment);
 
         node.getParameters().accept(init, null);
     }
 
-    public void generate(Binding node, MethodGenerator mv) {
+    void generate(Binding node, ExpressionVisitor mv) {
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
                 EnvironmentType.NoEnvironment);
         node.accept(init, null);
     }
 
-    public void generateWithEnvironment(Binding node, MethodGenerator mv) {
+    void generateWithEnvironment(Binding node, ExpressionVisitor mv) {
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
                 EnvironmentType.EnvironmentFromStack);
         node.accept(init, null);
@@ -55,10 +101,10 @@ class BindingInitialisationGenerator {
 
     private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {
         protected final CodeGenerator codegen;
-        protected final MethodGenerator mv;
+        protected final ExpressionVisitor mv;
         protected final EnvironmentType environment;
 
-        protected RuntimeSemantics(CodeGenerator codegen, MethodGenerator mv,
+        protected RuntimeSemantics(CodeGenerator codegen, ExpressionVisitor mv,
                 EnvironmentType environment) {
             this.codegen = codegen;
             this.mv = mv;
@@ -90,7 +136,7 @@ class BindingInitialisationGenerator {
         /**
          * Calls <code>GetValue(o)</code> if the expression could possibly be a reference
          */
-        protected final void invokeGetValue(Expression node, MethodGenerator mv) {
+        protected final void invokeGetValue(Expression node, ExpressionVisitor mv) {
             if (node.accept(IsReference.INSTANCE, null)) {
                 mv.load(Register.Realm);
                 mv.invoke(Methods.Reference_GetValue);
@@ -117,7 +163,7 @@ class BindingInitialisationGenerator {
     private static final class BindingInitialisation extends RuntimeSemantics<Void, Void> {
         private static IdentifierResolution identifierResolution = new IdentifierResolution();
 
-        protected BindingInitialisation(CodeGenerator codegen, MethodGenerator mv,
+        protected BindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
                 EnvironmentType environment) {
             super(codegen, mv, environment);
         }
@@ -224,7 +270,7 @@ class BindingInitialisationGenerator {
     }
 
     private static final class IndexedBindingInitialisation extends RuntimeSemantics<Void, Integer> {
-        protected IndexedBindingInitialisation(CodeGenerator codegen, MethodGenerator mv,
+        protected IndexedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
                 EnvironmentType environment) {
             super(codegen, mv, environment);
         }
@@ -325,7 +371,7 @@ class BindingInitialisationGenerator {
     }
 
     private static final class KeyedBindingInitialisation extends RuntimeSemantics<Void, String> {
-        protected KeyedBindingInitialisation(CodeGenerator codegen, MethodGenerator mv,
+        protected KeyedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
                 EnvironmentType environment) {
             super(codegen, mv, environment);
         }

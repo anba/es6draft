@@ -17,35 +17,60 @@ import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.PropertyName;
 import com.github.anba.es6draft.ast.PropertyNameDefinition;
 import com.github.anba.es6draft.ast.PropertyValueDefinition;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  *
  */
-class PropertyGenerator extends DefaultCodeGenerator<Void, MethodGenerator> {
+class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
+    private static class Methods {
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinition = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinition", Type
+                        .getMethodType(Type.VOID_TYPE, Types.Scriptable, Types.String,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-    /* ----------------------------------------------------------------------------------------- */
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGenerator = MethodDesc
+                .create(MethodType.Static, Types.ScriptRuntime,
+                        "EvaluatePropertyDefinitionGenerator", Type.getMethodType(Type.VOID_TYPE,
+                                Types.Scriptable, Types.String, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGetter = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionGetter", Type
+                        .getMethodType(Type.VOID_TYPE, Types.Scriptable, Types.String,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionSetter = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionSetter", Type
+                        .getMethodType(Type.VOID_TYPE, Types.Scriptable, Types.String,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_defineProperty = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "defineProperty",
+                Type.getMethodType(Type.VOID_TYPE, Types.Scriptable, Types.String, Types.Object));
+    }
 
     public PropertyGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
     @Override
-    protected Void visit(Node node, MethodGenerator mv) {
+    protected Void visit(Node node, ExpressionVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     @Override
-    protected Void visit(Expression node, MethodGenerator mv) {
+    protected Void visit(Expression node, ExpressionVisitor mv) {
         ValType type = codegen.expression(node, mv);
         mv.toBoxed(type);
         return null;
     }
 
-    /* ----------------------------------------------------------------------------------------- */
-
     @Override
-    public Void visit(MethodDefinition node, MethodGenerator mv) {
+    public Void visit(MethodDefinition node, ExpressionVisitor mv) {
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> MethodDefinition
@@ -77,7 +102,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, MethodGenerator> {
     }
 
     @Override
-    public Void visit(PropertyNameDefinition node, MethodGenerator mv) {
+    public Void visit(PropertyNameDefinition node, ExpressionVisitor mv) {
         Identifier propertyName = node.getPropertyName();
 
         String propName = propertyName.getName();
@@ -91,7 +116,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, MethodGenerator> {
     }
 
     @Override
-    public Void visit(PropertyValueDefinition node, MethodGenerator mv) {
+    public Void visit(PropertyValueDefinition node, ExpressionVisitor mv) {
         PropertyName propertyName = node.getPropertyName();
         Expression propertyValue = node.getPropertyValue();
 

@@ -11,53 +11,91 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import java.util.Iterator;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.ArrayComprehension;
 import com.github.anba.es6draft.ast.ComprehensionFor;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  * TODO: current draft [rev. 13] does not specify the runtime semantics for array-comprehensions,
  * therefore the translation from
  * http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions is used
  */
-class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator> {
+class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisitor> {
+    private static class Methods {
+        // class: AbstractOperations
+        static final MethodDesc AbstractOperations_CreateArrayFromList = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "CreateArrayFromList",
+                Type.getMethodType(Types.Scriptable, Types.Realm, Types.List));
+
+        // class: ArrayList
+        static final MethodDesc ArrayList_init = MethodDesc.create(MethodType.Special,
+                Types.ArrayList, "<init>", Type.getMethodType(Type.VOID_TYPE));
+
+        static final MethodDesc ArrayList_add = MethodDesc.create(MethodType.Virtual,
+                Types.ArrayList, "add", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+
+        // class: EnvironmentRecord
+        static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+
+        // class: Iterator
+        static final MethodDesc Iterator_hasNext = MethodDesc.create(MethodType.Interface,
+                Types.Iterator, "hasNext", Type.getMethodType(Type.BOOLEAN_TYPE));
+
+        static final MethodDesc Iterator_next = MethodDesc.create(MethodType.Interface,
+                Types.Iterator, "next", Type.getMethodType(Types.Object));
+
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
+
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "iterate",
+                Type.getMethodType(Types.Iterator, Types.Object, Types.Realm));
+    }
+
     ArrayComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
     @Override
-    protected ValType visit(Node node, MethodGenerator mv) {
+    protected ValType visit(Node node, ExpressionVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     @Override
-    public ValType visit(ArrayComprehension node, MethodGenerator mv) {
-        int result = mv.newVariable(Types.List);
+    public ValType visit(ArrayComprehension node, ExpressionVisitor mv) {
+        int result = mv.newVariable(Types.ArrayList);
         mv.anew(Types.ArrayList);
         mv.dup();
         mv.invoke(Methods.ArrayList_init);
-        mv.store(result, Types.List);
+        mv.store(result, Types.ArrayList);
 
         visitArrayComprehension(node, result, node.getList().iterator(), mv);
 
-        mv.load(result, Types.List);
-        mv.freeVariable(result);
         mv.load(Register.Realm);
-        mv.swap();
+        mv.load(result, Types.ArrayList);
         mv.invoke(Methods.AbstractOperations_CreateArrayFromList);
+        mv.freeVariable(result);
 
         return ValType.Object;
     }
 
-    private ValType expression(Expression node, MethodGenerator mv) {
+    private ValType expression(Expression node, ExpressionVisitor mv) {
         return codegen.expression(node, mv);
     }
 
-    private void visitArrayComprehension(ArrayComprehension node, int result, MethodGenerator mv) {
+    private void visitArrayComprehension(ArrayComprehension node, int result, ExpressionVisitor mv) {
         Label l0 = null;
         if (node.getTest() != null) {
             l0 = new Label();
@@ -70,9 +108,9 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGe
         ValType type = expression(node.getExpression(), mv);
         mv.toBoxed(type);
         invokeGetValue(node.getExpression(), mv);
-        mv.load(result, Types.List);
+        mv.load(result, Types.ArrayList);
         mv.swap();
-        mv.invoke(Methods.List_add);
+        mv.invoke(Methods.ArrayList_add);
         mv.pop();
 
         if (node.getTest() != null) {
@@ -81,14 +119,15 @@ class ArrayComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGe
     }
 
     private void visitArrayComprehension(ArrayComprehension comprehension, int result,
-            Iterator<ComprehensionFor> iterator, MethodGenerator mv) {
+            Iterator<ComprehensionFor> iterator, ExpressionVisitor mv) {
         Label lblContinue = new Label(), lblBreak = new Label();
         Label loopstart = new Label();
 
         assert iterator.hasNext();
         ComprehensionFor comprehensionFor = iterator.next();
 
-        expression(comprehensionFor.getExpression(), mv);
+        ValType type = expression(comprehensionFor.getExpression(), mv);
+        mv.toBoxed(type);
         invokeGetValue(comprehensionFor.getExpression(), mv);
 
         // FIXME: translation into for-of per

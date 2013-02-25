@@ -22,93 +22,65 @@ public final class Errors {
     private Errors() {
     }
 
-    private static String format(Realm realm, Messages.Key key, String... args) {
-        String pattern = realm.message(key);
-        MessageFormat format = new MessageFormat(pattern, realm.getLocale());
-        return format.format(args);
+    private static Object newError(Realm realm, NativeError.ErrorType type, Messages.Key key) {
+        String message = realm.message(key);
+        Scriptable nativeError = realm.getNativeError(type);
+        return ((Constructor) nativeError).construct(message);
+    }
+
+    private static Object newError(Realm realm, NativeError.ErrorType type, Messages.Key key,
+            String... args) {
+        MessageFormat format = new MessageFormat(realm.message(key), realm.getLocale());
+        String message = format.format(args);
+        Scriptable nativeError = realm.getNativeError(type);
+        return ((Constructor) nativeError).construct(message);
     }
 
     public static ScriptException throwInternalError(Realm realm, Messages.Key key) {
-        String message = realm.message(key);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.InternalError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.InternalError, key));
     }
 
     public static ScriptException throwInternalError(Realm realm, Messages.Key key, String... args) {
-        String message = format(realm, key, args);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.InternalError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.InternalError, key, args));
     }
 
     public static ScriptException throwTypeError(Realm realm, Messages.Key key) {
-        String message = realm.message(key);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.TypeError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.TypeError, key));
     }
 
     public static ScriptException throwTypeError(Realm realm, Messages.Key key, String... args) {
-        String message = format(realm, key, args);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.TypeError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.TypeError, key, args));
     }
 
     public static ScriptException throwReferenceError(Realm realm, Messages.Key key) {
-        String message = realm.message(key);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.ReferenceError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.ReferenceError, key));
     }
 
     public static ScriptException throwReferenceError(Realm realm, Messages.Key key, String... args) {
-        String message = format(realm, key, args);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.ReferenceError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.ReferenceError, key, args));
     }
 
     public static ScriptException throwSyntaxError(Realm realm, Messages.Key key) {
-        String message = realm.message(key);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.SyntaxError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.SyntaxError, key));
     }
 
     public static ScriptException throwSyntaxError(Realm realm, Messages.Key key, String... args) {
-        String message = format(realm, key, args);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.SyntaxError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.SyntaxError, key, args));
     }
 
     public static ScriptException throwRangeError(Realm realm, Messages.Key key) {
-        String message = realm.message(key);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.RangeError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.RangeError, key));
     }
 
     public static ScriptException throwRangeError(Realm realm, Messages.Key key, String... args) {
-        String message = format(realm, key, args);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.RangeError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.RangeError, key, args));
     }
 
     public static ScriptException throwURIError(Realm realm, Messages.Key key) {
-        String message = realm.message(key);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.URIError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.URIError, key));
     }
 
     public static ScriptException throwURIError(Realm realm, Messages.Key key, String... args) {
-        String message = format(realm, key, args);
-        Scriptable nativeError = realm.getNativeError(NativeError.ErrorType.URIError);
-        Object error = ((Constructor) nativeError).construct(message);
-        return _throw(error);
+        return _throw(newError(realm, NativeError.ErrorType.URIError, key, args));
     }
 }

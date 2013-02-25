@@ -15,6 +15,8 @@ import org.objectweb.asm.Type;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1>
@@ -23,6 +25,41 @@ import com.github.anba.es6draft.ast.GeneratorDeclaration;
  * </ul>
  */
 abstract class DeclarationBindingInstantiationGenerator {
+    private static class Methods {
+        // class: EnvironmentRecord
+        static final MethodDesc EnvironmentRecord_hasBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "hasBinding",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.String));
+
+        static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String));
+
+        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
+
+        static final MethodDesc EnvironmentRecord_setMutableBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "setMutableBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
+
+        // class: OrdinaryFunction
+        static final MethodDesc OrdinaryFunction_InstantiateFunctionObject = MethodDesc.create(
+                MethodType.Static, Types.OrdinaryFunction, "InstantiateFunctionObject", Type
+                        .getMethodType(Types.Function, Types.Realm, Types.LexicalEnvironment,
+                                Types.RuntimeInfo$Function));
+
+        // class: OrdinaryGenerator
+        static final MethodDesc OrdinaryGenerator_InstantiateGeneratorObject = MethodDesc.create(
+                MethodType.Static, Types.OrdinaryGenerator, "InstantiateGeneratorObject", Type
+                        .getMethodType(Types.Generator, Types.Realm, Types.LexicalEnvironment,
+                                Types.RuntimeInfo$Function));
+    }
+
     protected final CodeGenerator codegen;
 
     DeclarationBindingInstantiationGenerator(CodeGenerator codegen) {

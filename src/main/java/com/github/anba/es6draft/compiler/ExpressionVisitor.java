@@ -20,14 +20,14 @@ import com.github.anba.es6draft.ast.ScopedNode;
 /**
  * 
  */
-abstract class MethodGenerator extends InstructionVisitor {
+abstract class ExpressionVisitor extends InstructionVisitor {
     private final boolean strict;
     private final boolean globalCode;
     private Scope scope;
     // tail-call support
     private Set<CallExpression> tail = null;
 
-    protected MethodGenerator(MethodVisitor mv, String methodName, Type methodDescriptor,
+    protected ExpressionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
             boolean strict, boolean globalCode, boolean completionValue) {
         super(mv, methodName, methodDescriptor);
         this.strict = strict;

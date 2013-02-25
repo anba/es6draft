@@ -10,10 +10,13 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  * <h1>11 Expressions</h1><br>
@@ -23,18 +26,51 @@ import com.github.anba.es6draft.compiler.MethodGenerator.Register;
  * </ul>
  */
 class DestructuringAssignmentGenerator {
+    private static class Methods {
+        // class: AbstractOperations
+        static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "Get",
+                Type.getMethodType(Types.Object, Types.Scriptable, Types.String));
+
+        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToObject",
+                Type.getMethodType(Types.Scriptable, Types.Realm, Types.Object));
+
+        // class: Reference
+        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
+                Types.Reference, "GetValue",
+                Type.getMethodType(Types.Object, Types.Object, Types.Realm));
+
+        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Static,
+                Types.Reference, "PutValue",
+                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.Realm));
+
+        static final MethodDesc Reference_PutValue_ = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "PutValue",
+                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Realm));
+
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "createRestArray",
+                Type.getMethodType(Types.Scriptable, Types.Scriptable, Type.INT_TYPE, Types.Realm));
+
+        // class: Type
+        static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
+                Types._Type, "isUndefined", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+    }
+
     private final CodeGenerator codegen;
 
     DestructuringAssignmentGenerator(CodeGenerator codegen) {
         this.codegen = codegen;
     }
 
-    public void generate(AssignmentPattern node, MethodGenerator mv) {
+    public void generate(AssignmentPattern node, ExpressionVisitor mv) {
         DestructuringAssignmentEvaluation init = new DestructuringAssignmentEvaluation(codegen, mv);
         node.accept(init, null);
     }
 
-    private static void PutValue(Expression node, ValType type, MethodGenerator mv) {
+    private static void PutValue(Expression node, ValType type, ExpressionVisitor mv) {
         assert !node.accept(IsReference.INSTANCE, null)
                 || (type == ValType.Any || type == ValType.Reference) : type;
         assert !(type == ValType.Reference) || node.accept(IsReference.INSTANCE, null) : type;
@@ -52,9 +88,9 @@ class DestructuringAssignmentGenerator {
 
     private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {
         protected final CodeGenerator codegen;
-        protected final MethodGenerator mv;
+        protected final ExpressionVisitor mv;
 
-        protected RuntimeSemantics(CodeGenerator codegen, MethodGenerator mv) {
+        protected RuntimeSemantics(CodeGenerator codegen, ExpressionVisitor mv) {
             this.codegen = codegen;
             this.mv = mv;
         }
@@ -85,7 +121,7 @@ class DestructuringAssignmentGenerator {
         /**
          * Calls <code>GetValue(o)</code> if the expression could possibly be a reference
          */
-        protected final void invokeGetValue(Expression node, MethodGenerator mv) {
+        protected final void invokeGetValue(Expression node, ExpressionVisitor mv) {
             if (node.accept(IsReference.INSTANCE, null)) {
                 mv.load(Register.Realm);
                 mv.invoke(Methods.Reference_GetValue);
@@ -95,7 +131,7 @@ class DestructuringAssignmentGenerator {
 
     private static final class DestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, Void> {
-        protected DestructuringAssignmentEvaluation(CodeGenerator codegen, MethodGenerator mv) {
+        protected DestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
             super(codegen, mv);
         }
 
@@ -132,7 +168,7 @@ class DestructuringAssignmentGenerator {
 
     private static final class IndexedDestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, Integer> {
-        protected IndexedDestructuringAssignmentEvaluation(CodeGenerator codegen, MethodGenerator mv) {
+        protected IndexedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
             super(codegen, mv);
         }
 
@@ -185,7 +221,7 @@ class DestructuringAssignmentGenerator {
 
     private static final class KeyedDestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, String> {
-        protected KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, MethodGenerator mv) {
+        protected KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
             super(codegen, mv);
         }
 

@@ -32,7 +32,13 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * </ul>
  */
 class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
-    private static class InternMethods {
+    private static class Methods {
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
+
+        // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_canDeclareLexicalScopedOrThrow = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "canDeclareLexicalScopedOrThrow", Type
                         .getMethodType(Type.VOID_TYPE, Types.Realm, Types.GlobalEnvironmentRecord,
@@ -179,7 +185,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.load(realm, Types.Realm);
         mv.load(envRec, Types.GlobalEnvironmentRecord);
         mv.aconst(name);
-        mv.invoke(InternMethods.ScriptRuntime_canDeclareLexicalScopedOrThrow);
+        mv.invoke(Methods.ScriptRuntime_canDeclareLexicalScopedOrThrow);
     }
 
     private void canDeclareVarScopedOrThrow(int realm, int envRec, String name,
@@ -187,7 +193,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.load(realm, Types.Realm);
         mv.load(envRec, Types.GlobalEnvironmentRecord);
         mv.aconst(name);
-        mv.invoke(InternMethods.ScriptRuntime_canDeclareVarScopedOrThrow);
+        mv.invoke(Methods.ScriptRuntime_canDeclareVarScopedOrThrow);
     }
 
     private void canDeclareGlobalFunctionOrThrow(int realm, int envRec, String name,
@@ -195,7 +201,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.load(realm, Types.Realm);
         mv.load(envRec, Types.GlobalEnvironmentRecord);
         mv.aconst(name);
-        mv.invoke(InternMethods.ScriptRuntime_canDeclareGlobalFunctionOrThrow);
+        mv.invoke(Methods.ScriptRuntime_canDeclareGlobalFunctionOrThrow);
     }
 
     private void canDeclareGlobalVarOrThrow(int realm, int envRec, String name,
@@ -203,7 +209,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.load(realm, Types.Realm);
         mv.load(envRec, Types.GlobalEnvironmentRecord);
         mv.aconst(name);
-        mv.invoke(InternMethods.ScriptRuntime_canDeclareGlobalVarOrThrow);
+        mv.invoke(Methods.ScriptRuntime_canDeclareGlobalVarOrThrow);
     }
 
     private void createGlobalVarBinding(int envRec, String name, int deletableBindings,
@@ -212,7 +218,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.load(envRec, Types.GlobalEnvironmentRecord);
         mv.aconst(name);
         mv.load(deletableBindings, Type.BOOLEAN_TYPE);
-        mv.invoke(InternMethods.GlobalEnvironmentRecord_createGlobalVarBinding);
+        mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalVarBinding);
     }
 
     private void createGlobalFunctionBinding(int envRec, String name, int deletableBindings,
@@ -223,6 +229,6 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.aconst(name);
         mv.swap();
         mv.load(deletableBindings, Type.BOOLEAN_TYPE);
-        mv.invoke(InternMethods.GlobalEnvironmentRecord_createGlobalFunctionBinding);
+        mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalFunctionBinding);
     }
 }

@@ -17,22 +17,220 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.runtime.internal.SimpleBootstrap;
 import com.github.anba.es6draft.semantics.ObjectLiteralStaticSemantics;
 
 /**
  *
  */
-class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator> {
+class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisitor> {
+    private static class Fields {
+        static final FieldDesc Null_NULL = FieldDesc.create(FieldType.Static, Types.Null, "NULL",
+                Types.Null);
 
-    /* ----------------------------------------------------------------------------------------- */
+        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
+                Types.Undefined, "UNDEFINED", Types.Undefined);
+
+        static final FieldDesc ScriptRuntime_EMPTY_ARRAY = FieldDesc.create(FieldType.Static,
+                Types.ScriptRuntime, "EMPTY_ARRAY", Types.Object_);
+    }
+
+    private static class Methods {
+        // class: AbstractOperations
+        static final MethodDesc AbstractOperations_Put = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "Put", Type.getMethodType(Type.VOID_TYPE, Types.Realm,
+                        Types.Scriptable, Types.String, Types.Object, Type.BOOLEAN_TYPE));
+
+        // class: Callable
+        static final MethodDesc Callable_call = MethodDesc.create(MethodType.Interface,
+                Types.Callable, "call",
+                Type.getMethodType(Types.Object, Types.Object, Types.Object_));
+
+        // class: Eval
+        static final MethodDesc Eval_directEval = MethodDesc.create(MethodType.Static, Types.Eval,
+                "directEval", Type.getMethodType(Types.Object, Types.Object,
+                        Types.ExecutionContext, Type.BOOLEAN_TYPE, Type.BOOLEAN_TYPE));
+
+        // class: ExecutionContext
+        static final MethodDesc ExecutionContext_thisResolution = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "thisResolution",
+                Type.getMethodType(Types.Object));
+
+        // class: ExoticArray
+        static final MethodDesc ExoticArray_ArrayCreate = MethodDesc.create(MethodType.Static,
+                Types.ExoticArray, "ArrayCreate",
+                Type.getMethodType(Types.Scriptable, Types.Realm, Type.LONG_TYPE));
+
+        // class: OrdinaryObject
+        static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(MethodType.Static,
+                Types.OrdinaryObject, "ObjectCreate",
+                Type.getMethodType(Types.Scriptable, Types.Realm));
+
+        // class: Reference
+        static final MethodDesc Reference_GetValue_ = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "GetValue", Type.getMethodType(Types.Object, Types.Realm));
+
+        static final MethodDesc Reference_PutValue_ = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "PutValue",
+                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Realm));
+
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_add = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "add",
+                Type.getMethodType(Types.Object, Types.Object, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_add_str = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "add",
+                Type.getMethodType(Types.CharSequence, Types.CharSequence, Types.CharSequence));
+
+        static final MethodDesc ScriptRuntime_delete = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "delete",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_in = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "in",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_typeof = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "typeof",
+                Type.getMethodType(Types.String, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "yield",
+                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_delegatedYield = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "delegatedYield",
+                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_instanceOfOperator = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "instanceOfOperator",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_ArrayAccumulationSpreadElement = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "ArrayAccumulationSpreadElement", Type
+                        .getMethodType(Type.INT_TYPE, Types.Scriptable, Type.INT_TYPE,
+                                Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_CheckCallable = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "CheckCallable",
+                Type.getMethodType(Types.Callable, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "defineProperty",
+                Type.getMethodType(Type.VOID_TYPE, Types.Scriptable, Type.INT_TYPE, Types.Object));
+
+        static final MethodDesc ScriptRuntime_EvaluateArrowFunction = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type
+                        .getMethodType(Types.Object, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_EvaluateConstructorCall = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorCall",
+                Type.getMethodType(Types.Object, Types.Object, Types.Object_, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_EvaluateFunctionExpression = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateFunctionExpression", Type
+                        .getMethodType(Types.Object, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_EvaluateGeneratorComprehension = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorComprehension",
+                Type.getMethodType(Types.Scriptable, Types.MethodHandle, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_EvaluateGeneratorExpression = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorExpression", Type
+                        .getMethodType(Types.Object, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_GetCallThisValue = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetCallThisValue",
+                Type.getMethodType(Types.Object, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_getElement = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "getElement", Type.getMethodType(Types.Reference,
+                        Types.Object, Types.Object, Types.Realm, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getProperty = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "getProperty", Type.getMethodType(Types.Reference,
+                        Types.Object, Types.String, Types.Realm, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getSuperElement = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getSuperElement", Type.getMethodType(
+                        Types.Reference, Types.EnvironmentRecord, Types.Object, Types.Realm,
+                        Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getSuperMethod = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "getSuperMethod",
+                Type.getMethodType(Types.Reference, Types.EnvironmentRecord, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getSuperProperty = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getSuperProperty", Type.getMethodType(
+                        Types.Reference, Types.EnvironmentRecord, Types.String, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_GetThisEnvironmentOrThrow = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetThisEnvironmentOrThrow",
+                Type.getMethodType(Types.EnvironmentRecord, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "IsBuiltinEval",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Callable, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_RegExp = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "RegExp",
+                Type.getMethodType(Types.Object, Types.Realm, Types.String, Types.String));
+
+        static final MethodDesc ScriptRuntime_SpreadArray = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "SpreadArray",
+                Type.getMethodType(Types.Object_, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_toFlatArray = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "toFlatArray",
+                Type.getMethodType(Types.Object_, Types.Object_));
+
+        // class: StringBuilder
+        static final MethodDesc StringBuilder_append_Charsequence = MethodDesc.create(
+                MethodType.Virtual, Types.StringBuilder, "append",
+                Type.getMethodType(Types.StringBuilder, Types.CharSequence));
+
+        static final MethodDesc StringBuilder_append_String = MethodDesc.create(MethodType.Virtual,
+                Types.StringBuilder, "append",
+                Type.getMethodType(Types.StringBuilder, Types.String));
+
+        static final MethodDesc StringBuilder_init = MethodDesc.create(MethodType.Special,
+                Types.StringBuilder, "<init>", Type.getMethodType(Type.VOID_TYPE));
+
+        static final MethodDesc StringBuilder_toString = MethodDesc.create(MethodType.Virtual,
+                Types.StringBuilder, "toString", Type.getMethodType(Types.String));
+    }
+
+    private final ArrayComprehensionGenerator arraycomprgen;
+    private final IdentifierResolution identifierResolution;
+
+    public ExpressionGenerator(CodeGenerator codegen) {
+        super(codegen);
+        this.arraycomprgen = new ArrayComprehensionGenerator(codegen);
+        this.identifierResolution = new IdentifierResolution();
+    }
+
+    private static final Object[] EMPTY_BSM_ARGS = new Object[] {};
+
+    private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
+        mv.invokedynamic(SimpleBootstrap.getName(operator),
+                SimpleBootstrap.getMethodDescriptor(operator),
+                SimpleBootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
+    }
 
     /**
      * ref = `eval` {@code node}<br>
      * GetValue(ref)<br>
      */
-    private ValType evalAndGetValue(Expression node, MethodGenerator mv) {
+    private ValType evalAndGetValue(Expression node, ExpressionVisitor mv) {
         if (node instanceof Identifier) {
             return identifierResolution.resolveValue((Identifier) node, mv);
         } else {
@@ -42,7 +240,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         }
     }
 
-    private void GetValue(Expression node, ValType type, MethodGenerator mv) {
+    private void GetValue(Expression node, ValType type, ExpressionVisitor mv) {
         assert !node.accept(IsReference.INSTANCE, null)
                 || (type == ValType.Any || type == ValType.Reference) : type;
         assert !(type == ValType.Reference) || node.accept(IsReference.INSTANCE, null) : type;
@@ -57,7 +255,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         }
     }
 
-    private void PutValue(Expression node, ValType type, MethodGenerator mv) {
+    private void PutValue(Expression node, ValType type, ExpressionVisitor mv) {
         assert !node.accept(IsReference.INSTANCE, null)
                 || (type == ValType.Any || type == ValType.Reference) : type;
         assert !(type == ValType.Reference) || node.accept(IsReference.INSTANCE, null) : type;
@@ -72,19 +270,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
         }
     }
 
-    private static final Object[] EMPTY_BSM_ARGS = new Object[] {};
-
-    private void invokeDynamicOperator(BinaryExpression.Operator operator, MethodGenerator mv) {
-        mv.invokedynamic(SimpleBootstrap.getName(operator),
-                SimpleBootstrap.getMethodDescriptor(operator),
-                SimpleBootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
-    }
-
     /**
      * [11.2.3 EvaluateCall Abstract Operation]
      */
     private void EvaluateCall(Expression call, Expression base, ValType type,
-            List<Expression> arguments, boolean directEval, MethodGenerator mv) {
+            List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         // stack: [ref] -> [ref, ref]
         mv.dup();
         /* step 1-2 */
@@ -227,29 +417,18 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
 
     /* ----------------------------------------------------------------------------------------- */
 
-    private final ArrayComprehensionGenerator arraycomprgen;
-    private final IdentifierResolution identifierResolution;
-
-    public ExpressionGenerator(CodeGenerator codegen) {
-        super(codegen);
-        this.arraycomprgen = new ArrayComprehensionGenerator(codegen);
-        this.identifierResolution = new IdentifierResolution();
-    }
-
     @Override
-    protected ValType visit(Node node, MethodGenerator mv) {
+    protected ValType visit(Node node, ExpressionVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
-    /* ----------------------------------------------------------------------------------------- */
-
     @Override
-    public ValType visit(ArrayComprehension node, MethodGenerator mv) {
+    public ValType visit(ArrayComprehension node, ExpressionVisitor mv) {
         return node.accept(arraycomprgen, mv);
     }
 
     @Override
-    public ValType visit(ArrayLiteral node, MethodGenerator mv) {
+    public ValType visit(ArrayLiteral node, ExpressionVisitor mv) {
         boolean hasSpread = false;
         for (Expression element : node.getElements()) {
             if (element instanceof SpreadElement) {
@@ -344,7 +523,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(ArrowFunction node, MethodGenerator mv) {
+    public ValType visit(ArrowFunction node, ExpressionVisitor mv) {
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> ArrowFunction
@@ -357,7 +536,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(AssignmentExpression node, MethodGenerator mv) {
+    public ValType visit(AssignmentExpression node, ExpressionVisitor mv) {
         LeftHandSideExpression left = node.getLeft();
         Expression right = node.getRight();
         if (node.getOperator() == AssignmentExpression.Operator.ASSIGN) {
@@ -624,7 +803,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(BinaryExpression node, MethodGenerator mv) {
+    public ValType visit(BinaryExpression node, ExpressionVisitor mv) {
         Expression left = node.getLeft();
         Expression right = node.getRight();
 
@@ -1029,14 +1208,14 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(BooleanLiteral node, MethodGenerator mv) {
+    public ValType visit(BooleanLiteral node, ExpressionVisitor mv) {
         mv.iconst(node.getValue());
 
         return ValType.Boolean;
     }
 
     @Override
-    public ValType visit(CallExpression node, MethodGenerator mv) {
+    public ValType visit(CallExpression node, ExpressionVisitor mv) {
         ValType type = node.getBase().accept(this, mv);
         mv.toBoxed(type);
 
@@ -1049,7 +1228,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(ClassExpression node, MethodGenerator mv) {
+    public ValType visit(ClassExpression node, ExpressionVisitor mv) {
         String className = (node.getName() != null ? node.getName().getName() : null);
         ClassDefinitionEvaluation(node, className, mv);
 
@@ -1057,7 +1236,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(CommaExpression node, MethodGenerator mv) {
+    public ValType visit(CommaExpression node, ExpressionVisitor mv) {
         ValType type = null;
         List<Expression> list = node.getOperands();
         for (Expression e : list) {
@@ -1071,7 +1250,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(ConditionalExpression node, MethodGenerator mv) {
+    public ValType visit(ConditionalExpression node, ExpressionVisitor mv) {
         Label l0 = new Label(), l1 = new Label();
 
         ValType typeTest = evalAndGetValue(node.getTest(), mv);
@@ -1089,7 +1268,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(ElementAccessor node, MethodGenerator mv) {
+    public ValType visit(ElementAccessor node, ExpressionVisitor mv) {
         ValType baseType = evalAndGetValue(node.getBase(), mv);
         mv.toBoxed(baseType);
         ValType elementType = evalAndGetValue(node.getElement(), mv);
@@ -1102,7 +1281,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(FunctionExpression node, MethodGenerator mv) {
+    public ValType visit(FunctionExpression node, ExpressionVisitor mv) {
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> FunctionExpression
@@ -1115,7 +1294,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(GeneratorComprehension node, MethodGenerator mv) {
+    public ValType visit(GeneratorComprehension node, ExpressionVisitor mv) {
         codegen.compile(node, mv);
 
         String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
@@ -1127,7 +1306,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(GeneratorExpression node, MethodGenerator mv) {
+    public ValType visit(GeneratorExpression node, ExpressionVisitor mv) {
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> FunctionExpression
@@ -1140,12 +1319,12 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(Identifier node, MethodGenerator mv) {
+    public ValType visit(Identifier node, ExpressionVisitor mv) {
         return identifierResolution.resolve(node, mv);
     }
 
     @Override
-    public ValType visit(NewExpression node, MethodGenerator mv) {
+    public ValType visit(NewExpression node, ExpressionVisitor mv) {
         ValType type = evalAndGetValue(node.getExpression(), mv);
         mv.toBoxed(type);
         List<Expression> arguments = node.getArguments();
@@ -1176,14 +1355,14 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(NullLiteral node, MethodGenerator mv) {
+    public ValType visit(NullLiteral node, ExpressionVisitor mv) {
         mv.get(Fields.Null_NULL);
 
         return ValType.Null;
     }
 
     @Override
-    public ValType visit(NumericLiteral node, MethodGenerator mv) {
+    public ValType visit(NumericLiteral node, ExpressionVisitor mv) {
         double v = node.getValue();
         if ((int) v == v) {
             mv.iconst((int) v);
@@ -1195,7 +1374,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(ObjectLiteral node, MethodGenerator mv) {
+    public ValType visit(ObjectLiteral node, ExpressionVisitor mv) {
         // deferred static semantics validation :(
         ObjectLiteralStaticSemantics.validate(node, mv.isStrict());
 
@@ -1210,7 +1389,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(PropertyAccessor node, MethodGenerator mv) {
+    public ValType visit(PropertyAccessor node, ExpressionVisitor mv) {
         ValType type = evalAndGetValue(node.getBase(), mv);
         mv.toBoxed(type);
         mv.aconst(node.getName());
@@ -1222,7 +1401,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(RegularExpressionLiteral node, MethodGenerator mv) {
+    public ValType visit(RegularExpressionLiteral node, ExpressionVisitor mv) {
         mv.load(Register.Realm);
         mv.aconst(node.getRegexp());
         mv.aconst(node.getFlags());
@@ -1232,7 +1411,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(SpreadElement node, MethodGenerator mv) {
+    public ValType visit(SpreadElement node, ExpressionVisitor mv) {
         ValType type = evalAndGetValue(node.getExpression(), mv);
         mv.toBoxed(type);
         mv.load(Register.Realm);
@@ -1242,14 +1421,14 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(StringLiteral node, MethodGenerator mv) {
+    public ValType visit(StringLiteral node, ExpressionVisitor mv) {
         mv.aconst(node.getValue());
 
         return ValType.String;
     }
 
     @Override
-    public ValType visit(SuperExpression node, MethodGenerator mv) {
+    public ValType visit(SuperExpression node, ExpressionVisitor mv) {
         mv.load(Register.ExecutionContext);
         mv.invoke(Methods.ScriptRuntime_GetThisEnvironmentOrThrow);
         if (node.getName() != null) {
@@ -1276,7 +1455,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(TemplateCallExpression node, MethodGenerator mv) {
+    public ValType visit(TemplateCallExpression node, ExpressionVisitor mv) {
         codegen.compile(node.getTemplate());
 
         TemplateLiteral template = node.getTemplate();
@@ -1293,7 +1472,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(TemplateLiteral node, MethodGenerator mv) {
+    public ValType visit(TemplateLiteral node, ExpressionVisitor mv) {
         if (node.isTagged()) {
             codegen.GetTemplateCallSite(node, mv);
             return ValType.Object;
@@ -1323,7 +1502,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(ThisExpression node, MethodGenerator mv) {
+    public ValType visit(ThisExpression node, ExpressionVisitor mv) {
         mv.load(Register.ExecutionContext);
         mv.invoke(Methods.ExecutionContext_thisResolution);
 
@@ -1331,7 +1510,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(UnaryExpression node, MethodGenerator mv) {
+    public ValType visit(UnaryExpression node, ExpressionVisitor mv) {
         switch (node.getOperator()) {
         case POST_INC: {
             // 11.3.1 Postfix Increment Operator
@@ -1458,7 +1637,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator>
     }
 
     @Override
-    public ValType visit(YieldExpression node, MethodGenerator mv) {
+    public ValType visit(YieldExpression node, ExpressionVisitor mv) {
         Expression expr = node.getExpression();
         if (expr != null) {
             ValType type = evalAndGetValue(expr, mv);

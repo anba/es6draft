@@ -38,42 +38,28 @@ class FunctionName extends DefaultNodeVisitor<String, String> {
 
     @Override
     public String visit(FunctionDeclaration node, String defaultValue) {
-        BindingIdentifier identifier = node.getIdentifier();
-        assert identifier != null;
-        return identifier.getName();
+        return node.getIdentifier().getName();
     }
 
     @Override
     public String visit(FunctionExpression node, String defaultValue) {
         BindingIdentifier identifier = node.getIdentifier();
-        if (identifier != null) {
-            return identifier.getName();
-        } else {
-            return defaultValue;
-        }
+        return (identifier != null ? identifier.getName() : defaultValue);
     }
 
     @Override
     public String visit(GeneratorDeclaration node, String defaultValue) {
-        BindingIdentifier identifier = node.getIdentifier();
-        assert identifier != null;
-        return identifier.getName();
+        return node.getIdentifier().getName();
     }
 
     @Override
     public String visit(GeneratorExpression node, String defaultValue) {
         BindingIdentifier identifier = node.getIdentifier();
-        if (identifier != null) {
-            return identifier.getName();
-        } else {
-            return defaultValue;
-        }
+        return (identifier != null ? identifier.getName() : defaultValue);
     }
 
     @Override
     public String visit(MethodDefinition node, String defaultValue) {
-        String propName = PropName(node);
-        assert propName != null;
-        return propName;
+        return PropName(node);
     }
 }

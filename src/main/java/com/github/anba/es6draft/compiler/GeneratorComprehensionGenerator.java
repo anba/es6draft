@@ -11,40 +11,72 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import java.util.Iterator;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.ComprehensionFor;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  * TODO: current draft [rev. 13] does not specify the runtime semantics for
  * generator-comprehensions, therefore the translation from
  * http://wiki.ecmascript.org/doku.php?id=harmony:generator_expressions is used
  */
-final class GeneratorComprehensionGenerator extends DefaultCodeGenerator<ValType, MethodGenerator> {
+final class GeneratorComprehensionGenerator extends
+        DefaultCodeGenerator<ValType, ExpressionVisitor> {
+    private static class Methods {
+        // class: EnvironmentRecord
+        static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+
+        // class: Iterator
+        static final MethodDesc Iterator_hasNext = MethodDesc.create(MethodType.Interface,
+                Types.Iterator, "hasNext", Type.getMethodType(Type.BOOLEAN_TYPE));
+
+        static final MethodDesc Iterator_next = MethodDesc.create(MethodType.Interface,
+                Types.Iterator, "next", Type.getMethodType(Types.Object));
+
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
+
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "iterate",
+                Type.getMethodType(Types.Iterator, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "yield",
+                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
+    }
+
     GeneratorComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
     @Override
-    protected ValType visit(Node node, MethodGenerator mv) {
+    protected ValType visit(Node node, ExpressionVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     @Override
-    public ValType visit(GeneratorComprehension node, MethodGenerator mv) {
+    public ValType visit(GeneratorComprehension node, ExpressionVisitor mv) {
         visitGeneratorComprehension(node, node.getList().iterator(), mv);
         return ValType.Object;
     }
 
-    private ValType expression(Expression node, MethodGenerator mv) {
+    private ValType expression(Expression node, ExpressionVisitor mv) {
         return codegen.expression(node, mv);
     }
 
-    private void visitGeneratorComprehension(GeneratorComprehension node, MethodGenerator mv) {
+    private void visitGeneratorComprehension(GeneratorComprehension node, ExpressionVisitor mv) {
         Label l0 = null;
         if (node.getTest() != null) {
             l0 = new Label();
@@ -68,14 +100,15 @@ final class GeneratorComprehensionGenerator extends DefaultCodeGenerator<ValType
     }
 
     private void visitGeneratorComprehension(GeneratorComprehension comprehension,
-            Iterator<ComprehensionFor> iterator, MethodGenerator mv) {
+            Iterator<ComprehensionFor> iterator, ExpressionVisitor mv) {
         Label lblContinue = new Label(), lblBreak = new Label();
         Label loopstart = new Label();
 
         assert iterator.hasNext();
         ComprehensionFor comprehensionFor = iterator.next();
 
-        expression(comprehensionFor.getExpression(), mv);
+        ValType type = expression(comprehensionFor.getExpression(), mv);
+        mv.toBoxed(type);
         invokeGetValue(comprehensionFor.getExpression(), mv);
 
         // FIXME: translation into for-of per

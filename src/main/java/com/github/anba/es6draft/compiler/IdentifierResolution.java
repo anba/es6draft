@@ -13,13 +13,13 @@ import com.github.anba.es6draft.ast.Identifier;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  *
  */
 class IdentifierResolution {
-    private static class InternMethods {
+    private static class Methods {
         // identifierResolution()
         static final MethodDesc ExecutionContext_identifierResolution = MethodDesc.create(
                 MethodType.Virtual, Types.ExecutionContext, "identifierResolution",
@@ -31,28 +31,32 @@ class IdentifierResolution {
                 Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
     }
 
-    ValType resolve(Identifier node, MethodGenerator mv) {
+    ValType resolve(Identifier node, ExpressionVisitor mv) {
         return resolve(node.getName(), mv);
     }
 
-    ValType resolve(BindingIdentifier node, MethodGenerator mv) {
+    ValType resolve(BindingIdentifier node, ExpressionVisitor mv) {
         return resolve(node.getName(), mv);
     }
 
-    private ValType resolve(String identifierName, MethodGenerator mv) {
+    ValType resolveValue(Identifier node, ExpressionVisitor mv) {
+        return resolveValue(node.getName(), mv);
+    }
+
+    private ValType resolve(String identifierName, ExpressionVisitor mv) {
         mv.load(Register.ExecutionContext);
         mv.aconst(identifierName);
         mv.iconst(mv.isStrict());
-        mv.invoke(InternMethods.ExecutionContext_identifierResolution);
+        mv.invoke(Methods.ExecutionContext_identifierResolution);
 
         return ValType.Reference;
     }
 
-    ValType resolveValue(Identifier node, MethodGenerator mv) {
+    private ValType resolveValue(String identifierName, ExpressionVisitor mv) {
         mv.load(Register.ExecutionContext);
-        mv.aconst(node.getName());
+        mv.aconst(identifierName);
         mv.iconst(mv.isStrict());
-        mv.invoke(InternMethods.ExecutionContext_identifierValue);
+        mv.invoke(Methods.ExecutionContext_identifierValue);
 
         return ValType.Any;
     }

@@ -96,7 +96,6 @@ class RuntimeInfoGenerator {
                 .publicStaticMethod(methodName + "_rti", Methods.functionRTI);
 
         mv.begin();
-        // -start-
 
         mv.aconst(name);
         mv.iconst(isGenerator);
@@ -107,9 +106,8 @@ class RuntimeInfoGenerator {
         mv.invokeStaticMH(className, methodName, Methods.functionCode);
         mv.aconst(get(source));
         mv.invoke(Methods.RTI_newFunction);
-
         mv.areturn();
-        // -end-
+
         mv.end();
     }
 
@@ -118,16 +116,14 @@ class RuntimeInfoGenerator {
         InstructionVisitor mv = codegen.publicStaticMethod("script_rti", Methods.scriptRTI);
 
         mv.begin();
-        // -start-
 
         mv.iconst(IsStrict(node));
         mv.invokeStaticMH(className, "script_init", Methods.globalInit);
         mv.invokeStaticMH(className, "script_evalinit", Methods.evalInit);
         mv.invokeStaticMH(className, "script", Methods.scriptCode);
         mv.invoke(Methods.RTI_newScriptBody);
-
         mv.areturn();
-        // -end-
+
         mv.end();
     }
 }

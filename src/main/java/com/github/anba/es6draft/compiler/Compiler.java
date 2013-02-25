@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.util.Textifier;
@@ -18,12 +17,20 @@ import org.objectweb.asm.util.TraceClassVisitor;
 
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.parser.ParserException;
 
 /**
  *
  */
 public class Compiler {
+    private static class Methods {
+        // class: CompiledScript
+        static final MethodDesc CompiledScript_Constructor = MethodDesc.create(MethodType.Special,
+                Types.CompiledScript, "<init>",
+                Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
+    }
+
     private final boolean debug;
 
     public Compiler(boolean debug) {
@@ -67,16 +74,17 @@ public class Compiler {
     }
 
     private static void defaultConstructor(ClassWriter cw, String className) {
-        MethodDesc constructor = Methods.CompiledScript_Constructor;
-        MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
-        mv.visitCode();
-        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        String methodName = "<init>";
+        Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE);
+
+        InstructionVisitor mv = new InstructionVisitor(cw.visitMethod(Opcodes.ACC_PUBLIC,
+                methodName, "()V", null, null), methodName, methodDescriptor);
+        mv.begin();
+        mv.loadThis();
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, "script_rti",
                 Type.getMethodType(Types.RuntimeInfo$ScriptBody).getDescriptor());
-        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, constructor.owner, constructor.name,
-                constructor.desc);
-        mv.visitInsn(Opcodes.RETURN);
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
+        mv.invoke(Methods.CompiledScript_Constructor);
+        mv.areturn();
+        mv.end();
     }
 }

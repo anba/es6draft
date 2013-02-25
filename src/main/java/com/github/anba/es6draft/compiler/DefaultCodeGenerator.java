@@ -14,19 +14,156 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  *
  */
-abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends DefaultNodeVisitor<R, V> {
+abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
+        DefaultNodeVisitor<R, V> {
+    private static class Fields {
+        static final FieldDesc Double_NaN = FieldDesc.create(FieldType.Static, Types.Double, "NaN",
+                Type.DOUBLE_TYPE);
+    }
+
+    private static class Methods {
+        // class: AbstractOperations
+        static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToPrimitive",
+                Type.getMethodType(Types.Object, Types.Realm, Types.Object, Types._Type));
+
+        static final MethodDesc AbstractOperations_ToBoolean = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToBoolean",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+
+        static final MethodDesc AbstractOperations_ToBoolean_double = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToBoolean",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE));
+
+        static final MethodDesc AbstractOperations_ToNumber = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToNumber",
+                Type.getMethodType(Type.DOUBLE_TYPE, Types.Realm, Types.Object));
+
+        static final MethodDesc AbstractOperations_ToNumber_CharSequence = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToNumber",
+                Type.getMethodType(Type.DOUBLE_TYPE, Types.CharSequence));
+
+        static final MethodDesc AbstractOperations_ToInt32 = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToInt32",
+                Type.getMethodType(Type.INT_TYPE, Types.Realm, Types.Object));
+
+        static final MethodDesc AbstractOperations_ToInt32_double = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToInt32",
+                Type.getMethodType(Type.INT_TYPE, Type.DOUBLE_TYPE));
+
+        static final MethodDesc AbstractOperations_ToUint32 = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToUint32",
+                Type.getMethodType(Type.LONG_TYPE, Types.Realm, Types.Object));
+
+        static final MethodDesc AbstractOperations_ToUint32_double = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToUint32",
+                Type.getMethodType(Type.LONG_TYPE, Type.DOUBLE_TYPE));
+
+        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToObject",
+                Type.getMethodType(Types.Scriptable, Types.Realm, Types.Object));
+
+        static final MethodDesc AbstractOperations_ToString = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "ToString",
+                Type.getMethodType(Types.CharSequence, Types.Realm, Types.Object));
+
+        static final MethodDesc AbstractOperations_ToString_double = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToString",
+                Type.getMethodType(Types.String, Type.DOUBLE_TYPE));
+
+        // class: Boolean
+        static final MethodDesc Boolean_toString = MethodDesc.create(MethodType.Static,
+                Types.Boolean, "toString", Type.getMethodType(Types.String, Type.BOOLEAN_TYPE));
+
+        // class: CharSequence
+        static final MethodDesc CharSequence_length = MethodDesc.create(MethodType.Interface,
+                Types.CharSequence, "length", Type.getMethodType(Type.INT_TYPE));
+
+        // class: EnvironmentRecord
+        static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String));
+
+        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
+
+        // class: ExecutionContext
+        static final MethodDesc ExecutionContext_getLexicalEnvironment = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "getLexicalEnvironment",
+                Type.getMethodType(Types.LexicalEnvironment));
+
+        static final MethodDesc ExecutionContext_pushLexicalEnvironment = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "pushLexicalEnvironment",
+                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+
+        static final MethodDesc ExecutionContext_popLexicalEnvironment = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "popLexicalEnvironment",
+                Type.getMethodType(Type.VOID_TYPE));
+
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
+
+        static final MethodDesc LexicalEnvironment_newDeclarativeEnvironment = MethodDesc.create(
+                MethodType.Static, Types.LexicalEnvironment, "newDeclarativeEnvironment",
+                Type.getMethodType(Types.LexicalEnvironment, Types.LexicalEnvironment));
+
+        static final MethodDesc LexicalEnvironment_newObjectEnvironment = MethodDesc.create(
+                MethodType.Static, Types.LexicalEnvironment, "newObjectEnvironment", Type
+                        .getMethodType(Types.LexicalEnvironment, Types.Scriptable,
+                                Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
+
+        // class: Reference
+        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
+                Types.Reference, "GetValue",
+                Type.getMethodType(Types.Object, Types.Object, Types.Realm));
+
+        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Static,
+                Types.Reference, "PutValue",
+                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.Realm));
+
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_CreateDefaultConstructor = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "CreateDefaultConstructor",
+                Type.getMethodType(Types.RuntimeInfo$Function));
+
+        static final MethodDesc ScriptRuntime_EvaluateConstructorMethod = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorMethod", Type
+                        .getMethodType(Types.Function, Types.Scriptable, Types.Scriptable,
+                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_getClassProto = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "getClassProto",
+                Type.getMethodType(Types.Scriptable_, Types.Object, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_getDefaultClassProto = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getDefaultClassProto",
+                Type.getMethodType(Types.Scriptable_, Types.Realm));
+
+        // class: Type
+        static final MethodDesc Type_isUndefinedOrNull = MethodDesc.create(MethodType.Static,
+                Types._Type, "isUndefinedOrNull",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
+    }
+
     protected final CodeGenerator codegen;
 
     protected DefaultCodeGenerator(CodeGenerator codegen) {
         this.codegen = codegen;
     }
 
-    protected static final void tailCall(Expression expr, MethodGenerator mv) {
+    protected static final void tailCall(Expression expr, ExpressionVisitor mv) {
         while (expr instanceof CommaExpression) {
             List<Expression> list = ((CommaExpression) expr).getOperands();
             expr = list.get(list.size() - 1);
@@ -42,22 +179,24 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [] -> [lexEnv]
      */
-    protected final void getLexicalEnvironment(MethodGenerator mv) {
+    protected final void getLexicalEnvironment(ExpressionVisitor mv) {
         mv.load(Register.ExecutionContext);
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
     }
 
     /**
-     * stack: [env] -> [envRec]
+     * stack: [] -> [envRec]
      */
-    protected final void getEnvironmentRecord(MethodGenerator mv) {
+    protected final void getEnvironmentRecord(ExpressionVisitor mv) {
+        mv.load(Register.ExecutionContext);
+        mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
     }
 
     /**
      * stack: [obj] -> [lexEnv]
      */
-    protected final void newObjectEnvironment(MethodGenerator mv, boolean withEnvironment) {
+    protected final void newObjectEnvironment(ExpressionVisitor mv, boolean withEnvironment) {
         mv.load(Register.ExecutionContext);
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.iconst(withEnvironment);
@@ -67,7 +206,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [] -> [lexEnv]
      */
-    protected final void newDeclarativeEnvironment(MethodGenerator mv) {
+    protected final void newDeclarativeEnvironment(ExpressionVisitor mv) {
         mv.load(Register.ExecutionContext);
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
@@ -76,7 +215,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [lexEnv] -> []
      */
-    protected final void pushLexicalEnvironment(MethodGenerator mv) {
+    protected final void pushLexicalEnvironment(ExpressionVisitor mv) {
         mv.load(Register.ExecutionContext);
         mv.swap();
         mv.invoke(Methods.ExecutionContext_pushLexicalEnvironment);
@@ -85,7 +224,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [] -> []
      */
-    protected final void popLexicalEnvironment(MethodGenerator mv) {
+    protected final void popLexicalEnvironment(ExpressionVisitor mv) {
         mv.load(Register.ExecutionContext);
         mv.invoke(Methods.ExecutionContext_popLexicalEnvironment);
     }
@@ -93,7 +232,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * Calls <code>GetValue(o)</code> if the expression could possibly be a reference
      */
-    protected final void invokeGetValue(Expression node, MethodGenerator mv) {
+    protected final void invokeGetValue(Expression node, ExpressionVisitor mv) {
         if (node.accept(IsReference.INSTANCE, null)) {
             GetValue(mv);
         }
@@ -102,7 +241,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [object] -> [boolean]
      */
-    protected final void isUndefinedOrNull(MethodGenerator mv) {
+    protected final void isUndefinedOrNull(ExpressionVisitor mv) {
         mv.invoke(Methods.Type_isUndefinedOrNull);
     }
 
@@ -167,7 +306,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [Object] -> [Object]
      */
-    protected final void GetValue(MethodGenerator mv) {
+    protected final void GetValue(ExpressionVisitor mv) {
         mv.load(Register.Realm);
         mv.invoke(Methods.Reference_GetValue);
     }
@@ -175,7 +314,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [Object, Object] -> []
      */
-    protected final void PutValue(MethodGenerator mv) {
+    protected final void PutValue(ExpressionVisitor mv) {
         mv.load(Register.Realm);
         mv.invoke(Methods.Reference_PutValue);
     }
@@ -184,7 +323,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
      * stack: [Object] -> [boolean]
      */
     protected final ValType ToPrimitive(ValType from,
-            com.github.anba.es6draft.runtime.types.Type preferredType, MethodGenerator mv) {
+            com.github.anba.es6draft.runtime.types.Type preferredType, ExpressionVisitor mv) {
         switch (from) {
         case Number:
         case Number_int:
@@ -209,7 +348,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [Object] -> [boolean]
      */
-    protected final void ToBoolean(ValType from, MethodGenerator mv) {
+    protected final void ToBoolean(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToBoolean_double);
@@ -251,7 +390,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [Object] -> [double]
      */
-    protected final void ToNumber(ValType from, MethodGenerator mv) {
+    protected final void ToNumber(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             return;
@@ -288,7 +427,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [Object] -> [int]
      */
-    protected final void ToInt32(ValType from, MethodGenerator mv) {
+    protected final void ToInt32(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToInt32_double);
@@ -322,7 +461,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [Object] -> [long]
      */
-    protected final void ToUint32(ValType from, MethodGenerator mv) {
+    protected final void ToUint32(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToUint32_double);
@@ -357,7 +496,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [Object] -> [CharSequence]
      */
-    protected final void ToString(ValType from, MethodGenerator mv) {
+    protected final void ToString(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);
@@ -396,7 +535,7 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
     /**
      * stack: [Object] -> [Scriptable]
      */
-    protected final void ToObject(ValType from, MethodGenerator mv) {
+    protected final void ToObject(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
         case Number_int:
@@ -418,23 +557,26 @@ abstract class DefaultCodeGenerator<R, V extends MethodGenerator> extends Defaul
         mv.invoke(Methods.AbstractOperations_ToObject);
     }
 
-    protected void BindingInitialisation(Binding node, MethodGenerator mv) {
+    protected void BindingInitialisation(Binding node, ExpressionVisitor mv) {
         new BindingInitialisationGenerator(codegen).generate(node, mv);
     }
 
     /**
      * stack: [envRec, value] -> []
      */
-    protected void BindingInitialisationWithEnvironment(Binding node, MethodGenerator mv) {
+    protected void BindingInitialisationWithEnvironment(Binding node, ExpressionVisitor mv) {
         new BindingInitialisationGenerator(codegen).generateWithEnvironment(node, mv);
     }
 
-    protected void DestructuringAssignment(AssignmentPattern node, MethodGenerator mv) {
+    /**
+     * stack: [value] -> []
+     */
+    protected void DestructuringAssignment(AssignmentPattern node, ExpressionVisitor mv) {
         new DestructuringAssignmentGenerator(codegen).generate(node, mv);
     }
 
     protected void ClassDefinitionEvaluation(ClassDefinition def, String className,
-            MethodGenerator mv) {
+            ExpressionVisitor mv) {
         // stack: [] -> [<proto,ctor>]
         if (def.getHeritage() == null) {
             mv.load(Register.Realm);

@@ -24,7 +24,11 @@ import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.StatementListItem;
-import com.github.anba.es6draft.compiler.MethodGenerator.Register;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -34,7 +38,41 @@ import com.github.anba.es6draft.compiler.MethodGenerator.Register;
  * </ul>
  */
 class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
-    private static class FunctionDeclInitMethodGenerator extends MethodGenerator {
+    private static class Fields {
+        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
+                Types.Undefined, "UNDEFINED", Types.Undefined);
+    }
+
+    private static class Methods {
+        // class: ExecutionContext
+        static final MethodDesc ExecutionContext_getRealm = MethodDesc.create(MethodType.Virtual,
+                Types.ExecutionContext, "getRealm", Type.getMethodType(Types.Realm));
+
+        static final MethodDesc ExecutionContext_getVariableEnvironment = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "getVariableEnvironment",
+                Type.getMethodType(Types.LexicalEnvironment));
+
+        // class: ExoticArguments
+        static final MethodDesc ExoticArguments_InstantiateArgumentsObject = MethodDesc.create(
+                MethodType.Static, Types.ExoticArguments, "InstantiateArgumentsObject",
+                Type.getMethodType(Types.ExoticArguments, Types.Realm, Types.Object_));
+
+        static final MethodDesc ExoticArguments_CompleteStrictArgumentsObject = MethodDesc.create(
+                MethodType.Static, Types.ExoticArguments, "CompleteStrictArgumentsObject",
+                Type.getMethodType(Type.VOID_TYPE, Types.Realm, Types.ExoticArguments));
+
+        static final MethodDesc ExoticArguments_CompleteMappedArgumentsObject = MethodDesc.create(
+                MethodType.Static, Types.ExoticArguments, "CompleteMappedArgumentsObject", Type
+                        .getMethodType(Type.VOID_TYPE, Types.Realm, Types.ExoticArguments,
+                                Types.Function, Types.String_, Types.LexicalEnvironment));
+
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
+    }
+
+    private static class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
         static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.Function, Types.Object_);
 
@@ -77,7 +115,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
 
     void generate(FunctionNode func) {
         String methodName = codegen.methodName(func) + "_init";
-        MethodGenerator mv = new FunctionDeclInitMethodGenerator(codegen, methodName,
+        ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(codegen, methodName,
                 func.isStrict());
 
         mv.begin();
@@ -88,7 +126,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.end();
     }
 
-    private void generate(FunctionNode func, MethodGenerator mv) {
+    private void generate(FunctionNode func, ExpressionVisitor mv) {
         int realm = mv.var(Register.Realm);
 
         int env = mv.newVariable(Types.LexicalEnvironment);
@@ -213,19 +251,19 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         return;
     }
 
-    private void InstantiateArgumentsObject(MethodGenerator mv) {
+    private void InstantiateArgumentsObject(ExpressionVisitor mv) {
         mv.load(Register.Realm);
         mv.load(ARGUMENTS, Types.Object_);
         mv.invoke(Methods.ExoticArguments_InstantiateArgumentsObject);
     }
 
-    private void BindingInitialisation(FunctionNode node, MethodGenerator mv) {
+    private void BindingInitialisation(FunctionNode node, ExpressionVisitor mv) {
         // stack: [ao] -> [ao]
         mv.dup();
         new BindingInitialisationGenerator(codegen).generate(node, mv);
     }
 
-    private void CompleteStrictArgumentsObject(MethodGenerator mv) {
+    private void CompleteStrictArgumentsObject(ExpressionVisitor mv) {
         // stack: [ao] -> [ao]
         mv.dup();
         mv.load(Register.Realm);
@@ -234,7 +272,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     }
 
     private void CompleteMappedArgumentsObject(int env, FormalParameterList formals,
-            MethodGenerator mv) {
+            ExpressionVisitor mv) {
         // stack: [ao] -> [ao]
         mv.dup();
         mv.load(Register.Realm);
@@ -247,23 +285,21 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
 
     private String[] mappedNames(FormalParameterList formals) {
         List<FormalParameter> list = formals.getFormals();
-        Set<String> mappedNames = new HashSet<>();
         int numberOfNonRestFormals = NumberOfParameters(formals);
         assert numberOfNonRestFormals <= list.size();
+
+        Set<String> mappedNames = new HashSet<>();
         String[] names = new String[numberOfNonRestFormals];
         for (int index = numberOfNonRestFormals - 1; index >= 0; --index) {
             assert list.get(index) instanceof BindingElement;
-            String name = null;
             BindingElement formal = (BindingElement) list.get(index);
             if (formal.getBinding() instanceof BindingIdentifier) {
-                name = ((BindingIdentifier) formal.getBinding()).getName();
+                String name = ((BindingIdentifier) formal.getBinding()).getName();
                 if (!mappedNames.contains(name)) {
                     mappedNames.add(name);
-                } else {
-                    name = null;
+                    names[index] = name;
                 }
             }
-            names[index] = name;
         }
         return names;
     }

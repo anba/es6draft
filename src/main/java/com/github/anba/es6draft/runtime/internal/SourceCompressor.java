@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPInputStream;
@@ -31,7 +32,7 @@ public final class SourceCompressor {
         }
 
         @Override
-        public String call() throws Exception {
+        public String call() throws IOException {
             ByteArrayOutputStream bout = new ByteArrayOutputStream(BUFFER_SIZE);
             GZIPOutputStream out = new GZIPOutputStream(bout, BUFFER_SIZE);
             out.write(source.getBytes(ENCODING));
@@ -49,7 +50,7 @@ public final class SourceCompressor {
         }
 
         @Override
-        public String call() throws Exception {
+        public String call() throws IOException {
             byte[] compressed = source.getBytes(ENCODING);
             ByteArrayInputStream bin = new ByteArrayInputStream(compressed);
             GZIPInputStream in = new GZIPInputStream(bin, BUFFER_SIZE);

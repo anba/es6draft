@@ -27,7 +27,7 @@ import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
 /**
  * 
  */
-abstract class StatementMethodGenerator extends MethodGenerator {
+abstract class StatementVisitor extends ExpressionVisitor {
     private static class Labels {
         // unlabelled breaks and continues
         final Deque<Label> breakTargets = new ArrayDeque<>(4);
@@ -117,7 +117,7 @@ abstract class StatementMethodGenerator extends MethodGenerator {
     // tail-call support
     private int wrapped = 0;
 
-    protected StatementMethodGenerator(MethodVisitor mv, String methodName, Type methodDescriptor,
+    protected StatementVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
             boolean strict, boolean globalCode, boolean completionValue) {
         super(mv, methodName, methodDescriptor, strict, globalCode, completionValue);
         this.completionValue = completionValue;
