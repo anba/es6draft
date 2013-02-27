@@ -142,7 +142,7 @@ public class ExoticArguments extends OrdinaryObject implements Scriptable {
         /* [10.6] step 4 */
         obj.defineOwnProperty("length", new PropertyDescriptor(len, true, false, true));
         /* [10.6] step 5-6 */
-        for (int index = len - 1; index >= 0; --index) {
+        for (int index = 0; index < len; ++index) {
             Object val = args[index];
             obj.defineOwnProperty(ToString(index), new PropertyDescriptor(val, true, true, true));
         }
