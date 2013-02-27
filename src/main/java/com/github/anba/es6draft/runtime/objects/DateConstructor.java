@@ -11,6 +11,11 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.DateAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -142,6 +147,18 @@ public class DateConstructor extends OrdinaryObject implements Scriptable, Calla
         public static Object parse(Realm realm, Object thisValue, Object string) {
             CharSequence s = ToString(realm, string);
             double d = parseISOString(realm, s, true);
+            if (Double.isNaN(d)) {
+                SimpleDateFormat df = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)",
+                        Locale.US);
+                df.setLenient(false);
+                try {
+                    Date date = df.parse(s.toString());
+                    if (date != null) {
+                        d = date.getTime();
+                    }
+                } catch (ParseException e) {
+                }
+            }
             return d;
         }
 

@@ -13,6 +13,8 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.objects.DateAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
+import java.util.Locale;
+
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -139,8 +141,8 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            // implementation defined, but must be parsable from Date.parse()
-            return DatePrototype.toISOString(t);
+            return String.format(Locale.US, "%1$ta %1$tb %1$td %1$tY %1$tT GMT%1$tz (%1$tZ)",
+                    (long) t);
         }
 
         /**
@@ -152,7 +154,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format("%ta %tb %td %tY", (long) t);
+            return String.format(Locale.US, "%1$ta %1$tb %1$td %1$tY", (long) t);
         }
 
         /**
@@ -164,7 +166,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format("%tT GMT%tz (%tZ)", (long) t);
+            return String.format(Locale.US, "%1$tT GMT%1$tz (%1$tZ)", (long) t);
         }
 
         /**
@@ -176,7 +178,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format("%tc", (long) t);
+            return String.format(realm.getLocale(), "%1$tc", (long) t);
         }
 
         /**
@@ -188,7 +190,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format("%ta %tb %td %tY", (long) t);
+            return String.format(realm.getLocale(), "%1$ta %1$tb %1$td %1$tY", (long) t);
         }
 
         /**
@@ -200,7 +202,7 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format("%tT GMT%tz (%tZ)", (long) t);
+            return String.format(realm.getLocale(), "%1$tT GMT%1$tz (%1$tZ)", (long) t);
         }
 
         /**
