@@ -750,5 +750,163 @@ public class StringPrototype extends ExoticString implements Scriptable, Initial
             /* step 8-12 */
             return s.codePointAt((int) position);
         }
+
+        /**
+         * B.2.2.1 String.prototype.substr (start, length)
+         */
+        @Function(name = "substr", arity = 2)
+        public static Object substr(Realm realm, Object thisValue, Object start, Object length) {
+            // FIXME: spec bug 'sourceLength' undefined in description text
+            CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, thisValue);
+            double intStart = ToInteger(realm, start);
+            double end = (Type.isUndefined(length) ? Double.POSITIVE_INFINITY : ToInteger(realm,
+                    length));
+            int size = s.length();
+            if (intStart < 0) {
+                intStart = Math.max(size + intStart, 0);
+            }
+            double resultLength = Math.min(Math.max(end, 0), size - intStart);
+            if (resultLength <= 0) {
+                return "";
+            }
+            assert 0 <= intStart && intStart + resultLength <= size;
+            return s.substring((int) intStart, (int) (intStart + resultLength));
+        }
+
+        /**
+         * Abstract operation CreateHTML
+         */
+        private static String CreateHTML(Realm realm, Object string, String tag, String attribute,
+                Object value) {
+            CheckObjectCoercible(realm, string);
+            String s = ToFlatString(realm, string);
+            StringBuilder p = new StringBuilder().append("<").append(tag);
+            if (!attribute.isEmpty()) {
+                String v = ToFlatString(realm, value);
+                String escapedV = v.replace("\"", "&quot;");
+                p.append(" ").append(attribute).append("=").append('"').append(escapedV)
+                        .append('"');
+            }
+            // FIXME: spec bug (string 'S' not added to final string)
+            return p.append(">").append(s).append("</").append(tag).append(">").toString();
+        }
+
+        /**
+         * B.2.2.2 String.prototype.anchor ( name )
+         */
+        @Function(name = "anchor", arity = 1)
+        public static Object anchor(Realm realm, Object thisValue, Object name) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "a", "name", name);
+        }
+
+        /**
+         * B.2.2.3 String.prototype.big ()
+         */
+        @Function(name = "big", arity = 0)
+        public static Object big(Realm realm, Object thisValue) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "big", "", "");
+        }
+
+        /**
+         * B.2.2.4 String.prototype.blink ()
+         */
+        @Function(name = "blink", arity = 0)
+        public static Object blink(Realm realm, Object thisValue) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "blink", "", "");
+        }
+
+        /**
+         * B.2.2.5 String.prototype.bold ()
+         */
+        @Function(name = "bold", arity = 0)
+        public static Object bold(Realm realm, Object thisValue) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "b", "", "");
+        }
+
+        /**
+         * B.2.2.6 String.prototype.fixed ()
+         */
+        @Function(name = "fixed", arity = 0)
+        public static Object fixed(Realm realm, Object thisValue) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "tt", "", "");
+        }
+
+        /**
+         * B.2.2.7 String.prototype.fontcolor ( color )
+         */
+        @Function(name = "fontcolor", arity = 1)
+        public static Object fontcolor(Realm realm, Object thisValue, Object color) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "font", "color", color);
+        }
+
+        /**
+         * B.2.2.8 String.prototype.fontsize ( size )
+         */
+        @Function(name = "fontsize", arity = 1)
+        public static Object fontsize(Realm realm, Object thisValue, Object size) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "font", "size", size);
+        }
+
+        /**
+         * B.2.2.9 String.prototype.italics ()
+         */
+        @Function(name = "italics", arity = 0)
+        public static Object italics(Realm realm, Object thisValue) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "i", "", "");
+        }
+
+        /**
+         * B.2.2.10 String.prototype.link ( url )
+         */
+        @Function(name = "link", arity = 1)
+        public static Object link(Realm realm, Object thisValue, Object url) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "a", "href", url);
+        }
+
+        /**
+         * B.2.2.11 String.prototype.small ()
+         */
+        @Function(name = "small", arity = 0)
+        public static Object small(Realm realm, Object thisValue) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "small", "", "");
+        }
+
+        /**
+         * B.2.2.12 String.prototype.strike ()
+         */
+        @Function(name = "strike", arity = 0)
+        public static Object strike(Realm realm, Object thisValue) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "strike", "", "");
+        }
+
+        /**
+         * B.2.2.13 String.prototype.sub ()
+         */
+        @Function(name = "sub", arity = 0)
+        public static Object sub(Realm realm, Object thisValue) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "sub", "", "");
+        }
+
+        /**
+         * B.2.2.14 String.prototype.sup ()
+         */
+        @Function(name = "sup", arity = 0)
+        public static Object sup(Realm realm, Object thisValue) {
+            Object s = thisValue;
+            return CreateHTML(realm, s, "sup", "", "");
+        }
     }
 }

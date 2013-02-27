@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
 
@@ -46,6 +47,10 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
     @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
+
+        // B.2.3.3 Date.prototype.toGMTString ( )
+        defineOwnProperty("toGMTString", new PropertyDescriptor(Get(this, "toUTCString"), true,
+                false, true));
     }
 
     private static final String ISO_FORMAT = "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ";
@@ -716,6 +721,38 @@ public class DatePrototype extends DateObject implements Scriptable, Initialisab
                 throw throwTypeError(realm, Messages.Key.InvalidToPrimitiveHint, _hint);
             }
             return OrdinaryToPrimitive(realm, Type.objectValue(thisValue), tryFirst);
+        }
+
+        /**
+         * B.2.3.1 Date.prototype.getYear ( )
+         */
+        @Function(name = "getYear", arity = 0)
+        public static Object getYear(Realm realm, Object thisValue) {
+            double t = date(realm, thisValue).getDateValue();
+            if (Double.isNaN(t)) {
+                return Double.NaN;
+            }
+            return YearFromTime(LocalTime(realm, t)) - 1900;
+        }
+
+        /**
+         * B.2.3.2 Date.prototype.setYear (year)
+         */
+        @Function(name = "setYear", arity = 1)
+        public static Object setYear(Realm realm, Object thisValue, Object year) {
+            double t = date(realm, thisValue).getDateValue();
+            t = Double.isNaN(t) ? +0 : LocalTime(realm, t);
+            double y = ToNumber(realm, year);
+            if (Double.isNaN(y)) {
+                date(realm, thisValue).setDateValue(Double.NaN);
+                return Double.NaN;
+            }
+            double intYear = ToInteger(y);
+            double yyyy = (0 <= intYear && intYear <= 99 ? intYear + 1900 : y);
+            double d = MakeDay(yyyy, MonthFromTime(t), DateFromTime(t));
+            double date = UTC(realm, MakeDate(d, TimeWithinDay(t)));
+            date(realm, thisValue).setDateValue(TimeClip(date));
+            return date(realm, thisValue).getDateValue();
         }
     }
 }

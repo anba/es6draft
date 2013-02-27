@@ -177,6 +177,84 @@ public class GlobalObject extends OrdinaryObject implements Scriptable, Initiali
             }
             return true;
         }
+
+        private static int fromHexDigit(char c) {
+            if (c >= '0' && c <= '9')
+                return (c - '0');
+            if (c >= 'A' && c <= 'F')
+                return (c - 'A');
+            if (c >= 'a' && c <= 'f')
+                return (c - 'a');
+            return -1;
+        }
+
+        private static char toHexDigit(int i, int shift) {
+            i = (i >> shift) & 0b1111;
+            return (char) (i + (i < 0x0A ? '0' : ('A' - 10)));
+        }
+
+        /**
+         * B.2.1.1 escape (string)
+         */
+        @Function(name = "escape", arity = 1)
+        public static Object escape(Realm realm, Object thisValue, Object string) {
+            // FIXME: spec bug (spec language still in ES3 style)
+            String s = ToFlatString(realm, string);
+            int length = s.length();
+            StringBuilder r = new StringBuilder(length);
+            for (int k = 0; k < length; ++k) {
+                char c = s.charAt(k);
+                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
+                        || c == '@' || c == '*' || c == '_' || c == '+' || c == '-' || c == '.'
+                        || c == '/') {
+                    r.append(c);
+                } else if (c < 256) {
+                    r.append('%').append(toHexDigit(c, 4)).append(toHexDigit(c, 0));
+                } else {
+                    r.append("%u").append(toHexDigit(c, 12)).append(toHexDigit(c, 8))
+                            .append(toHexDigit(c, 4)).append(toHexDigit(c, 0));
+                }
+            }
+            return r.toString();
+        }
+
+        /**
+         * B.2.1.2 unescape (string)
+         */
+        @Function(name = "unescape", arity = 1)
+        public static Object unescape(Realm realm, Object thisValue, Object string) {
+            // FIXME: spec bug (spec language still in ES3 style)
+            String s = ToFlatString(realm, string);
+            int length = s.length();
+            StringBuilder r = new StringBuilder(length);
+            for (int k = 0; k < length; ++k) {
+                char c = s.charAt(k);
+                if (c == '%') {
+                    if (k <= length - 6 && s.charAt(k + 1) == 'u') {
+                        char c2 = s.charAt(k + 2);
+                        char c3 = s.charAt(k + 3);
+                        char c4 = s.charAt(k + 4);
+                        char c5 = s.charAt(k + 5);
+                        int h = fromHexDigit(c2) << 12 | fromHexDigit(c3) << 8
+                                | fromHexDigit(c4) << 4 | fromHexDigit(c5);
+                        if (h >= 0) {
+                            k += 5;
+                            c = (char) h;
+                        }
+                    } else if (k <= length - 3) {
+                        char c1 = s.charAt(k + 1);
+                        char c2 = s.charAt(k + 2);
+                        int h = fromHexDigit(c1) << 4 | fromHexDigit(c2);
+                        if (h >= 0) {
+                            k += 2;
+                            c = (char) h;
+                        }
+                    }
+                }
+                r.append(c);
+            }
+            return r.toString();
+        }
     }
 
     /**
