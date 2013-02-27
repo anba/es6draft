@@ -149,27 +149,12 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
             Scriptable wrapper = ObjectCreate(realm);
             CreateOwnDataProperty(wrapper, "", value);
             String result = Str(realm, stack, propertyList, replacerFunction, indent, gap, "",
-                    wrapper, true);
+                    wrapper);
             if (result == null) {
                 return UNDEFINED;
             }
             return result;
         }
-    }
-
-    /**
-     * Shared implementation for toSource() representation to avoid duplicating code...
-     */
-    public static String ToSource(Realm realm, Object value) {
-        HashSet<Scriptable> stack = new HashSet<>();
-        String indent = "";
-        String gap = "";
-        LinkedHashSet<String> propertyList = null;
-        Callable replacerFunction = null;
-
-        Scriptable wrapper = ObjectCreate(realm);
-        CreateOwnDataProperty(wrapper, "", value);
-        return Str(realm, stack, propertyList, replacerFunction, indent, gap, "", wrapper, false);
     }
 
     /**
@@ -210,21 +195,13 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
      * Runtime Semantics: Str Abstract Operation
      */
     public static String Str(Realm realm, Set<Scriptable> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, String key, Scriptable holder,
-            boolean isJSON) {
+            Callable replacerFunction, String indent, String gap, String key, Scriptable holder) {
         Object value = Get(holder, key);
         if (Type.isObject(value)) {
             Scriptable objValue = Type.objectValue(value);
-            if (isJSON) {
-                Object toJSON = Get(objValue, "toJSON");
-                if (IsCallable(toJSON)) {
-                    value = ((Callable) toJSON).call(value, key);
-                }
-            } else {
-                Object toSource = Get(objValue, "toSource");
-                if (IsCallable(toSource)) {
-                    value = ((Callable) toSource).call(value);
-                }
+            Object toJSON = Get(objValue, "toJSON");
+            if (IsCallable(toJSON)) {
+                value = ((Callable) toJSON).call(value, key);
             }
         }
         if (replacerFunction != null) {
@@ -248,23 +225,22 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
         case String:
             return Quote(Type.stringValue(value));
         case Number:
-            return !isJSON || isFinite(Type.numberValue(value)) ? ToFlatString(realm, value)
-                    : "null";
+            return isFinite(Type.numberValue(value)) ? ToFlatString(realm, value) : "null";
         case Object:
             if (!IsCallable(value)) {
                 if (Type.objectValue(value).getBuiltinBrand() == BuiltinBrand.BuiltinArray) {
                     return JA(realm, stack, propertyList, replacerFunction, indent, gap,
-                            Type.objectValue(value), isJSON);
+                            Type.objectValue(value));
                 } else {
                     return JO(realm, stack, propertyList, replacerFunction, indent, gap,
-                            Type.objectValue(value), isJSON);
+                            Type.objectValue(value));
                 }
             } else {
-                return isJSON ? null : ((Callable) value).toSource();
+                return null;
             }
         case Undefined:
         default:
-            return isJSON ? null : "(void 0)";
+            return null;
         }
     }
 
@@ -323,13 +299,9 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
      * Runtime Semantics: JO Abstract Operation
      */
     public static String JO(Realm realm, Set<Scriptable> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, Scriptable value, boolean isJSON) {
+            Callable replacerFunction, String indent, String gap, Scriptable value) {
         if (stack.contains(value)) {
-            if (isJSON) {
-                throw throwTypeError(realm, Messages.Key.CyclicValue);
-            } else {
-                return "« ... »";
-            }
+            throw throwTypeError(realm, Messages.Key.CyclicValue);
         }
         stack.add(value);
         String stepback = indent;
@@ -343,8 +315,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
         }
         List<String> partial = new ArrayList<>();
         for (String p : k) {
-            String strP = Str(realm, stack, propertyList, replacerFunction, indent, gap, p, value,
-                    isJSON);
+            String strP = Str(realm, stack, propertyList, replacerFunction, indent, gap, p, value);
             if (strP != null) {
                 StringBuilder member = new StringBuilder(p.length() + strP.length() + 4);
                 member.append(Quote(p)).append(":");
@@ -384,13 +355,9 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
      * Runtime Semantics: JA Abstract Operation
      */
     public static String JA(Realm realm, Set<Scriptable> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, Scriptable value, boolean isJSON) {
+            Callable replacerFunction, String indent, String gap, Scriptable value) {
         if (stack.contains(value)) {
-            if (isJSON) {
-                throw throwTypeError(realm, Messages.Key.CyclicValue);
-            } else {
-                return "« ... »";
-            }
+            throw throwTypeError(realm, Messages.Key.CyclicValue);
         }
         stack.add(value);
         String stepback = indent;
@@ -399,7 +366,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
         long len = ToUint32(realm, Get(value, "length"));
         for (long index = 0; index < len; ++index) {
             String strP = Str(realm, stack, propertyList, replacerFunction, indent, gap,
-                    ToString(index), value, isJSON);
+                    ToString(index), value);
             if (strP == null) {
                 partial.add("null");
             } else {
