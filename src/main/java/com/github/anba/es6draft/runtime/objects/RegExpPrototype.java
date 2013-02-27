@@ -80,6 +80,11 @@ public class RegExpPrototype extends RegExpObject implements Scriptable, Initial
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
+        @Function(name = "toSource", arity = 0)
+        public static Object toSource(Realm realm, Object thisValue) {
+            return toString(realm, thisValue);
+        }
+
         /**
          * 15.10.6.1 RegExp.prototype.constructor
          */
