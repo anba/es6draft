@@ -78,10 +78,6 @@ public class RegExpParser {
         return pos < length ? source.charAt(pos++) : -1;
     }
 
-    private boolean nomatch(char c) {
-        return !match(c);
-    }
-
     private boolean match(char c) {
         if (c == peek(0)) {
             get();
@@ -261,8 +257,8 @@ public class RegExpParser {
                 }
                 case 'u': {
                     // CharacterEscape :: UnicodeEscapeSequence
-                    int start = pos;
                     mustMatch('u');
+                    int start = pos;
                     int u = readUnicode();
                     if (u >= 0 && u <= 0x10ffff) {
                         out.append("\\x{").append(Integer.toHexString(u)).append("}");
@@ -441,8 +437,8 @@ public class RegExpParser {
                 }
                 case 'u': {
                     // CharacterEscape :: UnicodeEscapeSequence
-                    int start = pos;
                     mustMatch('u');
+                    int start = pos;
                     int u = readUnicode();
                     if (u >= 0 && u <= 0x10ffff) {
                         out.append("\\x{").append(Integer.toHexString(u)).append("}");
@@ -615,7 +611,7 @@ public class RegExpParser {
             case '[': {
                 // CharacterClass
                 boolean negation = match('^');
-                if (nomatch(']')) {
+                if (!match(']')) {
                     // non-empty character class
                     out.append('[');
                     if (negation) {
@@ -635,11 +631,29 @@ public class RegExpParser {
 
             case '*':
             case '+':
-            case '{':
-                // hasAtom = false;
-                // break atom;
-                // FIXME: web reality
+            case '?':
                 throw error(Messages.Key.RegExpInvalidQualifier);
+
+            case '{': {
+                // make web-reality aware
+                out.append('\\').append((char) c);
+                int start = pos;
+                if (decimal() < 0) {
+                    pos = start;
+                    break atom;
+                }
+                if (match(',') && peek(0) != '}') {
+                    if (decimal() < 0) {
+                        pos = start;
+                        break atom;
+                    }
+                }
+                if (!match('}')) {
+                    pos = start;
+                    break atom;
+                }
+                throw error(Messages.Key.RegExpInvalidQualifier);
+            }
 
             case ']':
             case '}':
@@ -683,7 +697,7 @@ public class RegExpParser {
                         continue term;
                     }
                 }
-                if (nomatch('}')) {
+                if (!match('}')) {
                     pos = start;
                     continue term;
                 }
