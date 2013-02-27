@@ -345,9 +345,12 @@ public class StringPrototype extends ExoticString implements Scriptable, Initial
                                     int n = c - '0';
                                     if (cursor < len) {
                                         char d = newstring.charAt(cursor);
-                                        if ((n == 0 ? d >= '1' : d >= '0') && d <= '9') {
-                                            cursor += 1;
-                                            n = n * 10 + (d - '0');
+                                        if (d >= (n == 0 ? '1' : '0') && d <= '9') {
+                                            int nn = n * 10 + (d - '0');
+                                            if (nn <= m) {
+                                                cursor += 1;
+                                                n = nn;
+                                            }
                                         }
                                     }
                                     if (n == 0) {
@@ -363,13 +366,8 @@ public class StringPrototype extends ExoticString implements Scriptable, Initial
                                                 replacement.append((String) group);
                                             }
                                         } else {
-                                            // TODO: implementation defined behaviour!
-                                            // Common browser behaviour:
-                                            // "AaBb".replace(/([A-Z])[a-z]/g, "$9")
-                                            // => "$9$9"
-                                            // "AaBb".replace(/([A-Z])[a-z]/g, "$10")
-                                            // => "A0B0"
-                                            replacement.append("");
+                                            replacement.append('$').append(n);
+                                            break;
                                         }
                                     }
                                     break;
