@@ -7,7 +7,10 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -15,6 +18,8 @@ import java.util.Set;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -188,6 +193,33 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
                 return false;
             }
             return desc.isEnumerable();
+        }
+
+        /**
+         * B.3.1.1 Object.prototype.__proto__
+         */
+        @Accessor(name = "__proto__", type = Accessor.Type.Getter)
+        public static Object getPrototype(Realm realm, Object thisValue) {
+            Scriptable o = ToObject(realm, thisValue);
+            Scriptable p = o.getPrototype();
+            return (p != null ? p : NULL);
+        }
+
+        /**
+         * B.3.1.1 Object.prototype.__proto__
+         */
+        @Accessor(name = "__proto__", type = Accessor.Type.Setter)
+        public static Object setPrototype(Realm realm, Object thisValue, Object p) {
+            Scriptable o = ToObject(realm, thisValue);
+            if (!o.isExtensible()) {
+                throwTypeError(realm, Messages.Key.NotExtensible);
+            }
+            if (Type.isNull(p)) {
+                o.setPrototype(null);
+            } else if (Type.isObject(p)) {
+                o.setPrototype(Type.objectValue(p));
+            }
+            return UNDEFINED;
         }
     }
 }
