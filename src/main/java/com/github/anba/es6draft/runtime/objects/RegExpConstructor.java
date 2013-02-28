@@ -33,6 +33,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -125,8 +126,7 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
         return RegExpCreate(realm, null, pattern, flags);
     }
 
-    private static RegExpObject RegExpCreate(Realm realm, RegExpObject obj, Object pattern,
-            Object flags) {
+    static RegExpObject RegExpCreate(Realm realm, RegExpObject obj, Object pattern, Object flags) {
         String p, f;
         if (Type.isObject(pattern)
                 && Type.objectValue(pattern).getBuiltinBrand() == BuiltinBrand.BuiltinRegExp) {
@@ -141,11 +141,6 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
         } else {
             p = (Type.isUndefined(pattern) ? "" : ToFlatString(realm, pattern));
             f = (Type.isUndefined(flags) ? "" : ToFlatString(realm, flags));
-
-            if (obj != null) {
-                // consider side-effects from ToString()!
-                TestNotInitialisedOrThrow(realm, obj);
-            }
         }
 
         // flags :: g | i | m
@@ -252,30 +247,43 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
             // standard ECMAScript5 code path
             obj = new RegExpObject(realm, p, f, match, negativeLAGroups);
             obj.setPrototype(realm.getIntrinsic(Intrinsics.RegExpPrototype));
+            obj.defineOwnProperty("source", new PropertyDescriptor(s, false, false, false));
+            obj.defineOwnProperty("global", new PropertyDescriptor(global, false, false, false));
+            obj.defineOwnProperty("ignoreCase", new PropertyDescriptor(ignoreCase, false, false,
+                    false));
+            obj.defineOwnProperty("multiline", new PropertyDescriptor(multiline, false, false,
+                    false));
+            obj.defineOwnProperty("lastIndex", new PropertyDescriptor(0, true, false, false));
         } else {
             // TODO: new ECMAScript6 behaviour
-            // source/global/ignoreCase/multiline/lastIndex must not be present, otherwise
-            // [[DefineOwnProperty]] may fail and we end up with a partially initialised RegExp
-            // object...
-            boolean hasRestricted = false;
-            hasRestricted |= obj.hasOwnProperty("source");
-            hasRestricted |= obj.hasOwnProperty("global");
-            hasRestricted |= obj.hasOwnProperty("ignoreCase");
-            hasRestricted |= obj.hasOwnProperty("multiline");
-            hasRestricted |= obj.hasOwnProperty("lastIndex");
-            if (hasRestricted) {
-                throwTypeError(realm, Messages.Key.RegExpHasRestricted);
-            }
-            assert !obj.isInitialised();
+            applyOrCreate(obj, "source", new PropertyDescriptor(s, false, false, false));
+            applyOrCreate(obj, "global", new PropertyDescriptor(global, false, false, false));
+            applyOrCreate(obj, "ignoreCase",
+                    new PropertyDescriptor(ignoreCase, false, false, false));
+            applyOrCreate(obj, "multiline", new PropertyDescriptor(multiline, false, false, false));
+            applyOrCreate(obj, "lastIndex", new PropertyDescriptor(0, true, false, false));
+
             obj.initialise(p, f, match, negativeLAGroups);
         }
-        obj.defineOwnProperty("source", new PropertyDescriptor(s, false, false, false));
-        obj.defineOwnProperty("global", new PropertyDescriptor(global, false, false, false));
-        obj.defineOwnProperty("ignoreCase", new PropertyDescriptor(ignoreCase, false, false, false));
-        obj.defineOwnProperty("multiline", new PropertyDescriptor(multiline, false, false, false));
-        obj.defineOwnProperty("lastIndex", new PropertyDescriptor(0, true, false, false));
 
         return obj;
+    }
+
+    private static void applyOrCreate(RegExpObject obj, String propertyKey, PropertyDescriptor desc) {
+        if (obj.hasOwnProperty(propertyKey)) {
+            Property prop = obj.getOwnProperty(propertyKey);
+            if (!prop.isDataDescriptor()) {
+                // or raise an error?
+                prop.toDataProperty();
+            }
+            if (desc.isWritable() && !prop.isWritable()) {
+                // handle 'lastIndex' special case
+                desc.setWritable(false);
+            }
+            prop.apply(desc);
+        } else {
+            obj.defineOwnProperty(propertyKey, desc);
+        }
     }
 
     /**

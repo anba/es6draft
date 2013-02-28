@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.TestInitialisedOrThrow;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -119,6 +120,16 @@ public class RegExpPrototype extends RegExpObject implements Scriptable, Initial
             RegExpObject r = regexp(realm, thisValue);
             StringBuilder sb = new StringBuilder();
             return sb.append('/').append(source(realm, r)).append('/').append(flags(r)).toString();
+        }
+
+        /**
+         * RegExp.prototype.compile(pattern, flags)
+         */
+        @Function(name = "compile", arity = 2)
+        public static Object compile(Realm realm, Object thisValue, Object pattern, Object flags) {
+            RegExpObject r = regexp(realm, thisValue);
+            RegExpCreate(realm, r, pattern, flags);
+            return r;
         }
     }
 
