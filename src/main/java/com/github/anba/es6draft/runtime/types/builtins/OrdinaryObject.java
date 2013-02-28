@@ -562,6 +562,11 @@ public abstract class OrdinaryObject implements Scriptable {
         return propList;
     }
 
+    protected boolean isEnumerableOwnProperty(String key) {
+        Property prop = ordinaryGetOwnProperty(key);
+        return (prop != null && prop.isEnumerable());
+    }
+
     private static final class EnumKeysIterator extends SimpleIterator<Object> {
         private final Realm realm;
         private OrdinaryObject obj;
@@ -582,9 +587,8 @@ public abstract class OrdinaryObject implements Scriptable {
             if (keys != null) {
                 assert protoKeys == null;
                 while (keys.hasNext()) {
-                    Object key = keys.next();
-                    Property prop = obj.__get__(key); // OrdinaryGetOwnProperty
-                    if (prop != null && visitedKeys.add(key) && prop.isEnumerable()) {
+                    String key = keys.next();
+                    if (obj.isEnumerableOwnProperty(key) && visitedKeys.add(key)) {
                         return key;
                     }
                 }
@@ -652,14 +656,19 @@ public abstract class OrdinaryObject implements Scriptable {
 
     /** 8.3.13 [[OwnPropertyKeys]] ( ) */
     @Override
-    public Scriptable ownPropertyKeys() {
+    public final Scriptable ownPropertyKeys() {
+        return MakeListIterator(realm(), enumerateOwnKeys().iterator());
+    }
+
+    /** 8.3.13 [[OwnPropertyKeys]] ( ) */
+    protected Collection<Object> enumerateOwnKeys() {
         List<Object> keys = new ArrayList<>();
         for (Object key : __keys__()) {
             if (key instanceof Symbol && ((Symbol) key).isPrivate())
                 continue;
             keys.add(key);
         }
-        return MakeListIterator(realm(), keys.iterator());
+        return keys;
     }
 
     /** 8.3.14 [[Freeze]] ( ) */

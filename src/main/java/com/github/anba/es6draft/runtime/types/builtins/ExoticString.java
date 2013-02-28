@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import java.util.Collection;
+
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -117,7 +119,7 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
     }
 
     /**
-     * 8.4.3.3 [[DefineOwnProperty]] ( P, Desc)
+     * 8.4.3.3 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
     public boolean defineOwnProperty(String propertyKey, PropertyDescriptor desc) {
@@ -126,21 +128,42 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
         return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
     }
 
-    // /**
-    // * 8.4.3.4 [[Enumerate]] ()
-    // */
-    // @Override
-    // public Scriptable enumerate() {
-    // // TODO: spec incomplete
-    // return super.enumerate();
-    // }
+    /**
+     * 8.4.3.4 [[Enumerate]] ()
+     */
+    @Override
+    protected Collection<String> enumerateKeys() {
+        Collection<String> keys = super.enumerateKeys();
+        addStringIndices(keys);
+        return keys;
+    }
 
-    // /**
-    // * 8.4.3.5 [[OwnPropertyKeys]] ( )
-    // */
-    // @Override
-    // public Scriptable ownPropertyKeys() {
-    // // TODO: spec incomplete
-    // return super.ownPropertyKeys();
-    // }
+    /**
+     * 8.4.3.5 [[OwnPropertyKeys]] ()
+     */
+    @Override
+    protected Collection<Object> enumerateOwnKeys() {
+        Collection<Object> keys = super.enumerateOwnKeys();
+        addStringIndices(keys);
+        return keys;
+    }
+
+    @Override
+    protected boolean isEnumerableOwnProperty(String key) {
+        int index = toStringIndex(key);
+        if (index >= 0 && index < stringData.length()) {
+            return true;
+        }
+        return super.isEnumerableOwnProperty(key);
+    }
+
+    /**
+     * Append string indices to {@code keys} collection
+     */
+    private void addStringIndices(Collection<? super String> keys) {
+        // SpiderMonkey appends string indices, whereas JSC/V8 prepends the indices
+        for (int i = 0, length = stringData.length(); i < length; ++i) {
+            keys.add(Integer.toString(i));
+        }
+    }
 }
