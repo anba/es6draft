@@ -8,6 +8,8 @@ package com.github.anba.es6draft;
 
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
 
+import java.util.EnumSet;
+
 import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.interpreter.Interpreter;
@@ -52,7 +54,7 @@ public class ScriptLoader {
             throws ParserException {
         Parser parser = new Parser(sourceFile, 1);
         com.github.anba.es6draft.ast.Script parsedScript = parser.parse(source);
-        Script script = compile(className, parsedScript, false);
+        Script script = compile(className, parsedScript, EnumSet.noneOf(Compiler.Option.class));
         return script;
     }
 
@@ -60,15 +62,16 @@ public class ScriptLoader {
             throws ParserException {
         Script script = Interpreter.script(parsedScript);
         if (script == null) {
-            script = compile(className, parsedScript, false);
+            script = compile(className, parsedScript, EnumSet.noneOf(Compiler.Option.class));
         }
         return script;
     }
 
     public static CompiledScript compile(String className,
-            com.github.anba.es6draft.ast.Script parsedScript, boolean debug) throws ParserException {
+            com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options)
+            throws ParserException {
         try {
-            Compiler compiler = new Compiler(debug);
+            Compiler compiler = new Compiler(options);
             byte[] bytes = compiler.compile(parsedScript, className);
             ClassLoader cl = new ByteClassLoader(className, bytes);
             Class<?> c = cl.loadClass(className);

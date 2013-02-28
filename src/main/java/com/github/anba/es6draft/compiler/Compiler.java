@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.compiler;
 
 import java.io.PrintWriter;
+import java.util.EnumSet;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -31,10 +32,14 @@ public class Compiler {
                 Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
     }
 
+    public enum Option {
+        Debug
+    }
+
     private final boolean debug;
 
-    public Compiler(boolean debug) {
-        this.debug = debug;
+    public Compiler(EnumSet<Option> options) {
+        this.debug = options.contains(Option.Debug);
     }
 
     public byte[] compile(Script script, String className) throws ParserException {

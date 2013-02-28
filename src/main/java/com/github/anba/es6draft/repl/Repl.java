@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserEOFException;
 import com.github.anba.es6draft.parser.ParserException;
@@ -48,14 +49,14 @@ import com.github.anba.es6draft.runtime.types.Type;
  */
 public class Repl {
     public static void main(String[] args) {
-        new Repl(Options.fromArgs(args), System.console()).loop();
+        new Repl(Option.fromArgs(args), System.console()).loop();
     }
 
-    enum Options {
+    private enum Option {
         CompileOnly, Debug;
 
-        static EnumSet<Options> fromArgs(String[] args) {
-            EnumSet<Options> options = EnumSet.noneOf(Options.class);
+        static EnumSet<Option> fromArgs(String[] args) {
+            EnumSet<Option> options = EnumSet.noneOf(Option.class);
             for (String arg : args) {
                 switch (arg) {
                 case "compile-only":
@@ -72,10 +73,10 @@ public class Repl {
         }
     }
 
-    private final EnumSet<Options> options;
+    private final EnumSet<Option> options;
     private final Console console;
 
-    private Repl(EnumSet<Options> options, Console console) {
+    private Repl(EnumSet<Option> options, Console console) {
         this.options = options;
         this.console = console;
     }
@@ -291,8 +292,12 @@ public class Repl {
 
     private Script script(com.github.anba.es6draft.ast.Script parsedScript) throws ParserException {
         String className = "typein_" + scriptCounter.incrementAndGet();
-        if (options.contains(Options.CompileOnly)) {
-            return ScriptLoader.compile(className, parsedScript, options.contains(Options.Debug));
+        if (options.contains(Option.CompileOnly)) {
+            EnumSet<Compiler.Option> opts = EnumSet.noneOf(Compiler.Option.class);
+            if (options.contains(Option.Debug)) {
+                opts.add(Compiler.Option.Debug);
+            }
+            return ScriptLoader.compile(className, parsedScript, opts);
         } else {
             return ScriptLoader.load(className, parsedScript);
         }
@@ -322,7 +327,7 @@ public class Repl {
         @Function(name = "options", arity = 0)
         public String options() {
             StringBuilder opts = new StringBuilder();
-            for (Options opt : this.repl.options) {
+            for (Option opt : this.repl.options) {
                 opts.append(opt).append(",");
             }
             if (opts.length() != 0) {
@@ -405,9 +410,9 @@ public class Repl {
         @Function(name = "setDebug", arity = 1)
         public void setDebug(boolean debug) {
             if (debug) {
-                repl.options.add(Options.Debug);
+                repl.options.add(Option.Debug);
             } else {
-                repl.options.remove(Options.Debug);
+                repl.options.remove(Option.Debug);
             }
         }
 
