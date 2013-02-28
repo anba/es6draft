@@ -164,11 +164,11 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 }
                 boolean alreadyDeclared = bindings.contains(fn);
                 if (!alreadyDeclared) {
-                    // FIXME: not in spec -> changed from mutable to immutable binding
-                    // envRec.createMutableBinding(fn, false);
                     bindings.add(fn);
-                    createImmutableBinding(envRec, fn, mv);
                     functionsToInitialize.add(d);
+                    // FIXME: not in spec -> changed from mutable to immutable binding
+                    // createMutableBinding(envRec, fn, false, mv);
+                    createImmutableBinding(envRec, fn, mv);
                 }
             }
         }
@@ -227,9 +227,8 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 InstantiateFunctionObject(realm, env, (FunctionDeclaration) f, mv);
             }
             // FIXME: not in spec -> changed from mutable to immutable binding
-            // setMutableBinding(fn, false);
-
             // stack: [fo] -> []
+            // setMutableBinding(envRec, fn, false, mv);
             initializeBinding(envRec, fn, mv);
         }
         /* [10.5.3] step 17-19 */
