@@ -9,8 +9,6 @@
 -->
 <excludeList>
   <!-- current draft issues -->
-  <test id="10.6-10-c-ii-2">https://bugs.ecmascript.org/show_bug.cgi?id=1160</test>
-  <test id="15.2.3.4-4-44">specification incomplete for ExoticString [[enumerate]]</test>
   <test id="S13_A19_T2">declaration and parameter binding broken in current draft</test>
 
   <!-- ES6 changes -->
@@ -25,23 +23,4 @@
   <test id="15.2.3.7-6-a-93-3">ES6-change: Object.defineProperties no longer stops at first exception</test>
   <test id="15.2.3.7-6-a-93-4">ES6-change: Object.defineProperties no longer stops at first exception</test>
   <test id="15.9.1.15-1">ES6-change: ISO date without timezone specifier now defaults to local time</test>
-
-  <!-- disable invalid test262 tests -->
-  <test id="S11.2.1_A4_T9">https://bugs.ecmascript.org/show_bug.cgi?id=1124</test>
-  <test id="S11.2.1_A4_T1">https://bugs.ecmascript.org/show_bug.cgi?id=1125</test>
-  <test id="11.13.1-4-27-s">https://bugs.ecmascript.org/show_bug.cgi?id=1126</test>
-  <test id="S15.2.2.1_A2_T5">https://bugs.ecmascript.org/show_bug.cgi?id=1128</test>
-  <test id="15.12.3-11-26">https://bugs.ecmascript.org/show_bug.cgi?id=1131</test>
-  <test id="S15.5.4.7_A1_T11">https://bugs.ecmascript.org/show_bug.cgi?id=1132</test>
-  <test id="S15.5.4.11_A3_T1">https://bugs.ecmascript.org/show_bug.cgi?id=1133</test>
-  <test id="S15.5.4.11_A3_T2">https://bugs.ecmascript.org/show_bug.cgi?id=1133</test>
-  <test id="S15.5.4.11_A3_T3">https://bugs.ecmascript.org/show_bug.cgi?id=1133</test>
-  <test id="15.2.3.3-4-12">https://bugs.ecmascript.org/show_bug.cgi?id=1129</test>
-  <test id="15.2.3.3-4-13">https://bugs.ecmascript.org/show_bug.cgi?id=1129</test>
-  <test id="15.2.3.3-4-74">https://bugs.ecmascript.org/show_bug.cgi?id=1129</test>
-  <test id="15.2.3.3-4-119">https://bugs.ecmascript.org/show_bug.cgi?id=1129</test>
-  <test id="15.2.3.3-4-137">https://bugs.ecmascript.org/show_bug.cgi?id=1129</test>
-  <test id="15.2.3.3-4-155">https://bugs.ecmascript.org/show_bug.cgi?id=1129</test>
-  <test id="15.2.3.3-4-164">https://bugs.ecmascript.org/show_bug.cgi?id=1129</test>
-  <test id="15.2.3.14-3-4">https://bugs.ecmascript.org/show_bug.cgi?id=1159</test>
 </excludeList>
