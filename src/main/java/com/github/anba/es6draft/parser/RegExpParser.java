@@ -25,13 +25,13 @@ public class RegExpParser {
             'A', 'B', 'C', 'D', 'E', 'F' };
 
     // CharacterClass \s
-    private static String characterClass_s = "[\\s\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
+    private static final String characterClass_s = "[\\s\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
     // CharacterClass \S
-    private static String characterClass_S = "[^\\s\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
+    private static final String characterClass_S = "[^\\s\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
     // [] => matches nothing
-    private static String emptyCharacterClass = "(?:\\Z )";
+    private static final String emptyCharacterClass = "(?:\\Z )";
     // [^] => matches everything
-    private static String emptyNegCharacterClass = "(?s:.)";
+    private static final String emptyNegCharacterClass = "(?s:.)";
 
     private final String source;
     private final int length;
@@ -172,7 +172,7 @@ public class RegExpParser {
         return c;
     }
 
-    private void characterclass() {
+    private void characterclass(boolean negation) {
         // TODO: check range [start-end] is valid
         boolean inrange = false;
         charclass: for (;;) {
@@ -201,14 +201,14 @@ public class RegExpParser {
                     if (inrange)
                         throw error(Messages.Key.RegExpInvalidCharacterRange);
                     mustMatch('s');
-                    out.append(characterClass_s);
+                    out.append(!negation ? characterClass_s : characterClass_S);
                     continue charclass;
                 case 'S':
                     // class escape (cannot start/end range)
                     if (inrange)
                         throw error(Messages.Key.RegExpInvalidCharacterRange);
                     mustMatch('S');
-                    out.append(characterClass_S);
+                    out.append(!negation ? characterClass_S : characterClass_s);
                     continue charclass;
 
                 case 'b':
@@ -617,7 +617,7 @@ public class RegExpParser {
                     if (negation) {
                         out.append('^');
                     }
-                    characterclass();
+                    characterclass(negation);
                     out.append((char) mustMatch(']'));
                 } else if (!negation) {
                     // empty character class: []
