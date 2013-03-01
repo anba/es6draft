@@ -23,4 +23,14 @@
   <test id="15.2.3.7-6-a-93-3">ES6-change: Object.defineProperties no longer stops at first exception</test>
   <test id="15.2.3.7-6-a-93-4">ES6-change: Object.defineProperties no longer stops at first exception</test>
   <test id="15.9.1.15-1">ES6-change: ISO date without timezone specifier now defaults to local time</test>
+
+  <test id="Sbp_A1_T1">ES6-change: function declaration in block</test>
+  <test id="Sbp_A2_T1">ES6-change: function declaration in block</test>
+  <test id="Sbp_A2_T2">ES6-change: function declaration in block</test>
+  <test id="Sbp_A3_T1">ES6-change: function declaration in block</test>
+  <test id="Sbp_A3_T2">ES6-change: function declaration in block</test>
+  <test id="Sbp_A4_T1">ES6-change: function declaration in block</test>
+  <test id="Sbp_A4_T2">ES6-change: function declaration in block</test>
+  <test id="Sbp_A5_T1">ES6-change: function declaration in block</test>
+  <test id="Sbp_A5_T2">ES6-change: function declaration in block</test>
 </excludeList>
