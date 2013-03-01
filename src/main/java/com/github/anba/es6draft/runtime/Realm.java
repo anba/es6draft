@@ -26,6 +26,13 @@ import com.github.anba.es6draft.runtime.objects.binary.DataViewPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.ElementKind;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototype;
+import com.github.anba.es6draft.runtime.objects.intl.CollatorConstructor;
+import com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype;
+import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor;
+import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatPrototype;
+import com.github.anba.es6draft.runtime.objects.intl.IntlObject;
+import com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor;
+import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
@@ -261,6 +268,15 @@ public class Realm {
         DataViewConstructor dataViewConstructor = new DataViewConstructor(realm);
         DataViewPrototype dataViewPrototype = new DataViewPrototype(realm);
 
+        // Internationalization API
+        IntlObject intlObject = new IntlObject(realm);
+        CollatorConstructor collatorConstructor = new CollatorConstructor(realm);
+        CollatorPrototype collatorPrototype = new CollatorPrototype(realm);
+        NumberFormatConstructor numberFormatConstructor = new NumberFormatConstructor(realm);
+        NumberFormatPrototype numberFormatPrototype = new NumberFormatPrototype(realm);
+        DateTimeFormatConstructor dateTimeFormatConstructor = new DateTimeFormatConstructor(realm);
+        DateTimeFormatPrototype dateTimeFormatPrototype = new DateTimeFormatPrototype(realm);
+
         // internal intrinsics
         ListIteratorPrototype listIteratorPrototype = new ListIteratorPrototype(realm);
 
@@ -320,6 +336,15 @@ public class Realm {
         intrinsics.put(Intrinsics.Float64ArrayPrototype, float64ArrayPrototype);
         intrinsics.put(Intrinsics.DataView, dataViewConstructor);
         intrinsics.put(Intrinsics.DataViewPrototype, dataViewPrototype);
+
+        // Internationalization API
+        intrinsics.put(Intrinsics.Intl, intlObject);
+        intrinsics.put(Intrinsics.Intl_Collator, collatorConstructor);
+        intrinsics.put(Intrinsics.Intl_CollatorPrototype, collatorPrototype);
+        intrinsics.put(Intrinsics.Intl_NumberFormat, numberFormatConstructor);
+        intrinsics.put(Intrinsics.Intl_NumberFormatPrototype, numberFormatPrototype);
+        intrinsics.put(Intrinsics.Intl_DateTimeFormat, dateTimeFormatConstructor);
+        intrinsics.put(Intrinsics.Intl_DateTimeFormatPrototype, dateTimeFormatPrototype);
 
         // internal intrinsics
         intrinsics.put(Intrinsics.ListIteratorPrototype, listIteratorPrototype);
@@ -382,6 +407,15 @@ public class Realm {
         float64ArrayPrototype.initialise(realm);
         dataViewConstructor.initialise(realm);
         dataViewPrototype.initialise(realm);
+
+        // Internationalization API
+        intlObject.initialise(realm);
+        collatorConstructor.initialise(realm);
+        collatorPrototype.initialise(realm);
+        numberFormatConstructor.initialise(realm);
+        numberFormatPrototype.initialise(realm);
+        dateTimeFormatConstructor.initialise(realm);
+        dateTimeFormatPrototype.initialise(realm);
 
         // internal intrinsics
         listIteratorPrototype.initialise(realm);

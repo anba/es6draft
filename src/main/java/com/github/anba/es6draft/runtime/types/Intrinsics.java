@@ -73,6 +73,15 @@ public enum Intrinsics {/* @formatter:off */
     DataView,
     DataViewPrototype,
 
+    // Internationalization API
+    Intl,
+    Intl_Collator,
+    Intl_CollatorPrototype,
+    Intl_NumberFormat,
+    Intl_NumberFormatPrototype,
+    Intl_DateTimeFormat,
+    Intl_DateTimeFormatPrototype,
+
     // internal
     ListIteratorPrototype,
 

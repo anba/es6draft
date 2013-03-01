@@ -470,6 +470,11 @@ public class GlobalObject extends OrdinaryObject implements Scriptable, Initiali
 
         @Value(name = "DataView")
         public static final Intrinsics DataView = Intrinsics.DataView;
+
+        // Internationalization API
+
+        @Value(name = "Intl")
+        public static final Intrinsics Intl = Intrinsics.Intl;
     }
 
     /**
