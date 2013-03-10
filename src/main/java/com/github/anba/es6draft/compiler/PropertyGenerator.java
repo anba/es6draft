@@ -49,12 +49,12 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_defineProperty = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "defineProperty",
-                Type.getMethodType(Type.VOID_TYPE, Types.Scriptable, Types.String, Types.Object));
+                Types.ScriptRuntime, "defineProperty", Type.getMethodType(Type.VOID_TYPE,
+                        Types.Scriptable, Types.String, Types.Object, Types.Realm));
 
         static final MethodDesc ScriptRuntime_defineProtoProperty = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "defineProtoProperty",
-                Type.getMethodType(Type.VOID_TYPE, Types.Scriptable, Types.Object));
+                Type.getMethodType(Type.VOID_TYPE, Types.Scriptable, Types.Object, Types.Realm));
     }
 
     public PropertyGenerator(CodeGenerator codegen) {
@@ -113,11 +113,13 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         if ("__proto__".equals(propName)) {
             propertyName.accept(this, mv);
             invokeGetValue(propertyName, mv);
+            mv.load(Register.Realm);
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else {
             mv.aconst(propName);
             propertyName.accept(this, mv);
             invokeGetValue(propertyName, mv);
+            mv.load(Register.Realm);
             mv.invoke(Methods.ScriptRuntime_defineProperty);
         }
 
@@ -133,11 +135,13 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         if ("__proto__".equals(propName)) {
             propertyValue.accept(this, mv);
             invokeGetValue(propertyValue, mv);
+            mv.load(Register.Realm);
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else {
             mv.aconst(propName);
             propertyValue.accept(this, mv);
             invokeGetValue(propertyValue, mv);
+            mv.load(Register.Realm);
             mv.invoke(Methods.ScriptRuntime_defineProperty);
         }
 

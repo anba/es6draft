@@ -205,7 +205,7 @@ public final class PropertyDescriptor {
             return UNDEFINED;
         }
         /* step 3-4 */
-        Scriptable obj = ObjectCreate(realm);
+        Scriptable obj = ObjectCreate(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
         /* step 5-10 */
         // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {
@@ -246,7 +246,7 @@ public final class PropertyDescriptor {
             return desc.origin;
         }
         /* step 3-4 */
-        Scriptable obj = ObjectCreate(realm);
+        Scriptable obj = ObjectCreate(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
         /* step 5-10 */
         // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {

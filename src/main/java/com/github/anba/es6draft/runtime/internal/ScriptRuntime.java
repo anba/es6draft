@@ -1096,16 +1096,18 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Property Definition Evaluation
      */
-    public static void defineProperty(Scriptable object, String propertyName, Object value) {
-        object.defineOwnProperty(propertyName, new PropertyDescriptor(value, true, true, true));
+    public static void defineProperty(Scriptable object, String propertyName, Object value,
+            Realm realm) {
+        DefinePropertyOrThrow(realm, object, propertyName, new PropertyDescriptor(value, true,
+                true, true));
     }
 
     /**
      * B.3.1.3 __proto___ Object Initialisers
      */
-    public static void defineProtoProperty(Scriptable object, Object value) {
-        // use [[Set]] to comply with current SpiderMonkey/JSC behaviour
-        object.set("__proto__", value, object);
+    public static void defineProtoProperty(Scriptable object, Object value, Realm realm) {
+        // use Put() to comply with current SpiderMonkey/JSC behaviour
+        Put(realm, object, "__proto__", value, true);
     }
 
     /**

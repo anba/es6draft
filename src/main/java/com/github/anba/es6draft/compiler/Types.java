@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Generator;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.Scriptable;
@@ -86,6 +87,7 @@ final class Types {
     static final Type Callable = Type.getType(Callable.class);
     static final Type Function = Type.getType(Function.class);
     static final Type Generator = Type.getType(Generator.class);
+    static final Type Intrinsics = Type.getType(Intrinsics.class);
     static final Type Null = Type.getType(Null.class);
     static final Type Reference = Type.getType(Reference.class);
     static final Type Scriptable = Type.getType(Scriptable.class);
