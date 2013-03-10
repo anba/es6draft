@@ -36,6 +36,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
                 Types.Undefined, "UNDEFINED", Types.Undefined);
 
+        static final FieldDesc Intrinsics_ObjectPrototype = FieldDesc.create(FieldType.Static,
+                Types.Intrinsics, "ObjectPrototype", Types.Intrinsics);
+
         static final FieldDesc ScriptRuntime_EMPTY_ARRAY = FieldDesc.create(FieldType.Static,
                 Types.ScriptRuntime, "EMPTY_ARRAY", Types.Object_);
     }
@@ -69,7 +72,12 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         // class: OrdinaryObject
         static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(MethodType.Static,
                 Types.OrdinaryObject, "ObjectCreate",
-                Type.getMethodType(Types.Scriptable, Types.Realm));
+                Type.getMethodType(Types.Scriptable, Types.Realm, Types.Scriptable));
+
+        // class: Realm
+        static final MethodDesc Realm_getIntrinsic = MethodDesc
+                .create(MethodType.Virtual, Types.Realm, "getIntrinsic",
+                        Type.getMethodType(Types.Scriptable, Types.Intrinsics));
 
         // class: Reference
         static final MethodDesc Reference_GetValue_ = MethodDesc.create(MethodType.Virtual,
@@ -1379,6 +1387,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         ObjectLiteralStaticSemantics.validate(node, mv.isStrict());
 
         mv.load(Register.Realm);
+        mv.dup();
+        mv.get(Fields.Intrinsics_ObjectPrototype);
+        mv.invoke(Methods.Realm_getIntrinsic);
         mv.invoke(Methods.OrdinaryObject_ObjectCreate);
         for (PropertyDefinition property : node.getProperties()) {
             mv.dup();
