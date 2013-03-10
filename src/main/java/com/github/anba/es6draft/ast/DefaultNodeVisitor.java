@@ -23,6 +23,10 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
         return visit((Binding) node, value);
     }
 
+    protected R visit(ComprehensionQualifier node, V value) {
+        return visit((Node) node, value);
+    }
+
     protected R visit(FormalParameter node, V value) {
         return visit((Node) node, value);
     }
@@ -181,8 +185,18 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(ComprehensionFor node, V value) {
+    public R visit(Comprehension node, V value) {
         return visit((Node) node, value);
+    }
+
+    @Override
+    public R visit(ComprehensionFor node, V value) {
+        return visit((ComprehensionQualifier) node, value);
+    }
+
+    @Override
+    public R visit(ComprehensionIf node, V value) {
+        return visit((ComprehensionQualifier) node, value);
     }
 
     @Override

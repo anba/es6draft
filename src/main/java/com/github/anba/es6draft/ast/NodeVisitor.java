@@ -56,7 +56,11 @@ public interface NodeVisitor<R, V> {
 
     R visit(CommaExpression node, V value);
 
+    R visit(Comprehension node, V value);
+
     R visit(ComprehensionFor node, V value);
+
+    R visit(ComprehensionIf node, V value);
 
     R visit(ConditionalExpression node, V value);
 
