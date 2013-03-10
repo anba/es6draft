@@ -2466,11 +2466,17 @@ public class Parser {
      * </pre>
      */
     private ExpressionStatement expressionStatement() {
-        assert !(token() == Token.LC || token() == Token.FUNCTION || token() == Token.CLASS);
-        Expression expr = expression(true);
-        semicolon();
+        switch (token()) {
+        case LC:
+        case FUNCTION:
+        case CLASS:
+            reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+        default:
+            Expression expr = expression(true);
+            semicolon();
 
-        return new ExpressionStatement(expr);
+            return new ExpressionStatement(expr);
+        }
     }
 
     /**
