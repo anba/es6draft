@@ -209,12 +209,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Types.StringBuilder, "toString", Type.getMethodType(Types.String));
     }
 
-    private final ArrayComprehensionGenerator arraycomprgen;
     private final IdentifierResolution identifierResolution;
 
     public ExpressionGenerator(CodeGenerator codegen) {
         super(codegen);
-        this.arraycomprgen = new ArrayComprehensionGenerator(codegen);
         this.identifierResolution = new IdentifierResolution();
     }
 
@@ -424,7 +422,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
     @Override
     public ValType visit(ArrayComprehension node, ExpressionVisitor mv) {
-        return node.accept(arraycomprgen, mv);
+        node.accept(new ArrayComprehensionGenerator(codegen), mv);
+
+        return ValType.Object;
     }
 
     @Override

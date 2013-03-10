@@ -3252,11 +3252,6 @@ public class Parser {
      *     [Lexical goal <i>InputElementRegExp</i>] RegularExpressionLiteral
      *     TemplateLiteral
      *     CoverParenthesizedExpressionAndArrowParameterList
-     * CoverParenthesizedExpressionAndArrowParameterList :
-     *     ( Expression )
-     *     ( )
-     *     ( ... Identifier )
-     *     ( Expression , ... Identifier)
      * Literal :
      *     NullLiteral
      *     ValueLiteral
@@ -3305,7 +3300,11 @@ public class Parser {
         case CLASS:
             return classExpression();
         case LP:
-            return groupingOperatorOrGeneratorComprehension();
+            if (LOOKAHEAD(Token.FOR)) {
+                return generatorComprehension();
+            } else {
+                return coverParenthesizedExpressionAndArrowParameterList();
+            }
         case TEMPLATE:
             return templateLiteral(false);
         default:
@@ -3314,21 +3313,60 @@ public class Parser {
     }
 
     /**
-     * Grouping operator <code>( )</code> and generator comprehension both start with
-     * <code>( Expression </code>.
+     * <strong>[11.1] Primary Expressions</strong>
      * 
-     * @see #generatorComprehension()
+     * <pre>
+     * CoverParenthesizedExpressionAndArrowParameterList :
+     *     ( Expression )
+     *     ( )
+     *     ( ... Identifier )
+     *     ( Expression , ... Identifier)
+     * </pre>
      */
-    private Expression groupingOperatorOrGeneratorComprehension() {
+    private Expression coverParenthesizedExpressionAndArrowParameterList() {
         consume(Token.LP);
-        Expression expr = expression(true, true);
-        if (token() == Token.FOR) {
-            return generatorComprehensionTail(expr);
+        Expression expr;
+        if (token() == Token.RP) {
+            expr = arrowFunctionEmptyParameters();
+        } else if (token() == Token.TRIPLE_DOT) {
+            expr = arrowFunctionRestParameter();
         } else {
-            consume(Token.RP);
-            expr.addParentheses();
-            return expr;
+            // inlined `expression(true)`
+            expr = assignmentExpression(true);
+            if (token() == Token.COMMA) {
+                List<Expression> list = new ArrayList<>();
+                list.add(expr);
+                while (token() == Token.COMMA) {
+                    consume(Token.COMMA);
+                    if (token() == Token.TRIPLE_DOT) {
+                        list.add(arrowFunctionRestParameter());
+                        break;
+                    }
+                    expr = assignmentExpression(true);
+                    list.add(expr);
+                }
+                expr = new CommaExpression(list);
+            }
         }
+        expr.addParentheses();
+        consume(Token.RP);
+        return expr;
+    }
+
+    private EmptyExpression arrowFunctionEmptyParameters() {
+        if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
+            reportSyntaxError(Messages.Key.EmptyParenthesisedExpression);
+        }
+        return new EmptyExpression();
+    }
+
+    private SpreadElement arrowFunctionRestParameter() {
+        consume(Token.TRIPLE_DOT);
+        SpreadElement spread = new SpreadElement(new Identifier(identifier()));
+        if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
+            reportSyntaxError(Messages.Key.InvalidSpreadExpression);
+        }
+        return spread;
     }
 
     /**
@@ -3338,6 +3376,20 @@ public class Parser {
      * ArrayInitialiser :
      *     ArrayLiteral
      *     ArrayComprehension
+     * </pre>
+     */
+    private ArrayInitialiser arrayInitialiser() {
+        if (LOOKAHEAD(Token.FOR)) {
+            return arrayComprehension();
+        } else {
+            return arrayLiteral();
+        }
+    }
+
+    /**
+     * <strong>[11.1.4] Array Initialiser</strong>
+     * 
+     * <pre>
      * ArrayLiteral :
      *     [ Elision<sub>opt</sub> ]
      *     [ ElementList ]
@@ -3352,55 +3404,13 @@ public class Parser {
      *     Elision ,
      * SpreadElement :
      *     ... AssignmentExpression
-     * ArrayComprehension :
-     *     [ AssignmentExpression ComprehensionForList ]
-     *     [ AssignmentExpression ComprehensionForList if Expression ]
-     * ComprehensionForList :
-     *     ComprehensionFor
-     *     ComprehensionForList ComprehensionFor
-     * ComprehensionFor :
-     *     for ForBinding of Expression
-     * ForBinding :
-     *     BindingIdentifier
-     *     BindingPattern
      * </pre>
-     * 
-     * @see #arrayLiteralTail()
-     * @see #arrayComprehensionTail()
      */
-    private ArrayInitialiser arrayInitialiser() {
+    private ArrayInitialiser arrayLiteral() {
         consume(Token.LB);
-        switch (token()) {
-        case RB:
-        case COMMA:
-        case TRIPLE_DOT:
-            return arrayLiteralTail(null);
-        default:
-            Expression head = assignmentExpression(true);
-            switch (token()) {
-            case FOR:
-                return arrayComprehensionTail(head);
-            case COMMA:
-            case RB:
-                return arrayLiteralTail(head);
-            default:
-                reportSyntaxError(Messages.Key.InvalidToken, token().toString());
-            }
-            return null;
-        }
-    }
-
-    /**
-     * @see #arrayInitialiser()
-     */
-    private ArrayLiteral arrayLiteralTail(Expression head) {
         List<Expression> list = newList();
-        if (head != null) {
-            list.add(head);
-        }
-        boolean needComma = (head != null);
-        Token tok;
-        while ((tok = token()) != Token.RB) {
+        boolean needComma = false;
+        for (Token tok; (tok = token()) != Token.RB;) {
             if (needComma) {
                 consume(Token.COMMA);
                 needComma = false;
@@ -3422,49 +3432,97 @@ public class Parser {
     }
 
     /**
-     * @see #arrayInitialiser()
+     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * 
+     * <pre>
+     * ArrayComprehension :
+     *     [ Comprehension ]
+     * </pre>
      */
-    private ArrayComprehension arrayComprehensionTail(Expression head) {
-        List<ComprehensionFor> list = comprehensionForList();
-        Expression test = null;
-        if (token() == Token.IF) {
-            consume(Token.IF);
-            test = expression(true);
-        }
+    private ArrayComprehension arrayComprehension() {
+        consume(Token.LB);
+        Comprehension comprehension = comprehension();
         consume(Token.RB);
 
-        return new ArrayComprehension(head, list, test);
+        return new ArrayComprehension(comprehension);
     }
 
     /**
      * <strong>[11.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
-     * ComprehensionForList :
+     * Comprehension :
+     *     ComprehensionQualification AssignmentExpression
+     * ComprehensionQualification :
+     *     ComprehensionFor ComprehensionQualifierList<sub>opt</sub>
+     * ComprehensionQualifierList :
+     *     ComprehensionQualifier
+     *     ComprehensionQualifierList ComprehensionQualifier
+     * ComprehensionQualifier :
      *     ComprehensionFor
-     *     ComprehensionForList ComprehensionFor
+     *     ComprehensionIf
+     * </pre>
+     */
+    private Comprehension comprehension() {
+        assert token() == Token.FOR;
+        List<ComprehensionQualifier> list = newSmallList();
+        int scopes = 0;
+        for (;;) {
+            ComprehensionQualifier qualifier;
+            if (token() == Token.FOR) {
+                scopes += 1;
+                qualifier = comprehensionFor();
+            } else if (token() == Token.IF) {
+                qualifier = comprehensionIf();
+            } else {
+                break;
+            }
+            list.add(qualifier);
+        }
+        Expression expression = assignmentExpression(true);
+        while (scopes-- > 0) {
+            exitBlockContext();
+        }
+        return new Comprehension(list, expression);
+    }
+
+    /**
+     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * 
+     * <pre>
      * ComprehensionFor :
-     *     for ForBinding of Expression
+     *     for ( ForBinding of AssignmentExpression )
      * ForBinding :
      *     BindingIdentifier
      *     BindingPattern
      * </pre>
      */
-    private List<ComprehensionFor> comprehensionForList() {
-        List<ComprehensionFor> list = newSmallList();
-        while (token() == Token.FOR) {
-            BlockContext scope = enterBlockContext();
-            consume(Token.FOR);
-            Binding b = binding();
-            addLexDeclaredName(b);
-            consume("of");
-            Expression e = expression(true);
-            list.add(new ComprehensionFor(scope, b, e));
-        }
-        for (int i = list.size(); i > 0; --i) {
-            exitBlockContext();
-        }
-        return list;
+    private ComprehensionFor comprehensionFor() {
+        consume(Token.FOR);
+        consume(Token.LP);
+        BlockContext scope = enterBlockContext();
+        Binding b = binding();
+        addLexDeclaredName(b);
+        consume("of");
+        Expression expression = assignmentExpression(true);
+        consume(Token.RP);
+        return new ComprehensionFor(scope, b, expression);
+    }
+
+    /**
+     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * 
+     * <pre>
+     * ComprehensionIf :
+     *     if ( AssignmentExpression )
+     * </pre>
+     */
+    private ComprehensionIf comprehensionIf() {
+        consume(Token.IF);
+        consume(Token.LP);
+        Expression expression = assignmentExpression(true);
+        consume(Token.RP);
+        return new ComprehensionIf(expression);
     }
 
     /**
@@ -3559,30 +3617,15 @@ public class Parser {
      * 
      * <pre>
      * GeneratorComprehension :
-     *     ( Expression ComprehensionForList )
-     *     ( Expression ComprehensionForList if Expression )
-     * ComprehensionForList :
-     *     ComprehensionFor
-     *     ComprehensionForList ComprehensionFor
-     * ComprehensionFor :
-     *     for ForBinding of Expression
-     * ForBinding :
-     *     BindingIdentifier
-     *     BindingPattern
+     *     ( Comprehension )
      * </pre>
-     * 
-     * @see #groupingOperatorOrGeneratorComprehension()
      */
-    private GeneratorComprehension generatorComprehensionTail(Expression head) {
-        List<ComprehensionFor> list = comprehensionForList();
-        Expression test = null;
-        if (token() == Token.IF) {
-            consume(Token.IF);
-            test = expression(true);
-        }
+    private GeneratorComprehension generatorComprehension() {
+        consume(Token.LP);
+        Comprehension comprehension = comprehension();
         consume(Token.RP);
 
-        return new GeneratorComprehension(head, list, test);
+        return new GeneratorComprehension(comprehension);
     }
 
     /**
@@ -4163,52 +4206,18 @@ public class Parser {
      * </pre>
      */
     private Expression expression(boolean allowIn) {
-        return expression(allowIn, false);
-    }
-
-    /**
-     * Additional {@code inParens} parameter to handle possible FunctionRestParameter, cf.
-     * ArrowFunction
-     */
-    private Expression expression(boolean allowIn, boolean inParens) {
-        if (inParens && token() == Token.RP) {
-            return arrowFunctionEmptyParameters();
-        }
-        if (inParens && token() == Token.TRIPLE_DOT) {
-            return arrowFunctionRestParameter();
-        }
         Expression expr = assignmentExpression(allowIn);
         if (token() == Token.COMMA) {
             List<Expression> list = new ArrayList<>();
             list.add(expr);
             while (token() == Token.COMMA) {
                 consume(Token.COMMA);
-                if (inParens && token() == Token.TRIPLE_DOT) {
-                    list.add(arrowFunctionRestParameter());
-                    break;
-                }
                 expr = assignmentExpression(allowIn);
                 list.add(expr);
             }
             return new CommaExpression(list);
         }
         return expr;
-    }
-
-    private EmptyExpression arrowFunctionEmptyParameters() {
-        if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
-            reportSyntaxError(Messages.Key.EmptyParenthesisedExpression);
-        }
-        return new EmptyExpression();
-    }
-
-    private SpreadElement arrowFunctionRestParameter() {
-        consume(Token.TRIPLE_DOT);
-        SpreadElement spread = new SpreadElement(new Identifier(identifier()));
-        if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
-            reportSyntaxError(Messages.Key.InvalidSpreadExpression);
-        }
-        return spread;
     }
 
     /* ***************************************************************************************** */

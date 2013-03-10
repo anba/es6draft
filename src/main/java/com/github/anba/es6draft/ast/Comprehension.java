@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.List;
+
 /**
  * <h1>11 Expressions</h1><br>
  * <h2>11.1 Primary Expressions</h2><br>
@@ -14,15 +16,21 @@ package com.github.anba.es6draft.ast;
  * <li>11.1.4.2 Array Comprehension
  * </ul>
  */
-public class ArrayComprehension extends ArrayInitialiser {
-    private Comprehension comprehension;
+public class Comprehension extends AstNode {
+    private List<ComprehensionQualifier> list;
+    private Expression expression;
 
-    public ArrayComprehension(Comprehension comprehension) {
-        this.comprehension = comprehension;
+    public Comprehension(List<ComprehensionQualifier> list, Expression expression) {
+        this.list = list;
+        this.expression = expression;
     }
 
-    public Comprehension getComprehension() {
-        return comprehension;
+    public List<ComprehensionQualifier> getList() {
+        return list;
+    }
+
+    public Expression getExpression() {
+        return expression;
     }
 
     @Override

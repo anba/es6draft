@@ -285,7 +285,7 @@ class CodeGenerator {
             body.begin();
 
             body.setScope(mv.getScope());
-            new GeneratorComprehensionGenerator(this).visit(node, body);
+            node.accept(new GeneratorComprehensionGenerator(this), body);
 
             body.get(Fields.Undefined_UNDEFINED);
             body.areturn();

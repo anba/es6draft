@@ -8,20 +8,21 @@ package com.github.anba.es6draft.ast;
 
 /**
  * <h1>11 Expressions</h1><br>
- * <h2>11.1 Primary Expressions</h2>
+ * <h2>11.1 Primary Expressions</h2><br>
+ * <h3>11.1.4 Array Initialiser</h3>
  * <ul>
- * <li>11.1.7 Generator Comprehensions
+ * <li>11.1.4.2 Array Comprehension
  * </ul>
  */
-public class GeneratorComprehension extends Expression {
-    private Comprehension comprehension;
+public class ComprehensionIf extends ComprehensionQualifier {
+    private Expression test;
 
-    public GeneratorComprehension(Comprehension comprehension) {
-        this.comprehension = comprehension;
+    public ComprehensionIf(Expression test) {
+        this.test = test;
     }
 
-    public Comprehension getComprehension() {
-        return comprehension;
+    public Expression getTest() {
+        return test;
     }
 
     @Override

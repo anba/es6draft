@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * <li>11.1.4.2 Array Comprehension
  * </ul>
  */
-public class ComprehensionFor extends AstNode implements ScopedNode {
+public class ComprehensionFor extends ComprehensionQualifier implements ScopedNode {
     private BlockScope scope;
     private Binding binding;
     private Expression expression;
