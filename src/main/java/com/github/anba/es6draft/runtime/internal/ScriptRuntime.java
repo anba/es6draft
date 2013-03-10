@@ -1104,7 +1104,7 @@ public final class ScriptRuntime {
      * B.3.1.3 __proto___ Object Initialisers
      */
     public static void defineProtoProperty(Scriptable object, Object value) {
-        // use [[SetP]] to comply with current SpiderMonkey/JSC behaviour
+        // use [[Set]] to comply with current SpiderMonkey/JSC behaviour
         object.set("__proto__", value, object);
     }
 

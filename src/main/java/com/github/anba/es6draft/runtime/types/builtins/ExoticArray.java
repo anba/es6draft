@@ -42,11 +42,11 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
         return BuiltinBrand.BuiltinArray;
     }
 
-    // [[SetP]] no longer overridden in rev. 13
-    // FIXME: spec bug (per introductory paragraph [[SetP]] is overridden!)
+    // [[Set]] no longer overridden in rev. 13
+    // FIXME: spec bug (per introductory paragraph [[Set]] is overridden!)
 
     // /**
-    // * 8.4.2.1 [[SetP] ( P, V, Receiver)
+    // * 8.4.2.1 [[Set] ( P, V, Receiver)
     // */
     // @Override
     // public boolean set(String propertyKey, Object value, Object receiver) {
@@ -129,7 +129,7 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
         assert length >= 0 && length <= 4294967295L;
         /* step 1-4, 6-7 (implicit) */
         ExoticArray array = new ExoticArray(realm);
-        // FIXME: spec bug (step 3-4 -> [[SetP]] no longer overridden)
+        // FIXME: spec bug (step 3-4 -> [[Set]] no longer overridden)
         /* step 5 */
         array.setPrototype(realm.getIntrinsic(Intrinsics.ArrayPrototype));
         /* step 8 */
