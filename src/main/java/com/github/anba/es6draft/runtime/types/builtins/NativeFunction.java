@@ -70,7 +70,7 @@ public class NativeFunction extends OrdinaryObject implements Scriptable, Callab
     }
 
     /**
-     * 8.3.19.3 [[GetP]] (P, Receiver)
+     * 8.3.19.3 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(String propertyKey, Object receiver) {
@@ -78,6 +78,7 @@ public class NativeFunction extends OrdinaryObject implements Scriptable, Callab
         Object v = super.get(propertyKey, receiver);
         /* step 3 */
         if ("caller".equals(propertyKey) && isStrictFunction(v)) {
+            // TODO: spec bug? [[Get]] override necessary, cf. AddRestrictedFunctionProperties
             return NULL;
         }
         /* step 4 */
@@ -92,6 +93,8 @@ public class NativeFunction extends OrdinaryObject implements Scriptable, Callab
         /* step 1-2 */
         Property v = super.getOwnProperty(propertyKey);
         if (v != null && v.isDataDescriptor()) {
+            // TODO: spec bug? [[GetOwnProperty]] override necessary, cf.
+            // AddRestrictedFunctionProperties
             if ("caller".equals(propertyKey) && isStrictFunction(v)) {
                 PropertyDescriptor desc = v.toPropertyDescriptor();
                 desc.setValue(NULL);

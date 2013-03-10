@@ -159,7 +159,7 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
     }
 
     /**
-     * [[GetP]] (P, Receiver)
+     * [[Get]] (P, Receiver)
      */
     @Override
     public Object get(String propertyKey, Object receiver) {
@@ -171,7 +171,7 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
     }
 
     /**
-     * [[GetP]] (P, Receiver)
+     * [[Get]] (P, Receiver)
      */
     @Override
     public Object get(Symbol propertyKey, Object receiver) {
@@ -179,7 +179,7 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
     }
 
     /**
-     * 8.4.4.8 [[SetP] ( P, V, Receiver)
+     * 8.4.4.8 [[Set] ( P, V, Receiver)
      */
     @Override
     public boolean set(String propertyKey, Object value, Object receiver) {
@@ -187,7 +187,7 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
     }
 
     /**
-     * 8.4.4.8 [[SetP] ( P, V, Receiver)
+     * 8.4.4.8 [[Set] ( P, V, Receiver)
      */
     @Override
     public boolean set(Symbol propertyKey, Object value, Object receiver) {

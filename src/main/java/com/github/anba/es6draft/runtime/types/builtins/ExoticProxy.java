@@ -438,7 +438,7 @@ public class ExoticProxy implements Scriptable {
     }
 
     /**
-     * 8.5.9 [[GetP]] (P, Receiver)
+     * 8.5.9 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(String propertyKey, Object receiver) {
@@ -446,7 +446,7 @@ public class ExoticProxy implements Scriptable {
     }
 
     /**
-     * 8.5.9 [[GetP]] (P, Receiver)
+     * 8.5.9 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(Symbol propertyKey, Object receiver) {
@@ -454,7 +454,7 @@ public class ExoticProxy implements Scriptable {
     }
 
     /**
-     * 8.5.9 [[GetP]] (P, Receiver)
+     * 8.5.9 [[Get]] (P, Receiver)
      */
     private Object get(Object propertyKey, Object receiver) {
         Scriptable handler = proxyHandler;
@@ -483,7 +483,7 @@ public class ExoticProxy implements Scriptable {
     }
 
     /**
-     * 8.5.10 [[SetP]] ( P, V, Receiver)
+     * 8.5.10 [[Set]] ( P, V, Receiver)
      */
     @Override
     public boolean set(String propertyKey, Object value, Object receiver) {
@@ -491,7 +491,7 @@ public class ExoticProxy implements Scriptable {
     }
 
     /**
-     * 8.5.10 [[SetP]] ( P, V, Receiver)
+     * 8.5.10 [[Set]] ( P, V, Receiver)
      */
     @Override
     public boolean set(Symbol propertyKey, Object value, Object receiver) {
@@ -499,7 +499,7 @@ public class ExoticProxy implements Scriptable {
     }
 
     /**
-     * 8.5.10 [[SetP]] ( P, V, Receiver)
+     * 8.5.10 [[Set]] ( P, V, Receiver)
      */
     private boolean set(Object propertyKey, Object value, Object receiver) {
         Scriptable handler = proxyHandler;

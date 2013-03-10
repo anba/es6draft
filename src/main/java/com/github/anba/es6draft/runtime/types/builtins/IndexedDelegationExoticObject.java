@@ -28,7 +28,7 @@ public class IndexedDelegationExoticObject extends OrdinaryObject {
     }
 
     /**
-     * 8.4.6.1 [[GetP]] (P, Receiver)
+     * 8.4.6.1 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(String propertyKey, Object receiver) {
@@ -41,7 +41,7 @@ public class IndexedDelegationExoticObject extends OrdinaryObject {
     }
 
     /**
-     * 8.4.6.2 [[SetP]] ( P, V, Receiver)
+     * 8.4.6.2 [[Set]] ( P, V, Receiver)
      */
     @Override
     public boolean set(String propertyKey, Object value, Object receiver) {

@@ -365,7 +365,7 @@ public abstract class OrdinaryObject implements Scriptable {
         return parent.hasProperty(propertyKey);
     }
 
-    /** 8.3.7 [[GetP]] (P, Receiver) */
+    /** 8.3.7 [[Get]] (P, Receiver) */
     @Override
     public Object get(String propertyKey, Object receiver) {
         /* step 2-3 */
@@ -393,7 +393,7 @@ public abstract class OrdinaryObject implements Scriptable {
         return getter.call(receiver);
     }
 
-    /** 8.3.7 [[GetP]] (P, Receiver) */
+    /** 8.3.7 [[Get]] (P, Receiver) */
     @Override
     public Object get(Symbol propertyKey, Object receiver) {
         /* step 2-3 */
@@ -421,7 +421,7 @@ public abstract class OrdinaryObject implements Scriptable {
         return getter.call(receiver);
     }
 
-    /** 8.3.8 [[SetP] (P, V, Receiver) */
+    /** 8.3.8 [[Set] (P, V, Receiver) */
     @Override
     public boolean set(String propertyKey, Object value, Object receiver) {
         /* step 2-3 */
@@ -465,7 +465,7 @@ public abstract class OrdinaryObject implements Scriptable {
         return true;
     }
 
-    /** 8.3.8 [[SetP] (P, V, Receiver) */
+    /** 8.3.8 [[Set] (P, V, Receiver) */
     @Override
     public boolean set(Symbol propertyKey, Object value, Object receiver) {
         /* step 2-3 */

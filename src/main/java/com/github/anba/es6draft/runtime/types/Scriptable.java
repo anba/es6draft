@@ -60,16 +60,16 @@ public interface Scriptable {
     /** [[HasProperty]](P) */
     boolean hasProperty(Symbol propertyKey);
 
-    /** [[GetP]] (P, Receiver) */
+    /** [[Get]] (P, Receiver) */
     Object get(String propertyKey, Object receiver);
 
-    /** [[GetP]] (P, Receiver) */
+    /** [[Get]] (P, Receiver) */
     Object get(Symbol propertyKey, Object receiver);
 
-    /** [[SetP] (P, V, Receiver) */
+    /** [[Set] (P, V, Receiver) */
     boolean set(String propertyKey, Object value, Object receiver);
 
-    /** [[SetP] (P, V, Receiver) */
+    /** [[Set] (P, V, Receiver) */
     boolean set(Symbol propertyKey, Object value, Object receiver);
 
     /** [[Delete]] (P) */

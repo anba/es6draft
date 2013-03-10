@@ -294,7 +294,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     }
 
     /**
-     * 8.3.19.3 [[GetP]] (P, Receiver)
+     * 8.3.19.3 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(String propertyKey, Object receiver) {
