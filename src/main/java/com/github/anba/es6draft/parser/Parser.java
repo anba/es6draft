@@ -2649,7 +2649,7 @@ public class Parser {
         } else {
             head = validateForInOf(head);
             consume("of");
-            Expression expr = expression(true);
+            Expression expr = assignmentExpression(true);
             consume(Token.RP);
 
             LabelContext labelCx = enterIteration(labelSet);
