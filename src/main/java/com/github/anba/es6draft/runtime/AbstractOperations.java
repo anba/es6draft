@@ -341,12 +341,25 @@ public final class AbstractOperations {
      */
     public static Object ToPropertyKey(Realm realm, Object val) {
         if (Type.isObject(val)) {
-            // FIXME: spec bug (test for Symbol instead of exotic String)
             if (val instanceof ExoticSymbolObject) {
                 return ((ExoticSymbolObject) val);
             }
         }
         return ToFlatString(realm, val);
+    }
+
+    /**
+     * 9.1.11 ToPositiveInteger
+     */
+    public static double ToPositiveInteger(Realm realm, Object val) {
+        double number = ToNumber(realm, val);
+        if (Double.isNaN(number))
+            return +0.0;
+        if (Double.isInfinite(number))
+            return number;
+        if (number <= 0)
+            return +0.0;
+        return Math.floor(number);
     }
 
     /**
