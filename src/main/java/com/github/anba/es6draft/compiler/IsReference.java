@@ -49,6 +49,6 @@ class IsReference extends DefaultNodeVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(SuperExpression node, Void value) {
-        return (node.getName() != null || node.getExpression() != null);
+        return true;
     }
 }

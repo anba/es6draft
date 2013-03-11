@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteMappedArgumentsObject;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteStrictArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.InstantiateArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
@@ -221,7 +221,7 @@ public final class ScriptRuntime {
      * Runtime Semantics: ClassDefinitionEvaluation
      */
     public static RuntimeInfo.Function CreateDefaultConstructor() {
-        RuntimeInfo.Function function = RuntimeInfo.newFunction("constructor", false, true, false,
+        RuntimeInfo.Function function = RuntimeInfo.newFunction("constructor", false, true, true,
                 0, DefaultConstructorInitMH, DefaultConstructorMH, DefaultConstructorSource);
 
         return function;
@@ -242,7 +242,7 @@ public final class ScriptRuntime {
             throw new IllegalStateException(e);
         }
         try {
-            String source = "constructor(...args) { super.constructor(...args); }";
+            String source = "constructor(...args) { super(...args); }";
             DefaultConstructorSource = SourceCompressor.compress(source).call();
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -257,12 +257,12 @@ public final class ScriptRuntime {
         envRec.createMutableBinding("args", false);
         envRec.initializeBinding("args", UNDEFINED);
 
-        envRec.createMutableBinding("arguments", false);
+        envRec.createImmutableBinding("arguments");
         ExoticArguments ao = InstantiateArgumentsObject(realm, args);
 
-        cx.identifierResolution("args", false).PutValue(createRestArray(ao, 0, realm), realm);
+        cx.identifierResolution("args", true).PutValue(createRestArray(ao, 0, realm), realm);
 
-        CompleteMappedArgumentsObject(realm, ao, f, new String[] { "args" }, env);
+        CompleteStrictArgumentsObject(realm, ao);
         envRec.initializeBinding("arguments", ao);
     }
 
@@ -270,9 +270,9 @@ public final class ScriptRuntime {
         Object completionValue = UNDEFINED;
 
         Realm realm = cx.getRealm();
-        Reference ref = MakeSuperReference(cx, "constructor", true);
+        Reference ref = MakeSuperReference(cx, null, true);
         Object func = ref.GetValue(realm);
-        Object[] args = SpreadArray(cx.identifierResolution("args", false).GetValue(realm), realm);
+        Object[] args = SpreadArray(cx.identifierValue("args", true), realm);
         Reference.GetValue(EvaluateCall(ref, func, args, realm), realm);
 
         return completionValue;
