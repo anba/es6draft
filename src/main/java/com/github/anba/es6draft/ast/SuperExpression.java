@@ -20,6 +20,10 @@ public class SuperExpression extends LeftHandSideExpression {
     private Expression expression;
     private List<Expression> arguments;
 
+    public SuperExpression() {
+        // new super()
+    }
+
     public SuperExpression(String name) {
         // super.<name>
         this.name = name;

@@ -44,6 +44,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Static, Types.AbstractOperations, "ToBoolean",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE));
 
+        static final MethodDesc AbstractOperations_ToFlatString = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToFlatString",
+                Type.getMethodType(Types.String, Types.Realm, Types.Object));
+
         static final MethodDesc AbstractOperations_ToNumber = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToNumber",
                 Type.getMethodType(Type.DOUBLE_TYPE, Types.Realm, Types.Object));
@@ -528,6 +532,45 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.load(Register.Realm);
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToString);
+            return;
+        }
+    }
+
+    /**
+     * stack: [Object] -> [String]
+     */
+    protected final void ToFlatString(ValType from, ExpressionVisitor mv) {
+        switch (from) {
+        case Number:
+            mv.invoke(Methods.AbstractOperations_ToString_double);
+            return;
+        case Number_int:
+            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
+            mv.invoke(Methods.AbstractOperations_ToString_double);
+            return;
+        case Number_uint:
+            mv.cast(Type.LONG_TYPE, Type.DOUBLE_TYPE);
+            mv.invoke(Methods.AbstractOperations_ToString_double);
+            return;
+        case Undefined:
+            mv.pop();
+            mv.aconst("undefined");
+            return;
+        case Null:
+            mv.pop();
+            mv.aconst("null");
+            return;
+        case Boolean:
+            mv.invoke(Methods.Boolean_toString);
+            return;
+        case String:
+            return;
+        case Object:
+        case Any:
+        default:
+            mv.load(Register.Realm);
+            mv.swap();
+            mv.invoke(Methods.AbstractOperations_ToFlatString);
             return;
         }
     }
