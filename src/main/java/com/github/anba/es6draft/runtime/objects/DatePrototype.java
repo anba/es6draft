@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -36,9 +37,9 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>15.9.5 Properties of the Date Prototype Object
  * </ul>
  */
-public class DatePrototype extends DateObject implements Scriptable, Initialisable {
+public class DatePrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public DatePrototype(Realm realm) {
-        super(realm, Double.NaN);
+        super(realm);
     }
 
     @Override

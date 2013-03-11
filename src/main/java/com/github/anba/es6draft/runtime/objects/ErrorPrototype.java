@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -28,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>15.11.4 Properties of the Error Prototype Object
  * </ul>
  */
-public class ErrorPrototype extends ErrorObject implements Scriptable, Initialisable {
+public class ErrorPrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public ErrorPrototype(Realm realm) {
         super(realm);
     }

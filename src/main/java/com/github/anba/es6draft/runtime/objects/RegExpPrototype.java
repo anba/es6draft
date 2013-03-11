@@ -19,7 +19,6 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -30,6 +29,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -39,9 +39,9 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * <li>15.10.7 Properties of RegExp Instances
  * </ul>
  */
-public class RegExpPrototype extends RegExpObject implements Scriptable, Initialisable {
+public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public RegExpPrototype(Realm realm) {
-        super(realm, "", "", Pattern.compile(""), new BitSet(0));
+        super(realm);
     }
 
     @Override
@@ -52,16 +52,6 @@ public class RegExpPrototype extends RegExpObject implements Scriptable, Initial
 
     @Override
     public void initialise(Realm realm) {
-        // FIXME: spec bug 'length' property for RegExp instances (Bug 1150)
-        // defineOwnProperty("length", new PropertyDescriptor(0, true, false, false));
-
-        // 15.10.7 Properties of RegExp Instances
-        defineOwnProperty("source", new PropertyDescriptor("", false, false, false));
-        defineOwnProperty("global", new PropertyDescriptor(false, false, false, false));
-        defineOwnProperty("ignoreCase", new PropertyDescriptor(false, false, false, false));
-        defineOwnProperty("multiline", new PropertyDescriptor(false, false, false, false));
-        defineOwnProperty("lastIndex", new PropertyDescriptor(0, true, false, false));
-
         createProperties(this, realm, Properties.class);
     }
 

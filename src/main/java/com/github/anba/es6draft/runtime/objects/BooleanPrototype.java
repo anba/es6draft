@@ -18,6 +18,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -26,9 +27,9 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>15.6.4 Properties of the Boolean Prototype Object
  * </ul>
  */
-public class BooleanPrototype extends BooleanObject implements Scriptable, Initialisable {
+public class BooleanPrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public BooleanPrototype(Realm realm) {
-        super(realm, false);
+        super(realm);
     }
 
     @Override
