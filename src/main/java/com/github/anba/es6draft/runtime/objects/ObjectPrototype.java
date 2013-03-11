@@ -12,8 +12,9 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.EnumMap;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.Realm;
@@ -24,13 +25,16 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -76,57 +80,63 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
                 return "[object Null]";
             }
             Scriptable o = ToObject(realm, thisValue);
-            CharSequence tag;
             if (o instanceof ExoticSymbolObject) {
-                tag = "Symbol";
-            } else if (o.getBuiltinBrand() != null) {
-                tag = builtinTagValues.get(o.getBuiltinBrand());
-                assert tag != null;
+                return "[object Symbol]";
+            }
+            String builtinTag;
+            if (o instanceof ExoticArray) {
+                builtinTag = "Array";
+            } else if (o instanceof ExoticString) {
+                builtinTag = "String";
+            } else if (o instanceof ExoticArguments) {
+                builtinTag = "Arguments";
+            } else if (o instanceof Callable) {
+                builtinTag = "Function";
+            } else if (o instanceof ErrorObject) {
+                builtinTag = "Error";
+            } else if (o instanceof BooleanObject) {
+                builtinTag = "Boolean";
+            } else if (o instanceof NumberObject) {
+                builtinTag = "Number";
+            } else if (o instanceof DateObject) {
+                builtinTag = "Date";
+            } else if (o instanceof RegExpObject) {
+                builtinTag = "RegExp";
+            } else if (o instanceof MathObject) {
+                builtinTag = "Math";
+            } else if (o instanceof JSONObject) {
+                builtinTag = "JSON";
             } else {
-                boolean hasTag = HasProperty(o, BuiltinSymbol.toStringTag.get());
-                if (!hasTag) {
-                    tag = "Object";
-                } else {
+                builtinTag = "Object";
+            }
+            String tag;
+            boolean hasTag = HasProperty(o, BuiltinSymbol.toStringTag.get());
+            if (!hasTag) {
+                tag = builtinTag;
+            } else {
+                try {
+                    Object ttag = Get(o, BuiltinSymbol.toStringTag.get());
+                    if (Type.isString(ttag)) {
+                        tag = Type.stringValue(ttag).toString();
+                    } else {
+                        tag = "???";
+                    }
+                } catch (ScriptException e) {
                     tag = "???";
-                    try {
-                        Object ttag = Get(o, BuiltinSymbol.toStringTag.get());
-                        if (Type.isString(ttag)) {
-                            tag = Type.stringValue(ttag);
-                        }
-                    } catch (ScriptException e) {
-                    }
-                    if (censoredNames.contains(tag)) {
-                        tag = "~" + tag;
-                    }
+                }
+                // FIXME: spec bug? (censor 'Object' again, but see Bug 1148)
+                if (censoredNames.contains(tag) && !builtinTag.equals(tag)) {
+                    tag = "~" + tag;
                 }
             }
             return "[object " + tag + "]";
         }
 
-        private static final EnumMap<BuiltinBrand, String> builtinTagValues;
-        static {
-            EnumMap<BuiltinBrand, String> tagValues = new EnumMap<>(BuiltinBrand.class);
-            tagValues.put(BuiltinBrand.BuiltinFunction, "Function");
-            tagValues.put(BuiltinBrand.BuiltinArray, "Array");
-            tagValues.put(BuiltinBrand.BuiltinStringWrapper, "String");
-            tagValues.put(BuiltinBrand.BuiltinBooleanWrapper, "Boolean");
-            tagValues.put(BuiltinBrand.BuiltinNumberWrapper, "Number");
-            tagValues.put(BuiltinBrand.BuiltinMath, "Math");
-            tagValues.put(BuiltinBrand.BuiltinDate, "Date");
-            tagValues.put(BuiltinBrand.BuiltinRegExp, "RegExp");
-            tagValues.put(BuiltinBrand.BuiltinError, "Error");
-            tagValues.put(BuiltinBrand.BuiltinJSON, "JSON");
-            tagValues.put(BuiltinBrand.BuiltinArguments, "Arguments");
-            builtinTagValues = tagValues;
-        }
-
         private static final Set<String> censoredNames;
         static {
-            Set<String> names = new HashSet<>();
-            names.addAll(builtinTagValues.values());
-            // FIXME: spec bug (Object shouldn't be censored?!) (Bug 1148)
-            names.add("Object");
-            censoredNames = names;
+            List<String> names = Arrays.asList("Arguments", "Array", "Boolean", "Date", "Error",
+                    "Function", "JSON", "Math", "Number", "RegExp", "String");
+            censoredNames = new HashSet<>(names);
         }
 
         /**
