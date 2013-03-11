@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.instanceOfOperator;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
@@ -326,8 +327,12 @@ public final class AbstractOperations {
             return obj;
         }
         case String: {
-            ExoticString obj = new ExoticString(realm, Type.stringValue(val));
-            obj.setPrototype(realm.getIntrinsic(Intrinsics.StringPrototype));
+            // new String(s)
+            CharSequence s = Type.stringValue(val);
+            ExoticString obj = StringCreate(realm, realm.getIntrinsic(Intrinsics.StringPrototype));
+            DefinePropertyOrThrow(realm, obj, "length", new PropertyDescriptor(s.length(), false,
+                    false, false));
+            obj.setStringData(s);
             return obj;
         }
         case Object:
@@ -877,10 +882,6 @@ public final class AbstractOperations {
     public static Scriptable OrdinaryCreateFromConstructor(Realm realm, Object constructor,
             Intrinsics intrinsicDefaultProto) {
         Scriptable proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
-        if (constructor instanceof Function) {
-            // handle different realms, cf. 9.3.13
-            realm = ((Function) constructor).getRealm();
-        }
         Scriptable creator = realm.getIntrinsic(intrinsicDefaultProto);
         return ObjectCreate(realm, proto, creator);
     }

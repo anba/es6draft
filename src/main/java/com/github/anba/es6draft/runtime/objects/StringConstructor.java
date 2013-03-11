@@ -10,7 +10,9 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -20,9 +22,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -66,10 +70,19 @@ public class StringConstructor extends OrdinaryObject implements Scriptable, Cal
      */
     @Override
     public Object call(Object thisValue, Object... args) {
-        if (args.length == 0) {
-            return "";
+        // FIXME: spec bug (`ToString(undefined)` no longer returns "undefined")
+        CharSequence s = (args.length > 0 ? ToString(realm(), args[0]) : "");
+        if (thisValue instanceof ExoticString) {
+            ExoticString obj = (ExoticString) thisValue;
+            if (obj.getStringData() == null) {
+                int length = s.length();
+                DefinePropertyOrThrow(realm(), obj, "length", new PropertyDescriptor(length, false,
+                        false, false));
+                obj.setStringData(s);
+                return obj;
+            }
         }
-        return ToString(realm(), args[0]);
+        return s;
     }
 
     /**
@@ -77,10 +90,7 @@ public class StringConstructor extends OrdinaryObject implements Scriptable, Cal
      */
     @Override
     public Object construct(Object... args) {
-        CharSequence stringData = (args.length > 0 ? ToString(realm(), args[0]) : "");
-        ExoticString obj = new ExoticString(realm(), stringData);
-        obj.setPrototype(realm().getIntrinsic(Intrinsics.StringPrototype));
-        return obj;
+        return OrdinaryConstruct(realm(), this, args);
     }
 
     /**
@@ -155,7 +165,7 @@ public class StringConstructor extends OrdinaryObject implements Scriptable, Cal
             }
             long substlength = substitutions.length;
             StringBuilder stringElements = new StringBuilder();
-            for (long nextIndex = 0; nextIndex < literalSegments; ++nextIndex) {
+            for (long nextIndex = 0;; ++nextIndex) {
                 String nextKey = ToString(nextIndex);
                 Object next = Get(raw, nextKey);
                 CharSequence nextSeg = ToString(realm, next);
@@ -167,9 +177,21 @@ public class StringConstructor extends OrdinaryObject implements Scriptable, Cal
                 CharSequence nextSub = ToString(realm, next);
                 stringElements.append(nextSub);
             }
-            // FIXME: spec bug (condition nextIndex < literalSegments is invalid) (Bug 1152)
-            assert false : "spec bug";
-            return UNDEFINED;
+        }
+
+        /**
+         * 15.5.4.5 String[ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            Scriptable proto = GetPrototypeFromConstructor(realm, thisValue,
+                    Intrinsics.StringPrototype);
+            ExoticString obj = StringCreate(realm, proto);
+            return obj;
         }
     }
 }
