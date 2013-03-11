@@ -40,6 +40,7 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -49,9 +50,9 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
  * <li>15.5.5 Properties of String Instances
  * </ul>
  */
-public class StringPrototype extends ExoticString implements Scriptable, Initialisable {
+public class StringPrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public StringPrototype(Realm realm) {
-        super(realm, "");
+        super(realm);
     }
 
     @Override

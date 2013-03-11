@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.strictEqualityComparison;
 import static com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.CreateArrayIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -44,7 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
  * <li>15.4.5 Properties of Array Instances
  * </ul>
  */
-public class ArrayPrototype extends ExoticArray implements Scriptable, Initialisable {
+public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public ArrayPrototype(Realm realm) {
         super(realm);
     }
@@ -56,7 +57,6 @@ public class ArrayPrototype extends ExoticArray implements Scriptable, Initialis
 
     @Override
     public void initialise(Realm realm) {
-        ordinaryDefineOwnProperty("length", new PropertyDescriptor(0, true, false, false));
         createProperties(this, realm, Properties.class);
 
         // 15.4.4.26 Array.prototype.@@iterator ( )

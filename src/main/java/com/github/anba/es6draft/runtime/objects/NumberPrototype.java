@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -33,9 +34,9 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>15.7.4 Properties of the Number Prototype Object
  * </ul>
  */
-public class NumberPrototype extends NumberObject implements Scriptable, Initialisable {
+public class NumberPrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public NumberPrototype(Realm realm) {
-        super(realm, +0.0);
+        super(realm);
     }
 
     @Override

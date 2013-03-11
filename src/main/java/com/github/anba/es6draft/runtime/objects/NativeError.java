@@ -70,8 +70,14 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
         return type.name();
     }
 
+    private static class NativeErrorPrototype extends OrdinaryObject {
+        public NativeErrorPrototype(Realm realm) {
+            super(realm);
+        }
+    }
+
     public static NativeError create(Realm realm, ErrorType type) {
-        ErrorObject proto = new ErrorObject(realm);
+        NativeErrorPrototype proto = new NativeErrorPrototype(realm);
         NativeError ctor = new NativeError(realm, type, proto);
 
         createProperties(ctor, realm, ConstructorProperties.class);
