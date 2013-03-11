@@ -15,7 +15,7 @@ import java.util.List;
  * <li>11.2.3 Function Calls
  * </ul>
  */
-public class CallExpression extends LeftHandSideExpression {
+public class CallExpression extends Expression {
     private Expression base;
     private List<Expression> arguments;
 

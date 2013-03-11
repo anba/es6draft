@@ -33,8 +33,8 @@ class IsReference extends DefaultNodeVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(CallExpression node, Void value) {
-        // allowed per spec, but (currently) not used
-        return true;
+        // call expression no longer valid left-hand-side
+        return false;
     }
 
     @Override
@@ -49,12 +49,6 @@ class IsReference extends DefaultNodeVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(SuperExpression node, Void value) {
-        return true;
-    }
-
-    @Override
-    public Boolean visit(TemplateCallExpression node, Void value) {
-        // allowed per spec, but (currently) not used
-        return true;
+        return (node.getName() != null || node.getExpression() != null);
     }
 }
