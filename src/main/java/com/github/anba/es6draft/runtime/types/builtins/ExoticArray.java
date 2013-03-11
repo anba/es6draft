@@ -37,6 +37,18 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
         super(realm);
     }
 
+    /** [[ArrayInitializationState]] */
+    public boolean getArrayInitializationState() {
+        return arrayInitializationState;
+    }
+
+    /** [[ArrayInitializationState]] */
+    public void setArrayInitializationState(boolean arrayInitializationState) {
+        assert arrayInitializationState : "cannot de-initialise an array";
+        assert !this.arrayInitializationState : "array already initialised";
+        this.arrayInitializationState = arrayInitializationState;
+    }
+
     /**
      * [[BuiltinBrand]]
      */
@@ -81,14 +93,14 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
     /**
      * 8.4.2.3 ArrayCreate Abstract Operation
      */
-    public static Scriptable ArrayCreate(Realm realm, long length) {
+    public static ExoticArray ArrayCreate(Realm realm, long length) {
         return ArrayCreate(realm, length, realm.getIntrinsic(Intrinsics.ArrayPrototype));
     }
 
     /**
      * 8.4.2.3 ArrayCreate Abstract Operation
      */
-    public static Scriptable ArrayCreate(Realm realm, long length, Scriptable proto) {
+    public static ExoticArray ArrayCreate(Realm realm, long length, Scriptable proto) {
         assert length <= 4294967295L && proto != null;
         /* step 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(realm);

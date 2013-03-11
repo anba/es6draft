@@ -67,7 +67,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         // class: ExoticArray
         static final MethodDesc ExoticArray_ArrayCreate = MethodDesc.create(MethodType.Static,
                 Types.ExoticArray, "ArrayCreate",
-                Type.getMethodType(Types.Scriptable, Types.Realm, Type.LONG_TYPE));
+                Type.getMethodType(Types.ExoticArray, Types.Realm, Type.LONG_TYPE));
 
         // class: OrdinaryObject
         static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(MethodType.Static,
