@@ -6,10 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -18,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -64,10 +67,16 @@ public class NumberConstructor extends OrdinaryObject implements Scriptable, Cal
      */
     @Override
     public Object call(Object thisValue, Object... args) {
-        if (args.length > 0) {
-            return ToNumber(realm(), args[0]);
+        // FIXME: spec bug (`Number(undefined)` no longer returns NaN)
+        double n = (args.length > 0 ? ToNumber(realm(), args[0]) : +0.0);
+        if (thisValue instanceof NumberObject) {
+            NumberObject obj = (NumberObject) thisValue;
+            if (!obj.isInitialised()) {
+                obj.setNumberData(n);
+                return obj;
+            }
         }
-        return +0.0;
+        return n;
     }
 
     /**
@@ -75,10 +84,7 @@ public class NumberConstructor extends OrdinaryObject implements Scriptable, Cal
      */
     @Override
     public Object construct(Object... args) {
-        double numberData = args.length > 0 ? ToNumber(realm(), args[0]) : +0.0;
-        NumberObject obj = new NumberObject(realm(), numberData);
-        obj.setPrototype(realm().getIntrinsic(Intrinsics.NumberPrototype));
-        return obj;
+        return OrdinaryConstruct(realm(), this, args);
     }
 
     /**
@@ -206,6 +212,20 @@ public class NumberConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "toInteger", arity = 1)
         public static Object toInt(Realm realm, Object thisValue, Object number) {
             return ToInteger(realm, number);
+        }
+
+        /**
+         * 15.7.3.15 Number[ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            Scriptable obj = OrdinaryCreateFromConstructor(realm, thisValue,
+                    Intrinsics.NumberPrototype);
+            return obj;
         }
     }
 }

@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -22,12 +23,16 @@ public class NumberObject extends OrdinaryObject implements Scriptable {
     /**
      * [[NumberData]]
      */
-    // FIXME: spec bug [[NumberValue]] (bug 1062)
-    private final double numberData;
+    private double numberData;
 
-    public NumberObject(Realm realm, double numberData) {
+    private boolean initialised = false;
+
+    public NumberObject(Realm realm) {
         super(realm);
-        this.numberData = numberData;
+    }
+
+    public boolean isInitialised() {
+        return initialised;
     }
 
     /**
@@ -38,10 +43,29 @@ public class NumberObject extends OrdinaryObject implements Scriptable {
     }
 
     /**
+     * [[NumberData]]
+     */
+    public void setNumberData(double numberData) {
+        assert !this.initialised : "NumberObject already initialised";
+        this.initialised = true;
+        this.numberData = numberData;
+    }
+
+    /**
      * [[BuiltinBrand]]
      */
     @Override
     public BuiltinBrand getBuiltinBrand() {
         return BuiltinBrand.BuiltinNumberWrapper;
+    }
+
+    /**
+     * Custom helper function
+     */
+    public static NumberObject NumberCreate(Realm realm, double numberData) {
+        NumberObject obj = new NumberObject(realm);
+        obj.setPrototype(realm.getIntrinsic(Intrinsics.NumberPrototype));
+        obj.setNumberData(numberData);
+        return obj;
     }
 }

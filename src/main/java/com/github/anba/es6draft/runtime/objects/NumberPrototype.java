@@ -40,6 +40,11 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
     }
 
     @Override
+    public Scriptable newInstance(Realm realm) {
+        return new NumberObject(realm);
+    }
+
+    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }
@@ -50,12 +55,18 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
     public enum Properties {
         ;
 
-        private static double numberValue(Realm realm, Object object) {
+        /**
+         * Abstract operation thisNumberValue(value)
+         */
+        private static double thisNumberValue(Realm realm, Object object) {
             if (Type.isNumber(object)) {
                 return Type.numberValue(object);
             }
             if (object instanceof NumberObject) {
-                return ((NumberObject) object).getNumberData();
+                NumberObject obj = (NumberObject) object;
+                if (obj.isInitialised()) {
+                    return obj.getNumberData();
+                }
             }
             throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
@@ -82,9 +93,9 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
                 throw throwRangeError(realm, Messages.Key.InvalidRadix);
             }
             if (r == 10) {
-                return ToString(numberValue(realm, thisValue));
+                return ToString(thisNumberValue(realm, thisValue));
             }
-            double val = numberValue(realm, thisValue);
+            double val = thisNumberValue(realm, thisValue);
 
             // 9.1.8.1 ToString Applied to the Number Type
             // steps 1-4
@@ -106,7 +117,7 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(Realm realm, Object thisValue) {
             // N.B. permissible but no encouraged
-            return ToString(numberValue(realm, thisValue));
+            return ToString(thisNumberValue(realm, thisValue));
         }
 
         /**
@@ -114,7 +125,7 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(Realm realm, Object thisValue) {
-            return numberValue(realm, thisValue);
+            return thisNumberValue(realm, thisValue);
         }
 
         /**
@@ -126,7 +137,7 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
             if (f < 0 || f > 20) {
                 throw throwRangeError(realm, Messages.Key.InvalidPrecision);
             }
-            double x = numberValue(realm, thisValue);
+            double x = thisNumberValue(realm, thisValue);
             if (x != x) {
                 return "NaN";
             }
@@ -140,7 +151,7 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "toExponential", arity = 1)
         public static Object toExponential(Realm realm, Object thisValue, Object fractionDigits) {
-            double x = numberValue(realm, thisValue);
+            double x = thisNumberValue(realm, thisValue);
             double f = ToInteger(realm, fractionDigits);
             if (x != x) {
                 return "NaN";
@@ -166,7 +177,7 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "toPrecision", arity = 1)
         public static Object toPrecision(Realm realm, Object thisValue, Object precision) {
-            double x = numberValue(realm, thisValue);
+            double x = thisNumberValue(realm, thisValue);
             if (precision == UNDEFINED) {
                 return ToString(x);
             }
@@ -191,7 +202,7 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "clz", arity = 0)
         public static Object clz(Realm realm, Object thisValue) {
-            double x = numberValue(realm, thisValue);
+            double x = thisNumberValue(realm, thisValue);
             long n = ToUint32(realm, x);
             return Integer.numberOfLeadingZeros((int) n);
         }
