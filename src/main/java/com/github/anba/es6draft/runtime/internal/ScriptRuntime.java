@@ -291,11 +291,16 @@ public final class ScriptRuntime {
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         Function constructor;
         if (fd.hasSuperReference()) {
+            // FIXME: spec bug (constructorParent not used)
             constructor = FunctionCreate(realm, FunctionKind.Method, fd, scope, constructorParent,
                     proto, propName);
         } else {
+            // FIXME: spec bug (constructorParent not used)
             constructor = FunctionCreate(realm, FunctionKind.Method, fd, scope, constructorParent);
         }
+        DefinePropertyOrThrow(realm, proto, propName, new PropertyDescriptor(constructor, true,
+                true, true));
+
         MakeConstructor(realm, constructor, false, proto);
         proto.defineOwnProperty(propName, new PropertyDescriptor(constructor, true, false, true));
 
@@ -320,7 +325,8 @@ public final class ScriptRuntime {
         } else {
             closure = FunctionCreate(realm, FunctionKind.Method, fd, scope);
         }
-        object.defineOwnProperty(propName, new PropertyDescriptor(closure, true, true, true));
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        DefinePropertyOrThrow(realm, object, propName, desc);
     }
 
     /**
@@ -341,7 +347,8 @@ public final class ScriptRuntime {
         } else {
             closure = GeneratorCreate(realm, FunctionKind.Method, fd, scope);
         }
-        object.defineOwnProperty(propName, new PropertyDescriptor(closure, true, true, true));
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        DefinePropertyOrThrow(realm, object, propName, desc);
     }
 
     /**
@@ -366,7 +373,8 @@ public final class ScriptRuntime {
         desc.setGetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        object.defineOwnProperty(propName, desc);
+        // FIXME: spec bug (not updated to use DefinePropertyOrThrow)
+        DefinePropertyOrThrow(realm, object, propName, desc);
     }
 
     /**
@@ -391,7 +399,7 @@ public final class ScriptRuntime {
         desc.setSetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        object.defineOwnProperty(propName, desc);
+        DefinePropertyOrThrow(realm, object, propName, desc);
     }
 
     /**
