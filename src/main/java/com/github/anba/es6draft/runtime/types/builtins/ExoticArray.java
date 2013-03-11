@@ -30,6 +30,9 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * </ul>
  */
 public class ExoticArray extends OrdinaryObject implements Scriptable {
+    /** [[ArrayInitializationState]] */
+    private boolean arrayInitializationState = false;
+
     public ExoticArray(Realm realm) {
         super(realm);
     }
@@ -42,57 +45,10 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
         return BuiltinBrand.BuiltinArray;
     }
 
-    // [[Set]] no longer overridden in rev. 13
     // FIXME: spec bug (per introductory paragraph [[Set]] is overridden!)
 
-    // /**
-    // * 8.4.2.1 [[Set] ( P, V, Receiver)
-    // */
-    // @Override
-    // public boolean set(String propertyKey, Object value, Object receiver) {
-    // PropertyDescriptor ownDesc = ordinaryGetOwnProperty(propertyKey);
-    // // FIXME : spec bug (bug 1067)
-    // if (ownDesc == null) {
-    // Scriptable parent = getPrototype();
-    // if (parent != null) {
-    // return parent.set(propertyKey, value, receiver);
-    // } else {
-    // if (Type.of(receiver) != Type.Object) {
-    // return false;
-    // }
-    // return CreateOwnDataProperty(Type.objectValue(receiver), propertyKey, value);
-    // }
-    // }
-    // if (ownDesc.isDataDescriptor()) {
-    // if (!ownDesc.isWritable()) {
-    // return false;
-    // }
-    // if (SameValue(this, receiver)) {
-    // PropertyDescriptor valueDesc = new PropertyDescriptor(value);
-    // if ("length".equals(propertyKey)) {
-    // return ArraySetLength(this, valueDesc);
-    // } else {
-    // return ordinaryDefineOwnProperty(propertyKey, valueDesc);
-    // }
-    // } else {
-    // if (Type.of(receiver) != Type.Object) {
-    // return false;
-    // }
-    // return CreateOwnDataProperty(Type.objectValue(receiver), propertyKey, value);
-    // }
-    // }
-    // // FIXME : spec bug (bug 1067)
-    // assert ownDesc.isAccessorDescriptor();
-    // Callable setter = ownDesc.getSetter();
-    // if (setter == null) {
-    // return false;
-    // }
-    // setter.call(receiver, value);
-    // return true;
-    // }
-
     /**
-     * 8.4.2.1 [[DefineOwnProperty]] ( P, Desc)
+     * 8.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
     public boolean defineOwnProperty(String propertyKey, PropertyDescriptor desc) {
@@ -126,12 +82,25 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
      * 8.4.2.3 ArrayCreate Abstract Operation
      */
     public static Scriptable ArrayCreate(Realm realm, long length) {
-        assert length >= 0 && length <= 4294967295L;
-        /* step 1-4, 6-7 (implicit) */
+        return ArrayCreate(realm, length, realm.getIntrinsic(Intrinsics.ArrayPrototype));
+    }
+
+    /**
+     * 8.4.2.3 ArrayCreate Abstract Operation
+     */
+    public static Scriptable ArrayCreate(Realm realm, long length, Scriptable proto) {
+        assert length <= 4294967295L && proto != null;
+        /* step 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(realm);
-        // FIXME: spec bug (step 3-4 -> [[Set]] no longer overridden)
         /* step 5 */
-        array.setPrototype(realm.getIntrinsic(Intrinsics.ArrayPrototype));
+        array.setPrototype(proto);
+        if (length >= 0) {
+            array.arrayInitializationState = true;
+        } else {
+            // negative values represent 'undefined'
+            array.arrayInitializationState = false;
+            length = 0;
+        }
         /* step 8 */
         array.ordinaryDefineOwnProperty("length",
                 new PropertyDescriptor(length, true, false, false));
@@ -144,10 +113,6 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
      */
     public static boolean ArraySetLength(ExoticArray array, PropertyDescriptor desc) {
         Realm realm = array.realm();
-        // FIXME: spec bug (https://bugs.ecmascript.org/show_bug.cgi?id=1200)
-        // Property oldLenDesc = array.getOwnProperty("length");
-        // assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
-        // long oldLen = ToUint32(realm, oldLenDesc.getValue());
         if (!desc.hasValue()) {
             return array.ordinaryDefineOwnProperty("length", desc);
         }
