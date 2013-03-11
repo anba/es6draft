@@ -851,24 +851,38 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.13 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
+     * 9.3.13 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
      */
-    public static Scriptable OrdinaryCreateFromConstructor(Realm realm, Object constructor,
+    public static Scriptable GetPrototypeFromConstructor(Realm realm, Object constructor,
             Intrinsics intrinsicDefaultProto) {
-        if (!Type.isObject(constructor)) {
+        if (!IsConstructor(constructor)) {
             throw throwTypeError(realm, Messages.Key.NotConstructor);
         }
-        // handle different realms early
-        if (constructor instanceof Function) {
-            realm = ((Function) constructor).getRealm();
-        }
-        Scriptable intrinsic = realm.getIntrinsic(intrinsicDefaultProto);
         Object proto = Get(Type.objectValue(constructor), "prototype");
         if (!Type.isObject(proto)) {
             // FIXME: spec bug (step 5a. -> F is not defined)
-            proto = intrinsic;
+            if (constructor instanceof Function) {
+                realm = ((Function) constructor).getRealm();
+            }
+            proto = realm.getIntrinsic(intrinsicDefaultProto);
         }
-        return ObjectCreate(realm, Type.objectValue(proto), intrinsic);
+        return Type.objectValue(proto);
+    }
+
+    // FIXME: spec bug (caption not updated to 9.3.14)
+
+    /**
+     * 9.3.13 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     */
+    public static Scriptable OrdinaryCreateFromConstructor(Realm realm, Object constructor,
+            Intrinsics intrinsicDefaultProto) {
+        Scriptable proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
+        if (constructor instanceof Function) {
+            // handle different realms, cf. 9.3.13
+            realm = ((Function) constructor).getRealm();
+        }
+        Scriptable creator = realm.getIntrinsic(intrinsicDefaultProto);
+        return ObjectCreate(realm, proto, creator);
     }
 
     public static List<String> GetOwnPropertyNames(Realm realm, Scriptable obj) {

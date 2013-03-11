@@ -686,6 +686,12 @@ public abstract class OrdinaryObject implements Scriptable {
         return keys;
     }
 
+    @Override
+    public Scriptable newInstance(Realm realm) {
+        return new OrdinaryObject(realm) {
+        };
+    }
+
     /** 8.3.14 ObjectCreate Abstract Operation */
     public static Scriptable ObjectCreate(Realm realm) {
         Scriptable proto = realm.getIntrinsic(Intrinsics.ObjectPrototype);
@@ -695,12 +701,6 @@ public abstract class OrdinaryObject implements Scriptable {
     /** 8.3.14 ObjectCreate Abstract Operation */
     public static Scriptable ObjectCreate(Realm realm, Scriptable proto) {
         return ObjectCreate(realm, proto, realm.getIntrinsic(Intrinsics.ObjectPrototype));
-    }
-
-    @Override
-    public Scriptable newInstance(Realm realm) {
-        return new OrdinaryObject(realm) {
-        };
     }
 
     /** 8.3.14 ObjectCreate Abstract Operation (extension) */
