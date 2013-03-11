@@ -17,12 +17,15 @@ import java.util.List;
 public class ClassExpression extends Expression implements ClassDefinition {
     private BindingIdentifier name;
     private Expression heritage;
-    private List<MethodDefinition> body;
+    private List<MethodDefinition> staticMethods;
+    private List<MethodDefinition> prototypeMethods;
 
-    public ClassExpression(BindingIdentifier name, Expression heritage, List<MethodDefinition> body) {
+    public ClassExpression(BindingIdentifier name, Expression heritage,
+            List<MethodDefinition> staticMethods, List<MethodDefinition> prototypeMethods) {
         this.name = name;
         this.heritage = heritage;
-        this.body = body;
+        this.staticMethods = staticMethods;
+        this.prototypeMethods = prototypeMethods;
     }
 
     @Override
@@ -36,8 +39,13 @@ public class ClassExpression extends Expression implements ClassDefinition {
     }
 
     @Override
-    public List<MethodDefinition> getBody() {
-        return body;
+    public List<MethodDefinition> getStaticMethods() {
+        return staticMethods;
+    }
+
+    @Override
+    public List<MethodDefinition> getPrototypeMethods() {
+        return prototypeMethods;
     }
 
     @Override
