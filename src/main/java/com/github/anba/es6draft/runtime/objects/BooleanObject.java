@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -22,11 +23,16 @@ public class BooleanObject extends OrdinaryObject implements Scriptable {
     /**
      * [[BooleanData]]
      */
-    private final boolean booleanData;
+    private boolean booleanData;
 
-    public BooleanObject(Realm realm, boolean booleanData) {
+    private boolean initialised = false;
+
+    public BooleanObject(Realm realm) {
         super(realm);
-        this.booleanData = booleanData;
+    }
+
+    public boolean isInitialised() {
+        return initialised;
     }
 
     /**
@@ -37,10 +43,29 @@ public class BooleanObject extends OrdinaryObject implements Scriptable {
     }
 
     /**
+     * [[BooleanData]]
+     */
+    public void setBooleanData(boolean booleanData) {
+        assert !this.initialised : "NumberObject already initialised";
+        this.initialised = true;
+        this.booleanData = booleanData;
+    }
+
+    /**
      * [[BuiltinBrand]]
      */
     @Override
     public BuiltinBrand getBuiltinBrand() {
         return BuiltinBrand.BuiltinBooleanWrapper;
+    }
+
+    /**
+     * Custom helper function
+     */
+    public static BooleanObject BooleanCreate(Realm realm, boolean booleanData) {
+        BooleanObject obj = new BooleanObject(realm);
+        obj.setPrototype(realm.getIntrinsic(Intrinsics.BooleanPrototype));
+        obj.setBooleanData(booleanData);
+        return obj;
     }
 }

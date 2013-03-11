@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.instanceOfOperator;
+import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 import static com.github.anba.es6draft.runtime.objects.NumberObject.NumberCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
@@ -25,7 +26,6 @@ import org.mozilla.javascript.v8dtoa.FastDtoa;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
-import com.github.anba.es6draft.runtime.objects.BooleanObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
@@ -315,11 +315,8 @@ public final class AbstractOperations {
         case Undefined:
         case Null:
             throw throwTypeError(realm, Messages.Key.UndefinedOrNull);
-        case Boolean: {
-            BooleanObject obj = new BooleanObject(realm, Type.booleanValue(val));
-            obj.setPrototype(realm.getIntrinsic(Intrinsics.BooleanPrototype));
-            return obj;
-        }
+        case Boolean:
+            return BooleanCreate(realm, Type.booleanValue(val));
         case Number:
             return NumberCreate(realm, Type.numberValue(val));
         case String:

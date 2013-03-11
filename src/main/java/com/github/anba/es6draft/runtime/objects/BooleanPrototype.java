@@ -33,6 +33,11 @@ public class BooleanPrototype extends OrdinaryObject implements Scriptable, Init
     }
 
     @Override
+    public Scriptable newInstance(Realm realm) {
+        return new BooleanObject(realm);
+    }
+
+    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }
@@ -42,6 +47,22 @@ public class BooleanPrototype extends OrdinaryObject implements Scriptable, Init
      */
     public enum Properties {
         ;
+
+        /**
+         * Abstract operation thisBooleanValue(value)
+         */
+        private static boolean thisBooleanValue(Realm realm, Object object) {
+            if (Type.isBoolean(object)) {
+                return Type.booleanValue(object);
+            }
+            if (object instanceof BooleanObject) {
+                BooleanObject obj = (BooleanObject) object;
+                if (obj.isInitialised()) {
+                    return obj.getBooleanData();
+                }
+            }
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+        }
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
@@ -57,20 +78,7 @@ public class BooleanPrototype extends OrdinaryObject implements Scriptable, Init
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
-            /* step 1 (omitted) */
-            // Object B = thisValue;
-            boolean b;
-            if (Type.isBoolean(thisValue)) {
-                /* step 2 */
-                b = Type.booleanValue(thisValue);
-            } else if (Type.isObject(thisValue) && thisValue instanceof BooleanObject) {
-                /* step 3 */
-                b = ((BooleanObject) thisValue).getBooleanData();
-            } else {
-                /* step 4 */
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
-            }
-            /* step 5 */
+            boolean b = thisBooleanValue(realm, thisValue);
             return (b ? "true" : "false");
         }
 
@@ -79,21 +87,7 @@ public class BooleanPrototype extends OrdinaryObject implements Scriptable, Init
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(Realm realm, Object thisValue) {
-            /* step 1 (omitted) */
-            // Object B = thisValue;
-            boolean b;
-            if (Type.isBoolean(thisValue)) {
-                /* step 2 */
-                b = Type.booleanValue(thisValue);
-            } else if (Type.isObject(thisValue) && thisValue instanceof BooleanObject) {
-                /* step 3 */
-                b = ((BooleanObject) thisValue).getBooleanData();
-            } else {
-                /* step 4 */
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
-            }
-            /* step 5 */
-            return b;
+            return thisBooleanValue(realm, thisValue);
         }
     }
 }
