@@ -380,7 +380,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.2.3 The SameValue Algorithm
+     * 9.2.3 SameValue(x, y)
      */
     public static boolean SameValue(Object x, Object y) {
         if (x == y) {
@@ -414,14 +414,51 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.2.4 IsConstructor
+     * 9.2.4 SameValueZero(x, y)
+     */
+    public static boolean SameValueZero(Object x, Object y) {
+        if (x == y) {
+            return true;
+        } else if (x == null || y == null) {
+            return false;
+        }
+        Type tx = Type.of(x);
+        Type ty = Type.of(y);
+        if (tx != ty) {
+            return false;
+        }
+        if (tx == Type.Undefined) {
+            return true;
+        }
+        if (tx == Type.Null) {
+            return true;
+        }
+        if (tx == Type.Number) {
+            double dx = Type.numberValue(x);
+            double dy = Type.numberValue(y);
+            if (dx == 0) {
+                return (dy == 0);
+            }
+            return Double.compare(dx, dy) == 0;
+        }
+        if (tx == Type.String) {
+            return Type.stringValue(x).toString().contentEquals(Type.stringValue(y));
+        }
+        if (tx == Type.Boolean) {
+            return Type.booleanValue(x) == Type.booleanValue(y);
+        }
+        return (x == y);
+    }
+
+    /**
+     * 9.2.5 IsConstructor
      */
     public static boolean IsConstructor(Object val) {
         return Type.isObject(val) && (val instanceof Constructor);
     }
 
     /**
-     * 9.2.5 IsPropertyKey
+     * 9.2.6 IsPropertyKey
      */
     public static boolean IsPropertyKey(Object val) {
         if (Type.isString(val)) {
