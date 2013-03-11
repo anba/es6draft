@@ -3717,14 +3717,23 @@ public class Parser {
                 lhs = new SuperExpression(expr);
                 break;
             case LP:
-                if (allowCall) {
+                if (!allowCall) {
+                    lhs = new SuperExpression();
+                } else {
                     List<Expression> args = arguments();
                     lhs = new SuperExpression(args);
-                    break;
                 }
+                break;
+            case TEMPLATE:
+                // handle "new super``" case
+                throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
             default:
-                reportSyntaxError(Messages.Key.InvalidToken, token().toString());
-                return null;
+                if (!allowCall) {
+                    lhs = new SuperExpression();
+                } else {
+                    throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+                }
+                break;
             }
         } else {
             lhs = primaryExpression();

@@ -270,7 +270,7 @@ public final class ScriptRuntime {
         Object completionValue = UNDEFINED;
 
         Realm realm = cx.getRealm();
-        Reference ref = getSuperProperty(GetThisEnvironmentOrThrow(cx), "constructor", false);
+        Reference ref = MakeSuperReference(cx, "constructor", true);
         Object func = ref.GetValue(realm);
         Object[] args = SpreadArray(cx.identifierResolution("args", false).GetValue(realm), realm);
         Reference.GetValue(EvaluateCall(ref, func, args, realm), realm);
@@ -522,6 +522,7 @@ public final class ScriptRuntime {
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
+     * <li>MemberExpression : new super Arguments<sub>opt</sub>
      * </ul>
      */
     public static Object EvaluateConstructorCall(Object constructor, Object[] args, Realm realm) {
@@ -630,61 +631,21 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 11.2.4 The super Keyword
+     * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      */
-    public static EnvironmentRecord GetThisEnvironmentOrThrow(ExecutionContext cx) {
+    public static Reference MakeSuperReference(ExecutionContext cx, String propertyKey,
+            boolean strict) {
         EnvironmentRecord envRec = cx.getThisEnvironment();
         if (!envRec.hasSuperBinding()) {
             throwReferenceError(cx.getRealm(), Messages.Key.MissingSuperBinding);
         }
-        return envRec;
-    }
-
-    /**
-     * 11.2.4 The super Keyword
-     * <p>
-     * Runtime Semantics: Evaluation<br>
-     * MemberExpression : super [ Expression ]
-     */
-    public static Reference getSuperElement(EnvironmentRecord envRec, Object propertyNameValue,
-            Realm realm, boolean strict) {
         assert envRec instanceof FunctionEnvironmentRecord;
         Object actualThis = envRec.getThisBinding();
-        // TODO: evaluation order -> side-effects?
         Scriptable baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
-        CheckObjectCoercible(realm, propertyNameValue);
-        // Object propertyKey = ToPropertyKey(realm, propertyNameValue);
-        String propertyKey = ToFlatString(realm, propertyNameValue);
-        return new Reference(baseValue, propertyKey, strict, actualThis);
-    }
-
-    /**
-     * 11.2.4 The super Keyword
-     * <p>
-     * Runtime Semantics: Evaluation<br>
-     * MemberExpression : super . IdentifierName
-     */
-    public static Reference getSuperProperty(EnvironmentRecord envRec, String propertyKey,
-            boolean strict) {
-        assert envRec instanceof FunctionEnvironmentRecord;
-        Object actualThis = envRec.getThisBinding();
-        // TODO: evaluation order -> side-effects?
-        Scriptable baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
-        return new Reference(baseValue, propertyKey, strict, actualThis);
-    }
-
-    /**
-     * 11.2.4 The super Keyword
-     * <p>
-     * Runtime Semantics: Evaluation<br>
-     * CallExpression : super Arguments
-     */
-    public static Reference getSuperMethod(EnvironmentRecord envRec, boolean strict) {
-        assert envRec instanceof FunctionEnvironmentRecord;
-        Object actualThis = envRec.getThisBinding();
-        // TODO: evaluation order -> side-effects?
-        Scriptable baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
-        String propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
+        CheckObjectCoercible(cx.getRealm(), baseValue);
+        if (propertyKey == null) {
+            propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
+        }
         return new Reference(baseValue, propertyKey, strict, actualThis);
     }
 

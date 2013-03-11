@@ -168,26 +168,13 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Types.ScriptRuntime, "getProperty", Type.getMethodType(Types.Reference,
                         Types.Object, Types.String, Types.Realm, Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_getSuperElement = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getSuperElement", Type.getMethodType(
-                        Types.Reference, Types.EnvironmentRecord, Types.Object, Types.Realm,
-                        Type.BOOLEAN_TYPE));
-
-        static final MethodDesc ScriptRuntime_getSuperMethod = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "getSuperMethod",
-                Type.getMethodType(Types.Reference, Types.EnvironmentRecord, Type.BOOLEAN_TYPE));
-
-        static final MethodDesc ScriptRuntime_getSuperProperty = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "getSuperProperty", Type.getMethodType(
-                        Types.Reference, Types.EnvironmentRecord, Types.String, Type.BOOLEAN_TYPE));
-
-        static final MethodDesc ScriptRuntime_GetThisEnvironmentOrThrow = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetThisEnvironmentOrThrow",
-                Type.getMethodType(Types.EnvironmentRecord, Types.ExecutionContext));
-
         static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "IsBuiltinEval",
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Callable, Types.Realm));
+
+        static final MethodDesc ScriptRuntime_MakeSuperReference = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "MakeSuperReference", Type.getMethodType(
+                        Types.Reference, Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_RegExp = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "RegExp",
@@ -1440,28 +1427,36 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
     @Override
     public ValType visit(SuperExpression node, ExpressionVisitor mv) {
-        mv.load(Register.ExecutionContext);
-        mv.invoke(Methods.ScriptRuntime_GetThisEnvironmentOrThrow);
         if (node.getName() != null) {
+            mv.load(Register.ExecutionContext);
             mv.aconst(node.getName());
             mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_getSuperProperty);
+            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
             return ValType.Reference;
         } else if (node.getExpression() != null) {
+            mv.load(Register.ExecutionContext);
             ValType type = evalAndGetValue(node.getExpression(), mv);
-            mv.toBoxed(type);
-            mv.load(Register.Realm);
+            // ToPropertyKey()
+            ToFlatString(type, mv);
             mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_getSuperElement);
+            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
             return ValType.Reference;
-        } else {
-            assert node.getArguments() != null;
+        } else if (node.getArguments() != null) {
+            mv.load(Register.ExecutionContext);
+            mv.aconst(null);
             mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_getSuperMethod);
+            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
             EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
 
             return ValType.Any;
+        } else {
+            mv.load(Register.ExecutionContext);
+            mv.aconst(null);
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+
+            return ValType.Reference;
         }
     }
 
