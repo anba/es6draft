@@ -1695,12 +1695,14 @@ public class Parser {
             heritage = assignmentExpression(true);
         }
         consume(Token.LC);
-        List<MethodDefinition> body = classBody();
+        List<MethodDefinition> staticMethods = newList();
+        List<MethodDefinition> prototypeMethods = newList();
+        classBody(staticMethods, prototypeMethods);
         consume(Token.RC);
 
+        ClassDeclaration decl = new ClassDeclaration(name, heritage, staticMethods,
+                prototypeMethods);
         addLexDeclaredName(name);
-
-        ClassDeclaration decl = new ClassDeclaration(name, heritage, body);
         addLexScopedDeclaration(decl);
         return decl;
     }
@@ -1733,13 +1735,15 @@ public class Parser {
             enterBlockContext();
             addLexDeclaredName(name);
         }
-        List<MethodDefinition> body = classBody();
+        List<MethodDefinition> staticMethods = newList();
+        List<MethodDefinition> prototypeMethods = newList();
+        classBody(staticMethods, prototypeMethods);
         if (name != null) {
             exitBlockContext();
         }
         consume(Token.RC);
 
-        return new ClassExpression(name, heritage, body);
+        return new ClassExpression(name, heritage, staticMethods, prototypeMethods);
     }
 
     /**
@@ -1753,31 +1757,40 @@ public class Parser {
      *     ClassElementList ClassElement
      * ClassElement :
      *     MethodDefinition
+     *     static MethodDefinition
      *     ;
      * </pre>
      */
-    private List<MethodDefinition> classBody() {
-        List<MethodDefinition> list = newList();
+    private void classBody(List<MethodDefinition> staticMethods,
+            List<MethodDefinition> prototypeMethods) {
         while (token() != Token.RC) {
             if (token() == Token.SEMI) {
                 consume(Token.SEMI);
+            } else if (token() == Token.STATIC) {
+                consume(Token.STATIC);
+                staticMethods.add(methodDefinition(true));
             } else {
-                list.add(methodDefinition(true));
+                prototypeMethods.add(methodDefinition(true));
             }
         }
 
-        classBody_StaticSemantics(list);
-
-        return list;
+        classBody_StaticSemantics(staticMethods, true);
+        classBody_StaticSemantics(prototypeMethods, false);
     }
 
-    private void classBody_StaticSemantics(List<MethodDefinition> defs) {
+    private void classBody_StaticSemantics(List<MethodDefinition> defs, boolean isStatic) {
         final int VALUE = 0, GETTER = 1, SETTER = 2;
         Map<String, Integer> values = new HashMap<>();
         for (MethodDefinition def : defs) {
             String key = PropName(def);
-            if ("constructor".equals(key) && SpecialMethod(def)) {
-                reportSyntaxError(Messages.Key.InvalidConstructorMethod);
+            if (isStatic) {
+                if ("prototype".equals(key)) {
+                    reportSyntaxError(Messages.Key.InvalidPrototypeMethod);
+                }
+            } else {
+                if ("constructor".equals(key) && SpecialMethod(def)) {
+                    reportSyntaxError(Messages.Key.InvalidConstructorMethod);
+                }
             }
             MethodDefinition.MethodType type = def.getType();
             final int kind = type == MethodType.Getter ? GETTER

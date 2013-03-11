@@ -7,18 +7,28 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
+import static com.github.anba.es6draft.semantics.StaticSemantics.PrototypeMethodDefinitions;
+import static com.github.anba.es6draft.semantics.StaticSemantics.StaticMethodDefinitions;
 
 import java.util.List;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.AssignmentPattern;
+import com.github.anba.es6draft.ast.Binding;
+import com.github.anba.es6draft.ast.CallExpression;
+import com.github.anba.es6draft.ast.ClassDefinition;
+import com.github.anba.es6draft.ast.CommaExpression;
+import com.github.anba.es6draft.ast.ConditionalExpression;
+import com.github.anba.es6draft.ast.DefaultNodeVisitor;
+import com.github.anba.es6draft.ast.Expression;
+import com.github.anba.es6draft.ast.MethodDefinition;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  *
@@ -695,8 +705,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.swap();
 
         // steps 13-14
-        List<MethodDefinition> methods = def.getBody();
-        for (MethodDefinition method : methods) {
+        List<MethodDefinition> protoMethods = PrototypeMethodDefinitions(def);
+        for (MethodDefinition method : protoMethods) {
             if (method == constructor) {
                 // FIXME: spec bug? (not handled in draft)
                 continue;
@@ -705,14 +715,21 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             codegen.propertyDefinition(method, mv);
         }
 
-        // step 15
+        // stack: [F, proto] -> [F]
+        mv.pop();
+
+        // steps 15-16
+        List<MethodDefinition> staticMethods = StaticMethodDefinitions(def);
+        for (MethodDefinition method : staticMethods) {
+            mv.dup();
+            codegen.propertyDefinition(method, mv);
+        }
+
+        // step 17
         if (className != null) {
             // restore previous lexical environment
             popLexicalEnvironment(mv);
             // implicit: mv.exitScope()
         }
-
-        // stack: [F, proto] -> [F]
-        mv.pop();
     }
 }

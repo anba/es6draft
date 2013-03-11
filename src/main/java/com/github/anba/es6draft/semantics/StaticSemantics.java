@@ -81,7 +81,7 @@ public final class StaticSemantics {
      * Static Semantics: ConstructorMethod
      */
     public static MethodDefinition ConstructorMethod(ClassDefinition node) {
-        for (MethodDefinition m : node.getBody()) {
+        for (MethodDefinition m : PrototypeMethodDefinitions(node)) {
             if ("constructor".equals(PropName(m))) {
                 return m;
             }
@@ -218,10 +218,17 @@ public final class StaticSemantics {
     }
 
     /**
-     * Static Semantics: MethodDefinitions
+     * Static Semantics: PrototypeMethodDefinitions
      */
-    public static List<MethodDefinition> MethodDefinitions(ClassDefinition node) {
-        return node.getBody();
+    public static List<MethodDefinition> PrototypeMethodDefinitions(ClassDefinition node) {
+        return node.getPrototypeMethods();
+    }
+
+    /**
+     * Static Semantics: StaticMethodDefinitions
+     */
+    public static List<MethodDefinition> StaticMethodDefinitions(ClassDefinition node) {
+        return node.getStaticMethods();
     }
 
     /**

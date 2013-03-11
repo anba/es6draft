@@ -19,5 +19,7 @@ public interface ClassDefinition extends Node {
 
     Expression getHeritage();
 
-    List<MethodDefinition> getBody();
+    List<MethodDefinition> getStaticMethods();
+
+    List<MethodDefinition> getPrototypeMethods();
 }
