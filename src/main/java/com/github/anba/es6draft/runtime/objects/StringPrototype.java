@@ -56,6 +56,11 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
     }
 
     @Override
+    public Scriptable newInstance(Realm realm) {
+        return new ExoticString(realm);
+    }
+
+    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }
