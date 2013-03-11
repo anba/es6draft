@@ -14,6 +14,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -30,7 +31,7 @@ public class StopIterationObject extends OrdinaryObject implements Scriptable, I
     @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
-        preventExtensions();
+        setIntegrity(IntegrityLevel.NonExtensible);
     }
 
     /**

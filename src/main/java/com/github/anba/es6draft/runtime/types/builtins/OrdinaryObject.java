@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.MakeObjectSecure;
 import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
-import static com.github.anba.es6draft.runtime.AbstractOperations.TestIfSecureObject;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SetIntegrityLevel;
+import static com.github.anba.es6draft.runtime.AbstractOperations.TestIntegrityLevel;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.MakeListIterator;
@@ -26,6 +26,7 @@ import java.util.Set;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -42,8 +43,13 @@ import com.github.anba.es6draft.runtime.types.Type;
 public abstract class OrdinaryObject implements Scriptable {
     // Map<String|Symbol, Property> properties
     private LinkedHashMap<Object, Property> properties = new LinkedHashMap<>();
+
+    /** [[Prototype]] */
     private Scriptable prototype = null;
+
+    /** [[Extensible]] */
     private boolean extensible = true;
+
     private final Realm realm;
 
     public OrdinaryObject(Realm realm) {
@@ -52,6 +58,11 @@ public abstract class OrdinaryObject implements Scriptable {
 
     protected final Realm realm() {
         return realm;
+    }
+
+    /** [[Extensible]] */
+    protected final boolean isExtensible() {
+        return extensible;
     }
 
     private void __put__(Object propertyKey, Property property) {
@@ -102,16 +113,24 @@ public abstract class OrdinaryObject implements Scriptable {
         return true;
     }
 
-    /** 8.3.3 [[IsExtensible]] ( ) */
+    /** 8.3.3 [[HasIntegrity]] ( Level ) */
     @Override
-    public boolean isExtensible() {
-        return extensible;
+    public boolean hasIntegrity(IntegrityLevel level) {
+        if (level == IntegrityLevel.NonExtensible) {
+            // FIXME: spec bug (need to invert [[Extensible]] value)
+            return !extensible;
+        }
+        return TestIntegrityLevel(realm, this, level);
     }
 
-    /** 8.3.4 [[PreventExtensions]] ( ) */
+    /** 8.3.4 [[SetIntegrity]] ( Level ) */
     @Override
-    public void preventExtensions() {
+    public boolean setIntegrity(IntegrityLevel level) {
         this.extensible = false;
+        if (level != IntegrityLevel.NonExtensible) {
+            return SetIntegrityLevel(realm, this, level);
+        }
+        return true;
     }
 
     /** 8.3.5 [[HasOwnProperty]] (P) */
@@ -332,40 +351,36 @@ public abstract class OrdinaryObject implements Scriptable {
     }
 
     /**
-     * 8.7.8 [[HasProperty]](P)
+     * 8.3.8 [[HasProperty]](P)
      */
     @Override
     public boolean hasProperty(String propertyKey) {
-        // FIXME: spec bug ([[GetOwnProperty]] vs. [[HasOwnProperty]] (bug 1205)
-        boolean has = hasOwnProperty(propertyKey);
-        if (has) {
-            return true;
+        boolean hasOwn = hasOwnProperty(propertyKey);
+        if (!hasOwn) {
+            Scriptable parent = getPrototype();
+            if (parent != null) {
+                return parent.hasProperty(propertyKey);
+            }
         }
-        Scriptable parent = getPrototype();
-        if (parent == null) {
-            return false;
-        }
-        return parent.hasProperty(propertyKey);
+        return hasOwn;
     }
 
     /**
-     * 8.7.8 [[HasProperty]](P)
+     * 8.3.8 [[HasProperty]](P)
      */
     @Override
     public boolean hasProperty(Symbol propertyKey) {
-        // FIXME: spec bug ([[GetOwnProperty]] vs. [[HasOwnProperty]] (bug 1205)
-        boolean has = hasOwnProperty(propertyKey);
-        if (has) {
-            return true;
+        boolean hasOwn = hasOwnProperty(propertyKey);
+        if (!hasOwn) {
+            Scriptable parent = getPrototype();
+            if (parent != null) {
+                return parent.hasProperty(propertyKey);
+            }
         }
-        Scriptable parent = getPrototype();
-        if (parent == null) {
-            return false;
-        }
-        return parent.hasProperty(propertyKey);
+        return hasOwn;
     }
 
-    /** 8.3.7 [[Get]] (P, Receiver) */
+    /** 8.3.9 [[Get]] (P, Receiver) */
     @Override
     public Object get(String propertyKey, Object receiver) {
         /* step 2-3 */
@@ -393,7 +408,7 @@ public abstract class OrdinaryObject implements Scriptable {
         return getter.call(receiver);
     }
 
-    /** 8.3.7 [[Get]] (P, Receiver) */
+    /** 8.3.9 [[Get]] (P, Receiver) */
     @Override
     public Object get(Symbol propertyKey, Object receiver) {
         /* step 2-3 */
@@ -421,7 +436,7 @@ public abstract class OrdinaryObject implements Scriptable {
         return getter.call(receiver);
     }
 
-    /** 8.3.8 [[Set] (P, V, Receiver) */
+    /** 8.3.10 [[Set] (P, V, Receiver) */
     @Override
     public boolean set(String propertyKey, Object value, Object receiver) {
         /* step 2-3 */
@@ -465,7 +480,7 @@ public abstract class OrdinaryObject implements Scriptable {
         return true;
     }
 
-    /** 8.3.8 [[Set] (P, V, Receiver) */
+    /** 8.3.10 [[Set] (P, V, Receiver) */
     @Override
     public boolean set(Symbol propertyKey, Object value, Object receiver) {
         /* step 2-3 */
@@ -509,7 +524,7 @@ public abstract class OrdinaryObject implements Scriptable {
         return true;
     }
 
-    /** 8.3.9 [[Delete]] (P) */
+    /** 8.3.11 [[Delete]] (P) */
     @Override
     public boolean delete(String propertyKey) {
         /* step 2 */
@@ -527,7 +542,7 @@ public abstract class OrdinaryObject implements Scriptable {
         return false;
     }
 
-    /** 8.3.9 [[Delete]] (P) */
+    /** 8.3.11 [[Delete]] (P) */
     @Override
     public boolean delete(Symbol propertyKey) {
         /* step 2 */
@@ -545,13 +560,13 @@ public abstract class OrdinaryObject implements Scriptable {
         return false;
     }
 
-    /** 8.3.11 [[Enumerate]] () */
+    /** 8.3.12 [[Enumerate]] () */
     @Override
     public final Scriptable enumerate() {
         return MakeListIterator(realm(), new EnumKeysIterator(realm(), this));
     }
 
-    /** 8.3.11 [[Enumerate]] () */
+    /** 8.3.12 [[Enumerate]] () */
     protected Collection<String> enumerateKeys() {
         List<String> propList = new ArrayList<>();
         for (Object key : __keys__()) {
@@ -671,37 +686,13 @@ public abstract class OrdinaryObject implements Scriptable {
         return keys;
     }
 
-    /** 8.3.14 [[Freeze]] ( ) */
-    @Override
-    public void freeze() {
-        MakeObjectSecure(realm(), this, true);
-    }
-
-    /** 8.3.15 [[Seal]] ( ) */
-    @Override
-    public void seal() {
-        MakeObjectSecure(realm(), this, false);
-    }
-
-    /** 8.3.16 [[IsFrozen]] ( ) */
-    @Override
-    public boolean isFrozen() {
-        return TestIfSecureObject(realm(), this, true);
-    }
-
-    /** 8.3.17 [[IsSealed]] ( ) */
-    @Override
-    public boolean isSealed() {
-        return TestIfSecureObject(realm(), this, false);
-    }
-
-    /** 8.3.18 ObjectCreate Abstract Operation */
+    /** 8.3.14 ObjectCreate Abstract Operation */
     public static Scriptable ObjectCreate(Realm realm) {
         Scriptable proto = realm.getIntrinsic(Intrinsics.ObjectPrototype);
         return ObjectCreate(realm, proto, proto);
     }
 
-    /** 8.3.18 ObjectCreate Abstract Operation */
+    /** 8.3.14 ObjectCreate Abstract Operation */
     public static Scriptable ObjectCreate(Realm realm, Scriptable proto) {
         return ObjectCreate(realm, proto, realm.getIntrinsic(Intrinsics.ObjectPrototype));
     }
@@ -712,7 +703,7 @@ public abstract class OrdinaryObject implements Scriptable {
         };
     }
 
-    /** 8.3.18 ObjectCreate Abstract Operation (extension) */
+    /** 8.3.14 ObjectCreate Abstract Operation (extension) */
     public static Scriptable ObjectCreate(Realm realm, Scriptable proto, Scriptable creator) {
         /* step 1 (implicit) */
         /* step 2, step 3 */

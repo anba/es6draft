@@ -77,9 +77,6 @@ public class WeakMapConstructor extends OrdinaryObject implements Scriptable, Ca
         if (!(obj instanceof WeakMapObject)) {
             throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
-        if (!obj.isExtensible()) {
-            throw throwTypeError(realm, Messages.Key.NotExtensible);
-        }
         if (!Type.isUndefined(iterable)) {
             Scriptable _iterable = ToObject(realm, iterable);
             Symbol iterator = BuiltinSymbol.iterator.get();

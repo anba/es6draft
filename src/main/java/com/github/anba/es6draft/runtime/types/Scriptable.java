@@ -34,11 +34,11 @@ public interface Scriptable {
     /** [[SetPrototype]] (V) */
     boolean setPrototype(Scriptable prototype);
 
-    /** [[IsExtensible]] ( ) */
-    boolean isExtensible();
+    /** [[HasIntegrity]] (Level) */
+    boolean hasIntegrity(IntegrityLevel level);
 
-    /** [[PreventExtensions]] ( ) */
-    void preventExtensions();
+    /** [[SetIntegrity]] (Level) */
+    boolean setIntegrity(IntegrityLevel level);
 
     /** [[HasOwnProperty]] (P) */
     boolean hasOwnProperty(String propertyKey);
@@ -52,13 +52,13 @@ public interface Scriptable {
     /** [[GetOwnProperty]] (P) */
     Property getOwnProperty(Symbol propertyKey);
 
-    // FIXME: spec bug ([[HasProperty]] missing in 8.1.6.2)
-
     /** [[HasProperty]](P) */
     boolean hasProperty(String propertyKey);
 
     /** [[HasProperty]](P) */
     boolean hasProperty(Symbol propertyKey);
+
+    // FIXME: spec bug ([[Get]] missing in 8.1.6.2)
 
     /** [[Get]] (P, Receiver) */
     Object get(String propertyKey, Object receiver);
@@ -89,19 +89,5 @@ public interface Scriptable {
 
     /** [[OwnPropertyKeys]] ( ) */
     Scriptable ownPropertyKeys();
-
-    // FIXME: spec bug (return type!)
-    /** [[Freeze]] ( ) */
-    void freeze();
-
-    // FIXME: spec bug (return type!)
-    /** [[Seal]] ( ) */
-    void seal();
-
-    /** [[IsFrozen]] ( ) */
-    boolean isFrozen();
-
-    /** [[IsSealed]] ( ) */
-    boolean isSealed();
 
 }

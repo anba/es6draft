@@ -143,6 +143,10 @@ public class Messages {
 
         // 15.1 The Global Object
         MalformedURI("globalobject.malformed_uri"),
+        // 15.2 Object Objects
+        ObjectSealFailed("object.seal_failed"),
+        ObjectFreezeFailed("object.freeze_failed"),
+        ObjectPreventExtensionsFailed("object.preventextension_failed"),
         // 15.3 Function Objects
         GeneratorExecuting("generator.executing"),
         GeneratorClosed("generator.closed"),

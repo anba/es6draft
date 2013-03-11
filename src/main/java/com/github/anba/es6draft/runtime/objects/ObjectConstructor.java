@@ -26,15 +26,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
-import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Property;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
-import com.github.anba.es6draft.runtime.types.Symbol;
-import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -224,8 +216,10 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            // FIXME: spec bug (bug 1056)
-            MakeObjectSecure(realm, Type.objectValue(o), false);
+            boolean status = Type.objectValue(o).setIntegrity(IntegrityLevel.Sealed);
+            if (!status) {
+                throw throwTypeError(realm, Messages.Key.ObjectSealFailed);
+            }
             return o;
         }
 
@@ -237,8 +231,10 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            // FIXME: spec bug (bug 1056)
-            MakeObjectSecure(realm, Type.objectValue(o), true);
+            boolean status = Type.objectValue(o).setIntegrity(IntegrityLevel.Frozen);
+            if (!status) {
+                throw throwTypeError(realm, Messages.Key.ObjectFreezeFailed);
+            }
             return o;
         }
 
@@ -250,7 +246,10 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            Type.objectValue(o).preventExtensions();
+            boolean status = Type.objectValue(o).setIntegrity(IntegrityLevel.NonExtensible);
+            if (!status) {
+                throw throwTypeError(realm, Messages.Key.ObjectPreventExtensionsFailed);
+            }
             return o;
         }
 
@@ -262,7 +261,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            return TestIfSecureObject(realm, Type.objectValue(o), false);
+            return Type.objectValue(o).hasIntegrity(IntegrityLevel.Sealed);
         }
 
         /**
@@ -273,7 +272,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            return TestIfSecureObject(realm, Type.objectValue(o), true);
+            return Type.objectValue(o).hasIntegrity(IntegrityLevel.Frozen);
         }
 
         /**
@@ -284,7 +283,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            return Type.objectValue(o).isExtensible();
+            return IsExtensible(Type.objectValue(o));
         }
 
         /**
