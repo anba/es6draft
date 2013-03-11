@@ -28,7 +28,6 @@ import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.BooleanObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
 import com.google.doubleconversion.DoubleConversion;
 
@@ -323,15 +322,8 @@ public final class AbstractOperations {
         }
         case Number:
             return NumberCreate(realm, Type.numberValue(val));
-        case String: {
-            // new String(s)
-            CharSequence s = Type.stringValue(val);
-            ExoticString obj = StringCreate(realm, realm.getIntrinsic(Intrinsics.StringPrototype));
-            DefinePropertyOrThrow(realm, obj, "length", new PropertyDescriptor(s.length(), false,
-                    false, false));
-            obj.setStringData(s);
-            return obj;
-        }
+        case String:
+            return StringCreate(realm, Type.stringValue(val));
         case Object:
         default:
             return Type.objectValue(val);
