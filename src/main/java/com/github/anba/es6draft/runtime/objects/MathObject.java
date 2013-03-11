@@ -398,9 +398,9 @@ public class MathObject extends OrdinaryObject implements Scriptable, Initialisa
         }
 
         /**
-         * 15.8.2.29 Math.hypot( value1 , value2, value3 = 0 ) FIXME: arity -> 2 or 3? (Bug 1144)
+         * 15.8.2.29 Math.hypot( value1 , value2, value3 = 0 )
          */
-        @Function(name = "hypot", arity = 3)
+        @Function(name = "hypot", arity = 2)
         public static Object hypot(Realm realm, Object thisValue, Object value1, Object value2,
                 @Optional(Optional.Default.NONE) Object value3) {
             if (value3 == null) {
