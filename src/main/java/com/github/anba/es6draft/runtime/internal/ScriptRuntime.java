@@ -199,9 +199,7 @@ public final class ScriptRuntime {
         } else if (!Type.isObject(superClass)) {
             throw throwTypeError(realm, Messages.Key.NotObjectType);
         } else if (!IsConstructor(superClass)) {
-            // FIXME: spec bug (should use IsConstructor() instead of [[Construct]])
-            protoParent = Type.objectValue(superClass);
-            constructorParent = realm.getIntrinsic(Intrinsics.FunctionPrototype);
+            throw throwTypeError(realm, Messages.Key.NotConstructor);
         } else {
             Object p = Get(Type.objectValue(superClass), "prototype");
             if (!(Type.isObject(p) || Type.isNull(p))) {
