@@ -201,9 +201,9 @@ public class NumberConstructor extends OrdinaryObject implements Scriptable, Cal
         }
 
         /**
-         * 15.7.3.14 Number.toInt (number)
+         * 15.7.3.14 Number.toInteger (number)
          */
-        @Function(name = "toInt", arity = 1)
+        @Function(name = "toInteger", arity = 1)
         public static Object toInt(Realm realm, Object thisValue, Object number) {
             return ToInteger(realm, number);
         }
