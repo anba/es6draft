@@ -66,12 +66,18 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
     public enum Properties {
         ;
 
-        private static CharSequence stringValue(Realm realm, Object object) {
+        /**
+         * Abstract operation thisStringValue(value)
+         */
+        private static CharSequence thisStringValue(Realm realm, Object object) {
             if (Type.isString(object)) {
                 return Type.stringValue(object);
             }
             if (object instanceof ExoticString) {
-                return ((ExoticString) object).getStringData();
+                CharSequence s = ((ExoticString) object).getStringData();
+                if (s != null) {
+                    return s;
+                }
             }
             throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
@@ -90,7 +96,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
-            return stringValue(realm, thisValue);
+            return thisStringValue(realm, thisValue);
         }
 
         /**
@@ -98,7 +104,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(Realm realm, Object thisValue) {
-            return stringValue(realm, thisValue);
+            return thisStringValue(realm, thisValue);
         }
 
         /**
@@ -106,8 +112,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "charAt", arity = 1)
         public static Object charAt(Realm realm, Object thisValue, Object pos) {
-            CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, obj);
             double position = ToInteger(realm, pos);
             int size = s.length();
             if (position < 0 || position >= size) {
@@ -121,8 +127,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "charCodeAt", arity = 1)
         public static Object charCodeAt(Realm realm, Object thisValue, Object pos) {
-            CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, obj);
             double position = ToInteger(realm, pos);
             int size = s.length();
             if (position < 0 || position >= size) {
@@ -136,8 +142,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(Realm realm, Object thisValue, Object... args) {
-            CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, obj);
             StringBuilder r = new StringBuilder(s);
             for (int i = 0; i < args.length; ++i) {
                 Object next = args[i];
@@ -153,8 +159,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "indexOf", arity = 1)
         public static Object indexOf(Realm realm, Object thisValue, Object searchString,
                 Object position) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             String searchStr = ToFlatString(realm, searchString);
             double pos = ToInteger(realm, position);
             int len = s.length();
@@ -168,8 +174,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "lastIndexOf", arity = 1)
         public static Object lastIndexOf(Realm realm, Object thisValue, Object searchString,
                 Object position) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             String searchStr = ToFlatString(realm, searchString);
             double numPos = ToNumber(realm, position);
             double pos = Double.isNaN(numPos) ? Double.POSITIVE_INFINITY : ToInteger(realm,
@@ -184,8 +190,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "localeCompare", arity = 1)
         public static Object localeCompare(Realm realm, Object thisValue, Object that) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             String t = ToFlatString(realm, that);
             return realm.getCollator().compare(s, t);
         }
@@ -195,8 +201,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "match", arity = 1)
         public static Object match(Realm realm, Object thisValue, Object regexp) {
-            CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, obj);
             RegExpObject rx;
             if (Type.isObject(regexp)
                     && Type.objectValue(regexp).getBuiltinBrand() == BuiltinBrand.BuiltinRegExp) {
@@ -247,8 +253,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "replace", arity = 2)
         public static Object replace(Realm realm, Object thisValue, Object searchValue,
                 Object replaceValue) {
-            CheckObjectCoercible(realm, thisValue);
-            String string = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String string = ToFlatString(realm, obj);
             if (Type.isObject(searchValue)
                     && Type.objectValue(searchValue).getBuiltinBrand() == BuiltinBrand.BuiltinRegExp) {
                 assert searchValue instanceof RegExpObject;
@@ -449,8 +455,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "search", arity = 1)
         public static Object search(Realm realm, Object thisValue, Object regexp) {
-            CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, obj);
             RegExpObject rx;
             if (Type.isObject(regexp)
                     && Type.objectValue(regexp).getBuiltinBrand() == BuiltinBrand.BuiltinRegExp) {
@@ -471,8 +477,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(Realm realm, Object thisValue, Object start, Object end) {
-            CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, obj);
             int len = s.length();
             double intStart = ToInteger(realm, start);
             double intEnd = (Type.isUndefined(end) ? len : ToInteger(realm, end));
@@ -487,14 +493,12 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "split", arity = 2)
         public static Object split(Realm realm, Object thisValue, Object separator, Object limit) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             Scriptable a = ArrayCreate(realm, 0);
-            // FIXME: minor spec issue -> lengthA should be declared later (step 14?)
             int lengthA = 0;
             long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(realm, limit);
             int size = s.length();
-            // FIXME: minor spec issue -> p should be declared later (step 14?)
             int p = 0;
             Object r;
             if (BuiltinBrand.hasBuiltinBrand(separator, BuiltinBrand.BuiltinRegExp)) {
@@ -532,7 +536,6 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                         if (lengthA == lim) {
                             return a;
                         }
-                        // FIXME: minor spec issue (move step 6 before step 9 to keep things local)
                         p = e;
                         Iterator<Object> iterator = newGroupIterator(rx, matcher);
                         while (iterator.hasNext()) {
@@ -595,8 +598,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "substring", arity = 2)
         public static Object substring(Realm realm, Object thisValue, Object start, Object end) {
-            CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, obj);
             int len = s.length();
             double intStart = ToInteger(realm, start);
             double intEnd = (Type.isUndefined(end) ? len : ToInteger(realm, end));
@@ -612,8 +615,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "toLowerCase", arity = 0)
         public static Object toLowerCase(Realm realm, Object thisValue) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             return s.toLowerCase(Locale.ROOT);
         }
 
@@ -622,8 +625,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "toLocaleLowerCase", arity = 0)
         public static Object toLocaleLowerCase(Realm realm, Object thisValue) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             return s.toLowerCase(realm.getLocale());
         }
 
@@ -632,8 +635,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "toUpperCase", arity = 0)
         public static Object toUpperCase(Realm realm, Object thisValue) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             return s.toUpperCase(Locale.ROOT);
         }
 
@@ -642,8 +645,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "toLocaleUpperCase", arity = 0)
         public static Object toLocaleUpperCase(Realm realm, Object thisValue) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             return s.toUpperCase(realm.getLocale());
         }
 
@@ -652,8 +655,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "trim", arity = 0)
         public static Object trim(Realm realm, Object thisValue) {
-            CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, obj);
             return Strings.trim(s);
         }
 
@@ -662,8 +665,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "repeat", arity = 1)
         public static Object repeat(Realm realm, Object thisValue, Object count) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             double n = ToInteger(realm, count);
             if (n == 0) {
                 return "";
@@ -684,8 +687,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "startsWith", arity = 1)
         public static Object startsWith(Realm realm, Object thisValue, Object searchString,
                 Object position) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             String searchStr = ToFlatString(realm, searchString);
             double pos = ToInteger(realm, position);
             int len = s.length();
@@ -703,8 +706,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "endsWith", arity = 1)
         public static Object endsWith(Realm realm, Object thisValue, Object searchString,
                 Object endPosition) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             String searchStr = ToFlatString(realm, searchString);
             int len = s.length();
             double pos = Type.isUndefined(endPosition) ? len : ToInteger(realm, endPosition);
@@ -723,8 +726,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "contains", arity = 1)
         public static Object contains(Realm realm, Object thisValue, Object searchString,
                 Object position /* = 0 */) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             String searchStr = ToFlatString(realm, searchString);
             double pos = ToInteger(realm, position);
             int len = s.length();
@@ -738,8 +741,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "codePointAt", arity = 1)
         public static Object codePointAt(Realm realm, Object thisValue, Object pos) {
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             double position = ToInteger(realm, pos);
             int size = s.length();
             if (position < 0 || position >= size) {
@@ -755,9 +758,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "substr", arity = 2)
         public static Object substr(Realm realm, Object thisValue, Object start, Object length) {
-            // FIXME: spec bug 'sourceLength' undefined in description text
-            CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, thisValue);
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            String s = ToFlatString(realm, obj);
             double intStart = ToInteger(realm, start);
             double end = (Type.isUndefined(length) ? Double.POSITIVE_INFINITY : ToInteger(realm,
                     length));
@@ -778,8 +780,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         private static String CreateHTML(Realm realm, Object string, String tag, String attribute,
                 Object value) {
-            CheckObjectCoercible(realm, string);
-            String s = ToFlatString(realm, string);
+            Object str = CheckObjectCoercible(realm, string);
+            String s = ToFlatString(realm, str);
             StringBuilder p = new StringBuilder().append("<").append(tag);
             if (!attribute.isEmpty()) {
                 String v = ToFlatString(realm, value);

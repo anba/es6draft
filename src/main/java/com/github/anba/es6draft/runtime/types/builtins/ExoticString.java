@@ -25,17 +25,10 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
     /**
      * [[StringData]]
      */
-    private final CharSequence stringData;
+    private CharSequence stringData = null;
 
-    public ExoticString(Realm realm, CharSequence stringData) {
+    public ExoticString(Realm realm) {
         super(realm);
-        this.stringData = stringData;
-
-        // 8.4.3 String Exotic Objects
-        // 15.5.5 Properties of String Instances
-        // 15.5.5.1 length
-        defineOwnProperty("length",
-                new PropertyDescriptor(stringData.length(), false, false, false));
     }
 
     /**
@@ -46,11 +39,24 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
         return BuiltinBrand.BuiltinStringWrapper;
     }
 
+    private CharSequence getStringDataOrEmpty() {
+        // FIXME: spec bug (undefined [[StringData]] not handled in spec)
+        return (stringData != null ? stringData : "");
+    }
+
     /**
      * [[StringData]]
      */
     public CharSequence getStringData() {
         return stringData;
+    }
+
+    /**
+     * [[StringData]]
+     */
+    public void setStringData(CharSequence stringData) {
+        assert this.stringData == null;
+        this.stringData = stringData;
     }
 
     public static int toStringIndex(String p) {
@@ -88,7 +94,7 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
         if (index < 0) {
             return false;
         }
-        CharSequence str = stringData;
+        CharSequence str = getStringDataOrEmpty();
         int len = str.length();
         if (len <= index) {
             return false;
@@ -109,7 +115,7 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
         if (index < 0) {
             return null;
         }
-        CharSequence str = stringData;
+        CharSequence str = getStringDataOrEmpty();
         int len = str.length();
         if (len <= index) {
             return null;
@@ -151,10 +157,21 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
     @Override
     protected boolean isEnumerableOwnProperty(String key) {
         int index = toStringIndex(key);
-        if (index >= 0 && index < stringData.length()) {
+        if (index >= 0 && index < getStringDataOrEmpty().length()) {
             return true;
         }
         return super.isEnumerableOwnProperty(key);
+    }
+
+    /**
+     * 8.4.6.6 StringCreate Abstract Operation
+     */
+    public static ExoticString StringCreate(Realm realm, Scriptable prototype) {
+        // step 1, 2-6, 9 (implicit)
+        ExoticString obj = new ExoticString(realm);
+        // step 8
+        obj.setPrototype(prototype);
+        return obj;
     }
 
     /**
@@ -162,8 +179,9 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
      */
     private void addStringIndices(Collection<? super String> keys) {
         // SpiderMonkey appends string indices, whereas JSC/V8 prepends the indices
-        for (int i = 0, length = stringData.length(); i < length; ++i) {
+        for (int i = 0, length = getStringDataOrEmpty().length(); i < length; ++i) {
             keys.add(Integer.toString(i));
         }
     }
+
 }
