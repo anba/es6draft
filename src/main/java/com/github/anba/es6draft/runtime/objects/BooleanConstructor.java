@@ -6,17 +6,20 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -62,8 +65,15 @@ public class BooleanConstructor extends OrdinaryObject implements Scriptable, Ca
      */
     @Override
     public Object call(Object thisValue, Object... args) {
-        Object value = args.length > 0 ? args[0] : UNDEFINED;
-        return ToBoolean(value);
+        boolean b = (args.length > 0 ? ToBoolean(args[0]) : false);
+        if (thisValue instanceof BooleanObject) {
+            BooleanObject obj = (BooleanObject) thisValue;
+            if (!obj.isInitialised()) {
+                obj.setBooleanData(b);
+                return obj;
+            }
+        }
+        return b;
     }
 
     /**
@@ -71,11 +81,7 @@ public class BooleanConstructor extends OrdinaryObject implements Scriptable, Ca
      */
     @Override
     public Object construct(Object... args) {
-        Object value = args.length > 0 ? args[0] : UNDEFINED;
-        boolean booleanData = ToBoolean(value);
-        BooleanObject obj = new BooleanObject(realm(), booleanData);
-        obj.setPrototype(realm().getIntrinsic(Intrinsics.BooleanPrototype));
-        return obj;
+        return OrdinaryConstruct(realm(), this, args);
     }
 
     /**
@@ -97,5 +103,19 @@ public class BooleanConstructor extends OrdinaryObject implements Scriptable, Ca
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.BooleanPrototype;
+
+        /**
+         * 15.6.3.2 Boolean[ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            Scriptable obj = OrdinaryCreateFromConstructor(realm, thisValue,
+                    Intrinsics.BooleanPrototype);
+            return obj;
+        }
     }
 }
