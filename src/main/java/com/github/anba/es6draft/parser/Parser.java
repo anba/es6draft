@@ -1464,9 +1464,12 @@ public class Parser {
      *     BindingPattern
      * </pre>
      */
-    private MethodDefinition methodDefinition() {
+    private MethodDefinition methodDefinition(boolean alwaysStrict) {
         MethodType type = methodType();
         newContext(type != MethodType.Generator ? ContextKind.Function : ContextKind.Generator);
+        if (alwaysStrict) {
+            context.strictMode = StrictMode.Strict;
+        }
         try {
             PropertyName propertyName;
             FormalParameterList parameters;
@@ -1759,7 +1762,7 @@ public class Parser {
             if (token() == Token.SEMI) {
                 consume(Token.SEMI);
             } else {
-                list.add(methodDefinition());
+                list.add(methodDefinition(true));
             }
         }
 
@@ -3573,7 +3576,7 @@ public class Parser {
             Expression initialiser = assignmentExpression(true);
             return new CoverInitialisedName(identifier, initialiser);
         }
-        return methodDefinition();
+        return methodDefinition(false);
     }
 
     /**
@@ -4110,7 +4113,6 @@ public class Parser {
             return new ConditionalExpression(left, then, otherwise);
         } else if (tok == Token.ARROW) {
             ts.reset(marker);
-            // return arrowFunctionTail(left);
             return arrowFunction();
         } else if (tok == Token.ASSIGN) {
             LeftHandSideExpression lhs = validateAssignment(left);

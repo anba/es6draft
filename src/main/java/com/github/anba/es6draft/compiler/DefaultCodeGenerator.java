@@ -659,6 +659,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.aconst(className);
             mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
 
+            // FIXME: spec bug - InitializeBinding not called!
             // stack: [ctor, proto, scope, proto, envRec] -> [ctor, proto, scope]
             mv.swap();
             mv.aconst(className);
