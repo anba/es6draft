@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -27,6 +28,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -64,56 +66,62 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
     }
 
     /**
-     * 15.4.1.1 Array ( [ item1 [ , item2 [ , ... ] ] ] )
+     * 15.4.1.1 Array ( [ item1 [ , item2 [ , ... ] ] ] )<br>
+     * 15.4.1.2 Array (len)
      */
     @Override
     public Object call(Object thisValue, Object... args) {
-        return construct(args);
+        Realm realm = realm();
+        int numberOfArgs = args.length;
+        if (numberOfArgs != 1) {
+            // [15.4.1.1]
+            ExoticArray array = MaybeCreateArray(realm, thisValue, numberOfArgs);
+            for (int k = 0; k < numberOfArgs; ++k) {
+                String pk = ToString(k);
+                Object itemK = args[k];
+                DefinePropertyOrThrow(realm, array, pk, new PropertyDescriptor(itemK, true, true,
+                        true));
+            }
+            Put(realm, array, "length", numberOfArgs, true);
+            return array;
+        } else {
+            // [15.4.1.2]
+            ExoticArray array = MaybeCreateArray(realm, thisValue, 0);
+            Object len = args[0];
+            long intLen;
+            if (!Type.isNumber(len)) {
+                DefinePropertyOrThrow(realm, array, "0", new PropertyDescriptor(len, true, true,
+                        true));
+                intLen = 1;
+            } else {
+                intLen = ToUint32(realm, len);
+                if (intLen != Type.numberValue(len)) {
+                    throw throwRangeError(realm, Messages.Key.InvalidArrayLength);
+                }
+            }
+            Put(realm, array, "length", intLen, true);
+            return array;
+        }
+    }
+
+    private ExoticArray MaybeCreateArray(Realm realm, Object thisValue, long length) {
+        if (thisValue instanceof ExoticArray) {
+            ExoticArray array = (ExoticArray) thisValue;
+            if (!array.getArrayInitializationState()) {
+                array.setArrayInitializationState(true);
+                return array;
+            }
+        }
+        Scriptable proto = GetPrototypeFromConstructor(realm, this, Intrinsics.ArrayPrototype);
+        return ArrayCreate(realm, length, proto);
     }
 
     /**
-     * 15.4.2.1 new Array ( [ item0 [ , item1 [ , ... ] ] ] )<br>
-     * 15.4.2.2 new Array (len)
+     * 15.4.2 The Array Constructor
      */
     @Override
     public Object construct(Object... args) {
-        if (args.length != 1) {
-            // [15.4.2.1]
-            /* step 1 */
-            int len = args.length;
-            /* step 2-3 */
-            Scriptable array = ArrayCreate(realm(), len);
-            /* step 4-6 */
-            for (int k = 0; k < len; ++k) {
-                String pk = ToString(k);
-                Object itemK = args[k];
-                array.defineOwnProperty(pk, new PropertyDescriptor(itemK, true, true, true));
-            }
-            /* step 7-8 */
-            Put(realm(), array, "length", len, true);
-            /* step 9 */
-            return array;
-        } else {
-            // [15.4.2.2]
-            Object len = args[0];
-            /* step 1 */
-            if (!Type.isNumber(len)) {
-                Scriptable array = ArrayCreate(realm(), 1);
-                DefinePropertyOrThrow(realm(), array, "0", new PropertyDescriptor(len, true, true,
-                        true));
-                return array;
-            }
-            /* step 2 */
-            long intLen = ToUint32(realm(), len);
-            /* step 3 */
-            if (intLen != Type.numberValue(len)) {
-                throw throwRangeError(realm(), Messages.Key.InvalidArrayLength);
-            }
-            /* step 4 */
-            Scriptable array = ArrayCreate(realm(), intLen);
-            /* step 5 */
-            return array;
-        }
+        return OrdinaryConstruct(realm(), this, args);
     }
 
     /**
@@ -225,12 +233,17 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
         }
 
         /**
-         * TODO: not yet in spec
+         * 15.4.3.5 Array[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            Scriptable obj = OrdinaryCreateFromConstructor(realm, thisValue,
+            Scriptable proto = GetPrototypeFromConstructor(realm, thisValue,
                     Intrinsics.ArrayPrototype);
+            Scriptable obj = ArrayCreate(realm, -1, proto);
             return obj;
         }
     }
