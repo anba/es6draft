@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.instanceOfOperator;
+import static com.github.anba.es6draft.runtime.objects.NumberObject.NumberCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
@@ -25,7 +26,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.BooleanObject;
-import com.github.anba.es6draft.runtime.objects.NumberObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
@@ -321,11 +321,8 @@ public final class AbstractOperations {
             obj.setPrototype(realm.getIntrinsic(Intrinsics.BooleanPrototype));
             return obj;
         }
-        case Number: {
-            NumberObject obj = new NumberObject(realm, Type.numberValue(val));
-            obj.setPrototype(realm.getIntrinsic(Intrinsics.NumberPrototype));
-            return obj;
-        }
+        case Number:
+            return NumberCreate(realm, Type.numberValue(val));
         case String: {
             // new String(s)
             CharSequence s = Type.stringValue(val);
