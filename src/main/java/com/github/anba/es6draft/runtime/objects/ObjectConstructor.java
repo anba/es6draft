@@ -70,7 +70,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
     public Object call(Object thisValue, Object... args) {
         Object value = args.length > 0 ? args[0] : UNDEFINED;
         if (Type.isUndefinedOrNull(value)) {
-            return ObjectCreate(realm());
+            return ObjectCreate(realm(), realm().getIntrinsic(Intrinsics.ObjectPrototype));
         }
         return ToObject(realm(), value);
     }
@@ -95,7 +95,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
                 break;
             }
         }
-        return ObjectCreate(realm());
+        return ObjectCreate(realm(), realm().getIntrinsic(Intrinsics.ObjectPrototype));
     }
 
     /**
@@ -297,6 +297,41 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             }
             List<String> nameList = GetOwnPropertyKeys(realm, Type.objectValue(o));
             return CreateArrayFromList(realm, nameList);
+        }
+
+        /**
+         * 15.2.3.15 Object.getOwnPropertyKeys ( O )
+         */
+        @Function(name = "getOwnPropertyKeys", arity = 1)
+        public static Object getOwnPropertyKeys(Realm realm, Object thisValue, Object o) {
+            if (!Type.isObject(o)) {
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
+            }
+            return Type.objectValue(o).ownPropertyKeys();
+        }
+
+        /**
+         * 15.2.3.16 Object.is ( value1, value2 )
+         */
+        @Function(name = "is", arity = 2)
+        public static Object is(Realm realm, Object thisValue, Object value1, Object value2) {
+            return SameValue(value1, value2);
+        }
+
+        /**
+         * 15.2.3.17 Object.assign ( target, source )
+         */
+        @Function(name = "assign", arity = 2)
+        public static Object assign(Realm realm, Object thisValue, Object target, Object source) {
+            throw new IllegalStateException("NYI");
+        }
+
+        /**
+         * 15.2.3.18 Object.mixin ( target, source )
+         */
+        @Function(name = "mixin", arity = 2)
+        public static Object mixin(Realm realm, Object thisValue, Object target, Object source) {
+            throw new IllegalStateException("NYI");
         }
     }
 
