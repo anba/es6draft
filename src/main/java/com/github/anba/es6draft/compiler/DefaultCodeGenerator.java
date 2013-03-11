@@ -692,7 +692,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                     Type.getMethodDescriptor(Types.RuntimeInfo$Function));
             mv.load(Register.ExecutionContext);
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
-        } else {
+        } else if (def.getHeritage() != null) {
             // default constructor
             // stack: [ctor, proto] -> [proto, F]
             mv.dupX1();
