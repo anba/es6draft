@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.MakeObjectSecure;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
@@ -23,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.StopIterationObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 
@@ -46,7 +46,7 @@ public class ListIterator<T> extends OrdinaryObject implements Scriptable {
         @Override
         public void initialise(Realm realm) {
             createProperties(this, realm, Properties.class);
-            MakeObjectSecure(realm, this, true);
+            setIntegrity(IntegrityLevel.Frozen);
         }
     }
 
@@ -54,7 +54,7 @@ public class ListIterator<T> extends OrdinaryObject implements Scriptable {
         ListIterator<T> itr = new ListIterator<>(realm, iterator);
         // createProperties(itr, realm, Properties.class);
         itr.setPrototype(realm.getIntrinsic(Intrinsics.ListIteratorPrototype));
-        itr.preventExtensions();
+        itr.setIntegrity(IntegrityLevel.NonExtensible);
         return itr;
     }
 

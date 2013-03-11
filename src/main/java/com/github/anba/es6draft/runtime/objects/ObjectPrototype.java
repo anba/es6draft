@@ -211,7 +211,7 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(Realm realm, Object thisValue, Object p) {
             Scriptable o = ToObject(realm, thisValue);
-            if (!o.isExtensible()) {
+            if (!IsExtensible(o)) {
                 throwTypeError(realm, Messages.Key.NotExtensible);
             }
             if (Type.isNull(p)) {

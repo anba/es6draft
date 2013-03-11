@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.CompletePropertyDescriptor;
@@ -19,6 +22,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
@@ -169,62 +173,67 @@ public class ExoticProxy implements Scriptable {
             return target.setPrototype(prototype);
         }
         boolean trapResult = ToBoolean(trap.call(handler, target, maskNull(prototype)));
-        Callable getProtoTrap = GetMethod(realm, handler, "getPrototypeOf");
-        if (getProtoTrap == null) {
-            return trapResult;
-        }
-        Object getProtoResult = getProtoTrap.call(handler, target);
         Scriptable targetProto = target.getPrototype();
-        if (!SameValue(getProtoResult, maskNull(targetProto))) {
+        if (trapResult && !SameValue(maskNull(prototype), maskNull(targetProto))) {
             throw throwTypeError(realm, Messages.Key.ProxySameValue);
         }
         return trapResult;
     }
 
     /**
-     * 8.5.3 [[IsExtensible]] ( )
+     * 8.5.3 [[HasIntegrity]] ( Level )
      */
     @Override
-    public boolean isExtensible() {
+    public boolean hasIntegrity(IntegrityLevel level) {
         Scriptable handler = proxyHandler;
         Scriptable target = proxyTarget;
-        Callable trap = GetMethod(realm, handler, "isExtensible");
+        String trapName;
+        if (level == IntegrityLevel.NonExtensible) {
+            trapName = "isExtensible";
+        } else if (level == IntegrityLevel.Sealed) {
+            trapName = "isSealed";
+        } else {
+            trapName = "isFrozen";
+        }
+        Callable trap = GetMethod(realm, handler, trapName);
         if (trap == null) {
-            return target.isExtensible();
+            return target.hasIntegrity(level);
         }
         Object trapResult = trap.call(handler, target);
-        boolean proxyIsExtensible = ToBoolean(trapResult);
-        boolean targetIsExtensible = target.isExtensible();
-        if (proxyIsExtensible != targetIsExtensible) {
+        boolean booleanTrapResult = ToBoolean(trapResult);
+        boolean targetResult = target.hasIntegrity(level);
+        if (booleanTrapResult != targetResult) {
             throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
         }
-        return proxyIsExtensible;
+        return booleanTrapResult;
     }
 
     /**
-     * 8.5.4 [[PreventExtensions]] ( )
+     * 8.5.4 [[SetIntegrity]] ( Level )
      */
     @Override
-    public void preventExtensions() {
+    public boolean setIntegrity(IntegrityLevel level) {
         Scriptable handler = proxyHandler;
         Scriptable target = proxyTarget;
-        Callable trap = GetMethod(realm, handler, "preventExtensions");
+        String trapName;
+        if (level == IntegrityLevel.NonExtensible) {
+            trapName = "preventExtensions";
+        } else if (level == IntegrityLevel.Sealed) {
+            trapName = "seal";
+        } else {
+            trapName = "freeze";
+        }
+        Callable trap = GetMethod(realm, handler, trapName);
         if (trap == null) {
-            target.preventExtensions();
-            return;
+            return target.setIntegrity(level);
         }
-        @SuppressWarnings("unused")
         Object trapResult = trap.call(handler, target);
-        Callable isTrap = GetMethod(realm, handler, "isExtensible");
-        if (isTrap == null) {
-            return;
-        }
-        Object isTrapResult = isTrap.call(handler, target);
-        boolean proxyIsExtensible = ToBoolean(isTrapResult);
-        boolean targetIsExtensible = target.isExtensible();
-        if (proxyIsExtensible != targetIsExtensible) {
+        boolean booleanTrapResult = ToBoolean(trapResult);
+        boolean targetResult = target.hasIntegrity(level);
+        if (booleanTrapResult != targetResult) {
             throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
         }
+        return booleanTrapResult;
     }
 
     /**
@@ -261,13 +270,13 @@ public class ExoticProxy implements Scriptable {
                 if (!targetDesc.isConfigurable()) {
                     throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
                 }
-                boolean extensibleTarget = target.isExtensible();
+                boolean extensibleTarget = IsExtensible(target);
                 if (!extensibleTarget) {
                     throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
                 }
             }
         } else {
-            boolean extensibleTarget = target.isExtensible();
+            boolean extensibleTarget = IsExtensible(target);
             if (extensibleTarget) {
                 return success;
             }
@@ -318,14 +327,14 @@ public class ExoticProxy implements Scriptable {
             if (!targetDesc.isConfigurable()) {
                 throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
             }
-            boolean extensibleTarget = target.isExtensible();
+            boolean extensibleTarget = IsExtensible(target);
             if (!extensibleTarget) {
                 throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
             }
             return null;
         }
         // TODO: side-effect in isExtensible()?
-        boolean extensibleTarget = target.isExtensible();
+        boolean extensibleTarget = IsExtensible(target);
         PropertyDescriptor resultDesc = ToPropertyDescriptor(realm, trapResultObj);
         CompletePropertyDescriptor(resultDesc, targetDesc);
         boolean valid = IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc);
@@ -333,7 +342,7 @@ public class ExoticProxy implements Scriptable {
             throw throwTypeError(realm, Messages.Key.ProxyIncompatibleDescriptor);
         }
         if (!resultDesc.isConfigurable()) {
-            if (targetDesc != null && targetDesc.isConfigurable()) {
+            if (targetDesc == null || targetDesc.isConfigurable()) {
                 throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
             }
         }
@@ -375,7 +384,7 @@ public class ExoticProxy implements Scriptable {
         // TODO: need copy b/c of side-effects?
         Property targetDesc = __getOwnProperty(target, propertyKey);
         // TODO: side-effect in isExtensible()?
-        boolean extensibleTarget = target.isExtensible();
+        boolean extensibleTarget = IsExtensible(target);
         if (targetDesc == null) {
             if (!extensibleTarget) {
                 throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
@@ -428,7 +437,7 @@ public class ExoticProxy implements Scriptable {
                 if (!targetDesc.isConfigurable()) {
                     throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
                 }
-                boolean extensibleTarget = target.isExtensible();
+                boolean extensibleTarget = IsExtensible(target);
                 if (!extensibleTarget) {
                     throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
                 }
@@ -594,7 +603,7 @@ public class ExoticProxy implements Scriptable {
     public Scriptable ownPropertyKeys() {
         Scriptable handler = proxyHandler;
         Scriptable target = proxyTarget;
-        Callable trap = GetMethod(realm, handler, "ownPropertyKeys");
+        Callable trap = GetMethod(realm, handler, "ownKeys");
         if (trap == null) {
             return target.ownPropertyKeys();
         }
@@ -603,39 +612,6 @@ public class ExoticProxy implements Scriptable {
             throw throwTypeError(realm, Messages.Key.ProxyNotObject);
         }
         return Type.objectValue(trapResult);
-    }
-
-    /**
-     * 8.5.14 [[Freeze]] ()
-     */
-    @Override
-    public void freeze() {
-        // FIXME: spec bug (boolean argument should be `true`) (bug 1208)
-        MakeObjectSecure(realm, this, true);
-    }
-
-    /**
-     * 8.5.15 [[Seal]] ()
-     */
-    @Override
-    public void seal() {
-        MakeObjectSecure(realm, this, false);
-    }
-
-    /**
-     * 8.5.16 [[IsFrozen]] ()
-     */
-    @Override
-    public boolean isFrozen() {
-        return TestIfSecureObject(realm, this, true);
-    }
-
-    /**
-     * 8.5.17 [[IsSealed]] ()
-     */
-    @Override
-    public boolean isSealed() {
-        return TestIfSecureObject(realm, this, false);
     }
 
 }

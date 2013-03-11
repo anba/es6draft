@@ -471,6 +471,14 @@ public final class AbstractOperations {
     }
 
     /**
+     * 9.2.7 IsExtensible (O)
+     */
+    public static boolean IsExtensible(Scriptable object) {
+        boolean notExtensible = object.hasIntegrity(IntegrityLevel.NonExtensible);
+        return !notExtensible;
+    }
+
+    /**
      * 9.3.1 Get (O, P)
      */
     public static Object Get(Scriptable object, String propertyKey) {
@@ -510,8 +518,8 @@ public final class AbstractOperations {
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
     public static boolean CreateOwnDataProperty(Scriptable object, String propertyKey, Object value) {
-        boolean extensible = object.isExtensible();
-        if (!extensible) {
+        boolean notExtensible = object.hasIntegrity(IntegrityLevel.NonExtensible);
+        if (notExtensible) {
             return false;
         }
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
@@ -522,8 +530,8 @@ public final class AbstractOperations {
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
     public static boolean CreateOwnDataProperty(Scriptable object, Symbol propertyKey, Object value) {
-        boolean extensible = object.isExtensible();
-        if (!extensible) {
+        boolean notExtensible = object.hasIntegrity(IntegrityLevel.NonExtensible);
+        if (notExtensible) {
             return false;
         }
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
@@ -653,14 +661,16 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.9 MakeObjectSecure (O, immutable)
+     * 9.3.9 SetIntegrityLevel (O, level)
      */
-    public static void MakeObjectSecure(Realm realm, Scriptable object, boolean immutable) {
+    public static boolean SetIntegrityLevel(Realm realm, Scriptable object, IntegrityLevel level) {
+        /* step 1-2 */
+        assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* step 3-4 */
         Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys());
         /* step 5 */
         ScriptException pendingException = null;
-        if (!immutable) {
+        if (level == IntegrityLevel.Sealed) {
             /* step 6 */
             PropertyDescriptor nonConfigurable = new PropertyDescriptor();
             nonConfigurable.setConfigurable(false);
@@ -724,15 +734,18 @@ public final class AbstractOperations {
             throw pendingException;
         }
         /* step 9 */
-        object.preventExtensions();
+        // FIXME: spec bug ([[PreventExtensions]] -> [[SetIntegrity]] change missing)
+        return object.setIntegrity(IntegrityLevel.NonExtensible);
     }
 
     /**
-     * 9.3.10 TestIfSecureObject (O, immutable)
+     * 9.3.10 TestIntegrityLevel (O, level)
      */
-    public static boolean TestIfSecureObject(Realm realm, Scriptable object, boolean immutable) {
+    public static boolean TestIntegrityLevel(Realm realm, Scriptable object, IntegrityLevel level) {
+        /* step 1-2 */
+        assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* step 3-4 */
-        boolean status = object.isExtensible();
+        boolean status = IsExtensible(object);
         /* step 5-6 */
         if (status) {
             return false;
@@ -741,15 +754,14 @@ public final class AbstractOperations {
         Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys());
         /* step 9 */
         ScriptException pendingException = null;
-        /* step 10 -> FIXME: spec bug (indentation) */
-        /* step 11 */
+        /* step 10 */
         boolean configurable = false;
-        /* step 12 */
+        /* step 11 */
         boolean writable = false;
         while (keys.hasNext()) {
             // FIXME: spec bug? (missing call to ToPropertyKey()?)
             Object key = ToPropertyKey(realm, keys.next());
-            /* step 13 */
+            /* step 12 */
             try {
                 Property currentDesc;
                 if (key instanceof String) {
@@ -771,19 +783,19 @@ public final class AbstractOperations {
                 configurable = true;
             }
         }
-        /* step 14 */
+        /* step 13 */
         if (pendingException != null) {
             throw pendingException;
         }
-        /* step 15 */
-        if (immutable && writable) {
+        /* step 14 */
+        if (level == IntegrityLevel.Frozen && writable) {
             return false;
         }
-        /* step 16 */
+        /* step 15 */
         if (configurable) {
             return false;
         }
-        /* step 17 */
+        /* step 16 */
         return true;
     }
 

@@ -6,18 +6,19 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Symbol;
@@ -40,7 +41,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
     @Override
     public void initialise(Realm realm) {
         setPrototype(null);
-        preventExtensions();
+        setIntegrity(IntegrityLevel.NonExtensible);
 
         createProperties(this, realm, ReflectedFunctions.class);
     }
@@ -80,7 +81,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(Realm realm, Object thisValue, Object target) {
             Scriptable obj = ToObject(realm, target);
-            return obj.isExtensible();
+            return IsExtensible(obj);
         }
 
         /**
@@ -89,8 +90,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(Realm realm, Object thisValue, Object target) {
             Scriptable obj = ToObject(realm, target);
-            obj.preventExtensions();
-            return UNDEFINED;
+            return obj.setIntegrity(IntegrityLevel.NonExtensible);
         }
 
         /**
@@ -131,7 +131,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
                 Object propertyKey) {
             Scriptable obj = ToObject(realm, target);
             Object key = ToPropertyKey(realm, propertyKey);
-            // FIXME: spec bug [[DefineOwnProperty]] return value returned as-is!
+            // FIXME: spec bug [[GetOwnProperty]] return value returned as-is!
             if (key instanceof String) {
                 return obj.getOwnProperty((String) key);
             } else {
@@ -238,8 +238,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "freeze", arity = 1)
         public static Object freeze(Realm realm, Object thisValue, Object target) {
             Scriptable obj = ToObject(realm, target);
-            obj.freeze();
-            return UNDEFINED;
+            return obj.setIntegrity(IntegrityLevel.Frozen);
         }
 
         /**
@@ -248,8 +247,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "seal", arity = 1)
         public static Object seal(Realm realm, Object thisValue, Object target) {
             Scriptable obj = ToObject(realm, target);
-            obj.seal();
-            return UNDEFINED;
+            return obj.setIntegrity(IntegrityLevel.Sealed);
         }
 
         /**
@@ -258,7 +256,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "isFrozen", arity = 1)
         public static Object isFrozen(Realm realm, Object thisValue, Object target) {
             Scriptable obj = ToObject(realm, target);
-            return obj.isFrozen();
+            return obj.hasIntegrity(IntegrityLevel.Frozen);
         }
 
         /**
@@ -267,7 +265,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "isSealed", arity = 1)
         public static Object isSealed(Realm realm, Object thisValue, Object target) {
             Scriptable obj = ToObject(realm, target);
-            return obj.isSealed();
+            return obj.hasIntegrity(IntegrityLevel.Sealed);
         }
     }
 }

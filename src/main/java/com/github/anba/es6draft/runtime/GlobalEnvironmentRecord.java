@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -170,17 +172,14 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         if (objectEnv.hasBinding(name)) {
             return true;
         }
-        if (globalObject.isExtensible()) {
-            return true;
-        }
-        return false;
+        return IsExtensible(globalObject);
     }
 
     /**
      * 10.2.1.4.15 CanDeclareGlobalFunction (N)
      */
     public boolean canDeclareGlobalFunction(String name) {
-        boolean extensible = globalObject.isExtensible();
+        boolean extensible = IsExtensible(globalObject);
         if (!objectEnv.hasBinding(name)) {
             return extensible;
         }

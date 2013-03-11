@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
@@ -80,18 +81,19 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
     }
 
     /**
-     * 8.4.4.3 [[IsExtensible]] ( )
+     * 8.4.4.3 [[HasIntegrity]] ( Level )
      */
     @Override
-    public boolean isExtensible() {
-        return false;
+    public boolean hasIntegrity(IntegrityLevel level) {
+        return true;
     }
 
     /**
-     * 8.4.4.4 [[PreventExtensions]] ( )
+     * 8.4.4.4 [[setIntegrity]] ( Level )
      */
     @Override
-    public void preventExtensions() {
+    public boolean setIntegrity(IntegrityLevel level) {
+        return true;
     }
 
     /**
@@ -227,37 +229,4 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
         // FIXME: spec incomplete
         throw new IllegalStateException("NYI");
     }
-
-    /**
-     * 8.4.4.14 [[Freeze]] ( )
-     */
-    @Override
-    public void freeze() {
-        // FIXME: spec bug (return type)
-    }
-
-    /**
-     * 8.4.4.15 [[Seal]] ( )
-     */
-    @Override
-    public void seal() {
-        // FIXME: spec bug (return type)
-    }
-
-    /**
-     * 8.4.4.16 [[IsFrozen]] ( )
-     */
-    @Override
-    public boolean isFrozen() {
-        return true;
-    }
-
-    /**
-     * 8.4.4.17 [[IsSealed]] ( )
-     */
-    @Override
-    public boolean isSealed() {
-        return true;
-    }
-
 }

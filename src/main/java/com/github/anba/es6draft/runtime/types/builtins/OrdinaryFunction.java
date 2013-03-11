@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
@@ -189,7 +190,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
         f.defineOwnProperty("length", new PropertyDescriptor(0, false, false, false));
         f.defineOwnProperty("name", new PropertyDescriptor("ThrowTypeError", false, false, false));
         /* step 10 */
-        f.preventExtensions();
+        f.setIntegrity(IntegrityLevel.NonExtensible);
 
         return f;
     }
@@ -248,7 +249,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     }
 
     /**
-     * 8.3.19.1 [[Call]] Internal Method
+     * 8.3.15.1 [[Call]] Internal Method
      */
     @Override
     public Object call(Object thisValue, Object... args) {
@@ -264,7 +265,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     }
 
     /**
-     * 8.3.19.2 [[Construct]] Internal Method
+     * 8.3.15.2 [[Construct]] Internal Method
      */
     @Override
     public Object construct(Object... args) {
@@ -272,17 +273,17 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     }
 
     /**
-     * 8.3.19.2.1 OrdinaryConstruct (F, argumentsList, fallBackProto)
+     * 8.3.15.2.1 OrdinaryConstruct (F, argumentsList)
      */
     public static <FUNCTION extends Scriptable & Callable & Constructor> Object OrdinaryConstruct(
             Realm realm, FUNCTION f, Object[] args) {
         Object creator = Get(f, BuiltinSymbol.create.get());
         Object obj;
         if (!Type.isUndefined(creator)) {
-            // FIXME: spec bug (assert creator IsCallable) (bug 1206)
-            assert creator instanceof Callable;
+            if (!IsCallable(creator)) {
+                throw throwTypeError(realm, Messages.Key.NotCallable);
+            }
             obj = ((Callable) creator).call(f);
-            // FIXME: spec bug? assert obj instanceof Scriptable?) (bug 1206)
         } else {
             obj = OrdinaryCreateFromConstructor(realm, f, Intrinsics.ObjectPrototype);
         }
@@ -294,7 +295,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     }
 
     /**
-     * 8.3.19.3 [[Get]] (P, Receiver)
+     * 8.3.15.3 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(String propertyKey, Object receiver) {
@@ -308,8 +309,9 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
         return v;
     }
 
+    // FIXME: spec bug (caption not updated from 8.3.19.4 to 8.3.15.4)
     /**
-     * 8.3.19.4 [[GetOwnProperty]] (P)
+     * 8.3.15.4 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(String propertyKey) {

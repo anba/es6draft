@@ -502,9 +502,9 @@ public final class ScriptRuntime {
             rawObj.defineOwnProperty(prop, new PropertyDescriptor(rawValue, false, true, false));
         }
         /* step 9-11 */
-        rawObj.freeze();
+        rawObj.setIntegrity(IntegrityLevel.Frozen);
         siteObj.defineOwnProperty("raw", new PropertyDescriptor(rawObj, false, false, false));
-        siteObj.freeze();
+        siteObj.setIntegrity(IntegrityLevel.Frozen);
         /* step 12 */
         realm.addTemplateCallSite(key, siteObj);
 
