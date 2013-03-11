@@ -6,10 +6,13 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
+
 import java.util.Collection;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
@@ -171,6 +174,17 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
         ExoticString obj = new ExoticString(realm);
         // step 8
         obj.setPrototype(prototype);
+        return obj;
+    }
+
+    /**
+     * Custom helper function
+     */
+    public static ExoticString StringCreate(Realm realm, CharSequence stringData) {
+        ExoticString obj = StringCreate(realm, realm.getIntrinsic(Intrinsics.StringPrototype));
+        DefinePropertyOrThrow(realm, obj, "length", new PropertyDescriptor(stringData.length(),
+                false, false, false));
+        obj.setStringData(stringData);
         return obj;
     }
 
