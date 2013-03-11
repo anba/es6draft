@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -154,7 +155,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
                 return false;
             }
             /* step 2 */
-            if (Type.objectValue(arg).getBuiltinBrand() == BuiltinBrand.BuiltinArray) {
+            if (arg instanceof ExoticArray) {
                 return true;
             }
             /* step 3 */
@@ -193,12 +194,21 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
         }
 
         /**
-         * 15.4.3.4 Array.from ( arrayLike )
+         * 15.4.3.4 Array.from ( arrayLike, mapfn=undefined, thisArg=undefined )
          */
         @Function(name = "from", arity = 1)
-        public static Object from(Realm realm, Object thisValue, Object arrayLike) {
+        public static Object from(Realm realm, Object thisValue, Object arrayLike, Object mapfn,
+                Object thisArg) {
             /* step 1-2 */
             Scriptable items = ToObject(realm, arrayLike);
+            // FIXME: spec bug (mapfn and thisArg unused)
+            Callable mapper = null;
+            if (!Type.isUndefined(mapfn)) {
+                if (!IsCallable(mapfn)) {
+                    throw throwTypeError(realm, Messages.Key.NotCallable);
+                }
+                mapper = (Callable) mapfn;
+            }
             /* step 3 */
             Object lenValue = Get(items, "length");
             /* step 4-5 */
@@ -221,6 +231,9 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
                 boolean kPresent = HasProperty(items, pk);
                 if (kPresent) {
                     Object kValue = Get(items, pk);
+                    if (mapper != null) {
+                        kValue = mapper.call(thisArg, kValue);
+                    }
                     // FIXME: spec bug (Bug 1139)
                     DefinePropertyOrThrow(realm, a, pk, new PropertyDescriptor(kValue, true, true,
                             true));
