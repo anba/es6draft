@@ -78,11 +78,6 @@ class IsValidSimpleAssignmentTarget extends StaticSemanticsVisitor<Boolean, Bool
         return true;
     }
 
-    // @Override
-    // public Boolean visit(ParenthesisedExpression node, Boolean strict) {
-    // return node.getExpression().accept(this, strict);
-    // }
-
     @Override
     public Boolean visit(ElementAccessor node, Boolean strict) {
         return true;
@@ -95,12 +90,12 @@ class IsValidSimpleAssignmentTarget extends StaticSemanticsVisitor<Boolean, Bool
 
     @Override
     public Boolean visit(SuperExpression node, Boolean strict) {
-        return true;
+        return (node.getName() != null || node.getExpression() != null);
     }
 
     @Override
     public Boolean visit(CallExpression node, Boolean strict) {
-        return true;
+        return false;
     }
 
     @Override

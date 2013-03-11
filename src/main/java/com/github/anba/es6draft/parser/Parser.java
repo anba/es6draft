@@ -2720,6 +2720,9 @@ public class Parser {
         throw reportSyntaxError(Messages.Key.InvalidForInOfHead);
     }
 
+    /**
+     * Static Semantics: IsValidSimpleAssignmentTarget
+     */
     private LeftHandSideExpression validateSimpleAssignment(Expression lhs) {
         if (lhs instanceof Identifier) {
             if (context.strictMode != StrictMode.NonStrict) {
@@ -2733,30 +2736,22 @@ public class Parser {
             return (ElementAccessor) lhs;
         } else if (lhs instanceof PropertyAccessor) {
             return (PropertyAccessor) lhs;
-        } else if (lhs instanceof CallExpression) {
-            // allowed, but runtime-error
-            return (CallExpression) lhs;
         } else if (lhs instanceof SuperExpression) {
-            return (SuperExpression) lhs;
+            SuperExpression superExpr = (SuperExpression) lhs;
+            if (superExpr.getExpression() != null || superExpr.getName() != null) {
+                return superExpr;
+            }
         }
         // everything else => invalid lhs
         return null;
     }
 
+    /**
+     * Static Semantics: IsValidSimpleAssignmentTarget
+     */
     private LeftHandSideExpression validateAssignment(Expression lhs) {
-        if (lhs instanceof Identifier) {
-            if (context.strictMode != StrictMode.NonStrict) {
-                String name = ((Identifier) lhs).getName();
-                if ("eval".equals(name) || "arguments".equals(name)) {
-                    reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidAssignmentTarget);
-                }
-            }
-            return (Identifier) lhs;
-        } else if (lhs instanceof ElementAccessor) {
-            return (ElementAccessor) lhs;
-        } else if (lhs instanceof PropertyAccessor) {
-            return (PropertyAccessor) lhs;
-        } else if (lhs instanceof ObjectLiteral) {
+        // rewrite object/array literal to destructuring form
+        if (lhs instanceof ObjectLiteral) {
             ObjectAssignmentPattern pattern = toDestructuring((ObjectLiteral) lhs);
             if (lhs.isParenthesised()) {
                 pattern.addParentheses();
@@ -2768,14 +2763,8 @@ public class Parser {
                 pattern.addParentheses();
             }
             return pattern;
-        } else if (lhs instanceof CallExpression) {
-            // allowed, but runtime-error
-            return (CallExpression) lhs;
-        } else if (lhs instanceof SuperExpression) {
-            return (SuperExpression) lhs;
         }
-        // everything else => invalid lhs
-        return null;
+        return validateSimpleAssignment(lhs);
     }
 
     private ObjectAssignmentPattern toDestructuring(ObjectLiteral object) {
@@ -2892,11 +2881,11 @@ public class Parser {
                 pattern.addParentheses();
             }
             return pattern;
-        } else if (lhs instanceof CallExpression) {
-            // allowed, but runtime-error
-            return (CallExpression) lhs;
         } else if (lhs instanceof SuperExpression) {
-            return (SuperExpression) lhs;
+            SuperExpression superExpr = (SuperExpression) lhs;
+            if (superExpr.getExpression() != null || superExpr.getName() != null) {
+                return superExpr;
+            }
         }
         // FIXME: spec bug (IsInvalidAssignmentPattern not defined)
         // everything else => invalid lhs
