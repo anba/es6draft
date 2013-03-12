@@ -46,7 +46,7 @@ public class BooleanObject extends OrdinaryObject implements Scriptable {
      * [[BooleanData]]
      */
     public void setBooleanData(boolean booleanData) {
-        assert !this.initialised : "NumberObject already initialised";
+        assert !this.initialised : "BooleanObject already initialised";
         this.initialised = true;
         this.booleanData = booleanData;
     }
