@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.DateAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -68,56 +69,76 @@ public class DateConstructor extends OrdinaryObject implements Scriptable, Calla
     }
 
     /**
-     * 15.9.2.1 Date ( [ year [, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] ] ] )
+     * 15.9.2.1 Date (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )<br>
+     * 15.9.2.2 Date (value)<br>
+     * 15.9.2.3 Date ( )<br>
      */
     @Override
     public Object call(Object thisValue, Object... args) {
+        Realm realm = realm();
+        int numberOfArgs = args.length;
+        if (numberOfArgs >= 2) {
+            // [15.9.2.1]
+            if (isUninitialisedDateObject(thisValue)) {
+                DateObject obj = (DateObject) thisValue;
+                double year = ToNumber(realm, args[0]);
+                double month = ToNumber(realm, args[1]);
+                double date = (args.length > 2 ? ToNumber(realm, args[2]) : 1);
+                double hour = (args.length > 3 ? ToNumber(realm, args[3]) : 0);
+                double min = (args.length > 4 ? ToNumber(realm, args[4]) : 0);
+                double sec = (args.length > 5 ? ToNumber(realm, args[5]) : 0);
+                double ms = (args.length > 6 ? ToNumber(realm, args[6]) : 0);
+                if (!Double.isNaN(year) && 0 <= ToInteger(realm, year)
+                        && ToInteger(realm, year) <= 99) {
+                    year = 1900 + ToInteger(realm, year);
+                }
+                double finalDate = MakeDate(MakeDay(year, month, date),
+                        MakeTime(hour, min, sec, ms));
+                obj.setDateValue(TimeClip(UTC(realm, finalDate)));
+                return obj;
+            }
+        } else if (numberOfArgs == 1) {
+            // [15.9.2.2]
+            if (isUninitialisedDateObject(thisValue)) {
+                DateObject obj = (DateObject) thisValue;
+                Object v = ToPrimitive(realm, args[0]);
+                double d;
+                if (Type.isString(v)) {
+                    d = (double) Properties.parse(realm, null, v);
+                } else {
+                    d = ToNumber(realm, v);
+                }
+                obj.setDateValue(TimeClip(d));
+                return obj;
+            }
+        } else {
+            // [15.9.2.3]
+            if (isUninitialisedDateObject(thisValue)) {
+                DateObject obj = (DateObject) thisValue;
+                obj.setDateValue(System.currentTimeMillis());
+                return obj;
+            }
+        }
         long now = System.currentTimeMillis();
-        DateObject obj = new DateObject(realm(), now);
+        DateObject obj = new DateObject(realm());
         obj.setPrototype(realm().getIntrinsic(Intrinsics.DatePrototype));
+        obj.setDateValue(now);
         return DatePrototype.Properties.toString(realm(), obj);
     }
 
+    private static boolean isUninitialisedDateObject(Object thisValue) {
+        if (thisValue instanceof DateObject) {
+            return !((DateObject) thisValue).isInitialised();
+        }
+        return false;
+    }
+
     /**
-     * 15.9.3.1 new Date (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )<br>
-     * 15.9.3.2 new Date (value)<br>
-     * 15.9.3.3 new Date ( )<br>
+     * 15.9.3.1 new Date ( ...args )
      */
     @Override
     public Object construct(Object... args) {
-        Realm realm = realm();
-        double dateValue = 0;
-        if (args.length >= 2) {
-            // 15.9.3.1
-            double year = ToNumber(realm, args[0]);
-            double month = ToNumber(realm, args[1]);
-            double date = (args.length > 2 ? ToNumber(realm, args[2]) : 1);
-            double hour = (args.length > 3 ? ToNumber(realm, args[3]) : 0);
-            double min = (args.length > 4 ? ToNumber(realm, args[4]) : 0);
-            double sec = (args.length > 5 ? ToNumber(realm, args[5]) : 0);
-            double ms = (args.length > 6 ? ToNumber(realm, args[6]) : 0);
-            if (!Double.isNaN(year) && 0 <= ToInteger(realm, year) && ToInteger(realm, year) <= 99) {
-                year = 1900 + ToInteger(realm, year);
-            }
-            double finalDate = MakeDate(MakeDay(year, month, date), MakeTime(hour, min, sec, ms));
-            dateValue = TimeClip(UTC(realm, finalDate));
-        } else if (args.length == 1) {
-            // 15.9.3.2
-            Object v = ToPrimitive(realm, args[0]);
-            double d;
-            if (Type.isString(v)) {
-                d = (double) Properties.parse(realm, null, v);
-            } else {
-                d = ToNumber(realm, v);
-            }
-            dateValue = TimeClip(d);
-        } else {
-            // 15.9.3.3
-            dateValue = System.currentTimeMillis();
-        }
-        DateObject obj = new DateObject(realm, dateValue);
-        obj.setPrototype(realm.getIntrinsic(Intrinsics.DatePrototype));
-        return obj;
+        return OrdinaryConstruct(realm(), this, args);
     }
 
     /**
@@ -194,17 +215,17 @@ public class DateConstructor extends OrdinaryObject implements Scriptable, Calla
             return (double) System.currentTimeMillis();
         }
 
-        // FIXME: spec bug (15.9.4.5 not present)
-
         /**
-         * 15.9.4.6 @@create ( )
+         * 15.9.4.5 Date[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             Scriptable obj = OrdinaryCreateFromConstructor(realm, thisValue,
                     Intrinsics.DatePrototype);
-            // FIXME: spec bug (NativeBrand instead of BuiltinBrand)
-            // obj.[[DateValue]] = ?; (implicit)
             return obj;
         }
     }
