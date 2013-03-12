@@ -7,13 +7,23 @@
 package com.github.anba.es6draft.runtime.objects.intl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.CanonicalizeLocaleList;
+import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.getStringOption;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -40,6 +50,16 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public class NumberFormatConstructor extends OrdinaryObject implements Scriptable, Callable,
         Constructor, Initialisable {
+    /**
+     * [[availableLocales]]
+     */
+    private List<Locale> availableLocales = asList(Locale.ENGLISH);
+
+    /**
+     * [[relevantExtensionKeys]]
+     */
+    private List<String> relevantExtensionKeys = asList("nu");
+
     public NumberFormatConstructor(Realm realm) {
         super(realm);
     }
@@ -63,11 +83,32 @@ public class NumberFormatConstructor extends OrdinaryObject implements Scriptabl
         return "function NumberFormat() { /* native code */ }";
     }
 
+    @SafeVarargs
+    private static <T> Set<T> set(T... elements) {
+        return new HashSet<>(Arrays.asList(elements));
+    }
+
     /**
      * 11.1.1.1 InitializeNumberFormat (numberFormat, locales, options)
      */
-    public static void InitializeNumberFormat(Scriptable numberFormat, Object locales,
-            Object options) {
+    public static void InitializeNumberFormat(Realm realm, Scriptable obj, Object locales,
+            Object opts) {
+        if (!(obj instanceof NumberFormatObject)) {
+            throwTypeError(realm, Messages.Key.IncompatibleObject);
+        }
+        NumberFormatObject numberFormat = (NumberFormatObject) obj;
+        if (numberFormat.isInitializedIntlObject()) {
+            throwTypeError(realm, Messages.Key.IncompatibleObject);
+        }
+        Set<String> requestedLocales = CanonicalizeLocaleList(realm, locales);
+        Scriptable options;
+        if (Type.isUndefined(opts)) {
+            options = ObjectCreate(realm);
+        } else {
+            options = ToObject(realm, opts);
+        }
+        String matcher = getStringOption(realm, options, "localeMatcher",
+                set("lookup", "best fit"), "best fit");
 
     }
 
@@ -82,10 +123,10 @@ public class NumberFormatConstructor extends OrdinaryObject implements Scriptabl
             return construct(args);
         }
         Scriptable obj = ToObject(realm(), thisValue);
-        if (!obj.isExtensible()) {
+        if (!IsExtensible(obj)) {
             throwTypeError(realm(), Messages.Key.NotExtensible);
         }
-        InitializeNumberFormat(obj, locales, options);
+        InitializeNumberFormat(realm(), obj, locales, options);
         return obj;
     }
 
@@ -98,7 +139,7 @@ public class NumberFormatConstructor extends OrdinaryObject implements Scriptabl
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         NumberFormatObject obj = new NumberFormatObject(realm());
         obj.setPrototype(realm().getIntrinsic(Intrinsics.Intl_NumberFormatPrototype));
-        InitializeNumberFormat(obj, locales, options);
+        InitializeNumberFormat(realm(), obj, locales, options);
         return obj;
     }
 
