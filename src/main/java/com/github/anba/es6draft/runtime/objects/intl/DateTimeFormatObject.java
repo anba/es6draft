@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.intl;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -17,7 +18,38 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class DateTimeFormatObject extends OrdinaryObject implements Scriptable {
+    /**
+     * [[boundFormat]]
+     */
+    private Callable boundFormat;
+
     public DateTimeFormatObject(Realm realm) {
         super(realm);
+    }
+
+    /**
+     * [[boundFormat]]
+     */
+    public boolean hasBoundFormat() {
+        return boundFormat != null;
+    }
+
+    /**
+     * [[boundFormat]]
+     */
+    public Callable getBoundFormat() {
+        return boundFormat;
+    }
+
+    /**
+     * [[boundFormat]]
+     */
+    public void setBoundFormat(Callable boundFormat) {
+        this.boundFormat = boundFormat;
+    }
+
+    public String getLocale() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

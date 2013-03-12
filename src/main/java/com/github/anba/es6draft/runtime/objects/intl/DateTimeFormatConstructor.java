@@ -7,13 +7,18 @@
 package com.github.anba.es6draft.runtime.objects.intl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+
+import java.util.List;
+import java.util.Locale;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -40,6 +45,16 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public class DateTimeFormatConstructor extends OrdinaryObject implements Scriptable, Callable,
         Constructor, Initialisable {
+    /**
+     * [[availableLocales]]
+     */
+    private List<Locale> availableLocales = asList(Locale.ENGLISH);
+
+    /**
+     * [[relevantExtensionKeys]]
+     */
+    private List<String> relevantExtensionKeys = asList("ca", "nu");
+
     public DateTimeFormatConstructor(Realm realm) {
         super(realm);
     }
@@ -82,7 +97,7 @@ public class DateTimeFormatConstructor extends OrdinaryObject implements Scripta
             return construct(args);
         }
         Scriptable obj = ToObject(realm(), thisValue);
-        if (!obj.isExtensible()) {
+        if (!IsExtensible(obj)) {
             throwTypeError(realm(), Messages.Key.NotExtensible);
         }
         InitializeDateTimeFormat(obj, locales, options);

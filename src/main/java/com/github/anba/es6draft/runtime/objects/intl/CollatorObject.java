@@ -17,7 +17,26 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class CollatorObject extends OrdinaryObject implements Scriptable {
+    /**
+     * [[initializedIntlObject]]
+     */
+    private boolean initialized;
+
     public CollatorObject(Realm realm) {
         super(realm);
+    }
+
+    /**
+     * [[initializedIntlObject]]
+     */
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    /**
+     * [[initializedIntlObject]]
+     */
+    public void setInitialized(boolean initialized) {
+        this.initialized = initialized;
     }
 }
