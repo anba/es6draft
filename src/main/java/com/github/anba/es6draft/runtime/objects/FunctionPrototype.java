@@ -165,7 +165,7 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
         }
 
         /**
-         * 15.3.4.6 @@create ( )
+         * 15.3.4.6 Function.prototype[ @@create ] ( )
          */
         @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create)
         public static Object create(Realm realm, Object thisValue) {
@@ -173,7 +173,7 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
         }
 
         /**
-         * 15.3.4.7 @@hasInstance (V)
+         * 15.3.4.7 Function.prototype[@@hasInstance] (V)
          */
         @Function(name = "@@hasInstance", arity = 1, symbol = BuiltinSymbol.hasInstance)
         public static Object hasInstance(Realm realm, Object thisValue, Object v) {
