@@ -9,7 +9,8 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
+import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.EscapeRegExpPattern;
+import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpInitialize;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.TestInitialisedOrThrow;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -19,16 +20,19 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -46,7 +50,6 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
 
     @Override
     public Scriptable newInstance(Realm realm) {
-        // create a new uninitialised RegExp object
         return new RegExpObject(realm);
     }
 
@@ -61,7 +64,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
     public enum Properties {
         ;
 
-        private static RegExpObject regexp(Realm realm, Object object) {
+        private static RegExpObject thisRegExpValue(Realm realm, Object object) {
             if (object instanceof RegExpObject) {
                 return TestInitialisedOrThrow(realm, (RegExpObject) object);
             }
@@ -87,29 +90,102 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "exec", arity = 1)
         public static Object exec(Realm realm, Object thisValue, Object string) {
-            RegExpObject r = regexp(realm, thisValue);
+            RegExpObject r = thisRegExpValue(realm, thisValue);
             CharSequence s = ToString(realm, string);
             return RegExpExec(realm, r, s);
         }
 
         /**
-         * 15.10.6.3 RegExp.prototype.test(string)
+         * 15.10.6.3 get RegExp.prototype.global
+         */
+        @Accessor(name = "global", type = Accessor.Type.Getter)
+        public static Object global(Realm realm, Object thisValue) {
+            RegExpObject r = thisRegExpValue(realm, thisValue);
+            return r.getOriginalFlags().indexOf('g') != -1;
+        }
+
+        /**
+         * 15.10.6.4 get RegExp.prototype.ignoreCase
+         */
+        @Accessor(name = "ignoreCase", type = Accessor.Type.Getter)
+        public static Object ignoreCase(Realm realm, Object thisValue) {
+            RegExpObject r = thisRegExpValue(realm, thisValue);
+            return r.getOriginalFlags().indexOf('i') != -1;
+        }
+
+        /**
+         * 15.10.6.5 get RegExp.prototype.multiline
+         */
+        @Accessor(name = "multiline", type = Accessor.Type.Getter)
+        public static Object multiline(Realm realm, Object thisValue) {
+            RegExpObject r = thisRegExpValue(realm, thisValue);
+            return r.getOriginalFlags().indexOf('m') != -1;
+        }
+
+        /**
+         * 15.10.6.6 get RegExp.prototype.source
+         */
+        @Accessor(name = "source", type = Accessor.Type.Getter)
+        public static Object source(Realm realm, Object thisValue) {
+            RegExpObject r = thisRegExpValue(realm, thisValue);
+            return EscapeRegExpPattern(realm, r.getOriginalSource(), r.getOriginalFlags());
+        }
+
+        /**
+         * 15.10.6.7 get RegExp.prototype.sticky
+         */
+        @Accessor(name = "sticky", type = Accessor.Type.Getter)
+        public static Object sticky(Realm realm, Object thisValue) {
+            RegExpObject r = thisRegExpValue(realm, thisValue);
+            return r.getOriginalFlags().indexOf('y') != -1;
+        }
+
+        /**
+         * 15.10.6.8 RegExp.prototype.test(string)
          */
         @Function(name = "test", arity = 1)
         public static Object test(Realm realm, Object thisValue, Object string) {
-            RegExpObject r = regexp(realm, thisValue);
+            RegExpObject r = thisRegExpValue(realm, thisValue);
             CharSequence s = ToString(realm, string);
             return getMatcherOrNull(realm, r, s) != null;
         }
 
         /**
-         * 15.10.6.4 RegExp.prototype.toString()
+         * 15.10.6.9 get RegExp.prototype.unicode
+         */
+        @Accessor(name = "unicode", type = Accessor.Type.Getter)
+        public static Object unicode(Realm realm, Object thisValue) {
+            RegExpObject r = thisRegExpValue(realm, thisValue);
+            return r.getOriginalFlags().indexOf('u') != -1;
+        }
+
+        /**
+         * 15.10.6.10 RegExp.prototype.toString()
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
-            RegExpObject r = regexp(realm, thisValue);
-            StringBuilder sb = new StringBuilder();
-            return sb.append('/').append(source(realm, r)).append('/').append(flags(r)).toString();
+            RegExpObject r = thisRegExpValue(realm, thisValue);
+            CharSequence source = ToString(realm, Get(r, "source"));
+            if (source.length() == 0) {
+                source = "(?:)";
+            }
+            StringBuilder sb = new StringBuilder().append('/').append(source).append('/');
+            if (ToBoolean(Get(r, "global"))) {
+                sb.append('g');
+            }
+            if (ToBoolean(Get(r, "ignoreCase"))) {
+                sb.append('i');
+            }
+            if (ToBoolean(Get(r, "multiline"))) {
+                sb.append('m');
+            }
+            if (ToBoolean(Get(r, "sticky"))) {
+                sb.append('y');
+            }
+            if (ToBoolean(Get(r, "unicode"))) {
+                sb.append('u');
+            }
+            return sb.toString();
         }
 
         /**
@@ -117,34 +193,11 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "compile", arity = 2)
         public static Object compile(Realm realm, Object thisValue, Object pattern, Object flags) {
-            RegExpObject r = regexp(realm, thisValue);
-            RegExpCreate(realm, r, pattern, flags);
-            return r;
+            RegExpObject r = thisRegExpValue(realm, thisValue);
+            String p = Type.isUndefined(pattern) ? "" : ToFlatString(realm, pattern);
+            String f = Type.isUndefined(flags) ? "" : ToFlatString(realm, flags);
+            return RegExpInitialize(realm, r, p, f);
         }
-    }
-
-    private static CharSequence source(Realm realm, RegExpObject obj) {
-        CharSequence source = ToString(realm, obj.getOwnProperty("source").getValue());
-        if (source.length() == 0) {
-            source = "(?:)";
-        }
-        return source;
-    }
-
-    private static String flags(RegExpObject obj) {
-        // TODO: possible to call obj.getFlags() directly?
-        char flags[] = { 0, 0, 0 };
-        int i = 0;
-        if (ToBoolean(obj.getOwnProperty("global").getValue())) {
-            flags[i++] = 'g';
-        }
-        if (ToBoolean(obj.getOwnProperty("ignoreCase").getValue())) {
-            flags[i++] = 'i';
-        }
-        if (ToBoolean(obj.getOwnProperty("multiline").getValue())) {
-            flags[i++] = 'm';
-        }
-        return new String(flags, 0, i);
     }
 
     /**
@@ -164,6 +217,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
      */
     public static Matcher getMatcherOrNull(Realm realm, RegExpObject r, CharSequence s) {
         assert r.isInitialised();
+        Pattern matcher = r.getRegExpMatcher();
         int length = s.length();
         Object lastIndex = Get(r, "lastIndex");
         double i = ToInteger(realm, lastIndex);
@@ -175,7 +229,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
             Put(realm, r, "lastIndex", 0, true);
             return null;
         }
-        Matcher m = r.getMatch().matcher(s);
+        Matcher m = matcher.matcher(s);
         boolean matchSucceeded = m.find((int) i);
         if (!matchSucceeded) {
             Put(realm, r, "lastIndex", 0, true);
@@ -199,7 +253,6 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
         int n = m.groupCount();
 
         Scriptable array = ArrayCreate(realm, 0);
-        // FIXME: spec bug (argument to [[DefineOwnProperty]]) (Bug 1151)
         array.defineOwnProperty("index", new PropertyDescriptor(matchIndex, true, true, true));
         array.defineOwnProperty("input", new PropertyDescriptor(s, true, true, true));
         array.defineOwnProperty("length", new PropertyDescriptor(n + 1));
@@ -207,9 +260,9 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
         CharSequence matchedSubstr = s.subSequence(matchIndex, e);
         array.defineOwnProperty("0", new PropertyDescriptor(matchedSubstr, true, true, true));
         Iterator<Object> iterator = newGroupIterator(r, m);
-        for (int j = 1; iterator.hasNext(); ++j) {
+        for (int i = 1; iterator.hasNext(); ++i) {
             Object capture = iterator.next();
-            array.defineOwnProperty(ToString(j), new PropertyDescriptor(capture, true, true, true));
+            array.defineOwnProperty(ToString(i), new PropertyDescriptor(capture, true, true, true));
         }
         return array;
     }

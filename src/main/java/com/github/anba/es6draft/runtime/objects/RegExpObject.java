@@ -22,45 +22,31 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class RegExpObject extends OrdinaryObject implements Scriptable {
-    private String pattern;
-    private String flags;
-    private BitSet negativeLAGroups;
+    /** [[OriginalSource]] */
+    private String originalSource = null;
 
-    /**
-     * [[Match]]
-     */
-    private Pattern match;
+    /** [[OriginalFlags]] */
+    private String originalFlags = null;
+
+    /** [[RegExpMatcher]] */
+    private Pattern regExpMatcher = null;
+
+    private BitSet negativeLAGroups;
 
     public RegExpObject(Realm realm) {
         super(realm);
-        /* uninitialised regexp object */
     }
 
-    public RegExpObject(Realm realm, String pattern, String flags, Pattern match,
+    protected void initialise(String originalSource, String originalFlags, Pattern match,
             BitSet negativeLAGroups) {
-        super(realm);
-        initialise(pattern, flags, match, negativeLAGroups);
-    }
-
-    protected void initialise(String pattern, String flags, Pattern match, BitSet negativeLAGroups) {
-        this.pattern = pattern;
-        this.flags = flags;
-        this.match = match;
+        this.originalSource = originalSource;
+        this.originalFlags = originalFlags;
+        this.regExpMatcher = match;
         this.negativeLAGroups = negativeLAGroups;
     }
 
     protected boolean isInitialised() {
-        return match != null;
-    }
-
-    protected String getPattern() {
-        assert pattern != null;
-        return pattern;
-    }
-
-    protected String getFlags() {
-        assert flags != null;
-        return flags;
+        return regExpMatcher != null;
     }
 
     protected BitSet getNegativeLookaheadGroups() {
@@ -69,11 +55,27 @@ public class RegExpObject extends OrdinaryObject implements Scriptable {
     }
 
     /**
-     * [[Match]]
+     * [[OriginalSource]]
      */
-    public Pattern getMatch() {
-        assert match != null;
-        return match;
+    public String getOriginalSource() {
+        assert originalSource != null;
+        return originalSource;
+    }
+
+    /**
+     * [[OriginalFlags]]
+     */
+    public String getOriginalFlags() {
+        assert originalFlags != null;
+        return originalFlags;
+    }
+
+    /**
+     * [[RegExpMatcher]]
+     */
+    public Pattern getRegExpMatcher() {
+        assert regExpMatcher != null;
+        return regExpMatcher;
     }
 
     /**
