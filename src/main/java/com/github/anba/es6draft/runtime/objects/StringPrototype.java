@@ -214,7 +214,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                 assert regexp instanceof RegExpObject;
                 rx = TestInitialisedOrThrow(realm, (RegExpObject) regexp);
             } else {
-                rx = RegExpCreate(realm, regexp, UNDEFINED);
+                String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
+                rx = RegExpCreate(realm, p, "");
             }
             boolean global = ToBoolean(Get(rx, "global"));
             if (!global) {
@@ -273,7 +274,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                     Object lastIndex = Get(rx, "lastIndex");
                     // call ToInteger(realm,) in order to trigger possible side-effects...
                     ToInteger(realm, lastIndex);
-                    Matcher m = rx.getMatch().matcher(string);
+                    Matcher m = rx.getRegExpMatcher().matcher(string);
                     boolean matchSucceeded = m.find(0);
                     if (!matchSucceeded) {
                         Put(realm, rx, "lastIndex", 0, true);
@@ -468,9 +469,10 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                 assert regexp instanceof RegExpObject;
                 rx = TestInitialisedOrThrow(realm, (RegExpObject) regexp);
             } else {
-                rx = RegExpCreate(realm, regexp, UNDEFINED);
+                String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
+                rx = RegExpCreate(realm, p, "");
             }
-            Matcher matcher = rx.getMatch().matcher(s);
+            Matcher matcher = rx.getRegExpMatcher().matcher(s);
             if (matcher.find()) {
                 return matcher.start();
             }
@@ -521,7 +523,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
             if (BuiltinBrand.hasBuiltinBrand(r, BuiltinBrand.BuiltinRegExp)) {
                 // regexp case
                 RegExpObject rx = TestInitialisedOrThrow(realm, (RegExpObject) r);
-                Matcher matcher = rx.getMatch().matcher(s);
+                Matcher matcher = rx.getRegExpMatcher().matcher(s);
                 if (size == 0) {
                     if (matcher.find()) {
                         return a;
