@@ -24,9 +24,14 @@ public class DateObject extends OrdinaryObject implements Scriptable {
      */
     private double dateValue;
 
-    public DateObject(Realm realm, double dateValue) {
+    private boolean initialised = false;
+
+    public DateObject(Realm realm) {
         super(realm);
-        this.dateValue = dateValue;
+    }
+
+    public boolean isInitialised() {
+        return initialised;
     }
 
     /**
@@ -40,6 +45,7 @@ public class DateObject extends OrdinaryObject implements Scriptable {
      * [[DateValue]]
      */
     public void setDateValue(double dateValue) {
+        this.initialised = true;
         this.dateValue = dateValue;
     }
 
