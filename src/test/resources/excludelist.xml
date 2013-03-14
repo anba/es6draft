@@ -114,6 +114,12 @@
   <test id="15.10.7.5-1">ES6-change: RegExp.prototype no longer RegExp 'RegExp.prototype.lastIndex'</test>
   <test id="15.10.7.5-2">ES6-change: RegExp.prototype no longer RegExp 'RegExp.prototype.lastIndex'</test>
   <test id="S15.11.4_A2">ES6-change: Error.prototype no longer Error</test>
+  <test id="15.2.3.2-2-12">ES6-change: EvalError[[Prototype]] changed to Error</test>
+  <test id="15.2.3.2-2-13">ES6-change: RangeError[[Prototype]] changed to Error</test>
+  <test id="15.2.3.2-2-14">ES6-change: ReferenceError[[Prototype]] changed to Error</test>
+  <test id="15.2.3.2-2-15">ES6-change: SyntaxError[[Prototype]] changed to Error</test>
+  <test id="15.2.3.2-2-16">ES6-change: TypeError[[Prototype]] changed to Error</test>
+  <test id="15.2.3.2-2-17">ES6-change: URIError[[Prototype]] changed to Error</test>
 
   <test id="Sbp_A1_T1">ES6-change: function declaration in block</test>
   <test id="Sbp_A2_T1">ES6-change: function declaration in block</test>

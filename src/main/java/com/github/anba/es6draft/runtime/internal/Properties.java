@@ -30,7 +30,6 @@ import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.objects.NativeError;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -640,8 +639,6 @@ public final class Properties {
     private static Object resolveValue(Realm realm, Object value) {
         if (value instanceof Intrinsics) {
             value = realm.getIntrinsic((Intrinsics) value);
-        } else if (value instanceof NativeError.ErrorType) {
-            value = realm.getNativeError((NativeError.ErrorType) value);
         }
         return value;
     }

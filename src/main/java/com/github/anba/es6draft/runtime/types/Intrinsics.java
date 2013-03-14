@@ -32,6 +32,13 @@ public enum Intrinsics {/* @formatter:off */
     SetPrototype,
     SetIteratorPrototype,
     StopIteration,
+    ErrorPrototype,
+    EvalErrorPrototype,
+    RangeErrorPrototype,
+    ReferenceErrorPrototype,
+    SyntaxErrorPrototype,
+    TypeErrorPrototype,
+    URIErrorPrototype,
 
     // not yet (?) in spec
     String,
@@ -46,7 +53,12 @@ public enum Intrinsics {/* @formatter:off */
     RegExp,
     RegExpPrototype,
     Error,
-    ErrorPrototype,
+    EvalError,
+    RangeError,
+    ReferenceError,
+    SyntaxError,
+    TypeError,
+    URIError,
     JSON,
 
     // not yet (?) in spec
@@ -84,6 +96,8 @@ public enum Intrinsics {/* @formatter:off */
 
     // internal
     ListIteratorPrototype,
+    InternalError,
+    InternalErrorPrototype,
 
     /* @formatter:on */
 }
