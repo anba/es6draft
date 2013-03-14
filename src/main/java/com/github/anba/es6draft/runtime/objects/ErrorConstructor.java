@@ -6,21 +6,25 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -65,12 +69,24 @@ public class ErrorConstructor extends OrdinaryObject implements Scriptable, Call
     @Override
     public Object call(Object thisValue, Object... args) {
         Object message = args.length > 0 ? args[0] : UNDEFINED;
-        ErrorObject obj = new ErrorObject(realm());
-        obj.setPrototype(realm().getIntrinsic(Intrinsics.ErrorPrototype));
+
+        ErrorObject obj;
+        if (!Type.isObject(thisValue) || !(thisValue instanceof ErrorObject)
+                || ((ErrorObject) thisValue).isInitialised()) {
+            Scriptable o = OrdinaryCreateFromConstructor(realm(), this, Intrinsics.ErrorPrototype);
+            assert o instanceof ErrorObject;
+            obj = (ErrorObject) o;
+        } else {
+            obj = (ErrorObject) thisValue;
+        }
+
+        obj.initialise();
+
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(realm(), message);
-            obj.defineOwnProperty("message", new PropertyDescriptor(msg, true, false, true));
+            CreateOwnDataProperty(obj, "message", msg);
         }
+
         return obj;
     }
 
@@ -79,14 +95,7 @@ public class ErrorConstructor extends OrdinaryObject implements Scriptable, Call
      */
     @Override
     public Object construct(Object... args) {
-        Object message = args.length > 0 ? args[0] : UNDEFINED;
-        ErrorObject obj = new ErrorObject(realm());
-        obj.setPrototype(realm().getIntrinsic(Intrinsics.ErrorPrototype));
-        if (!Type.isUndefined(message)) {
-            CharSequence msg = ToString(realm(), message);
-            obj.defineOwnProperty("message", new PropertyDescriptor(msg, true, false, true));
-        }
-        return obj;
+        return OrdinaryConstruct(realm(), this, args);
     }
 
     /**
@@ -108,5 +117,17 @@ public class ErrorConstructor extends OrdinaryObject implements Scriptable, Call
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ErrorPrototype;
+
+        /**
+         * 15.11.3.2 Error[ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.ErrorPrototype);
+        }
     }
 }

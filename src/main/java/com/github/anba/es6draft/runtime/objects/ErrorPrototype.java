@@ -35,6 +35,11 @@ public class ErrorPrototype extends OrdinaryObject implements Scriptable, Initia
     }
 
     @Override
+    public Scriptable newInstance(Realm realm) {
+        return new ErrorObject(realm);
+    }
+
+    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }
