@@ -20,11 +20,26 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h2>15.11 Error Objects</h2>
  * <ul>
  * <li>15.11.5 Properties of Error Instances
+ * <li>15.11.7 NativeError Object Structure
+ * <ul>
+ * <li>15.11.7.5 Properties of NativeError Instances
+ * </ul>
  * </ul>
  */
 public class ErrorObject extends OrdinaryObject implements Scriptable {
+    private boolean initialised = false;
+
     public ErrorObject(Realm realm) {
         super(realm);
+    }
+
+    public boolean isInitialised() {
+        return initialised;
+    }
+
+    public void initialise() {
+        assert !this.initialised : "ErrorObject already initialised";
+        this.initialised = true;
     }
 
     /**
