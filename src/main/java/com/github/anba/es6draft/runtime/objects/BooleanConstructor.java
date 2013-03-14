@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -113,9 +114,17 @@ public class BooleanConstructor extends OrdinaryObject implements Scriptable, Ca
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            Scriptable obj = OrdinaryCreateFromConstructor(realm, thisValue,
-                    Intrinsics.BooleanPrototype);
-            return obj;
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.BooleanPrototype,
+                    BooleanObjectAllocator.INSTANCE);
+        }
+    }
+
+    private static class BooleanObjectAllocator implements ObjectAllocator<BooleanObject> {
+        static final ObjectAllocator<BooleanObject> INSTANCE = new BooleanObjectAllocator();
+
+        @Override
+        public BooleanObject newInstance(Realm realm) {
+            return new BooleanObject(realm);
         }
     }
 }

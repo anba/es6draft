@@ -72,12 +72,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         // class: OrdinaryObject
         static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(MethodType.Static,
                 Types.OrdinaryObject, "ObjectCreate",
-                Type.getMethodType(Types.Scriptable, Types.Realm, Types.Scriptable));
-
-        // class: Realm
-        static final MethodDesc Realm_getIntrinsic = MethodDesc
-                .create(MethodType.Virtual, Types.Realm, "getIntrinsic",
-                        Type.getMethodType(Types.Scriptable, Types.Intrinsics));
+                Type.getMethodType(Types.OrdinaryObject, Types.Realm, Types.Intrinsics));
 
         // class: Reference
         static final MethodDesc Reference_GetValue_ = MethodDesc.create(MethodType.Virtual,
@@ -1374,9 +1369,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         ObjectLiteralStaticSemantics.validate(node, mv.isStrict());
 
         mv.load(Register.Realm);
-        mv.dup();
         mv.get(Fields.Intrinsics_ObjectPrototype);
-        mv.invoke(Methods.Realm_getIntrinsic);
         mv.invoke(Methods.OrdinaryObject_ObjectCreate);
         for (PropertyDefinition property : node.getProperties()) {
             mv.dup();

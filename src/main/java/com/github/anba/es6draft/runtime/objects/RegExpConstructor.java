@@ -27,6 +27,7 @@ import com.github.anba.es6draft.parser.RegExpParser;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -123,16 +124,24 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
         return OrdinaryConstruct(realm(), this, args);
     }
 
+    private static class RegExpObjectAllocator implements ObjectAllocator<RegExpObject> {
+        static final ObjectAllocator<RegExpObject> INSTANCE = new RegExpObjectAllocator();
+
+        @Override
+        public RegExpObject newInstance(Realm realm) {
+            return new RegExpObject(realm);
+        }
+    }
+
     /**
      * Runtime Semantics: RegExpAlloc Abstract Operation
      */
     public static RegExpObject RegExpAllocate(Realm realm, Object constructor) {
-        Scriptable obj = OrdinaryCreateFromConstructor(realm, constructor,
-                Intrinsics.RegExpPrototype);
+        RegExpObject obj = OrdinaryCreateFromConstructor(realm, constructor,
+                Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
         DefinePropertyOrThrow(realm, obj, "lastIndex", new PropertyDescriptor(UNDEFINED, true,
                 false, false));
-        assert obj instanceof RegExpObject;
-        return (RegExpObject) obj;
+        return obj;
     }
 
     /**

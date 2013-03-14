@@ -17,18 +17,14 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h2>15.13 Binary Data Objects</h2><br>
  * <h3>15.13.5 ArrayBuffer Objects</h3>
  * <ul>
- * <li>15.13.5.5 Properties of the ArrayBuffer Instances
+ * <li>15.13.5.6 Properties of the ArrayBuffer Instances
  * </ul>
  */
 public class ArrayBufferObject extends OrdinaryObject implements Scriptable {
-    /**
-     * [[ArrayBufferData]]
-     */
+    /** [[ArrayBufferData]] */
     private ByteBuffer data = null;
 
-    /**
-     * [[ArrayBufferByteLength]]
-     */
+    /** [[ArrayBufferByteLength]] */
     private long byteLength = 0;
 
     public ArrayBufferObject(Realm realm) {

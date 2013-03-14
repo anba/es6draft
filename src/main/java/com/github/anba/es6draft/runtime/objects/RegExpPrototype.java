@@ -49,11 +49,6 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new RegExpObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }

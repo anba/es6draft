@@ -18,6 +18,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromL
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -41,7 +42,6 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * All kinds of different runtime support methods (TODO: clean-up)
@@ -180,7 +180,7 @@ public final class ScriptRuntime {
         Scriptable protoParent = realm.getIntrinsic(Intrinsics.ObjectPrototype);
         Scriptable constructorParent = realm.getIntrinsic(Intrinsics.FunctionPrototype);
         // step 3
-        Scriptable proto = OrdinaryObject.ObjectCreate(realm, protoParent);
+        Scriptable proto = ObjectCreate(realm, protoParent);
         return new Scriptable[] { proto, constructorParent };
     }
 
@@ -209,7 +209,7 @@ public final class ScriptRuntime {
             constructorParent = Type.objectValue(superClass);
         }
         // step 3
-        Scriptable proto = OrdinaryObject.ObjectCreate(realm, protoParent);
+        Scriptable proto = ObjectCreate(realm, protoParent);
         return new Scriptable[] { proto, constructorParent };
     }
 

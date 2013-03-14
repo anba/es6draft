@@ -40,11 +40,6 @@ public class NumberPrototype extends OrdinaryObject implements Scriptable, Initi
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new NumberObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }

@@ -20,29 +20,19 @@ import com.github.anba.es6draft.runtime.types.builtins.IndexedDelegationExoticOb
  */
 public class TypedArrayObject extends IndexedDelegationExoticObject implements Scriptable {
 
-    /**
-     * [[TypedArrayData]]
-     */
+    /** [[TypedArrayData]] */
     private ArrayBufferObject data;
 
-    /**
-     * [[TypedArrayElementKind]]
-     */
+    /** [[TypedArrayElementKind]] */
     private ElementKind elementKind;
 
-    /**
-     * [[ByteLength]]
-     */
+    /** [[ByteLength]] */
     private long byteLength;
 
-    /**
-     * [[ByteOffset]]
-     */
+    /** [[ByteOffset]] */
     private long byteOffset;
 
-    /**
-     * [[ArrayLength]]
-     */
+    /** [[ArrayLength]] */
     private long arrayLength;
 
     public TypedArrayObject(Realm realm) {

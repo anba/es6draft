@@ -190,8 +190,7 @@ public class StringConstructor extends OrdinaryObject implements Scriptable, Cal
         public static Object create(Realm realm, Object thisValue) {
             Scriptable proto = GetPrototypeFromConstructor(realm, thisValue,
                     Intrinsics.StringPrototype);
-            ExoticString obj = StringCreate(realm, proto);
-            return obj;
+            return StringCreate(realm, proto);
         }
     }
 }

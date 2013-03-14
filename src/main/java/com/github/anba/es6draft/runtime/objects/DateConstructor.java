@@ -19,6 +19,7 @@ import java.util.Locale;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
@@ -224,9 +225,17 @@ public class DateConstructor extends OrdinaryObject implements Scriptable, Calla
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            Scriptable obj = OrdinaryCreateFromConstructor(realm, thisValue,
-                    Intrinsics.DatePrototype);
-            return obj;
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.DatePrototype,
+                    DateObjectAllocator.INSTANCE);
+        }
+    }
+
+    private static class DateObjectAllocator implements ObjectAllocator<DateObject> {
+        static final ObjectAllocator<DateObject> INSTANCE = new DateObjectAllocator();
+
+        @Override
+        public DateObject newInstance(Realm realm) {
+            return new DateObject(realm);
         }
     }
 }

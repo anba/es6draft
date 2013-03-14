@@ -34,7 +34,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h2>15.13 Binary Data Objects</h2><br>
  * <h3>15.13.5 ArrayBuffer Objects</h3>
  * <ul>
- * <li>15.13.5.4 Properties of the ArrayBuffer Prototype Object
+ * <li>15.13.5.5 Properties of the ArrayBuffer Prototype Object
  * </ul>
  */
 public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, Initialisable {
@@ -47,13 +47,8 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, 
         createProperties(this, realm, Properties.class);
     }
 
-    @Override
-    public Scriptable newInstance(Realm realm) {
-        return new ArrayBufferObject(realm);
-    }
-
     /**
-     * 15.13.5.4 Properties of the ArrayBuffer Prototype Object
+     * 15.13.5.5 Properties of the ArrayBuffer Prototype Object
      */
     public enum Properties {
         ;
@@ -69,13 +64,13 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, 
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.13.5.4.1 ArrayBuffer.prototype.constructor
+         * 15.13.5.5.1 ArrayBuffer.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.ArrayBuffer;
 
         /**
-         * 15.13.5.4.2 get ArrayBuffer.prototype.byteLength
+         * 15.13.5.5.2 get ArrayBuffer.prototype.byteLength
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(Realm realm, Object thisValue) {
@@ -85,7 +80,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, 
         }
 
         /**
-         * 15.13.5.4.3 ArrayBuffer.prototype.slice (start , end)
+         * 15.13.5.5.3 ArrayBuffer.prototype.slice (start , end)
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(Realm realm, Object thisValue, Object start, Object end) {
@@ -111,7 +106,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, 
         }
 
         /**
-         * 15.13.5.4.4 ArrayBuffer.prototype.@@toStringTag
+         * 15.13.5.5.4 ArrayBuffer.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "ArrayBuffer";

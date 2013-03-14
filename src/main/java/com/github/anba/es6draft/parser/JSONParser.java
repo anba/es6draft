@@ -131,7 +131,7 @@ public class JSONParser {
      * </pre>
      */
     private Scriptable jsonObject() {
-        Scriptable object = ObjectCreate(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
+        Scriptable object = ObjectCreate(realm, Intrinsics.ObjectPrototype);
         consume(Token.LC);
         if (token() != Token.RC) {
             jsonMember(object);

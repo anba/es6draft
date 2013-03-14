@@ -43,11 +43,6 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new DateTimeFormatObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }

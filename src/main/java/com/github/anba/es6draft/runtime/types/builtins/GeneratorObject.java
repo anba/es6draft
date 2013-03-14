@@ -43,19 +43,13 @@ public class GeneratorObject extends OrdinaryObject implements Scriptable, Initi
         Newborn, Executing, Suspended, Closed
     }
 
-    /**
-     * [[State]]
-     */
+    /** [[State]] */
     private GeneratorState state = GeneratorState.Newborn;
 
-    /**
-     * [[Code]]
-     */
+    /** [[Code]] */
     private RuntimeInfo.Code code;
 
-    /**
-     * [[ExecutionContext]]
-     */
+    /** [[ExecutionContext]] */
     private ExecutionContext context;
 
     // internal

@@ -76,7 +76,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
         int numberOfArgs = args.length;
         if (numberOfArgs != 1) {
             // [15.4.1.1]
-            ExoticArray array = MaybeCreateArray(realm, thisValue, numberOfArgs);
+            ExoticArray array = maybeCreateArray(realm, thisValue, numberOfArgs);
             for (int k = 0; k < numberOfArgs; ++k) {
                 String pk = ToString(k);
                 Object itemK = args[k];
@@ -87,7 +87,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
             return array;
         } else {
             // [15.4.1.2]
-            ExoticArray array = MaybeCreateArray(realm, thisValue, 0);
+            ExoticArray array = maybeCreateArray(realm, thisValue, 0);
             Object len = args[0];
             long intLen;
             if (!Type.isNumber(len)) {
@@ -105,7 +105,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
         }
     }
 
-    private ExoticArray MaybeCreateArray(Realm realm, Object thisValue, long length) {
+    private ExoticArray maybeCreateArray(Realm realm, Object thisValue, long length) {
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
             if (!array.getArrayInitializationState()) {
@@ -256,8 +256,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
         public static Object create(Realm realm, Object thisValue) {
             Scriptable proto = GetPrototypeFromConstructor(realm, thisValue,
                     Intrinsics.ArrayPrototype);
-            Scriptable obj = ArrayCreate(realm, -1, proto);
-            return obj;
+            return ArrayCreate(realm, -1, proto);
         }
     }
 }

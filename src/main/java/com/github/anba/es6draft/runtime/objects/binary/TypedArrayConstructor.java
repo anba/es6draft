@@ -47,43 +47,45 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public class TypedArrayConstructor extends OrdinaryObject implements Scriptable, Callable,
         Constructor, Initialisable {
     private final ElementKind elementKind;
-    private final Class<? extends Enum<?>> properties;
 
-    public TypedArrayConstructor(Realm realm, ElementKind elementKind,
-            Class<? extends Enum<?>> properties) {
+    public TypedArrayConstructor(Realm realm, ElementKind elementKind) {
         super(realm);
         this.elementKind = elementKind;
-        this.properties = properties;
-    }
-
-    public static TypedArrayConstructor createConstructor(Realm realm, ElementKind elementKind) {
-        switch (elementKind) {
-        case Int8:
-            return new TypedArrayConstructor(realm, elementKind, Properties_Int8Array.class);
-        case Uint8:
-            return new TypedArrayConstructor(realm, elementKind, Properties_Uint8Array.class);
-        case Uint8C:
-            return new TypedArrayConstructor(realm, elementKind, Properties_Uint8Clamped.class);
-        case Int16:
-            return new TypedArrayConstructor(realm, elementKind, Properties_Int16Array.class);
-        case Uint16:
-            return new TypedArrayConstructor(realm, elementKind, Properties_Uint16Array.class);
-        case Int32:
-            return new TypedArrayConstructor(realm, elementKind, Properties_Int32Array.class);
-        case Uint32:
-            return new TypedArrayConstructor(realm, elementKind, Properties_Uint32Array.class);
-        case Float32:
-            return new TypedArrayConstructor(realm, elementKind, Properties_Float32Array.class);
-        case Float64:
-            return new TypedArrayConstructor(realm, elementKind, Properties_Float64Array.class);
-        default:
-            throw new IllegalStateException();
-        }
     }
 
     @Override
     public void initialise(Realm realm) {
-        createProperties(this, realm, properties);
+        switch (elementKind) {
+        case Int8:
+            createProperties(this, realm, Properties_Int8Array.class);
+            break;
+        case Uint8:
+            createProperties(this, realm, Properties_Uint8Array.class);
+            break;
+        case Uint8C:
+            createProperties(this, realm, Properties_Uint8Clamped.class);
+            break;
+        case Int16:
+            createProperties(this, realm, Properties_Int16Array.class);
+            break;
+        case Uint16:
+            createProperties(this, realm, Properties_Uint16Array.class);
+            break;
+        case Int32:
+            createProperties(this, realm, Properties_Int32Array.class);
+            break;
+        case Uint32:
+            createProperties(this, realm, Properties_Uint32Array.class);
+            break;
+        case Float32:
+            createProperties(this, realm, Properties_Float32Array.class);
+            break;
+        case Float64:
+            createProperties(this, realm, Properties_Float64Array.class);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
         AddRestrictedFunctionProperties(realm, this);
     }
 
@@ -142,7 +144,7 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         }
         long elementLength = ToUint32(realm, length);
         ArrayBufferObject data = AllocateArrayBuffer(realm,
-                (Constructor) realm.getIntrinsic(Intrinsics.ArrayBuffer));
+                realm.getIntrinsic(Intrinsics.ArrayBuffer));
         int elementSize = elementType.size();
         long byteLength = elementSize * elementLength;
         SetArrayBufferData(realm, data, byteLength);
@@ -211,7 +213,7 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         Object arrayLength = Get(_array, "length");
         long elementLength = ToUint32(realm, arrayLength);
         ArrayBufferObject data = AllocateArrayBuffer(realm,
-                (Constructor) realm.getIntrinsic(Intrinsics.ArrayBuffer));
+                realm.getIntrinsic(Intrinsics.ArrayBuffer));
         int elementSize = elementType.size();
         long byteLength = elementSize * elementLength;
         SetArrayBufferData(realm, data, byteLength);
@@ -282,7 +284,7 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
     }
 
     /**
-     * 15.13.6.2 The TypedArray Constructors
+     * 15.13.6.2.1 new TypedArray (...args)
      */
     @Override
     public Object construct(Object... args) {
@@ -290,27 +292,14 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
     }
 
     /**
-     * 15.13.6.3.2 @@create ( )
+     * 15.13.6.3.2 TypedArray[ @@create ] ( )
      */
     private static TypedArrayObject createTypedArray(Realm realm, Object thisValue,
             Intrinsics prototype) {
         Object f = thisValue;
-        if (!IsConstructor(f)) {
-            throwTypeError(realm, Messages.Key.NotConstructor);
-        }
-        // handle different realm case early
-        if (f instanceof com.github.anba.es6draft.runtime.types.Function) {
-            realm = ((com.github.anba.es6draft.runtime.types.Function) f).getRealm();
-        }
-        assert f instanceof Scriptable;
-        Object proto = Get((Scriptable) f, "prototype");
-        if (!Type.isObject(proto)) {
-            // FIXME: spec bug (variable constructor undefined)
-            proto = realm.getIntrinsic(prototype);
-        }
+        Scriptable proto = GetPrototypeFromConstructor(realm, f, prototype);
         TypedArrayObject obj = new TypedArrayObject(realm);
-        obj.setPrototype((Scriptable) proto);
-        obj.setData(null);
+        obj.setPrototype(proto);
         return obj;
     }
 
@@ -335,9 +324,13 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         public static final Intrinsics prototype = Intrinsics.Int8ArrayPrototype;
 
         /**
-         * 15.13.6.3.2 @@create ( )
+         * 15.13.6.3.2 TypedArray[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return createTypedArray(realm, thisValue, prototype);
         }
@@ -364,9 +357,13 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         public static final Intrinsics prototype = Intrinsics.Uint8ArrayPrototype;
 
         /**
-         * 15.13.6.3.2 @@create ( )
+         * 15.13.6.3.2 TypedArray[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return createTypedArray(realm, thisValue, prototype);
         }
@@ -393,9 +390,13 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         public static final Intrinsics prototype = Intrinsics.Uint8ClampedArrayPrototype;
 
         /**
-         * 15.13.6.3.2 @@create ( )
+         * 15.13.6.3.2 TypedArray[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return createTypedArray(realm, thisValue, prototype);
         }
@@ -422,9 +423,13 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         public static final Intrinsics prototype = Intrinsics.Int16ArrayPrototype;
 
         /**
-         * 15.13.6.3.2 @@create ( )
+         * 15.13.6.3.2 TypedArray[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return createTypedArray(realm, thisValue, prototype);
         }
@@ -451,9 +456,13 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         public static final Intrinsics prototype = Intrinsics.Uint16ArrayPrototype;
 
         /**
-         * 15.13.6.3.2 @@create ( )
+         * 15.13.6.3.2 TypedArray[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return createTypedArray(realm, thisValue, prototype);
         }
@@ -480,9 +489,13 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         public static final Intrinsics prototype = Intrinsics.Int32ArrayPrototype;
 
         /**
-         * 15.13.6.3.2 @@create ( )
+         * 15.13.6.3.2 TypedArray[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return createTypedArray(realm, thisValue, prototype);
         }
@@ -509,9 +522,13 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         public static final Intrinsics prototype = Intrinsics.Uint32ArrayPrototype;
 
         /**
-         * 15.13.6.3.2 @@create ( )
+         * 15.13.6.3.2 TypedArray[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return createTypedArray(realm, thisValue, prototype);
         }
@@ -538,9 +555,13 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         public static final Intrinsics prototype = Intrinsics.Float32ArrayPrototype;
 
         /**
-         * 15.13.6.3.2 @@create ( )
+         * 15.13.6.3.2 TypedArray[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return createTypedArray(realm, thisValue, prototype);
         }
@@ -567,9 +588,13 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
         public static final Intrinsics prototype = Intrinsics.Float64ArrayPrototype;
 
         /**
-         * 15.13.6.3.2 @@create ( )
+         * 15.13.6.3.2 TypedArray[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return createTypedArray(realm, thisValue, prototype);
         }

@@ -15,6 +15,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -143,9 +144,8 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
         ErrorObject obj;
         if (!Type.isObject(thisValue) || !(thisValue instanceof ErrorObject)
                 || ((ErrorObject) thisValue).isInitialised()) {
-            Scriptable o = OrdinaryCreateFromConstructor(realm(), this, type.prototype());
-            assert o instanceof ErrorObject;
-            obj = (ErrorObject) o;
+            obj = OrdinaryCreateFromConstructor(realm(), this, type.prototype(),
+                    NativeErrorObjectAllocator.INSTANCE);
         } else {
             obj = (ErrorObject) thisValue;
         }
@@ -197,7 +197,8 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.EvalErrorPrototype);
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.EvalErrorPrototype,
+                    NativeErrorObjectAllocator.INSTANCE);
         }
     }
 
@@ -230,7 +231,8 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.RangeErrorPrototype);
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.RangeErrorPrototype,
+                    NativeErrorObjectAllocator.INSTANCE);
         }
     }
 
@@ -264,7 +266,7 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return OrdinaryCreateFromConstructor(realm, thisValue,
-                    Intrinsics.ReferenceErrorPrototype);
+                    Intrinsics.ReferenceErrorPrototype, NativeErrorObjectAllocator.INSTANCE);
         }
     }
 
@@ -297,7 +299,8 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.SyntaxErrorPrototype);
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.SyntaxErrorPrototype,
+                    NativeErrorObjectAllocator.INSTANCE);
         }
     }
 
@@ -330,7 +333,8 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.TypeErrorPrototype);
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.TypeErrorPrototype,
+                    NativeErrorObjectAllocator.INSTANCE);
         }
     }
 
@@ -363,7 +367,8 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.URIErrorPrototype);
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.URIErrorPrototype,
+                    NativeErrorObjectAllocator.INSTANCE);
         }
     }
 
@@ -397,7 +402,16 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
             return OrdinaryCreateFromConstructor(realm, thisValue,
-                    Intrinsics.InternalErrorPrototype);
+                    Intrinsics.InternalErrorPrototype, NativeErrorObjectAllocator.INSTANCE);
+        }
+    }
+
+    private static class NativeErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
+        static final ObjectAllocator<ErrorObject> INSTANCE = new NativeErrorObjectAllocator();
+
+        @Override
+        public ErrorObject newInstance(Realm realm) {
+            return new ErrorObject(realm);
         }
     }
 }

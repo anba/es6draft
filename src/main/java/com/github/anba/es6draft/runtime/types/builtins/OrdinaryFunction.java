@@ -118,7 +118,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     public static void MakeConstructor(Realm realm, Function f) {
         /*  step 2 */
         boolean installNeeded = true;
-        Scriptable prototype = ObjectCreate(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
+        Scriptable prototype = ObjectCreate(realm, Intrinsics.ObjectPrototype);
         /*  step 3 */
         boolean writablePrototype = true;
         MakeConstructor(realm, f, writablePrototype, prototype, installNeeded);

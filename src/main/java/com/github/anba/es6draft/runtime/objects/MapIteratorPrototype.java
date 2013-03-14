@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -39,11 +40,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public MapIteratorPrototype(Realm realm) {
         super(realm);
-    }
-
-    @Override
-    public Scriptable newInstance(Realm realm) {
-        return new MapIterator(realm);
     }
 
     @Override
@@ -83,13 +79,22 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
         }
     }
 
+    private static class MapIteratorAllocator implements ObjectAllocator<MapIterator> {
+        static final ObjectAllocator<MapIterator> INSTANCE = new MapIteratorAllocator();
+
+        @Override
+        public MapIterator newInstance(Realm realm) {
+            return new MapIterator(realm);
+        }
+    }
+
     /**
      * 15.14.6.1 CreateMapIterator Abstract Operation
      */
     public static OrdinaryObject CreateMapIterator(Realm realm, MapObject m, MapIterationKind kind) {
         LinkedMap<Object, Object> entries = m.getMapData();
-        Scriptable proto = realm.getIntrinsic(Intrinsics.MapIteratorPrototype);
-        MapIterator itr = (MapIterator) ObjectCreate(realm, proto, proto);
+        MapIterator itr = ObjectCreate(realm, Intrinsics.MapIteratorPrototype,
+                MapIteratorAllocator.INSTANCE);
         itr.map = m;
         itr.nextIndex = 0;
         itr.iterationKind = kind;

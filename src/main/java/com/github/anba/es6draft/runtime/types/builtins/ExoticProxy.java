@@ -54,11 +54,6 @@ public class ExoticProxy implements Scriptable {
         this.proxyTarget = target;
     }
 
-    @Override
-    public Scriptable newInstance(Realm realm) {
-        throw new IllegalStateException();
-    }
-
     /**
      * [[BuiltinBrand]]
      */

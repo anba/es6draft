@@ -19,9 +19,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class DateObject extends OrdinaryObject implements Scriptable {
-    /**
-     * [[DateValue]]
-     */
+    /** [[DateValue]] */
     private double dateValue;
 
     private boolean initialised = false;

@@ -38,11 +38,6 @@ public class WeakMapPrototype extends OrdinaryObject implements Scriptable, Init
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new WeakMapObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }

@@ -46,11 +46,6 @@ public class MapPrototype extends OrdinaryObject implements Scriptable, Initiali
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new MapObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
 

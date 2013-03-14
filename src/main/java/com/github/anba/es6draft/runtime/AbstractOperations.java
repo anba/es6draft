@@ -24,11 +24,13 @@ import org.mozilla.javascript.StringToNumber;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.google.doubleconversion.DoubleConversion;
 
 /**
@@ -860,16 +862,22 @@ public final class AbstractOperations {
         return Type.objectValue(proto);
     }
 
-    // FIXME: spec bug (caption not updated to 9.3.14)
-
     /**
-     * 9.3.13 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     * 9.3.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
      */
-    public static Scriptable OrdinaryCreateFromConstructor(Realm realm, Object constructor,
+    public static OrdinaryObject OrdinaryCreateFromConstructor(Realm realm, Object constructor,
             Intrinsics intrinsicDefaultProto) {
         Scriptable proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
-        Scriptable creator = realm.getIntrinsic(intrinsicDefaultProto);
-        return ObjectCreate(realm, proto, creator);
+        return ObjectCreate(realm, proto);
+    }
+
+    /**
+     * 9.3.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     */
+    public static <OBJECT extends Scriptable> OBJECT OrdinaryCreateFromConstructor(Realm realm,
+            Object constructor, Intrinsics intrinsicDefaultProto, ObjectAllocator<OBJECT> allocator) {
+        Scriptable proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
+        return ObjectCreate(realm, proto, allocator);
     }
 
     public static List<String> GetOwnPropertyNames(Realm realm, Scriptable obj) {
