@@ -6,9 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.types;
 
-import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
-
 /**
  * <h1>8 Types</h1><br>
  * <h2>8.1 ECMAScript Language Types</h2><br>
@@ -18,11 +15,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public interface Scriptable {
-    /**
-     * {@link OrdinaryObject#ObjectCreate(Realm, Scriptable, Intrinsics)}
-     */
-    Scriptable newInstance(Realm realm);
-
     /**
      * [[BuiltinBrand]]
      */

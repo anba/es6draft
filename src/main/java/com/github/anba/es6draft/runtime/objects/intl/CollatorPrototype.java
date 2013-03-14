@@ -32,11 +32,6 @@ public class CollatorPrototype extends CollatorObject implements Initialisable, 
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new CollatorObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }

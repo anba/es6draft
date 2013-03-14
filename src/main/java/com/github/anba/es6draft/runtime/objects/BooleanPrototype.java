@@ -33,11 +33,6 @@ public class BooleanPrototype extends OrdinaryObject implements Scriptable, Init
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new BooleanObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }

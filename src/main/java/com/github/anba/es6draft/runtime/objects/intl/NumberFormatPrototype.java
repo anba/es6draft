@@ -42,11 +42,6 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new NumberFormatObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
     }

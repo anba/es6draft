@@ -51,11 +51,6 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return ArrayCreate(realm, 0);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
 

@@ -23,6 +23,7 @@ import java.util.Locale;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -151,9 +152,18 @@ public class DateTimeFormatConstructor extends OrdinaryObject implements Scripta
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
         public static Object create(Realm realm, Object thisValue) {
-            Scriptable obj = OrdinaryCreateFromConstructor(realm, thisValue,
-                    Intrinsics.Intl_DateTimeFormatPrototype);
-            return obj;
+            return OrdinaryCreateFromConstructor(realm, thisValue,
+                    Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObjectAllocator.INSTANCE);
+        }
+    }
+
+    private static class DateTimeFormatObjectAllocator implements
+            ObjectAllocator<DateTimeFormatObject> {
+        static final ObjectAllocator<DateTimeFormatObject> INSTANCE = new DateTimeFormatObjectAllocator();
+
+        @Override
+        public DateTimeFormatObject newInstance(Realm realm) {
+            return new DateTimeFormatObject(realm);
         }
     }
 }

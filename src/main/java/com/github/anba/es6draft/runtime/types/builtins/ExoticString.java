@@ -25,9 +25,7 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * </ul>
  */
 public class ExoticString extends OrdinaryObject implements Scriptable {
-    /**
-     * [[StringData]]
-     */
+    /** [[StringData]] */
     private CharSequence stringData = null;
 
     public ExoticString(Realm realm) {

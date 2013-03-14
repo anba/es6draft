@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -40,11 +41,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public class SetIteratorPrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public SetIteratorPrototype(Realm realm) {
         super(realm);
-    }
-
-    @Override
-    public Scriptable newInstance(Realm realm) {
-        return new SetIterator(realm);
     }
 
     @Override
@@ -78,13 +74,22 @@ public class SetIteratorPrototype extends OrdinaryObject implements Scriptable, 
         }
     }
 
+    private static class SetIteratorAllocator implements ObjectAllocator<SetIterator> {
+        static final ObjectAllocator<SetIterator> INSTANCE = new SetIteratorAllocator();
+
+        @Override
+        public SetIterator newInstance(Realm realm) {
+            return new SetIterator(realm);
+        }
+    }
+
     /**
      * 15.16.7.1 CreateSetIterator Abstract Operation
      */
     public static OrdinaryObject CreateSetIterator(Realm realm, SetObject set, SetIterationKind kind) {
         LinkedMap<Object, Void> entries = set.getSetData();
-        Scriptable proto = realm.getIntrinsic(Intrinsics.SetIteratorPrototype);
-        SetIterator itr = (SetIterator) ObjectCreate(realm, proto, proto);
+        SetIterator itr = ObjectCreate(realm, Intrinsics.SetIteratorPrototype,
+                SetIteratorAllocator.INSTANCE);
         itr.set = set;
         itr.nextIndex = 0;
         itr.iterator = entries.iterator();

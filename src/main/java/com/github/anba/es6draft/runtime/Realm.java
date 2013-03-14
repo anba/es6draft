@@ -246,41 +246,37 @@ public class Realm {
         // binary module intrinsics
         ArrayBufferConstructor arrayBufferConstructor = new ArrayBufferConstructor(realm);
         ArrayBufferPrototype arrayBufferPrototype = new ArrayBufferPrototype(realm);
-        TypedArrayConstructor int8ArrayConstructor = TypedArrayConstructor.createConstructor(realm,
+        TypedArrayConstructor int8ArrayConstructor = new TypedArrayConstructor(realm,
                 ElementKind.Int8);
-        TypedArrayPrototype int8ArrayPrototype = TypedArrayPrototype.createPrototype(realm,
-                ElementKind.Int8);
-        TypedArrayConstructor uint8ArrayConstructor = TypedArrayConstructor.createConstructor(
-                realm, ElementKind.Uint8);
-        TypedArrayPrototype uint8ArrayPrototype = TypedArrayPrototype.createPrototype(realm,
+        TypedArrayPrototype int8ArrayPrototype = new TypedArrayPrototype(realm, ElementKind.Int8);
+        TypedArrayConstructor uint8ArrayConstructor = new TypedArrayConstructor(realm,
                 ElementKind.Uint8);
-        TypedArrayConstructor uint8CArrayConstructor = TypedArrayConstructor.createConstructor(
-                realm, ElementKind.Uint8C);
-        TypedArrayPrototype uint8CArrayPrototype = TypedArrayPrototype.createPrototype(realm,
+        TypedArrayPrototype uint8ArrayPrototype = new TypedArrayPrototype(realm, ElementKind.Uint8);
+        TypedArrayConstructor uint8CArrayConstructor = new TypedArrayConstructor(realm,
                 ElementKind.Uint8C);
-        TypedArrayConstructor int16ArrayConstructor = TypedArrayConstructor.createConstructor(
-                realm, ElementKind.Int16);
-        TypedArrayPrototype int16ArrayPrototype = TypedArrayPrototype.createPrototype(realm,
+        TypedArrayPrototype uint8CArrayPrototype = new TypedArrayPrototype(realm,
+                ElementKind.Uint8C);
+        TypedArrayConstructor int16ArrayConstructor = new TypedArrayConstructor(realm,
                 ElementKind.Int16);
-        TypedArrayConstructor uint16ArrayConstructor = TypedArrayConstructor.createConstructor(
-                realm, ElementKind.Uint16);
-        TypedArrayPrototype uint16ArrayPrototype = TypedArrayPrototype.createPrototype(realm,
+        TypedArrayPrototype int16ArrayPrototype = new TypedArrayPrototype(realm, ElementKind.Int16);
+        TypedArrayConstructor uint16ArrayConstructor = new TypedArrayConstructor(realm,
                 ElementKind.Uint16);
-        TypedArrayConstructor int32ArrayConstructor = TypedArrayConstructor.createConstructor(
-                realm, ElementKind.Int32);
-        TypedArrayPrototype int32ArrayPrototype = TypedArrayPrototype.createPrototype(realm,
+        TypedArrayPrototype uint16ArrayPrototype = new TypedArrayPrototype(realm,
+                ElementKind.Uint16);
+        TypedArrayConstructor int32ArrayConstructor = new TypedArrayConstructor(realm,
                 ElementKind.Int32);
-        TypedArrayConstructor uint32ArrayConstructor = TypedArrayConstructor.createConstructor(
-                realm, ElementKind.Uint32);
-        TypedArrayPrototype uint32ArrayPrototype = TypedArrayPrototype.createPrototype(realm,
+        TypedArrayPrototype int32ArrayPrototype = new TypedArrayPrototype(realm, ElementKind.Int32);
+        TypedArrayConstructor uint32ArrayConstructor = new TypedArrayConstructor(realm,
                 ElementKind.Uint32);
-        TypedArrayConstructor float32ArrayConstructor = TypedArrayConstructor.createConstructor(
-                realm, ElementKind.Float32);
-        TypedArrayPrototype float32ArrayPrototype = TypedArrayPrototype.createPrototype(realm,
+        TypedArrayPrototype uint32ArrayPrototype = new TypedArrayPrototype(realm,
+                ElementKind.Uint32);
+        TypedArrayConstructor float32ArrayConstructor = new TypedArrayConstructor(realm,
                 ElementKind.Float32);
-        TypedArrayConstructor float64ArrayConstructor = TypedArrayConstructor.createConstructor(
-                realm, ElementKind.Float64);
-        TypedArrayPrototype float64ArrayPrototype = TypedArrayPrototype.createPrototype(realm,
+        TypedArrayPrototype float32ArrayPrototype = new TypedArrayPrototype(realm,
+                ElementKind.Float32);
+        TypedArrayConstructor float64ArrayConstructor = new TypedArrayConstructor(realm,
+                ElementKind.Float64);
+        TypedArrayPrototype float64ArrayPrototype = new TypedArrayPrototype(realm,
                 ElementKind.Float64);
         DataViewConstructor dataViewConstructor = new DataViewConstructor(realm);
         DataViewPrototype dataViewPrototype = new DataViewPrototype(realm);

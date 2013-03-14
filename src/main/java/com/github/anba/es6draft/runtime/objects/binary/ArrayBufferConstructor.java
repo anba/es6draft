@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalError;
@@ -22,6 +21,7 @@ import java.nio.ByteOrder;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -41,9 +41,9 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h3>15.13.5 ArrayBuffer Objects</h3>
  * <ul>
  * <li>15.13.5.1 Abstract Operations For ArrayBuffer Objects
- * <li>15.13.5.1 The ArrayBuffer Object Called as a Function [FIXME: spec bug - section number]
- * <li>15.13.5.2 The ArrayBuffer Constructor
- * <li>15.13.5.3 Properties of the ArrayBuffer Constructor
+ * <li>15.13.5.2 The ArrayBuffer Object Called as a Function
+ * <li>15.13.5.3 The ArrayBuffer Constructor
+ * <li>15.13.5.4 Properties of the ArrayBuffer Constructor
  * </ul>
  */
 public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable, Callable,
@@ -64,6 +64,15 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
     @Override
     public BuiltinBrand getBuiltinBrand() {
         return BuiltinBrand.BuiltinFunction;
+    }
+
+    private static class ArrayBufferObjectAllocator implements ObjectAllocator<ArrayBufferObject> {
+        static final ObjectAllocator<ArrayBufferObject> INSTANCE = new ArrayBufferObjectAllocator();
+
+        @Override
+        public ArrayBufferObject newInstance(Realm realm) {
+            return new ArrayBufferObject(realm);
+        }
     }
 
     /**
@@ -104,7 +113,7 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
     public static ArrayBufferObject CloneArrayBuffer(Realm realm, ArrayBufferObject srcData,
             ElementKind srcType, ElementKind destType, long length) {
         ArrayBufferObject destData = AllocateArrayBuffer(realm,
-                (Constructor) realm.getIntrinsic(Intrinsics.ArrayBuffer));
+                realm.getIntrinsic(Intrinsics.ArrayBuffer));
         SetArrayBufferData(realm, destData, length * destType.size());
 
         for (long index = 0; index < length; ++index) {
@@ -118,21 +127,15 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
     /**
      * 15.13.5.1.1 AllocateArrayBuffer(constructor)
      */
-    public static ArrayBufferObject AllocateArrayBuffer(Realm realm, Constructor constructor) {
-        // FIXME: spec bug (Assert IsConstructor() necessary?)
-        /* step 1 */
-        assert IsConstructor(constructor);
-        /* step 2 */
-        Scriptable obj = OrdinaryCreateFromConstructor(realm, constructor,
-                Intrinsics.ArrayBufferPrototype);
-        /* step 3-4 (implicit) */
-        assert obj instanceof ArrayBufferObject : "not arraybuffer-object";
-        /* step 5-6 */
-        ArrayBufferObject buf = (ArrayBufferObject) obj;
-        buf.setData(null);
-        buf.setByteLength(0);
-        /* step 7 */
-        return buf;
+    public static ArrayBufferObject AllocateArrayBuffer(Realm realm, Object constructor) {
+        /* step 1-2 */
+        ArrayBufferObject obj = OrdinaryCreateFromConstructor(realm, constructor,
+                Intrinsics.ArrayBufferPrototype, ArrayBufferObjectAllocator.INSTANCE);
+        /* step 3 */
+        obj.setData(null);
+        obj.setByteLength(0);
+        /* step 4 */
+        return obj;
     }
 
     /**
@@ -246,7 +249,7 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
     }
 
     /**
-     * 15.13.5.1.1 ArrayBuffer(length)
+     * 15.13.5.2.1 ArrayBuffer(length)
      */
     @Override
     public Object call(Object thisValue, Object... args) {
@@ -267,7 +270,7 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
     }
 
     /**
-     * 15.13.5.2.1 new ArrayBuffer(len)
+     * 15.13.5.3.1 new ArrayBuffer( ...args )
      */
     @Override
     public Object construct(Object... args) {
@@ -275,7 +278,7 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
     }
 
     /**
-     * 15.13.5.3 Properties of the ArrayBuffer Constructor
+     * 15.13.5.4 Properties of the ArrayBuffer Constructor
      */
     public enum Properties {
         ;
@@ -297,13 +300,13 @@ public class ArrayBufferConstructor extends OrdinaryObject implements Scriptable
         /**
          * 15.13.5.3.2 @@create ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            Object f = thisValue;
-            if (!IsConstructor(f)) {
-                throwTypeError(realm, Messages.Key.NotConstructor);
-            }
-            return AllocateArrayBuffer(realm, (Constructor) f);
+            return AllocateArrayBuffer(realm, thisValue);
         }
     }
 }

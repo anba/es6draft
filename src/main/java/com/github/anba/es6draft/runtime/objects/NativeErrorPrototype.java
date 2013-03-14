@@ -36,11 +36,6 @@ public class NativeErrorPrototype extends OrdinaryObject implements Scriptable, 
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new ErrorObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         switch (type) {
         case EvalError:

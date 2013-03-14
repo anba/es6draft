@@ -43,11 +43,6 @@ public class DatePrototype extends OrdinaryObject implements Scriptable, Initial
     }
 
     @Override
-    public Scriptable newInstance(Realm realm) {
-        return new DateObject(realm);
-    }
-
-    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
 

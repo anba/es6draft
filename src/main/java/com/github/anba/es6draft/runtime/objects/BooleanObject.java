@@ -20,9 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class BooleanObject extends OrdinaryObject implements Scriptable {
-    /**
-     * [[BooleanData]]
-     */
+    /** [[BooleanData]] */
     private boolean booleanData;
 
     private boolean initialised = false;

@@ -24,6 +24,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
@@ -686,33 +687,44 @@ public abstract class OrdinaryObject implements Scriptable {
         return keys;
     }
 
-    @Override
-    public Scriptable newInstance(Realm realm) {
-        return new OrdinaryObject(realm) {
-        };
+    private static class DefaultAllocator implements ObjectAllocator<OrdinaryObject> {
+        static final ObjectAllocator<OrdinaryObject> INSTANCE = new DefaultAllocator();
+
+        static class DefaultObject extends OrdinaryObject {
+            public DefaultObject(Realm realm) {
+                super(realm);
+            }
+        }
+
+        @Override
+        public OrdinaryObject newInstance(Realm realm) {
+            return new DefaultObject(realm);
+        }
     }
 
     /** 8.3.14 ObjectCreate Abstract Operation */
-    public static Scriptable ObjectCreate(Realm realm) {
-        Scriptable proto = realm.getIntrinsic(Intrinsics.ObjectPrototype);
-        return ObjectCreate(realm, proto, proto);
+    public static OrdinaryObject ObjectCreate(Realm realm, Scriptable proto) {
+        return ObjectCreate(realm, proto, DefaultAllocator.INSTANCE);
     }
 
     /** 8.3.14 ObjectCreate Abstract Operation */
-    public static Scriptable ObjectCreate(Realm realm, Scriptable proto) {
-        return ObjectCreate(realm, proto, realm.getIntrinsic(Intrinsics.ObjectPrototype));
+    public static OrdinaryObject ObjectCreate(Realm realm, Intrinsics proto) {
+        return ObjectCreate(realm, proto, DefaultAllocator.INSTANCE);
     }
 
-    /** 8.3.14 ObjectCreate Abstract Operation (extension) */
-    public static Scriptable ObjectCreate(Realm realm, Scriptable proto, Scriptable creator) {
-        /* step 1 (implicit) */
-        /* step 2, step 3 */
-        Scriptable obj = creator.newInstance(realm);
-        /* step 4 */
+    /** 8.3.14 ObjectCreate Abstract Operation */
+    public static <OBJECT extends Scriptable> OBJECT ObjectCreate(Realm realm, Scriptable proto,
+            ObjectAllocator<OBJECT> allocator) {
+        OBJECT obj = allocator.newInstance(realm);
         obj.setPrototype(proto);
-        /* step 5 (implicit) */
-        // obj.setExtensible(true);
-        /* step 6 */
+        return obj;
+    }
+
+    /** 8.3.14 ObjectCreate Abstract Operation */
+    public static <OBJECT extends Scriptable> OBJECT ObjectCreate(Realm realm, Intrinsics proto,
+            ObjectAllocator<OBJECT> allocator) {
+        OBJECT obj = allocator.newInstance(realm);
+        obj.setPrototype(realm.getIntrinsic(proto));
         return obj;
     }
 }

@@ -81,8 +81,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
                 throw throwSyntaxError(realm, Messages.Key.InvalidJSONLiteral);
             }
             if (IsCallable(reviver)) {
-                Scriptable root = ObjectCreate(realm,
-                        realm.getIntrinsic(Intrinsics.ObjectPrototype));
+                Scriptable root = ObjectCreate(realm, Intrinsics.ObjectPrototype);
                 CreateOwnDataProperty(root, "", unfiltered);
                 return Walk(realm, (Callable) reviver, root, "");
             }
@@ -147,7 +146,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
             } else {
                 gap = "";
             }
-            Scriptable wrapper = ObjectCreate(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
+            Scriptable wrapper = ObjectCreate(realm, Intrinsics.ObjectPrototype);
             CreateOwnDataProperty(wrapper, "", value);
             String result = Str(realm, stack, propertyList, replacerFunction, indent, gap, "",
                     wrapper);

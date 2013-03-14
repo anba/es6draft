@@ -20,9 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class NumberObject extends OrdinaryObject implements Scriptable {
-    /**
-     * [[NumberData]]
-     */
+    /** [[NumberData]] */
     private double numberData;
 
     private boolean initialised = false;

@@ -70,7 +70,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
     public Object call(Object thisValue, Object... args) {
         Object value = args.length > 0 ? args[0] : UNDEFINED;
         if (Type.isUndefinedOrNull(value)) {
-            return ObjectCreate(realm(), realm().getIntrinsic(Intrinsics.ObjectPrototype));
+            return ObjectCreate(realm(), Intrinsics.ObjectPrototype);
         }
         return ToObject(realm(), value);
     }
@@ -95,7 +95,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
                 break;
             }
         }
-        return ObjectCreate(realm(), realm().getIntrinsic(Intrinsics.ObjectPrototype));
+        return ObjectCreate(realm(), Intrinsics.ObjectPrototype);
     }
 
     /**

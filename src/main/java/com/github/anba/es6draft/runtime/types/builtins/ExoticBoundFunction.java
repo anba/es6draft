@@ -25,19 +25,13 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  */
 public class ExoticBoundFunction extends OrdinaryObject implements Scriptable, Callable,
         Constructor {
-    /**
-     * [[BoundTargetFunction]]
-     */
+    /** [[BoundTargetFunction]] */
     private Callable boundTargetFunction;
 
-    /**
-     * [[BoundThis]]
-     */
+    /** [[BoundThis]] */
     private Object boundThis;
 
-    /**
-     * [[BoundArguments]]
-     */
+    /** [[BoundArguments]] */
     private Object[] boundArguments;
 
     public ExoticBoundFunction(Realm realm) {

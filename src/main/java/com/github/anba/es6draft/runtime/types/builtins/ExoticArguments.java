@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * </ul>
  */
 public class ExoticArguments extends OrdinaryObject implements Scriptable {
-    // [[ParameterMap]]
+    /** [[ParameterMap]] */
     private ParameterMap parameterMap = null;
 
     private static class ParameterMap {

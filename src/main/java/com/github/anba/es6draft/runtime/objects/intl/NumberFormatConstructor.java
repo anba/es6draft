@@ -28,6 +28,7 @@ import java.util.Set;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -103,7 +104,7 @@ public class NumberFormatConstructor extends OrdinaryObject implements Scriptabl
         Set<String> requestedLocales = CanonicalizeLocaleList(realm, locales);
         Scriptable options;
         if (Type.isUndefined(opts)) {
-            options = ObjectCreate(realm);
+            options = ObjectCreate(realm, Intrinsics.ObjectPrototype);
         } else {
             options = ToObject(realm, opts);
         }
@@ -177,9 +178,17 @@ public class NumberFormatConstructor extends OrdinaryObject implements Scriptabl
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
         public static Object create(Realm realm, Object thisValue) {
-            Scriptable obj = OrdinaryCreateFromConstructor(realm, thisValue,
-                    Intrinsics.Intl_NumberFormatPrototype);
-            return obj;
+            return OrdinaryCreateFromConstructor(realm, thisValue,
+                    Intrinsics.Intl_NumberFormatPrototype, NumberFormatObjectAllocator.INSTANCE);
+        }
+    }
+
+    private static class NumberFormatObjectAllocator implements ObjectAllocator<NumberFormatObject> {
+        static final ObjectAllocator<NumberFormatObject> INSTANCE = new NumberFormatObjectAllocator();
+
+        @Override
+        public NumberFormatObject newInstance(Realm realm) {
+            return new NumberFormatObject(realm);
         }
     }
 }

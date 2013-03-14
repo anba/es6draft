@@ -38,38 +38,43 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, Initialisable {
-    private final Class<? extends Enum<?>> properties;
+    private final ElementKind elementKind;
 
-    public TypedArrayPrototype(Realm realm, Class<? extends Enum<?>> properties) {
+    public TypedArrayPrototype(Realm realm, ElementKind elementKind) {
         super(realm);
-        this.properties = properties;
+        this.elementKind = elementKind;
     }
 
     @Override
     public void initialise(Realm realm) {
-        createProperties(this, realm, properties);
-    }
-
-    public static TypedArrayPrototype createPrototype(Realm realm, ElementKind elementKind) {
         switch (elementKind) {
         case Int8:
-            return new TypedArrayPrototype(realm, Properties_Int8Array.class);
+            createProperties(this, realm, Properties_Int8Array.class);
+            break;
         case Uint8:
-            return new TypedArrayPrototype(realm, Properties_Uint8Array.class);
+            createProperties(this, realm, Properties_Uint8Array.class);
+            break;
         case Uint8C:
-            return new TypedArrayPrototype(realm, Properties_Uint8Clamped.class);
+            createProperties(this, realm, Properties_Uint8Clamped.class);
+            break;
         case Int16:
-            return new TypedArrayPrototype(realm, Properties_Int16Array.class);
+            createProperties(this, realm, Properties_Int16Array.class);
+            break;
         case Uint16:
-            return new TypedArrayPrototype(realm, Properties_Uint16Array.class);
+            createProperties(this, realm, Properties_Uint16Array.class);
+            break;
         case Int32:
-            return new TypedArrayPrototype(realm, Properties_Int32Array.class);
+            createProperties(this, realm, Properties_Int32Array.class);
+            break;
         case Uint32:
-            return new TypedArrayPrototype(realm, Properties_Uint32Array.class);
+            createProperties(this, realm, Properties_Uint32Array.class);
+            break;
         case Float32:
-            return new TypedArrayPrototype(realm, Properties_Float32Array.class);
+            createProperties(this, realm, Properties_Float32Array.class);
+            break;
         case Float64:
-            return new TypedArrayPrototype(realm, Properties_Float64Array.class);
+            createProperties(this, realm, Properties_Float64Array.class);
+            break;
         default:
             throw new IllegalStateException();
         }
@@ -263,7 +268,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.4 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Int8Array {
         ;
@@ -357,7 +362,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.4 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Uint8Array {
         ;
@@ -451,7 +456,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.4 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Uint8Clamped {
         ;
@@ -545,7 +550,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.4 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Int16Array {
         ;
@@ -639,7 +644,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.4 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Uint16Array {
         ;
@@ -733,7 +738,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.4 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Int32Array {
         ;
@@ -827,7 +832,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.4 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Uint32Array {
         ;
@@ -921,7 +926,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.4 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Float32Array {
         ;
@@ -1015,7 +1020,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.4 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Float64Array {
         ;

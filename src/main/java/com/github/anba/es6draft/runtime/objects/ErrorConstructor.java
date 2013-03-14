@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -73,9 +74,8 @@ public class ErrorConstructor extends OrdinaryObject implements Scriptable, Call
         ErrorObject obj;
         if (!Type.isObject(thisValue) || !(thisValue instanceof ErrorObject)
                 || ((ErrorObject) thisValue).isInitialised()) {
-            Scriptable o = OrdinaryCreateFromConstructor(realm(), this, Intrinsics.ErrorPrototype);
-            assert o instanceof ErrorObject;
-            obj = (ErrorObject) o;
+            obj = OrdinaryCreateFromConstructor(realm(), this, Intrinsics.ErrorPrototype,
+                    ErrorObjectAllocator.INSTANCE);
         } else {
             obj = (ErrorObject) thisValue;
         }
@@ -127,7 +127,17 @@ public class ErrorConstructor extends OrdinaryObject implements Scriptable, Call
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.ErrorPrototype);
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.ErrorPrototype,
+                    ErrorObjectAllocator.INSTANCE);
+        }
+    }
+
+    private static class ErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
+        static final ObjectAllocator<ErrorObject> INSTANCE = new ErrorObjectAllocator();
+
+        @Override
+        public ErrorObject newInstance(Realm realm) {
+            return new ErrorObject(realm);
         }
     }
 }
