@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.objects.*;
+import com.github.anba.es6draft.runtime.objects.NativeError.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor;
@@ -50,8 +51,6 @@ public class Realm {
      * [[intrinsics]]
      */
     private Map<Intrinsics, Scriptable> intrinsics = new EnumMap<>(Intrinsics.class);
-    private Map<NativeError.ErrorType, Scriptable> errors = new EnumMap<>(
-            NativeError.ErrorType.class);
 
     /**
      * [[globalThis]]
@@ -130,10 +129,6 @@ public class Realm {
 
     public String nextFunctionName() {
         return "Function_" + functionCounter.incrementAndGet();
-    }
-
-    public Scriptable getNativeError(NativeError.ErrorType id) {
-        return errors.get(id);
     }
 
     public Locale getLocale() {
@@ -226,6 +221,28 @@ public class Realm {
         SetIteratorPrototype setIteratorPrototype = new SetIteratorPrototype(realm);
         StopIterationObject stopIterationObject = new StopIterationObject(realm);
 
+        // native errors
+        NativeError evalErrorConstructor = new NativeError(realm, ErrorType.EvalError);
+        NativeErrorPrototype evalErrorPrototype = new NativeErrorPrototype(realm,
+                ErrorType.EvalError);
+        NativeError rangeErrorConstructor = new NativeError(realm, ErrorType.RangeError);
+        NativeErrorPrototype rangeErrorPrototype = new NativeErrorPrototype(realm,
+                ErrorType.RangeError);
+        NativeError referenceErrorConstructor = new NativeError(realm, ErrorType.ReferenceError);
+        NativeErrorPrototype referenceErrorPrototype = new NativeErrorPrototype(realm,
+                ErrorType.ReferenceError);
+        NativeError syntaxErrorConstructor = new NativeError(realm, ErrorType.SyntaxError);
+        NativeErrorPrototype syntaxErrorPrototype = new NativeErrorPrototype(realm,
+                ErrorType.SyntaxError);
+        NativeError typeErrorConstructor = new NativeError(realm, ErrorType.TypeError);
+        NativeErrorPrototype typeErrorPrototype = new NativeErrorPrototype(realm,
+                ErrorType.TypeError);
+        NativeError uriErrorConstructor = new NativeError(realm, ErrorType.URIError);
+        NativeErrorPrototype uriErrorPrototype = new NativeErrorPrototype(realm, ErrorType.URIError);
+        NativeError internalErrorConstructor = new NativeError(realm, ErrorType.InternalError);
+        NativeErrorPrototype internalErrorPrototype = new NativeErrorPrototype(realm,
+                ErrorType.InternalError);
+
         // binary module intrinsics
         ArrayBufferConstructor arrayBufferConstructor = new ArrayBufferConstructor(realm);
         ArrayBufferPrototype arrayBufferPrototype = new ArrayBufferPrototype(realm);
@@ -313,6 +330,22 @@ public class Realm {
         intrinsics.put(Intrinsics.SetIteratorPrototype, setIteratorPrototype);
         intrinsics.put(Intrinsics.StopIteration, stopIterationObject);
 
+        // native errors
+        intrinsics.put(Intrinsics.EvalError, evalErrorConstructor);
+        intrinsics.put(Intrinsics.EvalErrorPrototype, evalErrorPrototype);
+        intrinsics.put(Intrinsics.RangeError, rangeErrorConstructor);
+        intrinsics.put(Intrinsics.RangeErrorPrototype, rangeErrorPrototype);
+        intrinsics.put(Intrinsics.ReferenceError, referenceErrorConstructor);
+        intrinsics.put(Intrinsics.ReferenceErrorPrototype, referenceErrorPrototype);
+        intrinsics.put(Intrinsics.SyntaxError, syntaxErrorConstructor);
+        intrinsics.put(Intrinsics.SyntaxErrorPrototype, syntaxErrorPrototype);
+        intrinsics.put(Intrinsics.TypeError, typeErrorConstructor);
+        intrinsics.put(Intrinsics.TypeErrorPrototype, typeErrorPrototype);
+        intrinsics.put(Intrinsics.URIError, uriErrorConstructor);
+        intrinsics.put(Intrinsics.URIErrorPrototype, uriErrorPrototype);
+        intrinsics.put(Intrinsics.InternalError, internalErrorConstructor);
+        intrinsics.put(Intrinsics.InternalErrorPrototype, internalErrorPrototype);
+
         // binary module intrinsics
         intrinsics.put(Intrinsics.ArrayBuffer, arrayBufferConstructor);
         intrinsics.put(Intrinsics.ArrayBufferPrototype, arrayBufferPrototype);
@@ -384,6 +417,22 @@ public class Realm {
         setIteratorPrototype.initialise(realm);
         stopIterationObject.initialise(realm);
 
+        // native errors
+        evalErrorConstructor.initialise(realm);
+        evalErrorPrototype.initialise(realm);
+        rangeErrorConstructor.initialise(realm);
+        rangeErrorPrototype.initialise(realm);
+        referenceErrorConstructor.initialise(realm);
+        referenceErrorPrototype.initialise(realm);
+        syntaxErrorConstructor.initialise(realm);
+        syntaxErrorPrototype.initialise(realm);
+        typeErrorConstructor.initialise(realm);
+        typeErrorPrototype.initialise(realm);
+        uriErrorConstructor.initialise(realm);
+        uriErrorPrototype.initialise(realm);
+        internalErrorConstructor.initialise(realm);
+        internalErrorPrototype.initialise(realm);
+
         // binary module intrinsics
         arrayBufferConstructor.initialise(realm);
         arrayBufferPrototype.initialise(realm);
@@ -423,11 +472,6 @@ public class Realm {
         // intrinsics (4)
         Object objectPrototypeToString = Get(objectPrototype, "toString");
         intrinsics.put(Intrinsics.ObjProto_toString, (Scriptable) objectPrototypeToString);
-
-        // store reference to native errors
-        for (NativeError.ErrorType type : NativeError.ErrorType.values()) {
-            realm.errors.put(type, NativeError.create(realm, type));
-        }
 
         // finish initialising global object
         globalThis.initialise(realm);

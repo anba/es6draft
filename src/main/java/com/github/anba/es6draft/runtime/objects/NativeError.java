@@ -6,19 +6,24 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -31,19 +36,13 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.11.7 NativeError Object Structure
  * <ul>
  * <li>15.11.7.1 NativeError Constructors Called as Functions
- * <li>15.11.7.2 NativeError (message)
- * <li>15.11.7.3 The NativeError Constructors
- * <li>15.11.7.4 new NativeError (message)
- * <li>15.11.7.5 Properties of the NativeError Constructors
- * <li>15.11.7.6 Properties of the NativeError Prototype Objects
- * <li>15.11.7.8 Properties of NativeError Instances
+ * <li>15.11.7.2 The NativeError Constructors
+ * <li>15.11.7.3 Properties of the NativeError Constructors
  * </ul>
  * </ul>
  */
-public class NativeError extends OrdinaryObject implements Scriptable, Callable, Constructor {
-    private final ErrorType type;
-    private final Scriptable proto;
-
+public class NativeError extends OrdinaryObject implements Scriptable, Callable, Constructor,
+        Initialisable {
     /**
      * 15.11.6 Native Error Types Used in This Standard
      * <ul>
@@ -56,41 +55,69 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
      * </ul>
      */
     public enum ErrorType {
-        EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, InternalError
+        EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError, InternalError;
+
+        private Intrinsics prototype() {
+            switch (this) {
+            case EvalError:
+                return Intrinsics.EvalErrorPrototype;
+            case RangeError:
+                return Intrinsics.RangeErrorPrototype;
+            case ReferenceError:
+                return Intrinsics.ReferenceErrorPrototype;
+            case SyntaxError:
+                return Intrinsics.SyntaxErrorPrototype;
+            case TypeError:
+                return Intrinsics.TypeErrorPrototype;
+            case URIError:
+                return Intrinsics.URIErrorPrototype;
+            case InternalError:
+                return Intrinsics.InternalErrorPrototype;
+            default:
+                throw new IllegalStateException();
+            }
+        }
     }
 
-    public NativeError(Realm realm, ErrorType type, Scriptable proto) {
+    private final ErrorType type;
+
+    public NativeError(Realm realm, ErrorType type) {
         super(realm);
         this.type = type;
-        this.proto = proto;
+    }
+
+    @Override
+    public void initialise(Realm realm) {
+        switch (type) {
+        case EvalError:
+            createProperties(this, realm, EvalErrorConstructorProperties.class);
+            break;
+        case RangeError:
+            createProperties(this, realm, RangeErrorConstructorProperties.class);
+            break;
+        case ReferenceError:
+            createProperties(this, realm, ReferenceErrorConstructorProperties.class);
+            break;
+        case SyntaxError:
+            createProperties(this, realm, SyntaxErrorConstructorProperties.class);
+            break;
+        case TypeError:
+            createProperties(this, realm, TypeErrorConstructorProperties.class);
+            break;
+        case URIError:
+            createProperties(this, realm, URIErrorConstructorProperties.class);
+            break;
+        case InternalError:
+            createProperties(this, realm, InternalErrorConstructorProperties.class);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
     }
 
     @Override
     public String toString() {
         return type.name();
-    }
-
-    private static class NativeErrorPrototype extends OrdinaryObject {
-        public NativeErrorPrototype(Realm realm) {
-            super(realm);
-        }
-    }
-
-    public static NativeError create(Realm realm, ErrorType type) {
-        NativeErrorPrototype proto = new NativeErrorPrototype(realm);
-        NativeError ctor = new NativeError(realm, type, proto);
-
-        createProperties(ctor, realm, ConstructorProperties.class);
-        // 15.11.7.5.1 NativeError.prototype
-        ctor.defineOwnProperty("prototype", new PropertyDescriptor(proto, false, false, false));
-
-        createProperties(proto, realm, PrototypeProperties.class);
-        // 15.11.7.6.1 NativeError.prototype.constructor
-        proto.defineOwnProperty("constructor", new PropertyDescriptor(ctor, true, false, true));
-        // 15.11.7.6.2 NativeError.prototype.name
-        proto.defineOwnProperty("name", new PropertyDescriptor(type.name(), true, false, true));
-
-        return ctor;
     }
 
     /**
@@ -107,62 +134,270 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
     }
 
     /**
-     * 15.11.7.2 NativeError (message)
+     * 15.11.7.1.1 NativeError (message)
      */
     @Override
     public Object call(Object thisValue, Object... args) {
         Object message = args.length > 0 ? args[0] : UNDEFINED;
-        ErrorObject obj = new ErrorObject(realm());
-        obj.setPrototype(proto);
+
+        ErrorObject obj;
+        if (!Type.isObject(thisValue) || !(thisValue instanceof ErrorObject)
+                || ((ErrorObject) thisValue).isInitialised()) {
+            Scriptable o = OrdinaryCreateFromConstructor(realm(), this, type.prototype());
+            assert o instanceof ErrorObject;
+            obj = (ErrorObject) o;
+        } else {
+            obj = (ErrorObject) thisValue;
+        }
+
+        obj.initialise();
+
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(realm(), message);
-            obj.defineOwnProperty("message", new PropertyDescriptor(msg, true, false, true));
+            CreateOwnDataProperty(obj, "message", msg);
         }
+
         return obj;
     }
 
     /**
-     * 15.11.7.4 new NativeError (message)
+     * 15.11.7.2.1 new NativeError (... args)
      */
     @Override
     public Object construct(Object... args) {
-        Object message = args.length > 0 ? args[0] : UNDEFINED;
-        ErrorObject obj = new ErrorObject(realm());
-        obj.setPrototype(proto);
-        if (!Type.isUndefined(message)) {
-            CharSequence msg = ToString(realm(), message);
-            obj.defineOwnProperty("message", new PropertyDescriptor(msg, true, false, true));
-        }
-        return obj;
+        return OrdinaryConstruct(realm(), this, args);
     }
 
     /**
-     * 15.11.7.5 Properties of the NativeError Constructors
+     * 15.11.7.3 Properties of the NativeError Constructors
      */
-    public enum ConstructorProperties {
+    public enum EvalErrorConstructorProperties {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.Error;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 1;
+
+        /**
+         * 15.11.7.3.1 NativeError.prototype
+         */
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Intrinsics prototype = Intrinsics.EvalErrorPrototype;
+
+        /**
+         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.EvalErrorPrototype);
+        }
     }
 
     /**
-     * 15.11.7.6 Properties of the NativeError Prototype Objects
+     * 15.11.7.3 Properties of the NativeError Constructors
      */
-    public enum PrototypeProperties {
+    public enum RangeErrorConstructorProperties {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.ErrorPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.Error;
+
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final int length = 1;
 
         /**
-         * 15.11.7.6.3 NativeError.prototype.message
+         * 15.11.7.3.1 NativeError.prototype
          */
-        @Value(name = "message")
-        public static final String message = "";
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Intrinsics prototype = Intrinsics.RangeErrorPrototype;
+
+        /**
+         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.RangeErrorPrototype);
+        }
+    }
+
+    /**
+     * 15.11.7.3 Properties of the NativeError Constructors
+     */
+    public enum ReferenceErrorConstructorProperties {
+        ;
+
+        @Prototype
+        public static final Intrinsics __proto__ = Intrinsics.Error;
+
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final int length = 1;
+
+        /**
+         * 15.11.7.3.1 NativeError.prototype
+         */
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Intrinsics prototype = Intrinsics.ReferenceErrorPrototype;
+
+        /**
+         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            return OrdinaryCreateFromConstructor(realm, thisValue,
+                    Intrinsics.ReferenceErrorPrototype);
+        }
+    }
+
+    /**
+     * 15.11.7.3 Properties of the NativeError Constructors
+     */
+    public enum SyntaxErrorConstructorProperties {
+        ;
+
+        @Prototype
+        public static final Intrinsics __proto__ = Intrinsics.Error;
+
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final int length = 1;
+
+        /**
+         * 15.11.7.3.1 NativeError.prototype
+         */
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Intrinsics prototype = Intrinsics.SyntaxErrorPrototype;
+
+        /**
+         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.SyntaxErrorPrototype);
+        }
+    }
+
+    /**
+     * 15.11.7.3 Properties of the NativeError Constructors
+     */
+    public enum TypeErrorConstructorProperties {
+        ;
+
+        @Prototype
+        public static final Intrinsics __proto__ = Intrinsics.Error;
+
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final int length = 1;
+
+        /**
+         * 15.11.7.3.1 NativeError.prototype
+         */
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Intrinsics prototype = Intrinsics.TypeErrorPrototype;
+
+        /**
+         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.TypeErrorPrototype);
+        }
+    }
+
+    /**
+     * 15.11.7.3 Properties of the NativeError Constructors
+     */
+    public enum URIErrorConstructorProperties {
+        ;
+
+        @Prototype
+        public static final Intrinsics __proto__ = Intrinsics.Error;
+
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final int length = 1;
+
+        /**
+         * 15.11.7.3.1 NativeError.prototype
+         */
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Intrinsics prototype = Intrinsics.URIErrorPrototype;
+
+        /**
+         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.URIErrorPrototype);
+        }
+    }
+
+    /**
+     * 15.11.7.3 Properties of the NativeError Constructors
+     */
+    public enum InternalErrorConstructorProperties {
+        ;
+
+        @Prototype
+        public static final Intrinsics __proto__ = Intrinsics.Error;
+
+        @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final int length = 1;
+
+        /**
+         * 15.11.7.3.1 NativeError.prototype
+         */
+        @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final Intrinsics prototype = Intrinsics.InternalErrorPrototype;
+
+        /**
+         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         */
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        public static Object create(Realm realm, Object thisValue) {
+            return OrdinaryCreateFromConstructor(realm, thisValue,
+                    Intrinsics.InternalErrorPrototype);
+        }
     }
 }

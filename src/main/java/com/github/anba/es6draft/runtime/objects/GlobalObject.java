@@ -24,7 +24,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Strings;
-import com.github.anba.es6draft.runtime.objects.NativeError.ErrorType;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Undefined;
@@ -381,37 +380,37 @@ public class GlobalObject extends OrdinaryObject implements Scriptable, Initiali
          * 15.1.4.10 EvalError ( . . . )
          */
         @Value(name = "EvalError")
-        public static final ErrorType EvalError = ErrorType.EvalError;
+        public static final Intrinsics EvalError = Intrinsics.EvalError;
 
         /**
          * 15.1.4.11 RangeError ( . . . )
          */
         @Value(name = "RangeError")
-        public static final ErrorType RangeError = ErrorType.RangeError;
+        public static final Intrinsics RangeError = Intrinsics.RangeError;
 
         /**
          * 15.1.4.12 ReferenceError ( . . . )
          */
         @Value(name = "ReferenceError")
-        public static final ErrorType ReferenceError = ErrorType.ReferenceError;
+        public static final Intrinsics ReferenceError = Intrinsics.ReferenceError;
 
         /**
          * 15.1.4.13 SyntaxError ( . . . )
          */
         @Value(name = "SyntaxError")
-        public static final ErrorType SyntaxError = ErrorType.SyntaxError;
+        public static final Intrinsics SyntaxError = Intrinsics.SyntaxError;
 
         /**
          * 15.1.4.14 TypeError ( . . . )
          */
         @Value(name = "TypeError")
-        public static final ErrorType TypeError = ErrorType.TypeError;
+        public static final Intrinsics TypeError = Intrinsics.TypeError;
 
         /**
          * 15.1.4.15 URIError ( . . . )
          */
         @Value(name = "URIError")
-        public static final ErrorType URIError = ErrorType.URIError;
+        public static final Intrinsics URIError = Intrinsics.URIError;
 
         /**
          * 15.1.4.16 Map ( . . . )
