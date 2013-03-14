@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -30,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.15 WeakMap Objects</h2>
  * <ul>
- * <li>15.15.5 Properties of the WeakMap Prototype Object
+ * <li>15.15.4 Properties of the WeakMap Prototype Object
  * </ul>
  */
 public class WeakMapPrototype extends OrdinaryObject implements Scriptable, Initialisable {
@@ -49,14 +48,17 @@ public class WeakMapPrototype extends OrdinaryObject implements Scriptable, Init
     }
 
     /**
-     * 15.15.5 Properties of the WeakMap Prototype Object
+     * 15.15.4 Properties of the WeakMap Prototype Object
      */
     public enum Properties {
         ;
 
-        private static WeakMapObject WeakMap(Realm realm, Scriptable m) {
-            if (m instanceof WeakMapObject) {
-                return (WeakMapObject) m;
+        private static WeakMapObject thisWeakMapValue(Realm realm, Object obj) {
+            if (Type.isObject(obj) && obj instanceof WeakMapObject) {
+                WeakMapObject map = (WeakMapObject) obj;
+                if (map.isInitialised()) {
+                    return map;
+                }
             }
             throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
@@ -65,71 +67,78 @@ public class WeakMapPrototype extends OrdinaryObject implements Scriptable, Init
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.15.5.1 WeakMap.prototype.constructor
+         * 15.15.4.1 WeakMap.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.WeakMap;
 
         /**
-         * 15.15.5.2 WeakMap.prototype.clear ()
+         * 15.15.4.2 WeakMap.prototype.clear ()
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(Realm realm, Object thisValue) {
-            Scriptable m = ToObject(realm, thisValue);
-            WeakHashMap<Object, Object> entries = WeakMap(realm, m).getWeakMapData();
-            // FIXME: spec bug?! -> bad interaction with iterator methods!
-            // (calling clear() instead of adding new map for now...)
+            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+            WeakHashMap<Object, Object> entries = m.getWeakMapData();
             entries.clear();
             return UNDEFINED;
         }
 
         /**
-         * 15.15.5.3 WeakMap.prototype.delete ( key )
+         * 15.15.4.3 WeakMap.prototype.delete ( key )
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(Realm realm, Object thisValue, Object key) {
-            Scriptable m = ToObject(realm, thisValue);
-            WeakHashMap<Object, Object> entries = WeakMap(realm, m).getWeakMapData();
+            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+            WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            if (!Type.isObject(key)) {
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
+            }
             return entries.remove(key);
         }
 
         /**
-         * 15.15.5.4 WeakMap.prototype.get ( key )
+         * 15.15.4.4 WeakMap.prototype.get ( key )
          */
         @Function(name = "get", arity = 1)
         public static Object get(Realm realm, Object thisValue, Object key) {
-            Scriptable m = ToObject(realm, thisValue);
-            WeakHashMap<Object, Object> entries = WeakMap(realm, m).getWeakMapData();
+            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+            WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            if (!Type.isObject(key)) {
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
+            }
             Object value = entries.get(key);
             return (value != null ? value : UNDEFINED);
         }
 
         /**
-         * 15.15.5.5 WeakMap.prototype.has ( key )
+         * 15.15.4.5 WeakMap.prototype.has ( key )
          */
         @Function(name = "has", arity = 1)
         public static Object has(Realm realm, Object thisValue, Object key) {
-            Scriptable m = ToObject(realm, thisValue);
-            WeakHashMap<Object, Object> entries = WeakMap(realm, m).getWeakMapData();
+            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+            WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            if (!Type.isObject(key)) {
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
+            }
             return entries.containsKey(key);
         }
 
         /**
-         * 15.15.5.6 WeakMap.prototype.set ( key , value )
+         * 15.15.4.6 WeakMap.prototype.set ( key , value )
          */
         @Function(name = "set", arity = 2)
         public static Object set(Realm realm, Object thisValue, Object key, Object value) {
-            Scriptable m = ToObject(realm, thisValue);
-            WeakHashMap<Object, Object> entries = WeakMap(realm, m).getWeakMapData();
+            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+            WeakHashMap<Object, Object> entries = m.getWeakMapData();
             if (!Type.isObject(key)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             entries.put(key, new WeakReference<>(value));
-            return UNDEFINED;
+            return m;
         }
 
         /**
-         * 15.15.5.7 WeakMap.prototype.@@toStringTag
+         * 15.15.4.7 WeakMap.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "WeakMap";

@@ -15,22 +15,28 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.15 WeakMap Objects</h2>
  * <ul>
- * <li>15.15.6 Properties of WeakMap Instances
+ * <li>15.15.5 Properties of WeakMap Instances
  * </ul>
  */
 public class WeakMapObject extends OrdinaryObject {
-    /**
-     * [[WeakMapData]]
-     */
-    private WeakHashMap<Object, Object> weakMapData;
+    /** [[WeakMapData]] */
+    private WeakHashMap<Object, Object> weakMapData = null;
 
     public WeakMapObject(Realm realm) {
         super(realm);
-        // no ephemeron tables in java :(
-        weakMapData = new WeakHashMap<>();
     }
 
     public WeakHashMap<Object, Object> getWeakMapData() {
         return weakMapData;
+    }
+
+    public void initialise() {
+        assert this.weakMapData == null : "WeakMap already initialised";
+        // no ephemeron tables in java :(
+        this.weakMapData = new WeakHashMap<>();
+    }
+
+    public boolean isInitialised() {
+        return (weakMapData != null);
     }
 }
