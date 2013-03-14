@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
@@ -34,12 +33,17 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.14 Map Objects</h2>
  * <ul>
- * <li>15.14.7 Map Iterator Object Structure
+ * <li>15.14.6 Map Iterator Object Structure
  * </ul>
  */
 public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, Initialisable {
     public MapIteratorPrototype(Realm realm) {
         super(realm);
+    }
+
+    @Override
+    public Scriptable newInstance(Realm realm) {
+        return new MapIterator(realm);
     }
 
     @Override
@@ -52,14 +56,14 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
     }
 
     /**
-     * 15.14.7.3 Properties of Map Iterator Instances
+     * 15.14.6.3 Properties of Map Iterator Instances
      */
     private static class MapIterator extends OrdinaryObject {
         /**
          * [[Map]]
          */
         @SuppressWarnings("unused")
-        Scriptable map;
+        MapObject map;
 
         /**
          * [[MapNextIndex]]
@@ -79,24 +83,13 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
         }
     }
 
-    private static MapObject MapObject(Realm realm, Scriptable m) {
-        if (m instanceof MapObject) {
-            return (MapObject) m;
-        }
-        throw throwTypeError(realm, Messages.Key.IncompatibleObject);
-    }
-
     /**
-     * 15.14.7.1 CreateMapIterator Abstract Operation
+     * 15.14.6.1 CreateMapIterator Abstract Operation
      */
-    public static OrdinaryObject CreateMapIterator(Realm realm, Object map, MapIterationKind kind) {
-        Scriptable m = ToObject(realm, map);
-        LinkedMap<Object, Object> entries = MapObject(realm, m).getMapData();
-        // FIXME: spec bug (variable entries unused)
-        // ObjectCreate()
+    public static OrdinaryObject CreateMapIterator(Realm realm, MapObject m, MapIterationKind kind) {
+        LinkedMap<Object, Object> entries = m.getMapData();
         Scriptable proto = realm.getIntrinsic(Intrinsics.MapIteratorPrototype);
-        MapIterator itr = new MapIterator(realm);
-        itr.setPrototype(proto);
+        MapIterator itr = (MapIterator) ObjectCreate(realm, proto, proto);
         itr.map = m;
         itr.nextIndex = 0;
         itr.iterationKind = kind;
@@ -105,7 +98,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
     }
 
     /**
-     * 15.14.7.2 The Map Iterator Prototype
+     * 15.14.6.2 The Map Iterator Prototype
      */
     public enum Properties {
         ;
@@ -114,29 +107,29 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.14.7.2.1 MapIterator.prototype.constructor<br>
+         * 15.14.6.2.1 MapIterator.prototype.constructor<br>
          * FIXME: spec bug (no description)
          */
         @Value(name = "constructor")
         public static final Object constructor = UNDEFINED;
 
         /**
-         * 15.14.7.2.2 MapIterator.prototype.next( )
+         * 15.14.6.2.2 MapIterator.prototype.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(Realm realm, Object thisValue) {
             if (!Type.isObject(thisValue)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            Scriptable o = ToObject(realm, thisValue);
-            if (!(o instanceof MapIterator)) {
+            if (!(thisValue instanceof MapIterator)) {
                 throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
-            // Scriptable m = ((MapIterator)o).map;
-            // int index = ((MapIterator)o).nextIndex;
-            MapIterationKind itemKind = ((MapIterator) o).iterationKind;
-            Iterator<Entry<Object, Object>> itr = ((MapIterator) o).iterator;
-            while (itr.hasNext()) {
+            MapIterator o = (MapIterator) thisValue;
+            // Scriptable m = o.map;
+            // int index = o.nextIndex;
+            MapIterationKind itemKind = o.iterationKind;
+            Iterator<Entry<Object, Object>> itr = o.iterator;
+            if (itr.hasNext()) {
                 Entry<Object, Object> e = itr.next();
                 assert e != null;
                 Object result;
@@ -148,7 +141,6 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
                     assert itemKind == MapIterationKind.KeyValue;
                     Scriptable array = ArrayCreate(realm, 2);
                     CreateOwnDataProperty(array, "0", e.getKey());
-                    // FIXME: spec bug (3rd argument wrong) (Bug 1156)
                     CreateOwnDataProperty(array, "1", e.getValue());
                     result = array;
                 }
@@ -158,7 +150,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
         }
 
         /**
-         * 15.14.7.2.3 MapIterator.prototype.@@iterator ()
+         * 15.14.6.2.3 MapIterator.prototype.@@iterator ()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(Realm realm, Object thisValue) {
@@ -166,7 +158,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
         }
 
         /**
-         * 15.14.7.2.4 MapIterator.prototype.@@toStringTag
+         * 15.14.6.2.4 MapIterator.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Map Iterator";

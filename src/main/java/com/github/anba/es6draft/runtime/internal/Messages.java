@@ -178,6 +178,10 @@ public class Messages {
         ArrayOffsetOutOfRange("binary.array_offset_out_of_range"),
         InvalidByteOffset("binary.invalid_byteoffset"),
         InvalidBufferSize("binary.invalid_buffersize"),
+        // 15.14
+        MapInvalidComparator("map.invalid_comparator"),
+        // 15.16
+        SetInvalidComparator("set.invalid_comparator"),
         // 15.18 Proxy Objects
         ProxySameValue("proxy.same_value"),
         ProxyIncompatibleDescriptor("proxy.incompatible_descriptor"),
