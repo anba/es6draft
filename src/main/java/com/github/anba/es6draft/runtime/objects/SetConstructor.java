@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.StopIterationObject.IteratorComplete;
@@ -36,10 +37,9 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.16 Set Objects</h2>
  * <ul>
- * <li>15.16.1 Abstract Operations For Set Objects
- * <li>15.16.2 The Set Constructor Called as a Function
- * <li>15.16.3 The Set Constructor
- * <li>15.16.4 Properties of the Set Constructor
+ * <li>15.16.1 The Set Constructor Called as a Function
+ * <li>15.16.2 The Set Constructor
+ * <li>15.16.3 Properties of the Set Constructor
  * </ul>
  */
 public class SetConstructor extends OrdinaryObject implements Scriptable, Callable, Constructor,
@@ -62,67 +62,76 @@ public class SetConstructor extends OrdinaryObject implements Scriptable, Callab
         return BuiltinBrand.BuiltinFunction;
     }
 
-    /**
-     * 15.16.1.1 SetInitialisation
-     */
-    public static Scriptable SetInitialisation(Realm realm, Scriptable obj, Object iterable) {
-        if (!Type.isObject(obj)) {
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
-        }
-        if (!(obj instanceof SetObject)) {
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
-        }
-        if (!Type.isUndefined(iterable)) {
-            Scriptable _iterable = ToObject(realm, iterable);
-            Object itr;
-            boolean hasValues = HasProperty(_iterable, "values");
-            if (hasValues) {
-                // FIXME: spec bug (@@iterator of iterable instead of obj needed) (bug 1130)
-                itr = Invoke(realm, _iterable, "values");
-            } else {
-                Symbol iterator = BuiltinSymbol.iterator.get();
-                itr = Invoke(realm, _iterable, iterator);
-            }
-            Object adder = Get(obj, "add");
-            if (!IsCallable(adder)) {
-                throw throwTypeError(realm, Messages.Key.NotCallable);
-            }
-            for (;;) {
-                Object next;
-                try {
-                    next = Invoke(realm, itr, "next");
-                } catch (ScriptException e) {
-                    if (IteratorComplete(realm, e)) {
-                        return obj;
-                    }
-                    throw e;
-                }
-                ((Callable) adder).call(obj, next);
-            }
-        } else {
-            return obj;
-        }
-    }
-
     @Override
     public String toSource() {
         return "function Set() { /* native code */ }";
     }
 
     /**
-     * 15.16.2.1 Set (iterable = undefined )
+     * 15.16.1.1 Set (iterable = undefined, comparator = undefined )
      */
     @Override
     public Object call(Object thisValue, Object... args) {
-        Scriptable set = ToObject(realm(), thisValue);
+        Realm realm = realm();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
-        SetInitialisation(realm(), set, iterable);
-        // FIXME: spec bug (per description iterable returns array-like with [key,value]) (Bug 1155)
-        return set;
+        Object comparator = args.length > 1 ? args[1] : UNDEFINED;
+
+        /* steps 1-4 */
+        if (!Type.isObject(thisValue)) {
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
+        }
+        if (!(thisValue instanceof SetObject)) {
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+        }
+        SetObject set = (SetObject) thisValue;
+        if (set.isInitialised()) {
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+        }
+
+        /* steps 5-7 */
+        Object itr, adder = null;
+        if (Type.isUndefinedOrNull(iterable)) {
+            itr = UNDEFINED;
+        } else {
+            Symbol iterator = BuiltinSymbol.iterator.get();
+            itr = Invoke(realm, iterable, iterator);
+            adder = Get(set, "add");
+            if (!IsCallable(adder)) {
+                throw throwTypeError(realm, Messages.Key.NotCallable);
+            }
+        }
+
+        /* steps 8-10 */
+        String _comparator = "";
+        if (!Type.isUndefined(comparator)) {
+            if (!SameValue(comparator, "is")) {
+                // TODO: error message
+                throw throwRangeError(realm, Messages.Key.InvalidPrecision);
+            }
+            _comparator = "is";
+        }
+        set.initialise(_comparator);
+
+        /* steps 11-12 */
+        if (Type.isUndefined(itr)) {
+            return set;
+        }
+        for (;;) {
+            Object next;
+            try {
+                next = Invoke(realm, itr, "next");
+            } catch (ScriptException e) {
+                if (IteratorComplete(realm, e)) {
+                    return set;
+                }
+                throw e;
+            }
+            ((Callable) adder).call(set, next);
+        }
     }
 
     /**
-     * 15.16.3.1 new Set (iterable = undefined )
+     * 15.16.2.1 new Set ( ... args)
      */
     @Override
     public Object construct(Object... args) {
@@ -130,7 +139,7 @@ public class SetConstructor extends OrdinaryObject implements Scriptable, Callab
     }
 
     /**
-     * 15.16.4 Properties of the Set Constructor
+     * 15.16.3 Properties of the Set Constructor
      */
     public enum Properties {
         ;
@@ -143,21 +152,22 @@ public class SetConstructor extends OrdinaryObject implements Scriptable, Callab
         public static final int length = 0;
 
         /**
-         * 15.16.4.1 Set.prototype
+         * 15.16.3.1 Set.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.SetPrototype;
 
         /**
-         * 15.16.4.2 @@create ( )
+         * 15.16.3.2 Set[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            Object f = thisValue;
-            Scriptable obj = OrdinaryCreateFromConstructor(realm, f, Intrinsics.SetPrototype);
-            // obj.[[SetData]] = {}; (implicit)
-            return obj;
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.SetPrototype);
         }
     }
 }
