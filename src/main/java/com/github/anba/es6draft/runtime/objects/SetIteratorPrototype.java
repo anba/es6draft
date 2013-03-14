@@ -6,11 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -26,6 +27,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -41,25 +43,33 @@ public class SetIteratorPrototype extends OrdinaryObject implements Scriptable, 
     }
 
     @Override
+    public Scriptable newInstance(Realm realm) {
+        return new SetIterator(realm);
+    }
+
+    @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
+    }
+
+    public enum SetIterationKind {
+        Key, Value, KeyValue
     }
 
     /**
      * 15.16.7.3 Properties of Set Iterator Instances
      */
     private static class SetIterator extends OrdinaryObject {
-        /**
-         * [[IteratedSet]]
-         */
+        /** [[IteratedSet]] */
         @SuppressWarnings("unused")
-        Scriptable set;
+        SetObject set;
 
-        /**
-         * [[SetNextIndex]]
-         */
+        /** [[SetNextIndex]] */
         @SuppressWarnings("unused")
         int nextIndex;
+
+        /** [[SetIterationKind]] */
+        SetIterationKind iterationKind;
 
         Iterator<Entry<Object, Void>> iterator;
 
@@ -68,25 +78,14 @@ public class SetIteratorPrototype extends OrdinaryObject implements Scriptable, 
         }
     }
 
-    private static SetObject SetObject(Realm realm, Scriptable m) {
-        if (m instanceof SetObject) {
-            return (SetObject) m;
-        }
-        throw throwTypeError(realm, Messages.Key.IncompatibleObject);
-    }
-
     /**
      * 15.16.7.1 CreateSetIterator Abstract Operation
      */
-    public static OrdinaryObject CreateSetIterator(Realm realm, Object set) {
-        Scriptable s = ToObject(realm, set);
-        LinkedMap<Object, Void> entries = SetObject(realm, s).getSetData();
-        // FIXME: spec bug (variable entries unused)
-        // ObjectCreate()
+    public static OrdinaryObject CreateSetIterator(Realm realm, SetObject set, SetIterationKind kind) {
+        LinkedMap<Object, Void> entries = set.getSetData();
         Scriptable proto = realm.getIntrinsic(Intrinsics.SetIteratorPrototype);
-        SetIterator itr = new SetIterator(realm);
-        itr.setPrototype(proto);
-        itr.set = s;
+        SetIterator itr = (SetIterator) ObjectCreate(realm, proto, proto);
+        itr.set = set;
         itr.nextIndex = 0;
         itr.iterator = entries.iterator();
         return itr;
@@ -116,16 +115,23 @@ public class SetIteratorPrototype extends OrdinaryObject implements Scriptable, 
             if (!Type.isObject(thisValue)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            Scriptable o = ToObject(realm, thisValue);
-            if (!(o instanceof SetIterator)) {
+            if (!(thisValue instanceof SetIterator)) {
                 throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
-            // Scriptable m = ((SetIterator) o).set;
-            // int index = ((SetIterator) o).nextIndex;
-            Iterator<Entry<Object, Void>> itr = ((SetIterator) o).iterator;
-            while (itr.hasNext()) {
+            SetIterator o = (SetIterator) thisValue;
+            // Scriptable m = o.set;
+            // int index = o.nextIndex;
+            SetIterationKind itemKind = o.iterationKind;
+            Iterator<Entry<Object, Void>> itr = o.iterator;
+            if (itr.hasNext()) {
                 Entry<Object, Void> e = itr.next();
                 assert e != null;
+                if (itemKind == SetIterationKind.KeyValue) {
+                    ExoticArray result = ArrayCreate(realm, 2);
+                    CreateOwnDataProperty(result, "0", e.getKey());
+                    CreateOwnDataProperty(result, "1", e.getKey());
+                    return result;
+                }
                 return e.getKey();
             }
             return _throw(realm.getIntrinsic(Intrinsics.StopIteration));
