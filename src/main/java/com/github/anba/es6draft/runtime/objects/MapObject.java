@@ -14,21 +14,41 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.14 Map Objects</h2>
  * <ul>
- * <li>15.14.6 Properties of Map Instances
+ * <li>15.14.5 Properties of Map Instances
  * </ul>
  */
 public class MapObject extends OrdinaryObject {
-    /**
-     * [[MapData]]
-     */
-    private LinkedMap<Object, Object> mapData;
+    /** [[MapData]] */
+    private LinkedMap<Object, Object> mapData = null;
+
+    /** [[MapComparator]] */
+    private String mapComparator;
 
     public MapObject(Realm realm) {
         super(realm);
-        mapData = new LinkedMap<>(LinkedMap.HashMapBuilder);
     }
 
+    /**
+     * [[MapData]]
+     */
     public LinkedMap<Object, Object> getMapData() {
         return mapData;
+    }
+
+    /**
+     * [[MapComparator]]
+     */
+    public String getMapComparator() {
+        return mapComparator;
+    }
+
+    public void initialise(String comparator) {
+        assert this.mapData == null : "Map already initialised";
+        this.mapData = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        this.mapComparator = comparator;
+    }
+
+    public boolean isInitialised() {
+        return (mapData != null);
     }
 }
