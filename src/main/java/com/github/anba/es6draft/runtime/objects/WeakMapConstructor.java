@@ -36,10 +36,9 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.15 WeakMap Objects</h2>
  * <ul>
- * <li>15.15.1 Abstract Operations For WeakMap Objects
- * <li>15.15.2 The WeakMap Constructor Called as a Function
- * <li>15.15.3 The WeakMap Constructor
- * <li>15.15.4 Properties of the WeakMap Constructor
+ * <li>15.15.1 The WeakMap Constructor Called as a Function
+ * <li>15.15.2 The WeakMap Constructor
+ * <li>15.15.3 Properties of the WeakMap Constructor
  * </ul>
  */
 public class WeakMapConstructor extends OrdinaryObject implements Scriptable, Callable,
@@ -68,56 +67,64 @@ public class WeakMapConstructor extends OrdinaryObject implements Scriptable, Ca
     }
 
     /**
-     * 15.15.1.1 WeakMapInitialisation
-     */
-    public static Scriptable WeakMapInitialisation(Realm realm, Scriptable obj, Object iterable) {
-        if (!Type.isObject(obj)) {
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
-        }
-        if (!(obj instanceof WeakMapObject)) {
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
-        }
-        if (!Type.isUndefined(iterable)) {
-            Scriptable _iterable = ToObject(realm, iterable);
-            Symbol iterator = BuiltinSymbol.iterator.get();
-            Object itr = Invoke(realm, _iterable, iterator);
-            Object adder = Get(obj, "set");
-            if (!IsCallable(adder)) {
-                throw throwTypeError(realm, Messages.Key.NotCallable);
-            }
-            for (;;) {
-                Object next;
-                try {
-                    next = Invoke(realm, itr, "next");
-                } catch (ScriptException e) {
-                    if (IteratorComplete(realm, e)) {
-                        return obj;
-                    }
-                    throw e;
-                }
-                Scriptable entry = ToObject(realm, next);
-                Object k = Get(entry, "0");
-                Object v = Get(entry, "1");
-                ((Callable) adder).call(obj, k, v);
-            }
-        } else {
-            return obj;
-        }
-    }
-
-    /**
-     * 15.15.2.1 WeakMap (iterable = undefined )
+     * 15.15.1.1 WeakMap (iterable = undefined )
      */
     @Override
     public Object call(Object thisValue, Object... args) {
-        Scriptable map = ToObject(realm(), thisValue);
+        Realm realm = realm();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
-        WeakMapInitialisation(realm(), map, iterable);
-        return map;
+
+        /* steps 1-4 */
+        if (!Type.isObject(thisValue)) {
+            throw throwTypeError(realm, Messages.Key.NotObjectType);
+        }
+        if (!(thisValue instanceof WeakMapObject)) {
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+        }
+        WeakMapObject map = (WeakMapObject) thisValue;
+        if (map.isInitialised()) {
+            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+        }
+
+        /* steps 5-7 */
+        Object itr, adder = null;
+        if (Type.isUndefinedOrNull(iterable)) {
+            itr = UNDEFINED;
+        } else {
+            Symbol iterator = BuiltinSymbol.iterator.get();
+            itr = Invoke(realm, iterable, iterator);
+            adder = Get(map, "set");
+            if (!IsCallable(adder)) {
+                throw throwTypeError(realm, Messages.Key.NotCallable);
+            }
+        }
+
+        /* step 8 */
+        map.initialise();
+
+        /* steps 9-10 */
+        if (Type.isUndefined(itr)) {
+            return map;
+        }
+        for (;;) {
+            Object next;
+            try {
+                next = Invoke(realm, itr, "next");
+            } catch (ScriptException e) {
+                if (IteratorComplete(realm, e)) {
+                    return map;
+                }
+                throw e;
+            }
+            Scriptable entry = ToObject(realm, next);
+            Object k = Get(entry, "0");
+            Object v = Get(entry, "1");
+            ((Callable) adder).call(map, k, v);
+        }
     }
 
     /**
-     * 15.15.3.1 new WeakMap (iterable = undefined )
+     * 15.15.2.1 new WeakMap ( ... args )
      */
     @Override
     public Object construct(Object... args) {
@@ -125,7 +132,7 @@ public class WeakMapConstructor extends OrdinaryObject implements Scriptable, Ca
     }
 
     /**
-     * 15.15.4 Properties of the WeakMap Constructor
+     * 15.15.3 Properties of the WeakMap Constructor
      */
     public enum Properties {
         ;
@@ -138,21 +145,22 @@ public class WeakMapConstructor extends OrdinaryObject implements Scriptable, Ca
         public static final int length = 0;
 
         /**
-         * 15.15.4.1 WeakMap.prototype
+         * 15.15.3.1 WeakMap.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.WeakMapPrototype;
 
         /**
-         * 15.15.4.2 @@create ( )
+         * 15.15.3.2 WeakMap[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0)
+        @Function(
+                name = "@@create",
+                symbol = BuiltinSymbol.create,
+                arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            Object f = thisValue;
-            Scriptable obj = OrdinaryCreateFromConstructor(realm, f, Intrinsics.WeakMapPrototype);
-            // obj.[[WeakMapData]] = {}; (implicit)
-            return obj;
+            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.WeakMapPrototype);
         }
     }
 }
