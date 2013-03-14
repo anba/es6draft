@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.Obj
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
 
@@ -130,7 +131,7 @@ public class JSONParser {
      * </pre>
      */
     private Scriptable jsonObject() {
-        Scriptable object = ObjectCreate(realm);
+        Scriptable object = ObjectCreate(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
         consume(Token.LC);
         if (token() != Token.RC) {
             jsonMember(object);
