@@ -63,6 +63,9 @@ public enum BuiltinSymbol {
 
     ;
 
+    /**
+     * Returns a {@link Symbol} object for this {@link BuiltinSymbol}
+     */
     public final Symbol get() {
         assert this != NONE;
         return symbols.get(this);
