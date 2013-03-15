@@ -47,9 +47,9 @@ public class LinkedMap<KEY, VALUE> {
         head.next = head;
     }
 
-    private void insert(KEY key, VALUE value) {
+    private void insert(KEY hashKey, KEY key, VALUE value) {
         Entry<KEY, VALUE> entry = new Entry<>(key, value);
-        map.put(key, entry);
+        map.put(hashKey, entry);
         entry.prev = head.prev;
         entry.next = head;
         head.prev.next = entry;
@@ -60,6 +60,10 @@ public class LinkedMap<KEY, VALUE> {
         entry.removed = true;
         entry.prev.next = entry.next;
         entry.next.prev = entry.prev;
+    }
+
+    protected KEY hashKey(KEY key) {
+        return key;
     }
 
     public int size() {
@@ -76,7 +80,8 @@ public class LinkedMap<KEY, VALUE> {
     }
 
     public boolean delete(KEY key) {
-        Entry<KEY, VALUE> entry = map.remove(key);
+        KEY hashKey = hashKey(key);
+        Entry<KEY, VALUE> entry = map.remove(hashKey);
         if (entry != null) {
             remove(entry);
             return true;
@@ -85,7 +90,8 @@ public class LinkedMap<KEY, VALUE> {
     }
 
     public VALUE get(KEY key) {
-        Entry<KEY, VALUE> entry = map.get(key);
+        KEY hashKey = hashKey(key);
+        Entry<KEY, VALUE> entry = map.get(hashKey);
         if (entry != null) {
             return entry.getValue();
         } else {
@@ -94,15 +100,17 @@ public class LinkedMap<KEY, VALUE> {
     }
 
     public boolean has(KEY key) {
-        return map.containsKey(key);
+        KEY hashKey = hashKey(key);
+        return map.containsKey(hashKey);
     }
 
     public void set(KEY key, VALUE value) {
-        Entry<KEY, VALUE> entry = map.get(key);
+        KEY hashKey = hashKey(key);
+        Entry<KEY, VALUE> entry = map.get(hashKey);
         if (entry != null) {
             entry.setValue(value);
         } else {
-            insert(key, value);
+            insert(hashKey, key, value);
         }
     }
 

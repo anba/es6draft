@@ -103,13 +103,13 @@ public class SetConstructor extends OrdinaryObject implements Scriptable, Callab
         }
 
         /* steps 8-10 */
-        String _comparator = "";
+        SetObject.Comparator _comparator = SetObject.Comparator.SameValueZero;
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
                 // TODO: error message
                 throw throwRangeError(realm, Messages.Key.InvalidPrecision);
             }
-            _comparator = "is";
+            _comparator = SetObject.Comparator.SameValue;
         }
         set.initialise(_comparator);
 

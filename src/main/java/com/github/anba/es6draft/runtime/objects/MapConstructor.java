@@ -109,12 +109,12 @@ public class MapConstructor extends OrdinaryObject implements Scriptable, Callab
         }
 
         /* steps 8-10 */
-        String _comparator = "";
+        MapObject.Comparator _comparator = MapObject.Comparator.SameValueZero;
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
                 throw throwRangeError(realm, Messages.Key.MapInvalidComparator);
             }
-            _comparator = "is";
+            _comparator = MapObject.Comparator.SameValue;
         }
         map.initialise(_comparator);
 

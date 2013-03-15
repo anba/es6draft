@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
+import com.github.anba.es6draft.runtime.internal.LinkedMapImpl;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -22,7 +23,11 @@ public class SetObject extends OrdinaryObject {
     private LinkedMap<Object, Void> setData = null;
 
     /** [[SetComparator]] */
-    private String setComparator;
+    private Comparator setComparator;
+
+    public enum Comparator {
+        SameValue, SameValueZero
+    }
 
     public SetObject(Realm realm) {
         super(realm);
@@ -38,13 +43,13 @@ public class SetObject extends OrdinaryObject {
     /**
      * [[SetComparator]]
      */
-    public String getSetComparator() {
+    public Comparator getSetComparator() {
         return setComparator;
     }
 
-    public void initialise(String comparator) {
+    public void initialise(Comparator comparator) {
         assert this.setData == null : "Set already initialised";
-        this.setData = new LinkedMap<>(LinkedMap.HashMapBuilder);
+        this.setData = new LinkedMapImpl<Void>(comparator == Comparator.SameValueZero);
         this.setComparator = comparator;
     }
 
