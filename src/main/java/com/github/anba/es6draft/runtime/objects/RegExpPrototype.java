@@ -16,8 +16,10 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,6 +32,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
@@ -232,7 +235,154 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "replace", arity = 2)
         public static Object replace(Realm realm, Object thisValue, Object s, Object replaceValue) {
-            return UNDEFINED;
+            RegExpObject rx = thisRegExpValue(realm, thisValue);
+            String string = ToFlatString(realm, s);
+            List<MatchResult> matches = new ArrayList<>();
+            // cf. RegExp.prototype.match
+            boolean global = ToBoolean(Get(rx, "global"));
+            if (!global) {
+                // cf. RegExpExec
+                Object lastIndex = Get(rx, "lastIndex");
+                // call ToInteger(realm,) in order to trigger possible side-effects...
+                ToInteger(realm, lastIndex);
+                Matcher m = rx.getRegExpMatcher().matcher(string);
+                boolean matchSucceeded = m.find(0);
+                if (!matchSucceeded) {
+                    Put(realm, rx, "lastIndex", 0, true);
+                    return string;
+                }
+                matches.add(m.toMatchResult());
+            } else {
+                // cf. RegExpExec
+                Put(realm, rx, "lastIndex", 0, true);
+                int previousLastIndex = 0;
+                int n = 0;
+                boolean lastMatch = true;
+                while (lastMatch) {
+                    // Object result = RegExpExec(realm, rx, s);
+                    Matcher result = getMatcherOrNull(realm, rx, string);
+                    if (result == null) {
+                        lastMatch = false;
+                    } else {
+                        int thisIndex = (int) ToInteger(realm, Get(rx, "lastIndex"));
+                        if (thisIndex == previousLastIndex) {
+                            Put(realm, rx, "lastIndex", thisIndex + 1, true);
+                            previousLastIndex = thisIndex + 1;
+                        } else {
+                            previousLastIndex = thisIndex;
+                        }
+                        matches.add(result.toMatchResult());
+                        n += 1;
+                    }
+                }
+                if (n == 0) {
+                    return string;
+                }
+            }
+
+            if (IsCallable(replaceValue)) {
+                StringBuilder result = new StringBuilder();
+                int lastMatch = 0;
+                Callable fun = (Callable) replaceValue;
+                for (MatchResult matchResult : matches) {
+                    int m = matchResult.groupCount();
+                    Object[] arguments = new Object[m + 3];
+                    arguments[0] = matchResult.group();
+                    GroupIterator iterator = newGroupIterator(rx, matchResult);
+                    for (int i = 1; iterator.hasNext(); ++i) {
+                        Object group = iterator.next();
+                        arguments[i] = group;
+                    }
+                    arguments[m + 1] = matchResult.start();
+                    arguments[m + 2] = string;
+
+                    CharSequence replacement = ToString(realm, fun.call(UNDEFINED, arguments));
+                    result.append(string, lastMatch, matchResult.start());
+                    result.append(replacement);
+                    lastMatch = matchResult.end();
+                }
+                result.append(string, lastMatch, string.length());
+                return result.toString();
+            } else {
+                String replValue = ToFlatString(realm, replaceValue);
+                StringBuilder result = new StringBuilder();
+                int lastMatch = 0;
+                for (MatchResult matchResult : matches) {
+                    int m = matchResult.groupCount();
+                    Object[] groups = null;
+                    StringBuilder replacement = new StringBuilder();
+                    for (int cursor = 0, len = replValue.length(); cursor < len;) {
+                        char c = replValue.charAt(cursor++);
+                        if (c == '$' && cursor < len) {
+                            c = replValue.charAt(cursor++);
+                            switch (c) {
+                            case '0':
+                            case '1':
+                            case '2':
+                            case '3':
+                            case '4':
+                            case '5':
+                            case '6':
+                            case '7':
+                            case '8':
+                            case '9': {
+                                int n = c - '0';
+                                if (cursor < len) {
+                                    char d = replValue.charAt(cursor);
+                                    if (d >= (n == 0 ? '1' : '0') && d <= '9') {
+                                        int nn = n * 10 + (d - '0');
+                                        if (nn <= m) {
+                                            cursor += 1;
+                                            n = nn;
+                                        }
+                                    }
+                                }
+                                if (n == 0) {
+                                    replacement.append("$0");
+                                } else {
+                                    assert n >= 1 && n <= 99;
+                                    if (n <= m) {
+                                        if (groups == null) {
+                                            groups = RegExpPrototype.groups(rx, matchResult);
+                                        }
+                                        Object group = groups[n];
+                                        if (group != UNDEFINED) {
+                                            replacement.append((String) group);
+                                        }
+                                    } else {
+                                        replacement.append('$').append(n);
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case '&':
+                                replacement.append(matchResult.group());
+                                break;
+                            case '`':
+                                replacement.append(string, 0, matchResult.start());
+                                break;
+                            case '\'':
+                                replacement.append(string, matchResult.end(), string.length());
+                                break;
+                            case '$':
+                                replacement.append('$');
+                                break;
+                            default:
+                                replacement.append('$').append(c);
+                                break;
+                            }
+                        } else {
+                            replacement.append(c);
+                        }
+                    }
+                    result.append(string, lastMatch, matchResult.start());
+                    result.append(replacement);
+                    lastMatch = matchResult.end();
+                }
+                result.append(string, lastMatch, string.length());
+                return result.toString();
+            }
         }
 
         /**
@@ -283,7 +433,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
                         return a;
                     }
                     p = e;
-                    Iterator<Object> iterator = newGroupIterator(rx, matcher);
+                    GroupIterator iterator = newGroupIterator(rx, matcher);
                     while (iterator.hasNext()) {
                         Object cap = iterator.next();
                         a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(cap, true,
@@ -336,7 +486,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (1)
      */
-    public static Matcher getMatcherOrNull(Realm realm, RegExpObject r, CharSequence s) {
+    private static Matcher getMatcherOrNull(Realm realm, RegExpObject r, CharSequence s) {
         assert r.isInitialised();
         Pattern matcher = r.getRegExpMatcher();
         int length = s.length();
@@ -366,7 +516,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (2)
      */
-    public static Scriptable toMatchResult(Realm realm, RegExpObject r, CharSequence s,
+    private static Scriptable toMatchResult(Realm realm, RegExpObject r, CharSequence s,
             MatchResult m) {
         assert r.isInitialised();
         int matchIndex = m.start();
@@ -380,7 +530,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
 
         CharSequence matchedSubstr = s.subSequence(matchIndex, e);
         array.defineOwnProperty("0", new PropertyDescriptor(matchedSubstr, true, true, true));
-        Iterator<Object> iterator = newGroupIterator(r, m);
+        GroupIterator iterator = newGroupIterator(r, m);
         for (int i = 1; iterator.hasNext(); ++i) {
             Object capture = iterator.next();
             array.defineOwnProperty(ToString(i), new PropertyDescriptor(capture, true, true, true));
@@ -388,9 +538,9 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
         return array;
     }
 
-    static Object[] groups(RegExpObject r, MatchResult m) {
+    private static Object[] groups(RegExpObject r, MatchResult m) {
         assert r.isInitialised();
-        Iterator<Object> iterator = newGroupIterator(r, m);
+        GroupIterator iterator = newGroupIterator(r, m);
         int c = m.groupCount();
         Object[] groups = new Object[c + 1];
         groups[0] = m.group();
@@ -400,7 +550,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
         return groups;
     }
 
-    static Iterator<Object> newGroupIterator(RegExpObject r, MatchResult m) {
+    private static GroupIterator newGroupIterator(RegExpObject r, MatchResult m) {
         assert r.isInitialised();
         return new GroupIterator(m, r.getNegativeLookaheadGroups());
     }
