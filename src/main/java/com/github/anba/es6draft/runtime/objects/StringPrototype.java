@@ -19,6 +19,7 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -753,6 +754,23 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
             }
             /* step 8-12 */
             return s.codePointAt((int) position);
+        }
+
+        /**
+         * 15.5.4.26 String.prototype.normalize ( form = "NFC" )
+         */
+        @Function(name = "normalize", arity = 1)
+        public static Object normalize(Realm realm, Object thisValue, Object form) {
+            Object obj = CheckObjectCoercible(realm, thisValue);
+            CharSequence s = ToString(realm, obj);
+            String f = "NFC";
+            if (!Type.isUndefined(form)) {
+                f = ToFlatString(realm, form);
+            }
+            if (!("NFC".equals(f) || "NFD".equals(f) || "NFKC".equals(f) || "NFKD".equals(f))) {
+                throw throwRangeError(realm, Messages.Key.InvalidNormalizationForm);
+            }
+            return Normalizer.normalize(s, Normalizer.Form.valueOf(f));
         }
 
         /**
