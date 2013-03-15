@@ -190,9 +190,18 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
      * Append string indices to {@code keys} collection
      */
     private void addStringIndices(Collection<? super String> keys) {
+        // No longer possible to simply add string indices, cf.
+        // ---
+        // s = new (class extends String{constructor(){}})()
+        // Object.defineProperty(s, "0", {value:'hello'})
+        // String.call(s, "world")
+        // ---
         // SpiderMonkey appends string indices, whereas JSC/V8 prepends the indices
         for (int i = 0, length = getStringDataOrEmpty().length(); i < length; ++i) {
-            keys.add(Integer.toString(i));
+            String s = Integer.toString(i);
+            if (ordinaryGetOwnProperty(s) == null) {
+                keys.add(s);
+            }
         }
     }
 
