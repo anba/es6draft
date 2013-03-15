@@ -205,7 +205,11 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "search", arity = 1)
         public static Object search(Realm realm, Object thisValue, Object s) {
-            return UNDEFINED;
+            RegExpObject rx = thisRegExpValue(realm, thisValue);
+            String string = ToFlatString(realm, s);
+            Matcher matcher = rx.getRegExpMatcher().matcher(string);
+            int result = (matcher.find() ? matcher.start() : -1);
+            return result;
         }
 
         /**
