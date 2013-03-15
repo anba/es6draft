@@ -32,6 +32,11 @@ public enum BuiltinSymbol {
     hasInstance,
 
     /**
+     * @@isRegExp
+     */
+    isRegExp,
+
+    /**
      * @@iterator
      */
     iterator,
