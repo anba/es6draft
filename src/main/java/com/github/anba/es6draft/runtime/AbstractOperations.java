@@ -618,14 +618,7 @@ public final class AbstractOperations {
     /**
      * 9.3.8 Invoke(O,P [,args])
      */
-    public static Object Invoke(Realm realm, Object object, String propertyKey) {
-        return Invoke(realm, object, propertyKey, new Object[] {});
-    }
-
-    /**
-     * 9.3.8 Invoke(O,P [,args])
-     */
-    public static Object Invoke(Realm realm, Object object, String propertyKey, Object[] args) {
+    public static Object Invoke(Realm realm, Object object, String propertyKey, Object... args) {
         Scriptable obj = ToObject(realm, object);
         Callable func = GetMethod(realm, obj, propertyKey);
         if (func == null) {
@@ -637,14 +630,7 @@ public final class AbstractOperations {
     /**
      * 9.3.8 Invoke(O,P [,args])
      */
-    public static Object Invoke(Realm realm, Object object, Symbol propertyKey) {
-        return Invoke(realm, object, propertyKey, new Object[] {});
-    }
-
-    /**
-     * 9.3.8 Invoke(O,P [,args])
-     */
-    public static Object Invoke(Realm realm, Object object, Symbol propertyKey, Object[] args) {
+    public static Object Invoke(Realm realm, Object object, Symbol propertyKey, Object... args) {
         Scriptable obj = ToObject(realm, object);
         Callable func = GetMethod(realm, obj, propertyKey);
         if (func == null) {
