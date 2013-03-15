@@ -461,21 +461,16 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "search", arity = 1)
         public static Object search(Realm realm, Object thisValue, Object regexp) {
             Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, obj);
-            RegExpObject rx;
+            CharSequence string = ToString(realm, obj);
+            Scriptable rx;
             if (Type.isObject(regexp)
-                    && Type.objectValue(regexp).getBuiltinBrand() == BuiltinBrand.BuiltinRegExp) {
-                assert regexp instanceof RegExpObject;
-                rx = TestInitialisedOrThrow(realm, (RegExpObject) regexp);
+                    && HasProperty(Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
+                rx = Type.objectValue(regexp);
             } else {
                 String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
                 rx = RegExpCreate(realm, p, "");
             }
-            Matcher matcher = rx.getRegExpMatcher().matcher(s);
-            if (matcher.find()) {
-                return matcher.start();
-            }
-            return -1;
+            return Invoke(realm, rx, "search", new Object[] { string });
         }
 
         /**
