@@ -842,5 +842,66 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
             Scriptable o = ToObject(realm, thisValue);
             return CreateArrayIterator(realm, o, ArrayIterationKind.Value);
         }
+
+        /**
+         * 15.4.4.x Array.prototype.find ( predicate [ , thisArg ] )
+         */
+        @Function(name = "find", arity = 1)
+        public static Object find(Realm realm, Object thisValue, Object predicate, Object thisArg) {
+            Scriptable o = ToObject(realm, thisValue);
+            Object lenVal = Get(o, "length");
+            long len = ToUint32(realm, lenVal);
+            // FIXME: spec bug (IsCallable() check should occur before return)
+            if (!IsCallable(predicate)) {
+                throw throwTypeError(realm, Messages.Key.NotCallable);
+            }
+            Callable pred = (Callable) predicate;
+            if (len == 0) {
+                return UNDEFINED;
+            }
+            for (long k = 0; k < len; ++k) {
+                String pk = ToString(k);
+                boolean kpresent = HasProperty(o, pk);
+                if (kpresent) {
+                    Object kvalue = Get(o, pk);
+                    Object result = pred.call(thisArg, kvalue, k, o);
+                    if (ToBoolean(result)) {
+                        return kvalue;
+                    }
+                }
+            }
+            return UNDEFINED;
+        }
+
+        /**
+         * 15.4.4.x Array.prototype.findIndex ( predicate [ , thisArg ] )
+         */
+        @Function(name = "findIndex", arity = 1)
+        public static Object findIndex(Realm realm, Object thisValue, Object predicate,
+                Object thisArg) {
+            Scriptable o = ToObject(realm, thisValue);
+            Object lenVal = Get(o, "length");
+            long len = ToUint32(realm, lenVal);
+            // FIXME: spec bug (IsCallable() check should occur before return)
+            if (!IsCallable(predicate)) {
+                throw throwTypeError(realm, Messages.Key.NotCallable);
+            }
+            Callable pred = (Callable) predicate;
+            if (len == 0) {
+                return -1;
+            }
+            for (long k = 0; k < len; ++k) {
+                String pk = ToString(k);
+                boolean kpresent = HasProperty(o, pk);
+                if (kpresent) {
+                    Object kvalue = Get(o, pk);
+                    Object result = pred.call(thisArg, kvalue, k, o);
+                    if (ToBoolean(result)) {
+                        return k;
+                    }
+                }
+            }
+            return -1;
+        }
     }
 }
