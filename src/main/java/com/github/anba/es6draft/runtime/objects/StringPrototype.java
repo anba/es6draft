@@ -202,7 +202,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                 String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
                 rx = RegExpCreate(realm, p, "");
             }
-            return Invoke(realm, rx, "match", new Object[] { s });
+            return Invoke(realm, rx, "match", s);
         }
 
         /**
@@ -215,8 +215,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
             String string = ToFlatString(realm, obj);
             if (Type.isObject(searchValue)
                     && HasProperty(Type.objectValue(searchValue), BuiltinSymbol.isRegExp.get())) {
-                return Invoke(realm, Type.objectValue(searchValue), "replace", new Object[] {
-                        string, replaceValue });
+                return Invoke(realm, Type.objectValue(searchValue), "replace", string, replaceValue);
             }
             String searchString = ToFlatString(realm, searchValue);
             int pos = string.indexOf(searchString);
@@ -292,7 +291,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                 String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
                 rx = RegExpCreate(realm, p, "");
             }
-            return Invoke(realm, rx, "search", new Object[] { string });
+            return Invoke(realm, rx, "search", string);
         }
 
         /**
@@ -320,7 +319,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
             String s = ToFlatString(realm, obj);
             if (Type.isObject(separator)
                     && HasProperty(Type.objectValue(separator), BuiltinSymbol.isRegExp.get())) {
-                return Invoke(realm, separator, "split", new Object[] { s, limit });
+                return Invoke(realm, separator, "split", s, limit);
             }
             Scriptable a = ArrayCreate(realm, 0);
             int lengthA = 0;

@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.Invoke;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
@@ -13,7 +14,6 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -105,7 +105,7 @@ public class ListIterator<T> extends OrdinaryObject implements Scriptable {
 
         private Object tryNext() {
             try {
-                return AbstractOperations.Invoke(realm, object, "next");
+                return Invoke(realm, object, "next");
             } catch (ScriptException e) {
                 if (StopIterationObject.IteratorComplete(realm, e)) {
                     return null;

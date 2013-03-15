@@ -28,7 +28,6 @@ import java.util.Iterator;
 
 import org.mozilla.javascript.ConsString;
 
-import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
@@ -432,7 +431,7 @@ public final class ScriptRuntime {
     public static Object[] SpreadArray(Object spreadValue, Realm realm) {
         /* step 1-3 (cf. generated code) */
         /* step 4-5 */
-        Scriptable spreadObj = AbstractOperations.ToObject(realm, spreadValue);
+        Scriptable spreadObj = ToObject(realm, spreadValue);
         /* step 6 */
         Object lenVal = Get(spreadObj, "length");
         /* step 7-8 */
@@ -442,7 +441,7 @@ public final class ScriptRuntime {
         /* step 9-10 */
         for (int n = 0; n < spreadLen; ++n) {
             // FIXME: possible spec bug -> HasProperty() check missing?
-            Object nextArg = Get(spreadObj, AbstractOperations.ToString(n));
+            Object nextArg = Get(spreadObj, ToString(n));
             list[n] = nextArg;
         }
         return list;
@@ -495,7 +494,7 @@ public final class ScriptRuntime {
         /* step 7-8 */
         for (int i = 0, n = strings.length; i < n; i += 2) {
             int index = i >>> 1;
-            String prop = AbstractOperations.ToString(index);
+            String prop = ToString(index);
             String cookedValue = strings[i];
             siteObj.defineOwnProperty(prop, new PropertyDescriptor(cookedValue, false, true, false));
             String rawValue = strings[i + 1];
@@ -677,7 +676,7 @@ public final class ScriptRuntime {
             if (ref.isSuperReference()) {
                 throw throwReferenceError(realm, Messages.Key.SuperDelete);
             }
-            Scriptable obj = AbstractOperations.ToObject(realm, ref.getBase());
+            Scriptable obj = ToObject(realm, ref.getBase());
             boolean deleteStatus = obj.delete(ref.getReferencedName());
             if (!deleteStatus && ref.isStrictReference()) {
                 // FIXME: spec bug (typing 'typeError')
@@ -730,8 +729,8 @@ public final class ScriptRuntime {
         Object lprim = ToPrimitive(realm, lval, null);
         Object rprim = ToPrimitive(realm, rval, null);
         if (Type.isString(lprim) || Type.isString(rprim)) {
-            CharSequence lstr = AbstractOperations.ToString(realm, lprim);
-            CharSequence rstr = AbstractOperations.ToString(realm, rprim);
+            CharSequence lstr = ToString(realm, lprim);
+            CharSequence rstr = ToString(realm, rprim);
             return add(lstr, rstr);
         }
         return ToNumber(realm, lprim) + ToNumber(realm, rprim);
@@ -932,14 +931,14 @@ public final class ScriptRuntime {
         boolean send = true;
         Object received = UNDEFINED;
         Object result = UNDEFINED;
-        Scriptable g = AbstractOperations.ToObject(realm, expr);
+        Scriptable g = ToObject(realm, expr);
         try {
             while (true) {
                 Object next;
                 if (send) {
-                    next = Invoke(realm, g, "send", new Object[] { received });
+                    next = Invoke(realm, g, "send", received);
                 } else {
-                    next = Invoke(realm, g, "throw", new Object[] { received });
+                    next = Invoke(realm, g, "throw", received);
                 }
                 try {
                     received = yield(next, cx);
@@ -958,7 +957,7 @@ public final class ScriptRuntime {
             result = UNDEFINED;
         } finally {
             try {
-                Invoke(realm, g, "close", new Object[] {});
+                Invoke(realm, g, "close");
             } catch (ScriptException ignore) {
             }
         }
@@ -987,7 +986,7 @@ public final class ScriptRuntime {
      * Helper function
      */
     public static Iterator<?> enumerate(Object o, Realm realm) {
-        Scriptable obj = AbstractOperations.ToObject(realm, o);
+        Scriptable obj = ToObject(realm, o);
         return FromListIterator(realm, obj.enumerate());
     }
 
@@ -995,8 +994,8 @@ public final class ScriptRuntime {
      * Helper function
      */
     public static Iterator<?> iterate(Object o, Realm realm) {
-        Scriptable obj = AbstractOperations.ToObject(realm, o);
-        Object keys = AbstractOperations.Invoke(realm, obj, BuiltinSymbol.iterator.get());
+        Scriptable obj = ToObject(realm, o);
+        Object keys = Invoke(realm, obj, BuiltinSymbol.iterator.get());
         return FromListIterator(realm, keys);
     }
 
@@ -1012,13 +1011,13 @@ public final class ScriptRuntime {
         Scriptable result = ExoticArray.ArrayCreate(realm, 0);
         long n = 0;
         while (index < arrayLength) {
-            String p = AbstractOperations.ToString(index);
+            String p = ToString(index);
             boolean exists = HasProperty(array, p);
             // TODO: assert exists iff FunctionRestParameter
             if (exists) {
                 Object v = Get(array, p);
                 PropertyDescriptor desc = new PropertyDescriptor(v, true, true, true);
-                result.defineOwnProperty(AbstractOperations.ToString(n), desc);
+                result.defineOwnProperty(ToString(n), desc);
             }
             n = n + 1;
             index = index + 1;
@@ -1084,7 +1083,7 @@ public final class ScriptRuntime {
      */
     public static void defineProperty(Scriptable array, int nextIndex, Object value) {
         // String propertyName = ToString(ToUint32(nextIndex));
-        String propertyName = AbstractOperations.ToString(nextIndex);
+        String propertyName = ToString(nextIndex);
         array.defineOwnProperty(propertyName, new PropertyDescriptor(value, true, true, true));
     }
 
@@ -1098,17 +1097,17 @@ public final class ScriptRuntime {
             Object spreadValue, Realm realm) {
         /* step 1-2 (cf. generated code) */
         /* step 3-4 */
-        Scriptable spreadObj = AbstractOperations.ToObject(realm, spreadValue);
+        Scriptable spreadObj = ToObject(realm, spreadValue);
         /* step 5 */
         Object lenVal = Get(spreadObj, "length");
         /* step 6-7 */
         long spreadLen = ToUint32(realm, lenVal);
         /* step 8-9 */
         for (long n = 0; n < spreadLen; ++n, ++nextIndex) {
-            boolean exists = HasProperty(spreadObj, AbstractOperations.ToString(n));
+            boolean exists = HasProperty(spreadObj, ToString(n));
             if (exists) {
                 // FIXME: possible spec bug
-                Object v = spreadObj.get(AbstractOperations.ToString(n), spreadObj);
+                Object v = spreadObj.get(ToString(n), spreadObj);
                 defineProperty(array, nextIndex, v);
             }
         }
