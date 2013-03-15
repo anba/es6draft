@@ -189,7 +189,42 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "match", arity = 1)
         public static Object match(Realm realm, Object thisValue, Object string) {
-            return UNDEFINED;
+            RegExpObject rx = thisRegExpValue(realm, thisValue);
+            String s = ToFlatString(realm, string);
+            boolean global = ToBoolean(Get(rx, "global"));
+            if (!global) {
+                return RegExpExec(realm, rx, s);
+            } else {
+                Put(realm, rx, "lastIndex", 0, true);
+                Scriptable array = ArrayCreate(realm, 0);
+                int previousLastIndex = 0;
+                int n = 0;
+                boolean lastMatch = true;
+                while (lastMatch) {
+                    // Object result = RegExpExec(realm, rx, s);
+                    Matcher result = getMatcherOrNull(realm, rx, s);
+                    if (result == null) {
+                        lastMatch = false;
+                    } else {
+                        int thisIndex = (int) ToInteger(realm, Get(rx, "lastIndex"));
+                        if (thisIndex == previousLastIndex) {
+                            Put(realm, rx, "lastIndex", thisIndex + 1, true);
+                            previousLastIndex = thisIndex + 1;
+                        } else {
+                            previousLastIndex = thisIndex;
+                        }
+                        // Object matchStr = Get(Type.objectValue(result), "0");
+                        CharSequence matchStr = s.subSequence(result.start(), result.end());
+                        DefinePropertyOrThrow(realm, array, ToString(n), new PropertyDescriptor(
+                                matchStr, true, true, true));
+                        n += 1;
+                    }
+                }
+                if (n == 0) {
+                    return NULL;
+                }
+                return array;
+            }
         }
 
         /**
