@@ -12,10 +12,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.TestInitialisedOrThrow;
-import static com.github.anba.es6draft.runtime.objects.RegExpPrototype.RegExpExec;
 import static com.github.anba.es6draft.runtime.objects.RegExpPrototype.getMatcherOrNull;
 import static com.github.anba.es6draft.runtime.objects.RegExpPrototype.newGroupIterator;
-import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
@@ -205,49 +203,15 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         public static Object match(Realm realm, Object thisValue, Object regexp) {
             Object obj = CheckObjectCoercible(realm, thisValue);
             CharSequence s = ToString(realm, obj);
-            RegExpObject rx;
+            Scriptable rx;
             if (Type.isObject(regexp)
-                    && Type.objectValue(regexp).getBuiltinBrand() == BuiltinBrand.BuiltinRegExp) {
-                assert regexp instanceof RegExpObject;
-                rx = TestInitialisedOrThrow(realm, (RegExpObject) regexp);
+                    && HasProperty(Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
+                rx = Type.objectValue(regexp);
             } else {
                 String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
                 rx = RegExpCreate(realm, p, "");
             }
-            boolean global = ToBoolean(Get(rx, "global"));
-            if (!global) {
-                return RegExpExec(realm, rx, s);
-            } else {
-                Put(realm, rx, "lastIndex", 0, true);
-                Scriptable array = ArrayCreate(realm, 0);
-                int previousLastIndex = 0;
-                int n = 0;
-                boolean lastMatch = true;
-                while (lastMatch) {
-                    // Object result = RegExpExec(realm, rx, s);
-                    Matcher result = getMatcherOrNull(realm, rx, s);
-                    if (result == null) {
-                        lastMatch = false;
-                    } else {
-                        int thisIndex = (int) ToInteger(realm, Get(rx, "lastIndex"));
-                        if (thisIndex == previousLastIndex) {
-                            Put(realm, rx, "lastIndex", thisIndex + 1, true);
-                            previousLastIndex = thisIndex + 1;
-                        } else {
-                            previousLastIndex = thisIndex;
-                        }
-                        // Object matchStr = Get(Type.objectValue(result), "0");
-                        CharSequence matchStr = s.subSequence(result.start(), result.end());
-                        array.defineOwnProperty(ToString(n), new PropertyDescriptor(matchStr, true,
-                                true, true));
-                        n += 1;
-                    }
-                }
-                if (n == 0) {
-                    return NULL;
-                }
-                return array;
-            }
+            return Invoke(realm, rx, "match", new Object[] { s });
         }
 
         /**
