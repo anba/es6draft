@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Scriptable;
@@ -182,6 +183,92 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
             }
             return sb.toString();
         }
+
+        /**
+         * 15.10.6.11 RegExp.prototype.match (string)
+         */
+        @Function(name = "match", arity = 1)
+        public static Object match(Realm realm, Object thisValue, Object string) {
+            return UNDEFINED;
+        }
+
+        /**
+         * 15.10.6.12 RegExp.prototype.replace (S, replaceValue)
+         */
+        @Function(name = "replace", arity = 2)
+        public static Object replace(Realm realm, Object thisValue, Object s, Object replaceValue) {
+            return UNDEFINED;
+        }
+
+        /**
+         * 15.10.4.13 RegExp.prototype.search (S)
+         */
+        @Function(name = "search", arity = 1)
+        public static Object search(Realm realm, Object thisValue, Object s) {
+            return UNDEFINED;
+        }
+
+        /**
+         * 15.10.4.14 RegExp.prototype.split (string, limit)
+         */
+        @Function(name = "split", arity = 2)
+        public static Object split(Realm realm, Object thisValue, Object string, Object limit) {
+            RegExpObject rx = thisRegExpValue(realm, thisValue);
+            String s = ToFlatString(realm, string);
+            Scriptable a = ArrayCreate(realm, 0);
+            int lengthA = 0;
+            long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(realm, limit);
+            int size = s.length();
+            int p = 0;
+            if (lim == 0) {
+                return a;
+            }
+            Matcher matcher = rx.getRegExpMatcher().matcher(s);
+            if (size == 0) {
+                if (matcher.find()) {
+                    return a;
+                }
+                a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
+                return a;
+            }
+            // Note: omitted index q in the following code
+            int lastStart = -1;
+            while (matcher.find()) {
+                int e = matcher.end();
+                if (e != p) {
+                    String t = s.substring(p, lastStart = matcher.start());
+                    a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true,
+                            true));
+                    lengthA += 1;
+                    if (lengthA == lim) {
+                        return a;
+                    }
+                    p = e;
+                    Iterator<Object> iterator = newGroupIterator(rx, matcher);
+                    while (iterator.hasNext()) {
+                        Object cap = iterator.next();
+                        a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(cap, true,
+                                true, true));
+                        lengthA += 1;
+                        if (lengthA == lim) {
+                            return a;
+                        }
+                    }
+                }
+            }
+            if (p == lastStart) {
+                return a;
+            }
+            String t = s.substring(p, size);
+            a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true, true));
+            return a;
+        }
+
+        /**
+         * 15.10.4.14 RegExp.prototype.@@isRegExp
+         */
+        @Value(name = "@@isRegExp", symbol = BuiltinSymbol.isRegExp)
+        public static final boolean isRegExp = true;
 
         /**
          * RegExp.prototype.compile(pattern, flags)

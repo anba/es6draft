@@ -35,6 +35,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -438,6 +439,8 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                                 replacement.append(searchString, index, searchString.length());
                                 break;
                             case '$':
+                                replacement.append('$');
+                                break;
                             default:
                                 replacement.append('$').append(c);
                                 break;
@@ -498,17 +501,16 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         public static Object split(Realm realm, Object thisValue, Object separator, Object limit) {
             Object obj = CheckObjectCoercible(realm, thisValue);
             String s = ToFlatString(realm, obj);
+            if (Type.isObject(separator)
+                    && HasProperty(Type.objectValue(separator), BuiltinSymbol.isRegExp.get())) {
+                return Invoke(realm, separator, "split", new Object[] { s, limit });
+            }
             Scriptable a = ArrayCreate(realm, 0);
             int lengthA = 0;
             long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(realm, limit);
             int size = s.length();
             int p = 0;
-            Object r;
-            if (BuiltinBrand.hasBuiltinBrand(separator, BuiltinBrand.BuiltinRegExp)) {
-                r = separator;
-            } else {
-                r = ToFlatString(realm, separator);
-            }
+            String r = ToFlatString(realm, separator);
             if (lim == 0) {
                 return a;
             }
@@ -516,23 +518,24 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                 a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
                 return a;
             }
-            if (BuiltinBrand.hasBuiltinBrand(r, BuiltinBrand.BuiltinRegExp)) {
-                // regexp case
-                RegExpObject rx = TestInitialisedOrThrow(realm, (RegExpObject) r);
-                Matcher matcher = rx.getRegExpMatcher().matcher(s);
-                if (size == 0) {
-                    if (matcher.find()) {
-                        return a;
-                    }
-                    a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
+            if (size == 0) {
+                if (s.startsWith(r)) {
                     return a;
                 }
-                // Note: omitted index q in the following code
-                int lastStart = -1;
-                while (matcher.find()) {
-                    int e = matcher.end();
-                    if (e != p) {
-                        String t = s.substring(p, lastStart = matcher.start());
+                a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
+                return a;
+            }
+            int q = p;
+            while (q != size) {
+                int z = SplitMatch(s, q, r);
+                if (z == -1) {
+                    break;
+                } else {
+                    int e = z + r.length();
+                    if (e == p) {
+                        q = q + 1;
+                    } else {
+                        String t = s.substring(p, z);
                         a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true,
                                 true, true));
                         lengthA += 1;
@@ -540,60 +543,21 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                             return a;
                         }
                         p = e;
-                        Iterator<Object> iterator = newGroupIterator(rx, matcher);
-                        while (iterator.hasNext()) {
-                            Object cap = iterator.next();
-                            a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(cap,
-                                    true, true, true));
-                            lengthA += 1;
-                            if (lengthA == lim) {
-                                return a;
-                            }
-                        }
+                        q = p;
                     }
                 }
-                if (p == lastStart) {
-                    return a;
-                }
-                String t = s.substring(p, size);
-                a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true, true));
-                return a;
-            } else {
-                // string case
-                String sep = (String) r;
-                if (size == 0) {
-                    if (s.startsWith(sep)) {
-                        return a;
-                    }
-                    a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
-                    return a;
-                }
-                int q = p;
-                while (q != size) {
-                    int z = s.indexOf(sep, q);
-                    if (z == -1) {
-                        break;
-                    } else {
-                        int e = z + sep.length();
-                        if (e == p) {
-                            q = q + 1;
-                        } else {
-                            String t = s.substring(p, z);
-                            a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true,
-                                    true, true));
-                            lengthA += 1;
-                            if (lengthA == lim) {
-                                return a;
-                            }
-                            p = e;
-                            q = p;
-                        }
-                    }
-                }
-                String t = s.substring(p, size);
-                a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true, true));
-                return a;
             }
+            String t = s.substring(p, size);
+            a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true, true));
+            return a;
+        }
+
+        /**
+         * Runtime Semantics: SplitMatch Abstract Operation
+         */
+        public static int SplitMatch(String s, int q, String r) {
+            // returns start instead of end position
+            return s.indexOf(r, q);
         }
 
         /**
