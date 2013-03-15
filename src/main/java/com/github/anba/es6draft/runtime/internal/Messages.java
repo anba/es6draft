@@ -157,6 +157,7 @@ public class Messages {
         // 15.5 String Objects
         InvalidStringRepeat("string.invalid_string_repeat"),
         InvalidCodePoint("string.invalid_codepoint"),
+        InvalidNormalizationForm("string.invalid_normalization_form"),
         // 15.7 Number Objects
         InvalidRadix("number.invalid_radix"),
         InvalidPrecision("number.invalid_precision"),
