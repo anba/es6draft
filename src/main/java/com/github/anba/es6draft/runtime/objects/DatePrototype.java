@@ -432,14 +432,10 @@ public class DatePrototype extends OrdinaryObject implements Scriptable, Initial
          */
         @Function(name = "setTime", arity = 1)
         public static Object setTime(Realm realm, Object thisValue, Object time) {
-            // FIXME: spec bug (when to test for Date-ness?)
-            // FIXME: applicable for non-initialised date object?
-            if (!(thisValue instanceof DateObject)) {
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
-            }
-            DateObject obj = (DateObject) thisValue;
+            // just to trigger type and initialisation test
+            thisTimeValue(realm, thisValue);
             double v = TimeClip(ToNumber(realm, time));
-            obj.setDateValue(v);
+            thisTimeValue(realm, thisValue).setDateValue(v);
             return v;
         }
 
@@ -713,10 +709,8 @@ public class DatePrototype extends OrdinaryObject implements Scriptable, Initial
          */
         @Function(name = "@@ToPrimitive", arity = 1, symbol = BuiltinSymbol.ToPrimitive)
         public static Object ToPrimitive(Realm realm, Object thisValue, Object hint) {
-            // FIXME: spec bug (@@ToPrimitive generic?)
-            if (!Type.isObject(thisValue)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
-            }
+            // just to trigger type and initialisation test
+            thisTimeValue(realm, thisValue);
             // FIXME: spec bug (missing argument type check)
             Type tryFirst;
             if (!Type.isString(hint)) {
