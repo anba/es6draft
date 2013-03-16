@@ -120,6 +120,9 @@ public class Repl {
         } catch (ScriptException e) {
             console.printf("uncaught exception: %s\n", e.getMessage());
             return null;
+        } catch (ParserException e) {
+            console.printf("%s: %s\n", e.getExceptionType(), e.getMessage());
+            return null;
         }
     }
 
