@@ -13,9 +13,11 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.Realm;
@@ -323,7 +325,44 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
          */
         @Function(name = "assign", arity = 2)
         public static Object assign(Realm realm, Object thisValue, Object target, Object source) {
-            throw new IllegalStateException("NYI");
+            if (!Type.isObject(target)) {
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
+            }
+            if (!Type.isObject(source)) {
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
+            }
+            Scriptable _target = Type.objectValue(target);
+            Scriptable _source = Type.objectValue(source);
+            ScriptException pendingException = null;
+            List<Object> keys = GetOwnEnumerableKeys(realm, _source);
+            for (Object key : keys) {
+                if (key instanceof String) {
+                    String ownKey = (String) key;
+                    Object value = Get(_source, ownKey);
+                    try {
+                        Put(realm, _target, ownKey, value, true);
+                    } catch (ScriptException e) {
+                        if (pendingException == null) {
+                            pendingException = e;
+                        }
+                    }
+                } else {
+                    assert key instanceof Symbol;
+                    Symbol ownKey = (Symbol) key;
+                    Object value = Get(_source, ownKey);
+                    try {
+                        Put(realm, _target, ownKey, value, true);
+                    } catch (ScriptException e) {
+                        if (pendingException == null) {
+                            pendingException = e;
+                        }
+                    }
+                }
+            }
+            if (pendingException != null) {
+                throw pendingException;
+            }
+            return _target;
         }
 
         /**
@@ -331,7 +370,50 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
          */
         @Function(name = "mixin", arity = 2)
         public static Object mixin(Realm realm, Object thisValue, Object target, Object source) {
-            throw new IllegalStateException("NYI");
+            if (!Type.isObject(target)) {
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
+            }
+            if (!Type.isObject(source)) {
+                throw throwTypeError(realm, Messages.Key.NotObjectType);
+            }
+            Scriptable _target = Type.objectValue(target);
+            Scriptable _source = Type.objectValue(source);
+            ScriptException pendingException = null;
+            List<Object> keys = GetOwnEnumerableKeys(realm, _source);
+            for (Object key : keys) {
+                if (key instanceof String) {
+                    String ownKey = (String) key;
+                    Property desc = _source.getOwnProperty(ownKey);
+                    if (desc != null) {
+                        try {
+                            DefinePropertyOrThrow(realm, _target, ownKey,
+                                    desc.toPropertyDescriptor());
+                        } catch (ScriptException e) {
+                            if (pendingException == null) {
+                                pendingException = e;
+                            }
+                        }
+                    }
+                } else {
+                    assert key instanceof Symbol;
+                    Symbol ownKey = (Symbol) key;
+                    Property desc = _source.getOwnProperty(ownKey);
+                    if (desc != null) {
+                        try {
+                            DefinePropertyOrThrow(realm, _target, ownKey,
+                                    desc.toPropertyDescriptor());
+                        } catch (ScriptException e) {
+                            if (pendingException == null) {
+                                pendingException = e;
+                            }
+                        }
+                    }
+                }
+            }
+            if (pendingException != null) {
+                throw pendingException;
+            }
+            return _target;
         }
     }
 
@@ -370,5 +452,33 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             throw pendingException;
         }
         return obj;
+    }
+
+    /**
+     * Returns a list of all enumerable, non-private own property keys
+     */
+    private static List<Object> GetOwnEnumerableKeys(Realm realm, Scriptable object) {
+        List<Object> ownKeys = new ArrayList<>();
+        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys());
+        while (keys.hasNext()) {
+            Object key = ToPropertyKey(realm, keys.next());
+            if (key instanceof String) {
+                String ownKey = (String) key;
+                Property desc = object.getOwnProperty(ownKey);
+                if (desc != null && desc.isEnumerable()) {
+                    ownKeys.add(ownKey);
+                }
+            } else {
+                assert key instanceof Symbol;
+                Symbol ownKey = (Symbol) key;
+                if (!ownKey.isPrivate()) {
+                    Property desc = object.getOwnProperty(ownKey);
+                    if (desc != null && desc.isEnumerable()) {
+                        ownKeys.add(ownKey);
+                    }
+                }
+            }
+        }
+        return ownKeys;
     }
 }
