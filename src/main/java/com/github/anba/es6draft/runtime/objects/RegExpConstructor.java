@@ -272,13 +272,6 @@ public class RegExpConstructor extends OrdinaryObject implements Scriptable, Cal
         return s;
     }
 
-    public static RegExpObject TestInitialisedOrThrow(Realm realm, RegExpObject regexp) {
-        if (!regexp.isInitialised()) {
-            throwTypeError(realm, Messages.Key.RegExpNotInitialised);
-        }
-        return regexp;
-    }
-
     /**
      * 15.10.5 Properties of the RegExp Constructor
      */

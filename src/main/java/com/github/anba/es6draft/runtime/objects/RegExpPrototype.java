@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.EscapeRegExpPattern;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpInitialize;
-import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.TestInitialisedOrThrow;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
@@ -65,7 +64,10 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
 
         private static RegExpObject thisRegExpValue(Realm realm, Object object) {
             if (object instanceof RegExpObject) {
-                return TestInitialisedOrThrow(realm, (RegExpObject) object);
+                RegExpObject obj = (RegExpObject) object;
+                if (obj.isInitialised()) {
+                    return obj;
+                }
             }
             throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
