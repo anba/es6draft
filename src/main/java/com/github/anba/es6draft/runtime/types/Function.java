@@ -27,6 +27,11 @@ public interface Function extends Scriptable, Callable, Constructor {
     }
 
     /**
+     * Function kind
+     */
+    FunctionKind getFunctionKind();
+
+    /**
      * Compiled function object
      */
     RuntimeInfo.Function getFunction();

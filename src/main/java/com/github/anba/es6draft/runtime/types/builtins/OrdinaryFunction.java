@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.types.*;
  * </ul>
  */
 public class OrdinaryFunction extends OrdinaryObject implements Function {
+    private FunctionKind kind;
     private RuntimeInfo.Function function;
     private LexicalEnvironment scope;
     private boolean strict;
@@ -91,6 +92,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
         /* step 14 */
         f.strict = strict;
         /* step 15-17 */
+        f.kind = kind;
         if (kind == FunctionKind.Arrow) {
             f.thisMode = ThisMode.Lexical;
         } else if (strict) {
@@ -329,6 +331,11 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
 
     private static boolean isStrictFunction(Object v) {
         return v instanceof Function && ((Function) v).isStrict();
+    }
+
+    @Override
+    public FunctionKind getFunctionKind() {
+        return kind;
     }
 
     @Override

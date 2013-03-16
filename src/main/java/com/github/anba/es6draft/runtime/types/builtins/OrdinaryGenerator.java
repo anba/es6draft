@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * TODO: for now basically a copy of {@link OrdinaryFunction}
  */
 public class OrdinaryGenerator extends OrdinaryObject implements Generator {
+    private FunctionKind kind;
     private RuntimeInfo.Function function;
     private LexicalEnvironment scope;
     private boolean strict;
@@ -81,6 +82,7 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
         /* step 14 */
         f.strict = strict;
         /* step 15-17 */
+        f.kind = kind;
         if (strict) {
             f.thisMode = ThisMode.Strict;
         } else {
@@ -164,6 +166,11 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
     @Override
     public Object construct(Object... args) {
         return OrdinaryConstruct(realm, this, args);
+    }
+
+    @Override
+    public FunctionKind getFunctionKind() {
+        return kind;
     }
 
     @Override
