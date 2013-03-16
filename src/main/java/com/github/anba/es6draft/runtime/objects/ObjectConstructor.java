@@ -15,6 +15,8 @@ import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToProper
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorCreate;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -339,6 +341,9 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
                 if (key instanceof String) {
                     String ownKey = (String) key;
                     Object value = Get(_source, ownKey);
+                    if (isSuperBoundTo(value, _source)) {
+                        value = superBindTo(value, _target);
+                    }
                     try {
                         Put(realm, _target, ownKey, value, true);
                     } catch (ScriptException e) {
@@ -350,6 +355,9 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
                     assert key instanceof Symbol;
                     Symbol ownKey = (Symbol) key;
                     Object value = Get(_source, ownKey);
+                    if (isSuperBoundTo(value, _source)) {
+                        value = superBindTo(value, _target);
+                    }
                     try {
                         Put(realm, _target, ownKey, value, true);
                     } catch (ScriptException e) {
@@ -387,7 +395,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
                     if (desc != null) {
                         try {
                             DefinePropertyOrThrow(realm, _target, ownKey,
-                                    desc.toPropertyDescriptor());
+                                    fromDescriptor(desc.toPropertyDescriptor(), _source, _target));
                         } catch (ScriptException e) {
                             if (pendingException == null) {
                                 pendingException = e;
@@ -401,7 +409,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
                     if (desc != null) {
                         try {
                             DefinePropertyOrThrow(realm, _target, ownKey,
-                                    desc.toPropertyDescriptor());
+                                    fromDescriptor(desc.toPropertyDescriptor(), _source, _target));
                         } catch (ScriptException e) {
                             if (pendingException == null) {
                                 pendingException = e;
@@ -480,5 +488,58 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             }
         }
         return ownKeys;
+    }
+
+    /**
+     * Returns {@code desc} with [[Value]] resp. [[Get]] and [[Set]] super-rebound from
+     * {@code source} to {@code target}
+     */
+    private static PropertyDescriptor fromDescriptor(PropertyDescriptor desc, Scriptable source,
+            Scriptable target) {
+        if (desc.isDataDescriptor()) {
+            Object value = desc.getValue();
+            if (isSuperBoundTo(value, source)) {
+                desc.setValue(superBindTo(value, target));
+            }
+        } else {
+            assert desc.isAccessorDescriptor();
+            Callable getter = desc.getGetter();
+            if (isSuperBoundTo(getter, source)) {
+                desc.setGetter(superBindTo(getter, target));
+            }
+            Callable setter = desc.getSetter();
+            if (isSuperBoundTo(setter, source)) {
+                desc.setSetter(superBindTo(setter, target));
+            }
+        }
+        return desc;
+    }
+
+    /**
+     * Returns <code>true</code> if {@code value} is super-bound to {@code source}
+     */
+    private static boolean isSuperBoundTo(Object value, Scriptable source) {
+        if (value instanceof com.github.anba.es6draft.runtime.types.Function) {
+            Scriptable homeObject = ((com.github.anba.es6draft.runtime.types.Function) value)
+                    .getHome();
+            return (homeObject == source);
+        }
+        return false;
+    }
+
+    /**
+     * Super-binds {@code value} to {@code target}
+     */
+    private static Callable superBindTo(Object value, Scriptable target) {
+        if (value instanceof Generator) {
+            Generator gen = (Generator) value;
+            return GeneratorCreate(gen.getRealm(), gen.getFunctionKind(), gen.getFunction(),
+                    gen.getScope(), gen.getPrototype(), target, gen.getMethodName());
+        } else {
+            assert value instanceof com.github.anba.es6draft.runtime.types.Function;
+            com.github.anba.es6draft.runtime.types.Function fn = (com.github.anba.es6draft.runtime.types.Function) value;
+            return FunctionCreate(fn.getRealm(), fn.getFunctionKind(), fn.getFunction(),
+                    fn.getScope(), fn.getPrototype(), target, fn.getMethodName());
+        }
     }
 }
