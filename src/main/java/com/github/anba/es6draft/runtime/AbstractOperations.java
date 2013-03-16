@@ -29,7 +29,6 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.google.doubleconversion.DoubleConversion;
 
@@ -334,8 +333,8 @@ public final class AbstractOperations {
      */
     public static Object ToPropertyKey(Realm realm, Object val) {
         if (Type.isObject(val)) {
-            if (val instanceof ExoticSymbolObject) {
-                return ((ExoticSymbolObject) val);
+            if (val instanceof Symbol) {
+                return ((Symbol) val);
             }
         }
         return ToFlatString(realm, val);

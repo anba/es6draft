@@ -35,7 +35,6 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -80,7 +79,7 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
                 return "[object Null]";
             }
             Scriptable o = ToObject(realm, thisValue);
-            if (o instanceof ExoticSymbolObject) {
+            if (o instanceof Symbol) {
                 return "[object Symbol]";
             }
             String builtinTag;
