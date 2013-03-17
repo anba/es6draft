@@ -9,7 +9,7 @@
 -->
 <excludeList>
   <!-- current draft issues -->
-  <test id="S13_A19_T2">declaration and parameter binding broken in current draft</test>
+  <test id="S10.2.1_A4_T1">declaration and parameter binding broken in current draft</test>
 
   <!-- ES6 changes -->
   <test id="S12.1_A4_T2">ES6-change: `PropertyDefinition ::= IdentifierName` is a valid production</test>

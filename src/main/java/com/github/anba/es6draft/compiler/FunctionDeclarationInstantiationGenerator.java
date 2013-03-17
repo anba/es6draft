@@ -166,9 +166,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 if (!alreadyDeclared) {
                     bindings.add(fn);
                     functionsToInitialize.add(d);
-                    // FIXME: not in spec -> changed from mutable to immutable binding
-                    // createMutableBinding(envRec, fn, false, mv);
-                    createImmutableBinding(envRec, fn, mv);
+                    createMutableBinding(envRec, fn, false, mv);
                 }
             }
         }
@@ -226,10 +224,8 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             } else {
                 InstantiateFunctionObject(realm, env, (FunctionDeclaration) f, mv);
             }
-            // FIXME: not in spec -> changed from mutable to immutable binding
             // stack: [fo] -> []
-            // setMutableBinding(envRec, fn, false, mv);
-            initializeBinding(envRec, fn, mv);
+            setMutableBinding(envRec, fn, false, mv);
         }
         /* [10.5.3] step 17-19 */
         // stack: [] -> [ao]
