@@ -213,7 +213,7 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
         /*  step 4  */
         if (!isMapped) {
             Object v = super.get(propertyKey, accessorThisValue);
-            if ("caller".equals(propertyKey) && v instanceof Function && ((Function) v).isStrict()) {
+            if ("caller".equals(propertyKey) && isStrictFunction(v)) {
                 throw throwTypeError(realm(), Messages.Key.StrictModePoisonPill);
             }
             return v;
@@ -221,6 +221,10 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
         /*  step 5  */
         // return Get(map, propertyKey);
         return map.get(propertyKey);
+    }
+
+    private static boolean isStrictFunction(Object v) {
+        return v instanceof Function && ((Function) v).isStrict();
     }
 
     /**
