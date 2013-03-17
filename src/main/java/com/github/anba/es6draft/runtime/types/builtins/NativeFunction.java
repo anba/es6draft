@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 import java.lang.invoke.MethodHandle;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -25,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
  * <li>8.4.7 Built-in Function Objects
  * </ul>
  */
-public class NativeFunction extends OrdinaryObject implements BuiltinFunction {
+public class NativeFunction extends BuiltinFunction {
     private final String name;
     // (Object, Object[]) -> Object
     private final MethodHandle mh;
@@ -38,14 +37,6 @@ public class NativeFunction extends OrdinaryObject implements BuiltinFunction {
         defineOwnProperty("name", new PropertyDescriptor(name, false, false, false));
         defineOwnProperty("length", new PropertyDescriptor(arity, false, false, false));
         AddRestrictedFunctionProperties(realm, this);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinFunction;
     }
 
     @Override

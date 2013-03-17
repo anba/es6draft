@@ -26,13 +26,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional.Default;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -43,8 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.9.4 Properties of the Date Constructor
  * </ul>
  */
-public class DateConstructor extends OrdinaryObject implements BuiltinFunction, Constructor,
-        Initialisable {
+public class DateConstructor extends BuiltinFunction implements Constructor, Initialisable {
     public DateConstructor(Realm realm) {
         super(realm);
     }
@@ -53,14 +50,6 @@ public class DateConstructor extends OrdinaryObject implements BuiltinFunction, 
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
         AddRestrictedFunctionProperties(realm, this);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinFunction;
     }
 
     @Override

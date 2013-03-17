@@ -33,14 +33,12 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>11 NumberFormat Objects</h1>
@@ -49,8 +47,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>11.2 Properties of the Intl.NumberFormat Constructor
  * </ul>
  */
-public class NumberFormatConstructor extends OrdinaryObject implements BuiltinFunction,
-        Constructor, Initialisable {
+public class NumberFormatConstructor extends BuiltinFunction implements Constructor, Initialisable {
     /**
      * [[availableLocales]]
      */
@@ -69,14 +66,6 @@ public class NumberFormatConstructor extends OrdinaryObject implements BuiltinFu
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
         AddRestrictedFunctionProperties(realm, this);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinFunction;
     }
 
     @Override

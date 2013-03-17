@@ -21,13 +21,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -38,8 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.11.3 Properties of the Error Constructor
  * </ul>
  */
-public class ErrorConstructor extends OrdinaryObject implements BuiltinFunction, Constructor,
-        Initialisable {
+public class ErrorConstructor extends BuiltinFunction implements Constructor, Initialisable {
     public ErrorConstructor(Realm realm) {
         super(realm);
     }
@@ -48,14 +45,6 @@ public class ErrorConstructor extends OrdinaryObject implements BuiltinFunction,
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
         AddRestrictedFunctionProperties(realm, this);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinFunction;
     }
 
     @Override

@@ -32,7 +32,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -43,8 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.2.3 Properties of the Object Constructor
  * </ul>
  */
-public class ObjectConstructor extends OrdinaryObject implements BuiltinFunction, Constructor,
-        Initialisable {
+public class ObjectConstructor extends BuiltinFunction implements Constructor, Initialisable {
     public ObjectConstructor(Realm realm) {
         super(realm);
     }
@@ -53,14 +51,6 @@ public class ObjectConstructor extends OrdinaryObject implements BuiltinFunction
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
         AddRestrictedFunctionProperties(realm, this);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinFunction;
     }
 
     @Override

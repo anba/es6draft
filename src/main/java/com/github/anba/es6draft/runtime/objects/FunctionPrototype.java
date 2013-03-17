@@ -29,7 +29,6 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -39,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.3.5 Properties of Function Instances
  * </ul>
  */
-public class FunctionPrototype extends OrdinaryObject implements BuiltinFunction, Initialisable {
+public class FunctionPrototype extends BuiltinFunction implements Initialisable {
     public FunctionPrototype(Realm realm) {
         super(realm);
     }
@@ -48,14 +47,6 @@ public class FunctionPrototype extends OrdinaryObject implements BuiltinFunction
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
         AddRestrictedFunctionProperties(realm, this);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinFunction;
     }
 
     @Override

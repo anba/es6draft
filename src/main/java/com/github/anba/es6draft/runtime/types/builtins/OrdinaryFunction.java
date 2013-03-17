@@ -155,15 +155,9 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * 13.6.3 The [[ThrowTypeError]] Function Object
      */
-    private static class TypeErrorThrower extends OrdinaryObject implements BuiltinFunction {
+    private static class TypeErrorThrower extends BuiltinFunction {
         TypeErrorThrower(Realm realm) {
             super(realm);
-        }
-
-        @Override
-        public BuiltinBrand getBuiltinBrand() {
-            /* step 3 */
-            return BuiltinBrand.BuiltinFunction;
         }
 
         @Override

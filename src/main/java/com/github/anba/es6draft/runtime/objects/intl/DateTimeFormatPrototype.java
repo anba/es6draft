@@ -22,14 +22,12 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.DateConstructor;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>12 DateTimeFormat Objects</h1>
@@ -105,7 +103,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
         return "";
     }
 
-    private static class FormatFunction extends OrdinaryObject implements BuiltinFunction {
+    private static class FormatFunction extends BuiltinFunction {
         private static final String NAME = "format";
         private static final int ARITY = 0;
 
@@ -115,14 +113,6 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
             defineOwnProperty("name", new PropertyDescriptor(NAME, false, false, false));
             defineOwnProperty("length", new PropertyDescriptor(ARITY, false, false, false));
             AddRestrictedFunctionProperties(realm, this);
-        }
-
-        /**
-         * [[BuiltinBrand]]
-         */
-        @Override
-        public BuiltinBrand getBuiltinBrand() {
-            return BuiltinBrand.BuiltinFunction;
         }
 
         @Override
