@@ -20,7 +20,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -29,6 +28,8 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -143,7 +144,8 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             Callable target = (Callable) thisValue;
             ExoticBoundFunction f = BoundFunctionCreate(realm, target, thisArg, args);
             int l;
-            if (target.getBuiltinBrand() == BuiltinBrand.BuiltinFunction) {
+            if (target instanceof OrdinaryFunction || target instanceof OrdinaryGenerator
+                    || target instanceof BuiltinFunction || target instanceof ExoticBoundFunction) {
                 Object targetLen = Get(target, "length");
                 l = (int) Math.max(0, ToInteger(realm, targetLen) - args.length);
             } else {
