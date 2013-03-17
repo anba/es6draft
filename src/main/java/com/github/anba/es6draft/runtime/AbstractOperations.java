@@ -811,7 +811,6 @@ public final class AbstractOperations {
             return false;
         }
         /* step 4-5 */
-        assert c instanceof Scriptable;
         Object p = Get((Scriptable) c, "prototype");
         if (!Type.isObject(p)) {
             throw throwTypeError(realm, Messages.Key.NotObjectType);

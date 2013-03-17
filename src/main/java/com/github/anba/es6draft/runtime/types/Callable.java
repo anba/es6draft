@@ -16,7 +16,7 @@ package com.github.anba.es6draft.runtime.types;
  * <p>
  * Internal Method: [[Call]]
  */
-public interface Callable {
+public interface Callable extends Scriptable {
     /**
      * [[Call]]
      */

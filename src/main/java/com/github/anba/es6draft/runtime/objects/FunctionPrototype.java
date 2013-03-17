@@ -154,7 +154,6 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
             ExoticBoundFunction f = BoundFunctionCreate(realm, (Callable) target, thisArg, args);
             int l;
             if (hasBuiltinBrand(target, BuiltinBrand.BuiltinFunction)) {
-                assert (target instanceof Scriptable);
                 Object targetLen = Get((Scriptable) target, "length");
                 l = (int) Math.max(0, ToInteger(realm, targetLen) - args.length);
             } else {
