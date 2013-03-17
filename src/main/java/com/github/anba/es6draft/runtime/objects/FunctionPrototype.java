@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.BuiltinBrand.hasBuiltinBrand;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -107,12 +106,12 @@ public class FunctionPrototype extends OrdinaryObject implements ScriptObject, C
          */
         @Function(name = "apply", arity = 2)
         public static Object apply(Realm realm, Object thisValue, Object thisArg, Object argArray) {
-            Object func = thisValue;
-            if (!IsCallable(func)) {
+            if (!IsCallable(thisValue)) {
                 throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
+            Callable func = (Callable) thisValue;
             if (Type.isUndefinedOrNull(argArray)) {
-                return ((Callable) func).call(thisArg);
+                return func.call(thisArg);
             }
             if (!Type.isObject(argArray)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
@@ -127,7 +126,7 @@ public class FunctionPrototype extends OrdinaryObject implements ScriptObject, C
                 Object nextArg = Get(argarray, indexName);
                 argList[index] = nextArg;
             }
-            return ((Callable) func).call(thisArg, argList);
+            return func.call(thisArg, argList);
         }
 
         /**
@@ -135,11 +134,11 @@ public class FunctionPrototype extends OrdinaryObject implements ScriptObject, C
          */
         @Function(name = "call", arity = 1)
         public static Object call(Realm realm, Object thisValue, Object thisArg, Object... args) {
-            Object func = thisValue;
-            if (!IsCallable(func)) {
+            if (!IsCallable(thisValue)) {
                 throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
-            return ((Callable) func).call(thisArg, args);
+            Callable func = (Callable) thisValue;
+            return func.call(thisArg, args);
         }
 
         /**
@@ -147,14 +146,14 @@ public class FunctionPrototype extends OrdinaryObject implements ScriptObject, C
          */
         @Function(name = "bind", arity = 1)
         public static Object bind(Realm realm, Object thisValue, Object thisArg, Object... args) {
-            Object target = thisValue;
-            if (!IsCallable(target)) {
+            if (!IsCallable(thisValue)) {
                 throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
-            ExoticBoundFunction f = BoundFunctionCreate(realm, (Callable) target, thisArg, args);
+            Callable target = (Callable) thisValue;
+            ExoticBoundFunction f = BoundFunctionCreate(realm, target, thisArg, args);
             int l;
-            if (hasBuiltinBrand(target, BuiltinBrand.BuiltinFunction)) {
-                Object targetLen = Get((ScriptObject) target, "length");
+            if (target.getBuiltinBrand() == BuiltinBrand.BuiltinFunction) {
+                Object targetLen = Get(target, "length");
                 l = (int) Math.max(0, ToInteger(realm, targetLen) - args.length);
             } else {
                 l = 0;
@@ -177,8 +176,7 @@ public class FunctionPrototype extends OrdinaryObject implements ScriptObject, C
          */
         @Function(name = "@@hasInstance", arity = 1, symbol = BuiltinSymbol.hasInstance)
         public static Object hasInstance(Realm realm, Object thisValue, Object v) {
-            Object f = thisValue;
-            return OrdinaryHasInstance(realm, f, v);
+            return OrdinaryHasInstance(realm, thisValue, v);
         }
     }
 }

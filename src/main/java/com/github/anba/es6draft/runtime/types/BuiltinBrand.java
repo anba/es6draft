@@ -22,19 +22,4 @@ public enum BuiltinBrand {/* @formatter:off */
     BuiltinJSON,
     BuiltinArguments,
     ;/* @formatter:on */
-
-    /**
-     * Returns <code>true</code> iff object has a [[BuiltinBrand]] property with the value
-     * {@code value}
-     * <p>
-     * This function is currently only used when the [[BuiltinBrand]] value is queried without prior
-     * checks like `Type.of(x) == Type.Object`<br>
-     * FIXME: possible spec bug?
-     */
-    public static boolean hasBuiltinBrand(Object object, BuiltinBrand value) {
-        if (!(object instanceof ScriptObject)) {
-            return false;
-        }
-        return ((ScriptObject) object).getBuiltinBrand() == value;
-    }
 }
