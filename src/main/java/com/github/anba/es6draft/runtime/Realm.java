@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.objects.*;
-import com.github.anba.es6draft.runtime.objects.NativeError.ErrorType;
+import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor;
@@ -222,24 +222,31 @@ public class Realm {
         StopIterationObject stopIterationObject = new StopIterationObject(realm);
 
         // native errors
-        NativeError evalErrorConstructor = new NativeError(realm, ErrorType.EvalError);
+        NativeErrorConstructor evalErrorConstructor = new NativeErrorConstructor(realm,
+                ErrorType.EvalError);
         NativeErrorPrototype evalErrorPrototype = new NativeErrorPrototype(realm,
                 ErrorType.EvalError);
-        NativeError rangeErrorConstructor = new NativeError(realm, ErrorType.RangeError);
+        NativeErrorConstructor rangeErrorConstructor = new NativeErrorConstructor(realm,
+                ErrorType.RangeError);
         NativeErrorPrototype rangeErrorPrototype = new NativeErrorPrototype(realm,
                 ErrorType.RangeError);
-        NativeError referenceErrorConstructor = new NativeError(realm, ErrorType.ReferenceError);
+        NativeErrorConstructor referenceErrorConstructor = new NativeErrorConstructor(realm,
+                ErrorType.ReferenceError);
         NativeErrorPrototype referenceErrorPrototype = new NativeErrorPrototype(realm,
                 ErrorType.ReferenceError);
-        NativeError syntaxErrorConstructor = new NativeError(realm, ErrorType.SyntaxError);
+        NativeErrorConstructor syntaxErrorConstructor = new NativeErrorConstructor(realm,
+                ErrorType.SyntaxError);
         NativeErrorPrototype syntaxErrorPrototype = new NativeErrorPrototype(realm,
                 ErrorType.SyntaxError);
-        NativeError typeErrorConstructor = new NativeError(realm, ErrorType.TypeError);
+        NativeErrorConstructor typeErrorConstructor = new NativeErrorConstructor(realm,
+                ErrorType.TypeError);
         NativeErrorPrototype typeErrorPrototype = new NativeErrorPrototype(realm,
                 ErrorType.TypeError);
-        NativeError uriErrorConstructor = new NativeError(realm, ErrorType.URIError);
+        NativeErrorConstructor uriErrorConstructor = new NativeErrorConstructor(realm,
+                ErrorType.URIError);
         NativeErrorPrototype uriErrorPrototype = new NativeErrorPrototype(realm, ErrorType.URIError);
-        NativeError internalErrorConstructor = new NativeError(realm, ErrorType.InternalError);
+        NativeErrorConstructor internalErrorConstructor = new NativeErrorConstructor(realm,
+                ErrorType.InternalError);
         NativeErrorPrototype internalErrorPrototype = new NativeErrorPrototype(realm,
                 ErrorType.InternalError);
 

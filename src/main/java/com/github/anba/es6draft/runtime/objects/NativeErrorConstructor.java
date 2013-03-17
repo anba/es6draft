@@ -43,8 +43,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  * </ul>
  */
-public class NativeError extends OrdinaryObject implements ScriptObject, Callable, Constructor,
-        Initialisable {
+public class NativeErrorConstructor extends OrdinaryObject implements ScriptObject, Callable,
+        Constructor, Initialisable {
     /**
      * 15.11.6 Native Error Types Used in This Standard
      * <ul>
@@ -83,7 +83,7 @@ public class NativeError extends OrdinaryObject implements ScriptObject, Callabl
 
     private final ErrorType type;
 
-    public NativeError(Realm realm, ErrorType type) {
+    public NativeErrorConstructor(Realm realm, ErrorType type) {
         super(realm);
         this.type = type;
     }
