@@ -86,6 +86,10 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
                 configurable = false))
         public static final int length = 1;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Boolean";
+
         /**
          * 15.6.3.1 Boolean.prototype
          */

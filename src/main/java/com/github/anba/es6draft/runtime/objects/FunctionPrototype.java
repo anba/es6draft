@@ -76,6 +76,10 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
                 configurable = false))
         public static final int length = 0;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "FunctionPrototype";
+
         /**
          * 15.3.4.1 Function.prototype.constructor
          */

@@ -273,6 +273,10 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
                 configurable = false))
         public static final int length = 2;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "RegExp";
+
         /**
          * 15.10.5.1 RegExp.prototype
          */

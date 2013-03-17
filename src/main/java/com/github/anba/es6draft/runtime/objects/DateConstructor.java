@@ -143,6 +143,10 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
                 configurable = false))
         public static final int length = 7;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Date";
+
         /**
          * 15.9.4.1 Date.prototype
          */

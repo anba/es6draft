@@ -128,6 +128,10 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
                 configurable = false))
         public static final int length = 1;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Array";
+
         /**
          * 15.4.3.1 Array.prototype
          */

@@ -106,6 +106,10 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                 configurable = false))
         public static final int length = 1;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Object";
+
         /**
          * 15.2.3.1 Object.prototype
          */

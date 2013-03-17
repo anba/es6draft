@@ -125,5 +125,9 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 1;
+
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Function";
     }
 }

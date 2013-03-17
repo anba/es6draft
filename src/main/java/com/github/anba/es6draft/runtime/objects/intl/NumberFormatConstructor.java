@@ -146,6 +146,10 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
                 configurable = false))
         public static final int length = 0;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "NumberFormat";
+
         /**
          * 11.2.1 Intl.NumberFormat.prototype
          */

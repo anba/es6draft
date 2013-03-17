@@ -141,6 +141,10 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
                 configurable = false))
         public static final int length = 0;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Set";
+
         /**
          * 15.16.3.1 Set.prototype
          */

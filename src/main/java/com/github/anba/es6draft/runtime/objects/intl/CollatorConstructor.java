@@ -128,6 +128,10 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
                 configurable = false))
         public static final int length = 0;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Collator";
+
         /**
          * 10.2.1 Intl.Collator.prototype
          */

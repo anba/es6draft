@@ -99,6 +99,10 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "DataView";
+
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 3;

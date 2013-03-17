@@ -121,6 +121,10 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
                 configurable = false))
         public static final int length = 0;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "DateTimeFormat";
+
         /**
          * 12.2.1 Intl.DateTimeFormat.prototype
          */

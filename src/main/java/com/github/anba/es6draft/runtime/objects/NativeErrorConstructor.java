@@ -171,6 +171,10 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 configurable = false))
         public static final int length = 1;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "EvalError";
+
         /**
          * 15.11.7.3.1 NativeError.prototype
          */
@@ -204,6 +208,10 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 1;
+
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "RangeError";
 
         /**
          * 15.11.7.3.1 NativeError.prototype
@@ -239,6 +247,10 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 configurable = false))
         public static final int length = 1;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "ReferenceError";
+
         /**
          * 15.11.7.3.1 NativeError.prototype
          */
@@ -272,6 +284,10 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 1;
+
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "SyntaxError";
 
         /**
          * 15.11.7.3.1 NativeError.prototype
@@ -307,6 +323,10 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 configurable = false))
         public static final int length = 1;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "TypeError";
+
         /**
          * 15.11.7.3.1 NativeError.prototype
          */
@@ -341,6 +361,10 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 configurable = false))
         public static final int length = 1;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "URIError";
+
         /**
          * 15.11.7.3.1 NativeError.prototype
          */
@@ -374,6 +398,10 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 1;
+
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "InternalError";
 
         /**
          * 15.11.7.3.1 NativeError.prototype

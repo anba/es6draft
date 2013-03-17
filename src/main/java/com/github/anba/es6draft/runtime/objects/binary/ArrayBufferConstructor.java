@@ -278,6 +278,10 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
                 configurable = false))
         public static final int length = 1;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "ArrayBuffer";
+
         /**
          * 15.13.5.3.1 ArrayBuffer.prototype
          */

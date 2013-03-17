@@ -305,6 +305,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
                 configurable = false))
         public static final int length = 3;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Int8Array";
+
         /**
          * 15.13.6.3.1 TypedArray.prototype
          */
@@ -337,6 +341,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 3;
+
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Uint8Array";
 
         /**
          * 15.13.6.3.1 TypedArray.prototype
@@ -371,6 +379,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
                 configurable = false))
         public static final int length = 3;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Uint8Clamped";
+
         /**
          * 15.13.6.3.1 TypedArray.prototype
          */
@@ -403,6 +415,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 3;
+
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Int16Array";
 
         /**
          * 15.13.6.3.1 TypedArray.prototype
@@ -437,6 +453,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
                 configurable = false))
         public static final int length = 3;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Uint16Array";
+
         /**
          * 15.13.6.3.1 TypedArray.prototype
          */
@@ -469,6 +489,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 3;
+
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Int32Array";
 
         /**
          * 15.13.6.3.1 TypedArray.prototype
@@ -503,6 +527,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
                 configurable = false))
         public static final int length = 3;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Uint32Array";
+
         /**
          * 15.13.6.3.1 TypedArray.prototype
          */
@@ -536,6 +564,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
                 configurable = false))
         public static final int length = 3;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Float32Array";
+
         /**
          * 15.13.6.3.1 TypedArray.prototype
          */
@@ -568,6 +600,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final int length = 3;
+
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Float64Array";
 
         /**
          * 15.13.6.3.1 TypedArray.prototype

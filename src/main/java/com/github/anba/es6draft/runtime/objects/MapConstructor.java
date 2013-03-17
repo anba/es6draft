@@ -150,6 +150,10 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
                 configurable = false))
         public static final int length = 0;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "Map";
+
         /**
          * 15.14.3.1 Map.prototype
          */

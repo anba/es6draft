@@ -135,6 +135,10 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
                 configurable = false))
         public static final int length = 0;
 
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = false))
+        public static final String name = "WeakMap";
+
         /**
          * 15.15.3.1 WeakMap.prototype
          */
