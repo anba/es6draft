@@ -48,6 +48,7 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
     @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
+        AddRestrictedFunctionProperties(realm, this);
     }
 
     /**
