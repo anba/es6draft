@@ -52,11 +52,6 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Set() { /* native code */ }";
-    }
-
     /**
      * 15.16.1.1 Set (iterable = undefined, comparator = undefined )
      */

@@ -63,11 +63,6 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Collator() { /* native code */ }";
-    }
-
     /**
      * 10.1.1.1 InitializeCollator (collator, locales, options)
      */

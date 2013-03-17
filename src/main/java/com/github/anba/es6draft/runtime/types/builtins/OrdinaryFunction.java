@@ -161,11 +161,6 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
         }
 
         @Override
-        public String toSource() {
-            return "function TypeErrorThrower() { /* native code */ }";
-        }
-
-        @Override
         public Object call(Object thisValue, Object... args) {
             /* step 8 */
             throw throwTypeError(realm(), Messages.Key.StrictModePoisonPill);

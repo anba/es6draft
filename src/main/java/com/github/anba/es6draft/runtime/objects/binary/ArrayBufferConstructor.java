@@ -231,11 +231,6 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         }
     }
 
-    @Override
-    public String toSource() {
-        return "function ArrayBuffer() { /* native code */ }";
-    }
-
     /**
      * 15.13.5.2.1 ArrayBuffer(length)
      */

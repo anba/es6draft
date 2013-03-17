@@ -114,16 +114,6 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toString() {
-        return type.name();
-    }
-
-    @Override
-    public String toSource() {
-        return String.format("function %s() { /* native code */ }", type.name());
-    }
-
     /**
      * 15.11.7.1.1 NativeError (message)
      */

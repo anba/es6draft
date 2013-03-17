@@ -44,11 +44,6 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Boolean() { /* native code */ }";
-    }
-
     /**
      * 15.6.1.1 Boolean (value)
      */

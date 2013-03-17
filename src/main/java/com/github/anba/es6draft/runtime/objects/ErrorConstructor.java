@@ -47,11 +47,6 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Error() { /* native code */ }";
-    }
-
     /**
      * 15.11.1.1 Error (message)
      */

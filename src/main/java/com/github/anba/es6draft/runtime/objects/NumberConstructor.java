@@ -46,11 +46,6 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Number() { /* native code */ }";
-    }
-
     /**
      * 15.7.1.1 Number ( [ value ] )
      */

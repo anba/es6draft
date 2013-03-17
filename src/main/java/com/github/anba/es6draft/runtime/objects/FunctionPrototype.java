@@ -50,11 +50,6 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function FunctionPrototype() { /* native code */ }";
-    }
-
     /**
      * [[Call]]
      */

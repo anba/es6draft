@@ -53,11 +53,6 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Object() { /* native code */ }";
-    }
-
     /**
      * 15.2.1.1 Object ( [ value ] )
      */

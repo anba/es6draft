@@ -47,11 +47,6 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Function() { /* native code */ }";
-    }
-
     /**
      * 15.3.1.1 Function (p1, p2, ... , pn, body)
      */

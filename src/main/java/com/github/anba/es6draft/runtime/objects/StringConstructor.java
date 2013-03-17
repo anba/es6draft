@@ -49,11 +49,6 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function String() { /* native code */ }";
-    }
-
     /**
      * 15.5.1.1 String ( [ value ] )
      */

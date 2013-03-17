@@ -51,11 +51,6 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Array() { /* native code */ }";
-    }
-
     /**
      * 15.4.1.1 Array ( [ item1 [ , item2 [ , ... ] ] ] )<br>
      * 15.4.1.2 Array (len)

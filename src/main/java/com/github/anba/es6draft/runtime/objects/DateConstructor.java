@@ -52,11 +52,6 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Date() { /* native code */ }";
-    }
-
     /**
      * 15.9.2.1 Date (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )<br>
      * 15.9.2.2 Date (value)<br>

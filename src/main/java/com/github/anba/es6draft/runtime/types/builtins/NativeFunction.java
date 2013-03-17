@@ -25,23 +25,16 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
  * </ul>
  */
 public class NativeFunction extends BuiltinFunction {
-    private final String name;
     // (Object, Object[]) -> Object
     private final MethodHandle mh;
 
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
         super(realm);
-        this.name = name;
         this.mh = mh;
         setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
         defineOwnProperty("name", new PropertyDescriptor(name, false, false, false));
         defineOwnProperty("length", new PropertyDescriptor(arity, false, false, false));
         AddRestrictedFunctionProperties(realm, this);
-    }
-
-    @Override
-    public String toSource() {
-        return String.format("function %s() { /* native code */ }", name);
     }
 
     /**

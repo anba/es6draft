@@ -52,11 +52,6 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function WeakMap() { /* native code */ }";
-    }
-
     /**
      * 15.15.1.1 WeakMap (iterable = undefined )
      */

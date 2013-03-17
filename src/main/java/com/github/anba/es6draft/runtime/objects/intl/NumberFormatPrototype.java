@@ -126,20 +126,12 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
     }
 
     private static class FormatFunction extends BuiltinFunction {
-        private static final String NAME = "format";
-        private static final int ARITY = 1;
-
         public FormatFunction(Realm realm) {
             super(realm);
             setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-            defineOwnProperty("name", new PropertyDescriptor(NAME, false, false, false));
-            defineOwnProperty("length", new PropertyDescriptor(ARITY, false, false, false));
+            defineOwnProperty("name", new PropertyDescriptor("format", false, false, false));
+            defineOwnProperty("length", new PropertyDescriptor(1, false, false, false));
             AddRestrictedFunctionProperties(realm, this);
-        }
-
-        @Override
-        public String toSource() {
-            return String.format("function %s() { /* native code */ }", NAME);
         }
 
         /**

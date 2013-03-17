@@ -59,11 +59,6 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function RegExp() { /* native code */ }";
-    }
-
     /**
      * 15.10.3.1 RegExp(pattern, flags)
      */

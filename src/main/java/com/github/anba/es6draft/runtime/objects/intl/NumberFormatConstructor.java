@@ -68,11 +68,6 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function NumberFormat() { /* native code */ }";
-    }
-
     @SafeVarargs
     private static <T> Set<T> set(T... elements) {
         return new HashSet<>(Arrays.asList(elements));

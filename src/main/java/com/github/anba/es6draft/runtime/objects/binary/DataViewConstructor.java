@@ -48,11 +48,6 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function DataView() { /* native code */ }";
-    }
-
     /**
      * 15.13.7.1 The DataView Constructor Called as a Function
      */

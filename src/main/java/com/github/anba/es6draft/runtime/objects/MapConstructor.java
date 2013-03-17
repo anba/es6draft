@@ -53,11 +53,6 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function Map() { /* native code */ }";
-    }
-
     /**
      * 15.14.1.1 Map (iterable = undefined , comparator = undefined )
      */

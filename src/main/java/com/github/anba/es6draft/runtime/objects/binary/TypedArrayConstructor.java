@@ -86,12 +86,6 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        String name = elementKind != ElementKind.Uint8C ? elementKind.name() : "Uint8Clamped";
-        return String.format("function %sArray() { /* native code */ }", name);
-    }
-
     /**
      * 15.13.6.1.1 TypedArray ( length )<br>
      * 15.13.6.1.2 TypedArray ( typedArray )<br>

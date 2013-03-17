@@ -64,11 +64,6 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         AddRestrictedFunctionProperties(realm, this);
     }
 
-    @Override
-    public String toSource() {
-        return "function DateTimeFormat() { /* native code */ }";
-    }
-
     /**
      * 12.1.1.1 InitializeDateTimeFormat (dateTimeFormat, locales, options)
      */
