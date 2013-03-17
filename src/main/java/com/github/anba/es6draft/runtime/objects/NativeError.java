@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreate
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.Realm;
@@ -114,6 +115,7 @@ public class NativeError extends OrdinaryObject implements Scriptable, Callable,
         default:
             throw new IllegalStateException();
         }
+        AddRestrictedFunctionProperties(realm, this);
     }
 
     @Override
