@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -48,14 +47,6 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
     @Override
     public boolean isPrivate() {
         return isPrivate;
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return null;
     }
 
     /**

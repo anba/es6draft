@@ -9,17 +9,6 @@ package com.github.anba.es6draft.runtime.types;
 /**
  * 
  */
-public enum BuiltinBrand {/* @formatter:off */
-    BuiltinFunction,
-    BuiltinArray,
-    BuiltinStringWrapper,
-    BuiltinBooleanWrapper,
-    BuiltinNumberWrapper,
-    BuiltinMath,
-    BuiltinDate,
-    BuiltinRegExp,
-    BuiltinError,
-    BuiltinJSON,
-    BuiltinArguments,
-    ;/* @formatter:on */
+public enum BuiltinBrand {
+    BuiltinFunction
 }

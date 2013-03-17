@@ -20,7 +20,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.IsC
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -52,14 +51,6 @@ public class ExoticProxy implements ScriptObject {
         this.realm = realm;
         this.proxyHandler = handler;
         this.proxyTarget = target;
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return null;
     }
 
     private static boolean __hasOwnProperty(ScriptObject target, Object propertyKey) {

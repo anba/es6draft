@@ -16,7 +16,6 @@ import java.util.Collection;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -47,14 +46,6 @@ public class ExoticArray extends OrdinaryObject implements ScriptObject {
         assert arrayInitializationState : "cannot de-initialise an array";
         assert !this.arrayInitializationState : "array already initialised";
         this.arrayInitializationState = arrayInitializationState;
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinArray;
     }
 
     // FIXME: spec bug (per introductory paragraph [[Set]] is overridden!)

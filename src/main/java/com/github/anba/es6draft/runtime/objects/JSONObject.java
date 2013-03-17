@@ -26,7 +26,6 @@ import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -52,14 +51,6 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
     @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinJSON;
     }
 
     public enum Properties {

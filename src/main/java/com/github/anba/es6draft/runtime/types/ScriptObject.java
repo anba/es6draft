@@ -15,11 +15,6 @@ package com.github.anba.es6draft.runtime.types;
  * </ul>
  */
 public interface ScriptObject {
-    /**
-     * [[BuiltinBrand]]
-     */
-    BuiltinBrand getBuiltinBrand();
-
     /** [[GetPrototype]] ( ) */
     ScriptObject getPrototype();
 

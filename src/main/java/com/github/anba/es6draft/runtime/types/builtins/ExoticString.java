@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.DefineProperty
 import java.util.Collection;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -30,14 +29,6 @@ public class ExoticString extends OrdinaryObject implements ScriptObject {
 
     public ExoticString(Realm realm) {
         super(realm);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinStringWrapper;
     }
 
     private CharSequence getStringDataOrEmpty() {

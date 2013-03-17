@@ -10,7 +10,6 @@ import java.util.BitSet;
 import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -76,13 +75,5 @@ public class RegExpObject extends OrdinaryObject implements ScriptObject {
     public Pattern getRegExpMatcher() {
         assert regExpMatcher != null;
         return regExpMatcher;
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinRegExp;
     }
 }

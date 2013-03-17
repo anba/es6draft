@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -47,14 +46,6 @@ public class BooleanObject extends OrdinaryObject implements ScriptObject {
         assert !this.initialised : "BooleanObject already initialised";
         this.initialised = true;
         this.booleanData = booleanData;
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinBooleanWrapper;
     }
 
     /**

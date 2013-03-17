@@ -25,7 +25,6 @@ import java.util.Set;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -88,14 +87,6 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     private Set<Object> __keys__() {
         return properties.keySet();
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return null;
     }
 
     /** 8.3.1 [[GetPrototype]] ( ) */

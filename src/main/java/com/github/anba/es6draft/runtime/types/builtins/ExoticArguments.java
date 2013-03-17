@@ -15,7 +15,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -120,14 +119,6 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
 
     public ExoticArguments(Realm realm) {
         super(realm);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinArguments;
     }
 
     /**

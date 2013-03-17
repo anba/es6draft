@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -40,14 +39,6 @@ public class ErrorObject extends OrdinaryObject implements ScriptObject {
     public void initialise() {
         assert !this.initialised : "ErrorObject already initialised";
         this.initialised = true;
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinError;
     }
 
     @Override

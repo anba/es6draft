@@ -18,6 +18,11 @@ package com.github.anba.es6draft.runtime.types;
  */
 public interface Callable extends ScriptObject {
     /**
+     * [[BuiltinBrand]]
+     */
+    BuiltinBrand getBuiltinBrand();
+
+    /**
      * [[Call]]
      */
     Object call(Object thisValue, Object... args);
