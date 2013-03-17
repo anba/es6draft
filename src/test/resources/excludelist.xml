@@ -70,7 +70,7 @@
   <test id="15.3.5.4_2-93gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
     'caller'</test>
 
-  <!-- rev15 changes -->
+  <!-- rev14 changes -->
   <test id="S11.2.1_A4_T5">ES6-change: String.prototype no longer String 'String.prototype.length'</test>
   <test id="15.2.3.3-4-212">ES6-change: 'RegExp.prototype.source' accessor on prototype</test>
   <test id="15.2.3.3-4-213">ES6-change: 'RegExp.prototype.global' accessor on prototype</test>
