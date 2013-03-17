@@ -15,7 +15,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Generator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -113,15 +112,6 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
         MakeConstructor(realm, f);
         /* step 4 */
         return f;
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        /* [13.6 FunctionCreate] step 3 */
-        return BuiltinBrand.BuiltinFunction;
     }
 
     @Override

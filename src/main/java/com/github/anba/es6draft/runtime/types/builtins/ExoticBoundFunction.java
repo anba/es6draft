@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -57,14 +56,6 @@ public class ExoticBoundFunction extends OrdinaryObject implements ScriptObject,
      */
     public Object[] getBoundArguments() {
         return boundArguments;
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinFunction;
     }
 
     @Override

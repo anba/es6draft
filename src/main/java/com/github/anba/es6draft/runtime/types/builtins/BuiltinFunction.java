@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -21,13 +20,5 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 public abstract class BuiltinFunction extends OrdinaryObject implements ScriptObject, Callable {
     public BuiltinFunction(Realm realm) {
         super(realm);
-    }
-
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public final BuiltinBrand getBuiltinBrand() {
-        return BuiltinBrand.BuiltinFunction;
     }
 }

@@ -216,15 +216,6 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
         return f;
     }
 
-    /**
-     * [[BuiltinBrand]]
-     */
-    @Override
-    public BuiltinBrand getBuiltinBrand() {
-        /* [13.6 FunctionCreate] step 3 */
-        return BuiltinBrand.BuiltinFunction;
-    }
-
     @Override
     public String toSource() {
         String source = this.source;
