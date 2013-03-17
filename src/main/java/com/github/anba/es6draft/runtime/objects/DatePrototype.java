@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.9.5 Properties of the Date Prototype Object
  * </ul>
  */
-public class DatePrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class DatePrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public DatePrototype(Realm realm) {
         super(realm);
     }
@@ -692,7 +692,7 @@ public class DatePrototype extends OrdinaryObject implements Scriptable, Initial
          */
         @Function(name = "toJSON", arity = 1)
         public static Object toJSON(Realm realm, Object thisValue, Object key) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object tv = ToPrimitive(realm, o, Type.Number);
             if (Type.isNumber(tv) && !isFinite(Type.numberValue(tv))) {
                 return NULL;

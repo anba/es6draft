@@ -12,7 +12,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
@@ -22,7 +22,7 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * <li>8.4.4 Exotic Symbol Objects
  * </ul>
  */
-public class ExoticSymbolObject implements Scriptable, Symbol {
+public class ExoticSymbolObject implements ScriptObject, Symbol {
 
     /**
      * [[Private]]
@@ -62,7 +62,7 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
      * 8.4.4.1 [[GetInheritance]] ( )
      */
     @Override
-    public Scriptable getPrototype() {
+    public ScriptObject getPrototype() {
         return null;
     }
 
@@ -70,7 +70,7 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
      * 8.4.4.2 [[SetInheritance]] (V)
      */
     @Override
-    public boolean setPrototype(Scriptable prototype) {
+    public boolean setPrototype(ScriptObject prototype) {
         return false;
     }
 
@@ -210,7 +210,7 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
      * 8.4.4.11 [[Enumerate]] ()
      */
     @Override
-    public Scriptable enumerate() {
+    public ScriptObject enumerate() {
         // FIXME: spec incomplete
         throw new IllegalStateException("NYI");
     }
@@ -219,7 +219,7 @@ public class ExoticSymbolObject implements Scriptable, Symbol {
      * 8.4.4.13 [[OwnPropertyKeys]] ( )
      */
     @Override
-    public Scriptable ownPropertyKeys() {
+    public ScriptObject ownPropertyKeys() {
         // FIXME: spec incomplete
         throw new IllegalStateException("NYI");
     }

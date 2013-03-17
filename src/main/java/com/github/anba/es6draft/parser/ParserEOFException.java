@@ -7,10 +7,9 @@
 package com.github.anba.es6draft.parser;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
 
 /**
- * {@link ScriptException} subclass for parser exceptions
+ * {@link ParserException} subclass for parser EOF exceptions
  */
 @SuppressWarnings("serial")
 public class ParserEOFException extends ParserException {

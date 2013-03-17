@@ -13,13 +13,13 @@ import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>8 The Intl Object</h1>
  */
-public class IntlObject extends OrdinaryObject implements Scriptable, Initialisable {
+public class IntlObject extends OrdinaryObject implements ScriptObject, Initialisable {
     public IntlObject(Realm realm) {
         super(realm);
     }

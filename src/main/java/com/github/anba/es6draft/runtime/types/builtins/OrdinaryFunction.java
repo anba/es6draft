@@ -32,7 +32,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     private RuntimeInfo.Function function;
     private LexicalEnvironment scope;
     private boolean strict;
-    private Scriptable home;
+    private ScriptObject home;
     private String methodName;
     private Realm realm;
     private ThisMode thisMode;
@@ -55,7 +55,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
      * [13.6 Creating Function Objects and Constructors] FunctionCreate
      */
     public static Function FunctionCreate(Realm realm, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, Scriptable prototype) {
+            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype) {
         return FunctionCreate(realm, kind, function, scope, prototype, null, null);
     }
 
@@ -63,8 +63,8 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
      * [13.6 Creating Function Objects and Constructors] FunctionCreate
      */
     public static Function FunctionCreate(Realm realm, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, Scriptable prototype,
-            Scriptable homeObject, String methodName) {
+            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
+            ScriptObject homeObject, String methodName) {
         assert !function.isGenerator();
 
         boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
@@ -120,7 +120,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     public static void MakeConstructor(Realm realm, Function f) {
         /*  step 2 */
         boolean installNeeded = true;
-        Scriptable prototype = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+        ScriptObject prototype = ObjectCreate(realm, Intrinsics.ObjectPrototype);
         /*  step 3 */
         boolean writablePrototype = true;
         MakeConstructor(realm, f, writablePrototype, prototype, installNeeded);
@@ -130,7 +130,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
     public static void MakeConstructor(Realm realm, Function f, boolean writablePrototype,
-            Scriptable prototype) {
+            ScriptObject prototype) {
         /* step 1 */
         boolean installNeeded = false;
         MakeConstructor(realm, f, writablePrototype, prototype, installNeeded);
@@ -140,7 +140,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
     private static void MakeConstructor(Realm realm, Function f, boolean writablePrototype,
-            Scriptable prototype, boolean installNeeded) {
+            ScriptObject prototype, boolean installNeeded) {
         /* step 4 (implicit) */
         /* step 5 */
         if (installNeeded) {
@@ -200,7 +200,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * [13.6 Creating Function Objects and Constructors] AddRestrictedFunctionProperties
      */
-    public static void AddRestrictedFunctionProperties(Realm realm, Scriptable obj) {
+    public static void AddRestrictedFunctionProperties(Realm realm, ScriptObject obj) {
         /*  step 1  */
         Callable thrower = realm.getThrowTypeError();
         /*  step 2  */
@@ -277,7 +277,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * 8.3.15.2.1 OrdinaryConstruct (F, argumentsList)
      */
-    public static <FUNCTION extends Scriptable & Callable & Constructor> Object OrdinaryConstruct(
+    public static <FUNCTION extends ScriptObject & Callable & Constructor> Object OrdinaryConstruct(
             Realm realm, FUNCTION f, Object[] args) {
         Object creator = Get(f, BuiltinSymbol.create.get());
         Object obj;
@@ -387,7 +387,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
      * [[Home]]
      */
     @Override
-    public Scriptable getHome() {
+    public ScriptObject getHome() {
         return home;
     }
 

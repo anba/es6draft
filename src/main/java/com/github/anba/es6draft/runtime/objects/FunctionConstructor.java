@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -39,7 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.3.3 Properties of the Function Constructor
  * </ul>
  */
-public class FunctionConstructor extends OrdinaryObject implements Scriptable, Callable,
+public class FunctionConstructor extends OrdinaryObject implements ScriptObject, Callable,
         Constructor, Initialisable {
     public FunctionConstructor(Realm realm) {
         super(realm);

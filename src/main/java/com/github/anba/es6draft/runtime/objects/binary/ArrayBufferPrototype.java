@@ -25,7 +25,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.13.5.5 Properties of the ArrayBuffer Prototype Object
  * </ul>
  */
-public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class ArrayBufferPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public ArrayBufferPrototype(Realm realm) {
         super(realm);
     }
@@ -53,7 +53,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, 
     public enum Properties {
         ;
 
-        private static ArrayBufferObject ArrayBufferObject(Realm realm, Scriptable m) {
+        private static ArrayBufferObject ArrayBufferObject(Realm realm, ScriptObject m) {
             if (m instanceof ArrayBufferObject) {
                 return (ArrayBufferObject) m;
             }
@@ -74,7 +74,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, 
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(Realm realm, Object thisValue) {
-            Scriptable obj = ToObject(realm, thisValue);
+            ScriptObject obj = ToObject(realm, thisValue);
             long length = ArrayBufferObject(realm, obj).getByteLength();
             return length;
         }
@@ -84,7 +84,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Scriptable, 
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(Realm realm, Object thisValue, Object start, Object end) {
-            Scriptable obj = ToObject(realm, thisValue);
+            ScriptObject obj = ToObject(realm, thisValue);
             ArrayBufferObject buf = ArrayBufferObject(realm, obj);
             long len = buf.getByteLength();
             double relativeStart = ToInteger(realm, start);

@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.ListIterator.ListIteratorPrototype;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
@@ -50,12 +50,12 @@ public class Realm {
     /**
      * [[intrinsics]]
      */
-    private Map<Intrinsics, Scriptable> intrinsics = new EnumMap<>(Intrinsics.class);
+    private Map<Intrinsics, ScriptObject> intrinsics = new EnumMap<>(Intrinsics.class);
 
     /**
      * [[globalThis]]
      */
-    private Scriptable globalThis;
+    private ScriptObject globalThis;
 
     /**
      * [[globalEnv]]
@@ -79,7 +79,7 @@ public class Realm {
     private Messages messages = Messages.create(locale);
 
     // TODO: move into function source object
-    private Map<String, Scriptable> templateCallSites = new HashMap<>();
+    private Map<String, ScriptObject> templateCallSites = new HashMap<>();
 
     private Realm() {
     }
@@ -87,14 +87,14 @@ public class Realm {
     /**
      * [[intrinsics]]
      */
-    public Scriptable getIntrinsic(Intrinsics id) {
+    public ScriptObject getIntrinsic(Intrinsics id) {
         return intrinsics.get(id);
     }
 
     /**
      * [[globalThis]]
      */
-    public Scriptable getGlobalThis() {
+    public ScriptObject getGlobalThis() {
         return globalThis;
     }
 
@@ -147,11 +147,11 @@ public class Realm {
         return builtinEval;
     }
 
-    public Scriptable getTemplateCallSite(String key) {
+    public ScriptObject getTemplateCallSite(String key) {
         return templateCallSites.get(key);
     }
 
-    public void addTemplateCallSite(String key, Scriptable callSite) {
+    public void addTemplateCallSite(String key, ScriptObject callSite) {
         templateCallSites.put(key, callSite);
     }
 
@@ -294,7 +294,7 @@ public class Realm {
         ListIteratorPrototype listIteratorPrototype = new ListIteratorPrototype(realm);
 
         // intrinsics (2)
-        Map<Intrinsics, Scriptable> intrinsics = realm.intrinsics;
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
         intrinsics.put(Intrinsics.Object, objectConstructor);
         intrinsics.put(Intrinsics.ObjectPrototype, objectPrototype);
         intrinsics.put(Intrinsics.Function, functionConstructor);
@@ -467,7 +467,7 @@ public class Realm {
 
         // intrinsics (4)
         Object objectPrototypeToString = Get(objectPrototype, "toString");
-        intrinsics.put(Intrinsics.ObjProto_toString, (Scriptable) objectPrototypeToString);
+        intrinsics.put(Intrinsics.ObjProto_toString, (ScriptObject) objectPrototypeToString);
 
         // finish initialising global object
         globalThis.initialise(realm);

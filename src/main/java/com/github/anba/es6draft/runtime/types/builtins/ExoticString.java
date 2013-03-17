@@ -15,7 +15,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>8 Types</h1><br>
@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * <li>8.4.3 String Exotic Objects
  * </ul>
  */
-public class ExoticString extends OrdinaryObject implements Scriptable {
+public class ExoticString extends OrdinaryObject implements ScriptObject {
     /** [[StringData]] */
     private CharSequence stringData = null;
 
@@ -167,7 +167,7 @@ public class ExoticString extends OrdinaryObject implements Scriptable {
     /**
      * 8.4.6.6 StringCreate Abstract Operation
      */
-    public static ExoticString StringCreate(Realm realm, Scriptable prototype) {
+    public static ExoticString StringCreate(Realm realm, ScriptObject prototype) {
         // step 1, 2-6, 9 (implicit)
         ExoticString obj = new ExoticString(realm);
         // step 8

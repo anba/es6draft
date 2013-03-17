@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.6.3 Properties of the Boolean Constructor
  * </ul>
  */
-public class BooleanConstructor extends OrdinaryObject implements Scriptable, Callable,
+public class BooleanConstructor extends OrdinaryObject implements ScriptObject, Callable,
         Constructor, Initialisable {
     public BooleanConstructor(Realm realm) {
         super(realm);

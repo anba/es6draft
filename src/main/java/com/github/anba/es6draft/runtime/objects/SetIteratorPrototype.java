@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.16.7 Set Iterator Object Structure
  * </ul>
  */
-public class SetIteratorPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class SetIteratorPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public SetIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -124,7 +124,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Scriptable, 
                 throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             SetIterator o = (SetIterator) thisValue;
-            // Scriptable m = o.set;
+            // ScriptObject m = o.set;
             // int index = o.nextIndex;
             SetIterationKind itemKind = o.iterationKind;
             Iterator<Entry<Object, Void>> itr = o.iterator;

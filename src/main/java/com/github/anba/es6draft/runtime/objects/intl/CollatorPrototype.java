@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>10 Collator Objects</h1>
@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * <li>10.3 Properties of the Intl.Collator Prototype Object
  * </ul>
  */
-public class CollatorPrototype extends CollatorObject implements Initialisable, Scriptable {
+public class CollatorPrototype extends CollatorObject implements Initialisable, ScriptObject {
     public CollatorPrototype(Realm realm) {
         super(realm);
     }

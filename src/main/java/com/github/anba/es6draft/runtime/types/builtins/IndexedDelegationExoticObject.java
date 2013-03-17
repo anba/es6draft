@@ -13,7 +13,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.isArra
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>8 Types</h1><br>
@@ -56,10 +56,10 @@ public class IndexedDelegationExoticObject extends OrdinaryObject {
     /**
      * 8.4.6.3 IndexedDelegator Create Abstract Operation
      */
-    public static Scriptable IndexedDelegatorCreate(Realm realm, Scriptable prototype) {
+    public static ScriptObject IndexedDelegatorCreate(Realm realm, ScriptObject prototype) {
         // FIXME: spec bug stray '(' is introductory text (bug 1172)
         /* step 1-4 (implicit) */
-        Scriptable obj = new IndexedDelegationExoticObject(realm);
+        ScriptObject obj = new IndexedDelegationExoticObject(realm);
         /* step 5 */
         obj.setPrototype(prototype);
         /* step 6 (implicit) */

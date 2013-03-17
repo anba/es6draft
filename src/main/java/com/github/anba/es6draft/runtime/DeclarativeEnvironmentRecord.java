@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -167,7 +167,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      * 10.2.1.1.10 WithBaseObject()
      */
     @Override
-    public Scriptable withBaseObject() {
+    public ScriptObject withBaseObject() {
         return null;
     }
 }

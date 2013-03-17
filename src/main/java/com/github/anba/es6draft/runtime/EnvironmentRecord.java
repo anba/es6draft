@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime;
 
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -64,7 +64,7 @@ public interface EnvironmentRecord {
     /**
      * WithBaseObject ()
      */
-    Scriptable withBaseObject();
+    ScriptObject withBaseObject();
 
     // assert: FunctionEnvironmentRecord or GlobalEnvironmentRecord
     Object getThisBinding();

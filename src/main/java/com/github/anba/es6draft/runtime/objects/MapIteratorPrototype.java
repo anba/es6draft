@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.14.6 Map Iterator Object Structure
  * </ul>
  */
-public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class MapIteratorPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public MapIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -130,7 +130,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
                 throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             MapIterator o = (MapIterator) thisValue;
-            // Scriptable m = o.map;
+            // ScriptObject m = o.map;
             // int index = o.nextIndex;
             MapIterationKind itemKind = o.iterationKind;
             Iterator<Entry<Object, Object>> itr = o.iterator;
@@ -144,7 +144,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Scriptable, 
                     result = e.getValue();
                 } else {
                     assert itemKind == MapIterationKind.KeyValue;
-                    Scriptable array = ArrayCreate(realm, 2);
+                    ScriptObject array = ArrayCreate(realm, 2);
                     CreateOwnDataProperty(array, "0", e.getKey());
                     CreateOwnDataProperty(array, "1", e.getValue());
                     result = array;

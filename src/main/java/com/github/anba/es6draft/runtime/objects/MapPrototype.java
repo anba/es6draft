@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.14.4 Properties of the Map Prototype Object
  * </ul>
  */
-public class MapPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class MapPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public MapPrototype(Realm realm) {
         super(realm);
     }

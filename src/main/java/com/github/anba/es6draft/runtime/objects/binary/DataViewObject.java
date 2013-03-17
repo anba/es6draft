@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.13.7.5 Properties of DataView Instances
  * </ul>
  */
-public class DataViewObject extends OrdinaryObject implements Scriptable {
+public class DataViewObject extends OrdinaryObject implements ScriptObject {
     public DataViewObject(Realm realm) {
         super(realm);
     }

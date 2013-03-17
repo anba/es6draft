@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class DataViewConstructor extends OrdinaryObject implements Callable, Constructor,
-        Initialisable, Scriptable {
+        Initialisable, ScriptObject {
     public DataViewConstructor(Realm realm) {
         super(realm);
     }
@@ -79,7 +79,7 @@ public class DataViewConstructor extends OrdinaryObject implements Callable, Con
     public Object construct(Object... args) {
         Realm realm = realm();
         Object buffer = args.length > 0 ? args[0] : UNDEFINED;
-        Scriptable obj = ToObject(realm, buffer);
+        ScriptObject obj = ToObject(realm, buffer);
         if (!(obj instanceof ArrayBufferObject)) {
             throwTypeError(realm, Messages.Key.IncompatibleObject);
         }

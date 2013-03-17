@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -43,7 +43,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.12.3 JSON.stringify (value [, replacer [, space]])
  * </ul>
  */
-public class JSONObject extends OrdinaryObject implements Scriptable, Initialisable {
+public class JSONObject extends OrdinaryObject implements ScriptObject, Initialisable {
     public JSONObject(Realm realm) {
         super(realm);
     }
@@ -81,7 +81,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
                 throw throwSyntaxError(realm, Messages.Key.InvalidJSONLiteral);
             }
             if (IsCallable(reviver)) {
-                Scriptable root = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+                ScriptObject root = ObjectCreate(realm, Intrinsics.ObjectPrototype);
                 CreateOwnDataProperty(root, "", unfiltered);
                 return Walk(realm, (Callable) reviver, root, "");
             }
@@ -94,7 +94,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
         @Function(name = "stringify", arity = 3)
         public static Object stringify(Realm realm, Object thisValue, Object value,
                 Object replacer, Object space) {
-            HashSet<Scriptable> stack = new HashSet<>();
+            HashSet<ScriptObject> stack = new HashSet<>();
             String indent = "";
             LinkedHashSet<String> propertyList = null;
             Callable replacerFunction = null;
@@ -104,7 +104,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
                 } else if (Type.objectValue(replacer).getBuiltinBrand() == BuiltinBrand.BuiltinArray) {
                     // https://bugs.ecmascript.org/show_bug.cgi?id=170
                     propertyList = new LinkedHashSet<>();
-                    Scriptable objReplacer = Type.objectValue(replacer);
+                    ScriptObject objReplacer = Type.objectValue(replacer);
                     long len = ToUint32(realm, Get(objReplacer, "length"));
                     for (long i = 0; i < len; ++i) {
                         String item = null;
@@ -114,7 +114,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
                         } else if (Type.isNumber(v)) {
                             item = ToFlatString(realm, v);
                         } else if (Type.isObject(v)) {
-                            Scriptable o = Type.objectValue(v);
+                            ScriptObject o = Type.objectValue(v);
                             if (o instanceof ExoticString || o instanceof NumberObject) {
                                 item = ToFlatString(realm, v);
                             }
@@ -126,7 +126,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
                 }
             }
             if (Type.isObject(space)) {
-                Scriptable o = Type.objectValue(space);
+                ScriptObject o = Type.objectValue(space);
                 if (o instanceof NumberObject) {
                     space = ToNumber(realm, space);
                 } else if (o instanceof ExoticString) {
@@ -146,7 +146,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
             } else {
                 gap = "";
             }
-            Scriptable wrapper = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+            ScriptObject wrapper = ObjectCreate(realm, Intrinsics.ObjectPrototype);
             CreateOwnDataProperty(wrapper, "", value);
             String result = Str(realm, stack, propertyList, replacerFunction, indent, gap, "",
                     wrapper);
@@ -160,10 +160,10 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
     /**
      * Runtime Semantics: Walk Abstract Operation
      */
-    public static Object Walk(Realm realm, Callable reviver, Scriptable holder, String name) {
+    public static Object Walk(Realm realm, Callable reviver, ScriptObject holder, String name) {
         Object val = Get(holder, name);
         if (Type.isObject(val)) {
-            Scriptable objVal = Type.objectValue(val);
+            ScriptObject objVal = Type.objectValue(val);
             if (objVal.getBuiltinBrand() == BuiltinBrand.BuiltinArray) {
                 long len = ToUint32(realm, Get(objVal, "length"));
                 for (long i = 0; i < len; ++i) {
@@ -194,11 +194,11 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
     /**
      * Runtime Semantics: Str Abstract Operation
      */
-    public static String Str(Realm realm, Set<Scriptable> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, String key, Scriptable holder) {
+    public static String Str(Realm realm, Set<ScriptObject> stack, Set<String> propertyList,
+            Callable replacerFunction, String indent, String gap, String key, ScriptObject holder) {
         Object value = Get(holder, key);
         if (Type.isObject(value)) {
-            Scriptable objValue = Type.objectValue(value);
+            ScriptObject objValue = Type.objectValue(value);
             Object toJSON = Get(objValue, "toJSON");
             if (IsCallable(toJSON)) {
                 value = ((Callable) toJSON).call(value, key);
@@ -208,7 +208,7 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
             value = replacerFunction.call(holder, key, value);
         }
         if (Type.isObject(value)) {
-            Scriptable o = Type.objectValue(value);
+            ScriptObject o = Type.objectValue(value);
             if (o instanceof NumberObject) {
                 value = ToNumber(realm, value);
             } else if (o instanceof ExoticString) {
@@ -298,8 +298,8 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
     /**
      * Runtime Semantics: JO Abstract Operation
      */
-    public static String JO(Realm realm, Set<Scriptable> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, Scriptable value) {
+    public static String JO(Realm realm, Set<ScriptObject> stack, Set<String> propertyList,
+            Callable replacerFunction, String indent, String gap, ScriptObject value) {
         if (stack.contains(value)) {
             throw throwTypeError(realm, Messages.Key.CyclicValue);
         }
@@ -354,8 +354,8 @@ public class JSONObject extends OrdinaryObject implements Scriptable, Initialisa
     /**
      * Runtime Semantics: JA Abstract Operation
      */
-    public static String JA(Realm realm, Set<Scriptable> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, Scriptable value) {
+    public static String JA(Realm realm, Set<ScriptObject> stack, Set<String> propertyList,
+            Callable replacerFunction, String indent, String gap, ScriptObject value) {
         if (stack.contains(value)) {
             throw throwTypeError(realm, Messages.Key.CyclicValue);
         }

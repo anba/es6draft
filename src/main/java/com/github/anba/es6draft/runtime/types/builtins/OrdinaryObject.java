@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 
@@ -41,12 +41,12 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>8.3 Ordinary Object Internal Methods and Internal Data Properties
  * </ul>
  */
-public abstract class OrdinaryObject implements Scriptable {
+public abstract class OrdinaryObject implements ScriptObject {
     // Map<String|Symbol, Property> properties
     private LinkedHashMap<Object, Property> properties = new LinkedHashMap<>();
 
     /** [[Prototype]] */
-    private Scriptable prototype = null;
+    private ScriptObject prototype = null;
 
     /** [[Extensible]] */
     private boolean extensible = true;
@@ -100,13 +100,13 @@ public abstract class OrdinaryObject implements Scriptable {
 
     /** 8.3.1 [[GetPrototype]] ( ) */
     @Override
-    public Scriptable getPrototype() {
+    public ScriptObject getPrototype() {
         return prototype;
     }
 
     /** 8.3.2 [[SetPrototype]] (V) */
     @Override
-    public boolean setPrototype(Scriptable prototype) {
+    public boolean setPrototype(ScriptObject prototype) {
         if (!extensible) {
             return false;
         }
@@ -358,7 +358,7 @@ public abstract class OrdinaryObject implements Scriptable {
     public boolean hasProperty(String propertyKey) {
         boolean hasOwn = hasOwnProperty(propertyKey);
         if (!hasOwn) {
-            Scriptable parent = getPrototype();
+            ScriptObject parent = getPrototype();
             if (parent != null) {
                 return parent.hasProperty(propertyKey);
             }
@@ -373,7 +373,7 @@ public abstract class OrdinaryObject implements Scriptable {
     public boolean hasProperty(Symbol propertyKey) {
         boolean hasOwn = hasOwnProperty(propertyKey);
         if (!hasOwn) {
-            Scriptable parent = getPrototype();
+            ScriptObject parent = getPrototype();
             if (parent != null) {
                 return parent.hasProperty(propertyKey);
             }
@@ -388,7 +388,7 @@ public abstract class OrdinaryObject implements Scriptable {
         Property desc = getOwnProperty(propertyKey);
         /* step 4 */
         if (desc == null) {
-            Scriptable parent = getPrototype();
+            ScriptObject parent = getPrototype();
             if (parent == null) {
                 return UNDEFINED;
             }
@@ -416,7 +416,7 @@ public abstract class OrdinaryObject implements Scriptable {
         Property desc = getOwnProperty(propertyKey);
         /* step 4 */
         if (desc == null) {
-            Scriptable parent = getPrototype();
+            ScriptObject parent = getPrototype();
             if (parent == null) {
                 return UNDEFINED;
             }
@@ -444,7 +444,7 @@ public abstract class OrdinaryObject implements Scriptable {
         Property ownDesc = getOwnProperty(propertyKey);
         /* step 4 */
         if (ownDesc == null) {
-            Scriptable parent = getPrototype();
+            ScriptObject parent = getPrototype();
             if (parent != null) {
                 return parent.set(propertyKey, value, receiver);
             } else {
@@ -462,7 +462,7 @@ public abstract class OrdinaryObject implements Scriptable {
             if (!Type.isObject(receiver)) {
                 return false;
             }
-            Scriptable _receiver = Type.objectValue(receiver);
+            ScriptObject _receiver = Type.objectValue(receiver);
             Property existingDescriptor = _receiver.getOwnProperty(propertyKey);
             if (existingDescriptor != null) {
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
@@ -488,7 +488,7 @@ public abstract class OrdinaryObject implements Scriptable {
         Property ownDesc = getOwnProperty(propertyKey);
         /* step 4 */
         if (ownDesc == null) {
-            Scriptable parent = getPrototype();
+            ScriptObject parent = getPrototype();
             if (parent != null) {
                 return parent.set(propertyKey, value, receiver);
             } else {
@@ -506,7 +506,7 @@ public abstract class OrdinaryObject implements Scriptable {
             if (!Type.isObject(receiver)) {
                 return false;
             }
-            Scriptable _receiver = Type.objectValue(receiver);
+            ScriptObject _receiver = Type.objectValue(receiver);
             Property existingDescriptor = _receiver.getOwnProperty(propertyKey);
             if (existingDescriptor != null) {
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
@@ -563,7 +563,7 @@ public abstract class OrdinaryObject implements Scriptable {
 
     /** 8.3.12 [[Enumerate]] () */
     @Override
-    public final Scriptable enumerate() {
+    public final ScriptObject enumerate() {
         return MakeListIterator(realm(), new EnumKeysIterator(realm(), this));
     }
 
@@ -609,7 +609,7 @@ public abstract class OrdinaryObject implements Scriptable {
                     }
                 }
                 // switch to prototype enumerate
-                Scriptable proto = this.obj.getPrototype();
+                ScriptObject proto = this.obj.getPrototype();
                 if (proto != null) {
                     if (proto instanceof OrdinaryObject) {
                         this.obj = ((OrdinaryObject) proto);
@@ -672,7 +672,7 @@ public abstract class OrdinaryObject implements Scriptable {
 
     /** 8.3.13 [[OwnPropertyKeys]] ( ) */
     @Override
-    public final Scriptable ownPropertyKeys() {
+    public final ScriptObject ownPropertyKeys() {
         return MakeListIterator(realm(), enumerateOwnKeys().iterator());
     }
 
@@ -703,7 +703,7 @@ public abstract class OrdinaryObject implements Scriptable {
     }
 
     /** 8.3.14 ObjectCreate Abstract Operation */
-    public static OrdinaryObject ObjectCreate(Realm realm, Scriptable proto) {
+    public static OrdinaryObject ObjectCreate(Realm realm, ScriptObject proto) {
         return ObjectCreate(realm, proto, DefaultAllocator.INSTANCE);
     }
 
@@ -713,15 +713,15 @@ public abstract class OrdinaryObject implements Scriptable {
     }
 
     /** 8.3.14 ObjectCreate Abstract Operation */
-    public static <OBJECT extends Scriptable> OBJECT ObjectCreate(Realm realm, Scriptable proto,
-            ObjectAllocator<OBJECT> allocator) {
+    public static <OBJECT extends ScriptObject> OBJECT ObjectCreate(Realm realm,
+            ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(realm);
         obj.setPrototype(proto);
         return obj;
     }
 
     /** 8.3.14 ObjectCreate Abstract Operation */
-    public static <OBJECT extends Scriptable> OBJECT ObjectCreate(Realm realm, Intrinsics proto,
+    public static <OBJECT extends ScriptObject> OBJECT ObjectCreate(Realm realm, Intrinsics proto,
             ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(realm);
         obj.setPrototype(realm.getIntrinsic(proto));

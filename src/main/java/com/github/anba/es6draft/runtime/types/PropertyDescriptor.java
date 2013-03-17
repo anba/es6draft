@@ -48,7 +48,7 @@ public final class PropertyDescriptor {
     private boolean configurable = false;
 
     // [[Origin]]
-    private Scriptable origin = null;
+    private ScriptObject origin = null;
 
     public PropertyDescriptor() {
     }
@@ -196,7 +196,7 @@ public final class PropertyDescriptor {
      * 8.2.5.4 FromPropertyDescriptor ( Desc )
      * <p>
      * Returns {@code undefined} if the input property descriptor is {@code null}, otherwise returns
-     * a {@link Scriptable} representing the fields of this property descriptor.
+     * a {@link ScriptObject} representing the fields of this property descriptor.
      */
     public static Object FromPropertyDescriptor(Realm realm, Property desc)
             throws IllegalArgumentException {
@@ -205,7 +205,7 @@ public final class PropertyDescriptor {
             return UNDEFINED;
         }
         /* step 3-4 */
-        Scriptable obj = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+        ScriptObject obj = ObjectCreate(realm, Intrinsics.ObjectPrototype);
         /* step 5-10 */
         // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {
@@ -225,7 +225,7 @@ public final class PropertyDescriptor {
      * 8.2.5.4 FromPropertyDescriptor ( Desc )
      * <p>
      * Returns {@code undefined} if the input property descriptor is {@code null}, otherwise returns
-     * a {@link Scriptable} representing the fields of this property descriptor.
+     * a {@link ScriptObject} representing the fields of this property descriptor.
      */
     public static Object FromPropertyDescriptor(Realm realm, PropertyDescriptor desc)
             throws IllegalArgumentException {
@@ -246,7 +246,7 @@ public final class PropertyDescriptor {
             return desc.origin;
         }
         /* step 3-4 */
-        Scriptable obj = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+        ScriptObject obj = ObjectCreate(realm, Intrinsics.ObjectPrototype);
         /* step 5-10 */
         // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {
@@ -274,14 +274,14 @@ public final class PropertyDescriptor {
      * 8.2.5.5 ToPropertyDescriptor ( Obj )
      * <p>
      * Returns a new property descriptor from the input argument {@code object}, if {@code object}
-     * is not an instance of {@link Scriptable}, a TypeError is thrown.
+     * is not an instance of {@link ScriptObject}, a TypeError is thrown.
      */
     public static PropertyDescriptor ToPropertyDescriptor(Realm realm, Object object) {
         /* step 1-2 */
         if (!Type.isObject(object)) {
             throwTypeError(realm, Messages.Key.NotObjectType);
         }
-        Scriptable obj = Type.objectValue(object);
+        ScriptObject obj = Type.objectValue(object);
         /* step 3-9 */
         PropertyDescriptor desc = new PropertyDescriptor();
         if (HasProperty(obj, "enumerable")) {

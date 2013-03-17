@@ -53,10 +53,10 @@ class CodeGenerator {
                 Type.getMethodType(Types.Object, Types.Object, Types.Realm));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc
-                .create(MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type
-                        .getMethodType(Types.Scriptable, Types.String, Types.MethodHandle,
-                                Types.ExecutionContext));
+        static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetTemplateCallSite", Type.getMethodType(
+                        Types.ScriptObject, Types.String, Types.MethodHandle,
+                        Types.ExecutionContext));
     }
 
     private static final boolean INCLUDE_SOURCE = true;

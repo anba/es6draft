@@ -14,17 +14,17 @@ package com.github.anba.es6draft.runtime.types;
  * <li>8.1.6.2 Object Internal Methods and Internal Data Properties
  * </ul>
  */
-public interface Scriptable {
+public interface ScriptObject {
     /**
      * [[BuiltinBrand]]
      */
     BuiltinBrand getBuiltinBrand();
 
     /** [[GetPrototype]] ( ) */
-    Scriptable getPrototype();
+    ScriptObject getPrototype();
 
     /** [[SetPrototype]] (V) */
-    boolean setPrototype(Scriptable prototype);
+    boolean setPrototype(ScriptObject prototype);
 
     /** [[HasIntegrity]] (Level) */
     boolean hasIntegrity(IntegrityLevel level);
@@ -77,9 +77,9 @@ public interface Scriptable {
     boolean defineOwnProperty(Symbol propertyKey, PropertyDescriptor desc);
 
     /** [[Enumerate]] () */
-    Scriptable enumerate();
+    ScriptObject enumerate();
 
     /** [[OwnPropertyKeys]] ( ) */
-    Scriptable ownPropertyKeys();
+    ScriptObject ownPropertyKeys();
 
 }

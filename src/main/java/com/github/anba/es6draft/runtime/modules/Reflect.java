@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -33,7 +33,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * 
  * TODO: remove representation as ordinary object
  */
-public class Reflect extends OrdinaryObject implements Scriptable, Initialisable, Module {
+public class Reflect extends OrdinaryObject implements ScriptObject, Initialisable, Module {
     public Reflect(Realm realm) {
         super(realm);
     }
@@ -57,7 +57,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(Realm realm, Object thisValue, Object target) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             return obj.getPrototype();
         }
 
@@ -67,11 +67,11 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(Realm realm, Object thisValue, Object target,
                 Object proto) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             if (!(Type.isObject(proto) || Type.isNull(proto))) {
                 throw throwTypeError(realm, Messages.Key.NotObjectOrNull);
             }
-            Scriptable p = Type.isObject(proto) ? Type.objectValue(proto) : null;
+            ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
             return obj.setPrototype(p);
         }
 
@@ -80,7 +80,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(Realm realm, Object thisValue, Object target) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             return IsExtensible(obj);
         }
 
@@ -89,7 +89,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(Realm realm, Object thisValue, Object target) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             return obj.setIntegrity(IntegrityLevel.NonExtensible);
         }
 
@@ -98,7 +98,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "has", arity = 2)
         public static Object has(Realm realm, Object thisValue, Object target, Object propertyKey) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             Object key = ToPropertyKey(realm, propertyKey);
             if (key instanceof String) {
                 return obj.hasProperty((String) key);
@@ -113,7 +113,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "hasOwn", arity = 2)
         public static Object hasOwn(Realm realm, Object thisValue, Object target, Object propertyKey) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             Object key = ToPropertyKey(realm, propertyKey);
             if (key instanceof String) {
                 return obj.hasOwnProperty((String) key);
@@ -129,7 +129,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
         public static Object getOwnPropertyDescriptor(Realm realm, Object thisValue, Object target,
                 Object propertyKey) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             Object key = ToPropertyKey(realm, propertyKey);
             // FIXME: spec bug [[GetOwnProperty]] return value returned as-is!
             if (key instanceof String) {
@@ -149,7 +149,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
             if (receiver == null) {
                 receiver = target;
             }
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             Object key = ToPropertyKey(realm, propertyKey);
             if (key instanceof String) {
                 return obj.get((String) key, receiver);
@@ -168,7 +168,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
             if (receiver == null) {
                 receiver = target;
             }
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             Object key = ToPropertyKey(realm, propertyKey);
             if (key instanceof String) {
                 return obj.set((String) key, value, receiver);
@@ -184,7 +184,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "deleteProperty", arity = 2)
         public static Object deleteProperty(Realm realm, Object thisValue, Object target,
                 Object propertyKey) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             Object key = ToPropertyKey(realm, propertyKey);
             if (key instanceof String) {
                 return obj.delete((String) key);
@@ -200,7 +200,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
         @Function(name = "defineProperty", arity = 3)
         public static Object defineProperty(Realm realm, Object thisValue, Object target,
                 Object propertyKey, Object attributes) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             Object key = ToPropertyKey(realm, propertyKey);
             PropertyDescriptor desc = ToPropertyDescriptor(realm, attributes);
             if (key instanceof String) {
@@ -216,8 +216,8 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "enumerate", arity = 1)
         public static Object enumerate(Realm realm, Object thisValue, Object target) {
-            Scriptable obj = ToObject(realm, target);
-            Scriptable itr = obj.enumerate();
+            ScriptObject obj = ToObject(realm, target);
+            ScriptObject itr = obj.enumerate();
             return itr;
         }
 
@@ -226,8 +226,8 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "ownKeys", arity = 1)
         public static Object ownKeys(Realm realm, Object thisValue, Object target) {
-            Scriptable obj = ToObject(realm, target);
-            Scriptable keys = obj.ownPropertyKeys();
+            ScriptObject obj = ToObject(realm, target);
+            ScriptObject keys = obj.ownPropertyKeys();
             // FIXME: spec bug (algorithm end at step 4 without return)
             return keys;
         }
@@ -237,7 +237,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "freeze", arity = 1)
         public static Object freeze(Realm realm, Object thisValue, Object target) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             return obj.setIntegrity(IntegrityLevel.Frozen);
         }
 
@@ -246,7 +246,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "seal", arity = 1)
         public static Object seal(Realm realm, Object thisValue, Object target) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             return obj.setIntegrity(IntegrityLevel.Sealed);
         }
 
@@ -255,7 +255,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "isFrozen", arity = 1)
         public static Object isFrozen(Realm realm, Object thisValue, Object target) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             return obj.hasIntegrity(IntegrityLevel.Frozen);
         }
 
@@ -264,7 +264,7 @@ public class Reflect extends OrdinaryObject implements Scriptable, Initialisable
          */
         @Function(name = "isSealed", arity = 1)
         public static Object isSealed(Realm realm, Object thisValue, Object target) {
-            Scriptable obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(realm, target);
             return obj.hasIntegrity(IntegrityLevel.Sealed);
         }
     }

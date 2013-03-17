@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -51,8 +51,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.10.5 Properties of the RegExp Constructor
  * </ul>
  */
-public class RegExpConstructor extends OrdinaryObject implements Scriptable, Callable, Constructor,
-        Initialisable {
+public class RegExpConstructor extends OrdinaryObject implements ScriptObject, Callable,
+        Constructor, Initialisable {
     public RegExpConstructor(Realm realm) {
         super(realm);
     }

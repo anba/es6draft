@@ -47,7 +47,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Put = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "Put", Type.getMethodType(Type.VOID_TYPE, Types.Realm,
-                        Types.Scriptable, Types.String, Types.Object, Type.BOOLEAN_TYPE));
+                        Types.ScriptObject, Types.String, Types.Object, Type.BOOLEAN_TYPE));
 
         // class: Callable
         static final MethodDesc Callable_call = MethodDesc.create(MethodType.Interface,
@@ -117,16 +117,17 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         static final MethodDesc ScriptRuntime_ArrayAccumulationSpreadElement = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "ArrayAccumulationSpreadElement", Type
-                        .getMethodType(Type.INT_TYPE, Types.Scriptable, Type.INT_TYPE,
+                        .getMethodType(Type.INT_TYPE, Types.ScriptObject, Type.INT_TYPE,
                                 Types.Object, Types.Realm));
 
         static final MethodDesc ScriptRuntime_CheckCallable = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "CheckCallable",
                 Type.getMethodType(Types.Callable, Types.Object, Types.Realm));
 
-        static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "defineProperty",
-                Type.getMethodType(Type.VOID_TYPE, Types.Scriptable, Type.INT_TYPE, Types.Object));
+        static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc
+                .create(MethodType.Static, Types.ScriptRuntime, "defineProperty", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Type.INT_TYPE,
+                                Types.Object));
 
         static final MethodDesc ScriptRuntime_EvaluateArrowFunction = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type
@@ -144,7 +145,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorComprehension = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorComprehension",
-                Type.getMethodType(Types.Scriptable, Types.MethodHandle, Types.ExecutionContext));
+                Type.getMethodType(Types.ScriptObject, Types.MethodHandle, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorExpression = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorExpression", Type

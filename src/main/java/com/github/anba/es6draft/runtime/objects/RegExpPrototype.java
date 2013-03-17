@@ -34,7 +34,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -46,7 +46,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.10.7 Properties of RegExp Instances
  * </ul>
  */
-public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public RegExpPrototype(Realm realm) {
         super(realm);
     }
@@ -201,7 +201,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
                 return RegExpExec(realm, rx, s);
             } else {
                 Put(realm, rx, "lastIndex", 0, true);
-                Scriptable array = ArrayCreate(realm, 0);
+                ScriptObject array = ArrayCreate(realm, 0);
                 int previousLastIndex = 0;
                 int n = 0;
                 boolean lastMatch = true;
@@ -406,7 +406,7 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
         public static Object split(Realm realm, Object thisValue, Object string, Object limit) {
             RegExpObject rx = thisRegExpValue(realm, thisValue);
             String s = ToFlatString(realm, string);
-            Scriptable a = ArrayCreate(realm, 0);
+            ScriptObject a = ArrayCreate(realm, 0);
             int lengthA = 0;
             long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(realm, limit);
             int size = s.length();
@@ -518,14 +518,14 @@ public class RegExpPrototype extends OrdinaryObject implements Scriptable, Initi
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (2)
      */
-    private static Scriptable toMatchResult(Realm realm, RegExpObject r, CharSequence s,
+    private static ScriptObject toMatchResult(Realm realm, RegExpObject r, CharSequence s,
             MatchResult m) {
         assert r.isInitialised();
         int matchIndex = m.start();
         int e = m.end();
         int n = m.groupCount();
 
-        Scriptable array = ArrayCreate(realm, 0);
+        ScriptObject array = ArrayCreate(realm, 0);
         array.defineOwnProperty("index", new PropertyDescriptor(matchIndex, true, true, true));
         array.defineOwnProperty("input", new PropertyDescriptor(s, true, true, true));
         array.defineOwnProperty("length", new PropertyDescriptor(n + 1));

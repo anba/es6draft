@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -43,7 +43,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.14.3 Properties of the Map Constructor
  * </ul>
  */
-public class MapConstructor extends OrdinaryObject implements Scriptable, Callable, Constructor,
+public class MapConstructor extends OrdinaryObject implements ScriptObject, Callable, Constructor,
         Initialisable {
     public MapConstructor(Realm realm) {
         super(realm);
@@ -94,7 +94,7 @@ public class MapConstructor extends OrdinaryObject implements Scriptable, Callab
         if (Type.isUndefinedOrNull(iterable)) {
             itr = UNDEFINED;
         } else {
-            Scriptable _iterable = ToObject(realm, iterable);
+            ScriptObject _iterable = ToObject(realm, iterable);
             boolean hasValues = HasProperty(_iterable, "entries");
             if (hasValues) {
                 itr = Invoke(realm, _iterable, "entries");
@@ -132,7 +132,7 @@ public class MapConstructor extends OrdinaryObject implements Scriptable, Callab
                 }
                 throw e;
             }
-            Scriptable entry = ToObject(realm, next);
+            ScriptObject entry = ToObject(realm, next);
             Object k = Get(entry, "0");
             Object v = Get(entry, "1");
             ((Callable) adder).call(map, k, v);

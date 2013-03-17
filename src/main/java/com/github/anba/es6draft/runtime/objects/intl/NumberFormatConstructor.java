@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -49,7 +49,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>11.2 Properties of the Intl.NumberFormat Constructor
  * </ul>
  */
-public class NumberFormatConstructor extends OrdinaryObject implements Scriptable, Callable,
+public class NumberFormatConstructor extends OrdinaryObject implements ScriptObject, Callable,
         Constructor, Initialisable {
     /**
      * [[availableLocales]]
@@ -92,7 +92,7 @@ public class NumberFormatConstructor extends OrdinaryObject implements Scriptabl
     /**
      * 11.1.1.1 InitializeNumberFormat (numberFormat, locales, options)
      */
-    public static void InitializeNumberFormat(Realm realm, Scriptable obj, Object locales,
+    public static void InitializeNumberFormat(Realm realm, ScriptObject obj, Object locales,
             Object opts) {
         if (!(obj instanceof NumberFormatObject)) {
             throwTypeError(realm, Messages.Key.IncompatibleObject);
@@ -102,7 +102,7 @@ public class NumberFormatConstructor extends OrdinaryObject implements Scriptabl
             throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         Set<String> requestedLocales = CanonicalizeLocaleList(realm, locales);
-        Scriptable options;
+        ScriptObject options;
         if (Type.isUndefined(opts)) {
             options = ObjectCreate(realm, Intrinsics.ObjectPrototype);
         } else {
@@ -123,7 +123,7 @@ public class NumberFormatConstructor extends OrdinaryObject implements Scriptabl
         if (Type.isUndefined(thisValue) || thisValue == realm().getIntrinsic(Intrinsics.Intl)) {
             return construct(args);
         }
-        Scriptable obj = ToObject(realm(), thisValue);
+        ScriptObject obj = ToObject(realm(), thisValue);
         if (!IsExtensible(obj)) {
             throwTypeError(realm(), Messages.Key.NotExtensible);
         }

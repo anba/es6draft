@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolveLocaleOptions.MatcherType;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 
@@ -104,7 +104,7 @@ public final class IntlAbstractOperations {
         if (Type.isString(locales)) {
             locales = CreateArrayFromList(realm, singletonList(locales));
         }
-        Scriptable o = ToObject(realm, locales);
+        ScriptObject o = ToObject(realm, locales);
         Object lenValue = Get(o, "length");
         long len = ToUint32(realm, lenValue);
         for (long k = 0; k < len; ++k) {
@@ -223,7 +223,7 @@ public final class IntlAbstractOperations {
      */
     public static ResolvedLocale ResolveLocale(Realm realm, Set<String> availableLocales,
             Set<String> requestedLocales, ResolveLocaleOptions options,
-            Scriptable relevantExtensionKeys, Scriptable localeData) {
+            ScriptObject relevantExtensionKeys, ScriptObject localeData) {
         MatcherType matcher = options.localeMatcher;
         LocaleMatch r;
         if (matcher == MatcherType.Lookup) {
@@ -244,8 +244,8 @@ public final class IntlAbstractOperations {
         long len = ToUint32(realm, Get(relevantExtensionKeys, "length"));
         for (long i = 0; i < len; ++i) {
             String key = (String) Get(relevantExtensionKeys, ToString(i));
-            Scriptable foundLocaleData = (Scriptable) Get(localeData, foundLocale);
-            Scriptable keyLocaleData = (Scriptable) Get(foundLocaleData, key);
+            ScriptObject foundLocaleData = (ScriptObject) Get(localeData, foundLocale);
+            ScriptObject keyLocaleData = (ScriptObject) Get(foundLocaleData, key);
             Object value = Get(keyLocaleData, "0");
             String supportedExtensionAddition = "";
             if (extensionSubtags != null) {
@@ -265,7 +265,7 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.6 LookupSupportedLocales (availableLocales, requestedLocales)
      */
-    public static Scriptable LookupSupportedLocales(Realm realm, Set<String> availableLocales,
+    public static ScriptObject LookupSupportedLocales(Realm realm, Set<String> availableLocales,
             Set<String> requestedLocales) {
         List<String> subset = new ArrayList<>();
         for (String locale : requestedLocales) {
@@ -275,14 +275,14 @@ public final class IntlAbstractOperations {
                 subset.add(locale);
             }
         }
-        Scriptable subsetArray = AbstractOperations.CreateArrayFromList(realm, subset);
+        ScriptObject subsetArray = AbstractOperations.CreateArrayFromList(realm, subset);
         return subsetArray;
     }
 
     /**
      * 9.2.7 BestFitSupportedLocales (availableLocales, requestedLocales)
      */
-    public static Scriptable BestFitSupportedLocales(Realm realm, Set<String> availableLocales,
+    public static ScriptObject BestFitSupportedLocales(Realm realm, Set<String> availableLocales,
             Set<String> requestedLocales) {
         return LookupSupportedLocales(realm, availableLocales, requestedLocales);
     }
@@ -290,11 +290,11 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.8 SupportedLocales (availableLocales, requestedLocales, options)
      */
-    public static Scriptable SupportedLocales(Realm realm, Set<String> availableLocales,
+    public static ScriptObject SupportedLocales(Realm realm, Set<String> availableLocales,
             Set<String> requestedLocales, Object options) {
         boolean useBestFit = true;
         if (!Type.isUndefined(options)) {
-            Scriptable opts = ToObject(realm, options);
+            ScriptObject opts = ToObject(realm, options);
             Object matcher = Get(opts, "localeMatcher");
             if (!Type.isUndefined(matcher)) {
                 String m = ToFlatString(realm, matcher);
@@ -305,7 +305,7 @@ public final class IntlAbstractOperations {
                 }
             }
         }
-        Scriptable subset;
+        ScriptObject subset;
         if (useBestFit) {
             subset = BestFitSupportedLocales(realm, availableLocales, requestedLocales);
         } else {
@@ -330,7 +330,7 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.9 GetOption (options, property, type, values, fallback)
      */
-    public static <T> T getOption(Realm realm, Scriptable options, String property, Type type,
+    public static <T> T getOption(Realm realm, ScriptObject options, String property, Type type,
             Set<T> values, T fallback) {
         Object value = Get(options, property);
         if (!Type.isUndefined(value)) {
@@ -354,7 +354,7 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.9 GetOption (options, property, type, values, fallback)
      */
-    public static String getStringOption(Realm realm, Scriptable options, String property,
+    public static String getStringOption(Realm realm, ScriptObject options, String property,
             Set<String> values, String fallback) {
         Object value = Get(options, property);
         if (!Type.isUndefined(value)) {
@@ -370,7 +370,7 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.9 GetOption (options, property, type, values, fallback)
      */
-    public static boolean getBooleanOption(Realm realm, Scriptable options, String property,
+    public static boolean getBooleanOption(Realm realm, ScriptObject options, String property,
             boolean fallback) {
         Object value = Get(options, property);
         if (!Type.isUndefined(value)) {
@@ -382,7 +382,7 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.10 GetNumberOption (options, property, minimum, maximum, fallback)
      */
-    public static double GetNumberOption(Realm realm, Scriptable options, String property,
+    public static double GetNumberOption(Realm realm, ScriptObject options, String property,
             double minimum, double maximum, double fallback) {
         Object value = Get(options, property);
         if (!Type.isUndefined(value)) {

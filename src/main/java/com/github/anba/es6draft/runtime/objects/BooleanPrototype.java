@@ -16,7 +16,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.6.4 Properties of the Boolean Prototype Object
  * </ul>
  */
-public class BooleanPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class BooleanPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public BooleanPrototype(Realm realm) {
         super(realm);
     }

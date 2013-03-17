@@ -16,14 +16,14 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * TODO: spec incomplete<br>
  * TODO: change to constructor for return-in-generator support
  */
-public class StopIterationObject extends OrdinaryObject implements Scriptable, Initialisable {
+public class StopIterationObject extends OrdinaryObject implements ScriptObject, Initialisable {
     public StopIterationObject(Realm realm) {
         super(realm);
     }

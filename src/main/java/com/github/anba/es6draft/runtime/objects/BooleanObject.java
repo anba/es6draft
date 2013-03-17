@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.6.5 Properties of Boolean Instances
  * </ul>
  */
-public class BooleanObject extends OrdinaryObject implements Scriptable {
+public class BooleanObject extends OrdinaryObject implements ScriptObject {
     /** [[BooleanData]] */
     private boolean booleanData;
 

@@ -16,7 +16,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -130,8 +130,8 @@ public class JSONParser {
      *      JSONMemberList , JSONMember
      * </pre>
      */
-    private Scriptable jsonObject() {
-        Scriptable object = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+    private ScriptObject jsonObject() {
+        ScriptObject object = ObjectCreate(realm, Intrinsics.ObjectPrototype);
         consume(Token.LC);
         if (token() != Token.RC) {
             jsonMember(object);
@@ -150,7 +150,7 @@ public class JSONParser {
      *      JSONString : JSONValue
      * </pre>
      */
-    private void jsonMember(Scriptable object) {
+    private void jsonMember(ScriptObject object) {
         consume(Token.STRING);
         String name = ts.getString();
         consume(Token.COLON);
@@ -169,7 +169,7 @@ public class JSONParser {
      * </pre>
      */
     private Object jsonArray() {
-        Scriptable array = ArrayCreate(realm, 0);
+        ScriptObject array = ArrayCreate(realm, 0);
         consume(Token.LB);
         if (token() != Token.RB) {
             long index = 0;

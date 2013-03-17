@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>8 Types</h1><br>
@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * <li>8.4.2 Array Exotic Objects
  * </ul>
  */
-public class ExoticArray extends OrdinaryObject implements Scriptable {
+public class ExoticArray extends OrdinaryObject implements ScriptObject {
     /** [[ArrayInitializationState]] */
     private boolean arrayInitializationState = false;
 
@@ -100,7 +100,7 @@ public class ExoticArray extends OrdinaryObject implements Scriptable {
     /**
      * 8.4.2.3 ArrayCreate Abstract Operation
      */
-    public static ExoticArray ArrayCreate(Realm realm, long length, Scriptable proto) {
+    public static ExoticArray ArrayCreate(Realm realm, long length, ScriptObject proto) {
         assert length <= 4294967295L && proto != null;
         /* step 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(realm);

@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -44,7 +44,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.13.6.3 Properties of the TypedArray Constructors
  * </ul>
  */
-public class TypedArrayConstructor extends OrdinaryObject implements Scriptable, Callable,
+public class TypedArrayConstructor extends OrdinaryObject implements ScriptObject, Callable,
         Constructor, Initialisable {
     private final ElementKind elementKind;
 
@@ -121,7 +121,7 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
             } else if (arg0 instanceof ArrayBufferObject) {
                 return callWithArrayBuffer(realm(), thisValue, (ArrayBufferObject) arg0, args);
             } else {
-                return callWithArray(realm(), thisValue, (Scriptable) arg0, args);
+                return callWithArray(realm(), thisValue, (ScriptObject) arg0, args);
             }
         }
     }
@@ -194,14 +194,14 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
     /**
      * 15.13.6.1.3 TypedArray ( array )
      */
-    private Object callWithArray(Realm realm, Object thisValue, Scriptable _array, Object[] args) {
+    private Object callWithArray(Realm realm, Object thisValue, ScriptObject _array, Object[] args) {
         Object obj = thisValue;
         if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
             throw throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         // FIXME: spec bug (variable srcArray unused)
         @SuppressWarnings("unused")
-        Scriptable srcArray = _array;
+        ScriptObject srcArray = _array;
         ElementKind elementType = elementKind;
         if (Type.isUndefined(obj) || !(obj instanceof TypedArrayObject)) {
             return OrdinaryConstruct(realm, this, args);
@@ -297,7 +297,7 @@ public class TypedArrayConstructor extends OrdinaryObject implements Scriptable,
     private static TypedArrayObject createTypedArray(Realm realm, Object thisValue,
             Intrinsics prototype) {
         Object f = thisValue;
-        Scriptable proto = GetPrototypeFromConstructor(realm, f, prototype);
+        ScriptObject proto = GetPrototypeFromConstructor(realm, f, prototype);
         TypedArrayObject obj = new TypedArrayObject(realm);
         obj.setPrototype(proto);
         return obj;

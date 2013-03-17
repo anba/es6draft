@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.intl;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -16,7 +16,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>10.4 Properties of Intl.Collator Instances
  * </ul>
  */
-public class CollatorObject extends OrdinaryObject implements Scriptable {
+public class CollatorObject extends OrdinaryObject implements ScriptObject {
     /**
      * [[initializedIntlObject]]
      */

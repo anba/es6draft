@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.13.6.4 Properties of the TypedArray Prototype Object
  * </ul>
  */
-public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class TypedArrayPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     private final ElementKind elementKind;
 
     public TypedArrayPrototype(Realm realm, ElementKind elementKind) {
@@ -80,7 +80,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
         }
     }
 
-    private static TypedArrayObject TypedArrayObject(Realm realm, Scriptable m) {
+    private static TypedArrayObject TypedArrayObject(Realm realm, ScriptObject m) {
         if (m instanceof TypedArrayObject) {
             return (TypedArrayObject) m;
         }
@@ -88,7 +88,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     private static Object __buffer(Realm realm, Object thisValue) {
-        Scriptable obj = ToObject(realm, thisValue);
+        ScriptObject obj = ToObject(realm, thisValue);
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
@@ -98,7 +98,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     private static Object __byteLength(Realm realm, Object thisValue) {
-        Scriptable obj = ToObject(realm, thisValue);
+        ScriptObject obj = ToObject(realm, thisValue);
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
@@ -108,7 +108,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     private static Object __byteOffset(Realm realm, Object thisValue) {
-        Scriptable obj = ToObject(realm, thisValue);
+        ScriptObject obj = ToObject(realm, thisValue);
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
@@ -118,7 +118,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     private static Object __length(Realm realm, Object thisValue) {
-        Scriptable obj = ToObject(realm, thisValue);
+        ScriptObject obj = ToObject(realm, thisValue);
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
@@ -128,7 +128,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     private static Object __set(Realm realm, Object thisValue, Object array, Object offset) {
-        Scriptable obj = ToObject(realm, thisValue);
+        ScriptObject obj = ToObject(realm, thisValue);
         TypedArrayObject target = TypedArrayObject(realm, obj);
         ArrayBufferObject targetBuffer = target.getData();
         if (targetBuffer == null) {
@@ -142,7 +142,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
 
         if (!(array instanceof TypedArrayObject)) {
             // 15.13.6.6.7
-            Scriptable src = ToObject(realm, array);
+            ScriptObject src = ToObject(realm, array);
             Object srcLen = Get(src, "length");
             long srcLength = ToUint32(realm, srcLen);
             if (srcLength + targetOffset > targetLength) {
@@ -190,7 +190,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     private static Object __subarray(Realm realm, Object thisValue, Object begin, Object end) {
-        Scriptable obj = ToObject(realm, thisValue);
+        ScriptObject obj = ToObject(realm, thisValue);
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
@@ -223,7 +223,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
     }
 
     private static Object __elementGet(Realm realm, Object thisValue, Object index, int elementSize) {
-        Scriptable obj = ToObject(realm, thisValue);
+        ScriptObject obj = ToObject(realm, thisValue);
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {
@@ -243,7 +243,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Scriptable, I
 
     private static Object __elementSet(Realm realm, Object thisValue, Object index, Object value,
             int elementSize) {
-        Scriptable obj = ToObject(realm, thisValue);
+        ScriptObject obj = ToObject(realm, thisValue);
         TypedArrayObject array = TypedArrayObject(realm, obj);
         ArrayBufferObject buffer = array.getData();
         if (buffer == null) {

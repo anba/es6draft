@@ -28,7 +28,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.5.5 Properties of String Instances
  * </ul>
  */
-public class StringPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class StringPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public StringPrototype(Realm realm) {
         super(realm);
     }
@@ -194,7 +194,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         public static Object match(Realm realm, Object thisValue, Object regexp) {
             Object obj = CheckObjectCoercible(realm, thisValue);
             CharSequence s = ToString(realm, obj);
-            Scriptable rx;
+            ScriptObject rx;
             if (Type.isObject(regexp)
                     && HasProperty(Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
                 rx = Type.objectValue(regexp);
@@ -283,7 +283,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
         public static Object search(Realm realm, Object thisValue, Object regexp) {
             Object obj = CheckObjectCoercible(realm, thisValue);
             CharSequence string = ToString(realm, obj);
-            Scriptable rx;
+            ScriptObject rx;
             if (Type.isObject(regexp)
                     && HasProperty(Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
                 rx = Type.objectValue(regexp);
@@ -321,7 +321,7 @@ public class StringPrototype extends OrdinaryObject implements Scriptable, Initi
                     && HasProperty(Type.objectValue(separator), BuiltinSymbol.isRegExp.get())) {
                 return Invoke(realm, separator, "split", s, limit);
             }
-            Scriptable a = ArrayCreate(realm, 0);
+            ScriptObject a = ArrayCreate(realm, 0);
             int lengthA = 0;
             long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(realm, limit);
             int size = s.length();

@@ -25,7 +25,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 
@@ -35,20 +35,20 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>8.5 Proxy Object Internal Methods and Internal Data Properties
  * </ul>
  */
-public class ExoticProxy implements Scriptable {
+public class ExoticProxy implements ScriptObject {
     private Realm realm;
 
     /**
      * [[ProxyHandler]]
      */
-    private Scriptable proxyHandler;
+    private ScriptObject proxyHandler;
 
     /**
      * [[ProxyTarget]]
      */
-    private Scriptable proxyTarget;
+    private ScriptObject proxyTarget;
 
-    public ExoticProxy(Realm realm, Scriptable handler, Scriptable target) {
+    public ExoticProxy(Realm realm, ScriptObject handler, ScriptObject target) {
         this.realm = realm;
         this.proxyHandler = handler;
         this.proxyTarget = target;
@@ -62,7 +62,7 @@ public class ExoticProxy implements Scriptable {
         return null;
     }
 
-    private static boolean __hasOwnProperty(Scriptable target, Object propertyKey) {
+    private static boolean __hasOwnProperty(ScriptObject target, Object propertyKey) {
         if (propertyKey instanceof String) {
             return target.hasOwnProperty((String) propertyKey);
         } else {
@@ -71,7 +71,7 @@ public class ExoticProxy implements Scriptable {
         }
     }
 
-    private static Property __getOwnProperty(Scriptable target, Object propertyKey) {
+    private static Property __getOwnProperty(ScriptObject target, Object propertyKey) {
         if (propertyKey instanceof String) {
             return target.getOwnProperty((String) propertyKey);
         } else {
@@ -80,7 +80,7 @@ public class ExoticProxy implements Scriptable {
         }
     }
 
-    private static boolean __defineOwnProperty(Scriptable target, Object propertyKey,
+    private static boolean __defineOwnProperty(ScriptObject target, Object propertyKey,
             PropertyDescriptor desc) {
         if (propertyKey instanceof String) {
             return target.defineOwnProperty((String) propertyKey, desc);
@@ -90,7 +90,7 @@ public class ExoticProxy implements Scriptable {
         }
     }
 
-    private static boolean __hasProperty(Scriptable target, Object propertyKey) {
+    private static boolean __hasProperty(ScriptObject target, Object propertyKey) {
         if (propertyKey instanceof String) {
             return target.hasProperty((String) propertyKey);
         } else {
@@ -99,7 +99,7 @@ public class ExoticProxy implements Scriptable {
         }
     }
 
-    private static Object __get(Scriptable target, Object propertyKey, Object receiver) {
+    private static Object __get(ScriptObject target, Object propertyKey, Object receiver) {
         if (propertyKey instanceof String) {
             return target.get((String) propertyKey, receiver);
         } else {
@@ -108,7 +108,7 @@ public class ExoticProxy implements Scriptable {
         }
     }
 
-    private static boolean __set(Scriptable target, Object propertyKey, Object value,
+    private static boolean __set(ScriptObject target, Object propertyKey, Object value,
             Object receiver) {
         if (propertyKey instanceof String) {
             return target.set((String) propertyKey, value, receiver);
@@ -118,7 +118,7 @@ public class ExoticProxy implements Scriptable {
         }
     }
 
-    private static boolean __delete(Scriptable target, Object propertyKey) {
+    private static boolean __delete(ScriptObject target, Object propertyKey) {
         if (propertyKey instanceof String) {
             return target.delete((String) propertyKey);
         } else {
@@ -139,36 +139,36 @@ public class ExoticProxy implements Scriptable {
      * 8.5.1 [[GetInheritance]] ( )
      */
     @Override
-    public Scriptable getPrototype() {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+    public ScriptObject getPrototype() {
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "getPrototypeOf");
         if (trap == null) {
             return target.getPrototype();
         }
         Object handlerProto = trap.call(handler, target);
-        Scriptable targetProto = target.getPrototype();
+        ScriptObject targetProto = target.getPrototype();
         if (!SameValue(handlerProto, maskNull(targetProto))) {
             throw throwTypeError(realm, Messages.Key.ProxySameValue);
         }
         assert (Type.isNull(handlerProto) || Type.isObject(handlerProto));
-        return (Scriptable) unmaskNull(handlerProto);
+        return (ScriptObject) unmaskNull(handlerProto);
     }
 
     /**
      * 8.5.2 [[SetInheritance]] (V)
      */
     @Override
-    public boolean setPrototype(Scriptable prototype) {
+    public boolean setPrototype(ScriptObject prototype) {
         assert prototype == null || Type.isObject(prototype);
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "setPrototypeOf");
         if (trap == null) {
             return target.setPrototype(prototype);
         }
         boolean trapResult = ToBoolean(trap.call(handler, target, maskNull(prototype)));
-        Scriptable targetProto = target.getPrototype();
+        ScriptObject targetProto = target.getPrototype();
         if (trapResult && !SameValue(maskNull(prototype), maskNull(targetProto))) {
             throw throwTypeError(realm, Messages.Key.ProxySameValue);
         }
@@ -180,8 +180,8 @@ public class ExoticProxy implements Scriptable {
      */
     @Override
     public boolean hasIntegrity(IntegrityLevel level) {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         String trapName;
         if (level == IntegrityLevel.NonExtensible) {
             trapName = "isExtensible";
@@ -208,8 +208,8 @@ public class ExoticProxy implements Scriptable {
      */
     @Override
     public boolean setIntegrity(IntegrityLevel level) {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         String trapName;
         if (level == IntegrityLevel.NonExtensible) {
             trapName = "preventExtensions";
@@ -251,8 +251,8 @@ public class ExoticProxy implements Scriptable {
      * 8.5.5 [[HasOwnProperty]] (P)
      */
     private boolean hasOwnProperty(Object propertyKey) {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "hasOwn");
         if (trap == null) {
             return __hasOwnProperty(target, propertyKey);
@@ -303,8 +303,8 @@ public class ExoticProxy implements Scriptable {
      * 8.5.6 [[GetOwnProperty]] (P)
      */
     private Property getOwnProperty(Object propertyKey) {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "getOwnPropertyDescriptor");
         if (trap == null) {
             return __getOwnProperty(target, propertyKey);
@@ -365,8 +365,8 @@ public class ExoticProxy implements Scriptable {
      * 8.5.7 [[DefineOwnProperty]] (P, Desc)
      */
     private boolean defineOwnProperty(Object propertyKey, PropertyDescriptor desc) {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "defineProperty");
         if (trap == null) {
             return __defineOwnProperty(target, propertyKey, desc);
@@ -418,8 +418,8 @@ public class ExoticProxy implements Scriptable {
      * 8.5.8 [[HasProperty]] (P)
      */
     private boolean hasProperty(Object propertyKey) {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "has");
         if (trap == null) {
             return __hasProperty(target, propertyKey);
@@ -461,8 +461,8 @@ public class ExoticProxy implements Scriptable {
      * 8.5.9 [[Get]] (P, Receiver)
      */
     private Object get(Object propertyKey, Object receiver) {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "get");
         if (trap == null) {
             return __get(target, propertyKey, receiver);
@@ -506,8 +506,8 @@ public class ExoticProxy implements Scriptable {
      * 8.5.10 [[Set]] ( P, V, Receiver)
      */
     private boolean set(Object propertyKey, Object value, Object receiver) {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "set");
         if (trap == null) {
             return __set(target, propertyKey, value, receiver);
@@ -553,8 +553,8 @@ public class ExoticProxy implements Scriptable {
      * 8.5.11 [[Delete]] (P)
      */
     private boolean delete(Object propertyKey) {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "deleteProperty");
         if (trap == null) {
             return __delete(target, propertyKey);
@@ -577,9 +577,9 @@ public class ExoticProxy implements Scriptable {
      * 8.5.12 [[Enumerate]] ()
      */
     @Override
-    public Scriptable enumerate() {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+    public ScriptObject enumerate() {
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "enumerate");
         if (trap == null) {
             return target.enumerate();
@@ -595,9 +595,9 @@ public class ExoticProxy implements Scriptable {
      * 8.5.13 [[OwnPropertyKeys]] ()
      */
     @Override
-    public Scriptable ownPropertyKeys() {
-        Scriptable handler = proxyHandler;
-        Scriptable target = proxyTarget;
+    public ScriptObject ownPropertyKeys() {
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "ownKeys");
         if (trap == null) {
             return target.ownPropertyKeys();

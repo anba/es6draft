@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  * </ul>
  */
-public class ErrorObject extends OrdinaryObject implements Scriptable {
+public class ErrorObject extends OrdinaryObject implements ScriptObject {
     private boolean initialised = false;
 
     public ErrorObject(Realm realm) {

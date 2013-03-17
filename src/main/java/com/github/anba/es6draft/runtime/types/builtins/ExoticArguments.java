@@ -21,7 +21,7 @@ import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>8 Types</h1><br>
@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * <li>10.6 Arguments Object
  * </ul>
  */
-public class ExoticArguments extends OrdinaryObject implements Scriptable {
+public class ExoticArguments extends OrdinaryObject implements ScriptObject {
     /** [[ParameterMap]] */
     private ParameterMap parameterMap = null;
 

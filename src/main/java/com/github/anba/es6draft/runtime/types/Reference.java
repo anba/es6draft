@@ -116,7 +116,7 @@ public final class Reference {
                 // base = ToObject(realm, base);
                 return GetValuePrimitive(realm);
             }
-            return ((Scriptable) base).get(getReferencedName(), GetThisValue(realm));
+            return ((ScriptObject) base).get(getReferencedName(), GetThisValue(realm));
         } else {
             return ((EnvironmentRecord) base).getBindingValue(getReferencedName(),
                     isStrictReference());
@@ -124,7 +124,7 @@ public final class Reference {
     }
 
     private Object GetValuePrimitive(Realm realm) {
-        Scriptable proto;
+        ScriptObject proto;
         switch (type) {
         case Boolean:
             proto = realm.getIntrinsic(Intrinsics.BooleanPrototype);
@@ -175,14 +175,14 @@ public final class Reference {
             if (isStrictReference()) {
                 throw throwReferenceError(realm, Messages.Key.UnresolvableReference, referencedName);
             }
-            Scriptable globalObj = realm.getGlobalThis(); // = GetGlobalObject()
+            ScriptObject globalObj = realm.getGlobalThis(); // = GetGlobalObject()
             Put(realm, globalObj, getReferencedName(), w, false);
         } else if (isPropertyReference()) {
             if (hasPrimitiveBase()) {
                 base = ToObject(realm, base);
             }
-            boolean succeeded = ((Scriptable) base)
-                    .set(getReferencedName(), w, GetThisValue(realm));
+            boolean succeeded = ((ScriptObject) base).set(getReferencedName(), w,
+                    GetThisValue(realm));
             if (!succeeded && isStrictReference()) {
                 throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, referencedName);
             }

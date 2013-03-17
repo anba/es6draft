@@ -14,7 +14,7 @@ import static java.util.Objects.requireNonNull;
 import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Function.ThisMode;
 import com.github.anba.es6draft.runtime.types.Reference;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
 
@@ -178,7 +178,7 @@ public final class ExecutionContext {
     /**
      * 10.4.4 GetGlobalObject
      */
-    public Scriptable getGlobalObject() {
+    public ScriptObject getGlobalObject() {
         Realm currentRealm = realm;
         return currentRealm.getGlobalThis();
     }

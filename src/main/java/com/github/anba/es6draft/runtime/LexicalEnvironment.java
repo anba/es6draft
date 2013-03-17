@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceErr
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Reference;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -84,7 +84,7 @@ public final class LexicalEnvironment {
     /**
      * 10.2.2.3 NewObjectEnvironment (O, E)
      */
-    public static LexicalEnvironment newObjectEnvironment(Scriptable o, LexicalEnvironment e) {
+    public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e) {
         EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.realm, o, false);
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);
         return env;
@@ -93,7 +93,7 @@ public final class LexicalEnvironment {
     /**
      * 10.2.2.3 NewObjectEnvironment (O, E)
      */
-    public static LexicalEnvironment newObjectEnvironment(Scriptable o, LexicalEnvironment e,
+    public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e,
             boolean withEnvironment) {
         EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.realm, o, withEnvironment);
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);

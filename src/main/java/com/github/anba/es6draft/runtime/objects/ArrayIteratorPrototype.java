@@ -25,7 +25,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.4.6 Array Iterator Object Structure
  * </ul>
  */
-public class ArrayIteratorPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class ArrayIteratorPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public ArrayIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -60,7 +60,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Scriptable
         /**
          * [[IteratedObject]]
          */
-        Scriptable iteratedObject;
+        ScriptObject iteratedObject;
 
         /**
          * [[ArrayIteratorNextIndex]]
@@ -80,7 +80,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Scriptable
     /**
      * 15.4.6.1 CreateArrayIterator Abstract Operation
      */
-    public static OrdinaryObject CreateArrayIterator(Realm realm, Scriptable array,
+    public static OrdinaryObject CreateArrayIterator(Realm realm, ScriptObject array,
             ArrayIterationKind kind) {
         // ObjectCreate()
         ArrayIterator itr = new ArrayIterator(realm);
@@ -118,7 +118,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Scriptable
                 throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             ArrayIterator itr = (ArrayIterator) thisValue;
-            Scriptable array = itr.iteratedObject;
+            ScriptObject array = itr.iteratedObject;
             long index = itr.nextIndex;
             ArrayIterationKind itemKind = itr.kind;
             Object lenValue = Get(array, "length");
@@ -156,7 +156,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Scriptable
             if (itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
                 assert elementValue != null;
-                Scriptable result = ArrayCreate(realm, 2);
+                ScriptObject result = ArrayCreate(realm, 2);
                 result.defineOwnProperty("0", new PropertyDescriptor(elementKey, true, true, true));
                 result.defineOwnProperty("1",
                         new PropertyDescriptor(elementValue, true, true, true));

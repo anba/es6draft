@@ -16,7 +16,7 @@ package com.github.anba.es6draft.runtime.types;
  * <p>
  * Internal Method: [[Construct]]
  */
-public interface Constructor extends Scriptable {
+public interface Constructor extends ScriptObject {
     /**
      * [[Construct]]
      */

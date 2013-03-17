@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -39,7 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.3.5 Properties of Function Instances
  * </ul>
  */
-public class FunctionPrototype extends OrdinaryObject implements Scriptable, Callable,
+public class FunctionPrototype extends OrdinaryObject implements ScriptObject, Callable,
         Initialisable {
     public FunctionPrototype(Realm realm) {
         super(realm);
@@ -117,7 +117,7 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(argArray)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            Scriptable argarray = Type.objectValue(argArray);
+            ScriptObject argarray = Type.objectValue(argArray);
             Object len = Get(argarray, "length");
             long n = ToUint32(realm, len);
             assert n < 256;// TODO: actual limit?!
@@ -154,7 +154,7 @@ public class FunctionPrototype extends OrdinaryObject implements Scriptable, Cal
             ExoticBoundFunction f = BoundFunctionCreate(realm, (Callable) target, thisArg, args);
             int l;
             if (hasBuiltinBrand(target, BuiltinBrand.BuiltinFunction)) {
-                Object targetLen = Get((Scriptable) target, "length");
+                Object targetLen = Get((ScriptObject) target, "length");
                 l = (int) Math.max(0, ToInteger(realm, targetLen) - args.length);
             } else {
                 l = 0;

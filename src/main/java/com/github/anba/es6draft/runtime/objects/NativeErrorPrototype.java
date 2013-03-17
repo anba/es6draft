@@ -14,7 +14,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.NativeError.ErrorType;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  * </ul>
  */
-public class NativeErrorPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class NativeErrorPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     private final ErrorType type;
 
     public NativeErrorPrototype(Realm realm, ErrorType type) {

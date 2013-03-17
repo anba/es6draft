@@ -21,7 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -32,7 +32,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.13.7.4 Properties of the DataView Prototype Object
  * </ul>
  */
-public class DataViewPrototype extends OrdinaryObject implements Initialisable, Scriptable {
+public class DataViewPrototype extends OrdinaryObject implements Initialisable, ScriptObject {
     public DataViewPrototype(Realm realm) {
         super(realm);
     }
@@ -80,7 +80,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable, 
     public enum Properties {
         ;
 
-        private static DataViewObject DataViewObject(Realm realm, Scriptable m) {
+        private static DataViewObject DataViewObject(Realm realm, ScriptObject m) {
             if (m instanceof DataViewObject) {
                 return (DataViewObject) m;
             }

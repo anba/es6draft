@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Generator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * TODO: for now basically a copy of {@link OrdinaryFunction}
@@ -29,7 +29,7 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
     private RuntimeInfo.Function function;
     private LexicalEnvironment scope;
     private boolean strict;
-    private Scriptable home;
+    private ScriptObject home;
     private String methodName;
     private Realm realm;
     private ThisMode thisMode;
@@ -52,8 +52,8 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
      * 
      */
     public static Generator GeneratorCreate(Realm realm, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, Scriptable prototype,
-            Scriptable homeObject, String methodName) {
+            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
+            ScriptObject homeObject, String methodName) {
         assert function.isGenerator();
         assert kind != FunctionKind.Arrow;
 
@@ -222,7 +222,7 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
      * [[Home]]
      */
     @Override
-    public Scriptable getHome() {
+    public ScriptObject getHome() {
         return home;
     }
 

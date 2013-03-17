@@ -17,7 +17,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
  * <li>8.3.19 Ordinary Function Objects
  * </ul>
  */
-public interface Function extends Scriptable, Callable, Constructor {
+public interface Function extends ScriptObject, Callable, Constructor {
     public enum FunctionKind {
         Normal, Method, Arrow
     }
@@ -64,7 +64,7 @@ public interface Function extends Scriptable, Callable, Constructor {
     /**
      * [[Home]]
      */
-    Scriptable getHome();
+    ScriptObject getHome();
 
     /**
      * [[MethodName]]

@@ -84,7 +84,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.Scriptable, Types.Realm, Types.Object));
+                Type.getMethodType(Types.ScriptObject, Types.Realm, Types.Object));
 
         static final MethodDesc AbstractOperations_ToString = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToString",
@@ -135,7 +135,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc LexicalEnvironment_newObjectEnvironment = MethodDesc.create(
                 MethodType.Static, Types.LexicalEnvironment, "newObjectEnvironment", Type
-                        .getMethodType(Types.LexicalEnvironment, Types.Scriptable,
+                        .getMethodType(Types.LexicalEnvironment, Types.ScriptObject,
                                 Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
 
         // class: Reference
@@ -154,16 +154,16 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc ScriptRuntime_EvaluateConstructorMethod = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorMethod", Type
-                        .getMethodType(Types.Function, Types.Scriptable, Types.Scriptable,
+                        .getMethodType(Types.Function, Types.ScriptObject, Types.ScriptObject,
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getClassProto = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "getClassProto",
-                Type.getMethodType(Types.Scriptable_, Types.Object, Types.Realm));
+                Type.getMethodType(Types.ScriptObject_, Types.Object, Types.Realm));
 
         static final MethodDesc ScriptRuntime_getDefaultClassProto = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "getDefaultClassProto",
-                Type.getMethodType(Types.Scriptable_, Types.Realm));
+                Type.getMethodType(Types.ScriptObject_, Types.Realm));
 
         // class: Type
         static final MethodDesc Type_isUndefinedOrNull = MethodDesc.create(MethodType.Static,
@@ -586,7 +586,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [Scriptable]
+     * stack: [Object] -> [ScriptObject]
      */
     protected final void ToObject(ValType from, ExpressionVisitor mv) {
         switch (from) {
@@ -646,10 +646,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // stack: [<proto,ctor>] -> [ctor, proto]
         mv.dup();
         mv.iconst(1);
-        mv.aload(Types.Scriptable_);
+        mv.aload(Types.ScriptObject_);
         mv.swap();
         mv.iconst(0);
-        mv.aload(Types.Scriptable_);
+        mv.aload(Types.ScriptObject_);
 
         // steps 4-5
         if (className != null) {

@@ -33,7 +33,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -45,7 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.4.5 Properties of Array Instances
  * </ul>
  */
-public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public ArrayPrototype(Realm realm) {
         super(realm);
     }
@@ -79,7 +79,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
-            Scriptable array = ToObject(realm, thisValue);
+            ScriptObject array = ToObject(realm, thisValue);
             Object func = Get(array, "join");
             if (!IsCallable(func)) {
                 func = realm.getIntrinsic(Intrinsics.ObjProto_toString);
@@ -92,7 +92,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(Realm realm, Object thisValue) {
-            Scriptable array = ToObject(realm, thisValue);
+            ScriptObject array = ToObject(realm, thisValue);
             Object arrayLen = Get(array, "length");
             long len = ToUint32(realm, arrayLen);
             String separator = ",";
@@ -123,8 +123,8 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(Realm realm, Object thisValue, Object... items) {
-            Scriptable o = ToObject(realm, thisValue);
-            Scriptable a = ArrayCreate(realm, 0);
+            ScriptObject o = ToObject(realm, thisValue);
+            ScriptObject a = ArrayCreate(realm, 0);
             long n = 0;
             int itemsLength = items.length;
             items = Arrays.copyOf(items, itemsLength + 1, Object[].class);
@@ -132,8 +132,8 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
             items[0] = o;
             for (Object item : items) {
                 if (BuiltinBrand.hasBuiltinBrand(item, BuiltinBrand.BuiltinArray)) {
-                    assert item instanceof Scriptable;
-                    Scriptable e = (Scriptable) item;
+                    assert item instanceof ScriptObject;
+                    ScriptObject e = (ScriptObject) item;
                     long len = ToUint32(realm, Get(e, "length"));
                     for (long k = 0; k < len; ++k, ++n) {
                         String p = ToString(k);
@@ -158,7 +158,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "join", arity = 1)
         public static Object join(Realm realm, Object thisValue, Object separator) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (Type.isUndefined(separator)) {
@@ -191,7 +191,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "pop", arity = 0)
         public static Object pop(Realm realm, Object thisValue) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (len == 0) {
@@ -213,7 +213,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "push", arity = 1)
         public static Object push(Realm realm, Object thisValue, Object... items) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long n = ToUint32(realm, lenVal);
             for (Object e : items) {
@@ -229,7 +229,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "reverse", arity = 0)
         public static Object reverse(Realm realm, Object thisValue) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             long middle = len / 2L;
@@ -262,7 +262,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "shift", arity = 0)
         public static Object shift(Realm realm, Object thisValue) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (len == 0) {
@@ -291,8 +291,8 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(Realm realm, Object thisValue, Object start, Object end) {
-            Scriptable o = ToObject(realm, thisValue);
-            Scriptable a = ArrayCreate(realm, 0);
+            ScriptObject o = ToObject(realm, thisValue);
+            ScriptObject a = ArrayCreate(realm, 0);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             double relativeStart = ToInteger(realm, start);
@@ -368,7 +368,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "sort", arity = 1)
         public static Object sort(Realm realm, Object thisValue, Object comparefn) {
-            Scriptable obj = ToObject(realm, thisValue);
+            ScriptObject obj = ToObject(realm, thisValue);
             long len = ToUint32(realm, Get(obj, "length"));
 
             assert len <= (long) Integer.MAX_VALUE;
@@ -428,8 +428,8 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
         @Function(name = "splice", arity = 2)
         public static Object splice(Realm realm, Object thisValue, Object start,
                 Object deleteCount, Object... items) {
-            Scriptable o = ToObject(realm, thisValue);
-            Scriptable a = ArrayCreate(realm, 0);
+            ScriptObject o = ToObject(realm, thisValue);
+            ScriptObject a = ArrayCreate(realm, 0);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             double relativeStart = ToInteger(realm, start);
@@ -495,7 +495,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "unshift", arity = 1)
         public static Object unshift(Realm realm, Object thisValue, Object... items) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             int argCount = items.length;
@@ -524,7 +524,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
         @Function(name = "indexOf", arity = 1)
         public static Object indexOf(Realm realm, Object thisValue, Object searchElement,
                 @Optional(Optional.Default.NONE) Object fromIndex) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (len == 0) {
@@ -567,7 +567,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
         @Function(name = "lastIndexOf", arity = 1)
         public static Object lastIndexOf(Realm realm, Object thisValue, Object searchElement,
                 @Optional(Optional.Default.NONE) Object fromIndex) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (len == 0) {
@@ -603,7 +603,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "every", arity = 1)
         public static Object every(Realm realm, Object thisValue, Object callbackfn, Object thisArg) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
@@ -629,7 +629,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "some", arity = 1)
         public static Object some(Realm realm, Object thisValue, Object callbackfn, Object thisArg) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
@@ -656,7 +656,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
         @Function(name = "forEach", arity = 1)
         public static Object forEach(Realm realm, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
@@ -679,14 +679,14 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "map", arity = 1)
         public static Object map(Realm realm, Object thisValue, Object callbackfn, Object thisArg) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            Scriptable a = ArrayCreate(realm, len);
+            ScriptObject a = ArrayCreate(realm, len);
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 boolean kpresent = HasProperty(o, pk);
@@ -704,14 +704,14 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "filter", arity = 1)
         public static Object filter(Realm realm, Object thisValue, Object callbackfn, Object thisArg) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
-            Scriptable a = ArrayCreate(realm, 0);
+            ScriptObject a = ArrayCreate(realm, 0);
             for (long k = 0, to = 0; k < len; ++k) {
                 String pk = ToString(k);
                 boolean kpresent = HasProperty(o, pk);
@@ -734,7 +734,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
         @Function(name = "reduce", arity = 1)
         public static Object reduce(Realm realm, Object thisValue, Object callbackfn,
                 @Optional(Optional.Default.NONE) Object initialValue) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
@@ -778,7 +778,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
         @Function(name = "reduceRight", arity = 1)
         public static Object reduceRight(Realm realm, Object thisValue, Object callbackfn,
                 @Optional(Optional.Default.NONE) Object initialValue) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
@@ -821,7 +821,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "items", arity = 0)
         public static Object items(Realm realm, Object thisValue) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             return CreateArrayIterator(realm, o, ArrayIterationKind.KeyValue);
         }
 
@@ -830,7 +830,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(Realm realm, Object thisValue) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             return CreateArrayIterator(realm, o, ArrayIterationKind.Key);
         }
 
@@ -839,7 +839,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "values", arity = 0)
         public static Object values(Realm realm, Object thisValue) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             return CreateArrayIterator(realm, o, ArrayIterationKind.Value);
         }
 
@@ -848,7 +848,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
          */
         @Function(name = "find", arity = 1)
         public static Object find(Realm realm, Object thisValue, Object predicate, Object thisArg) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             // FIXME: spec bug (IsCallable() check should occur before return)
@@ -879,7 +879,7 @@ public class ArrayPrototype extends OrdinaryObject implements Scriptable, Initia
         @Function(name = "findIndex", arity = 1)
         public static Object findIndex(Realm realm, Object thisValue, Object predicate,
                 Object thisArg) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Object lenVal = Get(o, "length");
             long len = ToUint32(realm, lenVal);
             // FIXME: spec bug (IsCallable() check should occur before return)

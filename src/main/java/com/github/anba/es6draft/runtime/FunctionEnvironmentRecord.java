@@ -6,8 +6,7 @@
  */
 package com.github.anba.es6draft.runtime;
 
-import com.github.anba.es6draft.runtime.types.Scriptable;
-
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -19,10 +18,10 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  */
 public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecord {
     private final Object thisValue;
-    private final Scriptable homeObject;
+    private final ScriptObject homeObject;
     private final String methodName;
 
-    public FunctionEnvironmentRecord(Realm realm, Object thisValue, Scriptable homeObject,
+    public FunctionEnvironmentRecord(Realm realm, Object thisValue, ScriptObject homeObject,
             String methodName) {
         super(realm);
         this.thisValue = thisValue;
@@ -57,8 +56,8 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     /**
      * 10.2.1.3.4 GetSuperBase ()
      */
-    public Scriptable getSuperBase() {
-        Scriptable home = homeObject;
+    public ScriptObject getSuperBase() {
+        ScriptObject home = homeObject;
         if (home == null) {
             return null;
         }

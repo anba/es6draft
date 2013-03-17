@@ -29,13 +29,13 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Generator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * 
  *
  */
-public class GeneratorObject extends OrdinaryObject implements Scriptable, Initialisable {
+public class GeneratorObject extends OrdinaryObject implements ScriptObject, Initialisable {
     /**
      * [[State]]
      */

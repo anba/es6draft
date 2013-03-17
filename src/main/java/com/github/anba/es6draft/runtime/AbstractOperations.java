@@ -67,7 +67,7 @@ public final class AbstractOperations {
      * <p>
      * ToPrimitive for the Object type
      */
-    private static Object ToPrimitive(Realm realm, Scriptable argument, Type preferredType) {
+    private static Object ToPrimitive(Realm realm, ScriptObject argument, Type preferredType) {
         Object exoticToPrim = Get(argument, BuiltinSymbol.ToPrimitive.get());
         if (!Type.isUndefined(exoticToPrim)) {
             if (!IsCallable(exoticToPrim))
@@ -98,7 +98,7 @@ public final class AbstractOperations {
      * <p>
      * OrdinaryToPrimitive
      */
-    public static Object OrdinaryToPrimitive(Realm realm, Scriptable object, Type hint) {
+    public static Object OrdinaryToPrimitive(Realm realm, ScriptObject object, Type hint) {
         assert hint == Type.String || hint == Type.Number;
         String tryFirst, trySecond;
         if (hint == Type.String) {
@@ -311,7 +311,7 @@ public final class AbstractOperations {
     /**
      * 9.1.9 ToObject
      */
-    public static Scriptable ToObject(Realm realm, Object val) {
+    public static ScriptObject ToObject(Realm realm, Object val) {
         switch (Type.of(val)) {
         case Undefined:
         case Null:
@@ -465,7 +465,7 @@ public final class AbstractOperations {
     /**
      * 9.2.7 IsExtensible (O)
      */
-    public static boolean IsExtensible(Scriptable object) {
+    public static boolean IsExtensible(ScriptObject object) {
         boolean notExtensible = object.hasIntegrity(IntegrityLevel.NonExtensible);
         return !notExtensible;
     }
@@ -473,21 +473,21 @@ public final class AbstractOperations {
     /**
      * 9.3.1 Get (O, P)
      */
-    public static Object Get(Scriptable object, String propertyKey) {
+    public static Object Get(ScriptObject object, String propertyKey) {
         return object.get(propertyKey, object);
     }
 
     /**
      * 9.3.1 Get (O, P)
      */
-    public static Object Get(Scriptable object, Symbol propertyKey) {
+    public static Object Get(ScriptObject object, Symbol propertyKey) {
         return object.get(propertyKey, object);
     }
 
     /**
      * 9.3.2 Put (O, P, V, Throw)
      */
-    public static void Put(Realm realm, Scriptable object, String propertyKey, Object value,
+    public static void Put(Realm realm, ScriptObject object, String propertyKey, Object value,
             boolean _throw) {
         boolean success = object.set(propertyKey, value, object);
         if (!success && _throw) {
@@ -498,7 +498,7 @@ public final class AbstractOperations {
     /**
      * 9.3.2 Put (O, P, V, Throw)
      */
-    public static void Put(Realm realm, Scriptable object, Symbol propertyKey, Object value,
+    public static void Put(Realm realm, ScriptObject object, Symbol propertyKey, Object value,
             boolean _throw) {
         boolean success = object.set(propertyKey, value, object);
         if (!success && _throw) {
@@ -509,7 +509,8 @@ public final class AbstractOperations {
     /**
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
-    public static boolean CreateOwnDataProperty(Scriptable object, String propertyKey, Object value) {
+    public static boolean CreateOwnDataProperty(ScriptObject object, String propertyKey,
+            Object value) {
         boolean notExtensible = object.hasIntegrity(IntegrityLevel.NonExtensible);
         if (notExtensible) {
             return false;
@@ -521,7 +522,8 @@ public final class AbstractOperations {
     /**
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
-    public static boolean CreateOwnDataProperty(Scriptable object, Symbol propertyKey, Object value) {
+    public static boolean CreateOwnDataProperty(ScriptObject object, Symbol propertyKey,
+            Object value) {
         boolean notExtensible = object.hasIntegrity(IntegrityLevel.NonExtensible);
         if (notExtensible) {
             return false;
@@ -533,7 +535,7 @@ public final class AbstractOperations {
     /**
      * 9.3.4 DefinePropertyOrThrow (O, P, desc)
      */
-    public static void DefinePropertyOrThrow(Realm realm, Scriptable object, String propertyKey,
+    public static void DefinePropertyOrThrow(Realm realm, ScriptObject object, String propertyKey,
             PropertyDescriptor desc) {
         boolean success = object.defineOwnProperty(propertyKey, desc);
         if (!success) {
@@ -544,7 +546,7 @@ public final class AbstractOperations {
     /**
      * 9.3.4 DefinePropertyOrThrow (O, P, desc)
      */
-    public static void DefinePropertyOrThrow(Realm realm, Scriptable object, Symbol propertyKey,
+    public static void DefinePropertyOrThrow(Realm realm, ScriptObject object, Symbol propertyKey,
             PropertyDescriptor desc) {
         boolean success = object.defineOwnProperty(propertyKey, desc);
         if (!success) {
@@ -555,7 +557,7 @@ public final class AbstractOperations {
     /**
      * 9.3.5 DeletePropertyOrThrow (O, P)
      */
-    public static void DeletePropertyOrThrow(Realm realm, Scriptable object, String propertyKey) {
+    public static void DeletePropertyOrThrow(Realm realm, ScriptObject object, String propertyKey) {
         boolean success = object.delete(propertyKey);
         if (!success) {
             throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, propertyKey);
@@ -565,7 +567,7 @@ public final class AbstractOperations {
     /**
      * 9.3.5 DeletePropertyOrThrow (O, P)
      */
-    public static void DeletePropertyOrThrow(Realm realm, Scriptable object, Symbol propertyKey) {
+    public static void DeletePropertyOrThrow(Realm realm, ScriptObject object, Symbol propertyKey) {
         boolean success = object.delete(propertyKey);
         if (!success) {
             throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, propertyKey.toString());
@@ -575,21 +577,21 @@ public final class AbstractOperations {
     /**
      * 9.3.6 HasProperty (O, P)
      */
-    public static boolean HasProperty(Scriptable object, String propertyKey) {
+    public static boolean HasProperty(ScriptObject object, String propertyKey) {
         return object.hasProperty(propertyKey);
     }
 
     /**
      * 9.3.6 HasProperty (O, P)
      */
-    public static boolean HasProperty(Scriptable object, Symbol propertyKey) {
+    public static boolean HasProperty(ScriptObject object, Symbol propertyKey) {
         return object.hasProperty(propertyKey);
     }
 
     /**
      * 9.3.7 GetMethod (O, P)
      */
-    public static Callable GetMethod(Realm realm, Scriptable object, String propertyKey) {
+    public static Callable GetMethod(Realm realm, ScriptObject object, String propertyKey) {
         Object func = object.get(propertyKey, object);
         if (Type.isUndefined(func)) {
             return null;
@@ -603,7 +605,7 @@ public final class AbstractOperations {
     /**
      * 9.3.7 GetMethod (O, P)
      */
-    public static Callable GetMethod(Realm realm, Scriptable object, Symbol propertyKey) {
+    public static Callable GetMethod(Realm realm, ScriptObject object, Symbol propertyKey) {
         Object func = object.get(propertyKey, object);
         if (Type.isUndefined(func)) {
             return null;
@@ -618,7 +620,7 @@ public final class AbstractOperations {
      * 9.3.8 Invoke(O,P [,args])
      */
     public static Object Invoke(Realm realm, Object object, String propertyKey, Object... args) {
-        Scriptable obj = ToObject(realm, object);
+        ScriptObject obj = ToObject(realm, object);
         Callable func = GetMethod(realm, obj, propertyKey);
         if (func == null) {
             throw throwTypeError(realm, Messages.Key.MethodNotFound, propertyKey);
@@ -630,7 +632,7 @@ public final class AbstractOperations {
      * 9.3.8 Invoke(O,P [,args])
      */
     public static Object Invoke(Realm realm, Object object, Symbol propertyKey, Object... args) {
-        Scriptable obj = ToObject(realm, object);
+        ScriptObject obj = ToObject(realm, object);
         Callable func = GetMethod(realm, obj, propertyKey);
         if (func == null) {
             throw throwTypeError(realm, Messages.Key.MethodNotFound, propertyKey.toString());
@@ -641,7 +643,7 @@ public final class AbstractOperations {
     /**
      * 9.3.9 SetIntegrityLevel (O, level)
      */
-    public static boolean SetIntegrityLevel(Realm realm, Scriptable object, IntegrityLevel level) {
+    public static boolean SetIntegrityLevel(Realm realm, ScriptObject object, IntegrityLevel level) {
         /* step 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* step 3-4 */
@@ -719,7 +721,7 @@ public final class AbstractOperations {
     /**
      * 9.3.10 TestIntegrityLevel (O, level)
      */
-    public static boolean TestIntegrityLevel(Realm realm, Scriptable object, IntegrityLevel level) {
+    public static boolean TestIntegrityLevel(Realm realm, ScriptObject object, IntegrityLevel level) {
         /* step 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* step 3-4 */
@@ -780,9 +782,9 @@ public final class AbstractOperations {
     /**
      * 9.3.11 CreateArrayFromList (elements)
      */
-    public static Scriptable CreateArrayFromList(Realm realm, List<?> elements) {
+    public static ScriptObject CreateArrayFromList(Realm realm, List<?> elements) {
         /* step 2 */
-        Scriptable array = ArrayCreate(realm, 0);
+        ScriptObject array = ArrayCreate(realm, 0);
         /* step 3 */
         int n = 0;
         /* step 4 */
@@ -811,12 +813,12 @@ public final class AbstractOperations {
             return false;
         }
         /* step 4-5 */
-        Object p = Get((Scriptable) c, "prototype");
+        Object p = Get((ScriptObject) c, "prototype");
         if (!Type.isObject(p)) {
             throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         /* step 7 */
-        for (Scriptable obj = Type.objectValue(o);;) {
+        for (ScriptObject obj = Type.objectValue(o);;) {
             obj = obj.getPrototype();
             if (obj == null) {
                 return false;
@@ -830,7 +832,7 @@ public final class AbstractOperations {
     /**
      * 9.3.13 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
      */
-    public static Scriptable GetPrototypeFromConstructor(Realm realm, Object constructor,
+    public static ScriptObject GetPrototypeFromConstructor(Realm realm, Object constructor,
             Intrinsics intrinsicDefaultProto) {
         if (!IsConstructor(constructor)) {
             throw throwTypeError(realm, Messages.Key.NotConstructor);
@@ -851,20 +853,20 @@ public final class AbstractOperations {
      */
     public static OrdinaryObject OrdinaryCreateFromConstructor(Realm realm, Object constructor,
             Intrinsics intrinsicDefaultProto) {
-        Scriptable proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
+        ScriptObject proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
         return ObjectCreate(realm, proto);
     }
 
     /**
      * 9.3.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
      */
-    public static <OBJECT extends Scriptable> OBJECT OrdinaryCreateFromConstructor(Realm realm,
+    public static <OBJECT extends ScriptObject> OBJECT OrdinaryCreateFromConstructor(Realm realm,
             Object constructor, Intrinsics intrinsicDefaultProto, ObjectAllocator<OBJECT> allocator) {
-        Scriptable proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
+        ScriptObject proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
         return ObjectCreate(realm, proto, allocator);
     }
 
-    public static List<String> GetOwnPropertyNames(Realm realm, Scriptable obj) {
+    public static List<String> GetOwnPropertyNames(Realm realm, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
         Iterator<?> keys = FromListIterator(realm, obj.ownPropertyKeys());
         List<String> nameList = new ArrayList<>();
@@ -878,7 +880,7 @@ public final class AbstractOperations {
         return nameList;
     }
 
-    public static List<String> GetOwnPropertyKeys(Realm realm, Scriptable obj) {
+    public static List<String> GetOwnPropertyKeys(Realm realm, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
         Iterator<?> keys = FromListIterator(realm, obj.ownPropertyKeys());
         List<String> nameList = new ArrayList<>();

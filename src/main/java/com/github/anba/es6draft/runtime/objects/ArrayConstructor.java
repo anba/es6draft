@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -41,8 +41,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.4.3 Properties of the Array Constructor
  * </ul>
  */
-public class ArrayConstructor extends OrdinaryObject implements Scriptable, Callable, Constructor,
-        Initialisable {
+public class ArrayConstructor extends OrdinaryObject implements ScriptObject, Callable,
+        Constructor, Initialisable {
     public ArrayConstructor(Realm realm) {
         super(realm);
     }
@@ -113,7 +113,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
                 return array;
             }
         }
-        Scriptable proto = GetPrototypeFromConstructor(realm, this, Intrinsics.ArrayPrototype);
+        ScriptObject proto = GetPrototypeFromConstructor(realm, this, Intrinsics.ArrayPrototype);
         return ArrayCreate(realm, length, proto);
     }
 
@@ -171,7 +171,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
             int len = items.length;
             /* step 3 */
             Object c = thisValue;
-            Scriptable a;
+            ScriptObject a;
             if (IsConstructor(c)) {
                 /* step 4, 6 */
                 Object newObj = ((Constructor) c).construct(len);
@@ -200,7 +200,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
         public static Object from(Realm realm, Object thisValue, Object arrayLike, Object mapfn,
                 Object thisArg) {
             /* step 1-2 */
-            Scriptable items = ToObject(realm, arrayLike);
+            ScriptObject items = ToObject(realm, arrayLike);
             // FIXME: spec bug (mapfn and thisArg unused)
             Callable mapper = null;
             if (!Type.isUndefined(mapfn)) {
@@ -216,7 +216,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
             long llen = (long) len;
             /* step 6 */
             Object c = thisValue;
-            Scriptable a;
+            ScriptObject a;
             if (IsConstructor(c)) {
                 /* step 7, 9 */
                 Object newObj = ((Constructor) c).construct(len);
@@ -254,7 +254,7 @@ public class ArrayConstructor extends OrdinaryObject implements Scriptable, Call
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            Scriptable proto = GetPrototypeFromConstructor(realm, thisValue,
+            ScriptObject proto = GetPrototypeFromConstructor(realm, thisValue,
                     Intrinsics.ArrayPrototype);
             return ArrayCreate(realm, -1, proto);
         }

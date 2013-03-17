@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.objects;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.9.6 Properties of Date Instances
  * </ul>
  */
-public class DateObject extends OrdinaryObject implements Scriptable {
+public class DateObject extends OrdinaryObject implements ScriptObject {
     /** [[DateValue]] */
     private double dateValue;
 

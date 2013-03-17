@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -40,8 +40,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.5.3 Properties of the String Constructor
  * </ul>
  */
-public class StringConstructor extends OrdinaryObject implements Scriptable, Callable, Constructor,
-        Initialisable {
+public class StringConstructor extends OrdinaryObject implements ScriptObject, Callable,
+        Constructor, Initialisable {
     public StringConstructor(Realm realm) {
         super(realm);
     }
@@ -155,9 +155,9 @@ public class StringConstructor extends OrdinaryObject implements Scriptable, Cal
         @Function(name = "raw", arity = 1)
         public static Object raw(Realm realm, Object thisValue, Object callSite,
                 Object... substitutions) {
-            Scriptable cooked = ToObject(realm, callSite);
+            ScriptObject cooked = ToObject(realm, callSite);
             Object rawValue = Get(cooked, "raw");
-            Scriptable raw = ToObject(realm, rawValue);
+            ScriptObject raw = ToObject(realm, rawValue);
             Object len = Get(raw, "length");
             long literalSegments = ToUint32(realm, len); // FIXME: spec bug (bug 492)
             if (literalSegments == 0) {
@@ -188,7 +188,7 @@ public class StringConstructor extends OrdinaryObject implements Scriptable, Cal
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(Realm realm, Object thisValue) {
-            Scriptable proto = GetPrototypeFromConstructor(realm, thisValue,
+            ScriptObject proto = GetPrototypeFromConstructor(realm, thisValue,
                     Intrinsics.StringPrototype);
             return StringCreate(realm, proto);
         }

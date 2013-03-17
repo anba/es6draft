@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
@@ -164,11 +164,11 @@ public class Repl {
     }
 
     private static String ToSource(Realm realm, Object val) {
-        HashSet<Scriptable> stack = new HashSet<>();
+        HashSet<ScriptObject> stack = new HashSet<>();
         return toSource(realm, stack, val);
     }
 
-    private static String toSource(Realm realm, Set<Scriptable> stack, Object value) {
+    private static String toSource(Realm realm, Set<ScriptObject> stack, Object value) {
         switch (Type.of(value)) {
         case Null:
             return "null";
@@ -179,7 +179,7 @@ public class Repl {
         case Number:
             return ToFlatString(realm, value);
         case Object:
-            Scriptable objValue = Type.objectValue(value);
+            ScriptObject objValue = Type.objectValue(value);
             Object toSource = Get(objValue, "toSource");
             if (IsCallable(toSource)) {
                 return ToFlatString(realm, ((Callable) toSource).call(objValue));
@@ -248,7 +248,7 @@ public class Repl {
         return sb.toString();
     }
 
-    private static String objectToSource(Realm realm, Set<Scriptable> stack, Scriptable value) {
+    private static String objectToSource(Realm realm, Set<ScriptObject> stack, ScriptObject value) {
         List<String> keys = GetOwnPropertyKeys(realm, value);
         if (keys.isEmpty()) {
             return "{}";
@@ -262,7 +262,7 @@ public class Repl {
         return properties.toString();
     }
 
-    private static String arrayToSource(Realm realm, Set<Scriptable> stack, Scriptable value) {
+    private static String arrayToSource(Realm realm, Set<ScriptObject> stack, ScriptObject value) {
         long len = ToUint32(realm, Get(value, "length"));
         if (len <= 0) {
             return "[]";

@@ -30,11 +30,11 @@ class DestructuringAssignmentGenerator {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "Get",
-                Type.getMethodType(Types.Object, Types.Scriptable, Types.String));
+                Type.getMethodType(Types.Object, Types.ScriptObject, Types.String));
 
         static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.Scriptable, Types.Realm, Types.Object));
+                Type.getMethodType(Types.ScriptObject, Types.Realm, Types.Object));
 
         // class: Reference
         static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
@@ -51,8 +51,8 @@ class DestructuringAssignmentGenerator {
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "createRestArray",
-                Type.getMethodType(Types.Scriptable, Types.Scriptable, Type.INT_TYPE, Types.Realm));
+                MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
+                        Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE, Types.Realm));
 
         // class: Type
         static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
@@ -168,7 +168,8 @@ class DestructuringAssignmentGenerator {
 
     private static final class IndexedDestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, Integer> {
-        protected IndexedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
+        protected IndexedDestructuringAssignmentEvaluation(CodeGenerator codegen,
+                ExpressionVisitor mv) {
             super(codegen, mv);
         }
 

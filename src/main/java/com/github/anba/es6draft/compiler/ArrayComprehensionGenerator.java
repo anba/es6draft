@@ -24,7 +24,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_CreateArrayFromList = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "CreateArrayFromList",
-                Type.getMethodType(Types.Scriptable, Types.Realm, Types.List));
+                Type.getMethodType(Types.ScriptObject, Types.Realm, Types.List));
 
         // class: ArrayList
         static final MethodDesc ArrayList_init = MethodDesc.create(MethodType.Special,

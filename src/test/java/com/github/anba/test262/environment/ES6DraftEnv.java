@@ -25,13 +25,14 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.test262.util.ScriptErrorMatcher;
 
 /**
  * 
  */
-abstract class ES6DraftEnv<GLOBAL extends Scriptable & GlobalObject> implements Environment<GLOBAL> {
+abstract class ES6DraftEnv<GLOBAL extends ScriptObject & GlobalObject> implements
+        Environment<GLOBAL> {
 
     @Override
     public abstract GLOBAL global();

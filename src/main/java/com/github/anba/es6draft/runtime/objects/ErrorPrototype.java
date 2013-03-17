@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.11.4 Properties of the Error Prototype Object
  * </ul>
  */
-public class ErrorPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class ErrorPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public ErrorPrototype(Realm realm) {
         super(realm);
     }
@@ -74,7 +74,7 @@ public class ErrorPrototype extends OrdinaryObject implements Scriptable, Initia
             if (!Type.isObject(thisValue)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            Scriptable o = Type.objectValue(thisValue);
+            ScriptObject o = Type.objectValue(thisValue);
             Object name = Get(o, "name");
             CharSequence sname = (Type.isUndefined(name) ? "Error" : ToString(realm, name));
             Object msg = Get(o, "message");

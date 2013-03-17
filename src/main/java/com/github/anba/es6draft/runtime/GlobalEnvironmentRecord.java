@@ -13,7 +13,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -24,12 +24,12 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  * </ul>
  */
 public final class GlobalEnvironmentRecord implements EnvironmentRecord {
-    private Scriptable globalObject;
+    private ScriptObject globalObject;
     private ObjectEnvironmentRecord objectEnv;
     private DeclarativeEnvironmentRecord declEnv;
     private List<String> varNames = new ArrayList<>();
 
-    public GlobalEnvironmentRecord(Realm realm, Scriptable globalObject) {
+    public GlobalEnvironmentRecord(Realm realm, ScriptObject globalObject) {
         this.globalObject = globalObject;
         objectEnv = new ObjectEnvironmentRecord(realm, globalObject, false);
         declEnv = new DeclarativeEnvironmentRecord(realm);
@@ -139,7 +139,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * 10.2.1.4.10 WithBaseObject()
      */
     @Override
-    public Scriptable withBaseObject() {
+    public ScriptObject withBaseObject() {
         return null;
     }
 

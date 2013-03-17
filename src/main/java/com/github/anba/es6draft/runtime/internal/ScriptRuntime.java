@@ -119,7 +119,8 @@ public final class ScriptRuntime {
      * Runtime Semantics: Evaluation<br>
      * TODO: not yet defined in draft [rev. 13]
      */
-    public static Scriptable EvaluateGeneratorComprehension(MethodHandle handle, ExecutionContext cx) {
+    public static ScriptObject EvaluateGeneratorComprehension(MethodHandle handle,
+            ExecutionContext cx) {
         Realm realm = cx.getRealm();
         ExecutionContext calleeContext = ExecutionContext.newGeneratorComprehensionContext(cx);
         RuntimeInfo.Code newCode = RuntimeInfo.newCode(handle);
@@ -174,13 +175,13 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: ClassDefinitionEvaluation
      */
-    public static Scriptable[] getDefaultClassProto(Realm realm) {
+    public static ScriptObject[] getDefaultClassProto(Realm realm) {
         // step 1
-        Scriptable protoParent = realm.getIntrinsic(Intrinsics.ObjectPrototype);
-        Scriptable constructorParent = realm.getIntrinsic(Intrinsics.FunctionPrototype);
+        ScriptObject protoParent = realm.getIntrinsic(Intrinsics.ObjectPrototype);
+        ScriptObject constructorParent = realm.getIntrinsic(Intrinsics.FunctionPrototype);
         // step 3
-        Scriptable proto = ObjectCreate(realm, protoParent);
-        return new Scriptable[] { proto, constructorParent };
+        ScriptObject proto = ObjectCreate(realm, protoParent);
+        return new ScriptObject[] { proto, constructorParent };
     }
 
     /**
@@ -188,9 +189,9 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: ClassDefinitionEvaluation
      */
-    public static Scriptable[] getClassProto(Object superClass, Realm realm) {
-        Scriptable protoParent;
-        Scriptable constructorParent;
+    public static ScriptObject[] getClassProto(Object superClass, Realm realm) {
+        ScriptObject protoParent;
+        ScriptObject constructorParent;
         // step 2
         if (Type.isNull(superClass)) {
             protoParent = null;
@@ -208,8 +209,8 @@ public final class ScriptRuntime {
             constructorParent = Type.objectValue(superClass);
         }
         // step 3
-        Scriptable proto = ObjectCreate(realm, protoParent);
-        return new Scriptable[] { proto, constructorParent };
+        ScriptObject proto = ObjectCreate(realm, protoParent);
+        return new ScriptObject[] { proto, constructorParent };
     }
 
     /**
@@ -281,8 +282,8 @@ public final class ScriptRuntime {
      * Runtime Semantics: Property Definition Evaluation<br>
      * Runtime Semantics: ClassDefinitionEvaluation
      */
-    public static Function EvaluateConstructorMethod(Scriptable constructorParent,
-            Scriptable proto, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static Function EvaluateConstructorMethod(ScriptObject constructorParent,
+            ScriptObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         String propName = "constructor";
         LexicalEnvironment scope = cx.getLexicalEnvironment();
@@ -312,7 +313,7 @@ public final class ScriptRuntime {
      * <li>PropertyName ( FormalParameterList ) { FunctionBody }
      * </ul>
      */
-    public static void EvaluatePropertyDefinition(Scriptable object, String propName,
+    public static void EvaluatePropertyDefinition(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
@@ -334,7 +335,7 @@ public final class ScriptRuntime {
      * <li>* PropertyName ( FormalParameterList ) { FunctionBody }
      * </ul>
      */
-    public static void EvaluatePropertyDefinitionGenerator(Scriptable object, String propName,
+    public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
@@ -356,7 +357,7 @@ public final class ScriptRuntime {
      * <li>get PropertyName ( ) { FunctionBody }
      * </ul>
      */
-    public static void EvaluatePropertyDefinitionGetter(Scriptable object, String propName,
+    public static void EvaluatePropertyDefinitionGetter(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
@@ -382,7 +383,7 @@ public final class ScriptRuntime {
      * <li>set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </ul>
      */
-    public static void EvaluatePropertyDefinitionSetter(Scriptable object, String propName,
+    public static void EvaluatePropertyDefinitionSetter(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
@@ -431,7 +432,7 @@ public final class ScriptRuntime {
     public static Object[] SpreadArray(Object spreadValue, Realm realm) {
         /* step 1-3 (cf. generated code) */
         /* step 4-5 */
-        Scriptable spreadObj = ToObject(realm, spreadValue);
+        ScriptObject spreadObj = ToObject(realm, spreadValue);
         /* step 6 */
         Object lenVal = Get(spreadObj, "length");
         /* step 7-8 */
@@ -475,11 +476,11 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: GetTemplateCallSite Abstract Operation
      */
-    public static Scriptable GetTemplateCallSite(String key, MethodHandle handle,
+    public static ScriptObject GetTemplateCallSite(String key, MethodHandle handle,
             ExecutionContext cx) {
         Realm realm = cx.getRealm();
         /* step 1 */
-        Scriptable callSite = realm.getTemplateCallSite(key);
+        ScriptObject callSite = realm.getTemplateCallSite(key);
         if (callSite != null) {
             return callSite;
         }
@@ -489,8 +490,8 @@ public final class ScriptRuntime {
         /* step 4 */
         int count = strings.length >>> 1;
         /* step 5-6 */
-        Scriptable siteObj = ExoticArray.ArrayCreate(realm, count);
-        Scriptable rawObj = ExoticArray.ArrayCreate(realm, count);
+        ScriptObject siteObj = ExoticArray.ArrayCreate(realm, count);
+        ScriptObject rawObj = ExoticArray.ArrayCreate(realm, count);
         /* step 7-8 */
         for (int i = 0, n = strings.length; i < n; i += 2) {
             int index = i >>> 1;
@@ -646,7 +647,7 @@ public final class ScriptRuntime {
         }
         assert envRec instanceof FunctionEnvironmentRecord;
         Object actualThis = envRec.getThisBinding();
-        Scriptable baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
+        ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
         CheckObjectCoercible(cx.getRealm(), baseValue);
         if (propertyKey == null) {
             propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
@@ -676,7 +677,7 @@ public final class ScriptRuntime {
             if (ref.isSuperReference()) {
                 throw throwReferenceError(realm, Messages.Key.SuperDelete);
             }
-            Scriptable obj = ToObject(realm, ref.getBase());
+            ScriptObject obj = ToObject(realm, ref.getBase());
             boolean deleteStatus = obj.delete(ref.getReferencedName());
             if (!deleteStatus && ref.isStrictReference()) {
                 // FIXME: spec bug (typing 'typeError')
@@ -931,7 +932,7 @@ public final class ScriptRuntime {
         boolean send = true;
         Object received = UNDEFINED;
         Object result = UNDEFINED;
-        Scriptable g = ToObject(realm, expr);
+        ScriptObject g = ToObject(realm, expr);
         try {
             while (true) {
                 Object next;
@@ -986,7 +987,7 @@ public final class ScriptRuntime {
      * Helper function
      */
     public static Iterator<?> enumerate(Object o, Realm realm) {
-        Scriptable obj = ToObject(realm, o);
+        ScriptObject obj = ToObject(realm, o);
         return FromListIterator(realm, obj.enumerate());
     }
 
@@ -994,7 +995,7 @@ public final class ScriptRuntime {
      * Helper function
      */
     public static Iterator<?> iterate(Object o, Realm realm) {
-        Scriptable obj = ToObject(realm, o);
+        ScriptObject obj = ToObject(realm, o);
         Object keys = Invoke(realm, obj, BuiltinSymbol.iterator.get());
         return FromListIterator(realm, keys);
     }
@@ -1005,10 +1006,10 @@ public final class ScriptRuntime {
      * Runtime Semantics: Indexed Binding Initialisation<br>
      * BindingRestElement : ... BindingIdentifier
      */
-    public static Scriptable createRestArray(Scriptable array, int index, Realm realm) {
+    public static ScriptObject createRestArray(ScriptObject array, int index, Realm realm) {
         Object lenVal = Get(array, "length");
         long arrayLength = ToUint32(realm, lenVal);
-        Scriptable result = ExoticArray.ArrayCreate(realm, 0);
+        ScriptObject result = ExoticArray.ArrayCreate(realm, 0);
         long n = 0;
         while (index < arrayLength) {
             String p = ToString(index);
@@ -1062,7 +1063,7 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Property Definition Evaluation
      */
-    public static void defineProperty(Scriptable object, String propertyName, Object value,
+    public static void defineProperty(ScriptObject object, String propertyName, Object value,
             Realm realm) {
         DefinePropertyOrThrow(realm, object, propertyName, new PropertyDescriptor(value, true,
                 true, true));
@@ -1071,7 +1072,7 @@ public final class ScriptRuntime {
     /**
      * B.3.1.3 __proto___ Object Initialisers
      */
-    public static void defineProtoProperty(Scriptable object, Object value, Realm realm) {
+    public static void defineProtoProperty(ScriptObject object, Object value, Realm realm) {
         // use Put() to comply with current SpiderMonkey/JSC behaviour
         Put(realm, object, "__proto__", value, true);
     }
@@ -1081,7 +1082,7 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Array Accumulation
      */
-    public static void defineProperty(Scriptable array, int nextIndex, Object value) {
+    public static void defineProperty(ScriptObject array, int nextIndex, Object value) {
         // String propertyName = ToString(ToUint32(nextIndex));
         String propertyName = ToString(nextIndex);
         array.defineOwnProperty(propertyName, new PropertyDescriptor(value, true, true, true));
@@ -1093,11 +1094,11 @@ public final class ScriptRuntime {
      * Runtime Semantics: Array Accumulation<br>
      * Runtime Semantics: Evaluation
      */
-    public static int ArrayAccumulationSpreadElement(Scriptable array, int nextIndex,
+    public static int ArrayAccumulationSpreadElement(ScriptObject array, int nextIndex,
             Object spreadValue, Realm realm) {
         /* step 1-2 (cf. generated code) */
         /* step 3-4 */
-        Scriptable spreadObj = ToObject(realm, spreadValue);
+        ScriptObject spreadObj = ToObject(realm, spreadValue);
         /* step 5 */
         Object lenVal = Get(spreadObj, "length");
         /* step 6-7 */

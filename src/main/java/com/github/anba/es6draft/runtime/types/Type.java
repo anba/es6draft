@@ -42,7 +42,7 @@ public enum Type {
         if (val instanceof Double || val instanceof Integer || val instanceof Long) {
             return Number;
         }
-        assert val instanceof Scriptable : (val != null ? val.getClass() : "<null>");
+        assert val instanceof ScriptObject : (val != null ? val.getClass() : "<null>");
         return Object;
     }
 
@@ -71,7 +71,7 @@ public enum Type {
     }
 
     public static boolean isObject(Object val) {
-        return (val instanceof Scriptable);
+        return (val instanceof ScriptObject);
     }
 
     public static boolean booleanValue(Object val) {
@@ -86,7 +86,7 @@ public enum Type {
         return (CharSequence) val;
     }
 
-    public static Scriptable objectValue(Object val) {
-        return (Scriptable) val;
+    public static ScriptObject objectValue(Object val) {
+        return (ScriptObject) val;
     }
 }

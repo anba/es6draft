@@ -15,7 +15,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -27,10 +27,10 @@ import com.github.anba.es6draft.runtime.types.Scriptable;
  */
 public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     private final Realm realm;
-    private final Scriptable bindings;
+    private final ScriptObject bindings;
     private final boolean withEnvironment;
 
-    public ObjectEnvironmentRecord(Realm realm, Scriptable bindings, boolean withEnvironment) {
+    public ObjectEnvironmentRecord(Realm realm, ScriptObject bindings, boolean withEnvironment) {
         this.realm = realm;
         this.bindings = bindings;
         this.withEnvironment = withEnvironment;
@@ -134,7 +134,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      * 10.2.1.2.10 WithBaseObject()
      */
     @Override
-    public Scriptable withBaseObject() {
+    public ScriptObject withBaseObject() {
         if (withEnvironment) {
             return bindings;
         }

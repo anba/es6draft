@@ -31,11 +31,11 @@ class BindingInitialisationGenerator {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "Get",
-                Type.getMethodType(Types.Object, Types.Scriptable, Types.String));
+                Type.getMethodType(Types.Object, Types.ScriptObject, Types.String));
 
         static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.Scriptable, Types.Realm, Types.Object));
+                Type.getMethodType(Types.ScriptObject, Types.Realm, Types.Object));
 
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
@@ -58,8 +58,8 @@ class BindingInitialisationGenerator {
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "createRestArray",
-                Type.getMethodType(Types.Scriptable, Types.Scriptable, Type.INT_TYPE, Types.Realm));
+                MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
+                        Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE, Types.Realm));
 
         static final MethodDesc ScriptRuntime_throw = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "_throw",
@@ -182,7 +182,7 @@ class BindingInitialisationGenerator {
             // FIXME: spec bug -> internal `Assert` should never occur
             Label assertion = new Label();
             mv.dup();
-            mv.instanceOf(Types.Scriptable);
+            mv.instanceOf(Types.ScriptObject);
             mv.ifne(assertion);
             mv.aconst("Type(value) is Object");
             mv.invoke(Methods.ScriptRuntime_throw);
@@ -203,7 +203,7 @@ class BindingInitialisationGenerator {
             // FIXME: spec bug -> internal `Assert` should never occur
             Label assertion = new Label();
             mv.dup();
-            mv.instanceOf(Types.Scriptable);
+            mv.instanceOf(Types.ScriptObject);
             mv.ifne(assertion);
             mv.aconst("Type(value) is Object");
             mv.invoke(Methods.ScriptRuntime_throw);

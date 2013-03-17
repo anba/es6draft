@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
@@ -45,7 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.2.5 Properties of Object Instances
  * </ul>
  */
-public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initialisable {
+public class ObjectPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
     public ObjectPrototype(Realm realm) {
         super(realm);
     }
@@ -59,7 +59,7 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
         ;
 
         @Prototype
-        public static final Scriptable __proto__ = null;
+        public static final ScriptObject __proto__ = null;
 
         /**
          * 15.2.4.1 Object.prototype.constructor
@@ -78,7 +78,7 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
             if (Type.isNull(thisValue)) {
                 return "[object Null]";
             }
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             if (o instanceof Symbol) {
                 return "[object Symbol]";
             }
@@ -151,7 +151,7 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(Realm realm, Object thisValue) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             return o;
         }
 
@@ -161,7 +161,7 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "hasOwnProperty", arity = 1)
         public static Object hasOwnProperty(Realm realm, Object thisValue, Object v) {
             Object p = ToPropertyKey(realm, v);
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             if (p instanceof String) {
                 return o.hasOwnProperty((String) p);
             } else {
@@ -177,8 +177,8 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
             if (!Type.isObject(v)) {
                 return false;
             }
-            Scriptable w = Type.objectValue(v);
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject w = Type.objectValue(v);
+            ScriptObject o = ToObject(realm, thisValue);
             for (;;) {
                 w = w.getPrototype();
                 if (w == null) {
@@ -196,7 +196,7 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
         @Function(name = "propertyIsEnumerable", arity = 1)
         public static Object propertyIsEnumerable(Realm realm, Object thisValue, Object v) {
             String p = ToFlatString(realm, v);
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             Property desc = o.getOwnProperty(p);
             if (desc == null) {
                 return false;
@@ -209,8 +209,8 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Getter)
         public static Object getPrototype(Realm realm, Object thisValue) {
-            Scriptable o = ToObject(realm, thisValue);
-            Scriptable p = o.getPrototype();
+            ScriptObject o = ToObject(realm, thisValue);
+            ScriptObject p = o.getPrototype();
             return (p != null ? p : NULL);
         }
 
@@ -219,7 +219,7 @@ public class ObjectPrototype extends OrdinaryObject implements Scriptable, Initi
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(Realm realm, Object thisValue, Object p) {
-            Scriptable o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(realm, thisValue);
             if (!IsExtensible(o)) {
                 throwTypeError(realm, Messages.Key.NotExtensible);
             }

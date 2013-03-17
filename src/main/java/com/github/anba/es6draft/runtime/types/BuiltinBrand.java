@@ -32,9 +32,9 @@ public enum BuiltinBrand {/* @formatter:off */
      * FIXME: possible spec bug?
      */
     public static boolean hasBuiltinBrand(Object object, BuiltinBrand value) {
-        if (!(object instanceof Scriptable)) {
+        if (!(object instanceof ScriptObject)) {
             return false;
         }
-        return ((Scriptable) object).getBuiltinBrand() == value;
+        return ((ScriptObject) object).getBuiltinBrand() == value;
     }
 }

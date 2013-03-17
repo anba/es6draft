@@ -13,7 +13,7 @@ import java.text.MessageFormat;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Scriptable;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  *
@@ -24,7 +24,7 @@ public final class Errors {
 
     private static Object newError(Realm realm, Intrinsics constructor, Messages.Key key) {
         String message = realm.message(key);
-        Scriptable nativeError = realm.getIntrinsic(constructor);
+        ScriptObject nativeError = realm.getIntrinsic(constructor);
         return ((Constructor) nativeError).construct(message);
     }
 
@@ -32,7 +32,7 @@ public final class Errors {
             String... args) {
         MessageFormat format = new MessageFormat(realm.message(key), realm.getLocale());
         String message = format.format(args);
-        Scriptable nativeError = realm.getIntrinsic(constructor);
+        ScriptObject nativeError = realm.getIntrinsic(constructor);
         return ((Constructor) nativeError).construct(message);
     }
 

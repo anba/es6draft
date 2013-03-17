@@ -42,8 +42,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.2.3 Properties of the Object Constructor
  * </ul>
  */
-public class ObjectConstructor extends OrdinaryObject implements Scriptable, Callable, Constructor,
-        Initialisable {
+public class ObjectConstructor extends OrdinaryObject implements ScriptObject, Callable,
+        Constructor, Initialisable {
     public ObjectConstructor(Realm realm) {
         super(realm);
     }
@@ -130,7 +130,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            Scriptable proto = Type.objectValue(o).getPrototype();
+            ScriptObject proto = Type.objectValue(o).getPrototype();
             if (proto != null) {
                 return proto;
             }
@@ -176,8 +176,8 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!(Type.isObject(o) || Type.isNull(o))) {
                 throw throwTypeError(realm, Messages.Key.NotObjectOrNull);
             }
-            Scriptable proto = Type.isObject(o) ? Type.objectValue(o) : null;
-            Scriptable obj = ObjectCreate(realm, proto);
+            ScriptObject proto = Type.isObject(o) ? Type.objectValue(o) : null;
+            ScriptObject obj = ObjectCreate(realm, proto);
             if (!Type.isUndefined(properties)) {
                 return ObjectDefineProperties(realm, obj, properties);
             }
@@ -333,8 +333,8 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(source)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            Scriptable _target = Type.objectValue(target);
-            Scriptable _source = Type.objectValue(source);
+            ScriptObject _target = Type.objectValue(target);
+            ScriptObject _source = Type.objectValue(source);
             ScriptException pendingException = null;
             List<Object> keys = GetOwnEnumerableKeys(realm, _source);
             for (Object key : keys) {
@@ -384,8 +384,8 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
             if (!Type.isObject(source)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            Scriptable _target = Type.objectValue(target);
-            Scriptable _source = Type.objectValue(source);
+            ScriptObject _target = Type.objectValue(target);
+            ScriptObject _source = Type.objectValue(source);
             ScriptException pendingException = null;
             List<Object> keys = GetOwnEnumerableKeys(realm, _source);
             for (Object key : keys) {
@@ -430,12 +430,12 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
      * <p>
      * Runtime Semantics: ObjectDefineProperties Abstract Operation
      */
-    public static Scriptable ObjectDefineProperties(Realm realm, Object o, Object properties) {
+    public static ScriptObject ObjectDefineProperties(Realm realm, Object o, Object properties) {
         if (!Type.isObject(o)) {
             throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
-        Scriptable obj = Type.objectValue(o);
-        Scriptable props = ToObject(realm, properties);
+        ScriptObject obj = Type.objectValue(o);
+        ScriptObject props = ToObject(realm, properties);
         // FIXME: spec bug ('keys of each enumerable own property' -> string/symbol/private ?)
         List<String> names = GetOwnPropertyKeys(realm, props);
         List<PropertyDescriptor> descriptors = new ArrayList<>();
@@ -465,7 +465,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
     /**
      * Returns a list of all enumerable, non-private own property keys
      */
-    private static List<Object> GetOwnEnumerableKeys(Realm realm, Scriptable object) {
+    private static List<Object> GetOwnEnumerableKeys(Realm realm, ScriptObject object) {
         List<Object> ownKeys = new ArrayList<>();
         Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys());
         while (keys.hasNext()) {
@@ -494,8 +494,8 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
      * Returns {@code desc} with [[Value]] resp. [[Get]] and [[Set]] super-rebound from
      * {@code source} to {@code target}
      */
-    private static PropertyDescriptor fromDescriptor(PropertyDescriptor desc, Scriptable source,
-            Scriptable target) {
+    private static PropertyDescriptor fromDescriptor(PropertyDescriptor desc, ScriptObject source,
+            ScriptObject target) {
         if (desc.isDataDescriptor()) {
             Object value = desc.getValue();
             if (isSuperBoundTo(value, source)) {
@@ -518,9 +518,9 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
     /**
      * Returns <code>true</code> if {@code value} is super-bound to {@code source}
      */
-    private static boolean isSuperBoundTo(Object value, Scriptable source) {
+    private static boolean isSuperBoundTo(Object value, ScriptObject source) {
         if (value instanceof com.github.anba.es6draft.runtime.types.Function) {
-            Scriptable homeObject = ((com.github.anba.es6draft.runtime.types.Function) value)
+            ScriptObject homeObject = ((com.github.anba.es6draft.runtime.types.Function) value)
                     .getHome();
             return (homeObject == source);
         }
@@ -530,7 +530,7 @@ public class ObjectConstructor extends OrdinaryObject implements Scriptable, Cal
     /**
      * Super-binds {@code value} to {@code target}
      */
-    private static Callable superBindTo(Object value, Scriptable target) {
+    private static Callable superBindTo(Object value, ScriptObject target) {
         if (value instanceof Generator) {
             Generator gen = (Generator) value;
             return GeneratorCreate(gen.getRealm(), gen.getFunctionKind(), gen.getFunction(),
