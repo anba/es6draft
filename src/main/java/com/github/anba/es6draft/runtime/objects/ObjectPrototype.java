@@ -26,15 +26,18 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -89,7 +92,8 @@ public class ObjectPrototype extends OrdinaryObject implements ScriptObject, Ini
                 builtinTag = "String";
             } else if (o instanceof ExoticArguments) {
                 builtinTag = "Arguments";
-            } else if (o instanceof Callable) {
+            } else if (o instanceof OrdinaryFunction || o instanceof OrdinaryGenerator
+                    || o instanceof BuiltinFunction || o instanceof ExoticBoundFunction) {
                 builtinTag = "Function";
             } else if (o instanceof ErrorObject) {
                 builtinTag = "Error";
