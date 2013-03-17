@@ -32,6 +32,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -101,7 +102,7 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
             if (Type.isObject(replacer)) {
                 if (IsCallable(replacer)) {
                     replacerFunction = (Callable) replacer;
-                } else if (Type.objectValue(replacer).getBuiltinBrand() == BuiltinBrand.BuiltinArray) {
+                } else if (replacer instanceof ExoticArray) {
                     // https://bugs.ecmascript.org/show_bug.cgi?id=170
                     propertyList = new LinkedHashSet<>();
                     ScriptObject objReplacer = Type.objectValue(replacer);
@@ -164,7 +165,7 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
         Object val = Get(holder, name);
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
-            if (objVal.getBuiltinBrand() == BuiltinBrand.BuiltinArray) {
+            if (objVal instanceof ExoticArray) {
                 long len = ToUint32(realm, Get(objVal, "length"));
                 for (long i = 0; i < len; ++i) {
                     Object newElement = Walk(realm, reviver, objVal, ToString(i));
@@ -228,7 +229,7 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
             return isFinite(Type.numberValue(value)) ? ToFlatString(realm, value) : "null";
         case Object:
             if (!IsCallable(value)) {
-                if (Type.objectValue(value).getBuiltinBrand() == BuiltinBrand.BuiltinArray) {
+                if (value instanceof ExoticArray) {
                     return JA(realm, stack, propertyList, replacerFunction, indent, gap,
                             Type.objectValue(value));
                 } else {

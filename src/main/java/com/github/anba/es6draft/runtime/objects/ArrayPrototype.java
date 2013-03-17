@@ -28,13 +28,13 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.ArrayIterationKind;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -131,7 +131,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             System.arraycopy(items, 0, items, 1, itemsLength);
             items[0] = o;
             for (Object item : items) {
-                if (BuiltinBrand.hasBuiltinBrand(item, BuiltinBrand.BuiltinArray)) {
+                if (item instanceof ExoticArray) {
                     assert item instanceof ScriptObject;
                     ScriptObject e = (ScriptObject) item;
                     long len = ToUint32(realm, Get(e, "length"));

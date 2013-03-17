@@ -38,11 +38,11 @@ import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * Simple REPL
@@ -192,7 +192,7 @@ public class Repl {
             }
             stack.add(objValue);
             try {
-                if (objValue.getBuiltinBrand() == BuiltinBrand.BuiltinArray) {
+                if (objValue instanceof ExoticArray) {
                     return arrayToSource(realm, stack, objValue);
                 } else {
                     return objectToSource(realm, stack, objValue);
