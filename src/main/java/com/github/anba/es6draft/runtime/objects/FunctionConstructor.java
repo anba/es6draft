@@ -18,7 +18,6 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -98,14 +97,8 @@ public class FunctionConstructor extends OrdinaryObject implements Scriptable, C
         }
 
         Script script = script(realm(), p, bodyText);
-        return evaluate(realm(), script);
-    }
-
-    private static Object evaluate(Realm realm, Script script) {
-        LexicalEnvironment lexEnv = realm.getGlobalEnv();
-        LexicalEnvironment varEnv = realm.getGlobalEnv();
-        ExecutionContext evalCxt = ExecutionContext.newEvalExecutionContext(realm, lexEnv, varEnv);
-        return script.evaluate(evalCxt);
+        ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(realm());
+        return script.evaluate(scriptCxt);
     }
 
     private static Script script(Realm realm, CharSequence p, CharSequence bodyText) {
