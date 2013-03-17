@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -41,8 +42,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.4.3 Properties of the Array Constructor
  * </ul>
  */
-public class ArrayConstructor extends OrdinaryObject implements ScriptObject, Callable,
-        Constructor, Initialisable {
+public class ArrayConstructor extends OrdinaryObject implements BuiltinFunction, Constructor,
+        Initialisable {
     public ArrayConstructor(Realm realm) {
         super(realm);
     }

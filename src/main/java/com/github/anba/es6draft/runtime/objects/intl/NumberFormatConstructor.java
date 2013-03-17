@@ -35,11 +35,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -49,7 +49,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>11.2 Properties of the Intl.NumberFormat Constructor
  * </ul>
  */
-public class NumberFormatConstructor extends OrdinaryObject implements ScriptObject, Callable,
+public class NumberFormatConstructor extends OrdinaryObject implements BuiltinFunction,
         Constructor, Initialisable {
     /**
      * [[availableLocales]]

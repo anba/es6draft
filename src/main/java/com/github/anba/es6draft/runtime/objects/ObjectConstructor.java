@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.*;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -42,8 +43,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.2.3 Properties of the Object Constructor
  * </ul>
  */
-public class ObjectConstructor extends OrdinaryObject implements ScriptObject, Callable,
-        Constructor, Initialisable {
+public class ObjectConstructor extends OrdinaryObject implements BuiltinFunction, Constructor,
+        Initialisable {
     public ObjectConstructor(Realm realm) {
         super(realm);
     }

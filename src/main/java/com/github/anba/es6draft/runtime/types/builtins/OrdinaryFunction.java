@@ -155,7 +155,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * 13.6.3 The [[ThrowTypeError]] Function Object
      */
-    private static class TypeErrorThrower extends OrdinaryObject implements Callable {
+    private static class TypeErrorThrower extends OrdinaryObject implements BuiltinFunction {
         TypeErrorThrower(Realm realm) {
             super(realm);
         }

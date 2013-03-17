@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -38,8 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.3.5 Properties of Function Instances
  * </ul>
  */
-public class FunctionPrototype extends OrdinaryObject implements ScriptObject, Callable,
-        Initialisable {
+public class FunctionPrototype extends OrdinaryObject implements BuiltinFunction, Initialisable {
     public FunctionPrototype(Realm realm) {
         super(realm);
     }

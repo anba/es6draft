@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -104,7 +105,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
         return "";
     }
 
-    private static class FormatFunction extends OrdinaryObject implements Callable {
+    private static class FormatFunction extends OrdinaryObject implements BuiltinFunction {
         private static final String NAME = "format";
         private static final int ARITY = 0;
 

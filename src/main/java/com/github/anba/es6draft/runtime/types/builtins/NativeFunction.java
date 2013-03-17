@@ -13,12 +13,10 @@ import java.lang.invoke.MethodHandle;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinBrand;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>8 Types</h1><br>
@@ -27,7 +25,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>8.4.7 Built-in Function Objects
  * </ul>
  */
-public class NativeFunction extends OrdinaryObject implements ScriptObject, Callable {
+public class NativeFunction extends OrdinaryObject implements BuiltinFunction {
     private final String name;
     // (Object, Object[]) -> Object
     private final MethodHandle mh;

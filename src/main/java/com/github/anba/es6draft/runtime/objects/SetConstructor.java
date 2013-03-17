@@ -29,9 +29,9 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -43,7 +43,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.16.3 Properties of the Set Constructor
  * </ul>
  */
-public class SetConstructor extends OrdinaryObject implements ScriptObject, Callable, Constructor,
+public class SetConstructor extends OrdinaryObject implements BuiltinFunction, Constructor,
         Initialisable {
     public SetConstructor(Realm realm) {
         super(realm);
