@@ -41,6 +41,7 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
@@ -186,6 +187,9 @@ public class Repl {
             }
             if (IsCallable(objValue)) {
                 return ((Callable) objValue).toSource();
+            }
+            if (objValue instanceof Symbol) {
+                return ((Symbol) objValue).toString();
             }
             if (stack.contains(objValue)) {
                 return "« ... »";
