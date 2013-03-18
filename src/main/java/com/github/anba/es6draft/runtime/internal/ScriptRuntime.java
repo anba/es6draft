@@ -607,7 +607,10 @@ public final class ScriptRuntime {
         assert envRec instanceof FunctionEnvironmentRecord;
         Object actualThis = envRec.getThisBinding();
         ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
-        CheckObjectCoercible(cx.getRealm(), baseValue);
+        // CheckObjectCoercible(cx.getRealm(), baseValue);
+        if (baseValue == null) {
+            throw throwTypeError(cx.getRealm(), Messages.Key.UndefinedOrNull);
+        }
         if (propertyKey == null) {
             propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
         }
