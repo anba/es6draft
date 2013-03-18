@@ -611,7 +611,7 @@ public final class ScriptRuntime {
         if (propertyKey == null) {
             propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
         }
-        return new Reference.SuperReference(baseValue, propertyKey, strict, actualThis);
+        return new Reference.SuperNameReference(baseValue, propertyKey, strict, actualThis);
     }
 
     /**
@@ -637,19 +637,26 @@ public final class ScriptRuntime {
                 throw throwReferenceError(realm, Messages.Key.SuperDelete);
             }
             ScriptObject obj = ToObject(realm, ref.getBase());
-            boolean deleteStatus = obj.delete(ref.getReferencedName());
+            boolean deleteStatus;
+            Object referencedName = ref.getReferencedName();
+            if (referencedName instanceof String) {
+                deleteStatus = obj.delete((String) referencedName);
+            } else {
+                deleteStatus = obj.delete((Symbol) referencedName);
+            }
             if (!deleteStatus && ref.isStrictReference()) {
                 // FIXME: spec bug (typing 'typeError')
-                throw throwTypeError(realm, Messages.Key.PropertyNotDeletable,
-                        ref.getReferencedName());
+                throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, ref
+                        .getReferencedName().toString());
             }
             // FIXME: spec bug (return value)
             return deleteStatus;
         }
         /* step 6 */
-        assert ref.getBase() instanceof EnvironmentRecord;
-        EnvironmentRecord bindings = (EnvironmentRecord) ref.getBase();
-        return bindings.deleteBinding(ref.getReferencedName());
+        assert ref instanceof Reference.IdentifierReference;
+        Reference.IdentifierReference idref = (Reference.IdentifierReference) ref;
+        EnvironmentRecord bindings = idref.getBase();
+        return bindings.deleteBinding(idref.getReferencedName());
     }
 
     /**
@@ -991,7 +998,7 @@ public final class ScriptRuntime {
         /* step 7 */
         CheckObjectCoercible(realm, baseValue);
         /* step 8-10 */
-        return new Reference.PropertyReference(baseValue, propertyNameString, strict);
+        return new Reference.PropertyNameReference(baseValue, propertyNameString, strict);
     }
 
     /**
@@ -1006,9 +1013,12 @@ public final class ScriptRuntime {
         /* step 7 */
         CheckObjectCoercible(realm, baseValue);
         /* step 8 */
-        String propertyNameString = ToFlatString(realm, propertyNameValue);
+        Object propertyKey = ToPropertyKey(realm, propertyNameValue);
         /* step 9-10 */
-        return new Reference.PropertyReference(baseValue, propertyNameString, strict);
+        if (propertyKey instanceof String) {
+            return new Reference.PropertyNameReference(baseValue, (String) propertyKey, strict);
+        }
+        return new Reference.PropertySymbolReference(baseValue, (Symbol) propertyKey, strict);
     }
 
     /**

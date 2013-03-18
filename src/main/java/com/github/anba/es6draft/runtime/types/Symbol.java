@@ -15,4 +15,7 @@ package com.github.anba.es6draft.runtime.types;
  */
 public interface Symbol {
     boolean isPrivate();
+
+    @Override
+    public String toString();
 }
