@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.CompletePropertyDescriptor;
@@ -18,9 +15,12 @@ import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToProper
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.IsCompatiblePropertyDescriptor;
 
+import java.util.Arrays;
+
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -34,7 +34,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>8.5 Proxy Object Internal Methods and Internal Data Properties
  * </ul>
  */
-public class ExoticProxy implements ScriptObject {
+public class ExoticProxy implements ScriptObject, Callable, Constructor {
     private Realm realm;
 
     /**
@@ -600,4 +600,38 @@ public class ExoticProxy implements ScriptObject {
         return Type.objectValue(trapResult);
     }
 
+    /**
+     * 8.5.14 [[Call]] (thisArgument, argumentsList)
+     */
+    @Override
+    public Object call(Object thisValue, Object... args) {
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
+        Callable trap = GetMethod(realm, handler, "apply");
+        if (trap == null) {
+            return ((Callable) target).call(thisValue, args);
+        }
+        ScriptObject argArray = CreateArrayFromList(realm, Arrays.asList(args));
+        return trap.call(handler, target, thisValue, argArray);
+    }
+
+    @Override
+    public String toSource() {
+        return "";
+    }
+
+    /**
+     * 8.5.15 [[Construct]] Internal Method
+     */
+    @Override
+    public Object construct(Object... args) {
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
+        Callable trap = GetMethod(realm, handler, "construct");
+        if (trap == null) {
+            return ((Constructor) target).construct(args);
+        }
+        ScriptObject argArray = CreateArrayFromList(realm, Arrays.asList(args));
+        return trap.call(handler, target, argArray);
+    }
 }
