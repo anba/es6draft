@@ -108,11 +108,11 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         /**
          * Abstract operation thisTimeValue(value)
          */
-        private static DateObject thisTimeValue(Realm realm, Object object) {
+        private static double thisTimeValue(Realm realm, Object object) {
             if (object instanceof DateObject) {
                 DateObject obj = (DateObject) object;
                 if (obj.isInitialised()) {
-                    return obj;
+                    return obj.getDateValue();
                 }
             }
             throw throwTypeError(realm, Messages.Key.IncompatibleObject);
@@ -123,7 +123,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
 
         @Function(name = "toSource", arity = 0)
         public static Object toSource(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             return new StringBuilder().append("(new Date(").append(ToString(t)).append("))")
                     .toString();
         }
@@ -139,7 +139,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
@@ -152,7 +152,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "toDateString", arity = 0)
         public static Object toDateString(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
@@ -164,7 +164,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "toTimeString", arity = 0)
         public static Object toTimeString(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
@@ -176,7 +176,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
@@ -188,7 +188,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "toLocaleDateString", arity = 0)
         public static Object toLocaleDateString(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
@@ -200,7 +200,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "toLocaleTimeString", arity = 0)
         public static Object toLocaleTimeString(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
@@ -212,7 +212,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(Realm realm, Object thisValue) {
-            return thisTimeValue(realm, thisValue).getDateValue();
+            return thisTimeValue(realm, thisValue);
         }
 
         /**
@@ -220,7 +220,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getTime", arity = 0)
         public static Object getTime(Realm realm, Object thisValue) {
-            return thisTimeValue(realm, thisValue).getDateValue();
+            return thisTimeValue(realm, thisValue);
         }
 
         /**
@@ -228,7 +228,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getFullYear", arity = 0)
         public static Object getFullYear(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -240,7 +240,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getUTCFullYear", arity = 0)
         public static Object getUTCFullYear(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -252,7 +252,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getMonth", arity = 0)
         public static Object getMonth(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -264,7 +264,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getUTCMonth", arity = 0)
         public static Object getUTCMonth(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -276,7 +276,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getDate", arity = 0)
         public static Object getDate(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -288,7 +288,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getUTCDate", arity = 0)
         public static Object getUTCDate(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -300,7 +300,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getDay", arity = 0)
         public static Object getDay(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -312,7 +312,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getUTCDay", arity = 0)
         public static Object getUTCDay(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -324,7 +324,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getHours", arity = 0)
         public static Object getHours(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -336,7 +336,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getUTCHours", arity = 0)
         public static Object getUTCHours(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -348,7 +348,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getMinutes", arity = 0)
         public static Object getMinutes(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -360,7 +360,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getUTCMinutes", arity = 0)
         public static Object getUTCMinutes(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -372,7 +372,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getSeconds", arity = 0)
         public static Object getSeconds(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -384,7 +384,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getUTCSeconds", arity = 0)
         public static Object getUTCSeconds(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -396,7 +396,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getMilliseconds", arity = 0)
         public static Object getMilliseconds(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -408,7 +408,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getUTCMilliseconds", arity = 0)
         public static Object getUTCMilliseconds(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -420,7 +420,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getTimezoneOffset", arity = 0)
         public static Object getTimezoneOffset(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -435,7 +435,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
             // just to trigger type and initialisation test
             thisTimeValue(realm, thisValue);
             double v = TimeClip(ToNumber(realm, time));
-            thisTimeValue(realm, thisValue).setDateValue(v);
+            ((DateObject) thisValue).setDateValue(v);
             return v;
         }
 
@@ -444,11 +444,11 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "setMilliseconds", arity = 1)
         public static Object setMilliseconds(Realm realm, Object thisValue, Object ms) {
-            double t = LocalTime(realm, thisTimeValue(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, thisTimeValue(realm, thisValue));
             double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t),
                     ToNumber(realm, ms));
             double u = TimeClip(UTC(realm, MakeDate(Day(t), time)));
-            thisTimeValue(realm, thisValue).setDateValue(u);
+            ((DateObject) thisValue).setDateValue(u);
             return u;
         }
 
@@ -457,11 +457,11 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "setUTCMilliseconds", arity = 1)
         public static Object setUTCMilliseconds(Realm realm, Object thisValue, Object ms) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             double time = MakeTime(HourFromTime(t), MinFromTime(t), SecFromTime(t),
                     ToNumber(realm, ms));
             double v = TimeClip(MakeDate(Day(t), time));
-            thisTimeValue(realm, thisValue).setDateValue(v);
+            ((DateObject) thisValue).setDateValue(v);
             return v;
         }
 
@@ -471,12 +471,12 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         @Function(name = "setSeconds", arity = 2)
         public static Object setSeconds(Realm realm, Object thisValue, Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            double t = LocalTime(realm, thisTimeValue(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, thisTimeValue(realm, thisValue));
             double s = ToNumber(realm, sec);
             double milli = (ms == null ? msFromTime(t) : ToNumber(realm, ms));
             double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
             double u = TimeClip(UTC(realm, date));
-            thisTimeValue(realm, thisValue).setDateValue(u);
+            ((DateObject) thisValue).setDateValue(u);
             return u;
         }
 
@@ -486,12 +486,12 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         @Function(name = "setUTCSeconds", arity = 2)
         public static Object setUTCSeconds(Realm realm, Object thisValue, Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             double s = ToNumber(realm, sec);
             double milli = (ms == null ? msFromTime(t) : ToNumber(realm, ms));
             double date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
             double v = TimeClip(date);
-            thisTimeValue(realm, thisValue).setDateValue(v);
+            ((DateObject) thisValue).setDateValue(v);
             return v;
         }
 
@@ -502,13 +502,13 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         public static Object setMinutes(Realm realm, Object thisValue, Object min,
                 @Optional(Optional.Default.NONE) Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            double t = LocalTime(realm, thisTimeValue(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, thisTimeValue(realm, thisValue));
             double m = ToNumber(realm, min);
             double s = (sec == null ? SecFromTime(t) : ToNumber(realm, sec));
             double milli = (ms == null ? msFromTime(t) : ToNumber(realm, ms));
             double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
             double u = TimeClip(UTC(realm, date));
-            thisTimeValue(realm, thisValue).setDateValue(u);
+            ((DateObject) thisValue).setDateValue(u);
             return u;
         }
 
@@ -519,13 +519,13 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         public static Object setUTCMinutes(Realm realm, Object thisValue, Object min,
                 @Optional(Optional.Default.NONE) Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             double m = ToNumber(realm, min);
             double s = (sec == null ? SecFromTime(t) : ToNumber(realm, sec));
             double milli = (ms == null ? msFromTime(t) : ToNumber(realm, ms));
             double date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
             double v = TimeClip(date);
-            thisTimeValue(realm, thisValue).setDateValue(v);
+            ((DateObject) thisValue).setDateValue(v);
             return v;
         }
 
@@ -537,14 +537,14 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
                 @Optional(Optional.Default.NONE) Object min,
                 @Optional(Optional.Default.NONE) Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            double t = LocalTime(realm, thisTimeValue(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, thisTimeValue(realm, thisValue));
             double h = ToNumber(realm, hour);
             double m = (min == null ? MinFromTime(t) : ToNumber(realm, min));
             double s = (sec == null ? SecFromTime(t) : ToNumber(realm, sec));
             double milli = (ms == null ? msFromTime(t) : ToNumber(realm, ms));
             double date = MakeDate(Day(t), MakeTime(h, m, s, milli));
             double u = TimeClip(UTC(realm, date));
-            thisTimeValue(realm, thisValue).setDateValue(u);
+            ((DateObject) thisValue).setDateValue(u);
             return u;
         }
 
@@ -556,14 +556,14 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
                 @Optional(Optional.Default.NONE) Object min,
                 @Optional(Optional.Default.NONE) Object sec,
                 @Optional(Optional.Default.NONE) Object ms) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             double h = ToNumber(realm, hour);
             double m = (min == null ? MinFromTime(t) : ToNumber(realm, min));
             double s = (sec == null ? SecFromTime(t) : ToNumber(realm, sec));
             double milli = (ms == null ? msFromTime(t) : ToNumber(realm, ms));
             double newDate = MakeDate(Day(t), MakeTime(h, m, s, milli));
             double v = TimeClip(newDate);
-            thisTimeValue(realm, thisValue).setDateValue(v);
+            ((DateObject) thisValue).setDateValue(v);
             return v;
         }
 
@@ -572,12 +572,12 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "setDate", arity = 1)
         public static Object setDate(Realm realm, Object thisValue, Object date) {
-            double t = LocalTime(realm, thisTimeValue(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, thisTimeValue(realm, thisValue));
             double dt = ToNumber(realm, date);
             double newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), dt),
                     TimeWithinDay(t));
             double u = TimeClip(UTC(realm, newDate));
-            thisTimeValue(realm, thisValue).setDateValue(u);
+            ((DateObject) thisValue).setDateValue(u);
             return u;
         }
 
@@ -586,12 +586,12 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "setUTCDate", arity = 1)
         public static Object setUTCDate(Realm realm, Object thisValue, Object date) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             double dt = ToNumber(realm, date);
             double newDate = MakeDate(MakeDay(YearFromTime(t), MonthFromTime(t), dt),
                     TimeWithinDay(t));
             double v = TimeClip(newDate);
-            thisTimeValue(realm, thisValue).setDateValue(v);
+            ((DateObject) thisValue).setDateValue(v);
             return v;
         }
 
@@ -601,12 +601,12 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         @Function(name = "setMonth", arity = 2)
         public static Object setMonth(Realm realm, Object thisValue, Object month,
                 @Optional(Optional.Default.NONE) Object date) {
-            double t = LocalTime(realm, thisTimeValue(realm, thisValue).getDateValue());
+            double t = LocalTime(realm, thisTimeValue(realm, thisValue));
             double m = ToNumber(realm, month);
             double dt = (date == null ? DateFromTime(t) : ToNumber(realm, date));
             double newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
             double u = TimeClip(UTC(realm, newDate));
-            thisTimeValue(realm, thisValue).setDateValue(u);
+            ((DateObject) thisValue).setDateValue(u);
             return u;
         }
 
@@ -616,12 +616,12 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         @Function(name = "setUTCMonth", arity = 2)
         public static Object setUTCMonth(Realm realm, Object thisValue, Object month,
                 @Optional(Optional.Default.NONE) Object date) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             double m = ToNumber(realm, month);
             double dt = (date == null ? DateFromTime(t) : ToNumber(realm, date));
             double newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
             double v = TimeClip(newDate);
-            thisTimeValue(realm, thisValue).setDateValue(v);
+            ((DateObject) thisValue).setDateValue(v);
             return v;
         }
 
@@ -632,14 +632,14 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         public static Object setFullYear(Realm realm, Object thisValue, Object year,
                 @Optional(Optional.Default.NONE) Object month,
                 @Optional(Optional.Default.NONE) Object date) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             t = Double.isNaN(t) ? +0 : LocalTime(realm, t);
             double y = ToNumber(realm, year);
             double m = (month == null ? MonthFromTime(t) : ToNumber(realm, month));
             double dt = (date == null ? DateFromTime(t) : ToNumber(realm, date));
             double newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
             double u = TimeClip(UTC(realm, newDate));
-            thisTimeValue(realm, thisValue).setDateValue(u);
+            ((DateObject) thisValue).setDateValue(u);
             return u;
         }
 
@@ -650,7 +650,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         public static Object setUTCFullYear(Realm realm, Object thisValue, Object year,
                 @Optional(Optional.Default.NONE) Object month,
                 @Optional(Optional.Default.NONE) Object date) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 t = +0;
             }
@@ -659,7 +659,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
             double dt = (date == null ? DateFromTime(t) : ToNumber(realm, date));
             double newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
             double v = TimeClip(newDate);
-            thisTimeValue(realm, thisValue).setDateValue(v);
+            ((DateObject) thisValue).setDateValue(v);
             return v;
         }
 
@@ -668,7 +668,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "toUTCString", arity = 0)
         public static Object toUTCString(Realm realm, Object thisValue) {
-            double dateValue = thisTimeValue(realm, thisValue).getDateValue();
+            double dateValue = thisTimeValue(realm, thisValue);
             if (Double.isNaN(dateValue)) {
                 return "Invalid Date";
             }
@@ -680,7 +680,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "toISOString", arity = 0)
         public static Object toISOString(Realm realm, Object thisValue) {
-            double dateValue = thisTimeValue(realm, thisValue).getDateValue();
+            double dateValue = thisTimeValue(realm, thisValue);
             if (!isFinite(dateValue)) {
                 throw throwRangeError(realm, Messages.Key.InvalidDateValue);
             }
@@ -732,7 +732,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "getYear", arity = 0)
         public static Object getYear(Realm realm, Object thisValue) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             if (Double.isNaN(t)) {
                 return Double.NaN;
             }
@@ -744,19 +744,19 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
          */
         @Function(name = "setYear", arity = 1)
         public static Object setYear(Realm realm, Object thisValue, Object year) {
-            double t = thisTimeValue(realm, thisValue).getDateValue();
+            double t = thisTimeValue(realm, thisValue);
             t = Double.isNaN(t) ? +0 : LocalTime(realm, t);
             double y = ToNumber(realm, year);
             if (Double.isNaN(y)) {
-                thisTimeValue(realm, thisValue).setDateValue(Double.NaN);
+                ((DateObject) thisValue).setDateValue(Double.NaN);
                 return Double.NaN;
             }
             double intYear = ToInteger(y);
             double yyyy = (0 <= intYear && intYear <= 99 ? intYear + 1900 : y);
             double d = MakeDay(yyyy, MonthFromTime(t), DateFromTime(t));
             double date = UTC(realm, MakeDate(d, TimeWithinDay(t)));
-            thisTimeValue(realm, thisValue).setDateValue(TimeClip(date));
-            return thisTimeValue(realm, thisValue).getDateValue();
+            ((DateObject) thisValue).setDateValue(TimeClip(date));
+            return ((DateObject) thisValue).getDateValue();
         }
     }
 }
