@@ -7,6 +7,8 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.MakeListIterator;
+import static java.util.Collections.emptyIterator;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
@@ -204,7 +206,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
     @Override
     public ScriptObject enumerate(Realm realm) {
         // FIXME: spec incomplete
-        throw new IllegalStateException("NYI");
+        return MakeListIterator(realm, emptyIterator());
     }
 
     /**
@@ -213,6 +215,6 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
     @Override
     public ScriptObject ownPropertyKeys(Realm realm) {
         // FIXME: spec incomplete
-        throw new IllegalStateException("NYI");
+        return MakeListIterator(realm, emptyIterator());
     }
 }
