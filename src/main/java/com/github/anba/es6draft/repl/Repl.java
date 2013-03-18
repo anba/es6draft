@@ -133,7 +133,9 @@ public class Repl {
      */
     private void print(Realm realm, Object result) {
         try {
-            console.writer().println(ToSource(realm, result));
+            if (result != UNDEFINED) {
+                console.writer().println(ToSource(realm, result));
+            }
         } catch (ScriptException e) {
             console.printf("uncaught exception: %s\n", e.getMessage());
         }
