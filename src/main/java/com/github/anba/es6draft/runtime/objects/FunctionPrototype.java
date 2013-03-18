@@ -86,7 +86,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
-            if (!(thisValue instanceof Callable)) {
+            if (!IsCallable(thisValue)) {
                 throw throwTypeError(realm, Messages.Key.IncompatibleObject);
             }
             return ((Callable) thisValue).toSource();
