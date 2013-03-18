@@ -59,11 +59,7 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
     private SynchronousQueue<Object> in;
 
     public GeneratorObject(Realm realm, Generator generator, ExecutionContext context) {
-        super(realm);
-        this.code = generator.getCode();
-        this.context = context;
-        this.in = new SynchronousQueue<>();
-        this.out = new SynchronousQueue<>();
+        this(realm, generator.getCode(), context);
     }
 
     public GeneratorObject(Realm realm, RuntimeInfo.Code code, ExecutionContext context) {

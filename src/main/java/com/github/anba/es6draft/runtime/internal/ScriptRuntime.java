@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceErr
 import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
+import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteStrictArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.InstantiateArgumentsObject;
@@ -34,7 +35,6 @@ import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.Function.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
@@ -49,14 +49,6 @@ public final class ScriptRuntime {
     public static final Object[] EMPTY_ARRAY = new Object[0];
 
     private ScriptRuntime() {
-    }
-
-    /**
-     * 8.2.4.2 PutValue (V, W)
-     */
-    public static Object PutValue(Object v, Object w, Realm realm) {
-        Reference.PutValue(v, w, realm);
-        return w;
     }
 
     /**
@@ -268,10 +260,15 @@ public final class ScriptRuntime {
         Object completionValue = UNDEFINED;
 
         Realm realm = cx.getRealm();
+        // super()
         Reference ref = MakeSuperReference(cx, null, true);
+        // EvaluateCall: super(...args)
         Object func = ref.GetValue(realm);
-        Object[] args = SpreadArray(cx.identifierValue("args", true), realm);
-        Reference.GetValue(EvaluateCall(ref, func, args, realm), realm);
+        Object[] argList = SpreadArray(cx.identifierValue("args", true), realm);
+        Callable f = CheckCallable(func, realm);
+        Object thisValue = GetCallThisValue(ref, realm);
+        Object result = f.call(thisValue, argList);
+        GetValue(result, realm);
 
         return completionValue;
     }
@@ -599,44 +596,6 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 11.2.3 Function Calls: EvaluateCall
-     */
-    public static Object EvaluateCall(Object ref, Object func, Object[] args, Realm realm) {
-        /* step 1-4 (compiled code) */
-        /* step 5-6 */
-        Callable f = CheckCallable(func, realm);
-        /* step 7-8 */
-        Object thisValue = GetCallThisValue(ref, realm);
-        /* step 10 */
-        Object result = f.call(thisValue, args);
-        /* step 12 */
-        return result;
-    }
-
-    /**
-     * 11.2.3 Function Calls: EvaluateCall
-     */
-    public static Object EvaluateEvalCall(Object ref, Object func, Object[] args,
-            ExecutionContext cx, boolean strict, boolean global) {
-        Realm realm = cx.getRealm();
-        /* step 1-4 (compiled code) */
-        /* step 5-6 */
-        Callable f = CheckCallable(func, realm);
-
-        if (IsBuiltinEval(ref, f, realm)) {
-            Object x = args.length > 0 ? args[0] : Undefined.UNDEFINED;
-            return Eval.directEval(x, cx, strict, global);
-        }
-
-        /* step 7-8 */
-        Object thisValue = GetCallThisValue(ref, realm);
-        /* step 10 */
-        Object result = f.call(thisValue, args);
-        /* step 12 */
-        return result;
-    }
-
-    /**
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      */
     public static Reference MakeSuperReference(ExecutionContext cx, String propertyKey,
@@ -698,10 +657,11 @@ public final class ScriptRuntime {
      */
     public static String typeof(Object val, Realm realm) {
         if (val instanceof Reference) {
-            if (((Reference) val).isUnresolvableReference()) {
+            Reference ref = (Reference) val;
+            if (ref.isUnresolvableReference()) {
                 return "undefined";
             }
-            val = ((Reference) val).GetValue(realm);
+            val = ref.GetValue(realm);
         }
         switch (Type.of(val)) {
         case Undefined:
@@ -974,13 +934,6 @@ public final class ScriptRuntime {
         // FIXME: spec bug (call abstract operation RegExpCreate?!)
         Constructor ctor = (Constructor) realm.getIntrinsic(Intrinsics.RegExp);
         return ctor.construct(re, flags);
-    }
-
-    /**
-     * Helper function
-     */
-    public static boolean isUndefined(Object o) {
-        return Type.isUndefined(o);
     }
 
     /**
