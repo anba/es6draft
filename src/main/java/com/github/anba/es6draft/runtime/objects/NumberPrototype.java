@@ -128,11 +128,11 @@ public class NumberPrototype extends OrdinaryObject implements ScriptObject, Ini
          */
         @Function(name = "toFixed", arity = 1)
         public static Object toFixed(Realm realm, Object thisValue, Object fractionDigits) {
+            double x = thisNumberValue(realm, thisValue);
             double f = ToInteger(realm, fractionDigits);
             if (f < 0 || f > 20) {
                 throw throwRangeError(realm, Messages.Key.InvalidPrecision);
             }
-            double x = thisNumberValue(realm, thisValue);
             if (x != x) {
                 return "NaN";
             }
