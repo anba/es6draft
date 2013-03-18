@@ -25,21 +25,14 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * </ul>
  */
 public class ExoticSymbolObject implements ScriptObject, Symbol {
-
-    /**
-     * [[Private]]
-     */
-    @SuppressWarnings("unused")
-    private final Object _private;
-
-    private final boolean isPrivate;
+    /** [[Private]] */
+    private final boolean _private;
 
     private final String name;
 
-    public ExoticSymbolObject(String name, Object _private) {
+    public ExoticSymbolObject(String name, boolean _private) {
         this.name = name;
         this._private = _private;
-        this.isPrivate = true;
     }
 
     @Override
@@ -47,9 +40,12 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
         return name;
     }
 
+    /**
+     * [[Private]]
+     */
     @Override
     public boolean isPrivate() {
-        return isPrivate;
+        return _private;
     }
 
     /**
@@ -155,7 +151,6 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
     public Object get(String propertyKey, Object receiver) {
         if ("toString".equals(propertyKey)) {
             // TODO: implement
-            assert false : "NYI";
         }
         return UNDEFINED;
     }

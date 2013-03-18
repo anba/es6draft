@@ -77,7 +77,7 @@ public enum BuiltinSymbol {
         for (BuiltinSymbol builtin : values()) {
             if (builtin != NONE) {
                 String name = "@@" + builtin.name();
-                map.put(builtin, new ExoticSymbolObject(name, new Object()));
+                map.put(builtin, new ExoticSymbolObject(name, false));
             }
         }
         symbols = map;
