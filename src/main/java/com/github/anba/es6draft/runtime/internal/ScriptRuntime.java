@@ -611,7 +611,7 @@ public final class ScriptRuntime {
         if (propertyKey == null) {
             propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
         }
-        return new Reference(baseValue, propertyKey, strict, actualThis);
+        return new Reference.SuperReference(baseValue, propertyKey, strict, actualThis);
     }
 
     /**
@@ -991,7 +991,7 @@ public final class ScriptRuntime {
         /* step 7 */
         CheckObjectCoercible(realm, baseValue);
         /* step 8-10 */
-        return new Reference(baseValue, propertyNameString, strict);
+        return new Reference.PropertyReference(baseValue, propertyNameString, strict);
     }
 
     /**
@@ -1008,7 +1008,7 @@ public final class ScriptRuntime {
         /* step 8 */
         String propertyNameString = ToFlatString(realm, propertyNameValue);
         /* step 9-10 */
-        return new Reference(baseValue, propertyNameString, strict);
+        return new Reference.PropertyReference(baseValue, propertyNameString, strict);
     }
 
     /**

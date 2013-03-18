@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.Realm;
@@ -24,76 +23,320 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
  * <li>8.2.4 The Reference Specification Type
  * </ul>
  */
-public final class Reference {
-    private final Object base;
-    private final Type type;
-    private final String referencedName;
-    private final boolean strictReference;
-    private final Object thisValue;
-
-    public Reference(Object base, String referencedName, boolean strictReference) {
-        this(base, referencedName, strictReference, null);
+public abstract class Reference {
+    private Reference() {
     }
 
-    public Reference(Object base, String referencedName, boolean strictReference, Object thisValue) {
-        if (base == null) {
-            base = UNDEFINED;
+    public static final class IdentifierReference extends Reference {
+        private final EnvironmentRecord base;
+        private final String referencedName;
+        private final boolean strictReference;
+
+        public IdentifierReference(EnvironmentRecord base, String referencedName,
+                boolean strictReference) {
+            this.base = base;
+            this.referencedName = referencedName;
+            this.strictReference = strictReference;
         }
-        this.base = base;
-        this.type = (base instanceof EnvironmentRecord ? null : Type.of(base));
-        this.referencedName = referencedName;
-        this.strictReference = strictReference;
-        this.thisValue = thisValue;
+
+        @Override
+        public EnvironmentRecord getBase() {
+            return base;
+        }
+
+        @Override
+        public String getReferencedName() {
+            return referencedName;
+        }
+
+        @Override
+        public boolean isStrictReference() {
+            return strictReference;
+        }
+
+        @Override
+        public boolean hasPrimitiveBase() {
+            return false;
+        }
+
+        @Override
+        public boolean isPropertyReference() {
+            return false;
+        }
+
+        @Override
+        public boolean isUnresolvableReference() {
+            return (base == null);
+        }
+
+        @Override
+        public boolean isSuperReference() {
+            return false;
+        }
+
+        @Override
+        public Object GetValue(Realm realm) {
+            if (isUnresolvableReference()) {
+                throw throwReferenceError(realm, Messages.Key.UnresolvableReference,
+                        getReferencedName());
+            }
+            return getBase().getBindingValue(getReferencedName(), isStrictReference());
+        }
+
+        @Override
+        public void PutValue(Object w, Realm realm) {
+            assert Type.of(w) != null : "invalid value type";
+
+            if (isUnresolvableReference()) {
+                if (isStrictReference()) {
+                    throw throwReferenceError(realm, Messages.Key.UnresolvableReference,
+                            getReferencedName());
+                }
+                ScriptObject globalObj = realm.getGlobalThis(); // = GetGlobalObject()
+                Put(realm, globalObj, getReferencedName(), w, false);
+            } else {
+                getBase().setMutableBinding(getReferencedName(), w, isStrictReference());
+            }
+        }
+
+        @Override
+        public EnvironmentRecord GetThisValue(Realm realm) {
+            if (isUnresolvableReference()) {
+                throw throwReferenceError(realm, Messages.Key.UnresolvableReference,
+                        getReferencedName());
+            }
+            return getBase();
+        }
+    }
+
+    public static final class PropertyReference extends Reference {
+        private final Object base;
+        private final Type type;
+        private final String referencedName;
+        private final boolean strictReference;
+
+        public PropertyReference(Object base, String referencedName, boolean strictReference) {
+            this.base = base;
+            this.type = Type.of(base);
+            this.referencedName = referencedName;
+            this.strictReference = strictReference;
+        }
+
+        @Override
+        public Object getBase() {
+            return base;
+        }
+
+        @Override
+        public String getReferencedName() {
+            return referencedName;
+        }
+
+        @Override
+        public boolean isStrictReference() {
+            return strictReference;
+        }
+
+        @Override
+        public boolean hasPrimitiveBase() {
+            return type == Type.Boolean || type == Type.String || type == Type.Number;
+        }
+
+        @Override
+        public boolean isPropertyReference() {
+            return true;
+        }
+
+        @Override
+        public boolean isUnresolvableReference() {
+            return false;
+        }
+
+        @Override
+        public boolean isSuperReference() {
+            return false;
+        }
+
+        @Override
+        public Object GetValue(Realm realm) {
+            if (hasPrimitiveBase()) {
+                // base = ToObject(realm, base);
+                return GetValuePrimitive(realm);
+            }
+            return ((ScriptObject) getBase()).get(getReferencedName(), GetThisValue(realm));
+        }
+
+        private Object GetValuePrimitive(Realm realm) {
+            ScriptObject proto;
+            switch (type) {
+            case Boolean:
+                proto = realm.getIntrinsic(Intrinsics.BooleanPrototype);
+                break;
+            case Number:
+                proto = realm.getIntrinsic(Intrinsics.NumberPrototype);
+                break;
+            case String:
+                if ("length".equals(getReferencedName())) {
+                    CharSequence str = Type.stringValue(getBase());
+                    return str.length();
+                }
+                int index = ExoticString.toStringIndex(getReferencedName());
+                if (index >= 0) {
+                    CharSequence str = Type.stringValue(getBase());
+                    int len = str.length();
+                    if (index < len) {
+                        return str.subSequence(index, index + 1);
+                    }
+                }
+                proto = realm.getIntrinsic(Intrinsics.StringPrototype);
+                break;
+            default:
+                assert false : "invalid type";
+                return null;
+            }
+            return proto.get(getReferencedName(), getBase());
+        }
+
+        @Override
+        public void PutValue(Object w, Realm realm) {
+            assert Type.of(w) != null : "invalid value type";
+
+            Object base = getBase();
+            if (hasPrimitiveBase()) {
+                base = ToObject(realm, base);
+            }
+            boolean succeeded = ((ScriptObject) base).set(getReferencedName(), w,
+                    GetThisValue(realm));
+            if (!succeeded && isStrictReference()) {
+                throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName());
+            }
+        }
+
+        @Override
+        public Object GetThisValue(Realm realm) {
+            return getBase();
+        }
+    }
+
+    public static final class SuperReference extends Reference {
+        private final ScriptObject base;
+        private final String referencedName;
+        private final boolean strictReference;
+        private final Object thisValue;
+
+        public SuperReference(ScriptObject base, String referencedName, boolean strictReference,
+                Object thisValue) {
+            this.base = base;
+            this.referencedName = referencedName;
+            this.strictReference = strictReference;
+            this.thisValue = thisValue;
+        }
+
+        @Override
+        public ScriptObject getBase() {
+            return base;
+        }
+
+        @Override
+        public String getReferencedName() {
+            return referencedName;
+        }
+
+        @Override
+        public boolean isStrictReference() {
+            return strictReference;
+        }
+
+        @Override
+        public boolean hasPrimitiveBase() {
+            return false;
+        }
+
+        @Override
+        public boolean isPropertyReference() {
+            return true;
+        }
+
+        @Override
+        public boolean isUnresolvableReference() {
+            return false;
+        }
+
+        @Override
+        public boolean isSuperReference() {
+            return true;
+        }
+
+        @Override
+        public Object GetValue(Realm realm) {
+            return getBase().get(getReferencedName(), GetThisValue(realm));
+        }
+
+        @Override
+        public void PutValue(Object w, Realm realm) {
+            assert Type.of(w) != null : "invalid value type";
+
+            boolean succeeded = getBase().set(getReferencedName(), w, GetThisValue(realm));
+            if (!succeeded && isStrictReference()) {
+                throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName());
+            }
+        }
+
+        @Override
+        public Object GetThisValue(Realm realm) {
+            return thisValue;
+        }
     }
 
     /**
      * GetBase(V)
      */
-    public Object getBase() {
-        return base;
-    }
+    public abstract Object getBase();
 
     /**
      * GetReferencedName(V)
      */
-    public String getReferencedName() {
-        return referencedName;
-    }
+    public abstract String getReferencedName();
 
     /**
      * IsStrictReference(V)
      */
-    public boolean isStrictReference() {
-        return strictReference;
-    }
+    public abstract boolean isStrictReference();
 
     /**
      * HasPrimitiveBase(V)
      */
-    public boolean hasPrimitiveBase() {
-        return type == Type.Boolean || type == Type.String || type == Type.Number;
-    }
+    public abstract boolean hasPrimitiveBase();
 
     /**
      * IsPropertyReference(V)
      */
-    public boolean isPropertyReference() {
-        return type == Type.Object || hasPrimitiveBase();
-    }
+    public abstract boolean isPropertyReference();
 
     /**
      * IsUnresolvableReference(V)
      */
-    public boolean isUnresolvableReference() {
-        return type == Type.Undefined;
-    }
+    public abstract boolean isUnresolvableReference();
 
     /**
      * IsSuperReference(V)
      */
-    public boolean isSuperReference() {
-        return thisValue != null;
-    }
+    public abstract boolean isSuperReference();
+
+    /**
+     * [8.2.4.1] GetValue (V)
+     */
+    public abstract Object GetValue(Realm realm);
+
+    /**
+     * [8.2.4.1] PutValue (V, W)
+     */
+    public abstract void PutValue(Object w, Realm realm);
+
+    /**
+     * [8.2.4.3] GetThisValue (V)
+     */
+    public abstract Object GetThisValue(Realm realm);
 
     /**
      * [8.2.4.1] GetValue (V)
@@ -102,56 +345,6 @@ public final class Reference {
         if (!(v instanceof Reference))
             return v;
         return ((Reference) v).GetValue(realm);
-    }
-
-    /**
-     * [8.2.4.1] GetValue (V)
-     */
-    public Object GetValue(Realm realm) {
-        Object base = getBase();
-        if (isUnresolvableReference()) {
-            throw throwReferenceError(realm, Messages.Key.UnresolvableReference, referencedName);
-        } else if (isPropertyReference()) {
-            if (hasPrimitiveBase()) {
-                // base = ToObject(realm, base);
-                return GetValuePrimitive(realm);
-            }
-            return ((ScriptObject) base).get(getReferencedName(), GetThisValue(realm));
-        } else {
-            return ((EnvironmentRecord) base).getBindingValue(getReferencedName(),
-                    isStrictReference());
-        }
-    }
-
-    private Object GetValuePrimitive(Realm realm) {
-        ScriptObject proto;
-        switch (type) {
-        case Boolean:
-            proto = realm.getIntrinsic(Intrinsics.BooleanPrototype);
-            break;
-        case Number:
-            proto = realm.getIntrinsic(Intrinsics.NumberPrototype);
-            break;
-        case String:
-            if ("length".equals(getReferencedName())) {
-                CharSequence str = Type.stringValue(getBase());
-                return str.length();
-            }
-            int index = ExoticString.toStringIndex(getReferencedName());
-            if (index >= 0) {
-                CharSequence str = Type.stringValue(getBase());
-                int len = str.length();
-                if (index < len) {
-                    return str.subSequence(index, index + 1);
-                }
-            }
-            proto = realm.getIntrinsic(Intrinsics.StringPrototype);
-            break;
-        default:
-            assert false : "invalid type";
-            return null;
-        }
-        return proto.get(getReferencedName(), isSuperReference() ? thisValue : getBase());
     }
 
     /**
@@ -165,52 +358,11 @@ public final class Reference {
     }
 
     /**
-     * [8.2.4.1] PutValue (V, W)
-     */
-    public void PutValue(Object w, Realm realm) {
-        assert Type.of(w) != null : "invalid value type";
-
-        Object base = getBase();
-        if (isUnresolvableReference()) {
-            if (isStrictReference()) {
-                throw throwReferenceError(realm, Messages.Key.UnresolvableReference, referencedName);
-            }
-            ScriptObject globalObj = realm.getGlobalThis(); // = GetGlobalObject()
-            Put(realm, globalObj, getReferencedName(), w, false);
-        } else if (isPropertyReference()) {
-            if (hasPrimitiveBase()) {
-                base = ToObject(realm, base);
-            }
-            boolean succeeded = ((ScriptObject) base).set(getReferencedName(), w,
-                    GetThisValue(realm));
-            if (!succeeded && isStrictReference()) {
-                throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, referencedName);
-            }
-        } else {
-            ((EnvironmentRecord) base).setMutableBinding(getReferencedName(), w,
-                    isStrictReference());
-        }
-    }
-
-    /**
      * [8.2.4.3] GetThisValue (V)
      */
     public static Object GetThisValue(Realm realm, Object v) {
         if (!(v instanceof Reference))
             return v;
         return ((Reference) v).GetThisValue(realm);
-    }
-
-    /**
-     * [8.2.4.3] GetThisValue (V)
-     */
-    public Object GetThisValue(Realm realm) {
-        if (isUnresolvableReference()) {
-            throw throwReferenceError(realm, Messages.Key.UnresolvableReference, referencedName);
-        }
-        if (isSuperReference()) {
-            return thisValue;
-        }
-        return getBase();
     }
 }
