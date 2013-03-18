@@ -24,7 +24,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -294,7 +294,7 @@ public final class Properties {
             }
         }
         if (layout.accessors != null) {
-            Map<String, PropertyDescriptor> accessors1 = new HashMap<>();
+            Map<String, PropertyDescriptor> accessors1 = new LinkedHashMap<>();
             Map<BuiltinSymbol, PropertyDescriptor> accessors2 = new EnumMap<>(BuiltinSymbol.class);
             for (Entry<Accessor, MethodHandle> entry : layout.accessors.entrySet()) {
                 createAccessor(owner, realm, entry.getKey(), entry.getValue(), accessors1,
@@ -314,7 +314,7 @@ public final class Properties {
                 Function function = method.getAnnotation(Function.class);
                 if (function != null) {
                     if (layout.functions == null) {
-                        layout.functions = new HashMap<>();
+                        layout.functions = new LinkedHashMap<>();
                     }
                     layout.functions.put(function, lookup.unreflect(method));
                 }
@@ -336,7 +336,7 @@ public final class Properties {
                 Value value = field.getAnnotation(Value.class);
                 if (value != null) {
                     if (layout.values == null) {
-                        layout.values = new HashMap<>();
+                        layout.values = new LinkedHashMap<>();
                     }
                     layout.values.put(value, getRawValue(field));
                 } else {
@@ -355,14 +355,14 @@ public final class Properties {
                 Function function = method.getAnnotation(Function.class);
                 if (function != null) {
                     if (layout.functions == null) {
-                        layout.functions = new HashMap<>();
+                        layout.functions = new LinkedHashMap<>();
                     }
                     layout.functions.put(function, getStaticMethodHandle(lookup, method));
                 } else {
                     Accessor accessor = method.getAnnotation(Accessor.class);
                     if (accessor != null) {
                         if (layout.accessors == null) {
-                            layout.accessors = new HashMap<>();
+                            layout.accessors = new LinkedHashMap<>();
                         }
                         layout.accessors.put(accessor, getStaticMethodHandle(lookup, method));
                     }
