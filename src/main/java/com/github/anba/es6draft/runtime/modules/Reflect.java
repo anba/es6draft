@@ -217,7 +217,7 @@ public class Reflect extends OrdinaryObject implements ScriptObject, Initialisab
         @Function(name = "enumerate", arity = 1)
         public static Object enumerate(Realm realm, Object thisValue, Object target) {
             ScriptObject obj = ToObject(realm, target);
-            ScriptObject itr = obj.enumerate();
+            ScriptObject itr = obj.enumerate(realm);
             return itr;
         }
 
@@ -227,7 +227,7 @@ public class Reflect extends OrdinaryObject implements ScriptObject, Initialisab
         @Function(name = "ownKeys", arity = 1)
         public static Object ownKeys(Realm realm, Object thisValue, Object target) {
             ScriptObject obj = ToObject(realm, target);
-            ScriptObject keys = obj.ownPropertyKeys();
+            ScriptObject keys = obj.ownPropertyKeys(realm);
             // FIXME: spec bug (algorithm end at step 4 without return)
             return keys;
         }

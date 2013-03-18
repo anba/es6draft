@@ -647,7 +647,7 @@ public final class AbstractOperations {
         /* step 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* step 3-4 */
-        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys());
+        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys(realm));
         /* step 5 */
         ScriptException pendingException = null;
         if (level == IntegrityLevel.Sealed) {
@@ -731,7 +731,7 @@ public final class AbstractOperations {
             return false;
         }
         /* step 7-8 */
-        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys());
+        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys(realm));
         /* step 9 */
         ScriptException pendingException = null;
         /* step 10 */
@@ -868,7 +868,7 @@ public final class AbstractOperations {
 
     public static List<String> GetOwnPropertyNames(Realm realm, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(realm, obj.ownPropertyKeys());
+        Iterator<?> keys = FromListIterator(realm, obj.ownPropertyKeys(realm));
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object next = keys.next();
@@ -882,7 +882,7 @@ public final class AbstractOperations {
 
     public static List<String> GetOwnPropertyKeys(Realm realm, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(realm, obj.ownPropertyKeys());
+        Iterator<?> keys = FromListIterator(realm, obj.ownPropertyKeys(realm));
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object next = keys.next();

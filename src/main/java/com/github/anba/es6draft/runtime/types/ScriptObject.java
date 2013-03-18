@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types;
 
+import com.github.anba.es6draft.runtime.Realm;
+
 /**
  * <h1>8 Types</h1><br>
  * <h2>8.1 ECMAScript Language Types</h2><br>
@@ -72,9 +74,9 @@ public interface ScriptObject {
     boolean defineOwnProperty(Symbol propertyKey, PropertyDescriptor desc);
 
     /** [[Enumerate]] () */
-    ScriptObject enumerate();
+    ScriptObject enumerate(Realm realm);
 
     /** [[OwnPropertyKeys]] ( ) */
-    ScriptObject ownPropertyKeys();
+    ScriptObject ownPropertyKeys(Realm realm);
 
 }

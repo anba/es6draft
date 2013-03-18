@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -201,7 +202,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.11 [[Enumerate]] ()
      */
     @Override
-    public ScriptObject enumerate() {
+    public ScriptObject enumerate(Realm realm) {
         // FIXME: spec incomplete
         throw new IllegalStateException("NYI");
     }
@@ -210,7 +211,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.13 [[OwnPropertyKeys]] ( )
      */
     @Override
-    public ScriptObject ownPropertyKeys() {
+    public ScriptObject ownPropertyKeys(Realm realm) {
         // FIXME: spec incomplete
         throw new IllegalStateException("NYI");
     }

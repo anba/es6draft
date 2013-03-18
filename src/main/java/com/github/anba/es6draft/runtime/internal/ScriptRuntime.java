@@ -941,7 +941,7 @@ public final class ScriptRuntime {
      */
     public static Iterator<?> enumerate(Object o, Realm realm) {
         ScriptObject obj = ToObject(realm, o);
-        return FromListIterator(realm, obj.enumerate());
+        return FromListIterator(realm, obj.enumerate(realm));
     }
 
     /**

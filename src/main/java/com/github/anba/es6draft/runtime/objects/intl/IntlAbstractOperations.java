@@ -314,7 +314,7 @@ public final class IntlAbstractOperations {
         PropertyDescriptor nonConfigurableWritable = new PropertyDescriptor();
         nonConfigurableWritable.setConfigurable(false);
         nonConfigurableWritable.setWritable(false);
-        Iterator<?> keys = FromListIterator(realm, subset.ownPropertyKeys());
+        Iterator<?> keys = FromListIterator(realm, subset.ownPropertyKeys(realm));
         while (keys.hasNext()) {
             Object key = ToPropertyKey(realm, keys.next());
             if (key instanceof String) {

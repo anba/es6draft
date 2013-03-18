@@ -554,8 +554,8 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.12 [[Enumerate]] () */
     @Override
-    public final ScriptObject enumerate() {
-        return MakeListIterator(realm(), new EnumKeysIterator(realm(), this));
+    public final ScriptObject enumerate(Realm realm) {
+        return MakeListIterator(realm, new EnumKeysIterator(realm, this));
     }
 
     /** 8.3.12 [[Enumerate]] () */
@@ -609,7 +609,7 @@ public abstract class OrdinaryObject implements ScriptObject {
                     } else {
                         this.obj = null;
                         this.keys = null;
-                        this.protoKeys = FromListIterator(realm, proto.enumerate());
+                        this.protoKeys = FromListIterator(realm, proto.enumerate(realm));
                     }
                 } else {
                     this.obj = null;
@@ -663,7 +663,7 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.13 [[OwnPropertyKeys]] ( ) */
     @Override
-    public final ScriptObject ownPropertyKeys() {
+    public final ScriptObject ownPropertyKeys(Realm realm) {
         return MakeListIterator(realm(), enumerateOwnKeys().iterator());
     }
 

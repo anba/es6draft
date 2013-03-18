@@ -568,16 +568,16 @@ public class ExoticProxy implements ScriptObject, Callable, Constructor {
      * 8.5.12 [[Enumerate]] ()
      */
     @Override
-    public ScriptObject enumerate() {
+    public ScriptObject enumerate(Realm realm) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
-        Callable trap = GetMethod(realm, handler, "enumerate");
+        Callable trap = GetMethod(this.realm, handler, "enumerate");
         if (trap == null) {
-            return target.enumerate();
+            return target.enumerate(realm);
         }
         Object trapResult = trap.call(handler, target);
         if (!Type.isObject(trapResult)) {
-            throw throwTypeError(realm, Messages.Key.ProxyNotObject);
+            throw throwTypeError(this.realm, Messages.Key.ProxyNotObject);
         }
         return Type.objectValue(trapResult);
     }
@@ -586,16 +586,16 @@ public class ExoticProxy implements ScriptObject, Callable, Constructor {
      * 8.5.13 [[OwnPropertyKeys]] ()
      */
     @Override
-    public ScriptObject ownPropertyKeys() {
+    public ScriptObject ownPropertyKeys(Realm realm) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
-        Callable trap = GetMethod(realm, handler, "ownKeys");
+        Callable trap = GetMethod(this.realm, handler, "ownKeys");
         if (trap == null) {
-            return target.ownPropertyKeys();
+            return target.ownPropertyKeys(realm);
         }
         Object trapResult = trap.call(handler, target);
         if (!Type.isObject(trapResult)) {
-            throw throwTypeError(realm, Messages.Key.ProxyNotObject);
+            throw throwTypeError(this.realm, Messages.Key.ProxyNotObject);
         }
         return Type.objectValue(trapResult);
     }

@@ -301,7 +301,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            return Type.objectValue(o).ownPropertyKeys();
+            return Type.objectValue(o).ownPropertyKeys(realm);
         }
 
         /**
@@ -457,7 +457,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      */
     private static List<Object> GetOwnEnumerableKeys(Realm realm, ScriptObject object) {
         List<Object> ownKeys = new ArrayList<>();
-        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys());
+        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys(realm));
         while (keys.hasNext()) {
             Object key = ToPropertyKey(realm, keys.next());
             if (key instanceof String) {
