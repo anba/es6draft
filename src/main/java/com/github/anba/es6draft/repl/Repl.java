@@ -38,6 +38,7 @@ import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -464,6 +465,17 @@ public class Repl {
         @Function(name = "elapsed", arity = 0)
         public double elapsed() {
             return (double) TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - startNano);
+        }
+
+        @Function(name = "getSym", arity = 1)
+        public Object getSym(String name) {
+            try {
+                if (name.startsWith("@@")) {
+                    return BuiltinSymbol.valueOf(name.substring(2)).get();
+                }
+            } catch (IllegalArgumentException e) {
+            }
+            return UNDEFINED;
         }
     }
 }
