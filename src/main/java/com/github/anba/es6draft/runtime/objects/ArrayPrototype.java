@@ -371,10 +371,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             ScriptObject obj = ToObject(realm, thisValue);
             long len = ToUint32(realm, Get(obj, "length"));
 
-            assert len <= (long) Integer.MAX_VALUE;
             int emptyCount = 0;
             int undefCount = 0;
-            List<Object> elements = new ArrayList<>(Math.max((int) len, 1024));
+            List<Object> elements = new ArrayList<>((int) Math.min(len, 1024));
             for (int i = 0; i < len; ++i) {
                 String index = ToString(i);
                 if (HasProperty(obj, index)) {
