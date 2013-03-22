@@ -81,13 +81,6 @@ public class TokenStream {
         this.parser = parser;
         this.input = input;
         this.line = line;
-        //
-        this.hasLineTerminator = false;
-        this.hasCurrentLineTerminator = true;
-        this.position = input.position();
-        this.current = scanTokenNoComment();
-        this.nextposition = input.position();
-        this.next = null;
     }
 
     public int position() {
@@ -100,6 +93,15 @@ public class TokenStream {
 
     public long marker() {
         return ((long) line << 32) | position;
+    }
+
+    public void init() {
+        this.hasLineTerminator = false;
+        this.hasCurrentLineTerminator = true;
+        this.position = input.position();
+        this.current = scanTokenNoComment();
+        this.nextposition = input.position();
+        this.next = null;
     }
 
     public void reset(long marker) {

@@ -640,6 +640,7 @@ public class Parser {
         if (ts != null)
             throw new IllegalStateException();
         ts = new TokenStream(this, new StringTokenStreamInput(source), sourceLine);
+        ts.init();
         return script();
     }
 
@@ -657,12 +658,14 @@ public class Parser {
                 BindingIdentifier identifier = new BindingIdentifier("anonymous");
 
                 ts = new TokenStream(this, new StringTokenStreamInput(formals), sourceLine);
+                ts.init();
                 FormalParameterList parameters = formalParameterList(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
 
                 ts = new TokenStream(this, new StringTokenStreamInput(bodyText), sourceLine);
+                ts.init();
                 List<StatementListItem> statements = functionBody(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
