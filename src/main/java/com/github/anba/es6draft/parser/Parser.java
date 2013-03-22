@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.SpecialMethod;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -73,6 +74,7 @@ public class Parser {
         StrictMode strictMode = StrictMode.Unknown;
         ParserException strictError = null;
         List<FunctionNode> deferred = null;
+        ArrayDeque<ObjectLiteral> objectLiterals = null;
 
         Map<String, LabelContext> labelSet = null;
         LabelContext labels = null;
@@ -106,6 +108,21 @@ public class Parser {
 
         boolean hasSuperReference() {
             return superReference;
+        }
+
+        int countLiterals() {
+            return (objectLiterals != null ? objectLiterals.size() : 0);
+        }
+
+        void addLiteral(ObjectLiteral object) {
+            if (objectLiterals == null) {
+                objectLiterals = new ArrayDeque<>(4);
+            }
+            objectLiterals.push(object);
+        }
+
+        void removeLiteral(ObjectLiteral object) {
+            objectLiterals.removeFirstOccurrence(object);
         }
     }
 
@@ -562,12 +579,6 @@ public class Parser {
         throw reportError(ExceptionType.SyntaxError, line, messageKey, args);
     }
 
-    @SuppressWarnings("unused")
-    private static ParserException reportReferenceError(Messages.Key messageKey, int line,
-            String... args) {
-        throw reportError(ExceptionType.ReferenceError, line, messageKey, args);
-    }
-
     private ParserException reportSyntaxError(Messages.Key messageKey, String... args) {
         throw reportError(ExceptionType.SyntaxError, ts.getLine(), messageKey, args);
     }
@@ -576,22 +587,27 @@ public class Parser {
         throw reportError(ExceptionType.ReferenceError, ts.getLine(), messageKey, args);
     }
 
-    private void reportStrictModeError(ExceptionType type, Messages.Key messageKey, String... args) {
+    private void reportStrictModeError(ExceptionType type, int line, Messages.Key messageKey,
+            String... args) {
         if (context.strictMode == StrictMode.Unknown) {
             if (context.strictError == null) {
-                context.strictError = new ParserException(type, ts.getLine(), messageKey, args);
+                context.strictError = new ParserException(type, line, messageKey, args);
             }
         } else if (context.strictMode == StrictMode.Strict) {
-            reportError(type, ts.getLine(), messageKey, args);
+            reportError(type, line, messageKey, args);
         }
     }
 
+    private void reportStrictModeSyntaxError(Messages.Key messageKey, int line, String... args) {
+        reportStrictModeError(ExceptionType.SyntaxError, line, messageKey, args);
+    }
+
     void reportStrictModeSyntaxError(Messages.Key messageKey, String... args) {
-        reportStrictModeError(ExceptionType.SyntaxError, messageKey, args);
+        reportStrictModeError(ExceptionType.SyntaxError, ts.getLine(), messageKey, args);
     }
 
     void reportStrictModeReferenceError(Messages.Key messageKey, String... args) {
-        reportStrictModeError(ExceptionType.ReferenceError, messageKey, args);
+        reportStrictModeError(ExceptionType.ReferenceError, ts.getLine(), messageKey, args);
     }
 
     /**
@@ -2825,6 +2841,7 @@ public class Parser {
             }
             list.add(property);
         }
+        context.removeLiteral(object);
         return new ObjectAssignmentPattern(list);
     }
 
@@ -3340,7 +3357,7 @@ public class Parser {
             expr = arrowFunctionRestParameter();
         } else {
             // inlined `expression(true)`
-            expr = assignmentExpression(true);
+            expr = assignmentExpressionNoValidation(true);
             if (token() == Token.COMMA) {
                 List<Expression> list = new ArrayList<>();
                 list.add(expr);
@@ -3430,7 +3447,7 @@ public class Parser {
                 list.add(new SpreadElement(assignmentExpression(true)));
                 needComma = true;
             } else {
-                list.add(assignmentExpression(true));
+                list.add(assignmentExpressionNoValidation(true));
                 needComma = true;
             }
         }
@@ -3558,7 +3575,63 @@ public class Parser {
             }
         }
         consume(Token.RC);
-        return new ObjectLiteral(defs);
+        ObjectLiteral object = new ObjectLiteral(defs);
+        context.addLiteral(object);
+        return object;
+    }
+
+    private void objectLiteral_StaticSemantics(int oldCount) {
+        ArrayDeque<ObjectLiteral> literals = context.objectLiterals;
+        for (int i = oldCount, newCount = literals.size(); i < newCount; ++i) {
+            objectLiteral_StaticSemantics(literals.pop());
+        }
+    }
+
+    private void objectLiteral_StaticSemantics(ObjectLiteral object) {
+        final int VALUE = 0, GETTER = 1, SETTER = 2;
+        Map<String, Integer> values = new HashMap<>();
+        for (PropertyDefinition def : object.getProperties()) {
+            PropertyName propertyName = def.getPropertyName();
+            String key = propertyName.getName();
+            final int kind;
+            if (def instanceof PropertyValueDefinition || def instanceof PropertyNameDefinition) {
+                kind = VALUE;
+            } else if (def instanceof MethodDefinition) {
+                MethodDefinition method = (MethodDefinition) def;
+                if (method.hasSuperReference()) {
+                    throw reportSyntaxError(Messages.Key.SuperOutsideClass, def.getLine());
+                }
+                MethodDefinition.MethodType type = method.getType();
+                kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
+                        : VALUE;
+            } else {
+                assert def instanceof CoverInitialisedName;
+                // Always throw a Syntax Error if this production is present
+                throw reportSyntaxError(Messages.Key.MissingColonAfterPropertyId, def.getLine(),
+                        key);
+            }
+            // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any
+            // duplicate entries [...]
+            if (values.containsKey(key)) {
+                int prev = values.get(key);
+                if (kind == VALUE && prev != VALUE) {
+                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def.getLine(), key);
+                }
+                if (kind == VALUE && prev == VALUE) {
+                    reportStrictModeSyntaxError(Messages.Key.DuplicatePropertyDefinition,
+                            def.getLine(), key);
+                }
+                if (kind == GETTER && prev != SETTER) {
+                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def.getLine(), key);
+                }
+                if (kind == SETTER && prev != GETTER) {
+                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def.getLine(), key);
+                }
+                values.put(key, prev | kind);
+            } else {
+                values.put(key, kind);
+            }
+        }
     }
 
     /**
@@ -3578,7 +3651,7 @@ public class Parser {
         if (LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = propertyName();
             consume(Token.COLON);
-            Expression propertyValue = assignmentExpression(true);
+            Expression propertyValue = assignmentExpressionNoValidation(true);
             return new PropertyValueDefinition(propertyName, propertyValue);
         }
         if (LOOKAHEAD(Token.COMMA) || LOOKAHEAD(Token.RC)) {
@@ -4114,6 +4187,19 @@ public class Parser {
      * </pre>
      */
     private Expression assignmentExpression(boolean allowIn) {
+        int count = context.countLiterals();
+        Expression expr = assignmentExpression(allowIn, count);
+        if (count < context.countLiterals()) {
+            objectLiteral_StaticSemantics(count);
+        }
+        return expr;
+    }
+
+    private Expression assignmentExpressionNoValidation(boolean allowIn) {
+        return assignmentExpression(allowIn, context.countLiterals());
+    }
+
+    private Expression assignmentExpression(boolean allowIn, int oldCount) {
         // TODO: this may need to be changed...
         if (token() == Token.YIELD) {
             return yieldExpression();
@@ -4128,6 +4214,13 @@ public class Parser {
             Expression otherwise = assignmentExpression(allowIn);
             return new ConditionalExpression(left, then, otherwise);
         } else if (tok == Token.ARROW) {
+            // discard parsed object literals
+            if (oldCount < context.countLiterals()) {
+                ArrayDeque<ObjectLiteral> literals = context.objectLiterals;
+                for (int i = oldCount, newCount = literals.size(); i < newCount; ++i) {
+                    literals.pop();
+                }
+            }
             ts.reset(marker);
             return arrowFunction();
         } else if (tok == Token.ASSIGN) {

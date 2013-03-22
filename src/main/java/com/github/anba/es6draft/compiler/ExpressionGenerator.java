@@ -17,13 +17,12 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.runtime.internal.SimpleBootstrap;
-import com.github.anba.es6draft.semantics.ObjectLiteralStaticSemantics;
 
 /**
  *
@@ -1366,9 +1365,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
     @Override
     public ValType visit(ObjectLiteral node, ExpressionVisitor mv) {
-        // deferred static semantics validation :(
-        ObjectLiteralStaticSemantics.validate(node, mv.isStrict());
-
         mv.load(Register.Realm);
         mv.get(Fields.Intrinsics_ObjectPrototype);
         mv.invoke(Methods.OrdinaryObject_ObjectCreate);
