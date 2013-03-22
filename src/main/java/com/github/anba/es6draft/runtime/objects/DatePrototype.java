@@ -15,6 +15,7 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import java.util.Locale;
 
+import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -693,7 +694,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         @Function(name = "toJSON", arity = 1)
         public static Object toJSON(Realm realm, Object thisValue, Object key) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object tv = ToPrimitive(realm, o, Type.Number);
+            Object tv = AbstractOperations.ToPrimitive(realm, o, Type.Number);
             if (Type.isNumber(tv) && !isFinite(Type.numberValue(tv))) {
                 return NULL;
             }
