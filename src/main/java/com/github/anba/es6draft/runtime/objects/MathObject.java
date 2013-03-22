@@ -215,10 +215,10 @@ public class MathObject extends OrdinaryObject implements ScriptObject, Initiali
             double min = Double.POSITIVE_INFINITY;
             for (Object value : values) {
                 double v = ToNumber(realm, value);
-                // Do not call `Double.compare(min, v)` (parameter order!), to handle NaN properly
+                // Do not call `Double.compare(-v, -min)` (parameter order!), to handle NaN properly
                 // N.B. Double.compare() includes all necessary checks to be compliant to Abstract
                 // Relational Comparison Algorithm (11.8.1)
-                if (Double.compare(v, min) != -1) {
+                if (Double.compare(-min, -v) != 1) {
                     min = v;
                 }
             }
