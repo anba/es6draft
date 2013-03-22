@@ -115,20 +115,21 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
 
                 // stack: [] -> [fo]
                 if (f instanceof GeneratorDeclaration) {
-                    InstantiateGeneratorObject(realm, env, (GeneratorDeclaration) f, mv);
+                    InstantiateGeneratorObject(realm, lexEnv, (GeneratorDeclaration) f, mv);
                 } else {
-                    InstantiateFunctionObject(realm, env, (FunctionDeclaration) f, mv);
+                    InstantiateFunctionObject(realm, lexEnv, (FunctionDeclaration) f, mv);
                 }
 
                 hasBinding(envRec, fn, mv);
 
-                Label funcAlreadyDeclared = new Label();
+                Label funcAlreadyDeclared = new Label(), after = new Label();
                 mv.ifne(funcAlreadyDeclared);
                 createMutableBinding(envRec, fn, deletableBindings, mv);
+                initializeBinding(envRec, fn, mv);
+                mv.goTo(after);
                 mv.mark(funcAlreadyDeclared);
-                // omitted else-case
-
                 setMutableBinding(envRec, fn, strict, mv);
+                mv.mark(after);
             }
         }
         /* step 6-7 (not applicable) */
@@ -142,7 +143,8 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
                     mv.ifne(varAlreadyDeclared);
                     createMutableBinding(envRec, dn, deletableBindings, mv);
                     mv.get(Fields.Undefined_UNDEFINED);
-                    setMutableBinding(envRec, dn, strict, mv);
+                    // setMutableBinding(envRec, dn, strict, mv);
+                    initializeBinding(envRec, dn, mv);
                     mv.mark(varAlreadyDeclared);
                 }
             }

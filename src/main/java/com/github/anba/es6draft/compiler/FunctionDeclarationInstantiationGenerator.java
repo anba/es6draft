@@ -139,6 +139,10 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.store(envRec, Types.EnvironmentRecord);
 
+        int undef = mv.newVariable(Types.Undefined);
+        mv.get(Fields.Undefined_UNDEFINED);
+        mv.store(undef, Types.Undefined);
+
         Set<String> bindings = new HashSet<>();
         /* [10.5.3] step 1 */
         // RuntimeInfo.Code code = func.getCode();
@@ -180,7 +184,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 bindings.add(paramName);
                 createMutableBinding(envRec, paramName, false, mv);
                 // stack: [undefined] -> []
-                mv.get(Fields.Undefined_UNDEFINED);
+                mv.load(undef, Types.Undefined);
                 initializeBinding(envRec, paramName, mv);
             }
         }
@@ -201,6 +205,9 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             if (!alreadyDeclared) {
                 bindings.add(varName);
                 createMutableBinding(envRec, varName, false, mv);
+                // FIXME: spec bug
+                mv.load(undef, Types.Undefined);
+                initializeBinding(envRec, varName, mv);
             }
         }
         /* [10.5.3] step 14 */
@@ -225,7 +232,8 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 InstantiateFunctionObject(realm, env, (FunctionDeclaration) f, mv);
             }
             // stack: [fo] -> []
-            setMutableBinding(envRec, fn, false, mv);
+            // setMutableBinding(envRec, fn, false, mv);
+            initializeBinding(envRec, fn, mv);
         }
         /* [10.5.3] step 17-19 */
         // stack: [] -> [ao]

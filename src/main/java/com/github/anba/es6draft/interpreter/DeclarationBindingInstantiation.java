@@ -78,13 +78,14 @@ final class DeclarationBindingInstantiation {
 
         LexicalEnvironment env = varEnv;
         EnvironmentRecord envRec = env.getEnvRec();
-        boolean strict = script.isStrict();
+        // boolean strict = script.isStrict();
         for (StatementListItem d : VarScopedDeclarations(script)) {
             for (String dn : BoundNames(d)) {
                 boolean varAlreadyDeclared = envRec.hasBinding(dn);
                 if (!varAlreadyDeclared) {
                     envRec.createMutableBinding(dn, deletableBindings);
-                    envRec.setMutableBinding(dn, UNDEFINED, strict);
+                    // envRec.setMutableBinding(dn, UNDEFINED, strict);
+                    envRec.initializeBinding(dn, UNDEFINED);
                 }
             }
         }

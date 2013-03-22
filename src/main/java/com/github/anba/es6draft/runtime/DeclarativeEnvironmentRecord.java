@@ -96,6 +96,12 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         if (b == null) {
             throw new IllegalStateException();
         }
+
+        // FIXME: spec bug
+        if (b.value == null) {
+            throw throwReferenceError(realm, Messages.Key.UninitialisedBinding, name);
+        }
+
         if (b.mutable) {
             b.value = value;
         } else if (b.value == null) {
