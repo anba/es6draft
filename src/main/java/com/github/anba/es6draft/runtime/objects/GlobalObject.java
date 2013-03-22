@@ -181,9 +181,9 @@ public class GlobalObject extends OrdinaryObject implements ScriptObject, Initia
             if (c >= '0' && c <= '9')
                 return (c - '0');
             if (c >= 'A' && c <= 'F')
-                return (c - 'A');
+                return (c - 'A') + 10;
             if (c >= 'a' && c <= 'f')
-                return (c - 'a');
+                return (c - 'a') + 10;
             return -1;
         }
 
@@ -411,6 +411,10 @@ public class GlobalObject extends OrdinaryObject implements ScriptObject, Initia
          */
         @Value(name = "URIError")
         public static final Intrinsics URIError = Intrinsics.URIError;
+
+        // InternalError
+        @Value(name = "InternalError")
+        public static final Intrinsics InternalError = Intrinsics.InternalError;
 
         /**
          * 15.1.4.16 Map ( . . . )
@@ -776,7 +780,11 @@ public class GlobalObject extends OrdinaryObject implements ScriptObject, Initia
                         return null;
                     int c1 = readByte(s, i + 3);
                     int c2 = readByte(s, i + 6);
-                    if (c1 < 0x80 || c2 < 0x80 || c1 > 0xBF || c2 > 0xBF)
+                    if (c0 == 0b11100000 ? (c1 < 0xA0 || c1 > 0xBF)
+                            : c0 == 0b11101101 ? (c1 < 0x80 || c1 > 0x9F)
+                                    : (c1 < 0x80 || c1 > 0xBF))
+                        return null;
+                    if (c2 < 0x80 || c2 > 0xBF)
                         return null;
                     sb.append((char) ((c0 & 0b1111) << 12 | (c1 & 0b111111) << 6 | (c2 & 0b111111)));
                     i += 9;
@@ -787,7 +795,11 @@ public class GlobalObject extends OrdinaryObject implements ScriptObject, Initia
                     int c1 = readByte(s, i + 3);
                     int c2 = readByte(s, i + 6);
                     int c3 = readByte(s, i + 9);
-                    if (c1 < 0x80 || c2 < 0x80 || c3 < 0x80 || c1 > 0xBF || c2 > 0xBF || c3 > 0xBF)
+                    if (c0 == 0b11110000 ? (c1 < 0x90 || c1 > 0xBF)
+                            : c0 == 0b11110100 ? (c1 < 0x80 || c1 > 0x8F)
+                                    : (c1 < 0x80 || c1 > 0xBF))
+                        return null;
+                    if (c2 < 0x80 || c3 < 0x80 || c2 > 0xBF || c3 > 0xBF)
                         return null;
                     int cp = ((c0 & 0b111) << 18 | (c1 & 0b111111) << 12 | (c2 & 0b111111) << 6 | (c3 & 0b111111));
                     if (cp <= Character.MAX_CODE_POINT) {
