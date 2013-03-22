@@ -181,6 +181,10 @@ public class JSONTokenStream {
             c = input.get();
             // escape sequences
             switch (c) {
+            case '"':
+            case '/':
+            case '\\':
+                break;
             case 'b':
                 c = '\b';
                 break;
@@ -203,11 +207,8 @@ public class JSONTokenStream {
                     throw error(Messages.Key.JSONInvalidUnicodeEscape);
                 }
                 break;
-            case '"':
-            case '/':
-            case '\\':
             default:
-                // fall-through
+                throw error(Messages.Key.JSONInvalidStringLiteral);
             }
             buffer.add(c);
         }
@@ -237,12 +238,13 @@ public class JSONTokenStream {
         assert c == '-' || isDigit(c);
         TokenStreamInput input = this.input;
         StringBuffer buffer = this.buffer();
-        buffer.add(c);
         if (c == '-') {
+            buffer.add(c);
             if (!isDigit(c = input.get())) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
         }
+        buffer.add(c);
         if (c != '0') {
             while (isDigit(c = input.get())) {
                 buffer.add(c);
@@ -251,6 +253,7 @@ public class JSONTokenStream {
             c = input.get();
         }
         if (c == '.') {
+            buffer.add(c);
             if (!isDigit(c = input.get())) {
                 throw error(Messages.Key.JSONInvalidNumberLiteral);
             }
@@ -260,6 +263,7 @@ public class JSONTokenStream {
             }
         }
         if (c == 'e' || c == 'E') {
+            buffer.add(c);
             c = input.get();
             if (c == '+' || c == '-') {
                 buffer.add(c);
