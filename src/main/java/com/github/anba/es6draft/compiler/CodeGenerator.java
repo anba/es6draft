@@ -136,9 +136,65 @@ class CodeGenerator {
         String n = methodNames.get(node);
         if (n == null) {
             n = node.accept(FunctionName.INSTANCE, defaultValue) + "_" + nextMethodInt();
+            n = mangle(n);
             methodNames.put(node, n);
         }
         return n;
+    }
+
+    private String mangle(String n) {
+        // https://blogs.oracle.com/jrose/entry/symbolic_freedom_in_the_vm
+        int length = n.length();
+        if (length == 0) {
+            return "\\=";
+        }
+        NO_ESCAPE: {
+            for (int i = 0; i < length; ++i) {
+                char c = n.charAt(i);
+                if (getCharacterEscape(c) != c) {
+                    break NO_ESCAPE;
+                }
+            }
+            return n;
+        }
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; ++i) {
+            char c = n.charAt(i);
+            char d = getCharacterEscape(c);
+            if (c == d) {
+                sb.append(c);
+            } else {
+                sb.append('\\').append(d);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static char getCharacterEscape(char c) {
+        switch (c) {
+        case '/':
+            return '|';
+        case '.':
+            return ',';
+        case ';':
+            return '?';
+        case '$':
+            return '%';
+        case '<':
+            return '^';
+        case '>':
+            return '_';
+        case '[':
+            return '{';
+        case ']':
+            return '}';
+        case ':':
+            return '!';
+        case '\\':
+            return '-';
+        default:
+            return c;
+        }
     }
 
     private final String methodName(TemplateLiteral node) {
