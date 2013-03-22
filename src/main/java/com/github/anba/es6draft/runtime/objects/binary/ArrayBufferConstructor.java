@@ -195,12 +195,20 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
 
         int index = (int) byteIndex;
         switch (type) {
-        case Float32:
+        case Float32: {
+            if (Double.isNaN(value)) {
+                value = Double.NaN;
+            }
             block.putFloat(index, (float) value);
             return;
-        case Float64:
+        }
+        case Float64: {
+            if (Double.isNaN(value)) {
+                value = Double.NaN;
+            }
             block.putDouble(index, value);
             return;
+        }
 
         case Int8:
             block.put(index, ElementKind.ToInt8(value));
