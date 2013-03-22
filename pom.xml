@@ -432,9 +432,6 @@
               <enableAssertions>true</enableAssertions>
               <testFailureIgnore>true</testFailureIgnore>
               <forkMode>once</forkMode>
-              <excludes>
-                <exclude>**/Test262.java</exclude>
-              </excludes>
               <systemPropertyVariables>
                 <java.awt.headless>true</java.awt.headless>
               </systemPropertyVariables>

@@ -34,7 +34,7 @@ import com.github.anba.test262.util.Test262AssertionError;
 import com.github.anba.test262.util.Test262Info;
 
 /**
- * The new test262 style
+ * The standard test262 test suite
  * 
  */
 @RunWith(LabelledParameterized.class)
