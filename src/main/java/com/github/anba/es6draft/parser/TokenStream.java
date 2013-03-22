@@ -333,7 +333,7 @@ public class TokenStream {
                 c = '\u000B';
                 break;
             case '0':
-                if (isDigit(peek())) {
+                if (isDecimalDigit(peek())) {
                     throw error(Messages.Key.InvalidNULLEscape);
                 }
                 c = '\0';
@@ -433,7 +433,7 @@ public class TokenStream {
         case '7':
         case '8':
         case '9':
-            return readNumber(c);
+            return readNumberLiteral(c);
         case 'A':
         case 'B':
         case 'C':
@@ -513,7 +513,7 @@ public class TokenStream {
             case '7':
             case '8':
             case '9':
-                return readNumber(c);
+                return readNumberLiteral(c);
             case '.':
                 if (peek2() == '.') {
                     mustMatch('.');
@@ -1042,7 +1042,7 @@ public class TokenStream {
                 c = '\u000B';
                 break;
             case '0':
-                if (isDigit(peek())) {
+                if (isDecimalDigit(peek())) {
                     throw error(Messages.Key.InvalidNULLEscape);
                 }
                 c = '\0';
@@ -1077,7 +1077,7 @@ public class TokenStream {
         return Token.STRING;
     }
 
-    private Token readNumber(int c) {
+    private Token readNumberLiteral(int c) {
         if (c == '0') {
             int d = input.get();
             if (d == 'x' || d == 'X') {
@@ -1086,7 +1086,7 @@ public class TokenStream {
                 number = readBinaryIntegerLiteral();
             } else if (d == 'o' || d == 'O') {
                 number = readOctalIntegerLiteral();
-            } else if (isDigit(d)) {
+            } else if (isDecimalDigit(d)) {
                 parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalIntegerLiteral);
                 input.unget(d);
                 number = readOctalIntegerLiteral();
@@ -1107,6 +1107,9 @@ public class TokenStream {
         while (isHexDigit(c = input.get())) {
             buffer.add(c);
         }
+        if (isDecimalDigitOrIdentifierStart(c)) {
+            throw error(Messages.Key.InvalidHexIntegerLiteral);
+        }
         input.unget(c);
         if (buffer.length == 0) {
             throw error(Messages.Key.InvalidHexIntegerLiteral);
@@ -1120,6 +1123,9 @@ public class TokenStream {
         int c;
         while (isBinaryDigit(c = input.get())) {
             buffer.add(c);
+        }
+        if (isDecimalDigitOrIdentifierStart(c)) {
+            throw error(Messages.Key.InvalidHexIntegerLiteral);
         }
         input.unget(c);
         if (buffer.length == 0) {
@@ -1135,6 +1141,9 @@ public class TokenStream {
         while (isOctalDigit(c = input.get())) {
             buffer.add(c);
         }
+        if (isDecimalDigitOrIdentifierStart(c)) {
+            throw error(Messages.Key.InvalidHexIntegerLiteral);
+        }
         input.unget(c);
         if (buffer.length == 0) {
             throw error(Messages.Key.InvalidOctalIntegerLiteral);
@@ -1143,12 +1152,12 @@ public class TokenStream {
     }
 
     private double readDecimalLiteral(int c) {
-        assert c == '.' || isDigit(c);
+        assert c == '.' || isDecimalDigit(c);
         TokenStreamInput input = this.input;
         StringBuffer buffer = this.buffer();
         if (c != '.' && c != '0') {
             buffer.add(c);
-            while (isDigit(c = input.get())) {
+            while (isDecimalDigit(c = input.get())) {
                 buffer.add(c);
             }
         } else if (c == '0') {
@@ -1157,7 +1166,7 @@ public class TokenStream {
         }
         if (c == '.') {
             buffer.add(c);
-            while (isDigit(c = input.get())) {
+            while (isDecimalDigit(c = input.get())) {
                 buffer.add(c);
             }
         }
@@ -1168,19 +1177,26 @@ public class TokenStream {
                 buffer.add(c);
                 c = input.get();
             }
-            if (!isDigit(c)) {
+            if (!isDecimalDigit(c)) {
                 throw error(Messages.Key.InvalidNumberLiteral);
             }
             buffer.add(c);
-            while (isDigit(c = input.get())) {
+            while (isDecimalDigit(c = input.get())) {
                 buffer.add(c);
             }
+        }
+        if (isDecimalDigitOrIdentifierStart(c)) {
+            throw error(Messages.Key.InvalidHexIntegerLiteral);
         }
         input.unget(c);
         return parseDecimal(buffer.cbuf, buffer.length);
     }
 
-    private static boolean isDigit(int c) {
+    private boolean isDecimalDigitOrIdentifierStart(int c) {
+        return (c >= '0' && c <= '9') || isIdentifierStart(c);
+    }
+
+    private static boolean isDecimalDigit(int c) {
         return (c >= '0' && c <= '9');
     }
 
