@@ -110,7 +110,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             ScriptObject argarray = Type.objectValue(argArray);
             Object len = Get(argarray, "length");
             long n = ToUint32(realm, len);
-            assert n < 256;// TODO: actual limit?!
+            assert n <= 0x10000 : n;// TODO: actual limit?!
             Object[] argList = new Object[(int) n];
             for (int index = 0; index < n; ++index) {
                 String indexName = ToString(index);
