@@ -45,6 +45,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 
 /**
  * Simple REPL
@@ -478,6 +479,11 @@ public class Repl {
             } catch (IllegalArgumentException e) {
             }
             return UNDEFINED;
+        }
+
+        @Function(name = "createProxy", arity = 2)
+        public Object createProxy(Object handler, Object target) {
+            return new ExoticProxy(realm(), ToObject(realm(), handler), ToObject(realm(), target));
         }
     }
 }
