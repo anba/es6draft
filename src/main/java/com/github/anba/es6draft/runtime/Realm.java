@@ -221,6 +221,9 @@ public class Realm {
         SetIteratorPrototype setIteratorPrototype = new SetIteratorPrototype(realm);
         StopIterationObject stopIterationObject = new StopIterationObject(realm);
 
+        // Proxy
+        ProxyConstructor proxyConstructor = new ProxyConstructor(realm);
+
         // native errors
         NativeErrorConstructor evalErrorConstructor = new NativeErrorConstructor(realm,
                 ErrorType.EvalError);
@@ -332,6 +335,7 @@ public class Realm {
         intrinsics.put(Intrinsics.SetPrototype, setPrototype);
         intrinsics.put(Intrinsics.SetIteratorPrototype, setIteratorPrototype);
         intrinsics.put(Intrinsics.StopIteration, stopIterationObject);
+        intrinsics.put(Intrinsics.Proxy, proxyConstructor);
 
         // native errors
         intrinsics.put(Intrinsics.EvalError, evalErrorConstructor);
@@ -419,6 +423,7 @@ public class Realm {
         setPrototype.initialise(realm);
         setIteratorPrototype.initialise(realm);
         stopIterationObject.initialise(realm);
+        proxyConstructor.initialise(realm);
 
         // native errors
         evalErrorConstructor.initialise(realm);

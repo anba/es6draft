@@ -60,6 +60,7 @@ public enum Intrinsics {/* @formatter:off */
     TypeError,
     URIError,
     JSON,
+    Proxy,
 
     // not yet (?) in spec
     ArrayBuffer,

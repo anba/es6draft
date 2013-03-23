@@ -434,10 +434,10 @@ public class GlobalObject extends OrdinaryObject implements ScriptObject, Initia
         @Value(name = "Set")
         public static final Intrinsics Set = Intrinsics.Set;
 
-        // TODO: StopIteration object
+        // TODO: Proxy
 
-        @Value(name = "StopIteration")
-        public static final Intrinsics StopIteration = Intrinsics.StopIteration;
+        @Value(name = "Proxy")
+        public static final Intrinsics Proxy = Intrinsics.Proxy;
 
         // TODO: binary module intrinsics
 
@@ -473,11 +473,6 @@ public class GlobalObject extends OrdinaryObject implements ScriptObject, Initia
 
         @Value(name = "DataView")
         public static final Intrinsics DataView = Intrinsics.DataView;
-
-        // Internationalization API
-
-        @Value(name = "Intl")
-        public static final Intrinsics Intl = Intrinsics.Intl;
     }
 
     /**
@@ -497,6 +492,16 @@ public class GlobalObject extends OrdinaryObject implements ScriptObject, Initia
          */
         @Value(name = "JSON")
         public static final Intrinsics JSON = Intrinsics.JSON;
+
+        // TODO: StopIteration object
+
+        @Value(name = "StopIteration")
+        public static final Intrinsics StopIteration = Intrinsics.StopIteration;
+
+        // Internationalization API
+
+        @Value(name = "Intl")
+        public static final Intrinsics Intl = Intrinsics.Intl;
     }
 
     private static double readDecimalLiteralPrefix(String s, int start, int end) {
