@@ -64,7 +64,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         static final MethodDesc ExoticArguments_CompleteMappedArgumentsObject = MethodDesc.create(
                 MethodType.Static, Types.ExoticArguments, "CompleteMappedArgumentsObject", Type
                         .getMethodType(Type.VOID_TYPE, Types.Realm, Types.ExoticArguments,
-                                Types.Function, Types.String_, Types.LexicalEnvironment));
+                                Types.FunctionObject, Types.String_, Types.LexicalEnvironment));
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
@@ -74,7 +74,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
 
     private static class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
         static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.Function, Types.Object_);
+                Types.ExecutionContext, Types.FunctionObject, Types.Object_);
 
         private FunctionDeclInitMethodGenerator(CodeGenerator codegen, String methodName,
                 boolean strict) {
@@ -280,7 +280,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.dup();
         mv.load(Register.Realm);
         mv.swap();
-        mv.load(FUNCTION, Types.Function);
+        mv.load(FUNCTION, Types.FunctionObject);
         astore_string(mv, mappedNames(formals));
         mv.load(env, Types.LexicalEnvironment);
         mv.invoke(Methods.ExoticArguments_CompleteMappedArgumentsObject);

@@ -130,7 +130,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         static final MethodDesc ScriptRuntime_EvaluateArrowFunction = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type
-                        .getMethodType(Types.Object, Types.RuntimeInfo$Function,
+                        .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateConstructorCall = MethodDesc.create(
@@ -139,7 +139,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         static final MethodDesc ScriptRuntime_EvaluateFunctionExpression = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateFunctionExpression", Type
-                        .getMethodType(Types.Object, Types.RuntimeInfo$Function,
+                        .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorComprehension = MethodDesc.create(
@@ -148,7 +148,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorExpression = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorExpression", Type
-                        .getMethodType(Types.Object, Types.RuntimeInfo$Function,
+                        .getMethodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_GetCallThisValue = MethodDesc.create(

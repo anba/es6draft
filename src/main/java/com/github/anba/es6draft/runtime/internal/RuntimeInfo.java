@@ -11,6 +11,7 @@ import java.lang.invoke.MethodHandle;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
 /**
@@ -95,7 +96,7 @@ public final class RuntimeInfo {
 
             @Override
             public void functionDeclarationInstantiation(ExecutionContext cx,
-                    com.github.anba.es6draft.runtime.types.Function function, Object[] args) {
+                    FunctionObject function, Object[] args) {
                 try {
                     initialisation.invokeExact(cx, function, args);
                 } catch (RuntimeException | Error e) {
@@ -199,8 +200,8 @@ public final class RuntimeInfo {
 
         int expectedArgumentCount();
 
-        void functionDeclarationInstantiation(ExecutionContext cx,
-                com.github.anba.es6draft.runtime.types.Function function, Object[] args);
+        void functionDeclarationInstantiation(ExecutionContext cx, FunctionObject function,
+                Object[] args);
 
         String source();
     }

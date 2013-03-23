@@ -40,7 +40,7 @@ class RuntimeInfoGenerator {
         // Method descriptors
 
         static String functionInit = Type.getMethodDescriptor(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.Function, Types.Object_);
+                Types.ExecutionContext, Types.FunctionObject, Types.Object_);
         static String globalInit = Type.getMethodDescriptor(Type.VOID_TYPE, Types.Realm,
                 Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
         static String evalInit = Type.getMethodDescriptor(Type.VOID_TYPE, Types.Realm,

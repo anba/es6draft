@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -18,7 +17,14 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
-import com.github.anba.es6draft.runtime.types.*;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>8 Types</h1><br>
@@ -27,18 +33,7 @@ import com.github.anba.es6draft.runtime.types.*;
  * <li>8.3.19 Ordinary Function Objects
  * </ul>
  */
-public class OrdinaryFunction extends OrdinaryObject implements Function {
-    private FunctionKind kind;
-    private RuntimeInfo.Function function;
-    private LexicalEnvironment scope;
-    private boolean strict;
-    private ScriptObject home;
-    private String methodName;
-    private Realm realm;
-    private ThisMode thisMode;
-
-    private String source = null;
-
+public class OrdinaryFunction extends FunctionObject implements Constructor {
     private OrdinaryFunction(Realm realm) {
         super(realm);
     }
@@ -46,7 +41,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * [13.6 Creating Function Objects and Constructors] FunctionCreate
      */
-    public static Function FunctionCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryFunction FunctionCreate(Realm realm, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
         return FunctionCreate(realm, kind, function, scope, null, null, null);
     }
@@ -54,7 +49,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * [13.6 Creating Function Objects and Constructors] FunctionCreate
      */
-    public static Function FunctionCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryFunction FunctionCreate(Realm realm, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype) {
         return FunctionCreate(realm, kind, function, scope, prototype, null, null);
     }
@@ -62,7 +57,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * [13.6 Creating Function Objects and Constructors] FunctionCreate
      */
-    public static Function FunctionCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryFunction FunctionCreate(Realm realm, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
             ScriptObject homeObject, String methodName) {
         assert !function.isGenerator();
@@ -117,7 +112,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    public static void MakeConstructor(Realm realm, Function f) {
+    public static void MakeConstructor(Realm realm, FunctionObject f) {
         /*  step 2 */
         boolean installNeeded = true;
         ScriptObject prototype = ObjectCreate(realm, Intrinsics.ObjectPrototype);
@@ -129,7 +124,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    public static void MakeConstructor(Realm realm, Function f, boolean writablePrototype,
+    public static void MakeConstructor(Realm realm, FunctionObject f, boolean writablePrototype,
             ScriptObject prototype) {
         /* step 1 */
         boolean installNeeded = false;
@@ -139,7 +134,7 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    private static void MakeConstructor(Realm realm, Function f, boolean writablePrototype,
+    private static void MakeConstructor(Realm realm, FunctionObject f, boolean writablePrototype,
             ScriptObject prototype, boolean installNeeded) {
         /* step 4 (implicit) */
         /* step 5 */
@@ -201,10 +196,10 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
     /**
      * [Runtime Semantics: InstantiateFunctionObject]
      */
-    public static Function InstantiateFunctionObject(Realm realm, LexicalEnvironment scope,
+    public static OrdinaryFunction InstantiateFunctionObject(Realm realm, LexicalEnvironment scope,
             RuntimeInfo.Function fd) {
         /* step 1-2 */
-        Function f = FunctionCreate(realm, FunctionKind.Normal, fd, scope);
+        OrdinaryFunction f = FunctionCreate(realm, FunctionKind.Normal, fd, scope);
         /* step 3 */
         MakeConstructor(realm, f);
         /* step 4 */
@@ -274,108 +269,5 @@ public class OrdinaryFunction extends OrdinaryObject implements Function {
             return result;
         }
         return obj;
-    }
-
-    /**
-     * 8.3.15.3 [[Get]] (P, Receiver)
-     */
-    @Override
-    public Object get(String propertyKey, Object receiver) {
-        /* step 1-2 */
-        Object v = super.get(propertyKey, receiver);
-        /* step 3 */
-        if ("caller".equals(propertyKey) && isStrictFunction(v)) {
-            return NULL;
-        }
-        /* step 4 */
-        return v;
-    }
-
-    // FIXME: spec bug (caption not updated from 8.3.19.4 to 8.3.15.4)
-    /**
-     * 8.3.15.4 [[GetOwnProperty]] (P)
-     */
-    @Override
-    public Property getOwnProperty(String propertyKey) {
-        /* step 1-2 */
-        Property v = super.getOwnProperty(propertyKey);
-        if (v != null && v.isDataDescriptor()) {
-            if ("caller".equals(propertyKey) && isStrictFunction(v)) {
-                PropertyDescriptor desc = v.toPropertyDescriptor();
-                desc.setValue(NULL);
-                v = desc.toProperty();
-            }
-        }
-        return v;
-    }
-
-    private static boolean isStrictFunction(Object v) {
-        return v instanceof Function && ((Function) v).isStrict();
-    }
-
-    @Override
-    public FunctionKind getFunctionKind() {
-        return kind;
-    }
-
-    @Override
-    public RuntimeInfo.Function getFunction() {
-        return function;
-    }
-
-    /**
-     * [[Scope]]
-     */
-    @Override
-    public LexicalEnvironment getScope() {
-        return scope;
-    }
-
-    /**
-     * [[Code]]
-     */
-    @Override
-    public RuntimeInfo.Code getCode() {
-        return function;
-    }
-
-    /**
-     * [[Realm]]
-     */
-    @Override
-    public Realm getRealm() {
-        return realm;
-    }
-
-    /**
-     * [[ThisMode]]
-     */
-    @Override
-    public ThisMode getThisMode() {
-        return thisMode;
-    }
-
-    /**
-     * [[Strict]]
-     */
-    @Override
-    public boolean isStrict() {
-        return strict;
-    }
-
-    /**
-     * [[Home]]
-     */
-    @Override
-    public ScriptObject getHome() {
-        return home;
-    }
-
-    /**
-     * [[MethodName]]
-     */
-    @Override
-    public String getMethodName() {
-        return methodName;
     }
 }

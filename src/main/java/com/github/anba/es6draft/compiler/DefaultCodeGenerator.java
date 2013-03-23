@@ -154,8 +154,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc ScriptRuntime_EvaluateConstructorMethod = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorMethod", Type
-                        .getMethodType(Types.Function, Types.ScriptObject, Types.ScriptObject,
-                                Types.RuntimeInfo$Function, Types.ExecutionContext));
+                        .getMethodType(Types.OrdinaryFunction, Types.ScriptObject,
+                                Types.ScriptObject, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getClassProto = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "getClassProto",

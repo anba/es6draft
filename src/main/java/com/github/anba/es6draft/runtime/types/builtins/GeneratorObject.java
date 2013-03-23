@@ -27,7 +27,6 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Generator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -58,7 +57,7 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
     private SynchronousQueue<Object> out;
     private SynchronousQueue<Object> in;
 
-    public GeneratorObject(Realm realm, Generator generator, ExecutionContext context) {
+    public GeneratorObject(Realm realm, OrdinaryGenerator generator, ExecutionContext context) {
         this(realm, generator.getCode(), context);
     }
 

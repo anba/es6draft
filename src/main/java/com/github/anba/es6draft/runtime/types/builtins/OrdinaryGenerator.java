@@ -15,26 +15,15 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
-import com.github.anba.es6draft.runtime.types.Generator;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * TODO: for now basically a copy of {@link OrdinaryFunction}
+ *
  */
-public class OrdinaryGenerator extends OrdinaryObject implements Generator {
-    private FunctionKind kind;
-    private RuntimeInfo.Function function;
-    private LexicalEnvironment scope;
-    private boolean strict;
-    private ScriptObject home;
-    private String methodName;
-    private Realm realm;
-    private ThisMode thisMode;
-
-    private String source = null;
-
+public class OrdinaryGenerator extends FunctionObject implements Constructor {
     public OrdinaryGenerator(Realm realm) {
         super(realm);
     }
@@ -42,7 +31,7 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
     /**
      * 
      */
-    public static Generator GeneratorCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryGenerator GeneratorCreate(Realm realm, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
         return GeneratorCreate(realm, kind, function, scope, null, null, null);
     }
@@ -50,11 +39,11 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
     /**
      * 
      */
-    public static Generator GeneratorCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryGenerator GeneratorCreate(Realm realm, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
             ScriptObject homeObject, String methodName) {
         assert function.isGenerator();
-        assert kind != FunctionKind.Arrow;
+        assert kind != FunctionKind.Arrow && kind != FunctionKind.ConstructorMethod;
 
         boolean strict = function.isStrict();
         /* step 1 */
@@ -104,10 +93,10 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
     /**
      * 
      */
-    public static Generator InstantiateGeneratorObject(Realm realm, LexicalEnvironment scope,
-            RuntimeInfo.Function fd) {
+    public static OrdinaryGenerator InstantiateGeneratorObject(Realm realm,
+            LexicalEnvironment scope, RuntimeInfo.Function fd) {
         /* step 1-2 */
-        Generator f = GeneratorCreate(realm, FunctionKind.Normal, fd, scope);
+        OrdinaryGenerator f = GeneratorCreate(realm, FunctionKind.Normal, fd, scope);
         /* step 3 */
         MakeConstructor(realm, f);
         /* step 4 */
@@ -156,71 +145,5 @@ public class OrdinaryGenerator extends OrdinaryObject implements Generator {
     @Override
     public Object construct(Object... args) {
         return OrdinaryConstruct(realm, this, args);
-    }
-
-    @Override
-    public FunctionKind getFunctionKind() {
-        return kind;
-    }
-
-    @Override
-    public RuntimeInfo.Function getFunction() {
-        return function;
-    }
-
-    /**
-     * [[Scope]]
-     */
-    @Override
-    public LexicalEnvironment getScope() {
-        return scope;
-    }
-
-    /**
-     * [[Code]]
-     */
-    @Override
-    public RuntimeInfo.Code getCode() {
-        return function;
-    }
-
-    /**
-     * [[Realm]]
-     */
-    @Override
-    public Realm getRealm() {
-        return realm;
-    }
-
-    /**
-     * [[ThisMode]]
-     */
-    @Override
-    public ThisMode getThisMode() {
-        return thisMode;
-    }
-
-    /**
-     * [[Strict]]
-     */
-    @Override
-    public boolean isStrict() {
-        return strict;
-    }
-
-    /**
-     * [[Home]]
-     */
-    @Override
-    public ScriptObject getHome() {
-        return home;
-    }
-
-    /**
-     * [[MethodName]]
-     */
-    @Override
-    public String getMethodName() {
-        return methodName;
     }
 }

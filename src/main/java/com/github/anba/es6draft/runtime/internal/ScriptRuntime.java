@@ -36,11 +36,13 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.*;
-import com.github.anba.es6draft.runtime.types.Function.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
  * All kinds of different runtime support methods (TODO: clean-up)
@@ -130,7 +132,8 @@ public final class ScriptRuntime {
      * <li>FunctionExpression : function BindingIdentifier ( FormalParameterList ) { FunctionBody }
      * </ul>
      */
-    public static Object EvaluateFunctionExpression(RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static OrdinaryFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         String identifier = fd.functionName();
@@ -139,7 +142,7 @@ public final class ScriptRuntime {
             EnvironmentRecord envRec = scope.getEnvRec();
             envRec.createImmutableBinding(identifier);
         }
-        Function closure = FunctionCreate(realm, FunctionKind.Normal, fd, scope);
+        OrdinaryFunction closure = FunctionCreate(realm, FunctionKind.Normal, fd, scope);
         OrdinaryFunction.MakeConstructor(realm, closure);
         if (identifier != null) {
             scope.getEnvRec().initializeBinding(identifier, closure);
@@ -155,10 +158,11 @@ public final class ScriptRuntime {
      * <li>ArrowFunction : ArrowParameters => ConciseBody
      * </ul>
      */
-    public static Object EvaluateArrowFunction(RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static OrdinaryFunction EvaluateArrowFunction(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        Function closure = FunctionCreate(realm, FunctionKind.Arrow, fd, scope);
+        OrdinaryFunction closure = FunctionCreate(realm, FunctionKind.Arrow, fd, scope);
         return closure;
     }
 
@@ -225,7 +229,7 @@ public final class ScriptRuntime {
         try {
             DefaultConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
                     "DefaultConstructorInit", MethodType.methodType(Void.TYPE,
-                            ExecutionContext.class, Function.class, Object[].class));
+                            ExecutionContext.class, FunctionObject.class, Object[].class));
             DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
                     MethodType.methodType(Object.class, ExecutionContext.class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
@@ -239,7 +243,7 @@ public final class ScriptRuntime {
         }
     }
 
-    public static void DefaultConstructorInit(ExecutionContext cx, Function f, Object[] args) {
+    public static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
         Realm realm = cx.getRealm();
         LexicalEnvironment env = cx.getVariableEnvironment();
         EnvironmentRecord envRec = env.getEnvRec();
@@ -279,19 +283,20 @@ public final class ScriptRuntime {
      * Runtime Semantics: Property Definition Evaluation<br>
      * Runtime Semantics: ClassDefinitionEvaluation
      */
-    public static Function EvaluateConstructorMethod(ScriptObject constructorParent,
+    public static OrdinaryFunction EvaluateConstructorMethod(ScriptObject constructorParent,
             ScriptObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         String propName = "constructor";
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        Function constructor;
+        OrdinaryFunction constructor;
         if (fd.hasSuperReference()) {
             // FIXME: spec bug (constructorParent not used)
-            constructor = FunctionCreate(realm, FunctionKind.Method, fd, scope, constructorParent,
-                    proto, propName);
+            constructor = FunctionCreate(realm, FunctionKind.ConstructorMethod, fd, scope,
+                    constructorParent, proto, propName);
         } else {
             // FIXME: spec bug (constructorParent not used)
-            constructor = FunctionCreate(realm, FunctionKind.Method, fd, scope, constructorParent);
+            constructor = FunctionCreate(realm, FunctionKind.ConstructorMethod, fd, scope,
+                    constructorParent);
         }
         DefinePropertyOrThrow(realm, proto, propName, new PropertyDescriptor(constructor, true,
                 true, true));
@@ -314,7 +319,7 @@ public final class ScriptRuntime {
             RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        Function closure;
+        OrdinaryFunction closure;
         if (fd.hasSuperReference()) {
             closure = FunctionCreate(realm, FunctionKind.Method, fd, scope, null, object, propName);
         } else {
@@ -336,7 +341,7 @@ public final class ScriptRuntime {
             RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        Function closure;
+        OrdinaryGenerator closure;
         if (fd.hasSuperReference()) {
             closure = GeneratorCreate(realm, FunctionKind.Method, fd, scope, null, object, propName);
         } else {
@@ -358,7 +363,7 @@ public final class ScriptRuntime {
             RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        Function closure;
+        OrdinaryFunction closure;
         if (fd.hasSuperReference()) {
             closure = FunctionCreate(realm, FunctionKind.Method, fd, scope, null, object, propName);
         } else {
@@ -384,7 +389,7 @@ public final class ScriptRuntime {
             RuntimeInfo.Function fd, ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        Function closure;
+        OrdinaryFunction closure;
         if (fd.hasSuperReference()) {
             closure = FunctionCreate(realm, FunctionKind.Method, fd, scope, null, object, propName);
         } else {
@@ -406,7 +411,8 @@ public final class ScriptRuntime {
      * <li>GeneratorExpression: function* BindingIdentifier ( FormalParameterList ) { FunctionBody }
      * </ul>
      */
-    public static Object EvaluateGeneratorExpression(RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
         Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         String identifier = fd.functionName();
@@ -415,7 +421,7 @@ public final class ScriptRuntime {
             EnvironmentRecord envRec = scope.getEnvRec();
             envRec.createImmutableBinding(identifier);
         }
-        Generator closure = GeneratorCreate(realm, FunctionKind.Normal, fd, scope);
+        OrdinaryGenerator closure = GeneratorCreate(realm, FunctionKind.Normal, fd, scope);
         OrdinaryFunction.MakeConstructor(realm, closure);
         if (identifier != null) {
             scope.getEnvRec().initializeBinding(identifier, closure);

@@ -26,8 +26,6 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Function;
-import com.github.anba.es6draft.runtime.types.Generator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -35,6 +33,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -85,8 +84,6 @@ final class Types {
 
     // es6draft.runtime.types
     static final Type Callable = Type.getType(Callable.class);
-    static final Type Function = Type.getType(Function.class);
-    static final Type Generator = Type.getType(Generator.class);
     static final Type Intrinsics = Type.getType(Intrinsics.class);
     static final Type Null = Type.getType(Null.class);
     static final Type Reference = Type.getType(Reference.class);
@@ -98,6 +95,7 @@ final class Types {
     // es6draft.runtime.types.builtins
     static final Type ExoticArguments = Type.getType(ExoticArguments.class);
     static final Type ExoticArray = Type.getType(ExoticArray.class);
+    static final Type FunctionObject = Type.getType(FunctionObject.class);
     static final Type OrdinaryGenerator = Type.getType(OrdinaryGenerator.class);
     static final Type OrdinaryFunction = Type.getType(OrdinaryFunction.class);
     static final Type OrdinaryObject = Type.getType(OrdinaryObject.class);

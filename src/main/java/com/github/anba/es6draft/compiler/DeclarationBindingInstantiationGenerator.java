@@ -50,14 +50,14 @@ abstract class DeclarationBindingInstantiationGenerator {
         // class: OrdinaryFunction
         static final MethodDesc OrdinaryFunction_InstantiateFunctionObject = MethodDesc.create(
                 MethodType.Static, Types.OrdinaryFunction, "InstantiateFunctionObject", Type
-                        .getMethodType(Types.Function, Types.Realm, Types.LexicalEnvironment,
-                                Types.RuntimeInfo$Function));
+                        .getMethodType(Types.OrdinaryFunction, Types.Realm,
+                                Types.LexicalEnvironment, Types.RuntimeInfo$Function));
 
         // class: OrdinaryGenerator
         static final MethodDesc OrdinaryGenerator_InstantiateGeneratorObject = MethodDesc.create(
                 MethodType.Static, Types.OrdinaryGenerator, "InstantiateGeneratorObject", Type
-                        .getMethodType(Types.Generator, Types.Realm, Types.LexicalEnvironment,
-                                Types.RuntimeInfo$Function));
+                        .getMethodType(Types.OrdinaryGenerator, Types.Realm,
+                                Types.LexicalEnvironment, Types.RuntimeInfo$Function));
     }
 
     protected final CodeGenerator codegen;

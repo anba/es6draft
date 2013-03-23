@@ -11,11 +11,11 @@ import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarative
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnvironment;
 import static java.util.Objects.requireNonNull;
 
-import com.github.anba.es6draft.runtime.types.Function;
-import com.github.anba.es6draft.runtime.types.Function.ThisMode;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
 
 /**
@@ -103,7 +103,7 @@ public final class ExecutionContext {
     /**
      * 8.3.19.1 [[Call]] Internal Method
      */
-    public static ExecutionContext newFunctionExecutionContext(Function f, Object thisArgument) {
+    public static ExecutionContext newFunctionExecutionContext(FunctionObject f, Object thisArgument) {
         /* 13.6.1, step 1-10 */
         ExecutionContext calleeContext = new ExecutionContext();
         Realm calleeRealm = f.getRealm();

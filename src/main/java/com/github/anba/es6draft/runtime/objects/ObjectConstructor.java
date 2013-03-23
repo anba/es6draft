@@ -32,6 +32,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -509,9 +511,12 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      * Returns <code>true</code> if {@code value} is super-bound to {@code source}
      */
     private static boolean isSuperBoundTo(Object value, ScriptObject source) {
-        if (value instanceof com.github.anba.es6draft.runtime.types.Function) {
-            ScriptObject homeObject = ((com.github.anba.es6draft.runtime.types.Function) value)
-                    .getHome();
+        if (value instanceof OrdinaryFunction) {
+            ScriptObject homeObject = ((OrdinaryFunction) value).getHome();
+            return (homeObject == source);
+        }
+        if (value instanceof OrdinaryGenerator) {
+            ScriptObject homeObject = ((OrdinaryGenerator) value).getHome();
             return (homeObject == source);
         }
         return false;
@@ -521,13 +526,13 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      * Super-binds {@code value} to {@code target}
      */
     private static Callable superBindTo(Object value, ScriptObject target) {
-        if (value instanceof Generator) {
-            Generator gen = (Generator) value;
+        if (value instanceof OrdinaryGenerator) {
+            OrdinaryGenerator gen = (OrdinaryGenerator) value;
             return GeneratorCreate(gen.getRealm(), gen.getFunctionKind(), gen.getFunction(),
                     gen.getScope(), gen.getPrototype(), target, gen.getMethodName());
         } else {
-            assert value instanceof com.github.anba.es6draft.runtime.types.Function;
-            com.github.anba.es6draft.runtime.types.Function fn = (com.github.anba.es6draft.runtime.types.Function) value;
+            assert value instanceof OrdinaryFunction;
+            OrdinaryFunction fn = (OrdinaryFunction) value;
             return FunctionCreate(fn.getRealm(), fn.getFunctionKind(), fn.getFunction(),
                     fn.getScope(), fn.getPrototype(), target, fn.getMethodName());
         }

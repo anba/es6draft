@@ -7,10 +7,10 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -70,9 +70,5 @@ public abstract class BuiltinFunction extends OrdinaryObject implements ScriptOb
             }
         }
         return v;
-    }
-
-    private static boolean isStrictFunction(Object v) {
-        return v instanceof Function && ((Function) v).isStrict();
     }
 }

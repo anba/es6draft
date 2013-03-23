@@ -11,12 +11,12 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -165,7 +165,7 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
      * [10.6 Arguments Object] CompleteMappedArgumentsObject
      */
     public static void CompleteMappedArgumentsObject(Realm realm, ExoticArguments obj,
-            Function func, String[] formals, LexicalEnvironment env) {
+            FunctionObject func, String[] formals, LexicalEnvironment env) {
         // added ToInt32()
         int len = ToInt32(realm, Get(obj, "length"));
         boolean hasMapped = false;
@@ -221,10 +221,6 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
         /*  step 5  */
         // return Get(map, propertyKey);
         return map.get(propertyKey);
-    }
-
-    private static boolean isStrictFunction(Object v) {
-        return v instanceof Function && ((Function) v).isStrict();
     }
 
     /**

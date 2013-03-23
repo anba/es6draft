@@ -9,9 +9,9 @@ package com.github.anba.es6draft.runtime;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.types.Function;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -103,7 +103,7 @@ public final class LexicalEnvironment {
     /**
      * 10.2.2.4 NewFunctionEnvironment (F, T)
      */
-    public static LexicalEnvironment newFunctionEnvironment(Function f, Object t) {
+    public static LexicalEnvironment newFunctionEnvironment(FunctionObject f, Object t) {
         EnvironmentRecord envRec = new FunctionEnvironmentRecord(f.getRealm(), t, f.getHome(),
                 f.getMethodName());
         LexicalEnvironment env = new LexicalEnvironment(f.getScope(), envRec);

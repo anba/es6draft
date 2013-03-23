@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.google.doubleconversion.DoubleConversion;
 
@@ -840,8 +841,8 @@ public final class AbstractOperations {
         Object proto = Get(Type.objectValue(constructor), "prototype");
         if (!Type.isObject(proto)) {
             // FIXME: spec bug (step 5a. -> F is not defined)
-            if (constructor instanceof Function) {
-                realm = ((Function) constructor).getRealm();
+            if (constructor instanceof FunctionObject) {
+                realm = ((FunctionObject) constructor).getRealm();
             }
             proto = realm.getIntrinsic(intrinsicDefaultProto);
         }
