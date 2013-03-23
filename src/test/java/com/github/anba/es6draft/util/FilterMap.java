@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.test262.util;
+package com.github.anba.es6draft.util;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;

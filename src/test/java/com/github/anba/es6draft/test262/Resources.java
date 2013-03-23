@@ -4,9 +4,10 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.test262.util;
+package com.github.anba.es6draft.test262;
 
-import static com.github.anba.test262.util.Functional.filterMap;
+import static com.github.anba.es6draft.util.Functional.filterMap;
+import static java.util.Collections.emptyList;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,29 +49,33 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.github.anba.test262.util.Functional.Mapper;
-import com.github.anba.test262.util.Functional.Predicate;
+import com.github.anba.es6draft.util.Functional.Mapper;
+import com.github.anba.es6draft.util.Functional.Predicate;
 
 /**
  * 
  */
-public final class Resources {
+final class Resources {
     private Resources() {
     }
 
     /**
-     * Collects all test cases from the individual javascript files
+     * Loads all test cases from the individual javascript files
      * 
      */
-    public static List<Object[]> collectTestCases(String testpath, List<?> includes,
-            List<?> excludes, final boolean only_excluded, final Pattern excludePattern)
-            throws IOException {
+    public static List<Object[]> loadTestCases(Configuration c) throws IOException {
+        final String testpath = c.getString("");
+        final List<?> exclude = c.getList("exclude", emptyList());
+        final List<?> include = c.getList("include", emptyList());
+        final boolean only_excluded = c.getBoolean("only_excluded", false);
+        final Pattern excludePattern = Pattern.compile(c.getString("exclude_re", ""));
+
         // base directory to search for test javascript files
         final Path base = Paths.get(testpath);
 
         // set of test-case id to exclude from testing
-        final Set<String> exclude = readExcludeXMLs(excludes);
-        final Set<String> include = readExcludeXMLs(includes);
+        final Set<String> excludes = readExcludeXMLs(exclude);
+        final Set<String> includes = readExcludeXMLs(include);
 
         final List<Object[]> files = new ArrayList<>();
         Set<FileVisitOption> options = Collections.emptySet();
@@ -99,10 +104,10 @@ public final class Resources {
                         assert false : "regexp failure";
                     }
                     String testname = matcher.group(1);
-                    if (exclude.contains(testname) ^ only_excluded) {
+                    if (excludes.contains(testname) ^ only_excluded) {
                         break L1;
                     }
-                    if (!include.isEmpty() && !include.contains(testname)) {
+                    if (!includes.isEmpty() && !includes.contains(testname)) {
                         break L1;
                     }
                     files.add(array(testname, file.toString()));
@@ -168,7 +173,7 @@ public final class Resources {
      * prepended with "resource:", otherwise loads the resource with
      * {@link Files#newInputStream(Path, java.nio.file.OpenOption...)}
      */
-    public static InputStream resource(String uri) throws IOException {
+    private static InputStream resource(String uri) throws IOException {
         final String RESOURCE = "resource:";
         if (uri.startsWith(RESOURCE)) {
             String name = "/" + uri.substring(RESOURCE.length());
@@ -215,7 +220,7 @@ public final class Resources {
      * Reads the xml-structure from the {@link Reader} and returns the corresponding
      * {@link Document}
      */
-    public static Document xml(Reader xml) throws IOException {
+    private static Document xml(Reader xml) throws IOException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
         // turn off any validation or namespace features

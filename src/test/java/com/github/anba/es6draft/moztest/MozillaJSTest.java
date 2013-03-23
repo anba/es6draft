@@ -14,13 +14,13 @@ import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Rule;
@@ -30,18 +30,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.model.MultipleFailureException;
 
-import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.test262.util.LabelledParameterized;
+import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.ScriptCache;
 
 /**
  * Test suite for the Mozilla js-tests.
  */
-@RunWith(LabelledParameterized.class)
-@LabelledParameterized.Parallelized
+@RunWith(Parallelized.class)
 public class MozillaJSTest extends BaseMozillaTest {
 
     /**
@@ -61,7 +60,7 @@ public class MozillaJSTest extends BaseMozillaTest {
         return toObjectArray(tests);
     }
 
-    private static Map<Path, Script> scriptCache = new ScriptCache();
+    private static ScriptCache scriptCache = new ScriptCache(StandardCharsets.ISO_8859_1);
 
     @Rule
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(10));

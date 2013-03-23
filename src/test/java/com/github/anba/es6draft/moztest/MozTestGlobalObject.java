@@ -8,18 +8,12 @@ package com.github.anba.es6draft.moztest;
 
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.commons.io.IOUtils;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
@@ -29,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.util.ScriptCache;
 
 /**
  * Global object class for the Mozilla test-suite, also provides implementation for some
@@ -36,11 +31,10 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
  */
 public class MozTestGlobalObject extends GlobalObject {
     private List<Throwable> failures = new ArrayList<Throwable>();
-    private AtomicInteger scriptCounter = new AtomicInteger(0);
     private final Path basedir;
-    private final Map<Path, Script> scriptCache;
+    private final ScriptCache scriptCache;
 
-    public MozTestGlobalObject(Realm realm, Path basedir, Map<Path, Script> scriptCache) {
+    public MozTestGlobalObject(Realm realm, Path basedir, ScriptCache scriptCache) {
         super(realm);
         this.basedir = basedir;
         this.scriptCache = scriptCache;
@@ -54,7 +48,8 @@ public class MozTestGlobalObject extends GlobalObject {
      * Parses, compiles and executes the javascript file
      */
     public void eval(Path file) throws IOException {
-        Script script = script(file);
+        String sourceName = file.getFileName().toString();
+        Script script = scriptCache.script(sourceName, file);
         ScriptLoader.ScriptEvaluation(script, realm(), false);
     }
 
@@ -64,35 +59,8 @@ public class MozTestGlobalObject extends GlobalObject {
     public void evalWithCache(Path file) throws IOException {
         Path p = basedir.resolve(file);
 
-        Script script = compile(p);
+        Script script = scriptCache.get(p);
         ScriptLoader.ScriptEvaluation(script, realm(), false);
-    }
-
-    private String nextScriptName() {
-        return "Script_" + scriptCounter.incrementAndGet();
-    }
-
-    /**
-     * Parses and compiles the javascript file
-     */
-    private Script script(Path file) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.ISO_8859_1)) {
-            String sourceName = file.getFileName().toString();
-            String className = nextScriptName();
-            return ScriptLoader.load(sourceName, className, IOUtils.toString(reader));
-        }
-    }
-
-    /**
-     * Compiles {@code file} to a {@link Script} and caches the result in {@code #scriptCache}
-     */
-    private Script compile(Path file) throws IOException {
-        Script script = scriptCache.get(file);
-        if (script == null) {
-            script = script(file);
-            scriptCache.put(file, script);
-        }
-        return script;
     }
 
     /** testsuite-function: {@code reportFailure(msg)} */

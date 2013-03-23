@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.test262.util;
+package com.github.anba.es6draft.test262;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
@@ -30,7 +31,7 @@ import org.apache.commons.io.input.BOMInputStream;
  * {@link http://wiki.ecmascript.org/doku.php?id=test262:test_case_format}
  * 
  */
-public class Test262Info {
+class Test262Info {
     // private static final Pattern tags = Pattern
     // .compile("\\s*\\*\\s*@(\\w+)\\s*(?:\\:\\s*(.*);|;)?\\s*");
     private static final Pattern tags = Pattern.compile("\\s*\\*\\s*@(\\w+)\\s*(.+)?\\s*");
@@ -98,10 +99,9 @@ public class Test262Info {
     /**
      * Parses the test-info from the input file and returns a {@link Test262Info} object
      */
-    public static Test262Info from(Path path, String defaultCharset) throws IOException {
+    public static Test262Info from(Path path) throws IOException {
         Test262Info info = new Test262Info();
-        InputStream stream = Files.newInputStream(path);
-        Reader reader = newReader(stream, defaultCharset);
+        Reader reader = newReader(Files.newInputStream(path));
         try ($LineIterator lines = new $LineIterator(reader)) {
             boolean preamble = true;
             for (String line : iterable(lines)) {
@@ -189,10 +189,10 @@ public class Test262Info {
         }
     }
 
-    private static Reader newReader(InputStream stream, String defaultCharset) throws IOException {
+    private static Reader newReader(InputStream stream) throws IOException {
         BOMInputStream bomstream = new BOMInputStream(stream, ByteOrderMark.UTF_8,
                 ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE);
-        String charset = defaultIfNull(bomstream.getBOMCharsetName(), defaultCharset);
+        String charset = defaultIfNull(bomstream.getBOMCharsetName(), StandardCharsets.UTF_8.name());
         return new InputStreamReader(bomstream, charset);
     }
 }

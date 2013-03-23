@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 
 import org.junit.runners.Parameterized;
 
-import com.github.anba.es6draft.Script;
 
 /**
  *
@@ -54,23 +53,6 @@ public abstract class BaseMozillaTest {
         @Override
         public String toString() {
             return script.toString();
-        }
-    }
-
-    /**
-     * Simple cache for the compiled js-files
-     */
-    @SuppressWarnings("serial")
-    protected static class ScriptCache extends LinkedHashMap<Path, Script> {
-        private final int MAX_SIZE = 10;
-
-        public ScriptCache() {
-            super(16, .75f, true);
-        }
-
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<Path, Script> eldest) {
-            return (size() > MAX_SIZE);
         }
     }
 

@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.test262.util;
+package com.github.anba.es6draft.util;
 
 import static java.util.Objects.requireNonNull;
 import static org.hamcrest.Matchers.anything;
@@ -23,8 +23,7 @@ public abstract class ExceptionHandler implements TestRule {
     private Matcher<?> matcher = not(anything());
 
     public void match(Matcher<?> matcher) {
-        requireNonNull(matcher);
-        this.matcher = matcher;
+        this.matcher = requireNonNull(matcher);
     }
 
     /**
