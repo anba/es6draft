@@ -14,7 +14,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -23,9 +22,24 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 /**
  *
  */
-public class OrdinaryGenerator extends FunctionObject implements Constructor {
+public class OrdinaryGenerator extends FunctionObject {
     public OrdinaryGenerator(Realm realm) {
         super(realm);
+    }
+
+    private static class OrdinaryConstructorGenerator extends OrdinaryGenerator implements
+            Constructor {
+        public OrdinaryConstructorGenerator(Realm realm) {
+            super(realm);
+        }
+
+        /**
+         * 8.3.15.2 [[Construct]] Internal Method
+         */
+        @Override
+        public Object construct(Object... args) {
+            return OrdinaryConstruct(realm, this, args);
+        }
     }
 
     /**
@@ -47,7 +61,12 @@ public class OrdinaryGenerator extends FunctionObject implements Constructor {
 
         boolean strict = function.isStrict();
         /* step 1 */
-        OrdinaryGenerator f = new OrdinaryGenerator(realm);
+        OrdinaryGenerator f;
+        if (kind == FunctionKind.Normal) {
+            f = new OrdinaryConstructorGenerator(realm);
+        } else {
+            f = new OrdinaryGenerator(realm);
+        }
         /* step 2-4 (implicit) */
         /* step 5 */
         if (prototype == null) {
@@ -103,25 +122,6 @@ public class OrdinaryGenerator extends FunctionObject implements Constructor {
         return f;
     }
 
-    @Override
-    public String toSource() {
-        String source = this.source;
-        if (source == null) {
-            String src = function.source();
-            if (src != null) {
-                try {
-                    source = SourceCompressor.decompress(src).call();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                source = "function F() { /* source not available */ }";
-            }
-            this.source = source;
-        }
-        return source;
-    }
-
     /**
      * 8.3.19.1 [[Call]] Internal Method
      */
@@ -137,13 +137,5 @@ public class OrdinaryGenerator extends FunctionObject implements Constructor {
         result.initialise(getRealm());
         /* step 16 */
         return result;
-    }
-
-    /**
-     * 8.3.19.2 [[Construct]] Internal Method
-     */
-    @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm, this, args);
     }
 }

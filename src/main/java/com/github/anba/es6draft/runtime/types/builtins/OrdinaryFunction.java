@@ -16,7 +16,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -33,9 +32,24 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>8.3.19 Ordinary Function Objects
  * </ul>
  */
-public class OrdinaryFunction extends FunctionObject implements Constructor {
-    private OrdinaryFunction(Realm realm) {
+public class OrdinaryFunction extends FunctionObject {
+    protected OrdinaryFunction(Realm realm) {
         super(realm);
+    }
+
+    private static class OrdinaryConstructorFunction extends OrdinaryFunction implements
+            Constructor {
+        public OrdinaryConstructorFunction(Realm realm) {
+            super(realm);
+        }
+
+        /**
+         * 8.3.15.2 [[Construct]] Internal Method
+         */
+        @Override
+        public Object construct(Object... args) {
+            return OrdinaryConstruct(realm, this, args);
+        }
     }
 
     /**
@@ -64,7 +78,12 @@ public class OrdinaryFunction extends FunctionObject implements Constructor {
 
         boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
         /* step 1 */
-        OrdinaryFunction f = new OrdinaryFunction(realm);
+        OrdinaryFunction f;
+        if (kind == FunctionKind.Normal || kind == FunctionKind.ConstructorMethod) {
+            f = new OrdinaryConstructorFunction(realm);
+        } else {
+            f = new OrdinaryFunction(realm);
+        }
         /* step 2-4 (implicit) */
         /* step 5 */
         if (prototype == null) {
@@ -136,6 +155,7 @@ public class OrdinaryFunction extends FunctionObject implements Constructor {
      */
     private static void MakeConstructor(Realm realm, FunctionObject f, boolean writablePrototype,
             ScriptObject prototype, boolean installNeeded) {
+        assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
         /* step 4 (implicit) */
         /* step 5 */
         if (installNeeded) {
@@ -206,25 +226,6 @@ public class OrdinaryFunction extends FunctionObject implements Constructor {
         return f;
     }
 
-    @Override
-    public String toSource() {
-        String source = this.source;
-        if (source == null) {
-            String src = function.source();
-            if (src != null) {
-                try {
-                    source = SourceCompressor.decompress(src).call();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                source = "function F() { /* source not available */ }";
-            }
-            this.source = source;
-        }
-        return source;
-    }
-
     /**
      * 8.3.15.1 [[Call]] Internal Method
      */
@@ -239,14 +240,6 @@ public class OrdinaryFunction extends FunctionObject implements Constructor {
         Object result = getCode().evaluate(calleeContext);
         /* step 16 */
         return result;
-    }
-
-    /**
-     * 8.3.15.2 [[Construct]] Internal Method
-     */
-    @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm, this, args);
     }
 
     /**

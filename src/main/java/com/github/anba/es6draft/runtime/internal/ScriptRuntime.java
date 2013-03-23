@@ -143,7 +143,7 @@ public final class ScriptRuntime {
             envRec.createImmutableBinding(identifier);
         }
         OrdinaryFunction closure = FunctionCreate(realm, FunctionKind.Normal, fd, scope);
-        OrdinaryFunction.MakeConstructor(realm, closure);
+        MakeConstructor(realm, closure);
         if (identifier != null) {
             scope.getEnvRec().initializeBinding(identifier, closure);
         }
@@ -422,7 +422,7 @@ public final class ScriptRuntime {
             envRec.createImmutableBinding(identifier);
         }
         OrdinaryGenerator closure = GeneratorCreate(realm, FunctionKind.Normal, fd, scope);
-        OrdinaryFunction.MakeConstructor(realm, closure);
+        MakeConstructor(realm, closure);
         if (identifier != null) {
             scope.getEnvRec().initializeBinding(identifier, closure);
         }

@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -48,6 +49,25 @@ public abstract class FunctionObject extends OrdinaryObject implements ScriptObj
 
     public static boolean isStrictFunction(Object v) {
         return v instanceof FunctionObject && ((FunctionObject) v).isStrict();
+    }
+
+    @Override
+    public String toSource() {
+        String source = this.source;
+        if (source == null) {
+            String src = function.source();
+            if (src != null) {
+                try {
+                    source = SourceCompressor.decompress(src).call();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                source = "function F() { /* source not available */ }";
+            }
+            this.source = source;
+        }
+        return source;
     }
 
     /**
@@ -89,10 +109,6 @@ public abstract class FunctionObject extends OrdinaryObject implements ScriptObj
 
     public RuntimeInfo.Function getFunction() {
         return function;
-    }
-
-    public String getSource() {
-        return source;
     }
 
     /**
