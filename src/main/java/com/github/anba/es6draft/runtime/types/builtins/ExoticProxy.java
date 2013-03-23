@@ -34,23 +34,87 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>8.5 Proxy Object Internal Methods and Internal Data Properties
  * </ul>
  */
-public class ExoticProxy implements ScriptObject, Callable, Constructor {
-    private Realm realm;
+public class ExoticProxy implements ScriptObject {
+    protected final Realm realm;
+    /** [[ProxyTarget]] */
+    protected final ScriptObject proxyTarget;
+    /** [[ProxyHandler]] */
+    protected final ScriptObject proxyHandler;
 
-    /**
-     * [[ProxyHandler]]
-     */
-    private ScriptObject proxyHandler;
-
-    /**
-     * [[ProxyTarget]]
-     */
-    private ScriptObject proxyTarget;
-
-    public ExoticProxy(Realm realm, ScriptObject handler, ScriptObject target) {
+    public ExoticProxy(Realm realm, ScriptObject target, ScriptObject handler) {
         this.realm = realm;
-        this.proxyHandler = handler;
         this.proxyTarget = target;
+        this.proxyHandler = handler;
+    }
+
+    private static class CallabeExoticProxy extends ExoticProxy implements Callable {
+        public CallabeExoticProxy(Realm realm, ScriptObject target, ScriptObject handler) {
+            super(realm, target, handler);
+        }
+
+        /**
+         * 8.5.14 [[Call]] (thisArgument, argumentsList)
+         */
+        @Override
+        public Object call(Object thisValue, Object... args) {
+            ScriptObject handler = proxyHandler;
+            ScriptObject target = proxyTarget;
+            Callable trap = GetMethod(realm, handler, "apply");
+            if (trap == null) {
+                return ((Callable) target).call(thisValue, args);
+            }
+            ScriptObject argArray = CreateArrayFromList(realm, Arrays.asList(args));
+            return trap.call(handler, target, thisValue, argArray);
+        }
+
+        @Override
+        public String toSource() {
+            return "";
+        }
+    }
+
+    private static class ConstructorExoticProxy extends CallabeExoticProxy implements Constructor {
+        public ConstructorExoticProxy(Realm realm, ScriptObject target, ScriptObject handler) {
+            super(realm, target, handler);
+        }
+
+        /**
+         * 8.5.15 [[Construct]] Internal Method
+         */
+        @Override
+        public Object construct(Object... args) {
+            ScriptObject handler = proxyHandler;
+            ScriptObject target = proxyTarget;
+            Callable trap = GetMethod(realm, handler, "construct");
+            if (trap == null) {
+                return ((Constructor) target).construct(args);
+            }
+            ScriptObject argArray = CreateArrayFromList(realm, Arrays.asList(args));
+            return trap.call(handler, target, argArray);
+        }
+    }
+
+    /**
+     * Abstract Operation: CreateProxy
+     */
+    public static ExoticProxy CreateProxy(Realm realm, Object target, Object handler) {
+        if (!Type.isObject(target)) {
+            throwTypeError(realm, Messages.Key.NotObjectType);
+        }
+        if (!Type.isObject(handler)) {
+            throwTypeError(realm, Messages.Key.NotObjectType);
+        }
+        ScriptObject proxyTarget = Type.objectValue(target);
+        ScriptObject proxyHandler = Type.objectValue(handler);
+        ExoticProxy proxy;
+        if (IsConstructor(proxyTarget)) {
+            proxy = new ConstructorExoticProxy(realm, proxyTarget, proxyHandler);
+        } else if (IsCallable(proxyTarget)) {
+            proxy = new CallabeExoticProxy(realm, proxyTarget, proxyHandler);
+        } else {
+            proxy = new ExoticProxy(realm, proxyTarget, proxyHandler);
+        }
+        return proxy;
     }
 
     private static boolean __hasOwnProperty(ScriptObject target, Object propertyKey) {
@@ -598,40 +662,5 @@ public class ExoticProxy implements ScriptObject, Callable, Constructor {
             throw throwTypeError(this.realm, Messages.Key.ProxyNotObject);
         }
         return Type.objectValue(trapResult);
-    }
-
-    /**
-     * 8.5.14 [[Call]] (thisArgument, argumentsList)
-     */
-    @Override
-    public Object call(Object thisValue, Object... args) {
-        ScriptObject handler = proxyHandler;
-        ScriptObject target = proxyTarget;
-        Callable trap = GetMethod(realm, handler, "apply");
-        if (trap == null) {
-            return ((Callable) target).call(thisValue, args);
-        }
-        ScriptObject argArray = CreateArrayFromList(realm, Arrays.asList(args));
-        return trap.call(handler, target, thisValue, argArray);
-    }
-
-    @Override
-    public String toSource() {
-        return "";
-    }
-
-    /**
-     * 8.5.15 [[Construct]] Internal Method
-     */
-    @Override
-    public Object construct(Object... args) {
-        ScriptObject handler = proxyHandler;
-        ScriptObject target = proxyTarget;
-        Callable trap = GetMethod(realm, handler, "construct");
-        if (trap == null) {
-            return ((Constructor) target).construct(args);
-        }
-        ScriptObject argArray = CreateArrayFromList(realm, Arrays.asList(args));
-        return trap.call(handler, target, argArray);
     }
 }

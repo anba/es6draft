@@ -482,8 +482,8 @@ public class Repl {
         }
 
         @Function(name = "createProxy", arity = 2)
-        public Object createProxy(Object handler, Object target) {
-            return new ExoticProxy(realm(), ToObject(realm(), handler), ToObject(realm(), target));
+        public Object createProxy(Object target, Object handler) {
+            return ExoticProxy.CreateProxy(realm(), target, handler);
         }
     }
 }
