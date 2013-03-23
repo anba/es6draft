@@ -500,7 +500,7 @@ public class StringPrototype extends OrdinaryObject implements ScriptObject, Ini
             if (start < 0) {
                 return false;
             }
-            return s.startsWith(searchStr, end);
+            return s.startsWith(searchStr, start);
         }
 
         /**
