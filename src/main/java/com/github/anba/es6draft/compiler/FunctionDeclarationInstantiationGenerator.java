@@ -249,6 +249,9 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             }
             // stack: [ao] -> []
             initializeBinding(envRec, "arguments", mv);
+        } else {
+            // stack: [ao] -> []
+            mv.pop();
         }
         /* [10.5.3] step 23 */
         return;
