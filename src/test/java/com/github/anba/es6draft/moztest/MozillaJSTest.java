@@ -14,6 +14,7 @@ import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,13 +24,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.model.MultipleFailureException;
 
+import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
@@ -51,7 +56,7 @@ public class MozillaJSTest extends BaseMozillaTest {
         return (testPath != null ? Paths.get(testPath) : null);
     }
 
-    @Parameters
+    @Parameters(name = "{0}")
     public static Iterable<Object[]> mozillaSuiteValues() throws IOException {
         Path testdir = testDir();
         assumeThat("missing system property 'MOZ_JSTESTS'", testdir, notNullValue());
@@ -61,13 +66,23 @@ public class MozillaJSTest extends BaseMozillaTest {
     }
 
     private static ScriptCache scriptCache = new ScriptCache(StandardCharsets.ISO_8859_1);
+    private static Script legacyMozilla;
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(10));
+    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(15));
 
-    public MozillaJSTest(MozTest moztest) {
-        super(moztest);
-    }
+    @Parameter(0)
+    public MozTest moztest;
+
+    @ClassRule
+    public static ExternalResource resource = new ExternalResource() {
+        @Override
+        protected void before() throws Throwable {
+            String sourceName = "mozlegacy.js";
+            InputStream stream = MozillaJSTest.class.getResourceAsStream("/" + sourceName);
+            legacyMozilla = scriptCache.script(sourceName, stream);
+        }
+    };
 
     @Test
     public void runMozillaTest() throws Throwable {
@@ -88,12 +103,13 @@ public class MozillaJSTest extends BaseMozillaTest {
         MozTestGlobalObject global = (MozTestGlobalObject) realm.getGlobalThis();
         createProperties(global, realm, MozTestGlobalObject.class);
 
+        // load legacy mozilla
+        global.evaluate(legacyMozilla);
+
         // load and execute shell.js files
         for (Path shell : shellJS(moztest)) {
-            global.evalWithCache(shell);
+            global.include(shell);
         }
-        // export additional functions to overwrite shell.js defaults
-        global.set("reportFailure", global.get("__reportFailure", global), global);
 
         // evaluate actual test-script
         Path js = testDir().resolve(moztest.script);
@@ -122,8 +138,6 @@ public class MozillaJSTest extends BaseMozillaTest {
 
     /**
      * Returns an {@link Iterable} of 'shell.js'-{@link Path}s
-     * 
-     * @param testDir
      */
     private static Iterable<Path> shellJS(MozTest test) {
         // add 'shell.js' files from each directory

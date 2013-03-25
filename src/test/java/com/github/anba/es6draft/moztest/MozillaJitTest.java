@@ -21,6 +21,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.util.Parallelized;
@@ -37,8 +38,6 @@ public class MozillaJitTest extends BaseMozillaTest {
      */
     private static Path testDir() {
         String testPath = System.getenv("MOZ_JITTESTS");
-        // TODO: remove hard coded path...!
-        testPath = "D:\\cygwin\\tmp\\build\\jittests\\js\\src\\jit-test";
         return (testPath != null ? Paths.get(testPath) : null);
     }
 
@@ -53,7 +52,6 @@ public class MozillaJitTest extends BaseMozillaTest {
     @Rule
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(10));
 
-    public MozillaJitTest(MozTest moztest) {
-        super(moztest);
-    }
+    @Parameter(0)
+    public MozTest moztest;
 }

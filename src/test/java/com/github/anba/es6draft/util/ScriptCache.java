@@ -8,6 +8,7 @@ package com.github.anba.es6draft.util;
 
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -53,25 +54,31 @@ public class ScriptCache {
     }
 
     /**
-     * Returns a new {@link Reader} for the {@code file} parameter
+     * Returns a new {@link Reader} for the {@code stream} parameter
      */
-    private Reader newReader(Path file) throws IOException {
+    private Reader newReader(InputStream stream) throws IOException {
         if (charset.equals(StandardCharsets.UTF_8)) {
-            InputStream stream = Files.newInputStream(file);
             BOMInputStream bomstream = new BOMInputStream(stream, ByteOrderMark.UTF_8,
                     ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE);
             String charsetName = defaultIfNull(bomstream.getBOMCharsetName(), charset.name());
-            return new InputStreamReader(bomstream, charsetName);
+            return new BufferedReader(new InputStreamReader(bomstream, charsetName));
         }
-        return Files.newBufferedReader(file, charset);
+        return new BufferedReader(new InputStreamReader(stream, charset));
     }
 
     /**
      * Parses and compiles the javascript file
      */
     public Script script(String sourceName, Path file) throws IOException {
+        return script(sourceName, Files.newInputStream(file));
+    }
+
+    /**
+     * Parses and compiles the javascript file
+     */
+    public Script script(String sourceName, InputStream stream) throws IOException {
         String className = nextScriptName();
-        try (Reader reader = newReader(file)) {
+        try (Reader reader = newReader(stream)) {
             return ScriptLoader.load(sourceName, className, IOUtils.toString(reader));
         }
     }

@@ -29,17 +29,10 @@ import java.util.regex.Pattern;
 
 import org.junit.runners.Parameterized;
 
-
 /**
  *
  */
 public abstract class BaseMozillaTest {
-    protected final MozTest moztest;
-
-    protected BaseMozillaTest(MozTest moztest) {
-        this.moztest = moztest;
-    }
-
     /**
      * Simple class to store information for each test case
      */
@@ -161,7 +154,7 @@ public abstract class BaseMozillaTest {
             map.put(test.script, test);
         }
         // disable tests
-        int disabledTests = 0;
+        List<MozTest> disabledTests = new ArrayList<>();
         InputStream res = MozillaJSTest.class.getResourceAsStream(filename);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(res,
                 StandardCharsets.UTF_8))) {
@@ -176,11 +169,11 @@ public abstract class BaseMozillaTest {
                     System.err.printf("detected stale entry '%s'\n", line);
                     continue;
                 }
-                disabledTests += 1;
+                disabledTests.add(t);
                 t.enable = false;
             }
         }
-        System.out.printf("disabled %d tests of %d in total%n", disabledTests, tests.size());
+        System.out.printf("disabled %d tests of %d in total%n", disabledTests.size(), tests.size());
         return tests;
     }
 

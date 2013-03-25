@@ -50,24 +50,23 @@ public class MozTestGlobalObject extends GlobalObject {
     public void eval(Path file) throws IOException {
         String sourceName = file.getFileName().toString();
         Script script = scriptCache.script(sourceName, file);
-        ScriptLoader.ScriptEvaluation(script, realm(), false);
+        evaluate(script);
     }
 
     /**
      * Parses, compiles and executes the javascript file (uses {@link #scriptCache})
      */
-    public void evalWithCache(Path file) throws IOException {
+    public void include(Path file) throws IOException {
         Path p = basedir.resolve(file);
-
         Script script = scriptCache.get(p);
-        ScriptLoader.ScriptEvaluation(script, realm(), false);
+        evaluate(script);
     }
 
-    /** testsuite-function: {@code reportFailure(msg)} */
-    @Function(name = "__reportFailure", arity = 1)
-    public void reportFailure(String msg) {
-        // collect all failures instead of calling fail() directly
-        failures.add(new AssertionError(msg));
+    /**
+     * Evalutes the {@code script}
+     */
+    public Object evaluate(Script script) throws IOException {
+        return ScriptLoader.ScriptEvaluation(script, realm(), false);
     }
 
     /** shell-function: {@code print()} */
@@ -79,6 +78,10 @@ public class MozTestGlobalObject extends GlobalObject {
     /** shell-function: {@code print([exp, ...])} */
     @Function(name = "print", arity = 1)
     public void print(String message) {
+        if (message.startsWith(" FAILED! ")) {
+            // collect all failures instead of calling fail() directly
+            failures.add(new AssertionError(message));
+        }
         // System.out.println(message);
     }
 
@@ -91,7 +94,7 @@ public class MozTestGlobalObject extends GlobalObject {
             ScriptRuntime._throw(e);
         }
         try {
-            evalWithCache(p);
+            eval(p);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -100,7 +103,8 @@ public class MozTestGlobalObject extends GlobalObject {
 
     /** shell-function: {@code gc()} */
     @Function(name = "gc", arity = 0)
-    public void gc(String message) {
+    public String gc() {
+        return "";
     }
 
     /** shell-function: {@code options([name])} */
