@@ -34,6 +34,19 @@ ecma_3/Number/15.7.4.7-1.js
 ecma_5/RegExp/exec.js
 
 
+#############################
+# Intl not yet supported    #
+#############################
+
+Intl/Collator/compare.js
+Intl/Collator/supportedLocalesOf.js
+Intl/DateTimeFormat/format.js
+Intl/DateTimeFormat/supportedLocalesOf.js
+Intl/NumberFormat/format.js
+Intl/NumberFormat/StringBuffer.js
+Intl/NumberFormat/supportedLocalesOf.js
+
+
 ###############################################################
 # ES6 (rev14) <Object>.prototype no longer instance of <Type> #
 ###############################################################
@@ -870,7 +883,7 @@ ecma_5/String/string-upper-lower-mapping.js
 js1_5/Regress/regress-308085.js
 js1_5/Regress/regress-398085-01.js
 js1_5/Regress/regress-396684.js
-js1_8_5/Regress/regress-563221.js
+js1_8_5/regress/regress-563221.js
 
 # Class file too large
 js1_5/Regress/regress-155081.js
@@ -911,6 +924,7 @@ js1_5/extensions/regress-369696-03.js
 # OutOfMemory: Java heap space
 js1_5/Regress/regress-422348.js
 ecma_5/String/string-object-length.js
+ecma_5/RegExp/regress-617935.js
 
 # Timeout
 ecma/Date/15.9.5.10-2.js
