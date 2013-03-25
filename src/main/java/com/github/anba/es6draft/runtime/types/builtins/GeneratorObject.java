@@ -250,7 +250,7 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
         }
 
         @Function(name = "next", arity = 0)
-        public static Object send(Realm realm, Object thisValue) {
+        public static Object next(Realm realm, Object thisValue) {
             return generatorObject(realm, thisValue).send(UNDEFINED);
         }
 
