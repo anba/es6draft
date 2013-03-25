@@ -32,11 +32,13 @@ import com.github.anba.es6draft.util.ScriptCache;
 public class MozTestGlobalObject extends GlobalObject {
     private List<Throwable> failures = new ArrayList<Throwable>();
     private final Path basedir;
+    private final Path script;
     private final ScriptCache scriptCache;
 
-    public MozTestGlobalObject(Realm realm, Path basedir, ScriptCache scriptCache) {
+    public MozTestGlobalObject(Realm realm, Path basedir, Path file, ScriptCache scriptCache) {
         super(realm);
         this.basedir = basedir;
+        this.script = file;
         this.scriptCache = scriptCache;
     }
 
@@ -87,10 +89,11 @@ public class MozTestGlobalObject extends GlobalObject {
 
     /** shell-function: {@code load(path)} */
     @Function(name = "load", arity = 1)
-    public Object load(String file) {
-        Path p = basedir.resolve(Paths.get(file));
+    public Object load(String path) {
+        Path p = basedir.resolve(script.getParent().resolve(Paths.get(path)));
         if (!Files.exists(p)) {
-            Object e = ((Constructor) realm().getIntrinsic(Intrinsics.Error)).construct();
+            String s = p.toString();
+            Object e = ((Constructor) realm().getIntrinsic(Intrinsics.Error)).construct(s);
             ScriptRuntime._throw(e);
         }
         try {
@@ -104,6 +107,12 @@ public class MozTestGlobalObject extends GlobalObject {
     /** shell-function: {@code gc()} */
     @Function(name = "gc", arity = 0)
     public String gc() {
+        return "";
+    }
+
+    /** shell-function: {@code gczeal()} */
+    @Function(name = "gczeal", arity = 0)
+    public String gczeal() {
         return "";
     }
 

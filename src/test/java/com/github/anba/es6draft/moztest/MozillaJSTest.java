@@ -86,7 +86,7 @@ public class MozillaJSTest extends BaseMozillaTest {
 
     @Test
     public void runMozillaTest() throws Throwable {
-        MozTest moztest = this.moztest;
+        final MozTest moztest = this.moztest;
         // filter disabled tests
         assumeTrue(moztest.enable);
         // don't run slow tests
@@ -95,7 +95,7 @@ public class MozillaJSTest extends BaseMozillaTest {
         Realm realm = Realm.newRealm(new GlobalObjectCreator<MozTestGlobalObject>() {
             @Override
             public MozTestGlobalObject createGlobal(Realm realm) {
-                return new MozTestGlobalObject(realm, testDir(), scriptCache);
+                return new MozTestGlobalObject(realm, testDir(), moztest.script, scriptCache);
             }
         });
 
