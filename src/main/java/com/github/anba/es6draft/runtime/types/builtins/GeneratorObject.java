@@ -110,7 +110,7 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
         }
     }
 
-    private Object execute0() {
+    private Object execute0(Realm realm) {
         if (!future.isDone()) {
             Object result;
             try {
@@ -135,7 +135,7 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
             }
             // TODO: StopIteration with value
             // throw new StopIteration(result);
-            return ScriptRuntime._throw(realm().getIntrinsic(Intrinsics.StopIteration));
+            return ScriptRuntime._throw(realm.getIntrinsic(Intrinsics.StopIteration));
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -144,24 +144,24 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
     /**
      * [[Send]]
      */
-    public Object send(Object value) {
+    public Object send(Realm realm, Object value) {
         GeneratorState state = this.state;
         switch (state) {
         case Executing:
-            throw throwTypeError(realm(), Messages.Key.GeneratorExecuting);
+            throw throwTypeError(realm, Messages.Key.GeneratorExecuting);
         case Closed:
-            throw throwTypeError(realm(), Messages.Key.GeneratorClosed);
+            throw throwTypeError(realm, Messages.Key.GeneratorClosed);
         case Newborn: {
             if (value != UNDEFINED) {
-                throw throwTypeError(realm(), Messages.Key.GeneratorNewbornSend);
+                throw throwTypeError(realm, Messages.Key.GeneratorNewbornSend);
             }
             start0();
-            return execute0();
+            return execute0(realm);
         }
         case Suspended:
         default: {
             resume0(value);
-            return execute0();
+            return execute0(realm);
         }
         }
     }
@@ -169,13 +169,13 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
     /**
      * [[Throw]]
      */
-    public Object _throw(Object value) {
+    public Object _throw(Realm realm, Object value) {
         GeneratorState state = this.state;
         switch (state) {
         case Executing:
-            throw throwTypeError(realm(), Messages.Key.GeneratorExecuting);
+            throw throwTypeError(realm, Messages.Key.GeneratorExecuting);
         case Closed:
-            throw throwTypeError(realm(), Messages.Key.GeneratorClosed);
+            throw throwTypeError(realm, Messages.Key.GeneratorClosed);
         case Newborn: {
             this.state = GeneratorState.Closed;
             throw ScriptRuntime._throw(value);
@@ -183,7 +183,7 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
         case Suspended:
         default: {
             resume0(new ScriptException(value));
-            return execute0();
+            return execute0(realm);
         }
         }
     }
@@ -191,11 +191,11 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
     /**
      * [[Close]]
      */
-    public Object close() {
+    public Object close(Realm realm) {
         GeneratorState state = this.state;
         switch (state) {
         case Executing:
-            throw throwTypeError(realm(), Messages.Key.GeneratorExecuting);
+            throw throwTypeError(realm, Messages.Key.GeneratorExecuting);
         case Closed:
             return UNDEFINED;
         case Newborn: {
@@ -205,7 +205,7 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
         case Suspended:
         default: {
             resume0(new CloseGenerator());
-            return execute0();
+            return execute0(realm);
         }
         }
     }
@@ -246,22 +246,22 @@ public class GeneratorObject extends OrdinaryObject implements ScriptObject, Ini
 
         @Function(name = "send", arity = 1)
         public static Object send(Realm realm, Object thisValue, Object value) {
-            return generatorObject(realm, thisValue).send(value);
+            return generatorObject(realm, thisValue).send(realm, value);
         }
 
         @Function(name = "next", arity = 0)
         public static Object next(Realm realm, Object thisValue) {
-            return generatorObject(realm, thisValue).send(UNDEFINED);
+            return generatorObject(realm, thisValue).send(realm, UNDEFINED);
         }
 
         @Function(name = "throw", arity = 1)
         public static Object _throw(Realm realm, Object thisValue, Object value) {
-            return generatorObject(realm, thisValue)._throw(value);
+            return generatorObject(realm, thisValue)._throw(realm, value);
         }
 
         @Function(name = "close", arity = 0)
         public static Object close(Realm realm, Object thisValue) {
-            return generatorObject(realm, thisValue).close();
+            return generatorObject(realm, thisValue).close(realm);
         }
 
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)

@@ -321,10 +321,12 @@ public class Repl {
     public static class ReplGlobalObject extends GlobalObject {
         private final long startMilli = System.currentTimeMillis();
         private final long startNano = System.nanoTime();
+        private final Realm realm;
         private final Repl repl;
 
         public ReplGlobalObject(Realm realm, Repl repl) {
             super(realm);
+            this.realm = realm;
             this.repl = repl;
         }
 
@@ -351,15 +353,15 @@ public class Repl {
             try {
                 Path path = Paths.get(file);
                 String source = repl.loadFile(path);
-                return repl.evaluate(realm(), source, path.getFileName().toString());
+                return repl.evaluate(realm, source, path.getFileName().toString());
             } catch (IOException e) {
-                throw throwError(realm(), e.getMessage());
+                throw throwError(realm, e.getMessage());
             }
         }
 
         @Function(name = "evaluate", arity = 1)
         public Object evaluate(String source) {
-            return repl.evaluate(realm(), source, "string");
+            return repl.evaluate(realm, source, "string");
         }
 
         @Function(name = "run", arity = 1)
@@ -406,7 +408,6 @@ public class Repl {
         @Function(name = "assertEq", arity = 2)
         public void assertEq(Object actual, Object expected, Object message) {
             if (!SameValue(actual, expected)) {
-                Realm realm = realm();
                 StringBuilder msg = new StringBuilder();
                 msg.append(String.format("Assertion failed: got %s, expected %s",
                         ToSource(realm, actual), ToSource(realm, expected)));
@@ -428,7 +429,7 @@ public class Repl {
 
         @Function(name = "throwError", arity = 0)
         public void throwError() {
-            throwError(realm(), "This is an error");
+            throwError(realm, "This is an error");
         }
 
         @Function(name = "build", arity = 0)
@@ -437,7 +438,7 @@ public class Repl {
                     Repl.class.getResourceAsStream("/build-date"), StandardCharsets.UTF_8))) {
                 return reader.readLine();
             } catch (IOException e) {
-                throw throwError(realm(), "could not read build-date file");
+                throw throwError(realm, "could not read build-date file");
             }
         }
 
@@ -446,7 +447,7 @@ public class Repl {
             try {
                 TimeUnit.SECONDS.sleep(ToUint32(dt));
             } catch (InterruptedException e) {
-                throwError(realm(), e.getMessage());
+                throwError(realm, e.getMessage());
             }
         }
 
@@ -455,7 +456,7 @@ public class Repl {
             try {
                 return repl.loadFile(Paths.get(file));
             } catch (IOException e) {
-                throw throwError(realm(), e.getMessage());
+                throw throwError(realm, e.getMessage());
             }
         }
 

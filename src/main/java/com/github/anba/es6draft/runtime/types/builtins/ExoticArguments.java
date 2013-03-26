@@ -217,7 +217,7 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
         if (!isMapped) {
             Object v = super.get(realm, propertyKey, accessorThisValue);
             if ("caller".equals(propertyKey) && isStrictFunction(v)) {
-                throw throwTypeError(realm(), Messages.Key.StrictModePoisonPill);
+                throw throwTypeError(realm, Messages.Key.StrictModePoisonPill);
             }
             return v;
         }

@@ -31,12 +31,14 @@ import com.github.anba.es6draft.util.ScriptCache;
  */
 public class MozTestGlobalObject extends GlobalObject {
     private List<Throwable> failures = new ArrayList<Throwable>();
+    private final Realm realm;
     private final Path basedir;
     private final Path script;
     private final ScriptCache scriptCache;
 
     public MozTestGlobalObject(Realm realm, Path basedir, Path file, ScriptCache scriptCache) {
         super(realm);
+        this.realm = realm;
         this.basedir = basedir;
         this.script = file;
         this.scriptCache = scriptCache;
@@ -68,7 +70,7 @@ public class MozTestGlobalObject extends GlobalObject {
      * Evalutes the {@code script}
      */
     public Object evaluate(Script script) throws IOException {
-        return ScriptLoader.ScriptEvaluation(script, realm(), false);
+        return ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
     /** shell-function: {@code print()} */
@@ -93,7 +95,7 @@ public class MozTestGlobalObject extends GlobalObject {
         Path p = basedir.resolve(script.getParent().resolve(Paths.get(path)));
         if (!Files.exists(p)) {
             String s = p.toString();
-            Object e = ((Constructor) realm().getIntrinsic(Intrinsics.Error)).construct(s);
+            Object e = ((Constructor) realm.getIntrinsic(Intrinsics.Error)).construct(s);
             ScriptRuntime._throw(e);
         }
         try {

@@ -26,6 +26,7 @@ import com.github.anba.es6draft.util.ScriptCache;
  * Global object for test262 tests, includes all necessary global function definitions.
  */
 public class Test262GlobalObject extends GlobalObject {
+    private final Realm realm;
     private final Path libpath;
     private final ScriptCache cache;
     private final Test262Info info;
@@ -34,6 +35,7 @@ public class Test262GlobalObject extends GlobalObject {
     public Test262GlobalObject(Realm realm, Path libpath, ScriptCache cache, Test262Info info,
             String sourceName) {
         super(realm);
+        this.realm = realm;
         this.libpath = libpath;
         this.cache = cache;
         this.info = info;
@@ -45,7 +47,7 @@ public class Test262GlobalObject extends GlobalObject {
      */
     public void eval(Path file) throws IOException {
         Script script = cache.script(sourceName, file);
-        ScriptLoader.ScriptEvaluation(script, realm(), false);
+        ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
     /**
@@ -92,7 +94,7 @@ public class Test262GlobalObject extends GlobalObject {
         // resolve the input file against the library path
         Path path = libpath.resolve(Paths.get(file));
         Script script = cache.get(path);
-        ScriptLoader.ScriptEvaluation(script, realm(), false);
+        ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
     /**

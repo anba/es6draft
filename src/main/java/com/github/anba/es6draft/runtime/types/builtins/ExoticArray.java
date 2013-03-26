@@ -56,12 +56,12 @@ public class ExoticArray extends OrdinaryObject implements ScriptObject {
     @Override
     public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
         if ("length".equals(propertyKey)) {
-            return ArraySetLength(this, desc);
+            return ArraySetLength(realm, this, desc);
         } else if (isArrayIndex(propertyKey)) {
             Property oldLenDesc = getOwnProperty(realm, "length");
             assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
-            long oldLen = ToUint32(realm(), oldLenDesc.getValue());
-            long index = ToUint32(realm(), propertyKey);
+            long oldLen = ToUint32(realm, oldLenDesc.getValue());
+            long index = ToUint32(realm, propertyKey);
             if (index >= oldLen && !oldLenDesc.isWritable()) {
                 return false;
             }
@@ -114,8 +114,7 @@ public class ExoticArray extends OrdinaryObject implements ScriptObject {
     /**
      * 8.4.2.4 ArraySetLength Abstract Operation
      */
-    public static boolean ArraySetLength(ExoticArray array, PropertyDescriptor desc) {
-        Realm realm = array.realm();
+    public static boolean ArraySetLength(Realm realm, ExoticArray array, PropertyDescriptor desc) {
         if (!desc.hasValue()) {
             return array.ordinaryDefineOwnProperty("length", desc);
         }

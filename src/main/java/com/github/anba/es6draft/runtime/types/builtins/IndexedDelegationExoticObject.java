@@ -34,7 +34,7 @@ public class IndexedDelegationExoticObject extends OrdinaryObject {
     public Object get(Realm realm, String propertyKey, Object receiver) {
         if (SameValue(this, receiver) && isArrayIndex(propertyKey)) {
             // FIXME: spec bug (variable 'index' not defined) (bug 1207)
-            return Invoke(realm(), this, BuiltinSymbol.elementGet.get(), propertyKey);
+            return Invoke(realm, this, BuiltinSymbol.elementGet.get(), propertyKey);
         }
         return super.get(realm, propertyKey, receiver);
     }
@@ -47,8 +47,7 @@ public class IndexedDelegationExoticObject extends OrdinaryObject {
         if (SameValue(this, receiver) && isArrayIndex(propertyKey)) {
             // FIXME: spec bug (variable 'index' not defined) (bug 1207)
             // FIXME: spec bug (missing ToBoolean() conversion?) (bug 1207)
-            return ToBoolean(Invoke(realm(), this, BuiltinSymbol.elementSet.get(), propertyKey,
-                    value));
+            return ToBoolean(Invoke(realm, this, BuiltinSymbol.elementSet.get(), propertyKey, value));
         }
         return super.set(realm, propertyKey, value, receiver);
     }

@@ -123,10 +123,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Types.ScriptRuntime, "CheckCallable",
                 Type.getMethodType(Types.Callable, Types.Object, Types.Realm));
 
-        static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc
-                .create(MethodType.Static, Types.ScriptRuntime, "defineProperty", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Type.INT_TYPE,
-                                Types.Object, Types.Realm));
+        static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "defineProperty", Type.getMethodType(
+                        Type.VOID_TYPE, Types.ScriptObject, Type.INT_TYPE, Types.Object,
+                        Types.Realm));
 
         static final MethodDesc ScriptRuntime_EvaluateArrowFunction = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type

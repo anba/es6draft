@@ -664,7 +664,7 @@ public abstract class OrdinaryObject implements ScriptObject {
     /** 8.3.13 [[OwnPropertyKeys]] ( ) */
     @Override
     public final ScriptObject ownPropertyKeys(Realm realm) {
-        return MakeListIterator(realm(), enumerateOwnKeys().iterator());
+        return MakeListIterator(realm, enumerateOwnKeys().iterator());
     }
 
     /** 8.3.13 [[OwnPropertyKeys]] ( ) */
