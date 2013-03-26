@@ -26,10 +26,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class ErrorObject extends OrdinaryObject implements ScriptObject {
+    private final Realm realm;
     private boolean initialised = false;
 
     public ErrorObject(Realm realm) {
         super(realm);
+        this.realm = realm;
     }
 
     public boolean isInitialised() {
@@ -44,9 +46,9 @@ public class ErrorObject extends OrdinaryObject implements ScriptObject {
     @Override
     public String toString() {
         try {
-            Object toString = Get(realm(), this, "toString");
+            Object toString = Get(realm, this, "toString");
             if (toString instanceof Callable) {
-                return ToFlatString(realm(), ((Callable) toString).call(this));
+                return ToFlatString(realm, ((Callable) toString).call(this));
             }
         } catch (RuntimeException e) {
         }

@@ -50,14 +50,7 @@ public abstract class OrdinaryObject implements ScriptObject {
     /** [[Extensible]] */
     private boolean extensible = true;
 
-    private final Realm realm;
-
     public OrdinaryObject(Realm realm) {
-        this.realm = realm;
-    }
-
-    protected final Realm realm() {
-        return realm;
     }
 
     /** [[Extensible]] */

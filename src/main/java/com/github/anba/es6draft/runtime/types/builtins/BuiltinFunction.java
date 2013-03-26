@@ -24,8 +24,19 @@ import com.github.anba.es6draft.runtime.types.Type;
  * </ul>
  */
 public abstract class BuiltinFunction extends OrdinaryObject implements ScriptObject, Callable {
+    /** [[Realm]] */
+    private final Realm realm;
+
     public BuiltinFunction(Realm realm) {
         super(realm);
+        this.realm = realm;
+    }
+
+    /**
+     * [[Realm]]
+     */
+    protected final Realm realm() {
+        return realm;
     }
 
     @Override
