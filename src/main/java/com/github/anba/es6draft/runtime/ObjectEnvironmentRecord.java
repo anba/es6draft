@@ -41,7 +41,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasBinding(String name) {
-        return HasProperty(bindings, name);
+        return HasProperty(realm, bindings, name);
     }
 
     /**
@@ -49,7 +49,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void createMutableBinding(String name, boolean deletable) {
-        if (HasProperty(bindings, name)) {
+        if (HasProperty(realm, bindings, name)) {
             throw new IllegalStateException();
         }
         PropertyDescriptor desc = new PropertyDescriptor(UNDEFINED, true, true, deletable);
@@ -88,14 +88,14 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public Object getBindingValue(String name, boolean strict) {
-        boolean value = HasProperty(bindings, name);
+        boolean value = HasProperty(realm, bindings, name);
         if (!value) {
             if (!strict) {
                 return UNDEFINED;
             }
             throw throwReferenceError(realm, Messages.Key.UnresolvableReference, name);
         }
-        return Get(bindings, name);
+        return Get(realm, bindings, name);
     }
 
     /**
@@ -103,7 +103,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean deleteBinding(String name) {
-        return bindings.delete(name);
+        return bindings.delete(realm, name);
     }
 
     /**

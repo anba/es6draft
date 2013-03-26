@@ -24,12 +24,14 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public final class GlobalEnvironmentRecord implements EnvironmentRecord {
-    private ScriptObject globalObject;
-    private ObjectEnvironmentRecord objectEnv;
-    private DeclarativeEnvironmentRecord declEnv;
+    private final Realm realm;
+    private final ScriptObject globalObject;
+    private final ObjectEnvironmentRecord objectEnv;
+    private final DeclarativeEnvironmentRecord declEnv;
     private List<String> varNames = new ArrayList<>();
 
     public GlobalEnvironmentRecord(Realm realm, ScriptObject globalObject) {
+        this.realm = realm;
         this.globalObject = globalObject;
         objectEnv = new ObjectEnvironmentRecord(realm, globalObject, false);
         declEnv = new DeclarativeEnvironmentRecord(realm);
@@ -172,18 +174,18 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         if (objectEnv.hasBinding(name)) {
             return true;
         }
-        return IsExtensible(globalObject);
+        return IsExtensible(realm, globalObject);
     }
 
     /**
      * 10.2.1.4.15 CanDeclareGlobalFunction (N)
      */
     public boolean canDeclareGlobalFunction(String name) {
-        boolean extensible = IsExtensible(globalObject);
+        boolean extensible = IsExtensible(realm, globalObject);
         if (!objectEnv.hasBinding(name)) {
             return extensible;
         }
-        Property existingProp = globalObject.getOwnProperty(name);
+        Property existingProp = globalObject.getOwnProperty(realm, name);
         if (existingProp == null) {
             return extensible;
         }
@@ -219,13 +221,13 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         if (!canDeclareGlobalFunction(name)) {
             throw new IllegalStateException();
         }
-        Property existingProp = globalObject.getOwnProperty(name);
+        Property existingProp = globalObject.getOwnProperty(realm, name);
         if (existingProp == null || existingProp.isConfigurable()) {
             PropertyDescriptor desc = new PropertyDescriptor(value, true, true, deletable);
-            globalObject.defineOwnProperty(name, desc);
+            globalObject.defineOwnProperty(realm, name, desc);
         } else {
             PropertyDescriptor desc = new PropertyDescriptor(value);
-            globalObject.defineOwnProperty(name, desc);
+            globalObject.defineOwnProperty(realm, name, desc);
         }
         if (!varNames.contains(name)) {
             varNames.add(name);

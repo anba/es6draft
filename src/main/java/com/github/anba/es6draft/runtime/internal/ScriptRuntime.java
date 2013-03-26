@@ -197,7 +197,7 @@ public final class ScriptRuntime {
         } else if (!IsConstructor(superClass)) {
             throw throwTypeError(realm, Messages.Key.NotConstructor);
         } else {
-            Object p = Get(Type.objectValue(superClass), "prototype");
+            Object p = Get(realm, Type.objectValue(superClass), "prototype");
             if (!(Type.isObject(p) || Type.isNull(p))) {
                 throw throwTypeError(realm, Messages.Key.NotObjectOrNull);
             }
@@ -302,7 +302,8 @@ public final class ScriptRuntime {
                 true, true));
 
         MakeConstructor(realm, constructor, false, proto);
-        proto.defineOwnProperty(propName, new PropertyDescriptor(constructor, true, false, true));
+        proto.defineOwnProperty(realm, propName, new PropertyDescriptor(constructor, true, false,
+                true));
 
         return constructor;
     }
@@ -437,7 +438,7 @@ public final class ScriptRuntime {
         /* step 4-5 */
         ScriptObject spreadObj = ToObject(realm, spreadValue);
         /* step 6 */
-        Object lenVal = Get(spreadObj, "length");
+        Object lenVal = Get(realm, spreadObj, "length");
         /* step 7-8 */
         long spreadLen = ToUint32(realm, lenVal);
         assert spreadLen <= Integer.MAX_VALUE;
@@ -445,7 +446,7 @@ public final class ScriptRuntime {
         /* step 9-10 */
         for (int n = 0; n < spreadLen; ++n) {
             // FIXME: possible spec bug -> HasProperty() check missing?
-            Object nextArg = Get(spreadObj, ToString(n));
+            Object nextArg = Get(realm, spreadObj, ToString(n));
             list[n] = nextArg;
         }
         return list;
@@ -500,14 +501,16 @@ public final class ScriptRuntime {
             int index = i >>> 1;
             String prop = ToString(index);
             String cookedValue = strings[i];
-            siteObj.defineOwnProperty(prop, new PropertyDescriptor(cookedValue, false, true, false));
+            siteObj.defineOwnProperty(realm, prop, new PropertyDescriptor(cookedValue, false, true,
+                    false));
             String rawValue = strings[i + 1];
-            rawObj.defineOwnProperty(prop, new PropertyDescriptor(rawValue, false, true, false));
+            rawObj.defineOwnProperty(realm, prop, new PropertyDescriptor(rawValue, false, true,
+                    false));
         }
         /* step 9-11 */
-        rawObj.setIntegrity(IntegrityLevel.Frozen);
-        siteObj.defineOwnProperty("raw", new PropertyDescriptor(rawObj, false, false, false));
-        siteObj.setIntegrity(IntegrityLevel.Frozen);
+        rawObj.setIntegrity(realm, IntegrityLevel.Frozen);
+        siteObj.defineOwnProperty(realm, "raw", new PropertyDescriptor(rawObj, false, false, false));
+        siteObj.setIntegrity(realm, IntegrityLevel.Frozen);
         /* step 12 */
         realm.addTemplateCallSite(key, siteObj);
 
@@ -649,9 +652,9 @@ public final class ScriptRuntime {
             boolean deleteStatus;
             Object referencedName = ref.getReferencedName();
             if (referencedName instanceof String) {
-                deleteStatus = obj.delete((String) referencedName);
+                deleteStatus = obj.delete(realm, (String) referencedName);
             } else {
-                deleteStatus = obj.delete((Symbol) referencedName);
+                deleteStatus = obj.delete(realm, (Symbol) referencedName);
             }
             if (!deleteStatus && ref.isStrictReference()) {
                 // FIXME: spec bug (typing 'typeError')
@@ -782,9 +785,9 @@ public final class ScriptRuntime {
         }
         Object p = ToPropertyKey(realm, lval);
         if (p instanceof String) {
-            return HasProperty(Type.objectValue(rval), (String) p);
+            return HasProperty(realm, Type.objectValue(rval), (String) p);
         } else {
-            return HasProperty(Type.objectValue(rval), (Symbol) p);
+            return HasProperty(realm, Type.objectValue(rval), (Symbol) p);
         }
     }
 
@@ -976,18 +979,18 @@ public final class ScriptRuntime {
      * BindingRestElement : ... BindingIdentifier
      */
     public static ScriptObject createRestArray(ScriptObject array, int index, Realm realm) {
-        Object lenVal = Get(array, "length");
+        Object lenVal = Get(realm, array, "length");
         long arrayLength = ToUint32(realm, lenVal);
         ScriptObject result = ExoticArray.ArrayCreate(realm, 0);
         long n = 0;
         while (index < arrayLength) {
             String p = ToString(index);
-            boolean exists = HasProperty(array, p);
+            boolean exists = HasProperty(realm, array, p);
             // TODO: assert exists iff FunctionRestParameter
             if (exists) {
-                Object v = Get(array, p);
+                Object v = Get(realm, array, p);
                 PropertyDescriptor desc = new PropertyDescriptor(v, true, true, true);
-                result.defineOwnProperty(ToString(n), desc);
+                result.defineOwnProperty(realm, ToString(n), desc);
             }
             n = n + 1;
             index = index + 1;
@@ -1054,10 +1057,11 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Array Accumulation
      */
-    public static void defineProperty(ScriptObject array, int nextIndex, Object value) {
+    public static void defineProperty(ScriptObject array, int nextIndex, Object value, Realm realm) {
         // String propertyName = ToString(ToUint32(nextIndex));
         String propertyName = ToString(nextIndex);
-        array.defineOwnProperty(propertyName, new PropertyDescriptor(value, true, true, true));
+        array.defineOwnProperty(realm, propertyName,
+                new PropertyDescriptor(value, true, true, true));
     }
 
     /**
@@ -1072,16 +1076,16 @@ public final class ScriptRuntime {
         /* step 3-4 */
         ScriptObject spreadObj = ToObject(realm, spreadValue);
         /* step 5 */
-        Object lenVal = Get(spreadObj, "length");
+        Object lenVal = Get(realm, spreadObj, "length");
         /* step 6-7 */
         long spreadLen = ToUint32(realm, lenVal);
         /* step 8-9 */
         for (long n = 0; n < spreadLen; ++n, ++nextIndex) {
-            boolean exists = HasProperty(spreadObj, ToString(n));
+            boolean exists = HasProperty(realm, spreadObj, ToString(n));
             if (exists) {
                 // FIXME: possible spec bug
-                Object v = spreadObj.get(ToString(n), spreadObj);
-                defineProperty(array, nextIndex, v);
+                Object v = spreadObj.get(realm, ToString(n), spreadObj);
+                defineProperty(array, nextIndex, v, realm);
             }
         }
         return nextIndex;

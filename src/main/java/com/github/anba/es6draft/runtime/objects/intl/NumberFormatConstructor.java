@@ -108,7 +108,7 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
             return construct(args);
         }
         ScriptObject obj = ToObject(realm(), thisValue);
-        if (!IsExtensible(obj)) {
+        if (!IsExtensible(realm(), obj)) {
             throwTypeError(realm(), Messages.Key.NotExtensible);
         }
         InitializeNumberFormat(realm(), obj, locales, options);
@@ -123,7 +123,7 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         NumberFormatObject obj = new NumberFormatObject(realm());
-        obj.setPrototype(realm().getIntrinsic(Intrinsics.Intl_NumberFormatPrototype));
+        obj.setPrototype(realm(), realm().getIntrinsic(Intrinsics.Intl_NumberFormatPrototype));
         InitializeNumberFormat(realm(), obj, locales, options);
         return obj;
     }

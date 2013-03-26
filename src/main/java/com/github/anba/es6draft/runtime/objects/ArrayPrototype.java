@@ -55,8 +55,8 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         createProperties(this, realm, Properties.class);
 
         // 15.4.4.26 Array.prototype.@@iterator ( )
-        defineOwnProperty(BuiltinSymbol.iterator.get(), new PropertyDescriptor(Get(this, "values"),
-                true, false, true));
+        defineOwnProperty(realm, BuiltinSymbol.iterator.get(),
+                new PropertyDescriptor(Get(realm, this, "values"), true, false, true));
     }
 
     /**
@@ -80,7 +80,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
             ScriptObject array = ToObject(realm, thisValue);
-            Object func = Get(array, "join");
+            Object func = Get(realm, array, "join");
             if (!IsCallable(func)) {
                 func = realm.getIntrinsic(Intrinsics.ObjProto_toString);
             }
@@ -93,21 +93,21 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(Realm realm, Object thisValue) {
             ScriptObject array = ToObject(realm, thisValue);
-            Object arrayLen = Get(array, "length");
+            Object arrayLen = Get(realm, array, "length");
             long len = ToUint32(realm, arrayLen);
             String separator = ",";
             if (len == 0) {
                 return "";
             }
             StringBuilder r = new StringBuilder();
-            Object firstElement = Get(array, "0");
+            Object firstElement = Get(realm, array, "0");
             if (Type.isUndefinedOrNull(firstElement)) {
                 r.append("");
             } else {
                 r.append(ToString(realm, Invoke(realm, firstElement, "toLocaleString")));
             }
             for (long k = 1; k < len; ++k) {
-                Object nextElement = Get(array, ToString(k));
+                Object nextElement = Get(realm, array, ToString(k));
                 if (Type.isUndefinedOrNull(nextElement)) {
                     r.append(separator).append("");
                 } else {
@@ -134,19 +134,19 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 if (item instanceof ExoticArray) {
                     assert item instanceof ScriptObject;
                     ScriptObject e = (ScriptObject) item;
-                    long len = ToUint32(realm, Get(e, "length"));
+                    long len = ToUint32(realm, Get(realm, e, "length"));
                     for (long k = 0; k < len; ++k, ++n) {
                         String p = ToString(k);
-                        boolean exists = HasProperty(e, p);
+                        boolean exists = HasProperty(realm, e, p);
                         if (exists) {
-                            Object subElement = Get(e, p);
-                            a.defineOwnProperty(ToString(n), new PropertyDescriptor(subElement,
-                                    true, true, true));
+                            Object subElement = Get(realm, e, p);
+                            a.defineOwnProperty(realm, ToString(n), new PropertyDescriptor(
+                                    subElement, true, true, true));
                         }
                     }
                 } else {
-                    a.defineOwnProperty(ToString(n++), new PropertyDescriptor(item, true, true,
-                            true));
+                    a.defineOwnProperty(realm, ToString(n++), new PropertyDescriptor(item, true,
+                            true, true));
                 }
             }
             Put(realm, a, "length", n, true);
@@ -159,7 +159,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "join", arity = 1)
         public static Object join(Realm realm, Object thisValue, Object separator) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (Type.isUndefined(separator)) {
                 separator = ",";
@@ -169,14 +169,14 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 return "";
             }
             StringBuilder r = new StringBuilder();
-            Object element0 = Get(o, "0");
+            Object element0 = Get(realm, o, "0");
             if (Type.isUndefinedOrNull(element0)) {
                 r.append("");
             } else {
                 r.append(ToString(realm, element0));
             }
             for (long k = 1; k < len; ++k) {
-                Object element = Get(o, ToString(k));
+                Object element = Get(realm, o, ToString(k));
                 if (Type.isUndefinedOrNull(element)) {
                     r.append(sep).append("");
                 } else {
@@ -192,7 +192,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "pop", arity = 0)
         public static Object pop(Realm realm, Object thisValue) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (len == 0) {
                 Put(realm, o, "length", 0, true);
@@ -201,7 +201,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 assert len > 0;
                 long newLen = len - 1;
                 String index = ToString(newLen);
-                Object element = Get(o, index);
+                Object element = Get(realm, o, index);
                 DeletePropertyOrThrow(realm, o, index);
                 Put(realm, o, "length", newLen, true);
                 return element;
@@ -214,7 +214,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "push", arity = 1)
         public static Object push(Realm realm, Object thisValue, Object... items) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long n = ToUint32(realm, lenVal);
             for (Object e : items) {
                 Put(realm, o, ToString(n), e, true);
@@ -230,17 +230,17 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "reverse", arity = 0)
         public static Object reverse(Realm realm, Object thisValue) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             long middle = len / 2L;
             for (long lower = 0; lower != middle; ++lower) {
                 long upper = len - lower - 1;
                 String upperP = ToString(upper);
                 String lowerP = ToString(lower);
-                Object lowerValue = Get(o, lowerP);
-                Object upperValue = Get(o, upperP);
-                boolean lowerExists = HasProperty(o, lowerP);
-                boolean upperExists = HasProperty(o, upperP);
+                Object lowerValue = Get(realm, o, lowerP);
+                Object upperValue = Get(realm, o, upperP);
+                boolean lowerExists = HasProperty(realm, o, lowerP);
+                boolean upperExists = HasProperty(realm, o, upperP);
                 if (lowerExists && upperExists) {
                     Put(realm, o, lowerP, upperValue, true);
                     Put(realm, o, upperP, lowerValue, true);
@@ -263,19 +263,19 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "shift", arity = 0)
         public static Object shift(Realm realm, Object thisValue) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (len == 0) {
                 Put(realm, o, "length", 0, true);
                 return UNDEFINED;
             }
-            Object first = Get(o, "0");
+            Object first = Get(realm, o, "0");
             for (long k = 1; k < len; ++k) {
                 String from = ToString(k);
                 String to = ToString(k - 1);
-                boolean fromPresent = HasProperty(o, from);
+                boolean fromPresent = HasProperty(realm, o, from);
                 if (fromPresent) {
-                    Object fromVal = Get(o, from);
+                    Object fromVal = Get(realm, o, from);
                     Put(realm, o, to, fromVal, true);
                 } else {
                     DeletePropertyOrThrow(realm, o, to);
@@ -293,7 +293,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         public static Object slice(Realm realm, Object thisValue, Object start, Object end) {
             ScriptObject o = ToObject(realm, thisValue);
             ScriptObject a = ArrayCreate(realm, 0);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             double relativeStart = ToInteger(realm, start);
             long k;
@@ -316,11 +316,11 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             }
             for (long n = 0; k < finall; ++k, ++n) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     String p = ToString(n);
-                    boolean status = CreateOwnDataProperty(a, p, kvalue);
+                    boolean status = CreateOwnDataProperty(realm, a, p, kvalue);
                     if (!status) {
                         // FIXME: spec bug? (Assert instead of throw TypeError?)
                         throw throwTypeError(realm, Messages.Key.PropertyNotCreatable, p);
@@ -369,15 +369,15 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "sort", arity = 1)
         public static Object sort(Realm realm, Object thisValue, Object comparefn) {
             ScriptObject obj = ToObject(realm, thisValue);
-            long len = ToUint32(realm, Get(obj, "length"));
+            long len = ToUint32(realm, Get(realm, obj, "length"));
 
             int emptyCount = 0;
             int undefCount = 0;
             List<Object> elements = new ArrayList<>((int) Math.min(len, 1024));
             for (int i = 0; i < len; ++i) {
                 String index = ToString(i);
-                if (HasProperty(obj, index)) {
-                    Object e = Get(obj, index);
+                if (HasProperty(realm, obj, index)) {
+                    Object e = Get(realm, obj, index);
                     if (!Type.isUndefined(e)) {
                         elements.add(e);
                     } else {
@@ -404,13 +404,13 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
 
             for (int i = 0, offset = 0; i < count; ++i) {
                 String p = ToString(offset + i);
-                if (!obj.set(p, elements.get(i), obj)) {
+                if (!obj.set(realm, p, elements.get(i), obj)) {
                     throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, p);
                 }
             }
             for (int i = 0, offset = count; i < undefCount; ++i) {
                 String p = ToString(offset + i);
-                if (!obj.set(p, UNDEFINED, obj)) {
+                if (!obj.set(realm, p, UNDEFINED, obj)) {
                     throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, p);
                 }
             }
@@ -429,7 +429,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 Object deleteCount, Object... items) {
             ScriptObject o = ToObject(realm, thisValue);
             ScriptObject a = ArrayCreate(realm, 0);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             double relativeStart = ToInteger(realm, start);
             long actualStart;
@@ -442,11 +442,11 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                     len - actualStart);
             for (long k = 0; k < actualDeleteCount; ++k) {
                 String from = ToString(actualStart + k);
-                boolean fromPresent = HasProperty(o, from);
+                boolean fromPresent = HasProperty(realm, o, from);
                 if (fromPresent) {
-                    Object fromValue = Get(o, from);
-                    a.defineOwnProperty(ToString(k), new PropertyDescriptor(fromValue, true, true,
-                            true));
+                    Object fromValue = Get(realm, o, from);
+                    a.defineOwnProperty(realm, ToString(k), new PropertyDescriptor(fromValue, true,
+                            true, true));
                 }
             }
             Put(realm, a, "length", actualDeleteCount, true);
@@ -456,9 +456,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 for (long k = actualStart; k < (len - actualDeleteCount); ++k) {
                     String from = ToString(k + actualDeleteCount);
                     String to = ToString(k + itemCount);
-                    boolean fromPresent = HasProperty(o, from);
+                    boolean fromPresent = HasProperty(realm, o, from);
                     if (fromPresent) {
-                        Object fromValue = Get(o, from);
+                        Object fromValue = Get(realm, o, from);
                         Put(realm, o, to, fromValue, true);
                     } else {
                         DeletePropertyOrThrow(realm, o, to);
@@ -471,9 +471,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 for (long k = (len - actualDeleteCount); k > actualStart; --k) {
                     String from = ToString(k + actualDeleteCount - 1);
                     String to = ToString(k + itemCount - 1);
-                    boolean fromPresent = HasProperty(o, from);
+                    boolean fromPresent = HasProperty(realm, o, from);
                     if (fromPresent) {
-                        Object fromValue = Get(o, from);
+                        Object fromValue = Get(realm, o, from);
                         Put(realm, o, to, fromValue, true);
                     } else {
                         DeletePropertyOrThrow(realm, o, to);
@@ -495,15 +495,15 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "unshift", arity = 1)
         public static Object unshift(Realm realm, Object thisValue, Object... items) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             int argCount = items.length;
             for (long k = len; k > 0; --k) {
                 String from = ToString(k - 1);
                 String to = ToString(k + argCount - 1);
-                boolean fromPresent = HasProperty(o, from);
+                boolean fromPresent = HasProperty(realm, o, from);
                 if (fromPresent) {
-                    Object fromValue = Get(o, from);
+                    Object fromValue = Get(realm, o, from);
                     Put(realm, o, to, fromValue, true);
                 } else {
                     DeletePropertyOrThrow(realm, o, to);
@@ -524,7 +524,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         public static Object indexOf(Realm realm, Object thisValue, Object searchElement,
                 @Optional(Optional.Default.NONE) Object fromIndex) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (len == 0) {
                 return -1;
@@ -548,9 +548,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 }
             }
             for (; k < len; ++k) {
-                boolean kpresent = HasProperty(o, ToString(k));
+                boolean kpresent = HasProperty(realm, o, ToString(k));
                 if (kpresent) {
-                    Object elementk = Get(o, ToString(k));
+                    Object elementk = Get(realm, o, ToString(k));
                     boolean same = strictEqualityComparison(searchElement, elementk);
                     if (same) {
                         return k;
@@ -567,7 +567,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         public static Object lastIndexOf(Realm realm, Object thisValue, Object searchElement,
                 @Optional(Optional.Default.NONE) Object fromIndex) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (len == 0) {
                 return -1;
@@ -585,9 +585,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 k = (long) (len - Math.abs(n));
             }
             for (; k >= 0; --k) {
-                boolean kpresent = HasProperty(o, ToString(k));
+                boolean kpresent = HasProperty(realm, o, ToString(k));
                 if (kpresent) {
-                    Object elementk = Get(o, ToString(k));
+                    Object elementk = Get(realm, o, ToString(k));
                     boolean same = strictEqualityComparison(searchElement, elementk);
                     if (same) {
                         return k;
@@ -603,7 +603,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "every", arity = 1)
         public static Object every(Realm realm, Object thisValue, Object callbackfn, Object thisArg) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
@@ -611,9 +611,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             Callable callback = (Callable) callbackfn;
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     Object testResult = callback.call(thisArg, kvalue, k, o);
                     if (!ToBoolean(testResult)) {
                         return false;
@@ -629,7 +629,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "some", arity = 1)
         public static Object some(Realm realm, Object thisValue, Object callbackfn, Object thisArg) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
@@ -637,9 +637,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             Callable callback = (Callable) callbackfn;
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     Object testResult = callback.call(thisArg, kvalue, k, o);
                     if (ToBoolean(testResult)) {
                         return true;
@@ -656,7 +656,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         public static Object forEach(Realm realm, Object thisValue, Object callbackfn,
                 Object thisArg) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
@@ -664,9 +664,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             Callable callback = (Callable) callbackfn;
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     callback.call(thisArg, kvalue, k, o);
                 }
             }
@@ -679,7 +679,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "map", arity = 1)
         public static Object map(Realm realm, Object thisValue, Object callbackfn, Object thisArg) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
@@ -688,11 +688,12 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             ScriptObject a = ArrayCreate(realm, len);
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     Object mappedValue = callback.call(thisArg, kvalue, k, o);
-                    a.defineOwnProperty(pk, new PropertyDescriptor(mappedValue, true, true, true));
+                    a.defineOwnProperty(realm, pk, new PropertyDescriptor(mappedValue, true, true,
+                            true));
                 }
             }
             return a;
@@ -704,7 +705,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "filter", arity = 1)
         public static Object filter(Realm realm, Object thisValue, Object callbackfn, Object thisArg) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
@@ -713,13 +714,13 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             ScriptObject a = ArrayCreate(realm, 0);
             for (long k = 0, to = 0; k < len; ++k) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     Object selected = callback.call(thisArg, kvalue, k, o);
                     if (ToBoolean(selected)) {
-                        a.defineOwnProperty(ToString(to), new PropertyDescriptor(kvalue, true,
-                                true, true));
+                        a.defineOwnProperty(realm, ToString(to), new PropertyDescriptor(kvalue,
+                                true, true, true));
                         to += 1;
                     }
                 }
@@ -734,7 +735,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         public static Object reduce(Realm realm, Object thisValue, Object callbackfn,
                 @Optional(Optional.Default.NONE) Object initialValue) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
@@ -751,9 +752,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 boolean kpresent = false;
                 for (; !kpresent && k < len; ++k) {
                     String pk = ToString(k);
-                    kpresent = HasProperty(o, pk);
+                    kpresent = HasProperty(realm, o, pk);
                     if (kpresent) {
-                        accumulator = Get(o, pk);
+                        accumulator = Get(realm, o, pk);
                     }
                 }
                 if (!kpresent) {
@@ -762,9 +763,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             }
             for (; k < len; ++k) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     accumulator = callback.call(UNDEFINED, accumulator, kvalue, k, o);
                 }
             }
@@ -778,7 +779,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         public static Object reduceRight(Realm realm, Object thisValue, Object callbackfn,
                 @Optional(Optional.Default.NONE) Object initialValue) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
@@ -795,9 +796,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
                 boolean kpresent = false;
                 for (; !kpresent && k >= 0; --k) {
                     String pk = ToString(k);
-                    kpresent = HasProperty(o, pk);
+                    kpresent = HasProperty(realm, o, pk);
                     if (kpresent) {
-                        accumulator = Get(o, pk);
+                        accumulator = Get(realm, o, pk);
                     }
                 }
                 if (!kpresent) {
@@ -806,9 +807,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             }
             for (; k >= 0; --k) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     accumulator = callback.call(UNDEFINED, accumulator, kvalue, k, o);
                 }
             }
@@ -848,7 +849,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         @Function(name = "find", arity = 1)
         public static Object find(Realm realm, Object thisValue, Object predicate, Object thisArg) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             // FIXME: spec bug (IsCallable() check should occur before return)
             if (!IsCallable(predicate)) {
@@ -860,9 +861,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             }
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     Object result = pred.call(thisArg, kvalue, k, o);
                     if (ToBoolean(result)) {
                         return kvalue;
@@ -879,7 +880,7 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
         public static Object findIndex(Realm realm, Object thisValue, Object predicate,
                 Object thisArg) {
             ScriptObject o = ToObject(realm, thisValue);
-            Object lenVal = Get(o, "length");
+            Object lenVal = Get(realm, o, "length");
             long len = ToUint32(realm, lenVal);
             // FIXME: spec bug (IsCallable() check should occur before return)
             if (!IsCallable(predicate)) {
@@ -891,9 +892,9 @@ public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Init
             }
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
-                boolean kpresent = HasProperty(o, pk);
+                boolean kpresent = HasProperty(realm, o, pk);
                 if (kpresent) {
-                    Object kvalue = Get(o, pk);
+                    Object kvalue = Get(realm, o, pk);
                     Object result = pred.call(thisArg, kvalue, k, o);
                     if (ToBoolean(result)) {
                         return k;

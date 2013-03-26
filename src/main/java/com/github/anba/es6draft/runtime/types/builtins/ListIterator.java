@@ -46,15 +46,15 @@ public class ListIterator<T> extends OrdinaryObject implements ScriptObject {
         @Override
         public void initialise(Realm realm) {
             createProperties(this, realm, Properties.class);
-            setIntegrity(IntegrityLevel.Frozen);
+            setIntegrity(realm, IntegrityLevel.Frozen);
         }
     }
 
     public static <T> ListIterator<T> MakeListIterator(Realm realm, Iterator<T> iterator) {
         ListIterator<T> itr = new ListIterator<>(realm, iterator);
         // createProperties(itr, realm, Properties.class);
-        itr.setPrototype(realm.getIntrinsic(Intrinsics.ListIteratorPrototype));
-        itr.setIntegrity(IntegrityLevel.NonExtensible);
+        itr.setPrototype(realm, realm.getIntrinsic(Intrinsics.ListIteratorPrototype));
+        itr.setIntegrity(realm, IntegrityLevel.NonExtensible);
         return itr;
     }
 

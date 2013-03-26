@@ -80,7 +80,7 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
         } else {
             Symbol iterator = BuiltinSymbol.iterator.get();
             itr = Invoke(realm, iterable, iterator);
-            adder = Get(set, "add");
+            adder = Get(realm, set, "add");
             if (!IsCallable(adder)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
             }

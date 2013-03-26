@@ -126,7 +126,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         static final MethodDesc ScriptRuntime_defineProperty__int = MethodDesc
                 .create(MethodType.Static, Types.ScriptRuntime, "defineProperty", Type
                         .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Type.INT_TYPE,
-                                Types.Object));
+                                Types.Object, Types.Realm));
 
         static final MethodDesc ScriptRuntime_EvaluateArrowFunction = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type
@@ -440,6 +440,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                     mv.iconst(nextIndex);
                     ValType type = evalAndGetValue(element, mv);
                     mv.toBoxed(type);
+                    mv.load(Register.Realm);
                     mv.invoke(Methods.ScriptRuntime_defineProperty__int);
                 }
                 nextIndex += 1;
@@ -483,6 +484,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                     mv.dup2();
                     ValType type = evalAndGetValue(element, mv);
                     mv.toBoxed(type);
+                    mv.load(Register.Realm);
                     // stack: [array, nextIndex, array, nextIndex, obj] -> [array, nextIndex]
                     mv.invoke(Methods.ScriptRuntime_defineProperty__int);
                     elisionWidth += 1;

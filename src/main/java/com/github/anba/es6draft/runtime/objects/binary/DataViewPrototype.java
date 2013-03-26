@@ -49,12 +49,12 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable, 
     public static double GetValue(Realm realm, DataViewObject view, long byteOffset,
             boolean isLittleEndian, ElementKind type) {
         // long byteOffsetInt = ToUint32(realm, byteOffset);
-        long totalOffset = byteOffset + ToUint32(realm, Get(view, "byteOffset"));
-        long byteLength = ToUint32(realm, Get(view, "byteLength"));
+        long totalOffset = byteOffset + ToUint32(realm, Get(realm, view, "byteOffset"));
+        long byteLength = ToUint32(realm, Get(realm, view, "byteLength"));
         if (totalOffset >= byteLength) {
             throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
         }
-        ArrayBufferObject buffer = (ArrayBufferObject) Get(view, "buffer");
+        ArrayBufferObject buffer = (ArrayBufferObject) Get(realm, view, "buffer");
         return GetValueFromBuffer(buffer, totalOffset, type, !isLittleEndian);
     }
 
@@ -65,12 +65,12 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable, 
     public static void SetValue(Realm realm, DataViewObject view, long byteOffset,
             boolean isLittleEndian, ElementKind type, double value) {
         // long byteOffsetInt = ToUint32(realm, byteOffset);
-        long totalOffset = byteOffset + ToUint32(realm, Get(view, "byteOffset"));
-        long byteLength = ToUint32(realm, Get(view, "byteLength"));
+        long totalOffset = byteOffset + ToUint32(realm, Get(realm, view, "byteOffset"));
+        long byteLength = ToUint32(realm, Get(realm, view, "byteLength"));
         if (totalOffset >= byteLength) {
             throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
         }
-        ArrayBufferObject buffer = (ArrayBufferObject) Get(view, "buffer");
+        ArrayBufferObject buffer = (ArrayBufferObject) Get(realm, view, "buffer");
         SetValueInBuffer(buffer, totalOffset, type, value, !isLittleEndian);
     }
 

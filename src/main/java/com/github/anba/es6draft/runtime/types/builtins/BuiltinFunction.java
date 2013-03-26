@@ -41,9 +41,9 @@ public abstract class BuiltinFunction extends OrdinaryObject implements ScriptOb
      * 8.3.19.3 [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(String propertyKey, Object receiver) {
+    public Object get(Realm realm, String propertyKey, Object receiver) {
         /* step 1-2 */
-        Object v = super.get(propertyKey, receiver);
+        Object v = super.get(realm, propertyKey, receiver);
         /* step 3 */
         if ("caller".equals(propertyKey) && isStrictFunction(v)) {
             // TODO: spec bug? [[Get]] override necessary, cf. AddRestrictedFunctionProperties
@@ -57,9 +57,9 @@ public abstract class BuiltinFunction extends OrdinaryObject implements ScriptOb
      * 8.3.19.4 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(String propertyKey) {
+    public Property getOwnProperty(Realm realm, String propertyKey) {
         /* step 1-2 */
-        Property v = super.getOwnProperty(propertyKey);
+        Property v = super.getOwnProperty(realm, propertyKey);
         if (v != null && v.isDataDescriptor()) {
             // TODO: spec bug? [[GetOwnProperty]] override necessary, cf.
             // AddRestrictedFunctionProperties

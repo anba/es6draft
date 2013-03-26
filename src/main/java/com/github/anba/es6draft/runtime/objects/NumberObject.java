@@ -53,7 +53,7 @@ public class NumberObject extends OrdinaryObject implements ScriptObject {
      */
     public static NumberObject NumberCreate(Realm realm, double numberData) {
         NumberObject obj = new NumberObject(realm);
-        obj.setPrototype(realm.getIntrinsic(Intrinsics.NumberPrototype));
+        obj.setPrototype(realm, realm.getIntrinsic(Intrinsics.NumberPrototype));
         obj.setNumberData(numberData);
         return obj;
     }

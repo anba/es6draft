@@ -209,14 +209,14 @@ public final class PropertyDescriptor {
         /* step 5-10 */
         // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {
-            obj.defineOwnProperty("value", _p(desc.getValue()));
-            obj.defineOwnProperty("writable", _p(desc.isWritable()));
+            obj.defineOwnProperty(realm, "value", _p(desc.getValue()));
+            obj.defineOwnProperty(realm, "writable", _p(desc.isWritable()));
         } else {
-            obj.defineOwnProperty("get", _p(undefinedIfNull(desc.getGetter())));
-            obj.defineOwnProperty("set", _p(undefinedIfNull(desc.getSetter())));
+            obj.defineOwnProperty(realm, "get", _p(undefinedIfNull(desc.getGetter())));
+            obj.defineOwnProperty(realm, "set", _p(undefinedIfNull(desc.getSetter())));
         }
-        obj.defineOwnProperty("enumerable", _p(desc.isEnumerable()));
-        obj.defineOwnProperty("configurable", _p(desc.isConfigurable()));
+        obj.defineOwnProperty(realm, "enumerable", _p(desc.isEnumerable()));
+        obj.defineOwnProperty(realm, "configurable", _p(desc.isConfigurable()));
         /* step 11 */
         return obj;
     }
@@ -250,14 +250,14 @@ public final class PropertyDescriptor {
         /* step 5-10 */
         // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {
-            obj.defineOwnProperty("value", _p(desc.getValue()));
-            obj.defineOwnProperty("writable", _p(desc.isWritable()));
+            obj.defineOwnProperty(realm, "value", _p(desc.getValue()));
+            obj.defineOwnProperty(realm, "writable", _p(desc.isWritable()));
         } else {
-            obj.defineOwnProperty("get", _p(undefinedIfNull(desc.getGetter())));
-            obj.defineOwnProperty("set", _p(undefinedIfNull(desc.getSetter())));
+            obj.defineOwnProperty(realm, "get", _p(undefinedIfNull(desc.getGetter())));
+            obj.defineOwnProperty(realm, "set", _p(undefinedIfNull(desc.getSetter())));
         }
-        obj.defineOwnProperty("enumerable", _p(desc.isEnumerable()));
-        obj.defineOwnProperty("configurable", _p(desc.isConfigurable()));
+        obj.defineOwnProperty(realm, "enumerable", _p(desc.isEnumerable()));
+        obj.defineOwnProperty(realm, "configurable", _p(desc.isConfigurable()));
         /* step 11 */
         return obj;
     }
@@ -284,31 +284,31 @@ public final class PropertyDescriptor {
         ScriptObject obj = Type.objectValue(object);
         /* step 3-9 */
         PropertyDescriptor desc = new PropertyDescriptor();
-        if (HasProperty(obj, "enumerable")) {
-            Object enumerable = Get(obj, "enumerable");
+        if (HasProperty(realm, obj, "enumerable")) {
+            Object enumerable = Get(realm, obj, "enumerable");
             desc.setEnumerable(ToBoolean(enumerable));
         }
-        if (HasProperty(obj, "configurable")) {
-            Object configurable = Get(obj, "configurable");
+        if (HasProperty(realm, obj, "configurable")) {
+            Object configurable = Get(realm, obj, "configurable");
             desc.setConfigurable(ToBoolean(configurable));
         }
-        if (HasProperty(obj, "value")) {
-            Object value = Get(obj, "value");
+        if (HasProperty(realm, obj, "value")) {
+            Object value = Get(realm, obj, "value");
             desc.setValue(value);
         }
-        if (HasProperty(obj, "writable")) {
-            Object writable = Get(obj, "writable");
+        if (HasProperty(realm, obj, "writable")) {
+            Object writable = Get(realm, obj, "writable");
             desc.setWritable(ToBoolean(writable));
         }
-        if (HasProperty(obj, "get")) {
-            Object getter = Get(obj, "get");
+        if (HasProperty(realm, obj, "get")) {
+            Object getter = Get(realm, obj, "get");
             if (!(IsCallable(getter) || Type.isUndefined(getter))) {
                 throwTypeError(realm, Messages.Key.InvalidGetter);
             }
             desc.setGetter(callableOrNull(getter));
         }
-        if (HasProperty(obj, "set")) {
-            Object setter = Get(obj, "set");
+        if (HasProperty(realm, obj, "set")) {
+            Object setter = Get(realm, obj, "set");
             if (!(IsCallable(setter) || Type.isUndefined(setter))) {
                 throwTypeError(realm, Messages.Key.InvalidSetter);
             }

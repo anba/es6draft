@@ -28,9 +28,9 @@ public class NativeFunction extends BuiltinFunction {
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
         super(realm);
         this.mh = mh;
-        setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-        defineOwnProperty("name", new PropertyDescriptor(name, false, false, false));
-        defineOwnProperty("length", new PropertyDescriptor(arity, false, false, false));
+        setPrototype(realm, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+        defineOwnProperty(realm, "name", new PropertyDescriptor(name, false, false, false));
+        defineOwnProperty(realm, "length", new PropertyDescriptor(arity, false, false, false));
         AddRestrictedFunctionProperties(realm, this);
     }
 

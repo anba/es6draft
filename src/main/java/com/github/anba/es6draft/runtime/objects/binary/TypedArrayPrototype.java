@@ -143,7 +143,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements ScriptObject,
         if (!(array instanceof TypedArrayObject)) {
             // 15.13.6.6.7
             ScriptObject src = ToObject(realm, array);
-            Object srcLen = Get(src, "length");
+            Object srcLen = Get(realm, src, "length");
             long srcLength = ToUint32(realm, srcLen);
             if (srcLength + targetOffset > targetLength) {
                 throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
@@ -153,7 +153,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements ScriptObject,
                     * Math.min(srcLength, targetLength - targetOffset);
             for (long k = 0; targetByteIndex < limit; ++k, targetByteIndex += targetElementSize) {
                 String pk = ToString(k);
-                Object kValue = Get(src, pk);
+                Object kValue = Get(realm, src, pk);
                 double kNumber = ToNumber(realm, kValue);
                 // FIXME: spec bug (variables data, elementSize and elementType not defined)
                 SetValueInBuffer(targetBuffer, k * targetElementSize, targetType, kNumber, false);
@@ -215,7 +215,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements ScriptObject,
         int elementSize = elementType.size();
         long srcByteOffset = array.getByteOffset();
         long beginByteOffset = srcByteOffset + beginIndex * elementSize;
-        Object constructor = Get(array, "constructor");
+        Object constructor = Get(realm, array, "constructor");
         if (!IsConstructor(constructor)) {
             throwTypeError(realm, Messages.Key.NotConstructor);
         }

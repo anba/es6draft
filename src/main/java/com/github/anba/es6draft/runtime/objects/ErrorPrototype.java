@@ -75,9 +75,9 @@ public class ErrorPrototype extends OrdinaryObject implements ScriptObject, Init
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             ScriptObject o = Type.objectValue(thisValue);
-            Object name = Get(o, "name");
+            Object name = Get(realm, o, "name");
             CharSequence sname = (Type.isUndefined(name) ? "Error" : ToString(realm, name));
-            Object msg = Get(o, "message");
+            Object msg = Get(realm, o, "message");
             CharSequence smsg = (Type.isUndefined(msg) ? "" : ToString(realm, msg));
             if (sname.length() == 0) {
                 return smsg;

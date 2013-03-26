@@ -155,7 +155,7 @@ public class JSONParser {
         String name = ts.getString();
         consume(Token.COLON);
         Object value = jsonValue();
-        object.defineOwnProperty(name, new PropertyDescriptor(value, true, true, true));
+        object.defineOwnProperty(realm, name, new PropertyDescriptor(value, true, true, true));
     }
 
     /**
@@ -174,13 +174,13 @@ public class JSONParser {
         if (token() != Token.RB) {
             long index = 0;
             Object value = jsonValue();
-            array.defineOwnProperty(ToString(index++), new PropertyDescriptor(value, true, true,
-                    true));
+            array.defineOwnProperty(realm, ToString(index++), new PropertyDescriptor(value, true,
+                    true, true));
             while (token() != Token.RB) {
                 consume(Token.COMMA);
                 value = jsonValue();
-                array.defineOwnProperty(ToString(index++), new PropertyDescriptor(value, true,
-                        true, true));
+                array.defineOwnProperty(realm, ToString(index++), new PropertyDescriptor(value,
+                        true, true, true));
             }
         }
         consume(Token.RB);

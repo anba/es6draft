@@ -117,68 +117,69 @@ public class ExoticProxy implements ScriptObject {
         return proxy;
     }
 
-    private static boolean __hasOwnProperty(ScriptObject target, Object propertyKey) {
+    private static boolean __hasOwnProperty(Realm realm, ScriptObject target, Object propertyKey) {
         if (propertyKey instanceof String) {
-            return target.hasOwnProperty((String) propertyKey);
+            return target.hasOwnProperty(realm, (String) propertyKey);
         } else {
             assert propertyKey instanceof Symbol;
-            return target.hasOwnProperty((Symbol) propertyKey);
+            return target.hasOwnProperty(realm, (Symbol) propertyKey);
         }
     }
 
-    private static Property __getOwnProperty(ScriptObject target, Object propertyKey) {
+    private static Property __getOwnProperty(Realm realm, ScriptObject target, Object propertyKey) {
         if (propertyKey instanceof String) {
-            return target.getOwnProperty((String) propertyKey);
+            return target.getOwnProperty(realm, (String) propertyKey);
         } else {
             assert propertyKey instanceof Symbol;
-            return target.getOwnProperty((Symbol) propertyKey);
+            return target.getOwnProperty(realm, (Symbol) propertyKey);
         }
     }
 
-    private static boolean __defineOwnProperty(ScriptObject target, Object propertyKey,
-            PropertyDescriptor desc) {
+    private static boolean __defineOwnProperty(Realm realm, ScriptObject target,
+            Object propertyKey, PropertyDescriptor desc) {
         if (propertyKey instanceof String) {
-            return target.defineOwnProperty((String) propertyKey, desc);
+            return target.defineOwnProperty(realm, (String) propertyKey, desc);
         } else {
             assert propertyKey instanceof Symbol;
-            return target.defineOwnProperty((Symbol) propertyKey, desc);
+            return target.defineOwnProperty(realm, (Symbol) propertyKey, desc);
         }
     }
 
-    private static boolean __hasProperty(ScriptObject target, Object propertyKey) {
+    private static boolean __hasProperty(Realm realm, ScriptObject target, Object propertyKey) {
         if (propertyKey instanceof String) {
-            return target.hasProperty((String) propertyKey);
+            return target.hasProperty(realm, (String) propertyKey);
         } else {
             assert propertyKey instanceof Symbol;
-            return target.hasProperty((Symbol) propertyKey);
+            return target.hasProperty(realm, (Symbol) propertyKey);
         }
     }
 
-    private static Object __get(ScriptObject target, Object propertyKey, Object receiver) {
-        if (propertyKey instanceof String) {
-            return target.get((String) propertyKey, receiver);
-        } else {
-            assert propertyKey instanceof Symbol;
-            return target.get((Symbol) propertyKey, receiver);
-        }
-    }
-
-    private static boolean __set(ScriptObject target, Object propertyKey, Object value,
+    private static Object __get(Realm realm, ScriptObject target, Object propertyKey,
             Object receiver) {
         if (propertyKey instanceof String) {
-            return target.set((String) propertyKey, value, receiver);
+            return target.get(realm, (String) propertyKey, receiver);
         } else {
             assert propertyKey instanceof Symbol;
-            return target.set((Symbol) propertyKey, value, receiver);
+            return target.get(realm, (Symbol) propertyKey, receiver);
         }
     }
 
-    private static boolean __delete(ScriptObject target, Object propertyKey) {
+    private static boolean __set(Realm realm, ScriptObject target, Object propertyKey,
+            Object value, Object receiver) {
         if (propertyKey instanceof String) {
-            return target.delete((String) propertyKey);
+            return target.set(realm, (String) propertyKey, value, receiver);
         } else {
             assert propertyKey instanceof Symbol;
-            return target.delete((Symbol) propertyKey);
+            return target.set(realm, (Symbol) propertyKey, value, receiver);
+        }
+    }
+
+    private static boolean __delete(Realm realm, ScriptObject target, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return target.delete(realm, (String) propertyKey);
+        } else {
+            assert propertyKey instanceof Symbol;
+            return target.delete(realm, (Symbol) propertyKey);
         }
     }
 
@@ -194,15 +195,15 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.1 [[GetInheritance]] ( )
      */
     @Override
-    public ScriptObject getPrototype() {
+    public ScriptObject getPrototype(Realm realm) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "getPrototypeOf");
         if (trap == null) {
-            return target.getPrototype();
+            return target.getPrototype(realm);
         }
         Object handlerProto = trap.call(handler, target);
-        ScriptObject targetProto = target.getPrototype();
+        ScriptObject targetProto = target.getPrototype(realm);
         if (!SameValue(handlerProto, maskNull(targetProto))) {
             throw throwTypeError(realm, Messages.Key.ProxySameValue);
         }
@@ -214,16 +215,16 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.2 [[SetInheritance]] (V)
      */
     @Override
-    public boolean setPrototype(ScriptObject prototype) {
+    public boolean setPrototype(Realm realm, ScriptObject prototype) {
         assert prototype == null || Type.isObject(prototype);
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "setPrototypeOf");
         if (trap == null) {
-            return target.setPrototype(prototype);
+            return target.setPrototype(realm, prototype);
         }
         boolean trapResult = ToBoolean(trap.call(handler, target, maskNull(prototype)));
-        ScriptObject targetProto = target.getPrototype();
+        ScriptObject targetProto = target.getPrototype(realm);
         if (trapResult && !SameValue(maskNull(prototype), maskNull(targetProto))) {
             throw throwTypeError(realm, Messages.Key.ProxySameValue);
         }
@@ -234,7 +235,7 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.3 [[HasIntegrity]] ( Level )
      */
     @Override
-    public boolean hasIntegrity(IntegrityLevel level) {
+    public boolean hasIntegrity(Realm realm, IntegrityLevel level) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         String trapName;
@@ -247,11 +248,11 @@ public class ExoticProxy implements ScriptObject {
         }
         Callable trap = GetMethod(realm, handler, trapName);
         if (trap == null) {
-            return target.hasIntegrity(level);
+            return target.hasIntegrity(realm, level);
         }
         Object trapResult = trap.call(handler, target);
         boolean booleanTrapResult = ToBoolean(trapResult);
-        boolean targetResult = target.hasIntegrity(level);
+        boolean targetResult = target.hasIntegrity(realm, level);
         if (booleanTrapResult != targetResult) {
             throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
         }
@@ -262,7 +263,7 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.4 [[SetIntegrity]] ( Level )
      */
     @Override
-    public boolean setIntegrity(IntegrityLevel level) {
+    public boolean setIntegrity(Realm realm, IntegrityLevel level) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         String trapName;
@@ -275,11 +276,11 @@ public class ExoticProxy implements ScriptObject {
         }
         Callable trap = GetMethod(realm, handler, trapName);
         if (trap == null) {
-            return target.setIntegrity(level);
+            return target.setIntegrity(realm, level);
         }
         Object trapResult = trap.call(handler, target);
         boolean booleanTrapResult = ToBoolean(trapResult);
-        boolean targetResult = target.hasIntegrity(level);
+        boolean targetResult = target.hasIntegrity(realm, level);
         if (booleanTrapResult != targetResult) {
             throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
         }
@@ -290,47 +291,47 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.5 [[HasOwnProperty]] (P)
      */
     @Override
-    public boolean hasOwnProperty(String propertyKey) {
-        return hasOwnProperty((Object) propertyKey);
+    public boolean hasOwnProperty(Realm realm, String propertyKey) {
+        return hasOwnProperty(realm, (Object) propertyKey);
     }
 
     /**
      * 8.5.5 [[HasOwnProperty]] (P)
      */
     @Override
-    public boolean hasOwnProperty(Symbol propertyKey) {
-        return hasOwnProperty((Object) propertyKey);
+    public boolean hasOwnProperty(Realm realm, Symbol propertyKey) {
+        return hasOwnProperty(realm, (Object) propertyKey);
     }
 
     /**
      * 8.5.5 [[HasOwnProperty]] (P)
      */
-    private boolean hasOwnProperty(Object propertyKey) {
+    private boolean hasOwnProperty(Realm realm, Object propertyKey) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "hasOwn");
         if (trap == null) {
-            return __hasOwnProperty(target, propertyKey);
+            return __hasOwnProperty(realm, target, propertyKey);
         }
         Object trapResult = trap.call(handler, target, propertyKey);
         boolean success = ToBoolean(trapResult);
         if (!success) {
-            Property targetDesc = __getOwnProperty(target, propertyKey);
+            Property targetDesc = __getOwnProperty(realm, target, propertyKey);
             if (targetDesc != null) {
                 if (!targetDesc.isConfigurable()) {
                     throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
                 }
-                boolean extensibleTarget = IsExtensible(target);
+                boolean extensibleTarget = IsExtensible(realm, target);
                 if (!extensibleTarget) {
                     throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
                 }
             }
         } else {
-            boolean extensibleTarget = IsExtensible(target);
+            boolean extensibleTarget = IsExtensible(realm, target);
             if (extensibleTarget) {
                 return success;
             }
-            Property targetDesc = __getOwnProperty(target, propertyKey);
+            Property targetDesc = __getOwnProperty(realm, target, propertyKey);
             if (targetDesc == null) {
                 throw throwTypeError(realm, Messages.Key.ProxyNoOwnProperty);
             }
@@ -342,34 +343,34 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.6 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(String propertyKey) {
-        return getOwnProperty((Object) propertyKey);
+    public Property getOwnProperty(Realm realm, String propertyKey) {
+        return getOwnProperty(realm, (Object) propertyKey);
     }
 
     /**
      * 8.5.6 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(Symbol propertyKey) {
-        return getOwnProperty((Object) propertyKey);
+    public Property getOwnProperty(Realm realm, Symbol propertyKey) {
+        return getOwnProperty(realm, (Object) propertyKey);
     }
 
     /**
      * 8.5.6 [[GetOwnProperty]] (P)
      */
-    private Property getOwnProperty(Object propertyKey) {
+    private Property getOwnProperty(Realm realm, Object propertyKey) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "getOwnPropertyDescriptor");
         if (trap == null) {
-            return __getOwnProperty(target, propertyKey);
+            return __getOwnProperty(realm, target, propertyKey);
         }
         Object trapResultObj = trap.call(handler, target, propertyKey);
         if (!(Type.isObject(trapResultObj) || Type.isUndefined(trapResultObj))) {
             throw throwTypeError(realm, Messages.Key.ProxyNotObjectOrUndefined);
         }
         // TODO: need copy b/c of side-effects?
-        Property targetDesc = __getOwnProperty(target, propertyKey);
+        Property targetDesc = __getOwnProperty(realm, target, propertyKey);
         if (Type.isUndefined(trapResultObj)) {
             if (targetDesc == null) {
                 return null;
@@ -377,14 +378,14 @@ public class ExoticProxy implements ScriptObject {
             if (!targetDesc.isConfigurable()) {
                 throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
             }
-            boolean extensibleTarget = IsExtensible(target);
+            boolean extensibleTarget = IsExtensible(realm, target);
             if (!extensibleTarget) {
                 throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
             }
             return null;
         }
         // TODO: side-effect in isExtensible()?
-        boolean extensibleTarget = IsExtensible(target);
+        boolean extensibleTarget = IsExtensible(realm, target);
         PropertyDescriptor resultDesc = ToPropertyDescriptor(realm, trapResultObj);
         CompletePropertyDescriptor(resultDesc, targetDesc);
         boolean valid = IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc);
@@ -404,27 +405,27 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.7 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(String propertyKey, PropertyDescriptor desc) {
-        return defineOwnProperty((Object) propertyKey, desc);
+    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
+        return defineOwnProperty(realm, (Object) propertyKey, desc);
     }
 
     /**
      * 8.5.7 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(Symbol propertyKey, PropertyDescriptor desc) {
-        return defineOwnProperty((Object) propertyKey, desc);
+    public boolean defineOwnProperty(Realm realm, Symbol propertyKey, PropertyDescriptor desc) {
+        return defineOwnProperty(realm, (Object) propertyKey, desc);
     }
 
     /**
      * 8.5.7 [[DefineOwnProperty]] (P, Desc)
      */
-    private boolean defineOwnProperty(Object propertyKey, PropertyDescriptor desc) {
+    private boolean defineOwnProperty(Realm realm, Object propertyKey, PropertyDescriptor desc) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "defineProperty");
         if (trap == null) {
-            return __defineOwnProperty(target, propertyKey, desc);
+            return __defineOwnProperty(realm, target, propertyKey, desc);
         }
         Object descObj = FromPropertyDescriptor(realm, desc);
         Object trapResult = trap.call(handler, target, propertyKey, descObj);
@@ -432,9 +433,9 @@ public class ExoticProxy implements ScriptObject {
             return false;
         }
         // TODO: need copy b/c of side-effects?
-        Property targetDesc = __getOwnProperty(target, propertyKey);
+        Property targetDesc = __getOwnProperty(realm, target, propertyKey);
         // TODO: side-effect in isExtensible()?
-        boolean extensibleTarget = IsExtensible(target);
+        boolean extensibleTarget = IsExtensible(realm, target);
         if (targetDesc == null) {
             if (!extensibleTarget) {
                 throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
@@ -457,37 +458,37 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.8 [[HasProperty]] (P)
      */
     @Override
-    public boolean hasProperty(String propertyKey) {
-        return hasProperty((Object) propertyKey);
+    public boolean hasProperty(Realm realm, String propertyKey) {
+        return hasProperty(realm, (Object) propertyKey);
     }
 
     /**
      * 8.5.8 [[HasProperty]] (P)
      */
     @Override
-    public boolean hasProperty(Symbol propertyKey) {
-        return hasProperty((Object) propertyKey);
+    public boolean hasProperty(Realm realm, Symbol propertyKey) {
+        return hasProperty(realm, (Object) propertyKey);
     }
 
     /**
      * 8.5.8 [[HasProperty]] (P)
      */
-    private boolean hasProperty(Object propertyKey) {
+    private boolean hasProperty(Realm realm, Object propertyKey) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "has");
         if (trap == null) {
-            return __hasProperty(target, propertyKey);
+            return __hasProperty(realm, target, propertyKey);
         }
         Object trapResult = trap.call(handler, target, propertyKey);
         boolean success = ToBoolean(trapResult);
         if (!success) {
-            Property targetDesc = __getOwnProperty(target, propertyKey);
+            Property targetDesc = __getOwnProperty(realm, target, propertyKey);
             if (targetDesc != null) {
                 if (!targetDesc.isConfigurable()) {
                     throw throwTypeError(realm, Messages.Key.ProxyNotConfigurable);
                 }
-                boolean extensibleTarget = IsExtensible(target);
+                boolean extensibleTarget = IsExtensible(realm, target);
                 if (!extensibleTarget) {
                     throw throwTypeError(realm, Messages.Key.ProxyNotExtensible);
                 }
@@ -500,30 +501,30 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.9 [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(String propertyKey, Object receiver) {
-        return get((Object) propertyKey, receiver);
+    public Object get(Realm realm, String propertyKey, Object receiver) {
+        return get(realm, (Object) propertyKey, receiver);
     }
 
     /**
      * 8.5.9 [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(Symbol propertyKey, Object receiver) {
-        return get((Object) propertyKey, receiver);
+    public Object get(Realm realm, Symbol propertyKey, Object receiver) {
+        return get(realm, (Object) propertyKey, receiver);
     }
 
     /**
      * 8.5.9 [[Get]] (P, Receiver)
      */
-    private Object get(Object propertyKey, Object receiver) {
+    private Object get(Realm realm, Object propertyKey, Object receiver) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "get");
         if (trap == null) {
-            return __get(target, propertyKey, receiver);
+            return __get(realm, target, propertyKey, receiver);
         }
         Object trapResult = trap.call(handler, target, propertyKey, receiver);
-        Property targetDesc = __getOwnProperty(target, propertyKey);
+        Property targetDesc = __getOwnProperty(realm, target, propertyKey);
         if (targetDesc != null) {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
                     && !targetDesc.isWritable()) {
@@ -545,33 +546,33 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.10 [[Set]] ( P, V, Receiver)
      */
     @Override
-    public boolean set(String propertyKey, Object value, Object receiver) {
-        return set((Object) propertyKey, value, receiver);
+    public boolean set(Realm realm, String propertyKey, Object value, Object receiver) {
+        return set(realm, (Object) propertyKey, value, receiver);
     }
 
     /**
      * 8.5.10 [[Set]] ( P, V, Receiver)
      */
     @Override
-    public boolean set(Symbol propertyKey, Object value, Object receiver) {
-        return set((Object) propertyKey, value, receiver);
+    public boolean set(Realm realm, Symbol propertyKey, Object value, Object receiver) {
+        return set(realm, (Object) propertyKey, value, receiver);
     }
 
     /**
      * 8.5.10 [[Set]] ( P, V, Receiver)
      */
-    private boolean set(Object propertyKey, Object value, Object receiver) {
+    private boolean set(Realm realm, Object propertyKey, Object value, Object receiver) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "set");
         if (trap == null) {
-            return __set(target, propertyKey, value, receiver);
+            return __set(realm, target, propertyKey, value, receiver);
         }
         Object trapResult = trap.call(handler, target, propertyKey, value, receiver);
         if (!ToBoolean(trapResult)) {
             return false;
         }
-        Property targetDesc = __getOwnProperty(target, propertyKey);
+        Property targetDesc = __getOwnProperty(realm, target, propertyKey);
         if (targetDesc != null) {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
                     && !targetDesc.isWritable()) {
@@ -592,33 +593,33 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.11 [[Delete]] (P)
      */
     @Override
-    public boolean delete(String propertyKey) {
-        return delete((Object) propertyKey);
+    public boolean delete(Realm realm, String propertyKey) {
+        return delete(realm, (Object) propertyKey);
     }
 
     /**
      * 8.5.11 [[Delete]] (P)
      */
     @Override
-    public boolean delete(Symbol propertyKey) {
-        return delete((Object) propertyKey);
+    public boolean delete(Realm realm, Symbol propertyKey) {
+        return delete(realm, (Object) propertyKey);
     }
 
     /**
      * 8.5.11 [[Delete]] (P)
      */
-    private boolean delete(Object propertyKey) {
+    private boolean delete(Realm realm, Object propertyKey) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(realm, handler, "deleteProperty");
         if (trap == null) {
-            return __delete(target, propertyKey);
+            return __delete(realm, target, propertyKey);
         }
         Object trapResult = trap.call(handler, target, propertyKey);
         if (!ToBoolean(trapResult)) {
             return false;
         }
-        Property targetDesc = __getOwnProperty(target, propertyKey);
+        Property targetDesc = __getOwnProperty(realm, target, propertyKey);
         if (targetDesc == null) {
             return true;
         }

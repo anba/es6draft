@@ -44,7 +44,7 @@ public class ErrorObject extends OrdinaryObject implements ScriptObject {
     @Override
     public String toString() {
         try {
-            Object toString = Get(this, "toString");
+            Object toString = Get(realm(), this, "toString");
             if (toString instanceof Callable) {
                 return ToFlatString(realm(), ((Callable) toString).call(this));
             }

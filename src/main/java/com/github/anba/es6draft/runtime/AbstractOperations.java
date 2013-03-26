@@ -69,7 +69,7 @@ public final class AbstractOperations {
      * ToPrimitive for the Object type
      */
     private static Object ToPrimitive(Realm realm, ScriptObject argument, Type preferredType) {
-        Object exoticToPrim = Get(argument, BuiltinSymbol.ToPrimitive.get());
+        Object exoticToPrim = Get(realm, argument, BuiltinSymbol.ToPrimitive.get());
         if (!Type.isUndefined(exoticToPrim)) {
             if (!IsCallable(exoticToPrim))
                 throw throwTypeError(realm, Messages.Key.NotCallable);
@@ -109,7 +109,7 @@ public final class AbstractOperations {
             tryFirst = "valueOf";
             trySecond = "toString";
         }
-        Object first = Get(object, tryFirst);
+        Object first = Get(realm, object, tryFirst);
         if (IsCallable(first)) {
             Object result = ((Callable) first).call(object);
             if (!Type.isObject(result)) {
@@ -117,7 +117,7 @@ public final class AbstractOperations {
             }
             // FIXME: spec bug!
         }
-        Object second = Get(object, trySecond);
+        Object second = Get(realm, object, trySecond);
         if (IsCallable(second)) {
             Object result = ((Callable) second).call(object);
             if (!Type.isObject(result)) {
@@ -466,23 +466,23 @@ public final class AbstractOperations {
     /**
      * 9.2.7 IsExtensible (O)
      */
-    public static boolean IsExtensible(ScriptObject object) {
-        boolean notExtensible = object.hasIntegrity(IntegrityLevel.NonExtensible);
+    public static boolean IsExtensible(Realm realm, ScriptObject object) {
+        boolean notExtensible = object.hasIntegrity(realm, IntegrityLevel.NonExtensible);
         return !notExtensible;
     }
 
     /**
      * 9.3.1 Get (O, P)
      */
-    public static Object Get(ScriptObject object, String propertyKey) {
-        return object.get(propertyKey, object);
+    public static Object Get(Realm realm, ScriptObject object, String propertyKey) {
+        return object.get(realm, propertyKey, object);
     }
 
     /**
      * 9.3.1 Get (O, P)
      */
-    public static Object Get(ScriptObject object, Symbol propertyKey) {
-        return object.get(propertyKey, object);
+    public static Object Get(Realm realm, ScriptObject object, Symbol propertyKey) {
+        return object.get(realm, propertyKey, object);
     }
 
     /**
@@ -490,7 +490,7 @@ public final class AbstractOperations {
      */
     public static void Put(Realm realm, ScriptObject object, String propertyKey, Object value,
             boolean _throw) {
-        boolean success = object.set(propertyKey, value, object);
+        boolean success = object.set(realm, propertyKey, value, object);
         if (!success && _throw) {
             throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, propertyKey);
         }
@@ -501,7 +501,7 @@ public final class AbstractOperations {
      */
     public static void Put(Realm realm, ScriptObject object, Symbol propertyKey, Object value,
             boolean _throw) {
-        boolean success = object.set(propertyKey, value, object);
+        boolean success = object.set(realm, propertyKey, value, object);
         if (!success && _throw) {
             throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, propertyKey.toString());
         }
@@ -510,27 +510,27 @@ public final class AbstractOperations {
     /**
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
-    public static boolean CreateOwnDataProperty(ScriptObject object, String propertyKey,
-            Object value) {
-        boolean notExtensible = object.hasIntegrity(IntegrityLevel.NonExtensible);
+    public static boolean CreateOwnDataProperty(Realm realm, ScriptObject object,
+            String propertyKey, Object value) {
+        boolean notExtensible = object.hasIntegrity(realm, IntegrityLevel.NonExtensible);
         if (notExtensible) {
             return false;
         }
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
-        return object.defineOwnProperty(propertyKey, newDesc);
+        return object.defineOwnProperty(realm, propertyKey, newDesc);
     }
 
     /**
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
-    public static boolean CreateOwnDataProperty(ScriptObject object, Symbol propertyKey,
-            Object value) {
-        boolean notExtensible = object.hasIntegrity(IntegrityLevel.NonExtensible);
+    public static boolean CreateOwnDataProperty(Realm realm, ScriptObject object,
+            Symbol propertyKey, Object value) {
+        boolean notExtensible = object.hasIntegrity(realm, IntegrityLevel.NonExtensible);
         if (notExtensible) {
             return false;
         }
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
-        return object.defineOwnProperty(propertyKey, newDesc);
+        return object.defineOwnProperty(realm, propertyKey, newDesc);
     }
 
     /**
@@ -538,7 +538,7 @@ public final class AbstractOperations {
      */
     public static void DefinePropertyOrThrow(Realm realm, ScriptObject object, String propertyKey,
             PropertyDescriptor desc) {
-        boolean success = object.defineOwnProperty(propertyKey, desc);
+        boolean success = object.defineOwnProperty(realm, propertyKey, desc);
         if (!success) {
             throw throwTypeError(realm, Messages.Key.PropertyNotCreatable, propertyKey);
         }
@@ -549,7 +549,7 @@ public final class AbstractOperations {
      */
     public static void DefinePropertyOrThrow(Realm realm, ScriptObject object, Symbol propertyKey,
             PropertyDescriptor desc) {
-        boolean success = object.defineOwnProperty(propertyKey, desc);
+        boolean success = object.defineOwnProperty(realm, propertyKey, desc);
         if (!success) {
             throw throwTypeError(realm, Messages.Key.PropertyNotCreatable, propertyKey.toString());
         }
@@ -559,7 +559,7 @@ public final class AbstractOperations {
      * 9.3.5 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(Realm realm, ScriptObject object, String propertyKey) {
-        boolean success = object.delete(propertyKey);
+        boolean success = object.delete(realm, propertyKey);
         if (!success) {
             throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, propertyKey);
         }
@@ -569,7 +569,7 @@ public final class AbstractOperations {
      * 9.3.5 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(Realm realm, ScriptObject object, Symbol propertyKey) {
-        boolean success = object.delete(propertyKey);
+        boolean success = object.delete(realm, propertyKey);
         if (!success) {
             throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, propertyKey.toString());
         }
@@ -578,22 +578,22 @@ public final class AbstractOperations {
     /**
      * 9.3.6 HasProperty (O, P)
      */
-    public static boolean HasProperty(ScriptObject object, String propertyKey) {
-        return object.hasProperty(propertyKey);
+    public static boolean HasProperty(Realm realm, ScriptObject object, String propertyKey) {
+        return object.hasProperty(realm, propertyKey);
     }
 
     /**
      * 9.3.6 HasProperty (O, P)
      */
-    public static boolean HasProperty(ScriptObject object, Symbol propertyKey) {
-        return object.hasProperty(propertyKey);
+    public static boolean HasProperty(Realm realm, ScriptObject object, Symbol propertyKey) {
+        return object.hasProperty(realm, propertyKey);
     }
 
     /**
      * 9.3.7 GetMethod (O, P)
      */
     public static Callable GetMethod(Realm realm, ScriptObject object, String propertyKey) {
-        Object func = object.get(propertyKey, object);
+        Object func = object.get(realm, propertyKey, object);
         if (Type.isUndefined(func)) {
             return null;
         }
@@ -607,7 +607,7 @@ public final class AbstractOperations {
      * 9.3.7 GetMethod (O, P)
      */
     public static Callable GetMethod(Realm realm, ScriptObject object, Symbol propertyKey) {
-        Object func = object.get(propertyKey, object);
+        Object func = object.get(realm, propertyKey, object);
         if (Type.isUndefined(func)) {
             return null;
         }
@@ -684,10 +684,10 @@ public final class AbstractOperations {
                     Object key = ToPropertyKey(realm, keys.next());
                     Property currentDesc;
                     if (key instanceof String) {
-                        currentDesc = object.getOwnProperty((String) key);
+                        currentDesc = object.getOwnProperty(realm, (String) key);
                     } else {
                         assert key instanceof Symbol;
-                        currentDesc = object.getOwnProperty((Symbol) key);
+                        currentDesc = object.getOwnProperty(realm, (Symbol) key);
                     }
                     if (currentDesc != null) {
                         PropertyDescriptor desc;
@@ -716,7 +716,7 @@ public final class AbstractOperations {
         }
         /* step 9 */
         // FIXME: spec bug ([[PreventExtensions]] -> [[SetIntegrity]] change missing)
-        return object.setIntegrity(IntegrityLevel.NonExtensible);
+        return object.setIntegrity(realm, IntegrityLevel.NonExtensible);
     }
 
     /**
@@ -726,7 +726,7 @@ public final class AbstractOperations {
         /* step 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* step 3-4 */
-        boolean status = IsExtensible(object);
+        boolean status = IsExtensible(realm, object);
         /* step 5-6 */
         if (status) {
             return false;
@@ -746,10 +746,10 @@ public final class AbstractOperations {
             try {
                 Property currentDesc;
                 if (key instanceof String) {
-                    currentDesc = object.getOwnProperty((String) key);
+                    currentDesc = object.getOwnProperty(realm, (String) key);
                 } else {
                     assert key instanceof Symbol;
-                    currentDesc = object.getOwnProperty((Symbol) key);
+                    currentDesc = object.getOwnProperty(realm, (Symbol) key);
                 }
                 if (currentDesc != null) {
                     configurable |= currentDesc.isConfigurable();
@@ -790,7 +790,7 @@ public final class AbstractOperations {
         int n = 0;
         /* step 4 */
         for (Object e : elements) {
-            CreateOwnDataProperty(array, ToString(n++), e);
+            CreateOwnDataProperty(realm, array, ToString(n++), e);
         }
         /* step 5 */
         return array;
@@ -814,13 +814,13 @@ public final class AbstractOperations {
             return false;
         }
         /* step 4-5 */
-        Object p = Get((ScriptObject) c, "prototype");
+        Object p = Get(realm, (ScriptObject) c, "prototype");
         if (!Type.isObject(p)) {
             throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         /* step 7 */
         for (ScriptObject obj = Type.objectValue(o);;) {
-            obj = obj.getPrototype();
+            obj = obj.getPrototype(realm);
             if (obj == null) {
                 return false;
             }
@@ -838,7 +838,7 @@ public final class AbstractOperations {
         if (!IsConstructor(constructor)) {
             throw throwTypeError(realm, Messages.Key.NotConstructor);
         }
-        Object proto = Get(Type.objectValue(constructor), "prototype");
+        Object proto = Get(realm, Type.objectValue(constructor), "prototype");
         if (!Type.isObject(proto)) {
             // FIXME: spec bug (step 5a. -> F is not defined)
             if (constructor instanceof FunctionObject) {
@@ -889,7 +889,7 @@ public final class AbstractOperations {
             Object next = keys.next();
             if (Type.isString(next)) {
                 String nextKey = Type.stringValue(next).toString();
-                Property desc = obj.getOwnProperty(nextKey);
+                Property desc = obj.getOwnProperty(realm, nextKey);
                 if (desc != null && desc.isEnumerable()) {
                     nameList.add(nextKey);
                 }

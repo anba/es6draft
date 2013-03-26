@@ -67,7 +67,7 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
 
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(realm(), message);
-            CreateOwnDataProperty(obj, "message", msg);
+            CreateOwnDataProperty(realm(), obj, "message", msg);
         }
 
         return obj;

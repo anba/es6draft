@@ -50,11 +50,12 @@ public class SetPrototype extends OrdinaryObject implements ScriptObject, Initia
         createProperties(this, realm, Properties.class);
 
         // 15.16.4.8 Set.prototype.keys ( )
-        defineOwnProperty("keys", new PropertyDescriptor(Get(this, "values"), true, false, true));
+        defineOwnProperty(realm, "keys", new PropertyDescriptor(Get(realm, this, "values"), true,
+                false, true));
 
         // 15.16.4.11 Set.prototype.@@iterator ( )
-        defineOwnProperty(BuiltinSymbol.iterator.get(), new PropertyDescriptor(Get(this, "values"),
-                true, false, true));
+        defineOwnProperty(realm, BuiltinSymbol.iterator.get(),
+                new PropertyDescriptor(Get(realm, this, "values"), true, false, true));
     }
 
     /**

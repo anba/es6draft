@@ -113,7 +113,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements ScriptObject,
         /* step 2-5 (implicit) */
         ExoticBoundFunction obj = new ExoticBoundFunction(realm);
         /* step 6 */
-        obj.setPrototype(proto);
+        obj.setPrototype(realm, proto);
         /* step 7 (implicit) */
         /* step 8 */
         obj.boundTargetFunction = targetFunction;

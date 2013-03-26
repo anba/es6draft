@@ -79,7 +79,7 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
         } else {
             Symbol iterator = BuiltinSymbol.iterator.get();
             itr = Invoke(realm, iterable, iterator);
-            adder = Get(map, "set");
+            adder = Get(realm, map, "set");
             if (!IsCallable(adder)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
             }
@@ -103,8 +103,8 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
                 throw e;
             }
             ScriptObject entry = ToObject(realm, next);
-            Object k = Get(entry, "0");
-            Object v = Get(entry, "1");
+            Object k = Get(realm, entry, "0");
+            Object v = Get(realm, entry, "1");
             ((Callable) adder).call(map, k, v);
         }
     }

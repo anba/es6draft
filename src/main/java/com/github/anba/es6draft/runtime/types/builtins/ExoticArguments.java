@@ -129,13 +129,14 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
         int len = args.length;
         /* [10.6] step 2-3 */
         ExoticArguments obj = new ExoticArguments(realm);
-        obj.setPrototype(realm.getIntrinsic(Intrinsics.ObjectPrototype));
+        obj.setPrototype(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
         /* [10.6] step 4 */
-        obj.defineOwnProperty("length", new PropertyDescriptor(len, true, false, true));
+        obj.defineOwnProperty(realm, "length", new PropertyDescriptor(len, true, false, true));
         /* [10.6] step 5-6 */
         for (int index = 0; index < len; ++index) {
             Object val = args[index];
-            obj.defineOwnProperty(ToString(index), new PropertyDescriptor(val, true, true, true));
+            obj.defineOwnProperty(realm, ToString(index), new PropertyDescriptor(val, true, true,
+                    true));
         }
         return obj;
     }
@@ -155,10 +156,12 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
         /*  step 1  */
         Callable thrower = realm.getThrowTypeError();
         /*  step 2  */
-        obj.defineOwnProperty("caller", new PropertyDescriptor(thrower, thrower, false, false));
+        obj.defineOwnProperty(realm, "caller", new PropertyDescriptor(thrower, thrower, false,
+                false));
         /*  step 3  */
         // FIXME: spec bug ("arguments" per spec!) (Bug 1158)
-        obj.defineOwnProperty("callee", new PropertyDescriptor(thrower, thrower, false, false));
+        obj.defineOwnProperty(realm, "callee", new PropertyDescriptor(thrower, thrower, false,
+                false));
     }
 
     /**
@@ -167,7 +170,7 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
     public static void CompleteMappedArgumentsObject(Realm realm, ExoticArguments obj,
             FunctionObject func, String[] formals, LexicalEnvironment env) {
         // added ToInt32()
-        int len = ToInt32(realm, Get(obj, "length"));
+        int len = ToInt32(realm, Get(realm, obj, "length"));
         boolean hasMapped = false;
         int numberOfNonRestFormals = formals.length;
         ParameterMap map = new ParameterMap(env, len);
@@ -183,28 +186,28 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
             obj.parameterMap = map;
         }
         /*  step 9  */
-        obj.defineOwnProperty("callee", new PropertyDescriptor(func, true, false, true));
+        obj.defineOwnProperty(realm, "callee", new PropertyDescriptor(func, true, false, true));
     }
 
     /**
      * [[Set]]
      */
     @Override
-    public boolean set(String propertyKey, Object value, Object receiver) {
+    public boolean set(Realm realm, String propertyKey, Object value, Object receiver) {
         // FIXME: spec bug (not overriden in spec -> 10.6-10-c-ii-2) (bug 1160)
-        return super.set(propertyKey, value, receiver);
+        return super.set(realm, propertyKey, value, receiver);
     }
 
     /**
      * [[Get]]
      */
     @Override
-    public Object get(String propertyKey, Object accessorThisValue) {
+    public Object get(Realm realm, String propertyKey, Object accessorThisValue) {
         /*  step 1-2  */
         ParameterMap map = this.parameterMap;
         /*  [[ParameterMap]] not present  */
         if (map == null) {
-            return super.get(propertyKey, accessorThisValue);
+            return super.get(realm, propertyKey, accessorThisValue);
         }
         /*  step 3  */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
@@ -212,7 +215,7 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 4  */
         if (!isMapped) {
-            Object v = super.get(propertyKey, accessorThisValue);
+            Object v = super.get(realm, propertyKey, accessorThisValue);
             if ("caller".equals(propertyKey) && isStrictFunction(v)) {
                 throw throwTypeError(realm(), Messages.Key.StrictModePoisonPill);
             }
@@ -227,9 +230,9 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
      * [[GetOwnProperty]]
      */
     @Override
-    public Property getOwnProperty(String propertyKey) {
+    public Property getOwnProperty(Realm realm, String propertyKey) {
         /*  step 1  */
-        Property desc = super.getOwnProperty(propertyKey);
+        Property desc = super.getOwnProperty(realm, propertyKey);
         /*  step 3  */
         if (desc == null) {
             return desc;
@@ -259,19 +262,19 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
      * [[DefineOwnProperty]]
      */
     @Override
-    public boolean defineOwnProperty(String propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
         /*  step 1  */
         ParameterMap map = this.parameterMap;
         /*  [[ParameterMap]] not present  */
         if (map == null) {
-            return super.defineOwnProperty(propertyKey, desc);
+            return super.defineOwnProperty(realm, propertyKey, desc);
         }
         /*  step 2  */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 3-4  */
-        boolean allowed = super.defineOwnProperty(propertyKey, desc);
+        boolean allowed = super.defineOwnProperty(realm, propertyKey, desc);
         /*  step 5  */
         if (!allowed) {
             return false;
@@ -297,19 +300,19 @@ public class ExoticArguments extends OrdinaryObject implements ScriptObject {
      * [[Delete]]
      */
     @Override
-    public boolean delete(String propertyKey) {
+    public boolean delete(Realm realm, String propertyKey) {
         /*  step 1  */
         ParameterMap map = this.parameterMap;
         /*  [[ParameterMap]] not present  */
         if (map == null) {
-            return super.delete(propertyKey);
+            return super.delete(realm, propertyKey);
         }
         /*  step 2  */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 3  */
-        boolean result = super.delete(propertyKey);
+        boolean result = super.delete(realm, propertyKey);
         if (result && isMapped) {
             map.delete(propertyKey);
         }

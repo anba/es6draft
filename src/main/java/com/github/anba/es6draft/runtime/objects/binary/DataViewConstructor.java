@@ -68,19 +68,19 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
             throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
         long byteOffset = args.length > 1 ? ToUint32(realm, args[1]) : 0;
-        long bufferLength = ToUint32(realm, Get(obj, "byteLength"));
+        long bufferLength = ToUint32(realm, Get(realm, obj, "byteLength"));
         long byteLength = args.length > 2 ? ToUint32(realm, args[2]) : (bufferLength - byteOffset);
         if (byteOffset + byteLength > bufferLength) {
             throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
         }
 
         DataViewObject view = new DataViewObject(realm);
-        view.setPrototype(realm.getIntrinsic(Intrinsics.DataViewPrototype));
-        view.defineOwnProperty("byteLength",
-                new PropertyDescriptor(byteLength, false, false, false));
-        view.defineOwnProperty("buffer", new PropertyDescriptor(obj, false, false, false));
-        view.defineOwnProperty("byteOffset",
-                new PropertyDescriptor(byteOffset, false, false, false));
+        view.setPrototype(realm, realm.getIntrinsic(Intrinsics.DataViewPrototype));
+        view.defineOwnProperty(realm, "byteLength", new PropertyDescriptor(byteLength, false,
+                false, false));
+        view.defineOwnProperty(realm, "buffer", new PropertyDescriptor(obj, false, false, false));
+        view.defineOwnProperty(realm, "byteOffset", new PropertyDescriptor(byteOffset, false,
+                false, false));
 
         return view;
     }

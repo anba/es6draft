@@ -77,8 +77,8 @@ public class ExoticString extends OrdinaryObject implements ScriptObject {
      * 8.4.3.1 [[HasOwnProperty]] (P)
      */
     @Override
-    public boolean hasOwnProperty(String propertyKey) {
-        boolean has = super.hasOwnProperty(propertyKey);
+    public boolean hasOwnProperty(Realm realm, String propertyKey) {
+        boolean has = super.hasOwnProperty(realm, propertyKey);
         if (has) {
             return true;
         }
@@ -98,7 +98,7 @@ public class ExoticString extends OrdinaryObject implements ScriptObject {
      * 8.4.3.2 [[GetOwnProperty]] ( P )
      */
     @Override
-    public Property getOwnProperty(String propertyKey) {
+    public Property getOwnProperty(Realm realm, String propertyKey) {
         Property desc = ordinaryGetOwnProperty(propertyKey);
         if (desc != null) {
             return desc;
@@ -120,8 +120,8 @@ public class ExoticString extends OrdinaryObject implements ScriptObject {
      * 8.4.3.3 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(String propertyKey, PropertyDescriptor desc) {
-        Property current = getOwnProperty(propertyKey);
+    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
+        Property current = getOwnProperty(realm, propertyKey);
         boolean extensible = isExtensible();
         return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
     }
@@ -162,7 +162,7 @@ public class ExoticString extends OrdinaryObject implements ScriptObject {
         // step 1, 2-6, 9 (implicit)
         ExoticString obj = new ExoticString(realm);
         // step 8
-        obj.setPrototype(prototype);
+        obj.setPrototype(realm, prototype);
         return obj;
     }
 

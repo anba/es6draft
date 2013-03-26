@@ -48,8 +48,8 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
         createProperties(this, realm, Properties.class);
 
         // B.2.3.3 Date.prototype.toGMTString ( )
-        defineOwnProperty("toGMTString", new PropertyDescriptor(Get(this, "toUTCString"), true,
-                false, true));
+        defineOwnProperty(realm, "toGMTString",
+                new PropertyDescriptor(Get(realm, this, "toUTCString"), true, false, true));
     }
 
     private static final String ISO_FORMAT = "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ";
@@ -698,7 +698,7 @@ public class DatePrototype extends OrdinaryObject implements ScriptObject, Initi
             if (Type.isNumber(tv) && !isFinite(Type.numberValue(tv))) {
                 return NULL;
             }
-            Object toISO = Get(o, "toISOString");
+            Object toISO = Get(realm, o, "toISOString");
             if (!IsCallable(toISO)) {
                 throw throwTypeError(realm, Messages.Key.NotCallable);
             }

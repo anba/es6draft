@@ -122,7 +122,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            ScriptObject proto = Type.objectValue(o).getPrototype();
+            ScriptObject proto = Type.objectValue(o).getPrototype(realm);
             if (proto != null) {
                 return proto;
             }
@@ -141,9 +141,9 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             Object key = ToPropertyKey(realm, p);
             Property desc;
             if (key instanceof String) {
-                desc = Type.objectValue(o).getOwnProperty((String) key);
+                desc = Type.objectValue(o).getOwnProperty(realm, (String) key);
             } else {
-                desc = Type.objectValue(o).getOwnProperty((Symbol) key);
+                desc = Type.objectValue(o).getOwnProperty(realm, (Symbol) key);
             }
             return FromPropertyDescriptor(realm, desc);
         }
@@ -212,7 +212,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            boolean status = Type.objectValue(o).setIntegrity(IntegrityLevel.Sealed);
+            boolean status = Type.objectValue(o).setIntegrity(realm, IntegrityLevel.Sealed);
             if (!status) {
                 throw throwTypeError(realm, Messages.Key.ObjectSealFailed);
             }
@@ -227,7 +227,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            boolean status = Type.objectValue(o).setIntegrity(IntegrityLevel.Frozen);
+            boolean status = Type.objectValue(o).setIntegrity(realm, IntegrityLevel.Frozen);
             if (!status) {
                 throw throwTypeError(realm, Messages.Key.ObjectFreezeFailed);
             }
@@ -242,7 +242,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            boolean status = Type.objectValue(o).setIntegrity(IntegrityLevel.NonExtensible);
+            boolean status = Type.objectValue(o).setIntegrity(realm, IntegrityLevel.NonExtensible);
             if (!status) {
                 throw throwTypeError(realm, Messages.Key.ObjectPreventExtensionsFailed);
             }
@@ -257,7 +257,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            return Type.objectValue(o).hasIntegrity(IntegrityLevel.Sealed);
+            return Type.objectValue(o).hasIntegrity(realm, IntegrityLevel.Sealed);
         }
 
         /**
@@ -268,7 +268,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            return Type.objectValue(o).hasIntegrity(IntegrityLevel.Frozen);
+            return Type.objectValue(o).hasIntegrity(realm, IntegrityLevel.Frozen);
         }
 
         /**
@@ -279,7 +279,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
-            return IsExtensible(Type.objectValue(o));
+            return IsExtensible(realm, Type.objectValue(o));
         }
 
         /**
@@ -332,9 +332,9 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             for (Object key : keys) {
                 if (key instanceof String) {
                     String ownKey = (String) key;
-                    Object value = Get(_source, ownKey);
+                    Object value = Get(realm, _source, ownKey);
                     if (isSuperBoundTo(value, _source)) {
-                        value = superBindTo(value, _target);
+                        value = superBindTo(realm, value, _target);
                     }
                     try {
                         Put(realm, _target, ownKey, value, true);
@@ -346,9 +346,9 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                 } else {
                     assert key instanceof Symbol;
                     Symbol ownKey = (Symbol) key;
-                    Object value = Get(_source, ownKey);
+                    Object value = Get(realm, _source, ownKey);
                     if (isSuperBoundTo(value, _source)) {
-                        value = superBindTo(value, _target);
+                        value = superBindTo(realm, value, _target);
                     }
                     try {
                         Put(realm, _target, ownKey, value, true);
@@ -383,11 +383,12 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             for (Object key : keys) {
                 if (key instanceof String) {
                     String ownKey = (String) key;
-                    Property desc = _source.getOwnProperty(ownKey);
+                    Property desc = _source.getOwnProperty(realm, ownKey);
                     if (desc != null) {
                         try {
-                            DefinePropertyOrThrow(realm, _target, ownKey,
-                                    fromDescriptor(desc.toPropertyDescriptor(), _source, _target));
+                            PropertyDescriptor desc2 = fromDescriptor(realm,
+                                    desc.toPropertyDescriptor(), _source, _target);
+                            DefinePropertyOrThrow(realm, _target, ownKey, desc2);
                         } catch (ScriptException e) {
                             if (pendingException == null) {
                                 pendingException = e;
@@ -397,11 +398,12 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                 } else {
                     assert key instanceof Symbol;
                     Symbol ownKey = (Symbol) key;
-                    Property desc = _source.getOwnProperty(ownKey);
+                    Property desc = _source.getOwnProperty(realm, ownKey);
                     if (desc != null) {
                         try {
-                            DefinePropertyOrThrow(realm, _target, ownKey,
-                                    fromDescriptor(desc.toPropertyDescriptor(), _source, _target));
+                            PropertyDescriptor desc2 = fromDescriptor(realm,
+                                    desc.toPropertyDescriptor(), _source, _target);
+                            DefinePropertyOrThrow(realm, _target, ownKey, desc2);
                         } catch (ScriptException e) {
                             if (pendingException == null) {
                                 pendingException = e;
@@ -432,7 +434,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         List<String> names = GetOwnPropertyKeys(realm, props);
         List<PropertyDescriptor> descriptors = new ArrayList<>();
         for (String p : names) {
-            Object descObj = Get(props, p);
+            Object descObj = Get(realm, props, p);
             PropertyDescriptor desc = ToPropertyDescriptor(realm, descObj);
             descriptors.add(desc);
         }
@@ -464,7 +466,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             Object key = ToPropertyKey(realm, keys.next());
             if (key instanceof String) {
                 String ownKey = (String) key;
-                Property desc = object.getOwnProperty(ownKey);
+                Property desc = object.getOwnProperty(realm, ownKey);
                 if (desc != null && desc.isEnumerable()) {
                     ownKeys.add(ownKey);
                 }
@@ -472,7 +474,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                 assert key instanceof Symbol;
                 Symbol ownKey = (Symbol) key;
                 if (!ownKey.isPrivate()) {
-                    Property desc = object.getOwnProperty(ownKey);
+                    Property desc = object.getOwnProperty(realm, ownKey);
                     if (desc != null && desc.isEnumerable()) {
                         ownKeys.add(ownKey);
                     }
@@ -486,22 +488,22 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      * Returns {@code desc} with [[Value]] resp. [[Get]] and [[Set]] super-rebound from
      * {@code source} to {@code target}
      */
-    private static PropertyDescriptor fromDescriptor(PropertyDescriptor desc, ScriptObject source,
-            ScriptObject target) {
+    private static PropertyDescriptor fromDescriptor(Realm realm, PropertyDescriptor desc,
+            ScriptObject source, ScriptObject target) {
         if (desc.isDataDescriptor()) {
             Object value = desc.getValue();
             if (isSuperBoundTo(value, source)) {
-                desc.setValue(superBindTo(value, target));
+                desc.setValue(superBindTo(realm, value, target));
             }
         } else {
             assert desc.isAccessorDescriptor();
             Callable getter = desc.getGetter();
             if (isSuperBoundTo(getter, source)) {
-                desc.setGetter(superBindTo(getter, target));
+                desc.setGetter(superBindTo(realm, getter, target));
             }
             Callable setter = desc.getSetter();
             if (isSuperBoundTo(setter, source)) {
-                desc.setSetter(superBindTo(setter, target));
+                desc.setSetter(superBindTo(realm, setter, target));
             }
         }
         return desc;
@@ -525,16 +527,16 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
     /**
      * Super-binds {@code value} to {@code target}
      */
-    private static Callable superBindTo(Object value, ScriptObject target) {
+    private static Callable superBindTo(Realm realm, Object value, ScriptObject target) {
         if (value instanceof OrdinaryGenerator) {
             OrdinaryGenerator gen = (OrdinaryGenerator) value;
             return GeneratorCreate(gen.getRealm(), gen.getFunctionKind(), gen.getFunction(),
-                    gen.getScope(), gen.getPrototype(), target, gen.getMethodName());
+                    gen.getScope(), gen.getPrototype(realm), target, gen.getMethodName());
         } else {
             assert value instanceof OrdinaryFunction;
             OrdinaryFunction fn = (OrdinaryFunction) value;
             return FunctionCreate(fn.getRealm(), fn.getFunctionKind(), fn.getFunction(),
-                    fn.getScope(), fn.getPrototype(), target, fn.getMethodName());
+                    fn.getScope(), fn.getPrototype(realm), target, fn.getMethodName());
         }
     }
 }

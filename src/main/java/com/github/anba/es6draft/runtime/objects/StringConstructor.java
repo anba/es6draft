@@ -144,9 +144,9 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
         public static Object raw(Realm realm, Object thisValue, Object callSite,
                 Object... substitutions) {
             ScriptObject cooked = ToObject(realm, callSite);
-            Object rawValue = Get(cooked, "raw");
+            Object rawValue = Get(realm, cooked, "raw");
             ScriptObject raw = ToObject(realm, rawValue);
-            Object len = Get(raw, "length");
+            Object len = Get(realm, raw, "length");
             long literalSegments = ToUint32(realm, len); // FIXME: spec bug (bug 492)
             if (literalSegments == 0) {
                 return "";
@@ -155,7 +155,7 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
             StringBuilder stringElements = new StringBuilder();
             for (long nextIndex = 0;; ++nextIndex) {
                 String nextKey = ToString(nextIndex);
-                Object next = Get(raw, nextKey);
+                Object next = Get(realm, raw, nextKey);
                 CharSequence nextSeg = ToString(realm, next);
                 stringElements.append(nextSeg);
                 if (nextIndex + 1 == literalSegments) {

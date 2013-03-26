@@ -199,7 +199,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
                 mapper = (Callable) mapfn;
             }
             /* step 3 */
-            Object lenValue = Get(items, "length");
+            Object lenValue = Get(realm, items, "length");
             /* step 4-5 */
             double len = ToInteger(realm, lenValue);
             long llen = (long) len;
@@ -217,9 +217,9 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
             /* step 10-11 */
             for (long k = 0; k < llen; ++k) {
                 String pk = ToString(k);
-                boolean kPresent = HasProperty(items, pk);
+                boolean kPresent = HasProperty(realm, items, pk);
                 if (kPresent) {
-                    Object kValue = Get(items, pk);
+                    Object kValue = Get(realm, items, pk);
                     if (mapper != null) {
                         kValue = mapper.call(thisArg, kValue);
                     }

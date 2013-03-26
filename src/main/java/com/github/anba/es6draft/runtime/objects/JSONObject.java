@@ -74,7 +74,7 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
             }
             if (IsCallable(reviver)) {
                 ScriptObject root = ObjectCreate(realm, Intrinsics.ObjectPrototype);
-                CreateOwnDataProperty(root, "", unfiltered);
+                CreateOwnDataProperty(realm, root, "", unfiltered);
                 return Walk(realm, (Callable) reviver, root, "");
             }
             return unfiltered;
@@ -97,10 +97,10 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
                     // https://bugs.ecmascript.org/show_bug.cgi?id=170
                     propertyList = new LinkedHashSet<>();
                     ScriptObject objReplacer = Type.objectValue(replacer);
-                    long len = ToUint32(realm, Get(objReplacer, "length"));
+                    long len = ToUint32(realm, Get(realm, objReplacer, "length"));
                     for (long i = 0; i < len; ++i) {
                         String item = null;
-                        Object v = Get(objReplacer, ToString(i));
+                        Object v = Get(realm, objReplacer, ToString(i));
                         if (Type.isString(v)) {
                             item = Type.stringValue(v).toString();
                         } else if (Type.isNumber(v)) {
@@ -139,7 +139,7 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
                 gap = "";
             }
             ScriptObject wrapper = ObjectCreate(realm, Intrinsics.ObjectPrototype);
-            CreateOwnDataProperty(wrapper, "", value);
+            CreateOwnDataProperty(realm, wrapper, "", value);
             String result = Str(realm, stack, propertyList, replacerFunction, indent, gap, "",
                     wrapper);
             if (result == null) {
@@ -153,18 +153,18 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
      * Runtime Semantics: Walk Abstract Operation
      */
     public static Object Walk(Realm realm, Callable reviver, ScriptObject holder, String name) {
-        Object val = Get(holder, name);
+        Object val = Get(realm, holder, name);
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
             if (objVal instanceof ExoticArray) {
-                long len = ToUint32(realm, Get(objVal, "length"));
+                long len = ToUint32(realm, Get(realm, objVal, "length"));
                 for (long i = 0; i < len; ++i) {
                     Object newElement = Walk(realm, reviver, objVal, ToString(i));
                     if (Type.isUndefined(newElement)) {
-                        objVal.delete(ToString(i));
+                        objVal.delete(realm, ToString(i));
                     } else {
-                        objVal.defineOwnProperty(ToString(i), new PropertyDescriptor(newElement,
-                                true, true, true));
+                        objVal.defineOwnProperty(realm, ToString(i), new PropertyDescriptor(
+                                newElement, true, true, true));
                     }
                 }
             } else {
@@ -172,10 +172,10 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
                 for (String p : keys) {
                     Object newElement = Walk(realm, reviver, objVal, p);
                     if (Type.isUndefined(newElement)) {
-                        objVal.delete(p);
+                        objVal.delete(realm, p);
                     } else {
-                        objVal.defineOwnProperty(p, new PropertyDescriptor(newElement, true, true,
-                                true));
+                        objVal.defineOwnProperty(realm, p, new PropertyDescriptor(newElement, true,
+                                true, true));
                     }
                 }
             }
@@ -188,10 +188,10 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
      */
     public static String Str(Realm realm, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, String key, ScriptObject holder) {
-        Object value = Get(holder, key);
+        Object value = Get(realm, holder, key);
         if (Type.isObject(value)) {
             ScriptObject objValue = Type.objectValue(value);
-            Object toJSON = Get(objValue, "toJSON");
+            Object toJSON = Get(realm, objValue, "toJSON");
             if (IsCallable(toJSON)) {
                 value = ((Callable) toJSON).call(value, key);
             }
@@ -355,7 +355,7 @@ public class JSONObject extends OrdinaryObject implements ScriptObject, Initiali
         String stepback = indent;
         indent = indent + gap;
         List<String> partial = new ArrayList<>();
-        long len = ToUint32(realm, Get(value, "length"));
+        long len = ToUint32(realm, Get(realm, value, "length"));
         for (long index = 0; index < len; ++index) {
             String strP = Str(realm, stack, propertyList, replacerFunction, indent, gap,
                     ToString(index), value);

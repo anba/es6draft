@@ -166,24 +166,24 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
         @Function(name = "toString", arity = 0)
         public static Object toString(Realm realm, Object thisValue) {
             RegExpObject r = thisRegExpValue(realm, thisValue);
-            CharSequence source = ToString(realm, Get(r, "source"));
+            CharSequence source = ToString(realm, Get(realm, r, "source"));
             if (source.length() == 0) {
                 source = "(?:)";
             }
             StringBuilder sb = new StringBuilder().append('/').append(source).append('/');
-            if (ToBoolean(Get(r, "global"))) {
+            if (ToBoolean(Get(realm, r, "global"))) {
                 sb.append('g');
             }
-            if (ToBoolean(Get(r, "ignoreCase"))) {
+            if (ToBoolean(Get(realm, r, "ignoreCase"))) {
                 sb.append('i');
             }
-            if (ToBoolean(Get(r, "multiline"))) {
+            if (ToBoolean(Get(realm, r, "multiline"))) {
                 sb.append('m');
             }
-            if (ToBoolean(Get(r, "sticky"))) {
+            if (ToBoolean(Get(realm, r, "sticky"))) {
                 sb.append('y');
             }
-            if (ToBoolean(Get(r, "unicode"))) {
+            if (ToBoolean(Get(realm, r, "unicode"))) {
                 sb.append('u');
             }
             return sb.toString();
@@ -196,7 +196,7 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
         public static Object match(Realm realm, Object thisValue, Object string) {
             RegExpObject rx = thisRegExpValue(realm, thisValue);
             String s = ToFlatString(realm, string);
-            boolean global = ToBoolean(Get(rx, "global"));
+            boolean global = ToBoolean(Get(realm, rx, "global"));
             if (!global) {
                 return RegExpExec(realm, rx, s);
             } else {
@@ -211,7 +211,7 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
                     if (result == null) {
                         lastMatch = false;
                     } else {
-                        int thisIndex = (int) ToInteger(realm, Get(rx, "lastIndex"));
+                        int thisIndex = (int) ToInteger(realm, Get(realm, rx, "lastIndex"));
                         if (thisIndex == previousLastIndex) {
                             Put(realm, rx, "lastIndex", thisIndex + 1, true);
                             previousLastIndex = thisIndex + 1;
@@ -241,10 +241,10 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
             String string = ToFlatString(realm, s);
             List<MatchResult> matches = new ArrayList<>();
             // cf. RegExp.prototype.match
-            boolean global = ToBoolean(Get(rx, "global"));
+            boolean global = ToBoolean(Get(realm, rx, "global"));
             if (!global) {
                 // cf. RegExpExec
-                Object lastIndex = Get(rx, "lastIndex");
+                Object lastIndex = Get(realm, rx, "lastIndex");
                 // call ToInteger(realm,) in order to trigger possible side-effects...
                 ToInteger(realm, lastIndex);
                 Matcher m = rx.getRegExpMatcher().matcher(string);
@@ -266,7 +266,7 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
                     if (result == null) {
                         lastMatch = false;
                     } else {
-                        int thisIndex = (int) ToInteger(realm, Get(rx, "lastIndex"));
+                        int thisIndex = (int) ToInteger(realm, Get(realm, rx, "lastIndex"));
                         if (thisIndex == previousLastIndex) {
                             Put(realm, rx, "lastIndex", thisIndex + 1, true);
                             previousLastIndex = thisIndex + 1;
@@ -419,7 +419,7 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
                 if (matcher.find()) {
                     return a;
                 }
-                a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
+                a.defineOwnProperty(realm, "0", new PropertyDescriptor(s, true, true, true));
                 return a;
             }
             // Note: omitted index q in the following code
@@ -428,8 +428,8 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
                 int e = matcher.end();
                 if (e != p) {
                     String t = s.substring(p, lastStart = matcher.start());
-                    a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true,
-                            true));
+                    a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(t, true,
+                            true, true));
                     lengthA += 1;
                     if (lengthA == lim) {
                         return a;
@@ -438,8 +438,8 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
                     GroupIterator iterator = newGroupIterator(rx, matcher);
                     while (iterator.hasNext()) {
                         Object cap = iterator.next();
-                        a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(cap, true,
-                                true, true));
+                        a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(cap,
+                                true, true, true));
                         lengthA += 1;
                         if (lengthA == lim) {
                             return a;
@@ -451,7 +451,8 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
                 return a;
             }
             String t = s.substring(p, size);
-            a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true, true));
+            a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(t, true, true,
+                    true));
             return a;
         }
 
@@ -492,9 +493,9 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
         assert r.isInitialised();
         Pattern matcher = r.getRegExpMatcher();
         int length = s.length();
-        Object lastIndex = Get(r, "lastIndex");
+        Object lastIndex = Get(realm, r, "lastIndex");
         double i = ToInteger(realm, lastIndex);
-        boolean global = ToBoolean(Get(r, "global"));
+        boolean global = ToBoolean(Get(realm, r, "global"));
         if (!global) {
             i = 0;
         }
@@ -526,16 +527,18 @@ public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Ini
         int n = m.groupCount();
 
         ScriptObject array = ArrayCreate(realm, 0);
-        array.defineOwnProperty("index", new PropertyDescriptor(matchIndex, true, true, true));
-        array.defineOwnProperty("input", new PropertyDescriptor(s, true, true, true));
-        array.defineOwnProperty("length", new PropertyDescriptor(n + 1));
+        array.defineOwnProperty(realm, "index",
+                new PropertyDescriptor(matchIndex, true, true, true));
+        array.defineOwnProperty(realm, "input", new PropertyDescriptor(s, true, true, true));
+        array.defineOwnProperty(realm, "length", new PropertyDescriptor(n + 1));
 
         CharSequence matchedSubstr = s.subSequence(matchIndex, e);
-        array.defineOwnProperty("0", new PropertyDescriptor(matchedSubstr, true, true, true));
+        array.defineOwnProperty(realm, "0", new PropertyDescriptor(matchedSubstr, true, true, true));
         GroupIterator iterator = newGroupIterator(r, m);
         for (int i = 1; iterator.hasNext(); ++i) {
             Object capture = iterator.next();
-            array.defineOwnProperty(ToString(i), new PropertyDescriptor(capture, true, true, true));
+            array.defineOwnProperty(realm, ToString(i), new PropertyDescriptor(capture, true, true,
+                    true));
         }
         return array;
     }

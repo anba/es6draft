@@ -53,7 +53,7 @@ public class BooleanObject extends OrdinaryObject implements ScriptObject {
      */
     public static BooleanObject BooleanCreate(Realm realm, boolean booleanData) {
         BooleanObject obj = new BooleanObject(realm);
-        obj.setPrototype(realm.getIntrinsic(Intrinsics.BooleanPrototype));
+        obj.setPrototype(realm, realm.getIntrinsic(Intrinsics.BooleanPrototype));
         obj.setBooleanData(booleanData);
         return obj;
     }

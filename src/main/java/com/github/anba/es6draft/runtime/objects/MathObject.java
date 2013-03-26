@@ -34,7 +34,7 @@ public class MathObject extends OrdinaryObject implements ScriptObject, Initiali
 
     @Override
     public void initialise(Realm realm) {
-        setPrototype(realm.getIntrinsic(Intrinsics.ObjectPrototype));
+        setPrototype(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
 
         createProperties(this, realm, ValueProperties.class);
         createProperties(this, realm, FunctionProperties.class);

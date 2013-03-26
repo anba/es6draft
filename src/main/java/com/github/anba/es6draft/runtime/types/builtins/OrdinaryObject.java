@@ -91,13 +91,13 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.1 [[GetPrototype]] ( ) */
     @Override
-    public ScriptObject getPrototype() {
+    public ScriptObject getPrototype(Realm realm) {
         return prototype;
     }
 
     /** 8.3.2 [[SetPrototype]] (V) */
     @Override
-    public boolean setPrototype(ScriptObject prototype) {
+    public boolean setPrototype(Realm realm, ScriptObject prototype) {
         if (!extensible) {
             return false;
         }
@@ -107,7 +107,7 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.3 [[HasIntegrity]] ( Level ) */
     @Override
-    public boolean hasIntegrity(IntegrityLevel level) {
+    public boolean hasIntegrity(Realm realm, IntegrityLevel level) {
         if (level == IntegrityLevel.NonExtensible) {
             // FIXME: spec bug (need to invert [[Extensible]] value)
             return !extensible;
@@ -117,7 +117,7 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.4 [[SetIntegrity]] ( Level ) */
     @Override
-    public boolean setIntegrity(IntegrityLevel level) {
+    public boolean setIntegrity(Realm realm, IntegrityLevel level) {
         this.extensible = false;
         if (level != IntegrityLevel.NonExtensible) {
             return SetIntegrityLevel(realm, this, level);
@@ -127,25 +127,25 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.5 [[HasOwnProperty]] (P) */
     @Override
-    public boolean hasOwnProperty(String propertyKey) {
+    public boolean hasOwnProperty(Realm realm, String propertyKey) {
         return __has__(propertyKey);
     }
 
     /** 8.3.5 [[HasOwnProperty]] (P) */
     @Override
-    public boolean hasOwnProperty(Symbol propertyKey) {
+    public boolean hasOwnProperty(Realm realm, Symbol propertyKey) {
         return __has__(propertyKey);
     }
 
     /** 8.3.6 [[GetOwnProperty]] (P) */
     @Override
-    public Property getOwnProperty(String propertyKey) {
+    public Property getOwnProperty(Realm realm, String propertyKey) {
         return ordinaryGetOwnProperty(propertyKey);
     }
 
     /** 8.3.6 [[GetOwnProperty]] (P) */
     @Override
-    public Property getOwnProperty(Symbol propertyKey) {
+    public Property getOwnProperty(Realm realm, Symbol propertyKey) {
         return ordinaryGetOwnProperty(propertyKey);
     }
 
@@ -177,14 +177,14 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.7 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    public boolean defineOwnProperty(String propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
         /* step 1 */
         return ordinaryDefineOwnProperty(propertyKey, desc);
     }
 
     /** 8.3.7 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    public boolean defineOwnProperty(Symbol propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(Realm realm, Symbol propertyKey, PropertyDescriptor desc) {
         /* step 1 */
         return ordinaryDefineOwnProperty(propertyKey, desc);
     }
@@ -346,12 +346,12 @@ public abstract class OrdinaryObject implements ScriptObject {
      * 8.3.8 [[HasProperty]](P)
      */
     @Override
-    public boolean hasProperty(String propertyKey) {
-        boolean hasOwn = hasOwnProperty(propertyKey);
+    public boolean hasProperty(Realm realm, String propertyKey) {
+        boolean hasOwn = hasOwnProperty(realm, propertyKey);
         if (!hasOwn) {
-            ScriptObject parent = getPrototype();
+            ScriptObject parent = getPrototype(realm);
             if (parent != null) {
-                return parent.hasProperty(propertyKey);
+                return parent.hasProperty(realm, propertyKey);
             }
         }
         return hasOwn;
@@ -361,12 +361,12 @@ public abstract class OrdinaryObject implements ScriptObject {
      * 8.3.8 [[HasProperty]](P)
      */
     @Override
-    public boolean hasProperty(Symbol propertyKey) {
-        boolean hasOwn = hasOwnProperty(propertyKey);
+    public boolean hasProperty(Realm realm, Symbol propertyKey) {
+        boolean hasOwn = hasOwnProperty(realm, propertyKey);
         if (!hasOwn) {
-            ScriptObject parent = getPrototype();
+            ScriptObject parent = getPrototype(realm);
             if (parent != null) {
-                return parent.hasProperty(propertyKey);
+                return parent.hasProperty(realm, propertyKey);
             }
         }
         return hasOwn;
@@ -374,16 +374,16 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.9 [[Get]] (P, Receiver) */
     @Override
-    public Object get(String propertyKey, Object receiver) {
+    public Object get(Realm realm, String propertyKey, Object receiver) {
         /* step 2-3 */
-        Property desc = getOwnProperty(propertyKey);
+        Property desc = getOwnProperty(realm, propertyKey);
         /* step 4 */
         if (desc == null) {
-            ScriptObject parent = getPrototype();
+            ScriptObject parent = getPrototype(realm);
             if (parent == null) {
                 return UNDEFINED;
             }
-            return parent.get(propertyKey, receiver);
+            return parent.get(realm, propertyKey, receiver);
         }
         /* step 5 */
         if (desc.isDataDescriptor()) {
@@ -402,16 +402,16 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.9 [[Get]] (P, Receiver) */
     @Override
-    public Object get(Symbol propertyKey, Object receiver) {
+    public Object get(Realm realm, Symbol propertyKey, Object receiver) {
         /* step 2-3 */
-        Property desc = getOwnProperty(propertyKey);
+        Property desc = getOwnProperty(realm, propertyKey);
         /* step 4 */
         if (desc == null) {
-            ScriptObject parent = getPrototype();
+            ScriptObject parent = getPrototype(realm);
             if (parent == null) {
                 return UNDEFINED;
             }
-            return parent.get(propertyKey, receiver);
+            return parent.get(realm, propertyKey, receiver);
         }
         /* step 5 */
         if (desc.isDataDescriptor()) {
@@ -430,19 +430,19 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.10 [[Set] (P, V, Receiver) */
     @Override
-    public boolean set(String propertyKey, Object value, Object receiver) {
+    public boolean set(Realm realm, String propertyKey, Object value, Object receiver) {
         /* step 2-3 */
-        Property ownDesc = getOwnProperty(propertyKey);
+        Property ownDesc = getOwnProperty(realm, propertyKey);
         /* step 4 */
         if (ownDesc == null) {
-            ScriptObject parent = getPrototype();
+            ScriptObject parent = getPrototype(realm);
             if (parent != null) {
-                return parent.set(propertyKey, value, receiver);
+                return parent.set(realm, propertyKey, value, receiver);
             } else {
                 if (!Type.isObject(receiver)) {
                     return false;
                 }
-                return CreateOwnDataProperty(Type.objectValue(receiver), propertyKey, value);
+                return CreateOwnDataProperty(realm, Type.objectValue(receiver), propertyKey, value);
             }
         }
         /* step 5 */
@@ -454,12 +454,12 @@ public abstract class OrdinaryObject implements ScriptObject {
                 return false;
             }
             ScriptObject _receiver = Type.objectValue(receiver);
-            Property existingDescriptor = _receiver.getOwnProperty(propertyKey);
+            Property existingDescriptor = _receiver.getOwnProperty(realm, propertyKey);
             if (existingDescriptor != null) {
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
-                return _receiver.defineOwnProperty(propertyKey, valueDesc);
+                return _receiver.defineOwnProperty(realm, propertyKey, valueDesc);
             } else {
-                return CreateOwnDataProperty(_receiver, propertyKey, value);
+                return CreateOwnDataProperty(realm, _receiver, propertyKey, value);
             }
         }
         /* step 6 */
@@ -474,19 +474,19 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.10 [[Set] (P, V, Receiver) */
     @Override
-    public boolean set(Symbol propertyKey, Object value, Object receiver) {
+    public boolean set(Realm realm, Symbol propertyKey, Object value, Object receiver) {
         /* step 2-3 */
-        Property ownDesc = getOwnProperty(propertyKey);
+        Property ownDesc = getOwnProperty(realm, propertyKey);
         /* step 4 */
         if (ownDesc == null) {
-            ScriptObject parent = getPrototype();
+            ScriptObject parent = getPrototype(realm);
             if (parent != null) {
-                return parent.set(propertyKey, value, receiver);
+                return parent.set(realm, propertyKey, value, receiver);
             } else {
                 if (!Type.isObject(receiver)) {
                     return false;
                 }
-                return CreateOwnDataProperty(Type.objectValue(receiver), propertyKey, value);
+                return CreateOwnDataProperty(realm, Type.objectValue(receiver), propertyKey, value);
             }
         }
         /* step 5 */
@@ -498,12 +498,12 @@ public abstract class OrdinaryObject implements ScriptObject {
                 return false;
             }
             ScriptObject _receiver = Type.objectValue(receiver);
-            Property existingDescriptor = _receiver.getOwnProperty(propertyKey);
+            Property existingDescriptor = _receiver.getOwnProperty(realm, propertyKey);
             if (existingDescriptor != null) {
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
-                return _receiver.defineOwnProperty(propertyKey, valueDesc);
+                return _receiver.defineOwnProperty(realm, propertyKey, valueDesc);
             } else {
-                return CreateOwnDataProperty(_receiver, propertyKey, value);
+                return CreateOwnDataProperty(realm, _receiver, propertyKey, value);
             }
         }
         /* step 6 */
@@ -518,9 +518,9 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.11 [[Delete]] (P) */
     @Override
-    public boolean delete(String propertyKey) {
+    public boolean delete(Realm realm, String propertyKey) {
         /* step 2 */
-        Property desc = getOwnProperty(propertyKey);
+        Property desc = getOwnProperty(realm, propertyKey);
         /* step 3 */
         if (desc == null) {
             return true;
@@ -536,9 +536,9 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     /** 8.3.11 [[Delete]] (P) */
     @Override
-    public boolean delete(Symbol propertyKey) {
+    public boolean delete(Realm realm, Symbol propertyKey) {
         /* step 2 */
-        Property desc = getOwnProperty(propertyKey);
+        Property desc = getOwnProperty(realm, propertyKey);
         /* step 3 */
         if (desc == null) {
             return true;
@@ -600,7 +600,7 @@ public abstract class OrdinaryObject implements ScriptObject {
                     }
                 }
                 // switch to prototype enumerate
-                ScriptObject proto = this.obj.getPrototype();
+                ScriptObject proto = this.obj.getPrototype(realm);
                 if (proto != null) {
                     if (proto instanceof OrdinaryObject) {
                         this.obj = ((OrdinaryObject) proto);
@@ -707,7 +707,7 @@ public abstract class OrdinaryObject implements ScriptObject {
     public static <OBJECT extends ScriptObject> OBJECT ObjectCreate(Realm realm,
             ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(realm);
-        obj.setPrototype(proto);
+        obj.setPrototype(realm, proto);
         return obj;
     }
 
@@ -715,7 +715,7 @@ public abstract class OrdinaryObject implements ScriptObject {
     public static <OBJECT extends ScriptObject> OBJECT ObjectCreate(Realm realm, Intrinsics proto,
             ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(realm);
-        obj.setPrototype(realm.getIntrinsic(proto));
+        obj.setPrototype(realm, realm.getIntrinsic(proto));
         return obj;
     }
 }

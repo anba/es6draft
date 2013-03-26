@@ -84,7 +84,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements ScriptObje
             ArrayIterationKind kind) {
         // ObjectCreate()
         ArrayIterator itr = new ArrayIterator(realm);
-        itr.setPrototype(realm.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
+        itr.setPrototype(realm, realm.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
         itr.iteratedObject = array;
         itr.nextIndex = 0;
         itr.kind = kind;
@@ -121,7 +121,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements ScriptObje
             ScriptObject array = itr.iteratedObject;
             long index = itr.nextIndex;
             ArrayIterationKind itemKind = itr.kind;
-            Object lenValue = Get(array, "length");
+            Object lenValue = Get(realm, array, "length");
             long len = ToUint32(realm, lenValue);
 
             // index == +Infinity => index == -1
@@ -135,7 +135,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements ScriptObje
                 boolean found = false;
                 while (!found && index < len) {
                     String elementKey = ToString(index);
-                    found = HasProperty(array, elementKey);
+                    found = HasProperty(realm, array, elementKey);
                     if (!found) {
                         index += 1;
                     }
@@ -151,15 +151,16 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements ScriptObje
             if (itemKind == ArrayIterationKind.Value || itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
-                elementValue = Get(array, elementKey);
+                elementValue = Get(realm, array, elementKey);
             }
             if (itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
                 assert elementValue != null;
                 ScriptObject result = ArrayCreate(realm, 2);
-                result.defineOwnProperty("0", new PropertyDescriptor(elementKey, true, true, true));
-                result.defineOwnProperty("1",
-                        new PropertyDescriptor(elementValue, true, true, true));
+                result.defineOwnProperty(realm, "0", new PropertyDescriptor(elementKey, true, true,
+                        true));
+                result.defineOwnProperty(realm, "1", new PropertyDescriptor(elementValue, true,
+                        true, true));
                 return result;
             } else if (itemKind == ArrayIterationKind.Key
                     || itemKind == ArrayIterationKind.SparseKey) {

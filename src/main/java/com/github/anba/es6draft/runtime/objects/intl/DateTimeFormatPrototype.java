@@ -106,9 +106,9 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
     private static class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm);
-            setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-            defineOwnProperty("name", new PropertyDescriptor("format", false, false, false));
-            defineOwnProperty("length", new PropertyDescriptor(0, false, false, false));
+            setPrototype(realm, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+            defineOwnProperty(realm, "name", new PropertyDescriptor("format", false, false, false));
+            defineOwnProperty(realm, "length", new PropertyDescriptor(0, false, false, false));
             AddRestrictedFunctionProperties(realm, this);
         }
 

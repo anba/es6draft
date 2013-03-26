@@ -50,8 +50,8 @@ public class MapPrototype extends OrdinaryObject implements ScriptObject, Initia
         createProperties(this, realm, Properties.class);
 
         // 15.14.4.12 Map.prototype.@@iterator ( )
-        defineOwnProperty(BuiltinSymbol.iterator.get(), new PropertyDescriptor(
-                Get(this, "entries"), true, false, true));
+        defineOwnProperty(realm, BuiltinSymbol.iterator.get(),
+                new PropertyDescriptor(Get(realm, this, "entries"), true, false, true));
     }
 
     /**

@@ -133,8 +133,8 @@ public class SetIteratorPrototype extends OrdinaryObject implements ScriptObject
                 assert e != null;
                 if (itemKind == SetIterationKind.KeyValue) {
                     ExoticArray result = ArrayCreate(realm, 2);
-                    CreateOwnDataProperty(result, "0", e.getKey());
-                    CreateOwnDataProperty(result, "1", e.getKey());
+                    CreateOwnDataProperty(realm, result, "0", e.getKey());
+                    CreateOwnDataProperty(realm, result, "1", e.getKey());
                     return result;
                 }
                 return e.getKey();

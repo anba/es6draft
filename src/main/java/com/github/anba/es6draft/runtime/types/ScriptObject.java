@@ -18,60 +18,60 @@ import com.github.anba.es6draft.runtime.Realm;
  */
 public interface ScriptObject {
     /** [[GetPrototype]] ( ) */
-    ScriptObject getPrototype();
+    ScriptObject getPrototype(Realm realm);
 
     /** [[SetPrototype]] (V) */
-    boolean setPrototype(ScriptObject prototype);
+    boolean setPrototype(Realm realm, ScriptObject prototype);
 
     /** [[HasIntegrity]] (Level) */
-    boolean hasIntegrity(IntegrityLevel level);
+    boolean hasIntegrity(Realm realm, IntegrityLevel level);
 
     /** [[SetIntegrity]] (Level) */
-    boolean setIntegrity(IntegrityLevel level);
+    boolean setIntegrity(Realm realm, IntegrityLevel level);
 
     /** [[HasOwnProperty]] (P) */
-    boolean hasOwnProperty(String propertyKey);
+    boolean hasOwnProperty(Realm realm, String propertyKey);
 
     /** [[HasOwnProperty]] (P) */
-    boolean hasOwnProperty(Symbol propertyKey);
+    boolean hasOwnProperty(Realm realm, Symbol propertyKey);
 
     /** [[GetOwnProperty]] (P) */
-    Property getOwnProperty(String propertyKey);
+    Property getOwnProperty(Realm realm, String propertyKey);
 
     /** [[GetOwnProperty]] (P) */
-    Property getOwnProperty(Symbol propertyKey);
+    Property getOwnProperty(Realm realm, Symbol propertyKey);
 
     /** [[HasProperty]](P) */
-    boolean hasProperty(String propertyKey);
+    boolean hasProperty(Realm realm, String propertyKey);
 
     /** [[HasProperty]](P) */
-    boolean hasProperty(Symbol propertyKey);
+    boolean hasProperty(Realm realm, Symbol propertyKey);
 
     // FIXME: spec bug ([[Get]] missing in 8.1.6.2)
 
     /** [[Get]] (P, Receiver) */
-    Object get(String propertyKey, Object receiver);
+    Object get(Realm realm, String propertyKey, Object receiver);
 
     /** [[Get]] (P, Receiver) */
-    Object get(Symbol propertyKey, Object receiver);
+    Object get(Realm realm, Symbol propertyKey, Object receiver);
 
     /** [[Set] (P, V, Receiver) */
-    boolean set(String propertyKey, Object value, Object receiver);
+    boolean set(Realm realm, String propertyKey, Object value, Object receiver);
 
     /** [[Set] (P, V, Receiver) */
-    boolean set(Symbol propertyKey, Object value, Object receiver);
+    boolean set(Realm realm, Symbol propertyKey, Object value, Object receiver);
 
     /** [[Delete]] (P) */
-    boolean delete(String propertyKey);
+    boolean delete(Realm realm, String propertyKey);
 
     /** [[Delete]] (P) */
-    boolean delete(Symbol propertyKey);
+    boolean delete(Realm realm, Symbol propertyKey);
 
     /** [[DefineOwnProperty]] (P, Desc) */
-    boolean defineOwnProperty(String propertyKey, PropertyDescriptor desc);
+    boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc);
 
     /** [[DefineOwnProperty]] (P, Desc) */
-    boolean defineOwnProperty(Symbol propertyKey, PropertyDescriptor desc);
+    boolean defineOwnProperty(Realm realm, Symbol propertyKey, PropertyDescriptor desc);
 
     /** [[Enumerate]] () */
     ScriptObject enumerate(Realm realm);

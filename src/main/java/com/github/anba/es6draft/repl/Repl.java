@@ -184,7 +184,7 @@ public class Repl {
             return ToFlatString(realm, value);
         case Object:
             ScriptObject objValue = Type.objectValue(value);
-            Object toSource = Get(objValue, "toSource");
+            Object toSource = Get(realm, objValue, "toSource");
             if (IsCallable(toSource)) {
                 return ToFlatString(realm, ((Callable) toSource).call(objValue));
             }
@@ -262,7 +262,7 @@ public class Repl {
         }
         StringBuilder properties = new StringBuilder();
         for (String k : keys) {
-            String p = toSource(realm, stack, Get(value, k));
+            String p = toSource(realm, stack, Get(realm, value, k));
             properties.append(',').append(k).append(':').append(p);
         }
         properties.append('}').setCharAt(0, '{');
@@ -270,13 +270,13 @@ public class Repl {
     }
 
     private static String arrayToSource(Realm realm, Set<ScriptObject> stack, ScriptObject value) {
-        long len = ToUint32(realm, Get(value, "length"));
+        long len = ToUint32(realm, Get(realm, value, "length"));
         if (len <= 0) {
             return "[]";
         }
         StringBuilder properties = new StringBuilder();
         for (long index = 0; index < len; ++index) {
-            String p = toSource(realm, stack, Get(value, ToString(index)));
+            String p = toSource(realm, stack, Get(realm, value, ToString(index)));
             properties.append(',').append(p);
         }
         properties.append(']').setCharAt(0, '[');

@@ -105,13 +105,13 @@ public final class IntlAbstractOperations {
             locales = CreateArrayFromList(realm, singletonList(locales));
         }
         ScriptObject o = ToObject(realm, locales);
-        Object lenValue = Get(o, "length");
+        Object lenValue = Get(realm, o, "length");
         long len = ToUint32(realm, lenValue);
         for (long k = 0; k < len; ++k) {
             String pk = ToString(k);
-            boolean kPresent = HasProperty(o, pk);
+            boolean kPresent = HasProperty(realm, o, pk);
             if (kPresent) {
-                Object kValue = Get(o, pk);
+                Object kValue = Get(realm, o, pk);
                 if (!(Type.isString(kValue) || Type.isObject(pk))) {
                     // TODO: error message
                     throwTypeError(realm, Messages.Key.IncompatibleObject);
@@ -241,12 +241,12 @@ public final class IntlAbstractOperations {
         ResolvedLocale result = new ResolvedLocale();
         result.dataLocale = foundLocale;
         String supportedExtension = "-u";
-        long len = ToUint32(realm, Get(relevantExtensionKeys, "length"));
+        long len = ToUint32(realm, Get(realm, relevantExtensionKeys, "length"));
         for (long i = 0; i < len; ++i) {
-            String key = (String) Get(relevantExtensionKeys, ToString(i));
-            ScriptObject foundLocaleData = (ScriptObject) Get(localeData, foundLocale);
-            ScriptObject keyLocaleData = (ScriptObject) Get(foundLocaleData, key);
-            Object value = Get(keyLocaleData, "0");
+            String key = (String) Get(realm, relevantExtensionKeys, ToString(i));
+            ScriptObject foundLocaleData = (ScriptObject) Get(realm, localeData, foundLocale);
+            ScriptObject keyLocaleData = (ScriptObject) Get(realm, foundLocaleData, key);
+            Object value = Get(realm, keyLocaleData, "0");
             String supportedExtensionAddition = "";
             if (extensionSubtags != null) {
                 int keyPos = extensionSubtags.indexOf(key);
@@ -295,7 +295,7 @@ public final class IntlAbstractOperations {
         boolean useBestFit = true;
         if (!Type.isUndefined(options)) {
             ScriptObject opts = ToObject(realm, options);
-            Object matcher = Get(opts, "localeMatcher");
+            Object matcher = Get(realm, opts, "localeMatcher");
             if (!Type.isUndefined(matcher)) {
                 String m = ToFlatString(realm, matcher);
                 if ("lookup".equals(m)) {
@@ -332,7 +332,7 @@ public final class IntlAbstractOperations {
      */
     public static <T> T getOption(Realm realm, ScriptObject options, String property, Type type,
             Set<T> values, T fallback) {
-        Object value = Get(options, property);
+        Object value = Get(realm, options, property);
         if (!Type.isUndefined(value)) {
             assert type == Type.Boolean || type == Type.String;
             if (type == Type.Boolean) {
@@ -356,7 +356,7 @@ public final class IntlAbstractOperations {
      */
     public static String getStringOption(Realm realm, ScriptObject options, String property,
             Set<String> values, String fallback) {
-        Object value = Get(options, property);
+        Object value = Get(realm, options, property);
         if (!Type.isUndefined(value)) {
             String val = ToFlatString(realm, value);
             if (values != null && values.contains(val)) {
@@ -372,7 +372,7 @@ public final class IntlAbstractOperations {
      */
     public static boolean getBooleanOption(Realm realm, ScriptObject options, String property,
             boolean fallback) {
-        Object value = Get(options, property);
+        Object value = Get(realm, options, property);
         if (!Type.isUndefined(value)) {
             return ToBoolean(value);
         }
@@ -384,7 +384,7 @@ public final class IntlAbstractOperations {
      */
     public static double GetNumberOption(Realm realm, ScriptObject options, String property,
             double minimum, double maximum, double fallback) {
-        Object value = Get(options, property);
+        Object value = Get(realm, options, property);
         if (!Type.isUndefined(value)) {
             double val = ToNumber(realm, value);
             if (Double.isNaN(val) || val < minimum || val > maximum) {

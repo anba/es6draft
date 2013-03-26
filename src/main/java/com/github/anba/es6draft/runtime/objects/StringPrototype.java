@@ -196,7 +196,7 @@ public class StringPrototype extends OrdinaryObject implements ScriptObject, Ini
             CharSequence s = ToString(realm, obj);
             ScriptObject rx;
             if (Type.isObject(regexp)
-                    && HasProperty(Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
+                    && HasProperty(realm, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
                 rx = Type.objectValue(regexp);
             } else {
                 String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
@@ -214,7 +214,8 @@ public class StringPrototype extends OrdinaryObject implements ScriptObject, Ini
             Object obj = CheckObjectCoercible(realm, thisValue);
             String string = ToFlatString(realm, obj);
             if (Type.isObject(searchValue)
-                    && HasProperty(Type.objectValue(searchValue), BuiltinSymbol.isRegExp.get())) {
+                    && HasProperty(realm, Type.objectValue(searchValue),
+                            BuiltinSymbol.isRegExp.get())) {
                 return Invoke(realm, Type.objectValue(searchValue), "replace", string, replaceValue);
             }
             String searchString = ToFlatString(realm, searchValue);
@@ -285,7 +286,7 @@ public class StringPrototype extends OrdinaryObject implements ScriptObject, Ini
             CharSequence string = ToString(realm, obj);
             ScriptObject rx;
             if (Type.isObject(regexp)
-                    && HasProperty(Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
+                    && HasProperty(realm, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
                 rx = Type.objectValue(regexp);
             } else {
                 String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
@@ -318,7 +319,7 @@ public class StringPrototype extends OrdinaryObject implements ScriptObject, Ini
             Object obj = CheckObjectCoercible(realm, thisValue);
             String s = ToFlatString(realm, obj);
             if (Type.isObject(separator)
-                    && HasProperty(Type.objectValue(separator), BuiltinSymbol.isRegExp.get())) {
+                    && HasProperty(realm, Type.objectValue(separator), BuiltinSymbol.isRegExp.get())) {
                 return Invoke(realm, separator, "split", s, limit);
             }
             ScriptObject a = ArrayCreate(realm, 0);
@@ -331,14 +332,14 @@ public class StringPrototype extends OrdinaryObject implements ScriptObject, Ini
                 return a;
             }
             if (Type.isUndefined(separator)) {
-                a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
+                a.defineOwnProperty(realm, "0", new PropertyDescriptor(s, true, true, true));
                 return a;
             }
             if (size == 0) {
                 if (s.startsWith(r)) {
                     return a;
                 }
-                a.defineOwnProperty("0", new PropertyDescriptor(s, true, true, true));
+                a.defineOwnProperty(realm, "0", new PropertyDescriptor(s, true, true, true));
                 return a;
             }
             int q = p;
@@ -352,8 +353,8 @@ public class StringPrototype extends OrdinaryObject implements ScriptObject, Ini
                         q = q + 1;
                     } else {
                         String t = s.substring(p, z);
-                        a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true,
-                                true, true));
+                        a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(t,
+                                true, true, true));
                         lengthA += 1;
                         if (lengthA == lim) {
                             return a;
@@ -364,7 +365,8 @@ public class StringPrototype extends OrdinaryObject implements ScriptObject, Ini
                 }
             }
             String t = s.substring(p, size);
-            a.defineOwnProperty(ToString(lengthA), new PropertyDescriptor(t, true, true, true));
+            a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(t, true, true,
+                    true));
             return a;
         }
 

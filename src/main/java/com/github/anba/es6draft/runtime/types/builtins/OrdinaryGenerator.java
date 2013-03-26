@@ -73,7 +73,7 @@ public class OrdinaryGenerator extends FunctionObject {
             prototype = realm.getIntrinsic(Intrinsics.FunctionPrototype);
         }
         /* step 6 */
-        f.setPrototype(prototype);
+        f.setPrototype(realm, prototype);
         /* step 7 */
         f.scope = scope;
         /* step 8-9 */
@@ -98,9 +98,9 @@ public class OrdinaryGenerator extends FunctionObject {
         /*  step 18 */
         int len = function.expectedArgumentCount();
         /* step 19 */
-        f.defineOwnProperty("length", new PropertyDescriptor(len, false, false, false));
+        f.defineOwnProperty(realm, "length", new PropertyDescriptor(len, false, false, false));
         String name = function.functionName() != null ? function.functionName() : "";
-        f.defineOwnProperty("name", new PropertyDescriptor(name, false, false, false));
+        f.defineOwnProperty(realm, "name", new PropertyDescriptor(name, false, false, false));
         /* step 20 */
         if (strict) {
             AddRestrictedFunctionProperties(realm, f);

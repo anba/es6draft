@@ -113,12 +113,12 @@ public class ObjectPrototype extends OrdinaryObject implements ScriptObject, Ini
                 builtinTag = "Object";
             }
             String tag;
-            boolean hasTag = HasProperty(o, BuiltinSymbol.toStringTag.get());
+            boolean hasTag = HasProperty(realm, o, BuiltinSymbol.toStringTag.get());
             if (!hasTag) {
                 tag = builtinTag;
             } else {
                 try {
-                    Object ttag = Get(o, BuiltinSymbol.toStringTag.get());
+                    Object ttag = Get(realm, o, BuiltinSymbol.toStringTag.get());
                     if (Type.isString(ttag)) {
                         tag = Type.stringValue(ttag).toString();
                     } else {
@@ -167,9 +167,9 @@ public class ObjectPrototype extends OrdinaryObject implements ScriptObject, Ini
             Object p = ToPropertyKey(realm, v);
             ScriptObject o = ToObject(realm, thisValue);
             if (p instanceof String) {
-                return o.hasOwnProperty((String) p);
+                return o.hasOwnProperty(realm, (String) p);
             } else {
-                return o.hasOwnProperty((Symbol) p);
+                return o.hasOwnProperty(realm, (Symbol) p);
             }
         }
 
@@ -184,7 +184,7 @@ public class ObjectPrototype extends OrdinaryObject implements ScriptObject, Ini
             ScriptObject w = Type.objectValue(v);
             ScriptObject o = ToObject(realm, thisValue);
             for (;;) {
-                w = w.getPrototype();
+                w = w.getPrototype(realm);
                 if (w == null) {
                     return false;
                 }
@@ -201,7 +201,7 @@ public class ObjectPrototype extends OrdinaryObject implements ScriptObject, Ini
         public static Object propertyIsEnumerable(Realm realm, Object thisValue, Object v) {
             String p = ToFlatString(realm, v);
             ScriptObject o = ToObject(realm, thisValue);
-            Property desc = o.getOwnProperty(p);
+            Property desc = o.getOwnProperty(realm, p);
             if (desc == null) {
                 return false;
             }
@@ -214,7 +214,7 @@ public class ObjectPrototype extends OrdinaryObject implements ScriptObject, Ini
         @Accessor(name = "__proto__", type = Accessor.Type.Getter)
         public static Object getPrototype(Realm realm, Object thisValue) {
             ScriptObject o = ToObject(realm, thisValue);
-            ScriptObject p = o.getPrototype();
+            ScriptObject p = o.getPrototype(realm);
             return (p != null ? p : NULL);
         }
 
@@ -224,13 +224,13 @@ public class ObjectPrototype extends OrdinaryObject implements ScriptObject, Ini
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(Realm realm, Object thisValue, Object p) {
             ScriptObject o = ToObject(realm, thisValue);
-            if (!IsExtensible(o)) {
+            if (!IsExtensible(realm, o)) {
                 throwTypeError(realm, Messages.Key.NotExtensible);
             }
             if (Type.isNull(p)) {
-                o.setPrototype(null);
+                o.setPrototype(realm, null);
             } else if (Type.isObject(p)) {
-                o.setPrototype(Type.objectValue(p));
+                o.setPrototype(realm, Type.objectValue(p));
             }
             return UNDEFINED;
         }

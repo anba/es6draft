@@ -108,13 +108,13 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
                 throw throwTypeError(realm, Messages.Key.NotObjectType);
             }
             ScriptObject argarray = Type.objectValue(argArray);
-            Object len = Get(argarray, "length");
+            Object len = Get(realm, argarray, "length");
             long n = ToUint32(realm, len);
             assert n <= 0x10000 : n;// TODO: actual limit?!
             Object[] argList = new Object[(int) n];
             for (int index = 0; index < n; ++index) {
                 String indexName = ToString(index);
-                Object nextArg = Get(argarray, indexName);
+                Object nextArg = Get(realm, argarray, indexName);
                 argList[index] = nextArg;
             }
             return func.call(thisArg, argList);
@@ -145,12 +145,12 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             int l;
             if (target instanceof OrdinaryFunction || target instanceof OrdinaryGenerator
                     || target instanceof BuiltinFunction || target instanceof ExoticBoundFunction) {
-                Object targetLen = Get(target, "length");
+                Object targetLen = Get(realm, target, "length");
                 l = (int) Math.max(0, ToInteger(realm, targetLen) - args.length);
             } else {
                 l = 0;
             }
-            f.defineOwnProperty("length", new PropertyDescriptor(l, false, false, false));
+            f.defineOwnProperty(realm, "length", new PropertyDescriptor(l, false, false, false));
             AddRestrictedFunctionProperties(realm, f);
             return f;
         }

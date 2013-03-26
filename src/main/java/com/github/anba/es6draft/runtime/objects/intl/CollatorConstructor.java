@@ -90,7 +90,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
             return construct(args);
         }
         ScriptObject obj = ToObject(realm(), thisValue);
-        if (!IsExtensible(obj)) {
+        if (!IsExtensible(realm(), obj)) {
             throwTypeError(realm(), Messages.Key.NotExtensible);
         }
         InitializeCollator(realm(), obj, locales, options);
@@ -105,7 +105,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         CollatorObject obj = new CollatorObject(realm());
-        obj.setPrototype(realm().getIntrinsic(Intrinsics.Intl_CollatorPrototype));
+        obj.setPrototype(realm(), realm().getIntrinsic(Intrinsics.Intl_CollatorPrototype));
         InitializeCollator(realm(), obj, locales, options);
         return obj;
     }

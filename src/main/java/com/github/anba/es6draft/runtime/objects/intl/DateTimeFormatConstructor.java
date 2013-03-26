@@ -83,7 +83,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
             return construct(args);
         }
         ScriptObject obj = ToObject(realm(), thisValue);
-        if (!IsExtensible(obj)) {
+        if (!IsExtensible(realm(), obj)) {
             throwTypeError(realm(), Messages.Key.NotExtensible);
         }
         InitializeDateTimeFormat(obj, locales, options);
@@ -98,7 +98,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         DateTimeFormatObject obj = new DateTimeFormatObject(realm());
-        obj.setPrototype(realm().getIntrinsic(Intrinsics.Intl_DateTimeFormatPrototype));
+        obj.setPrototype(realm(), realm().getIntrinsic(Intrinsics.Intl_DateTimeFormatPrototype));
         InitializeDateTimeFormat(obj, locales, options);
         return obj;
     }

@@ -273,7 +273,7 @@ public final class Properties {
                 int arity = function.arity();
                 Attributes attrs = function.attributes();
                 NativeFunction fun = new NativeFunction(realm, name, arity, handle);
-                owner.defineOwnProperty(name, propertyDescriptor(fun, attrs));
+                owner.defineOwnProperty(realm, name, propertyDescriptor(fun, attrs));
             }
         }
     }
@@ -555,7 +555,7 @@ public final class Properties {
         Object value = resolveValue(realm, rawValue);
         assert value == null || value instanceof ScriptObject;
         ScriptObject prototype = (ScriptObject) value;
-        owner.setPrototype(prototype);
+        owner.setPrototype(realm, prototype);
     }
 
     private static void createValue(ScriptObject owner, Realm realm, Value val, Object rawValue) {
@@ -564,9 +564,9 @@ public final class Properties {
         Attributes attrs = val.attributes();
         Object value = resolveValue(realm, rawValue);
         if (sym == BuiltinSymbol.NONE) {
-            owner.defineOwnProperty(name, propertyDescriptor(value, attrs));
+            owner.defineOwnProperty(realm, name, propertyDescriptor(value, attrs));
         } else {
-            owner.defineOwnProperty(sym.get(), propertyDescriptor(value, attrs));
+            owner.defineOwnProperty(realm, sym.get(), propertyDescriptor(value, attrs));
         }
     }
 
@@ -581,9 +581,9 @@ public final class Properties {
 
         NativeFunction fun = new NativeFunction(realm, name, arity, mh);
         if (sym == BuiltinSymbol.NONE) {
-            owner.defineOwnProperty(name, propertyDescriptor(fun, attrs));
+            owner.defineOwnProperty(realm, name, propertyDescriptor(fun, attrs));
         } else {
-            owner.defineOwnProperty(sym.get(), propertyDescriptor(fun, attrs));
+            owner.defineOwnProperty(realm, sym.get(), propertyDescriptor(fun, attrs));
         }
     }
 
@@ -626,12 +626,12 @@ public final class Properties {
             Map<BuiltinSymbol, PropertyDescriptor> accessors2) {
         if (accessors1 != null) {
             for (Entry<String, PropertyDescriptor> entry : accessors1.entrySet()) {
-                owner.defineOwnProperty(entry.getKey(), entry.getValue());
+                owner.defineOwnProperty(realm, entry.getKey(), entry.getValue());
             }
         }
         if (accessors2 != null) {
             for (Entry<BuiltinSymbol, PropertyDescriptor> entry : accessors2.entrySet()) {
-                owner.defineOwnProperty(entry.getKey().get(), entry.getValue());
+                owner.defineOwnProperty(realm, entry.getKey().get(), entry.getValue());
             }
         }
     }

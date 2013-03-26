@@ -90,7 +90,7 @@ public class OrdinaryFunction extends FunctionObject {
             prototype = realm.getIntrinsic(Intrinsics.FunctionPrototype);
         }
         /* step 6 */
-        f.setPrototype(prototype);
+        f.setPrototype(realm, prototype);
         /* step 7 */
         f.scope = scope;
         /* step 8-9 */
@@ -117,9 +117,9 @@ public class OrdinaryFunction extends FunctionObject {
         /*  step 18 */
         int len = function.expectedArgumentCount();
         /* step 19 */
-        f.defineOwnProperty("length", new PropertyDescriptor(len, false, false, false));
+        f.defineOwnProperty(realm, "length", new PropertyDescriptor(len, false, false, false));
         String name = function.functionName() != null ? function.functionName() : "";
-        f.defineOwnProperty("name", new PropertyDescriptor(name, false, false, false));
+        f.defineOwnProperty(realm, "name", new PropertyDescriptor(name, false, false, false));
         /* step 20 */
         if (strict) {
             AddRestrictedFunctionProperties(realm, f);
@@ -159,12 +159,12 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 4 (implicit) */
         /* step 5 */
         if (installNeeded) {
-            prototype.defineOwnProperty("constructor", new PropertyDescriptor(f, writablePrototype,
-                    false, writablePrototype));
+            prototype.defineOwnProperty(realm, "constructor", new PropertyDescriptor(f,
+                    writablePrototype, false, writablePrototype));
         }
         /* step 7 */
-        f.defineOwnProperty("prototype", new PropertyDescriptor(prototype, writablePrototype,
-                false, false));
+        f.defineOwnProperty(realm, "prototype", new PropertyDescriptor(prototype,
+                writablePrototype, false, false));
     }
 
     /**
@@ -190,13 +190,14 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 1-3 (implicit) */
         TypeErrorThrower f = new TypeErrorThrower(realm);
         /* step 4 */
-        f.setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
+        f.setPrototype(realm, realm.getIntrinsic(Intrinsics.FunctionPrototype));
         /* step 5-8 (implicit) */
         /* step 9 */
-        f.defineOwnProperty("length", new PropertyDescriptor(0, false, false, false));
-        f.defineOwnProperty("name", new PropertyDescriptor("ThrowTypeError", false, false, false));
+        f.defineOwnProperty(realm, "length", new PropertyDescriptor(0, false, false, false));
+        f.defineOwnProperty(realm, "name", new PropertyDescriptor("ThrowTypeError", false, false,
+                false));
         /* step 10 */
-        f.setIntegrity(IntegrityLevel.NonExtensible);
+        f.setIntegrity(realm, IntegrityLevel.NonExtensible);
 
         return f;
     }
@@ -208,9 +209,11 @@ public class OrdinaryFunction extends FunctionObject {
         /*  step 1  */
         Callable thrower = realm.getThrowTypeError();
         /*  step 2  */
-        obj.defineOwnProperty("caller", new PropertyDescriptor(thrower, thrower, false, false));
+        obj.defineOwnProperty(realm, "caller", new PropertyDescriptor(thrower, thrower, false,
+                false));
         /*  step 3  */
-        obj.defineOwnProperty("arguments", new PropertyDescriptor(thrower, thrower, false, false));
+        obj.defineOwnProperty(realm, "arguments", new PropertyDescriptor(thrower, thrower, false,
+                false));
     }
 
     /**
@@ -247,7 +250,7 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static <FUNCTION extends ScriptObject & Callable & Constructor> Object OrdinaryConstruct(
             Realm realm, FUNCTION f, Object[] args) {
-        Object creator = Get(f, BuiltinSymbol.create.get());
+        Object creator = Get(realm, f, BuiltinSymbol.create.get());
         Object obj;
         if (!Type.isUndefined(creator)) {
             if (!IsCallable(creator)) {

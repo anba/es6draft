@@ -36,7 +36,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         }
     }
 
-    private final Realm realm;
+    protected final Realm realm;
     private Map<String, Binding> bindings = new HashMap<>();
 
     public DeclarativeEnvironmentRecord(Realm realm) {

@@ -31,7 +31,7 @@ public class StopIterationObject extends OrdinaryObject implements ScriptObject,
     @Override
     public void initialise(Realm realm) {
         createProperties(this, realm, Properties.class);
-        setIntegrity(IntegrityLevel.NonExtensible);
+        setIntegrity(realm, IntegrityLevel.NonExtensible);
     }
 
     /**

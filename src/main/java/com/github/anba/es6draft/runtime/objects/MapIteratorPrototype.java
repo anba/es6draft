@@ -145,8 +145,8 @@ public class MapIteratorPrototype extends OrdinaryObject implements ScriptObject
                 } else {
                     assert itemKind == MapIterationKind.KeyValue;
                     ScriptObject array = ArrayCreate(realm, 2);
-                    CreateOwnDataProperty(array, "0", e.getKey());
-                    CreateOwnDataProperty(array, "1", e.getValue());
+                    CreateOwnDataProperty(realm, array, "0", e.getKey());
+                    CreateOwnDataProperty(realm, array, "1", e.getValue());
                     result = array;
                 }
                 return result;

@@ -193,7 +193,7 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         if (array.getData() != null) {
             throwTypeError(realm, Messages.Key.IncompatibleObject);
         }
-        Object arrayLength = Get(_array, "length");
+        Object arrayLength = Get(realm, _array, "length");
         long elementLength = ToUint32(realm, arrayLength);
         ArrayBufferObject data = AllocateArrayBuffer(realm,
                 realm.getIntrinsic(Intrinsics.ArrayBuffer));
@@ -203,7 +203,7 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         for (long k = 0; k < elementLength; ++k) {
             String pk = ToString(k);
             // FIXME: spec bug (`Get(array, Pk)` instead of `Get(O, Pk)`)
-            Object kValue = Get(_array, pk);
+            Object kValue = Get(realm, _array, pk);
             double kNumber = ToNumber(realm, kValue);
             SetValueInBuffer(data, k * elementSize, elementType, kNumber, false);
         }
@@ -282,7 +282,7 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         Object f = thisValue;
         ScriptObject proto = GetPrototypeFromConstructor(realm, f, prototype);
         TypedArrayObject obj = new TypedArrayObject(realm);
-        obj.setPrototype(proto);
+        obj.setPrototype(realm, proto);
         return obj;
     }
 

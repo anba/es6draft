@@ -267,7 +267,7 @@ public abstract class Reference {
                 // base = ToObject(realm, base);
                 return GetValuePrimitive(realm);
             }
-            return ((ScriptObject) getBase()).get(getReferencedName(), GetThisValue(realm));
+            return ((ScriptObject) getBase()).get(realm, getReferencedName(), GetThisValue(realm));
         }
 
         @Override
@@ -276,7 +276,7 @@ public abstract class Reference {
 
             ScriptObject base = (hasPrimitiveBase() ? ToObject(realm, getBase())
                     : (ScriptObject) getBase());
-            boolean succeeded = base.set(getReferencedName(), w, GetThisValue(realm));
+            boolean succeeded = base.set(realm, getReferencedName(), w, GetThisValue(realm));
             if (!succeeded && isStrictReference()) {
                 throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName());
             }
@@ -297,7 +297,7 @@ public abstract class Reference {
                     }
                 }
             }
-            return getPrimitiveBaseProto(realm).get(getReferencedName(), getBase());
+            return getPrimitiveBaseProto(realm).get(realm, getReferencedName(), getBase());
         }
     }
 
@@ -320,7 +320,7 @@ public abstract class Reference {
                 // base = ToObject(realm, base);
                 return GetValuePrimitive(realm);
             }
-            return ((ScriptObject) getBase()).get(getReferencedName(), GetThisValue(realm));
+            return ((ScriptObject) getBase()).get(realm, getReferencedName(), GetThisValue(realm));
         }
 
         @Override
@@ -329,7 +329,7 @@ public abstract class Reference {
 
             ScriptObject base = (hasPrimitiveBase() ? ToObject(realm, getBase())
                     : (ScriptObject) getBase());
-            boolean succeeded = base.set(getReferencedName(), w, GetThisValue(realm));
+            boolean succeeded = base.set(realm, getReferencedName(), w, GetThisValue(realm));
             if (!succeeded && isStrictReference()) {
                 throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
@@ -337,7 +337,7 @@ public abstract class Reference {
         }
 
         private Object GetValuePrimitive(Realm realm) {
-            return getPrimitiveBaseProto(realm).get(getReferencedName(), getBase());
+            return getPrimitiveBaseProto(realm).get(realm, getReferencedName(), getBase());
         }
     }
 
@@ -404,14 +404,14 @@ public abstract class Reference {
 
         @Override
         public Object GetValue(Realm realm) {
-            return getBase().get(getReferencedName(), GetThisValue(realm));
+            return getBase().get(realm, getReferencedName(), GetThisValue(realm));
         }
 
         @Override
         public void PutValue(Object w, Realm realm) {
             assert Type.of(w) != null : "invalid value type";
 
-            boolean succeeded = getBase().set(getReferencedName(), w, GetThisValue(realm));
+            boolean succeeded = getBase().set(realm, getReferencedName(), w, GetThisValue(realm));
             if (!succeeded && isStrictReference()) {
                 throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
@@ -435,14 +435,14 @@ public abstract class Reference {
 
         @Override
         public Object GetValue(Realm realm) {
-            return getBase().get(getReferencedName(), GetThisValue(realm));
+            return getBase().get(realm, getReferencedName(), GetThisValue(realm));
         }
 
         @Override
         public void PutValue(Object w, Realm realm) {
             assert Type.of(w) != null : "invalid value type";
 
-            boolean succeeded = getBase().set(getReferencedName(), w, GetThisValue(realm));
+            boolean succeeded = getBase().set(realm, getReferencedName(), w, GetThisValue(realm));
             if (!succeeded && isStrictReference()) {
                 throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());

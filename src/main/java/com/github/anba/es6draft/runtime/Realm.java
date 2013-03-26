@@ -478,14 +478,14 @@ public class Realm {
         listIteratorPrototype.initialise(realm);
 
         // intrinsics (4)
-        Object objectPrototypeToString = Get(objectPrototype, "toString");
+        Object objectPrototypeToString = Get(realm, objectPrototype, "toString");
         intrinsics.put(Intrinsics.ObjProto_toString, (ScriptObject) objectPrototypeToString);
 
         // finish initialising global object
         globalThis.initialise(realm);
 
         // store reference to built-in eval
-        realm.builtinEval = (Callable) Get(globalThis, "eval");
+        realm.builtinEval = (Callable) Get(realm, globalThis, "eval");
 
         return realm;
     }

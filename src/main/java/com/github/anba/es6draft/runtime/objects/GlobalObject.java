@@ -48,7 +48,7 @@ public class GlobalObject extends OrdinaryObject implements ScriptObject, Initia
     @Override
     public void initialise(Realm realm) {
         // implementation defined behaviour
-        setPrototype(realm.getIntrinsic(Intrinsics.ObjectPrototype));
+        setPrototype(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
 
         createProperties(this, realm, ValueProperties.class);
         createProperties(this, realm, FunctionProperties.class);

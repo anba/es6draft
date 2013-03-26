@@ -31,7 +31,7 @@ class BindingInitialisationGenerator {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "Get",
-                Type.getMethodType(Types.Object, Types.ScriptObject, Types.String));
+                Type.getMethodType(Types.Object, Types.Realm, Types.ScriptObject, Types.String));
 
         static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToObject",
@@ -307,6 +307,8 @@ class BindingInitialisationGenerator {
                 // step 1-3:
                 // stack: [(env), value] -> [(env), v]
                 String name = ToString(index);
+                mv.load(Register.Realm);
+                mv.swap();
                 mv.aconst(name);
                 mv.invoke(Methods.AbstractOperations_Get);
 
@@ -391,6 +393,8 @@ class BindingInitialisationGenerator {
         private void generate(Binding binding, Expression initialiser, String propertyName) {
             // step 1-2:
             // stack: [(env), value] -> [(env), v]
+            mv.load(Register.Realm);
+            mv.swap();
             mv.aconst(propertyName);
             mv.invoke(Methods.AbstractOperations_Get);
 

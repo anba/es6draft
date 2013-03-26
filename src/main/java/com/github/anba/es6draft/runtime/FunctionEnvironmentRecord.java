@@ -61,7 +61,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
         if (home == null) {
             return null;
         }
-        return home.getPrototype();
+        return home.getPrototype(realm);
     }
 
     /**

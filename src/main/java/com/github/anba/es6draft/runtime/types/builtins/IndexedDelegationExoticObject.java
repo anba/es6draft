@@ -31,26 +31,26 @@ public class IndexedDelegationExoticObject extends OrdinaryObject {
      * 8.4.6.1 [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(String propertyKey, Object receiver) {
+    public Object get(Realm realm, String propertyKey, Object receiver) {
         if (SameValue(this, receiver) && isArrayIndex(propertyKey)) {
             // FIXME: spec bug (variable 'index' not defined) (bug 1207)
             return Invoke(realm(), this, BuiltinSymbol.elementGet.get(), propertyKey);
         }
-        return super.get(propertyKey, receiver);
+        return super.get(realm, propertyKey, receiver);
     }
 
     /**
      * 8.4.6.2 [[Set]] ( P, V, Receiver)
      */
     @Override
-    public boolean set(String propertyKey, Object value, Object receiver) {
+    public boolean set(Realm realm, String propertyKey, Object value, Object receiver) {
         if (SameValue(this, receiver) && isArrayIndex(propertyKey)) {
             // FIXME: spec bug (variable 'index' not defined) (bug 1207)
             // FIXME: spec bug (missing ToBoolean() conversion?) (bug 1207)
             return ToBoolean(Invoke(realm(), this, BuiltinSymbol.elementSet.get(), propertyKey,
                     value));
         }
-        return super.set(propertyKey, value, receiver);
+        return super.set(realm, propertyKey, value, receiver);
     }
 
     /**
@@ -61,7 +61,7 @@ public class IndexedDelegationExoticObject extends OrdinaryObject {
         /* step 1-4 (implicit) */
         ScriptObject obj = new IndexedDelegationExoticObject(realm);
         /* step 5 */
-        obj.setPrototype(prototype);
+        obj.setPrototype(realm, prototype);
         /* step 6 (implicit) */
         // obj.[[Extensible]] = true;
         return obj;

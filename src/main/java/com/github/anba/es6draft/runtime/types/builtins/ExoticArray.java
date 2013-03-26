@@ -54,11 +54,11 @@ public class ExoticArray extends OrdinaryObject implements ScriptObject {
      * 8.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(String propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
         if ("length".equals(propertyKey)) {
             return ArraySetLength(this, desc);
         } else if (isArrayIndex(propertyKey)) {
-            Property oldLenDesc = getOwnProperty("length");
+            Property oldLenDesc = getOwnProperty(realm, "length");
             assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
             long oldLen = ToUint32(realm(), oldLenDesc.getValue());
             long index = ToUint32(realm(), propertyKey);
@@ -96,7 +96,7 @@ public class ExoticArray extends OrdinaryObject implements ScriptObject {
         /* step 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(realm);
         /* step 5 */
-        array.setPrototype(proto);
+        array.setPrototype(realm, proto);
         if (length >= 0) {
             array.arrayInitializationState = true;
         } else {
@@ -125,7 +125,7 @@ public class ExoticArray extends OrdinaryObject implements ScriptObject {
             throw throwRangeError(realm, Messages.Key.InvalidArrayLength);
         }
         newLenDesc.setValue(newLen);
-        Property oldLenDesc = array.getOwnProperty("length");
+        Property oldLenDesc = array.getOwnProperty(realm, "length");
         assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
         long oldLen = ToUint32(realm, oldLenDesc.getValue());
         if (newLen >= oldLen) {
@@ -146,7 +146,7 @@ public class ExoticArray extends OrdinaryObject implements ScriptObject {
             return false;
         }
         if ((oldLen - newLen) > 1000) {
-            oldLen = SparseArraySetLength(array, newLen);
+            oldLen = SparseArraySetLength(realm, array, newLen);
             if (oldLen >= 0) {
                 newLenDesc.setValue(oldLen + 1);
                 if (!newWritable) {
@@ -158,7 +158,7 @@ public class ExoticArray extends OrdinaryObject implements ScriptObject {
         } else {
             while (newLen < oldLen) {
                 oldLen -= 1;
-                boolean deleteSucceeded = array.delete(ToString(oldLen));
+                boolean deleteSucceeded = array.delete(realm, ToString(oldLen));
                 if (!deleteSucceeded) {
                     newLenDesc.setValue(oldLen + 1);
                     if (!newWritable) {
@@ -177,11 +177,11 @@ public class ExoticArray extends OrdinaryObject implements ScriptObject {
         return true;
     }
 
-    private static long SparseArraySetLength(ExoticArray array, long newLen) {
+    private static long SparseArraySetLength(Realm realm, ExoticArray array, long newLen) {
         long[] indices = array.indices(newLen);
         for (int i = indices.length - 1; i >= 0; --i) {
             long oldLen = indices[i];
-            boolean deleteSucceeded = array.delete(ToString(oldLen));
+            boolean deleteSucceeded = array.delete(realm, ToString(oldLen));
             if (!deleteSucceeded) {
                 return oldLen;
             }
