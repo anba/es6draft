@@ -12,6 +12,7 @@ import static java.util.Collections.emptyIterator;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -150,7 +151,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
     @Override
     public Object get(Realm realm, String propertyKey, Object receiver) {
         if ("toString".equals(propertyKey)) {
-            // TODO: implement
+            return realm.getIntrinsic(Intrinsics.ObjProto_toString);
         }
         return UNDEFINED;
     }
