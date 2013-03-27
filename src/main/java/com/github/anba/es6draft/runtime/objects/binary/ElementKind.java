@@ -38,6 +38,7 @@ public enum ElementKind {
     }
 
     public static byte ToUint8Clamp(double v) {
+        v = Math.rint(v);
         return (byte) (v >= 0 ? v <= 255 ? v : 255 : 0);
     }
 
