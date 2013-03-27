@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.4.6 Array Iterator Object Structure
  * </ul>
  */
-public class ArrayIteratorPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
+public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisable {
     public ArrayIteratorPrototype(Realm realm) {
         super(realm);
     }

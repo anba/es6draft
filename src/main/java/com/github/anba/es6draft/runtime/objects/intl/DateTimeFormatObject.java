@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.objects.intl;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -17,7 +16,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>12.4 Properties of Intl.DateTimeFormat Instances
  * </ul>
  */
-public class DateTimeFormatObject extends OrdinaryObject implements ScriptObject {
+public class DateTimeFormatObject extends OrdinaryObject {
     /**
      * [[boundFormat]]
      */

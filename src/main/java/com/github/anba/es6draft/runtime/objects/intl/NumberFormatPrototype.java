@@ -26,7 +26,6 @@ import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
@@ -35,8 +34,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>11.3 Properties of the Intl.NumberFormat Prototype Object
  * </ul>
  */
-public class NumberFormatPrototype extends NumberFormatObject implements Initialisable,
-        ScriptObject {
+public class NumberFormatPrototype extends NumberFormatObject implements Initialisable {
     public NumberFormatPrototype(Realm realm) {
         super(realm);
     }

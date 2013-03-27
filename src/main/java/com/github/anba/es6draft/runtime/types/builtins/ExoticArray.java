@@ -28,7 +28,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>8.4.2 Array Exotic Objects
  * </ul>
  */
-public class ExoticArray extends OrdinaryObject implements ScriptObject {
+public class ExoticArray extends OrdinaryObject {
     /** [[ArrayInitializationState]] */
     private boolean arrayInitializationState = false;
 

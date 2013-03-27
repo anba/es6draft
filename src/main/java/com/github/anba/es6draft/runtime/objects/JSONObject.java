@@ -43,7 +43,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.12.3 JSON.stringify (value [, replacer [, space]])
  * </ul>
  */
-public class JSONObject extends OrdinaryObject implements ScriptObject, Initialisable {
+public class JSONObject extends OrdinaryObject implements Initialisable {
     public JSONObject(Realm realm) {
         super(realm);
     }

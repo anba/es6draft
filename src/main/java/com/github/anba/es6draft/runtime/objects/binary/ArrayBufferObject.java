@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects.binary;
 import java.nio.ByteBuffer;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -20,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.13.5.6 Properties of the ArrayBuffer Instances
  * </ul>
  */
-public class ArrayBufferObject extends OrdinaryObject implements ScriptObject {
+public class ArrayBufferObject extends OrdinaryObject {
     /** [[ArrayBufferData]] */
     private ByteBuffer data = null;
 

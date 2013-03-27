@@ -23,7 +23,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -34,7 +33,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.7.4 Properties of the Number Prototype Object
  * </ul>
  */
-public class NumberPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
+public class NumberPrototype extends OrdinaryObject implements Initialisable {
     public NumberPrototype(Realm realm) {
         super(realm);
     }

@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.IndexedDelegationExoticObject;
 
 /**
@@ -18,7 +17,7 @@ import com.github.anba.es6draft.runtime.types.builtins.IndexedDelegationExoticOb
  * <li>15.13.6.5 Properties of TypedArray instances
  * </ul>
  */
-public class TypedArrayObject extends IndexedDelegationExoticObject implements ScriptObject {
+public class TypedArrayObject extends IndexedDelegationExoticObject {
 
     /** [[TypedArrayData]] */
     private ArrayBufferObject data;

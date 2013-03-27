@@ -33,7 +33,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * 
  * TODO: remove representation as ordinary object
  */
-public class Reflect extends OrdinaryObject implements ScriptObject, Initialisable, Module {
+public class Reflect extends OrdinaryObject implements Initialisable, Module {
     public Reflect(Realm realm) {
         super(realm);
     }

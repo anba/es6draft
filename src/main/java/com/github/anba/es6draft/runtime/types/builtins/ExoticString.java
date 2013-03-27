@@ -23,7 +23,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>8.4.3 String Exotic Objects
  * </ul>
  */
-public class ExoticString extends OrdinaryObject implements ScriptObject {
+public class ExoticString extends OrdinaryObject {
     /** [[StringData]] */
     private CharSequence stringData = null;
 

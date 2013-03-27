@@ -45,7 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.4.5 Properties of Array Instances
  * </ul>
  */
-public class ArrayPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
+public class ArrayPrototype extends OrdinaryObject implements Initialisable {
     public ArrayPrototype(Realm realm) {
         super(realm);
     }

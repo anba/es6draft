@@ -22,8 +22,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>8.4.1 Bound Function Exotic Objects
  * </ul>
  */
-public class ExoticBoundFunction extends OrdinaryObject implements ScriptObject, Callable,
-        Constructor {
+public class ExoticBoundFunction extends OrdinaryObject implements Callable, Constructor {
     /** [[Realm]] */
     private final Realm realm;
 

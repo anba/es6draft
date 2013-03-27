@@ -25,7 +25,6 @@ import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
@@ -35,8 +34,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>12.3 Properties of the Intl.DateTimeFormat Prototype Object
  * </ul>
  */
-public class DateTimeFormatPrototype extends DateTimeFormatObject implements Initialisable,
-        ScriptObject {
+public class DateTimeFormatPrototype extends DateTimeFormatObject implements Initialisable {
     public DateTimeFormatPrototype(Realm realm) {
         super(realm);
     }

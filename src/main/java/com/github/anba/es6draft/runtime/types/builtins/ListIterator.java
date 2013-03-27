@@ -24,12 +24,11 @@ import com.github.anba.es6draft.runtime.objects.StopIterationObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  *
  */
-public class ListIterator<T> extends OrdinaryObject implements ScriptObject {
+public class ListIterator<T> extends OrdinaryObject {
     private Iterator<T> iterator;
 
     public ListIterator(Realm realm, Iterator<T> iterator) {
@@ -37,8 +36,7 @@ public class ListIterator<T> extends OrdinaryObject implements ScriptObject {
         this.iterator = iterator;
     }
 
-    public static class ListIteratorPrototype extends OrdinaryObject implements ScriptObject,
-            Initialisable {
+    public static class ListIteratorPrototype extends OrdinaryObject implements Initialisable {
         public ListIteratorPrototype(Realm realm) {
             super(realm);
         }

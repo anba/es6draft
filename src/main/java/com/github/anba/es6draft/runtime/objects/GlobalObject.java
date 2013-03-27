@@ -25,7 +25,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -40,7 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.1.5 Other Properties of the Global Object
  * </ul>
  */
-public class GlobalObject extends OrdinaryObject implements ScriptObject, Initialisable {
+public class GlobalObject extends OrdinaryObject implements Initialisable {
     public GlobalObject(Realm realm) {
         super(realm);
     }

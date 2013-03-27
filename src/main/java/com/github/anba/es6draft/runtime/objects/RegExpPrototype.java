@@ -46,7 +46,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.10.7 Properties of RegExp Instances
  * </ul>
  */
-public class RegExpPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
+public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     public RegExpPrototype(Realm realm) {
         super(realm);
     }

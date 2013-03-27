@@ -26,7 +26,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -38,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.16.7 Set Iterator Object Structure
  * </ul>
  */
-public class SetIteratorPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
+public class SetIteratorPrototype extends OrdinaryObject implements Initialisable {
     public SetIteratorPrototype(Realm realm) {
         super(realm);
     }

@@ -13,7 +13,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
@@ -23,7 +22,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>8.4.7 Built-in Function Objects
  * </ul>
  */
-public abstract class BuiltinFunction extends OrdinaryObject implements ScriptObject, Callable {
+public abstract class BuiltinFunction extends OrdinaryObject implements Callable {
     /** [[Realm]] */
     private final Realm realm;
 

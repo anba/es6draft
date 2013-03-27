@@ -10,7 +10,6 @@ import java.util.BitSet;
 import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -20,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.10.7 Properties of RegExp Instances
  * </ul>
  */
-public class RegExpObject extends OrdinaryObject implements ScriptObject {
+public class RegExpObject extends OrdinaryObject {
     /** [[OriginalSource]] */
     private String originalSource = null;
 

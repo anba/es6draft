@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.5.5 Properties of String Instances
  * </ul>
  */
-public class StringPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
+public class StringPrototype extends OrdinaryObject implements Initialisable {
     public StringPrototype(Realm realm) {
         super(realm);
     }

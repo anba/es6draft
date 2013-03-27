@@ -29,7 +29,6 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -40,7 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.16.4 Properties of the Set Prototype Object
  * </ul>
  */
-public class SetPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
+public class SetPrototype extends OrdinaryObject implements Initialisable {
     public SetPrototype(Realm realm) {
         super(realm);
     }

@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>8.3.15 Ordinary Function Objects
  * </ul>
  */
-public abstract class FunctionObject extends OrdinaryObject implements ScriptObject, Callable {
+public abstract class FunctionObject extends OrdinaryObject implements Callable {
     protected FunctionKind kind;
     protected RuntimeInfo.Function function;
     protected LexicalEnvironment scope;
@@ -76,7 +76,7 @@ public abstract class FunctionObject extends OrdinaryObject implements ScriptObj
     @Override
     public Object get(Realm realm, String propertyKey, Object receiver) {
         /* step 1-2 */
-        Object v = super.get(realm,propertyKey, receiver);
+        Object v = super.get(realm, propertyKey, receiver);
         /* step 3 */
         if ("caller".equals(propertyKey) && isStrictFunction(v)) {
             return NULL;
@@ -90,9 +90,9 @@ public abstract class FunctionObject extends OrdinaryObject implements ScriptObj
      * 8.3.15.4 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(Realm realm,String propertyKey) {
+    public Property getOwnProperty(Realm realm, String propertyKey) {
         /* step 1-2 */
-        Property v = super.getOwnProperty(realm,propertyKey);
+        Property v = super.getOwnProperty(realm, propertyKey);
         if (v != null && v.isDataDescriptor()) {
             if ("caller".equals(propertyKey) && isStrictFunction(v)) {
                 PropertyDescriptor desc = v.toPropertyDescriptor();

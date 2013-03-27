@@ -16,7 +16,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -27,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.8.2 Function Properties of the Math Object
  * </ul>
  */
-public class MathObject extends OrdinaryObject implements ScriptObject, Initialisable {
+public class MathObject extends OrdinaryObject implements Initialisable {
     public MathObject(Realm realm) {
         super(realm);
     }

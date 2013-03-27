@@ -32,7 +32,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.13.7.4 Properties of the DataView Prototype Object
  * </ul>
  */
-public class DataViewPrototype extends OrdinaryObject implements Initialisable, ScriptObject {
+public class DataViewPrototype extends OrdinaryObject implements Initialisable {
     public DataViewPrototype(Realm realm) {
         super(realm);
     }

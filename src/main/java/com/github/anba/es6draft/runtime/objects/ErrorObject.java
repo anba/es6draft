@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -25,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  * </ul>
  */
-public class ErrorObject extends OrdinaryObject implements ScriptObject {
+public class ErrorObject extends OrdinaryObject {
     private final Realm realm;
     private boolean initialised = false;
 

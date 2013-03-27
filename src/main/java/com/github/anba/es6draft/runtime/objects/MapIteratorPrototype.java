@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.14.6 Map Iterator Object Structure
  * </ul>
  */
-public class MapIteratorPrototype extends OrdinaryObject implements ScriptObject, Initialisable {
+public class MapIteratorPrototype extends OrdinaryObject implements Initialisable {
     public MapIteratorPrototype(Realm realm) {
         super(realm);
     }
