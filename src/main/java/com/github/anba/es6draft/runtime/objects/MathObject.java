@@ -253,8 +253,11 @@ public class MathObject extends OrdinaryObject implements ScriptObject, Initiali
             if (d < 0 && d >= -0.5) {
                 return -0.0d;
             }
+            int exp = Math.getExponent(d);
+            if (exp >= 52) {
+                return d;
+            }
             return Math.floor(d + 0.5);
-            // return Math.round(ToNumber(realm, x));
         }
 
         /**
