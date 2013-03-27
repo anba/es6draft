@@ -62,6 +62,7 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
+            // FIXME: spec bug ? `WeakMap()` no longer allowed
             throw throwTypeError(realm, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof WeakMapObject)) {
