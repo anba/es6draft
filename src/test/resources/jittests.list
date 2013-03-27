@@ -1,0 +1,945 @@
+#
+# Copyright (c) 2012-2013 André Bargull
+# Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+#
+# <https://github.com/anba/es6draft>
+#
+
+# Over allocation
+tests/basic/bug839215.js
+
+# SpiderMonkey does not support [[Origin]] for PropertyDescriptors
+tests/proxy/testDirectProxyDefineProperty2.js
+
+# SpiderMonkey does not support CompletePropertyDescriptor
+tests/proxy/testDirectProxyGetOwnPropertyDescriptor10.js
+
+# SpiderMonkey does not support "ownKeys" trap
+tests/proxy/testDirectProxyGetOwnPropertyNames2.js
+tests/proxy/testDirectProxyGetOwnPropertyNames3.js
+tests/proxy/testDirectProxyGetOwnPropertyNames4.js
+tests/proxy/testDirectProxyGetOwnPropertyNames5.js
+tests/proxy/testDirectProxyGetOwnPropertyNames6.js
+tests/proxy/testDirectProxyGetOwnPropertyNames7.js
+tests/proxy/testDirectProxyGetOwnPropertyNames8.js
+tests/proxy/testDirectProxyKeys2.js
+tests/proxy/testDirectProxyKeys3.js
+tests/proxy/testDirectProxyKeys4.js
+tests/proxy/testDirectProxyKeys5.js
+tests/proxy/testDirectProxyKeys6.js
+tests/proxy/testDirectProxyKeys7.js
+tests/proxy/testDirectProxyKeys8.js
+tests/proxy/testDirectProxyKeys9.js
+
+# SpiderMonkey uses 'iterator' instead of '@@iterator'
+tests/for-of/arguments-1.js
+tests/for-of/arguments-2.js
+tests/for-of/arguments-3.js
+tests/for-of/arguments-4.js
+tests/for-of/arguments-5.js
+tests/for-of/arguments-6.js
+tests/for-of/arguments-7.js
+tests/for-of/array-holes-4.js
+tests/for-of/non-iterable.js
+tests/for-of/proxy-1.js
+tests/for-of/proxy-3.js
+tests/for-of/semantics-01.js
+
+# SpiderMonkey different implementation for Array iterators..
+tests/for-of/array-iterator-null.js
+
+# SpiderMonkey supports iteration for String and TypedArrays
+tests/for-of/array-iterator-surfaces-1.js
+tests/for-of/strings.js
+tests/for-of/typedarrays-1.js
+tests/for-of/typedarrays-2.js
+tests/for-of/typedarrays-3.js
+tests/for-of/typedarrays-6.js
+
+# Iterator.prototype, (Map|Set|Array).iterator() instanceof Iterator
+tests/collections/iterator-1.js
+tests/collections/iterator-proto-1.js
+tests/collections/iterator-proto-2.js
+tests/collections/iterator-proto-surfaces.js
+tests/for-of/array-iterator-surfaces-2.js
+tests/for-of/next-surfaces.js
+tests/basic/bug649939.js
+tests/basic/bug684922.js
+
+
+# `Map()` etc. must be called with explicit `new`
+tests/collections/iterator-gc.js
+tests/collections/Map-clear-1.js
+tests/collections/Map-clear-2.js
+tests/collections/Map-clear-3.js
+tests/collections/Map-clear-4.js
+tests/collections/Map-clear-5.js
+tests/collections/Map-clear-6.js
+tests/collections/Map-clear-gc.js
+tests/collections/Map-clear-iterators-1.js
+tests/collections/Map-clear-iterators-2.js
+tests/collections/Map-constructor-1.js
+tests/collections/Map-constructor-2.js
+tests/collections/Map-constructor-3.js
+tests/collections/Map-constructor-duplicates.js
+tests/collections/Map-delete-size.js
+tests/collections/Map-iterator-add-remove.js
+tests/collections/Map-iterator-2.js
+tests/collections/Map-iterator-pairs-1.js
+tests/collections/Map-iterator-pairs-2.js
+tests/collections/Map-iterator-add-1.js
+tests/collections/Map-iterator-pairs-3.js
+tests/collections/Map-iterator-remove-2.js
+tests/collections/Map-iterator-1.js
+tests/collections/Map-iterator-order.js
+tests/collections/Map-iterator-add-2.js
+tests/collections/Map-set-size.js
+tests/collections/Map-iterator-remove-5.js
+tests/collections/Map-iterators-3.js
+tests/collections/Map-size.js
+tests/collections/Map-values-1.js
+tests/collections/Map-iterator-remove-4.js
+tests/collections/Set-clear-1.js
+tests/collections/Map-iterator-remove-3.js
+tests/collections/Set-clear-2.js
+tests/collections/Set-clear-3.js
+tests/collections/Set-clear-4.js
+tests/collections/Set-clear-6.js
+tests/collections/Set-clear-iterators-2.js
+tests/collections/Set-clear-iterators-1.js
+tests/collections/Set-constructor-1.js
+tests/collections/Set-constructor-2.js
+tests/collections/Set-add-size.js
+tests/collections/Map-iterator-remove-6.js
+tests/collections/Set-iterator-1.js
+tests/collections/Set-clear-iterators-3.js
+tests/collections/Set-clear-5.js
+tests/collections/Set-delete-size.js
+tests/collections/Set-constructor-3.js
+tests/collections/Set-iterator-add-1.js
+tests/collections/Set-clear-gc.js
+tests/collections/Set-iterator-2.js
+tests/collections/Set-iterator-add-remove.js
+tests/collections/Set-iterator-add-2.js
+tests/collections/Set-iterator-gc-3.js
+tests/collections/Set-iterator-order.js
+tests/collections/Set-iterator-gc-1.js
+tests/collections/Set-iterator-gc-2.js
+tests/collections/Set-iterator-remove-3.js
+tests/collections/Set-iterator-remove-2.js
+tests/collections/Set-iterator-remove-4.js
+tests/collections/Set-iterator-remove-5.js
+tests/collections/Set-size.js
+tests/collections/Set-iterator-remove-6.js
+tests/collections/Set-iterator-3.js
+tests/collections/WeakMap-clear.js
+
+# Map.prototype.set returns the map instance
+tests/collections/Map-delete.js
+tests/collections/Map-get.js
+tests/collections/Map-scale.js
+tests/collections/Map-surfaces-3.js
+tests/collections/Set-scale.js
+tests/collections/Set-surfaces-3.js
+
+# ES6-change or? Map|Set.length is 0
+tests/collections/Map-surfaces-1.js
+tests/collections/Set-surfaces-1.js
+
+# missing [object Function] for proxied functions
+tests/basic/bug807623.js
+
+# ES6-change: no longer SyntaxError
+tests/basic/testBug775807.js
+
+# potential ES6 spec bug or deliberate change?
+tests/basic/testTypedArrayOutOfBounds.js
+tests/basic/typed-array-getprop-out-of-range.js
+
+# potential ES6 spec bug? for-of over undefined
+tests/basic/bug770952.js
+
+# potential ES6 spec bug? Number.isInteger(Infinity)
+tests/basic/number-isinteger.js
+
+# SpiderMonkey bug resp. derivation in Error.prototype.toString
+tests/basic/error-toString.js
+
+# invalid test case (relies on order in which elements are visited in Array.prototype.sort)
+# and its strcmp function is broken as well
+tests/basic/testBug720695.js
+
+# different Function toSource behaviour
+tests/basic/function-tosource-bug779694.js
+tests/basic/function-tosource-constructor.js
+tests/basic/function-tosource-func-proto.js
+tests/basic/function-tosource-lambda.js
+
+# Number.prototype no longer Number instance
+tests/auto-regress/bug698074.js
+
+# Date.prototype no longer Date instance
+tests/auto-regress/bug771946.js
+
+# RegExp.prototype no longer RegExp instance
+tests/basic/bug649771.js
+
+# RegExp sticky-flag
+tests/basic/bug576823-regexp.js
+
+# RegExp quantifier limitation to signed int32
+tests/basic/bug653672.js
+tests/basic/bug691299-regexp.js
+
+# RegExp support for legacy feature $1, lastMatch
+tests/basic/bug691797-regexp-2.js
+tests/basic/bug820124-2.js
+tests/basic/regexp-multiline.js
+tests/basic/regexp-reset-input.js
+tests/basic/testStaticsInRegExp.js
+
+# ES6 spec bug wrt destructuring
+tests/basic/bug719750.js
+tests/basic/testDestructuringFormalError.js
+
+# ES6 spec bug or SpiderMonkey bug? Proxy and [[Delete]]
+tests/basic/bug821850.js
+
+# ES6 spec bug or SpiderMonkey bug?
+tests/basic/bug829821.js
+
+# maybe ES6 spec bug in TypedArrays
+tests/basic/testArrayBufferSlice.js 
+
+# ES6-change: Array.prototype.splice calls Put("length") already in step 13
+tests/basic/splice-fail-step-16.js
+
+# __noSuchMethod__
+tests/basic/bug717208.js
+tests/basic/bug732087.js
+
+# __iterator__
+tests/basic/testCustomIterator.js
+
+
+
+# werror/strict shell options
+tests/basic/bug629858.js
+
+# Old Proxy API not completely emulated
+tests/auto-regress/bug578015.js
+tests/auto-regress/bug727330.js
+tests/basic/bug787847.js
+tests/basic/testProxyConstructors.js
+
+# SpiderMonkey: const feature
+tests/basic/bug821470.js
+
+# Spidermonkey: Proxy vs. __proto__ on global
+tests/auto-regress/bug589103.js
+tests/auto-regress/bug609287.js
+
+# SpiderMonkey: __proto__ and ArrayBuffer
+tests/auto-regress/bug666599.js
+
+# Spidermonkey: Array.prototype.toString internal recursion
+tests/auto-regress/bug635389.js
+
+# Function.prototype.{arguments,caller} not supported
+tests/auto-regress/bug686179.js
+tests/auto-regress/bug757428.js
+tests/basic/bug592927.js
+tests/basic/bug632901.js
+tests/basic/bug633752.js
+tests/basic/bug643285.js
+tests/basic/bug675889.js
+tests/basic/runOnceClosures.js
+tests/basic/testBug668479.js
+
+# ES6-change: let-block scope even in global scope
+tests/basic/bug646968-3.js
+
+# +0 and -0 map to the same key by default
+tests/auto-regress/bug770954.js
+tests/collections/key-equality-0.js
+tests/collections/Map-gc-4.js
+
+# Object.prototype.watch
+tests/auto-regress/bug638735.js
+tests/basic/bug510437.js
+tests/basic/bug631305.js
+tests/basic/bug690292.js
+tests/basic/testAssigningWatchedDeletedProperty.js
+tests/basic/testWatchRecursion.js
+tests/pic/fuzz1.js
+tests/pic/watch1.js
+tests/pic/watch1a.js
+tests/pic/watch2.js
+tests/pic/watch2a.js
+tests/pic/watch3.js
+tests/pic/watch3a.js
+tests/pic/watch4.js
+
+# html comments
+tests/auto-regress/bug650574.js
+
+# WithStatement vs. block scope
+tests/basic/testBug753158.js
+tests/basic/testDestructuringVarInsideWith.js
+
+# for-each syntax not supported
+tests/arguments/bug554670-1.js
+tests/arguments/bug554670-2.js
+tests/arguments/bug844048.js
+tests/auto-regress/bug466654.js
+tests/auto-regress/bug475658.js
+tests/auto-regress/bug487570.js
+tests/auto-regress/bug493662.js
+tests/auto-regress/bug495962.js
+tests/auto-regress/bug504516.js
+tests/auto-regress/bug510644.js
+tests/auto-regress/bug515440.js
+tests/auto-regress/bug520513.js
+tests/auto-regress/bug521169.js
+tests/auto-regress/bug525618.js
+tests/auto-regress/bug531513.js
+tests/auto-regress/bug532363.js
+tests/auto-regress/bug568275.js
+tests/auto-regress/bug568826.js
+tests/auto-regress/bug576846.js
+tests/auto-regress/bug591418.js
+tests/auto-regress/bug592224.js
+tests/auto-regress/bug593605.js
+tests/auto-regress/bug592226.js
+tests/auto-regress/bug600128.js
+tests/auto-regress/bug600889.js
+tests/auto-regress/bug601396.js
+tests/auto-regress/bug620640.js
+tests/auto-regress/bug652177.js
+tests/auto-regress/bug657986.js
+tests/auto-regress/bug669044.js
+tests/auto-regress/bug690650.js
+tests/auto-regress/bug779850.js
+tests/auto-regress/bug811606.js
+tests/basic/bug464403.js
+tests/basic/bug465902.js
+tests/basic/bug527288.js
+tests/basic/bug547911-2.js
+tests/basic/bug551705.js
+tests/basic/bug547911-1.js
+tests/basic/bug569849.js
+tests/basic/bug609502-3.js
+tests/basic/bug627692-1.js
+tests/basic/bug641224.js
+tests/basic/bug642772-3.js
+tests/basic/bug677957-2.js
+tests/basic/bug678087.js
+tests/basic/bug677957-1.js
+tests/basic/bug700501.js
+tests/basic/bug704795.js
+tests/basic/bug739694-1.js
+tests/basic/delete-named-names.js
+tests/basic/delete-indexed-names.js
+tests/basic/firstSlotConflict.js
+tests/basic/testBug462388.js
+tests/basic/testBug465261.js
+tests/basic/testBug462407.js
+tests/basic/testBug465483.js
+tests/basic/testBug466128.js
+tests/basic/testBug474769.js
+tests/basic/testBug465688.js
+tests/basic/testBug504520Harder.js
+tests/basic/testBug520503-2.js
+tests/basic/testBug560098.js
+tests/basic/testBug579646.js
+tests/basic/testBug579647.js
+tests/basic/testBug595916.js
+tests/basic/testBug667915.js
+tests/basic/testBug683470.js
+tests/basic/testBug709929.js
+tests/basic/testBug773108.js
+tests/basic/testDivOverflow.js
+tests/basic/testFewerGlobalsInInnerTree.js
+tests/basic/testForEach.js
+tests/basic/testGlobalMultitrees1.js
+tests/basic/testLetWithUnstableGlobal.js
+tests/basic/testOverRecursed5.js
+tests/basic/testStringResolve.js
+tests/basic/testSuppressDeletedProperty.js
+tests/basic/testThinForEach.js
+tests/basic/testUndemoteLateGlobalSlots.js
+tests/basic/truthies.js
+tests/closures/bug496987.js
+tests/closures/bug497015-1.js
+tests/closures/bug497015-2.js
+tests/closures/bug540133.js
+tests/closures/flat-closure-4.js
+tests/closures/flat-closure-6.js
+tests/closures/flat-closure-5.js
+tests/closures/t019.js
+tests/closures/t018.js
+tests/pic/bug558616.js
+tests/pic/bug582899.js
+tests/for-of/syntax-1.js
+tests/pic/fuzz2.js
+tests/pic/fuzz3.js
+tests/self-hosting/for-each-in-over-uncloned-method.js
+
+# old generator and comprehension syntax
+tests/arguments/bug843985.js
+tests/arguments/defaults-bug759904.js
+tests/arguments/defaults-bug790424.js
+tests/arguments/defaults-invalid-syntax.js
+tests/arguments/defaults-strict-mode.js
+tests/arguments/strict-args-generator-flushstack.js
+tests/auto-regress/bug488963.js
+tests/auto-regress/bug521694.js
+tests/auto-regress/bug563034.js
+tests/auto-regress/bug568281.js
+tests/auto-regress/bug622167.js
+tests/auto-regress/bug678090.js
+tests/auto-regress/bug690396.js
+tests/basic/bug528644.js
+tests/basic/bug560234b.js
+tests/basic/bug563243.js
+tests/basic/bug631082.js
+tests/basic/bug657975.js
+tests/basic/bug716013.js
+tests/basic/bug744356.js
+tests/basic/bug767234.js
+tests/basic/bug852016-2.js
+tests/basic/testBug550210.js
+tests/basic/testBug579602.js
+tests/basic/testBug593559.js
+tests/basic/testBug603193.js
+tests/basic/testBug630064.js
+tests/basic/testBug704351.js
+tests/basic/testBug705879.js
+tests/basic/testBug771242.js
+tests/basic/testDeepBailInMoreIter.js
+tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
+tests/basic/testGeneratorDeepBail.js
+tests/basic/testInterpreterReentry3.js
+tests/basic/testThatGenExpsActuallyDecompile.js
+tests/closures/bug540243.js
+tests/closures/bug541239.js
+tests/collections/Map-constructor-generator-1.js
+tests/collections/Map-constructor-generator-exception.js
+tests/collections/Set-constructor-generator-1.js
+tests/for-of/generators-1.js
+tests/for-of/generators-3.js
+tests/for-of/generators-4.js
+tests/for-of/generators-2.js
+tests/for-of/generators-5.js
+tests/for-of/generators-6.js
+tests/for-of/proxy-2.js
+tests/for-of/semantics-03.js
+tests/for-of/semantics-04.js
+tests/for-of/semantics-10.js
+tests/for-of/semantics-09.js
+tests/auto-regress/bug595911.js
+tests/basic/bug510655.js
+tests/basic/bug630377.js
+tests/basic/bug627692-2.js
+tests/basic/bug791465.js
+tests/basic/spread-array-invalid-syntax.js
+tests/basic/testArrayComp1.js
+tests/basic/testArrayComp2.js
+tests/basic/testInterpreterReentry2.js
+tests/collections/Map-iterator-remove-1.js
+tests/collections/Map-values-2.js
+tests/collections/Set-iterator-remove-1.js
+tests/for-of/array-comprehension.js
+tests/for-of/array-holes-7.js
+tests/for-of/bug-728079-js17-3.js
+tests/for-of/bug-728079-js17-2.js
+tests/auto-regress/bug589093.js
+tests/auto-regress/bug622318.js
+tests/auto-regress/bug691593.js
+tests/auto-regress/bug780405.js
+tests/basic/bug790629-1.js
+tests/basic/bug790629-2.js
+tests/basic/bug790629-3.js
+tests/basic/bug790629-4.js
+tests/basic/function-tosource-genexpr.js
+tests/basic/testBug773927.js
+tests/basic/testGCNewbornGenerator.js
+tests/collections/Map-constructor-generator-2.js
+tests/collections/Map-constructor-generator-3.js
+tests/collections/Set-constructor-generator-2.js
+
+# let expression blocks
+tests/auto-regress/bug496251.js
+tests/auto-regress/bug521163.js
+tests/auto-regress/bug523793.js
+tests/auto-regress/bug531298.js
+tests/auto-regress/bug680797.js
+tests/auto-regress/bug745158.js
+tests/basic/bug590006.js
+tests/basic/bug601395.js
+tests/basic/bug601398.js
+tests/basic/bug601401.js
+tests/basic/bug601428.js
+tests/basic/bug646968-1.js
+tests/basic/bug646968-7.js
+tests/basic/bug646968-6.js
+tests/basic/bug647695.js
+tests/basic/bug646968-8.js
+tests/basic/bug662338.js
+tests/basic/bug727921.js
+tests/basic/eif-generator.js
+tests/basic/expression-autopsy.js
+tests/basic/testAliasedLet.js
+tests/basic/testBadLetBodyWithArguments.js
+tests/basic/testBug692274-4.js
+tests/basic/testBug703857.js
+tests/basic/testBug714650.js
+tests/basic/testBug776191.js
+tests/basic/testClosureIncrSideExit.js
+tests/basic/testGlobalOptimize-2.js
+tests/basic/testGlobalOptimize-5.js
+tests/basic/testGlobalOptimize-3.js
+tests/basic/testGlobalOptimize-6.js
+tests/basic/testLetOverridingArgs.js
+tests/basic/testNonStubGetter.js
+tests/basic/testReplaceWithLambda.js
+tests/closures/bug496922.js
+tests/closures/bug540131-3.js
+tests/closures/bug540131.js
+tests/closures/incr-exit-2.js
+tests/closures/flat-closure-2.js
+tests/closures/flat-closure-7.js
+tests/closures/incr-exit.js
+tests/closures/incr-exit-3.js
+tests/closures/lambda-light.js
+tests/closures/t020.js
+tests/for-of/syntax-2.js
+tests/auto-regress/bug569774.js
+tests/auto-regress/bug765280.js
+tests/auto-regress/bug800407.js
+tests/basic/bug510642.js
+tests/basic/bug601402.js
+tests/basic/bug646968-2.js
+tests/basic/bug667504-syntax.js
+tests/basic/regress-bug720680.js
+tests/basic/testBug709633.js
+tests/basic/testBug756918.js
+tests/basic/throw-apply-too-many-args.js
+
+# lambda function expression syntax
+tests/arguments/destructuring-exprbody.js
+tests/auto-regress/bug488034.js
+tests/auto-regress/bug488421.js
+tests/auto-regress/bug490191.js
+tests/auto-regress/bug496270.js
+tests/auto-regress/bug580200.js
+tests/auto-regress/bug650658.js
+tests/auto-regress/bug659779.js
+tests/auto-regress/bug732719.js
+tests/auto-regress/bug830049.js
+tests/basic/bug709634.js
+tests/basic/bug744285.js
+tests/basic/bug830049.js
+tests/basic/bug832203.js
+tests/basic/decompile-script.js
+tests/basic/newArrayTest.js
+tests/basic/shapelessCalleeTest.js
+tests/basic/string-contains.js
+tests/basic/string-endswith.js
+tests/basic/string-startswith.js
+tests/basic/testBrandedVsGeneric.js
+tests/basic/testBug783441.js
+tests/basic/testCallProtoMethod.js
+tests/basic/testCrossCompartmentTransparency.js
+tests/basic/testDynamicUsage.js
+tests/basic/testHeavy2.js
+tests/basic/testHeavy.js
+tests/basic/testImplicitArgumentsInGenExprs.js
+tests/basic/testInterpreterReentry5.js
+tests/basic/testObjectToNumber.js
+tests/basic/testObjectToString.js
+tests/basic/testShiftRightArithmetic.js
+tests/basic/testShiftRightLogical.js
+tests/basic/testShiftLeft.js
+tests/closures/flat-closure-3.js
+tests/for-of/semantics-11.js
+tests/pic/arguments.js
+tests/pic/bug558099.js
+tests/auto-regress/bug630770.js
+tests/auto-regress/bug730806.js
+tests/auto-regress/bug746376.js
+tests/auto-regress/bug756236.js
+tests/auto-regress/bug778557.js
+tests/basic/bug650148.js
+tests/basic/bug651966.js
+tests/basic/bug657225.js
+tests/basic/bug673766.js
+tests/basic/bug708805.js
+tests/basic/bug729364.js
+tests/basic/bug728086.js
+tests/basic/bug808067.js
+tests/basic/bug815652.js
+tests/basic/forVarInWith.js
+tests/basic/function-tosource-exprbody.js
+tests/basic/function-tosource-exprbody-bug777834.js
+tests/basic/function-tosource-strict.js
+tests/basic/testBug740442.js
+tests/basic/testBug741497.js
+tests/basic/function-tosource-getset.js
+tests/basic/testInterpreterReentry4.js
+
+# different error message
+tests/basic/bug839420.js
+tests/basic/testBug566556.js
+tests/basic/testBug604210.js
+tests/basic/testDontClobberScannerError.js
+tests/basic/testErrorReportIn_getPrototypeOf.js
+tests/basic/testInitSingletons.js
+tests/basic/testSlowNativeBail.js
+tests/self-hosting/invoke-self-hosted-with-primitive-this.js
+
+# CallExpression no longer valid LHS
+tests/auto-regress/bug521279.js
+tests/auto-regress/bug701248.js
+tests/basic/bug738841.js
+
+# Initialiser in for-in
+tests/auto-regress/bug596817.js
+tests/closures/bug540136.js
+tests/closures/bug540348.js
+
+# cannot assign to 'arguments'
+tests/auto-regress/bug735936.js
+
+# try-catch with if
+tests/basic/bug593663-regexp.js
+tests/basic/bug640078.js
+tests/basic/bug787309.js
+tests/basic/bug787848.js
+
+# let variable must no be redeclared
+tests/basic/bug778268.js
+
+# Declaration directly nested in Statement
+tests/auto-regress/bug771027.js
+tests/basic/bug639797.js
+tests/basic/testBug762473.js
+tests/basic/testDynamicLookup.js
+tests/basic/testFunctionStatementNamedArguments.js
+tests/basic/testFunctionStatementAliasLocals.js
+tests/basic/testWeirdThingsInFunctionConstructor.js
+
+# missing const initialiser
+tests/auto-regress/bug495843.js
+
+# ES6-bug: declaration binding
+tests/arguments/defaults-bound-to-function.js
+tests/arguments/defaults-scoping.js
+tests/arguments/defaults-with-rest.js
+tests/arguments/rest-alias-function.js
+
+# ES6-change: 'eval'/'arguments' not allowed in binding pattern
+tests/arguments/rest-arguments-as-parameters.js
+
+# Object.prototype.watch
+tests/auto-regress/bug516897.js
+tests/auto-regress/bug537854.js
+tests/auto-regress/bug560796.js
+tests/basic/testBug578044.js
+tests/basic/testEvalCalledFromWatchOverSetter.js
+tests/basic/testSettingWatchPointOnReadOnlyProp.js
+
+# newGlobal() shell function not supported
+tests/arguments/rest-basic.js
+tests/arguments/rest-debugger.js
+tests/auto-regress/bug677587.js
+tests/auto-regress/bug677977.js
+tests/auto-regress/bug687398.js
+tests/auto-regress/bug692300.js
+tests/auto-regress/bug698150.js
+tests/auto-regress/bug718347.js
+tests/auto-regress/bug720396.js
+tests/auto-regress/bug737737.js
+tests/auto-regress/bug781364.js
+tests/auto-regress/bug785576.js
+tests/auto-regress/bug795937.js
+tests/basic/bug596351-1.js
+tests/basic/bug596351-2.js
+tests/basic/bug658539.js
+tests/basic/bug662841.js
+tests/basic/bug673468.js
+tests/basic/bug678211.js
+tests/basic/bug683140.js
+tests/basic/bug688939.js
+tests/basic/bug745360.js
+tests/basic/bug754242.js
+tests/basic/bug750307.js
+tests/basic/bug767273.js
+tests/basic/bug794947.js
+tests/basic/bug808483.js
+tests/basic/bug821340.js
+tests/basic/bug842482.js
+tests/basic/testBug637014.js
+tests/basic/testBug705423.js
+tests/basic/testBug723445.js
+tests/basic/testBug736807.js
+tests/basic/testBug770407.js
+tests/basic/testBug780288-1.js
+tests/basic/testBug780288-2.js
+tests/basic/testCrossCompartmentTransparency2.js
+tests/basic/testGeneratorDieButScopeAlive.js
+tests/basic/testLet.js
+tests/basic/testScriptCloning.js
+tests/collections/bug-743101.js
+tests/collections/Map-iterator-proxies-1.js
+tests/collections/Map-iterator-proxies-2.js
+tests/collections/Set-iterator-proxies-1.js
+tests/collections/Set-iterator-proxies-2.js
+tests/for-of/next-3.js
+tests/for-of/semantics-08.js
+tests/for-of/wrapper-1.js
+
+# trap() shell function not supported
+tests/auto-regress/bug432365.js
+tests/basic/bug656381.js
+tests/basic/bug656555.js
+tests/basic/testBug666292.js
+tests/basic/testBug677367.js
+tests/basic/testBug692274-1.js
+tests/basic/testEvalFromTrap.js
+tests/basic/testTrapOnEval.js
+
+
+# wrap() shell function not supported
+tests/auto-regress/bug571168.js
+tests/auto-regress/bug595923.js
+tests/auto-regress/bug612836.js
+tests/auto-regress/bug638212.js
+tests/auto-regress/bug743000.js
+tests/basic/bug632778-1.js
+tests/basic/bug632778-2.js
+tests/basic/bug639529.js
+tests/basic/testBug748212.js
+tests/basic/testBug761439.js
+
+# evaluate() shell function not supported
+tests/auto-regress/bug702003.js
+tests/auto-regress/bug743876.js
+tests/auto-regress/bug758164.js
+tests/auto-regress/bug781855.js
+tests/auto-regress/bug782083.js
+tests/auto-regress/bug811612.js
+tests/basic/bug713226.js
+tests/basic/bug753283.js
+tests/basic/bug777776.js
+tests/basic/bug792239.js
+tests/basic/bug846080.js
+tests/basic/evaluate-catchTermination.js
+tests/basic/testBug659577-2.js
+tests/basic/testBug736012.js
+tests/basic/testBug752379.js
+tests/basic/null-filename-Error.js
+
+# evalInFrame() shell function not supported
+tests/basic/testBug663789-2.js
+tests/basic/testEvalInFrameEdgeCase.js
+
+# evalcx() shell function not supported
+tests/auto-regress/bug563127.js
+tests/auto-regress/bug567577.js
+tests/auto-regress/bug610088.js
+tests/auto-regress/bug617485.js
+tests/auto-regress/bug639413.js
+tests/auto-regress/bug697255.js
+tests/auto-regress/bug698899.js
+tests/basic/bug619004.js
+tests/basic/bug642326.js
+tests/basic/bug653262.js
+tests/basic/bug662562.js
+tests/basic/bug665289.js
+tests/basic/bug702426-regexp-gc.js
+tests/basic/bug737384.js
+tests/basic/bug743961.js
+tests/basic/bug767074.js
+tests/basic/bug817002.js
+tests/basic/bug831658.js
+tests/basic/bug831846.js
+tests/basic/bug832197-1.js
+tests/basic/testBug584650.js
+tests/basic/testBug606138.js
+tests/basic/testBug634590b.js
+tests/basic/testBug634590.js
+tests/basic/testBug634590c.js
+tests/basic/testBug634590d.js
+tests/basic/testBug634590ma.js
+tests/basic/testBug780712.js
+tests/basic/testBug784639.js
+tests/basic/testDefinePropertyAcrossCompartment.js
+tests/basic/testIteratorReification.js
+tests/basic/testOOMInAutoEnterCompartment.js
+tests/pic/callname-eager-this1.js
+tests/pic/callname-eager-this2.js
+
+# uneval() shell function not supported
+tests/auto-regress/bug486139.js
+tests/auto-regress/bug491806.js
+tests/auto-regress/bug522624.js
+tests/auto-regress/bug562028.js
+tests/auto-regress/bug580694.js
+tests/auto-regress/bug584423.js
+tests/auto-regress/bug745452.js
+tests/basic/bug699166.js
+tests/basic/parseIntTests.js
+tests/basic/testDenseArrayProp.js
+tests/basic/testGCWhileRecording.js
+tests/basic/testNEWINIT.js
+tests/for-of/decompiler.js
+
+# other unsupported shell functions
+# it object
+tests/auto-regress/bug674207.js
+tests/auto-regress/bug764850.js
+# decompileBody
+tests/auto-regress/bug776484.js
+tests/basic/function-tosource-statement.js
+# shapeOf
+tests/basic/bug641525.js
+tests/basic/testMethodWriteBarrier3.js
+tests/basic/testSetProtoRegeneratesObjectShape.js
+tests/pic/watch3b.js
+# objectEmulatingUndefined
+tests/basic/emulates-undefined.js
+# wrapWithProto
+tests/basic/testProxyPrototypes.js
+tests/proxy/getElementIfPresent-not-present.js
+# FakeDOMObject
+tests/basic/testFakeDOMWeakmapKey.js
+tests/basic/test-jitinfo.js
+# PerfMeasurement
+tests/basic/perf-smoketest.js
+# timeout
+tests/basic/shell-watchdog.js
+# deserialize
+tests/basic/testBug616454.js
+# clone
+tests/basic/bug751139.js
+# terminate
+tests/basic/terminate.js
+# getMaxArgs
+tests/basic/testBug653396.js
+
+# Debugger API
+tests/basic/bug839313.js
+# setDebug
+tests/basic/testBug552248.js
+
+# Unsupported 'Testing' functions
+# gcparam
+tests/basic/bug720675.js
+tests/basic/testBug756919.js
+# countHeap
+tests/basic/bug734196.js
+tests/basic/bug747926.js
+# makeFinalizeObserver
+tests/basic/testStringBufferMallocAccounting.js
+# validategc
+tests/basic/bug782337.js
+# internalConst
+tests/basic/bug656261.js
+# mjitChunkLimit
+tests/auto-regress/bug726799.js
+tests/auto-regress/bug728509.js
+tests/auto-regress/bug740654.js
+tests/basic/testBug755916.js
+# displayName
+tests/basic/functionnames.js
+
+# ParallelArray not supported
+tests/auto-regress/bug755564.js
+tests/auto-regress/bug783923.js
+tests/auto-regress/bug784011.js
+tests/auto-regress/bug786106.js
+tests/auto-regress/bug789107.js
+tests/auto-regress/bug791445.js
+
+# Reflect not supported
+tests/auto-regress/bug590772.js
+tests/auto-regress/bug785305.js
+tests/basic/bug639311.js
+tests/for-of/bug-728079-js17-4.js
+
+# arguments allowed even with rest-parameters
+tests/arguments/rest-disallow-arguments.js
+tests/arrow-functions/arguments-4.js
+
+# arrow functions _do_ have arguments
+tests/arrow-functions/arguments-1.js
+tests/arrow-functions/arguments-2.js
+
+# different toString() representation for arrow-functions
+tests/arrow-functions/associativity-3.js
+
+# arrow functions are _not_ implicit strict-mode
+tests/arrow-functions/strict-1.js
+tests/arrow-functions/strict-2.js
+tests/arrow-functions/syntax-errors.js
+
+
+# NegativeArraySizeException?
+tests/basic/testBug507425.js
+
+# ASM NullPointerException
+tests/basic/testBug673066.js
+
+# Method code too large
+tests/auto-regress/bug601393.js
+tests/basic/bug586917.js
+tests/basic/bug641235.js
+
+# Timeout
+tests/auto-regress/bug583680.js
+tests/auto-regress/bug620637.js
+tests/auto-regress/bug678362.js
+tests/auto-regress/bug739402.js
+tests/basic/bug539379.js
+tests/basic/bug849777.js
+tests/basic/math-jit-tests.js
+tests/basic/regexp-sticky-undef-capture.js
+tests/basic/testBug614653.js
+tests/basic/testBug621202.js
+
+# StackOverflow
+tests/auto-regress/bug488203.js
+tests/auto-regress/bug653789.js
+tests/auto-regress/bug654392.js
+tests/auto-regress/bug666305.js
+tests/auto-regress/bug675251.js
+tests/auto-regress/bug701332.js
+tests/auto-regress/bug729797.js
+tests/auto-regress/bug743094.js
+tests/auto-regress/bug746103.js
+tests/auto-regress/bug746377.js
+tests/auto-regress/bug759306.js
+tests/auto-regress/bug782129.js
+tests/basic/bug520498.js
+tests/basic/bug522136.js
+tests/basic/bug617139.js
+tests/basic/bug632964-regexp.js
+tests/basic/bug657227.js
+tests/basic/bug708819.js
+tests/basic/bug763440.js
+tests/basic/bug836601.js
+tests/basic/testBug666003.js
+tests/basic/testBug692274-2.js
+tests/basic/testOverOOMInFixupArity.js
+tests/basic/testOverRecursed1.js
+tests/basic/testOverRecursed2.js
+tests/basic/testOverRecursed3.js
+tests/basic/testOverRecursed6.js
+tests/basic/testProxyDefinePropertyWithMissingSetter.js
+
+# OutOfMemory: Java heap space
+tests/auto-regress/bug690933.js
+tests/auto-regress/bug735313.js
+tests/basic/bug698584.js
+

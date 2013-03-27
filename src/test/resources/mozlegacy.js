@@ -74,10 +74,12 @@ function ToSource(o) {
 
 Object.defineProperties(Object.assign(Object.prototype, {
   __defineGetter__(name, getter) {
-    Object_defineProperty(this, name, {get: getter, enumerable: true, configurable: true});
+    var obj = (this != null ? Object(this) : global);
+    Object_defineProperty(obj, name, {get: getter, enumerable: true, configurable: true});
   },
   __defineSetter__(name, setter) {
-    Object_defineProperty(this, name, {set: setter, enumerable: true, configurable: true});
+    var obj = (this != null ? Object(this) : global);
+    Object_defineProperty(obj, name, {set: setter, enumerable: true, configurable: true});
   },
   __lookupGetter__(name) {
     var p = this;
@@ -110,7 +112,7 @@ Object.defineProperty(Object.assign(Object.prototype, {
     wm.set(this, null);
     try {
       var s = "";
-      var names = Object_getOwnPropertyNames(this);
+      var names = Object_keys(this);
       for (var i = 0, len = names.length; i < len; ++i) {
         var name = names[i];
         var desc = Object_getOwnPropertyDescriptor(this, name);
@@ -120,11 +122,13 @@ Object.defineProperty(Object.assign(Object.prototype, {
           s += name + ":" + ToSource(desc.value);
         } else {
           if (desc.get !== void 0) {
-            s += "get " + name + ToSource(desc.get).substr(8);
+            var fsrc = ToSource(desc.get);
+            s += "get " + name + fsrc.substr(fsrc.indexOf('('));
             if (desc.set !== void 0) s += ", ";
           }
           if (desc.set !== void 0) {
-            s += "set " + name + ToSource(desc.set).substr(8);
+            var fsrc = ToSource(desc.set);
+            s += "set " + name + fsrc.substr(fsrc.indexOf('('));
           }
         }
         if (i + 1 < len) s += ", ";
@@ -197,7 +201,10 @@ Object.defineProperties(Object.assign(Array, {
     return Array.prototype.sort.call(array, $1, ...more);
   },
   push(array, $1, ...more) {
-    return Array.prototype.push.call(array, $1, ...more);
+    if (arguments.length <= 1) {
+      return Array.prototype.push.call(array);
+    }
+    return Array.prototype.push.call(array, ...[$1, ...more]);
   },
   pop(array, ...more) {
     return Array.prototype.pop.call(array, ...more);
@@ -206,13 +213,19 @@ Object.defineProperties(Object.assign(Array, {
     return Array.prototype.shift.call(array, ...more);
   },
   unshift(array, $1, ...more) {
-    return Array.prototype.unshift.call(array, $1, ...more);
+    if (arguments.length <= 1) {
+      return Array.prototype.unshift.call(array);
+    }
+    return Array.prototype.unshift.call(array, ...[$1, ...more]);
   },
   splice(array, $1, $2, ...more) {
     return Array.prototype.splice.call(array, $1, $2, ...more);
   },
   concat(array, $1, ...more) {
-    return Array.prototype.concat.call(array, $1, ...more);
+    if (arguments.length <= 1) {
+      return Array.prototype.concat.call(array);
+    }
+    return Array.prototype.concat.call(array, ...[$1, ...more]);
   },
   slice(array, $1, $2, ...more) {
     return Array.prototype.slice.call(array, $1, $2, ...more);
@@ -334,7 +347,10 @@ Object.defineProperties(Object.assign(String, {
     return String.prototype.substr.call(string, $1, $2, ...more);
   },
   concat(string, $1, ...more) {
-    return String.prototype.concat.call(string, $1, ...more);
+    if (arguments.length <= 1) {
+      return String.prototype.concat.call(string);
+    }
+    return String.prototype.concat.call(string, ...[$1, ...more]);
   },
   slice(string, $1, $2, ...more) {
     return String.prototype.slice.call(string, $1, $2, ...more);
@@ -423,6 +439,16 @@ Object.defineProperty(Object.assign(Math, {
   }
 }), "toSource", {enumerable: false});
 
+Object.defineProperty(Object.assign(Math, {
+  imul(u, v) {
+    u = u >>> 0;
+    v = v >>> 0;
+    var u0 = u & 0xFFFF, u1 = u >>> 16,
+        v0 = v & 0xFFFF, v1 = v >>> 16;
+    return (((u1 * v0 + u0 * v1) << 16) + (u0 * v0)) | 0;
+  }
+}), "imul", {enumerable: false});
+
 Object.defineProperty(Object.assign(Date.prototype, {
   toSource() {
     return "(new Date(" + Date.prototype.valueOf.call(this) + "))";
@@ -446,6 +472,35 @@ Object.defineProperty(Object.assign(JSON, {
     return "JSON";
   }
 }), "toSource", {enumerable: false});
+
+
+Object.defineProperty(Object.mixin(Array.prototype, {
+  get iterator() {
+    return this[getSym("@@iterator")];
+  },
+  set iterator(it) {
+    this[getSym("@@iterator")] = it;
+  }
+}), "iterator", {enumerable: false});
+
+Object.defineProperty(Object.mixin(Map.prototype, {
+  get iterator() {
+    return this[getSym("@@iterator")];
+  },
+  set iterator(it) {
+    this[getSym("@@iterator")] = it;
+  }
+}), "iterator", {enumerable: false});
+
+Object.defineProperty(Object.mixin(Set.prototype, {
+  get iterator() {
+    return this[getSym("@@iterator")];
+  },
+  set iterator(it) {
+    this[getSym("@@iterator")] = it;
+  }
+}), "iterator", {enumerable: false});
+
 
 function toProxyHandler(handler) {
   var proxyHandler = {};
