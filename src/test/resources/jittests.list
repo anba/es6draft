@@ -942,4 +942,5 @@ tests/basic/testProxyDefinePropertyWithMissingSetter.js
 tests/auto-regress/bug690933.js
 tests/auto-regress/bug735313.js
 tests/basic/bug698584.js
+tests/basic/bug710947.js
 

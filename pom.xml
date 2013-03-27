@@ -369,7 +369,8 @@
               <target>
                 <fileset dir="${project.build.directory}/dependencies" id="deps_fileset"
                   includes="*.jar" />
-                <pathconvert dirsep="/" pathsep=";" property="dependencies.list" refid="deps_fileset">
+                <pathconvert dirsep="/" pathsep="${path.separator}" property="dependencies.list"
+                  refid="deps_fileset">
                   <map from="${project.basedir}" to="." />
                 </pathconvert>
               </target>
@@ -439,7 +440,7 @@
                 -Duser.language=${test.user.language}
                 -Duser.country=${test.user.country}
                 -Duser.timezone=${test.user.timezone}
-                -Xbootclasspath/a:"${project.build.outputDirectory};${dependencies.list}"
+                -Xbootclasspath/a:"${project.build.outputDirectory}${path.separator}${dependencies.list}"
               </argLine>
             </configuration>
           </execution>
