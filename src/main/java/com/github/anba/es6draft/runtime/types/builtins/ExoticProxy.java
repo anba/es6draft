@@ -69,7 +69,7 @@ public class ExoticProxy implements ScriptObject {
 
         @Override
         public String toSource() {
-            return "";
+            return ((Callable) proxyTarget).toSource();
         }
     }
 
