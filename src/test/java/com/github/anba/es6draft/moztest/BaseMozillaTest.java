@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.runners.Parameterized;
@@ -42,6 +43,7 @@ public abstract class BaseMozillaTest {
         boolean random = false;
         boolean slow = false;
         Path script = null;
+        String error = null;
 
         @Override
         public String toString() {
@@ -49,28 +51,29 @@ public abstract class BaseMozillaTest {
         }
     }
 
-    private static final Pattern jslinePattern;
-    static {
-        // script modificators
-        String mod1 = "fails|skip|random|slow|silentfail";
-        String mod2 = "(?:(?:fails-if|asserts-if|skip-if|random-if|require-or)\\(\\S+\\))";
-        String opt = "(?:-?\\d)";
-        String mod3 = "(?:skip-opt\\(" + opt + "(?:," + opt + ")*\\))";
-        String mod = "(?:" + mod1 + "|" + mod2 + "|" + mod3 + ")";
-        String script = "(?:(?:" + mod + "\\s+)*" + mod + "?)?";
-        // format: tag content comment
-        String tag = "\\|.*?\\|";
-        String content = "(?:" + script + ")?";
-        String comment = "(?:--.*)?";
-        String line = "//\\s*" + tag + "\\s*" + content + "\\s*" + comment;
-        jslinePattern = Pattern.compile(line);
+    private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
+
+    private static void applyPatternInfo(MozTest test, String line) {
+        Matcher m = testInfoPattern.matcher(line);
+        if (!m.matches()) {
+            // ignore if pattern invalid or not present
+            return;
+        }
+        switch (m.group(1)) {
+        case "reftest":
+            applyRefTestInfo(test, m.group(2));
+            break;
+        case "jit-test":
+            applyJitTestInfo(test, m.group(2));
+            break;
+        default:
+            System.err.printf("invalid tag '%s' in line: %s\n", m.group(1), line);
+        }
     }
 
-    private static String[] splitLine(String line) {
+    private static String[] split(String line) {
         final String comment = "--";
         final String ws = "[ \t\n\r\f\013]+";
-        // remove '//' prefix
-        line = line.substring(2);
         // remove comment if any
         int k = line.indexOf(comment);
         if (k != -1) {
@@ -80,12 +83,8 @@ public abstract class BaseMozillaTest {
         return line.trim().split(ws);
     }
 
-    private static void applyPatternInfo(MozTest test, String line) {
-        if (!jslinePattern.matcher(line).matches()) {
-            // ignore if pattern invalid or not present
-            return;
-        }
-        for (String p : splitLine(line)) {
+    private static void applyRefTestInfo(MozTest test, String content) {
+        for (String p : split(content)) {
             if (p.equals("fails")) {
                 test.expect = false;
             } else if (p.equals("skip")) {
@@ -98,10 +97,51 @@ public abstract class BaseMozillaTest {
                     || p.startsWith("skip-if") || p.startsWith("random-if")
                     || p.startsWith("require-or") || p.equals("silentfail")) {
                 // ignore for now...
-            } else if (p.equals("|reftest|")) {
-                // ignore tag
             } else {
                 System.err.printf("invalid manifest line: %s\n", p);
+            }
+        }
+    }
+
+    private static void applyJitTestInfo(MozTest test, String content) {
+        for (String p : content.split(";")) {
+            int sep = p.indexOf(':');
+            if (sep != -1) {
+                String name = p.substring(0, sep).trim();
+                String value = p.substring(sep + 1).trim();
+                switch (name) {
+                case "error":
+                    test.error = value;
+                    break;
+                case "exitstatus":
+                    // ignore for now...
+                    break;
+                default:
+                    System.err.printf("unknown option '%s' in line: %s\n", name, content);
+                }
+            } else {
+                String name = p.trim();
+                switch (name) {
+                case "slow":
+                    test.slow = true;
+                    break;
+                case "allow-oom":
+                case "valgrind":
+                case "tz-pacific":
+                case "mjitalways":
+                case "debug":
+                case "mjit":
+                case "no-jm":
+                case "ion-eager":
+                case "dump-bytecode":
+                    // ignore for now...
+                    break;
+                case "":
+                    // ignore empty string
+                    break;
+                default:
+                    System.err.printf("unknown option '%s' in line: %s\n", name, content);
+                }
             }
         }
     }
@@ -114,9 +154,9 @@ public abstract class BaseMozillaTest {
     /**
      * Recursively searches for js-file test cases in {@code basedir} and its sub-directories
      */
-    protected static List<MozTest> loadTests(final Path basedir) throws IOException {
+    protected static List<MozTest> loadTests(Path searchdir, final Path basedir) throws IOException {
         final List<MozTest> tests = new ArrayList<>();
-        Files.walkFileTree(basedir, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(searchdir, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException {

@@ -61,7 +61,7 @@ public class MozillaJSTest extends BaseMozillaTest {
         Path testdir = testDir();
         assumeThat("missing system property 'MOZ_JSTESTS'", testdir, notNullValue());
         assumeTrue("directy 'MOZ_JSTESTS' does not exist", Files.exists(testdir));
-        List<MozTest> tests = filterTests(loadTests(testdir), "/jstests.list");
+        List<MozTest> tests = filterTests(loadTests(testdir, testdir), "/jstests.list");
         return toObjectArray(tests);
     }
 

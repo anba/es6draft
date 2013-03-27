@@ -6,9 +6,15 @@
  */
 package com.github.anba.es6draft.moztest;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.EvaluateConstructorCall;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
+import static com.github.anba.es6draft.runtime.internal.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,10 +25,11 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
-import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.util.ScriptCache;
 
 /**
@@ -73,10 +80,44 @@ public class MozTestGlobalObject extends GlobalObject {
         return ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
-    /** shell-function: {@code print()} */
+    private static ScriptException throwError(Realm realm, String message) {
+        Object error = EvaluateConstructorCall(realm.getIntrinsic(Intrinsics.Error),
+                new Object[] { message }, realm);
+        return _throw(error);
+    }
+
+    /**
+     * Returns the well-known symbol {@code name} or undefined if there is no such symbol
+     */
+    @Function(name = "getSym", arity = 1)
+    public Object getSym(String name) {
+        try {
+            if (name.startsWith("@@")) {
+                return BuiltinSymbol.valueOf(name.substring(2)).get();
+            }
+        } catch (IllegalArgumentException e) {
+        }
+        return UNDEFINED;
+    }
+
+    /** shell-function: {@code quit()} */
     @Function(name = "quit", arity = 0)
     public void quit() {
         throw new StopExecutionException();
+    }
+
+    /** shell-function: {@code assertEq()} */
+    @Function(name = "assertEq", arity = 2)
+    public void assertEq(Object actual, Object expected, Object message) {
+        if (!SameValue(actual, expected)) {
+            StringBuilder msg = new StringBuilder();
+            msg.append(String.format("Assertion failed: got %s, expected %s",
+                    ToSource(realm, actual), ToSource(realm, expected)));
+            if (!Type.isUndefined(message)) {
+                msg.append(": ").append(ToFlatString(realm, message));
+            }
+            throwError(realm, msg.toString());
+        }
     }
 
     /** shell-function: {@code print([exp, ...])} */
@@ -89,17 +130,51 @@ public class MozTestGlobalObject extends GlobalObject {
         // System.out.println(message);
     }
 
-    /** shell-function: {@code load(path)} */
-    @Function(name = "load", arity = 1)
-    public Object load(String path) {
-        Path p = basedir.resolve(script.getParent().resolve(Paths.get(path)));
-        if (!Files.exists(p)) {
-            String s = p.toString();
-            Object e = ((Constructor) realm.getIntrinsic(Intrinsics.Error)).construct(s);
-            ScriptRuntime._throw(e);
+    /** shell-function: {@code snarf(filename)} */
+    @Function(name = "snarf", arity = 1)
+    public Object snarf(String filename) {
+        Path path = basedir.resolve(Paths.get(filename));
+        if (!Files.exists(path)) {
+            _throw(String.format("can't open '%s'", path.toString()));
         }
         try {
-            eval(p);
+            byte[] bytes = Files.readAllBytes(path);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** shell-function: {@code read(filename)} */
+    @Function(name = "read", arity = 1)
+    public Object read(String filename) {
+        return snarf(filename);
+    }
+
+    /** shell-function: {@code readRelativeToScript(filename)} */
+    @Function(name = "readRelativeToScript", arity = 1)
+    public Object readRelativeToScript(String filename) {
+        Path path = basedir.resolve(script.getParent().resolve(Paths.get(filename)));
+        if (!Files.exists(path)) {
+            _throw(String.format("can't open '%s'", path.toString()));
+        }
+        try {
+            byte[] bytes = Files.readAllBytes(path);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** shell-function: {@code load(filename)} */
+    @Function(name = "load", arity = 1)
+    public Object load(String filename) {
+        Path path = basedir.resolve(script.getParent().resolve(Paths.get(filename)));
+        if (!Files.exists(path)) {
+            _throw(String.format("can't open '%s'", path.toString()));
+        }
+        try {
+            eval(path);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
