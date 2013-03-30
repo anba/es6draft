@@ -5,6 +5,9 @@
 # <https://github.com/anba/es6draft>
 #
 
+# invalid tests wrt arrow function with rest argument length
+tests/arrow-functions/length.js
+
 # Over allocation
 tests/basic/bug839215.js
 
@@ -391,6 +394,12 @@ tests/arguments/defaults-bug759904.js
 tests/arguments/defaults-bug790424.js
 tests/arguments/defaults-invalid-syntax.js
 tests/arguments/defaults-strict-mode.js
+tests/arguments/genexpr-1.js
+tests/arguments/genexpr-2.js
+tests/arguments/genexpr-3.js
+tests/arguments/genexpr-4.js
+tests/arguments/genexpr-5.js
+tests/arguments/genexpr-6.js
 tests/arguments/strict-args-generator-flushstack.js
 tests/auto-regress/bug488963.js
 tests/auto-regress/bug521694.js
@@ -404,6 +413,7 @@ tests/basic/bug560234b.js
 tests/basic/bug563243.js
 tests/basic/bug631082.js
 tests/basic/bug657975.js
+tests/basic/bug660538.js
 tests/basic/bug716013.js
 tests/basic/bug744356.js
 tests/basic/bug767234.js
