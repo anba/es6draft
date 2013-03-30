@@ -41,7 +41,7 @@ public class RegExpParser {
     // map of groups created within negative lookahead
     private BitSet negativeLAGroups = new BitSet();
     // map of invalidated groups
-    private BitSet invalidGroups = new BitSet();
+    private BitSet validGroups = new BitSet();
     // number of groups
     private int groups = 0;
     // maximum backref found
@@ -105,7 +105,7 @@ public class RegExpParser {
             backrefmax = 0;
             pos = 0;
             negativeLAGroups.clear();
-            invalidGroups.clear();
+            validGroups.clear();
             out.setLength(0);
             disjunction(0, 0);
             assert backrefmax <= groups;
@@ -531,7 +531,7 @@ public class RegExpParser {
                         if (num > backrefmax) {
                             backrefmax = num;
                         }
-                        if (num <= groups && !invalidGroups.get(num)) {
+                        if (num <= groups && validGroups.get(num)) {
                             out.append('\\').append(num);
                         } else {
                             // omit forward reference (TODO: check this!) or backward reference into
@@ -578,22 +578,24 @@ public class RegExpParser {
                     default:
                         throw error(Messages.Key.RegExpInvalidQualifier);
                     }
-                } else {
-                    groups += 1;
-                    if (negativedepth > 0) {
-                        negativeLAGroups.set(groups);
+                    if (negativeLA) {
+                        int g = groups;
+                        disjunction(depth + 1, negativedepth + 1);
+                        // invalidate all capturing groups created within the negative lookahead
+                        for (int v = groups; v != g; --v) {
+                            validGroups.clear(v);
+                        }
+                    } else {
+                        disjunction(depth + 1, negativedepth);
                     }
+                } else {
                     out.append('(');
-                }
-                if (negativeLA) {
-                    int g = groups;
-                    disjunction(depth + 1, negativedepth + 1);
-                    // invalidate all capturing groups created within the negative lookahead
-                    for (int v = groups; v != g; --v) {
-                        invalidGroups.set(v);
-                    }
-                } else {
+                    int g = ++groups;
                     disjunction(depth + 1, negativedepth);
+                    validGroups.set(g);
+                    if (negativedepth > 0) {
+                        negativeLAGroups.set(g);
+                    }
                 }
                 out.append((char) mustMatch(')'));
                 break atom;
