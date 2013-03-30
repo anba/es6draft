@@ -333,6 +333,11 @@ public class Parser {
         return cx;
     }
 
+    private BlockContext reenterBlockContext(BlockContext cx) {
+        context.scopeContext = cx;
+        return cx;
+    }
+
     private ScopeContext exitBlockContext() {
         return exitScopeContext();
     }
@@ -2664,7 +2669,14 @@ public class Parser {
         } else if (token() == Token.IN) {
             head = validateForInOf(head);
             consume(Token.IN);
-            Expression expr = expression(true);
+            Expression expr;
+            if (lexBlockContext == null) {
+                expr = expression(true);
+            } else {
+                exitBlockContext();
+                expr = expression(true);
+                reenterBlockContext(lexBlockContext);
+            }
             consume(Token.RP);
 
             LabelContext labelCx = enterIteration(labelSet);
@@ -2684,7 +2696,14 @@ public class Parser {
         } else {
             head = validateForInOf(head);
             consume("of");
-            Expression expr = assignmentExpression(true);
+            Expression expr;
+            if (lexBlockContext == null) {
+                expr = assignmentExpression(true);
+            } else {
+                exitBlockContext();
+                expr = assignmentExpression(true);
+                reenterBlockContext(lexBlockContext);
+            }
             consume(Token.RP);
 
             LabelContext labelCx = enterIteration(labelSet);
@@ -3525,12 +3544,12 @@ public class Parser {
     private ComprehensionFor comprehensionFor() {
         consume(Token.FOR);
         consume(Token.LP);
-        BlockContext scope = enterBlockContext();
         Binding b = binding();
-        addLexDeclaredName(b);
         consume("of");
         Expression expression = assignmentExpression(true);
         consume(Token.RP);
+        BlockContext scope = enterBlockContext();
+        addLexDeclaredName(b);
         return new ComprehensionFor(scope, b, expression);
     }
 
