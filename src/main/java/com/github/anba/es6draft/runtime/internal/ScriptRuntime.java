@@ -19,6 +19,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromL
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import java.lang.invoke.MethodHandle;
@@ -39,8 +40,8 @@ import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
@@ -119,7 +120,8 @@ public final class ScriptRuntime {
         ExecutionContext calleeContext = ExecutionContext.newGeneratorComprehensionContext(cx);
         RuntimeInfo.Code newCode = RuntimeInfo.newCode(handle);
         GeneratorObject result = new GeneratorObject(realm, newCode, calleeContext);
-        result.initialise(realm);
+        ScriptObject proto = realm.getIntrinsic(Intrinsics.GeneratorPrototype);
+        result.setPrototype(realm, proto);
         return result;
     }
 

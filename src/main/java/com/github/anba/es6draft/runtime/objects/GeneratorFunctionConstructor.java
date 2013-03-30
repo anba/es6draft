@@ -28,16 +28,11 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.3 Function Objects</h2>
- * <ul>
- * <li>15.3.1 The Function Constructor Called as a Function
- * <li>15.3.2 The Function Constructor
- * <li>15.3.3 Properties of the Function Constructor
- * </ul>
+ * 
  */
-public class FunctionConstructor extends BuiltinFunction implements Constructor, Initialisable {
-    public FunctionConstructor(Realm realm) {
+public class GeneratorFunctionConstructor extends BuiltinFunction implements Constructor,
+        Initialisable {
+    public GeneratorFunctionConstructor(Realm realm) {
         super(realm);
     }
 
@@ -48,7 +43,7 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
     }
 
     /**
-     * 15.3.1.1 Function (p1, p2, ... , pn, body)
+     * GeneratorFunction (p1, p2, ... , pn, body)
      */
     @Override
     public Object call(Object thisValue, Object... args) {
@@ -56,7 +51,7 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
     }
 
     /**
-     * 15.3.2.1 new Function (p1, p2, ... , pn, body)
+     * new GeneratorFunction (p1, p2, ... , pn, body)
      */
     @Override
     public Object construct(Object... args) {
@@ -86,8 +81,8 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
 
     private static Script script(Realm realm, CharSequence p, CharSequence bodyText) {
         try {
-            Parser parser = new Parser("<Function>", 1);
-            com.github.anba.es6draft.ast.Script parsedScript = parser.parseFunction(p, bodyText);
+            Parser parser = new Parser("<GeneratorFunction>", 1);
+            com.github.anba.es6draft.ast.Script parsedScript = parser.parseGenerator(p, bodyText);
             String className = realm.nextFunctionName();
             return ScriptLoader.load(className, parsedScript);
         } catch (ParserException e) {
@@ -99,23 +94,23 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
     }
 
     /**
-     * 15.3.3 Properties of the Function Constructor
+     * Properties of the GeneratorFunction Constructor
      */
     public enum Properties {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.Function;
 
         /**
-         * 15.3.3.1 Function.prototype
+         * GeneratorFunction.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
-        public static final Intrinsics prototype = Intrinsics.FunctionPrototype;
+        public static final Intrinsics prototype = Intrinsics.Generator;
 
         /**
-         * 15.3.3.2 Function.length
+         * GeneratorFunction.length
          */
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -123,6 +118,6 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
-        public static final String name = "Function";
+        public static final String name = "GeneratorFunction";
     }
 }

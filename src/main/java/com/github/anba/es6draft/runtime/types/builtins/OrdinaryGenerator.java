@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -70,7 +70,7 @@ public class OrdinaryGenerator extends FunctionObject {
         /* step 2-4 (implicit) */
         /* step 5 */
         if (prototype == null) {
-            prototype = realm.getIntrinsic(Intrinsics.FunctionPrototype);
+            prototype = realm.getIntrinsic(Intrinsics.Generator);
         }
         /* step 6 */
         f.setPrototype(realm, prototype);
@@ -110,6 +110,28 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
+     * [13.6 Creating Function Objects and Constructors] MakeConstructor
+     */
+    public static void MakeConstructor(Realm realm, OrdinaryGenerator f) {
+        /*  step 2 */
+        ScriptObject prototype = ObjectCreate(realm, Intrinsics.GeneratorPrototype);
+        /*  step 3 */
+        boolean writablePrototype = true;
+        MakeConstructor(realm, f, writablePrototype, prototype);
+    }
+
+    /**
+     * [13.6 Creating Function Objects and Constructors] MakeConstructor
+     */
+    public static void MakeConstructor(Realm realm, OrdinaryGenerator f, boolean writablePrototype,
+            ScriptObject prototype) {
+        assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
+        // not "constructor" property on `prototype`
+        f.defineOwnProperty(realm, "prototype", new PropertyDescriptor(prototype,
+                writablePrototype, false, false));
+    }
+
+    /**
      * 
      */
     public static OrdinaryGenerator InstantiateGeneratorObject(Realm realm,
@@ -134,7 +156,8 @@ public class OrdinaryGenerator extends FunctionObject {
         getFunction().functionDeclarationInstantiation(calleeContext, this, args);
         /* step 14-15 */
         GeneratorObject result = new GeneratorObject(getRealm(), this, calleeContext);
-        result.initialise(getRealm());
+        ScriptObject proto = GetPrototypeFromConstructor(realm, this, Intrinsics.GeneratorPrototype);
+        result.setPrototype(realm, proto);
         /* step 16 */
         return result;
     }

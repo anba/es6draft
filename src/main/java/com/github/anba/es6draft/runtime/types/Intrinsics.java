@@ -62,6 +62,11 @@ public enum Intrinsics {/* @formatter:off */
     JSON,
     Proxy,
 
+    // Generators
+    GeneratorFunction,
+    Generator,
+    GeneratorPrototype,
+
     // not yet (?) in spec
     ArrayBuffer,
     ArrayBufferPrototype,

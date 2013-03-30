@@ -15,8 +15,8 @@ import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1>

@@ -131,7 +131,7 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    public static void MakeConstructor(Realm realm, FunctionObject f) {
+    public static void MakeConstructor(Realm realm, OrdinaryFunction f) {
         /*  step 2 */
         boolean installNeeded = true;
         ScriptObject prototype = ObjectCreate(realm, Intrinsics.ObjectPrototype);
@@ -143,7 +143,7 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    public static void MakeConstructor(Realm realm, FunctionObject f, boolean writablePrototype,
+    public static void MakeConstructor(Realm realm, OrdinaryFunction f, boolean writablePrototype,
             ScriptObject prototype) {
         /* step 1 */
         boolean installNeeded = false;
@@ -153,7 +153,7 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    private static void MakeConstructor(Realm realm, FunctionObject f, boolean writablePrototype,
+    private static void MakeConstructor(Realm realm, OrdinaryFunction f, boolean writablePrototype,
             ScriptObject prototype, boolean installNeeded) {
         assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
         /* step 4 (implicit) */

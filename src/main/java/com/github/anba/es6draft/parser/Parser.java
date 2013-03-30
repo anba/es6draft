@@ -665,7 +665,7 @@ public class Parser {
         return script();
     }
 
-    public Script parse(CharSequence formals, CharSequence bodyText) throws ParserException {
+    public Script parseFunction(CharSequence formals, CharSequence bodyText) throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
 
@@ -710,6 +710,64 @@ public class Parser {
             boolean strict = (context.strictMode == StrictMode.Strict);
             List<StatementListItem> body = newSmallList();
             body.add(new ExpressionStatement(function));
+
+            FunctionContext scope = context.funContext;
+            Script script = new Script(sourceFile, scope, body, options, strict);
+            scope.node = script;
+
+            return script;
+        } finally {
+            restoreContext();
+        }
+    }
+
+    public Script parseGenerator(CharSequence formals, CharSequence bodyText)
+            throws ParserException {
+        if (ts != null)
+            throw new IllegalStateException();
+
+        newContext(ContextKind.Script);
+        try {
+            applyStrictMode(false);
+
+            GeneratorExpression generator;
+            newContext(ContextKind.Generator);
+            try {
+                BindingIdentifier identifier = new BindingIdentifier("anonymous");
+
+                ts = new TokenStream(this, new StringTokenStreamInput(formals), sourceLine);
+                ts.init();
+                FormalParameterList parameters = formalParameterList(Token.EOF);
+                if (token() != Token.EOF) {
+                    reportSyntaxError(Messages.Key.InvalidFormalParameterList);
+                }
+
+                ts = new TokenStream(this, new StringTokenStreamInput(bodyText), sourceLine);
+                ts.init();
+                List<StatementListItem> statements = functionBody(Token.EOF);
+                if (token() != Token.EOF) {
+                    reportSyntaxError(Messages.Key.InvalidFunctionBody);
+                }
+
+                // FIXME: trailing single-line comment in formals
+                String source = String
+                        .format("function anonymous (%s) {\n%s\n}", formals, bodyText);
+
+                formalParameterList_StaticSemantics(parameters);
+
+                FunctionContext scope = context.funContext;
+                generator = new GeneratorExpression(scope, identifier, parameters, statements,
+                        source);
+                scope.node = generator;
+
+                generator = inheritStrictness(generator);
+            } finally {
+                restoreContext();
+            }
+
+            boolean strict = (context.strictMode == StrictMode.Strict);
+            List<StatementListItem> body = newSmallList();
+            body.add(new ExpressionStatement(generator));
 
             FunctionContext scope = context.funContext;
             Script script = new Script(sourceFile, scope, body, options, strict);

@@ -221,6 +221,12 @@ public class Realm {
         SetIteratorPrototype setIteratorPrototype = new SetIteratorPrototype(realm);
         StopIterationObject stopIterationObject = new StopIterationObject(realm);
 
+        // Generators
+        GeneratorFunctionConstructor generatorFunctionConstructor = new GeneratorFunctionConstructor(
+                realm);
+        GeneratorPrototype generatorPrototype = new GeneratorPrototype(realm);
+        Generator generator = new Generator(realm);
+
         // Proxy
         ProxyConstructor proxyConstructor = new ProxyConstructor(realm);
 
@@ -335,6 +341,10 @@ public class Realm {
         intrinsics.put(Intrinsics.SetPrototype, setPrototype);
         intrinsics.put(Intrinsics.SetIteratorPrototype, setIteratorPrototype);
         intrinsics.put(Intrinsics.StopIteration, stopIterationObject);
+
+        intrinsics.put(Intrinsics.GeneratorFunction, generatorFunctionConstructor);
+        intrinsics.put(Intrinsics.GeneratorPrototype, generatorPrototype);
+        intrinsics.put(Intrinsics.Generator, generator);
         intrinsics.put(Intrinsics.Proxy, proxyConstructor);
 
         // native errors
@@ -423,6 +433,10 @@ public class Realm {
         setPrototype.initialise(realm);
         setIteratorPrototype.initialise(realm);
         stopIterationObject.initialise(realm);
+
+        generatorFunctionConstructor.initialise(realm);
+        generatorPrototype.initialise(realm);
+        generator.initialise(realm);
         proxyConstructor.initialise(realm);
 
         // native errors
