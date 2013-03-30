@@ -555,7 +555,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
             }
             if (c == 'e' || c == 'E') {
                 if (index >= end)
-                    return Double.NaN;
+                    break prefix;
                 int exp = index;
                 c = s.charAt(index++);
                 if (c == '+' || c == '-') {
