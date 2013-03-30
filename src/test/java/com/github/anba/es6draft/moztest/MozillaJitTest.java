@@ -118,10 +118,8 @@ public class MozillaJitTest extends BaseMozillaTest {
         // load and execute prolog.js files
         global.include(Paths.get("lib/prolog.js"));
 
-        String libdir = moztest.script.getParent().relativize(Paths.get("lib")).toString();
-        global.set(realm, "libdir", libdir + "/", global);
-
-        // ?
+        // set required global variables
+        global.set(realm, "libdir", "lib/", global);
         global.set(realm, "environment",
                 OrdinaryObject.ObjectCreate(realm, Intrinsics.ObjectPrototype), global);
 

@@ -86,6 +86,38 @@ public class MozTestGlobalObject extends GlobalObject {
         return _throw(error);
     }
 
+    private Path absolutePath(String filename) {
+        return basedir.resolve(Paths.get(filename));
+    }
+
+    private Path relativePath(String filename) {
+        return basedir.resolve(script.getParent().resolve(Paths.get(filename)));
+    }
+
+    private String read(Path path) {
+        if (!Files.exists(path)) {
+            _throw(String.format("can't open '%s'", path.toString()));
+        }
+        try {
+            byte[] bytes = Files.readAllBytes(path);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Object load(Path path) {
+        if (!Files.exists(path)) {
+            _throw(String.format("can't open '%s'", path.toString()));
+        }
+        try {
+            eval(path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return UNDEFINED;
+    }
+
     /**
      * Returns the well-known symbol {@code name} or undefined if there is no such symbol
      */
@@ -133,52 +165,31 @@ public class MozTestGlobalObject extends GlobalObject {
     /** shell-function: {@code snarf(filename)} */
     @Function(name = "snarf", arity = 1)
     public Object snarf(String filename) {
-        Path path = basedir.resolve(Paths.get(filename));
-        if (!Files.exists(path)) {
-            _throw(String.format("can't open '%s'", path.toString()));
-        }
-        try {
-            byte[] bytes = Files.readAllBytes(path);
-            return new String(bytes, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return read(filename);
     }
 
     /** shell-function: {@code read(filename)} */
     @Function(name = "read", arity = 1)
     public Object read(String filename) {
-        return snarf(filename);
+        return read(absolutePath(filename));
     }
 
     /** shell-function: {@code readRelativeToScript(filename)} */
     @Function(name = "readRelativeToScript", arity = 1)
     public Object readRelativeToScript(String filename) {
-        Path path = basedir.resolve(script.getParent().resolve(Paths.get(filename)));
-        if (!Files.exists(path)) {
-            _throw(String.format("can't open '%s'", path.toString()));
-        }
-        try {
-            byte[] bytes = Files.readAllBytes(path);
-            return new String(bytes, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return read(relativePath(filename));
     }
 
     /** shell-function: {@code load(filename)} */
     @Function(name = "load", arity = 1)
     public Object load(String filename) {
-        Path path = basedir.resolve(script.getParent().resolve(Paths.get(filename)));
-        if (!Files.exists(path)) {
-            _throw(String.format("can't open '%s'", path.toString()));
-        }
-        try {
-            eval(path);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return UNDEFINED;
+        return load(absolutePath(filename));
+    }
+
+    /** shell-function: {@code loadRelativeToScript(filename)} */
+    @Function(name = "loadRelativeToScript", arity = 1)
+    public Object loadRelativeToScript(String filename) {
+        return load(relativePath(filename));
     }
 
     /** shell-function: {@code gc()} */
