@@ -751,7 +751,7 @@ public class Parser {
 
                 // FIXME: trailing single-line comment in formals
                 String source = String
-                        .format("function anonymous (%s) {\n%s\n}", formals, bodyText);
+                        .format("function* anonymous (%s) {\n%s\n}", formals, bodyText);
 
                 formalParameterList_StaticSemantics(parameters);
 
