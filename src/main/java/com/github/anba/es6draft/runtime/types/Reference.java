@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceErr
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
-import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 
@@ -65,44 +65,44 @@ public abstract class Reference {
     /**
      * [8.2.4.1] GetValue (V)
      */
-    public abstract Object GetValue(Realm realm);
+    public abstract Object GetValue(ExecutionContext cx);
 
     /**
      * [8.2.4.1] PutValue (V, W)
      */
-    public abstract void PutValue(Object w, Realm realm);
+    public abstract void PutValue(Object w, ExecutionContext cx);
 
     /**
      * [8.2.4.3] GetThisValue (V)
      */
-    public abstract Object GetThisValue(Realm realm);
+    public abstract Object GetThisValue(ExecutionContext cx);
 
     /**
      * [8.2.4.1] GetValue (V)
      */
-    public static Object GetValue(Object v, Realm realm) {
+    public static Object GetValue(Object v, ExecutionContext cx) {
         if (!(v instanceof Reference))
             return v;
-        return ((Reference) v).GetValue(realm);
+        return ((Reference) v).GetValue(cx);
     }
 
     /**
      * [8.2.4.1] PutValue (V, W)
      */
-    public static void PutValue(Object v, Object w, Realm realm) {
+    public static void PutValue(Object v, Object w, ExecutionContext cx) {
         if (!(v instanceof Reference)) {
-            throw throwReferenceError(realm, Messages.Key.InvalidReference);
+            throw throwReferenceError(cx, Messages.Key.InvalidReference);
         }
-        ((Reference) v).PutValue(w, realm);
+        ((Reference) v).PutValue(w, cx);
     }
 
     /**
      * [8.2.4.3] GetThisValue (V)
      */
-    public static Object GetThisValue(Realm realm, Object v) {
+    public static Object GetThisValue(ExecutionContext cx, Object v) {
         if (!(v instanceof Reference))
             return v;
-        return ((Reference) v).GetThisValue(realm);
+        return ((Reference) v).GetThisValue(cx);
     }
 
     public static final class IdentifierReference extends Reference {
@@ -153,34 +153,34 @@ public abstract class Reference {
         }
 
         @Override
-        public Object GetValue(Realm realm) {
+        public Object GetValue(ExecutionContext cx) {
             if (isUnresolvableReference()) {
-                throw throwReferenceError(realm, Messages.Key.UnresolvableReference,
+                throw throwReferenceError(cx, Messages.Key.UnresolvableReference,
                         getReferencedName());
             }
             return getBase().getBindingValue(getReferencedName(), isStrictReference());
         }
 
         @Override
-        public void PutValue(Object w, Realm realm) {
+        public void PutValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
             if (isUnresolvableReference()) {
                 if (isStrictReference()) {
-                    throw throwReferenceError(realm, Messages.Key.UnresolvableReference,
+                    throw throwReferenceError(cx, Messages.Key.UnresolvableReference,
                             getReferencedName());
                 }
-                ScriptObject globalObj = realm.getGlobalThis(); // = GetGlobalObject()
-                Put(realm, globalObj, getReferencedName(), w, false);
+                ScriptObject globalObj = cx.getGlobalObject();
+                Put(cx, globalObj, getReferencedName(), w, false);
             } else {
                 getBase().setMutableBinding(getReferencedName(), w, isStrictReference());
             }
         }
 
         @Override
-        public EnvironmentRecord GetThisValue(Realm realm) {
+        public EnvironmentRecord GetThisValue(ExecutionContext cx) {
             if (isUnresolvableReference()) {
-                throw throwReferenceError(realm, Messages.Key.UnresolvableReference,
+                throw throwReferenceError(cx, Messages.Key.UnresolvableReference,
                         getReferencedName());
             }
             return getBase();
@@ -229,18 +229,18 @@ public abstract class Reference {
         }
 
         @Override
-        public Object GetThisValue(Realm realm) {
+        public Object GetThisValue(ExecutionContext cx) {
             return getBase();
         }
 
-        protected final ScriptObject getPrimitiveBaseProto(Realm realm) {
+        protected final ScriptObject getPrimitiveBaseProto(ExecutionContext cx) {
             switch (type) {
             case Boolean:
-                return realm.getIntrinsic(Intrinsics.BooleanPrototype);
+                return cx.getIntrinsic(Intrinsics.BooleanPrototype);
             case Number:
-                return realm.getIntrinsic(Intrinsics.NumberPrototype);
+                return cx.getIntrinsic(Intrinsics.NumberPrototype);
             case String:
-                return realm.getIntrinsic(Intrinsics.StringPrototype);
+                return cx.getIntrinsic(Intrinsics.StringPrototype);
             default:
                 assert false : "invalid type";
                 return null;
@@ -262,27 +262,27 @@ public abstract class Reference {
         }
 
         @Override
-        public Object GetValue(Realm realm) {
+        public Object GetValue(ExecutionContext cx) {
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
-                return GetValuePrimitive(realm);
+                return GetValuePrimitive(cx);
             }
-            return ((ScriptObject) getBase()).get(realm, getReferencedName(), GetThisValue(realm));
+            return ((ScriptObject) getBase()).get(cx, getReferencedName(), GetThisValue(cx));
         }
 
         @Override
-        public void PutValue(Object w, Realm realm) {
+        public void PutValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            ScriptObject base = (hasPrimitiveBase() ? ToObject(realm, getBase())
+            ScriptObject base = (hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase());
-            boolean succeeded = base.set(realm, getReferencedName(), w, GetThisValue(realm));
+            boolean succeeded = base.set(cx, getReferencedName(), w, GetThisValue(cx));
             if (!succeeded && isStrictReference()) {
-                throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName());
+                throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
             }
         }
 
-        private Object GetValuePrimitive(Realm realm) {
+        private Object GetValuePrimitive(ExecutionContext cx) {
             if (type == Type.String) {
                 if ("length".equals(getReferencedName())) {
                     CharSequence str = Type.stringValue(getBase());
@@ -297,7 +297,7 @@ public abstract class Reference {
                     }
                 }
             }
-            return getPrimitiveBaseProto(realm).get(realm, getReferencedName(), getBase());
+            return getPrimitiveBaseProto(cx).get(cx, getReferencedName(), getBase());
         }
     }
 
@@ -315,29 +315,29 @@ public abstract class Reference {
         }
 
         @Override
-        public Object GetValue(Realm realm) {
+        public Object GetValue(ExecutionContext cx) {
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
-                return GetValuePrimitive(realm);
+                return GetValuePrimitive(cx);
             }
-            return ((ScriptObject) getBase()).get(realm, getReferencedName(), GetThisValue(realm));
+            return ((ScriptObject) getBase()).get(cx, getReferencedName(), GetThisValue(cx));
         }
 
         @Override
-        public void PutValue(Object w, Realm realm) {
+        public void PutValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            ScriptObject base = (hasPrimitiveBase() ? ToObject(realm, getBase())
+            ScriptObject base = (hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase());
-            boolean succeeded = base.set(realm, getReferencedName(), w, GetThisValue(realm));
+            boolean succeeded = base.set(cx, getReferencedName(), w, GetThisValue(cx));
             if (!succeeded && isStrictReference()) {
-                throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName()
+                throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
             }
         }
 
-        private Object GetValuePrimitive(Realm realm) {
-            return getPrimitiveBaseProto(realm).get(realm, getReferencedName(), getBase());
+        private Object GetValuePrimitive(ExecutionContext cx) {
+            return getPrimitiveBaseProto(cx).get(cx, getReferencedName(), getBase());
         }
     }
 
@@ -383,7 +383,7 @@ public abstract class Reference {
         }
 
         @Override
-        public Object GetThisValue(Realm realm) {
+        public Object GetThisValue(ExecutionContext cx) {
             return thisValue;
         }
     }
@@ -403,17 +403,17 @@ public abstract class Reference {
         }
 
         @Override
-        public Object GetValue(Realm realm) {
-            return getBase().get(realm, getReferencedName(), GetThisValue(realm));
+        public Object GetValue(ExecutionContext cx) {
+            return getBase().get(cx, getReferencedName(), GetThisValue(cx));
         }
 
         @Override
-        public void PutValue(Object w, Realm realm) {
+        public void PutValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            boolean succeeded = getBase().set(realm, getReferencedName(), w, GetThisValue(realm));
+            boolean succeeded = getBase().set(cx, getReferencedName(), w, GetThisValue(cx));
             if (!succeeded && isStrictReference()) {
-                throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName()
+                throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
             }
         }
@@ -434,17 +434,17 @@ public abstract class Reference {
         }
 
         @Override
-        public Object GetValue(Realm realm) {
-            return getBase().get(realm, getReferencedName(), GetThisValue(realm));
+        public Object GetValue(ExecutionContext cx) {
+            return getBase().get(cx, getReferencedName(), GetThisValue(cx));
         }
 
         @Override
-        public void PutValue(Object w, Realm realm) {
+        public void PutValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            boolean succeeded = getBase().set(realm, getReferencedName(), w, GetThisValue(realm));
+            boolean succeeded = getBase().set(cx, getReferencedName(), w, GetThisValue(cx));
             if (!succeeded && isStrictReference()) {
-                throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, getReferencedName()
+                throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
             }
         }

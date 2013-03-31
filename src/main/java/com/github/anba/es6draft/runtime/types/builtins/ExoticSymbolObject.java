@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.MakeListIterator;
 import static java.util.Collections.emptyIterator;
 
-import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -53,7 +53,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.1 [[GetInheritance]] ( )
      */
     @Override
-    public ScriptObject getPrototype(Realm realm) {
+    public ScriptObject getPrototype(ExecutionContext cx) {
         return null;
     }
 
@@ -61,7 +61,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.2 [[SetInheritance]] (V)
      */
     @Override
-    public boolean setPrototype(Realm realm, ScriptObject prototype) {
+    public boolean setPrototype(ExecutionContext cx, ScriptObject prototype) {
         return false;
     }
 
@@ -69,7 +69,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.3 [[HasIntegrity]] ( Level )
      */
     @Override
-    public boolean hasIntegrity(Realm realm, IntegrityLevel level) {
+    public boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level) {
         return true;
     }
 
@@ -77,7 +77,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.4 [[setIntegrity]] ( Level )
      */
     @Override
-    public boolean setIntegrity(Realm realm, IntegrityLevel level) {
+    public boolean setIntegrity(ExecutionContext cx, IntegrityLevel level) {
         return true;
     }
 
@@ -85,7 +85,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.5 [[HasOwnProperty]] (P)
      */
     @Override
-    public boolean hasOwnProperty(Realm realm, String propertyKey) {
+    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         return false;
     }
 
@@ -93,7 +93,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.5 [[HasOwnProperty]] (P)
      */
     @Override
-    public boolean hasOwnProperty(Realm realm, Symbol propertyKey) {
+    public boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         return false;
     }
 
@@ -101,7 +101,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.6 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(Realm realm, String propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         return null;
     }
 
@@ -109,7 +109,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.6 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(Realm realm, Symbol propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         return null;
     }
 
@@ -117,7 +117,8 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.7 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
+            PropertyDescriptor desc) {
         return false;
     }
 
@@ -125,7 +126,8 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.7 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(Realm realm, Symbol propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
+            PropertyDescriptor desc) {
         return false;
     }
 
@@ -133,7 +135,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.8 [[HasProperty]] (P)
      */
     @Override
-    public boolean hasProperty(Realm realm, String propertyKey) {
+    public boolean hasProperty(ExecutionContext cx, String propertyKey) {
         return false;
     }
 
@@ -141,7 +143,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.8 [[HasProperty]] (P)
      */
     @Override
-    public boolean hasProperty(Realm realm, Symbol propertyKey) {
+    public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
         return false;
     }
 
@@ -149,9 +151,9 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(Realm realm, String propertyKey, Object receiver) {
+    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         if ("toString".equals(propertyKey)) {
-            return realm.getIntrinsic(Intrinsics.ObjProto_toString);
+            return cx.getIntrinsic(Intrinsics.ObjProto_toString);
         }
         return UNDEFINED;
     }
@@ -160,7 +162,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(Realm realm, Symbol propertyKey, Object receiver) {
+    public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
         return UNDEFINED;
     }
 
@@ -168,7 +170,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.8 [[Set] ( P, V, Receiver)
      */
     @Override
-    public boolean set(Realm realm, String propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         return false;
     }
 
@@ -176,7 +178,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.8 [[Set] ( P, V, Receiver)
      */
     @Override
-    public boolean set(Realm realm, Symbol propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
         return false;
     }
 
@@ -184,7 +186,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.9 [[Delete]] (P)
      */
     @Override
-    public boolean delete(Realm realm, String propertyKey) {
+    public boolean delete(ExecutionContext cx, String propertyKey) {
         return true;
     }
 
@@ -192,7 +194,7 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.9 [[Delete]] (P)
      */
     @Override
-    public boolean delete(Realm realm, Symbol propertyKey) {
+    public boolean delete(ExecutionContext cx, Symbol propertyKey) {
         return true;
     }
 
@@ -200,17 +202,17 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
      * 8.4.4.11 [[Enumerate]] ()
      */
     @Override
-    public ScriptObject enumerate(Realm realm) {
+    public ScriptObject enumerate(ExecutionContext cx) {
         // FIXME: spec incomplete
-        return MakeListIterator(realm, emptyIterator());
+        return MakeListIterator(cx, emptyIterator());
     }
 
     /**
      * 8.4.4.13 [[OwnPropertyKeys]] ( )
      */
     @Override
-    public ScriptObject ownPropertyKeys(Realm realm) {
+    public ScriptObject ownPropertyKeys(ExecutionContext cx) {
         // FIXME: spec incomplete
-        return MakeListIterator(realm, emptyIterator());
+        return MakeListIterator(cx, emptyIterator());
     }
 }

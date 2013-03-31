@@ -16,7 +16,7 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 
 import com.github.anba.es6draft.ast.BinaryExpression;
-import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
@@ -25,15 +25,17 @@ import com.github.anba.es6draft.runtime.types.Type;
 public class SimpleBootstrap {
     private static class Types {
         static final org.objectweb.asm.Type Object = org.objectweb.asm.Type.getType(Object.class);
-        static final org.objectweb.asm.Type Realm = org.objectweb.asm.Type.getType(Realm.class);
+        static final org.objectweb.asm.Type ExecutionContext = org.objectweb.asm.Type
+                .getType(ExecutionContext.class);
     }
 
     private static final String OP_ADD = org.objectweb.asm.Type.getMethodDescriptor(Types.Object,
-            Types.Object, Types.Object, Types.Realm);
+            Types.Object, Types.Object, Types.ExecutionContext);
     private static final String OP_CMP = org.objectweb.asm.Type.getMethodDescriptor(
-            org.objectweb.asm.Type.INT_TYPE, Types.Object, Types.Object, Types.Realm);
-    private static final String OP_EQ = org.objectweb.asm.Type.getMethodDescriptor(
-            org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object, Types.Realm);
+            org.objectweb.asm.Type.INT_TYPE, Types.Object, Types.Object, Types.ExecutionContext);
+    private static final String OP_EQ = org.objectweb.asm.Type
+            .getMethodDescriptor(org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object,
+                    Types.ExecutionContext);
     private static final String OP_STRICT_EQ = org.objectweb.asm.Type.getMethodDescriptor(
             org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object);
 
@@ -130,15 +132,15 @@ public class SimpleBootstrap {
                     CharSequence.class, CharSequence.class, CharSequence.class));
             addNumberMH = lookup.findStatic(thisClass, "addNumber",
                     MethodType.methodType(Double.class, Number.class, Number.class));
-            addGenericMH = lookup.findStatic(thisClass, "addGeneric",
-                    MethodType.methodType(Object.class, Object.class, Object.class, Realm.class));
+            addGenericMH = lookup.findStatic(thisClass, "addGeneric", MethodType.methodType(
+                    Object.class, Object.class, Object.class, ExecutionContext.class));
 
             relCmpStringMH = lookup.findStatic(thisClass, "relCmpString",
                     MethodType.methodType(int.class, CharSequence.class, CharSequence.class));
             relCmpNumberMH = lookup.findStatic(thisClass, "relCmpNumber",
                     MethodType.methodType(int.class, Number.class, Number.class));
             relCmpGenericMH = lookup.findStatic(thisClass, "relCmpGeneric", MethodType.methodType(
-                    int.class, Object.class, Object.class, boolean.class, Realm.class));
+                    int.class, Object.class, Object.class, boolean.class, ExecutionContext.class));
 
             eqCmpStringMH = lookup.findStatic(thisClass, "eqCmpString",
                     MethodType.methodType(boolean.class, CharSequence.class, CharSequence.class));
@@ -146,8 +148,8 @@ public class SimpleBootstrap {
                     MethodType.methodType(boolean.class, Number.class, Number.class));
             eqCmpBooleanMH = lookup.findStatic(thisClass, "eqCmpBoolean",
                     MethodType.methodType(boolean.class, Boolean.class, Boolean.class));
-            eqCmpGenericMH = lookup.findStatic(thisClass, "eqCmpGeneric",
-                    MethodType.methodType(boolean.class, Object.class, Object.class, Realm.class));
+            eqCmpGenericMH = lookup.findStatic(thisClass, "eqCmpGeneric", MethodType.methodType(
+                    boolean.class, Object.class, Object.class, ExecutionContext.class));
 
             strictEqCmpStringMH = eqCmpStringMH;
             strictEqCmpNumberMH = eqCmpNumberMH;
@@ -156,12 +158,14 @@ public class SimpleBootstrap {
                     MethodType.methodType(boolean.class, Object.class, Object.class));
 
             addSetupMH = lookup.findStatic(thisClass, "addSetup", MethodType.methodType(
-                    Object.class, MutableCallSite.class, Object.class, Object.class, Realm.class));
+                    Object.class, MutableCallSite.class, Object.class, Object.class,
+                    ExecutionContext.class));
             relCmpSetupMH = lookup.findStatic(thisClass, "relCmpSetup", MethodType.methodType(
                     int.class, MutableCallSite.class, boolean.class, Object.class, Object.class,
-                    Realm.class));
+                    ExecutionContext.class));
             eqCmpSetupMH = lookup.findStatic(thisClass, "eqCmpSetup", MethodType.methodType(
-                    boolean.class, MutableCallSite.class, Object.class, Object.class, Realm.class));
+                    boolean.class, MutableCallSite.class, Object.class, Object.class,
+                    ExecutionContext.class));
             strictEqCmpSetupMH = lookup.findStatic(thisClass, "strictEqCmpSetup", MethodType
                     .methodType(boolean.class, MutableCallSite.class, Object.class, Object.class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
@@ -180,8 +184,8 @@ public class SimpleBootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static Object addGeneric(Object arg1, Object arg2, Realm realm) {
-        return ScriptRuntime.add(arg1, arg2, realm);
+    private static Object addGeneric(Object arg1, Object arg2, ExecutionContext cx) {
+        return ScriptRuntime.add(arg1, arg2, cx);
     }
 
     @SuppressWarnings("unused")
@@ -198,8 +202,9 @@ public class SimpleBootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static int relCmpGeneric(Object arg1, Object arg2, boolean leftFirst, Realm realm) {
-        return ScriptRuntime.relationalComparison(arg1, arg2, leftFirst, realm);
+    private static int relCmpGeneric(Object arg1, Object arg2, boolean leftFirst,
+            ExecutionContext cx) {
+        return ScriptRuntime.relationalComparison(arg1, arg2, leftFirst, cx);
     }
 
     @SuppressWarnings("unused")
@@ -218,8 +223,8 @@ public class SimpleBootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static boolean eqCmpGeneric(Object arg1, Object arg2, Realm realm) {
-        return ScriptRuntime.equalityComparison(arg1, arg2, realm);
+    private static boolean eqCmpGeneric(Object arg1, Object arg2, ExecutionContext cx) {
+        return ScriptRuntime.equalityComparison(arg1, arg2, cx);
     }
 
     @SuppressWarnings("unused")
@@ -240,15 +245,15 @@ public class SimpleBootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static Object addSetup(MutableCallSite callsite, Object arg1, Object arg2, Realm realm)
-            throws Throwable {
+    private static Object addSetup(MutableCallSite callsite, Object arg1, Object arg2,
+            ExecutionContext cx) throws Throwable {
         MethodHandle callSiteTarget, target;
         if (testString(arg1, arg2)) {
-            target = MethodHandles.dropArguments(addStringMH, 2, Realm.class).asType(
+            target = MethodHandles.dropArguments(addStringMH, 2, ExecutionContext.class).asType(
                     callsite.type());
             callSiteTarget = MethodHandles.guardWithTest(testStringMH, target, addGenericMH);
         } else if (testNumber(arg1, arg2)) {
-            target = MethodHandles.dropArguments(addNumberMH, 2, Realm.class).asType(
+            target = MethodHandles.dropArguments(addNumberMH, 2, ExecutionContext.class).asType(
                     callsite.type());
             callSiteTarget = MethodHandles.guardWithTest(testNumberMH, target, addGenericMH);
         } else {
@@ -256,20 +261,20 @@ public class SimpleBootstrap {
         }
 
         callsite.setTarget(callSiteTarget);
-        return target.invokeExact(arg1, arg2, realm);
+        return target.invokeExact(arg1, arg2, cx);
     }
 
     @SuppressWarnings("unused")
     private static int relCmpSetup(MutableCallSite callsite, boolean leftFirst, Object arg1,
-            Object arg2, Realm realm) throws Throwable {
+            Object arg2, ExecutionContext cx) throws Throwable {
         MethodHandle callSiteTarget, target;
         if (testString(arg1, arg2)) {
-            target = MethodHandles.dropArguments(relCmpStringMH, 2, Realm.class).asType(
+            target = MethodHandles.dropArguments(relCmpStringMH, 2, ExecutionContext.class).asType(
                     callsite.type());
             callSiteTarget = MethodHandles.guardWithTest(testStringMH, target,
                     MethodHandles.insertArguments(relCmpGenericMH, 2, leftFirst));
         } else if (testNumber(arg1, arg2)) {
-            target = MethodHandles.dropArguments(relCmpNumberMH, 2, Realm.class).asType(
+            target = MethodHandles.dropArguments(relCmpNumberMH, 2, ExecutionContext.class).asType(
                     callsite.type());
             callSiteTarget = MethodHandles.guardWithTest(testNumberMH, target,
                     MethodHandles.insertArguments(relCmpGenericMH, 2, leftFirst));
@@ -278,23 +283,23 @@ public class SimpleBootstrap {
         }
 
         callsite.setTarget(callSiteTarget);
-        return (int) target.invokeExact(arg1, arg2, realm);
+        return (int) target.invokeExact(arg1, arg2, cx);
     }
 
     @SuppressWarnings("unused")
     private static boolean eqCmpSetup(MutableCallSite callsite, Object arg1, Object arg2,
-            Realm realm) throws Throwable {
+            ExecutionContext cx) throws Throwable {
         MethodHandle callSiteTarget, target;
         if (testString(arg1, arg2)) {
-            target = MethodHandles.dropArguments(eqCmpStringMH, 2, Realm.class).asType(
+            target = MethodHandles.dropArguments(eqCmpStringMH, 2, ExecutionContext.class).asType(
                     callsite.type());
             callSiteTarget = MethodHandles.guardWithTest(testStringMH, target, eqCmpGenericMH);
         } else if (testNumber(arg1, arg2)) {
-            target = MethodHandles.dropArguments(eqCmpNumberMH, 2, Realm.class).asType(
+            target = MethodHandles.dropArguments(eqCmpNumberMH, 2, ExecutionContext.class).asType(
                     callsite.type());
             callSiteTarget = MethodHandles.guardWithTest(testNumberMH, target, eqCmpGenericMH);
         } else if (testBoolean(arg1, arg2)) {
-            target = MethodHandles.dropArguments(eqCmpBooleanMH, 2, Realm.class).asType(
+            target = MethodHandles.dropArguments(eqCmpBooleanMH, 2, ExecutionContext.class).asType(
                     callsite.type());
             callSiteTarget = MethodHandles.guardWithTest(testBooleanMH, target, eqCmpGenericMH);
         } else {
@@ -302,7 +307,7 @@ public class SimpleBootstrap {
         }
 
         callsite.setTarget(callSiteTarget);
-        return (boolean) target.invokeExact(arg1, arg2, realm);
+        return (boolean) target.invokeExact(arg1, arg2, cx);
     }
 
     @SuppressWarnings("unused")

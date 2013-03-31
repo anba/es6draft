@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -39,16 +40,16 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.6.1.1 Boolean (value)
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         boolean b = (args.length > 0 ? ToBoolean(args[0]) : false);
         if (thisValue instanceof BooleanObject) {
             BooleanObject obj = (BooleanObject) thisValue;
@@ -64,8 +65,8 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
      * 15.6.2.1 new Boolean (value)
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -100,8 +101,8 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.BooleanPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.BooleanPrototype,
                     BooleanObjectAllocator.INSTANCE);
         }
     }

@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
-import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
@@ -198,25 +198,25 @@ public final class PropertyDescriptor {
      * Returns {@code undefined} if the input property descriptor is {@code null}, otherwise returns
      * a {@link ScriptObject} representing the fields of this property descriptor.
      */
-    public static Object FromPropertyDescriptor(Realm realm, Property desc)
+    public static Object FromPropertyDescriptor(ExecutionContext cx, Property desc)
             throws IllegalArgumentException {
         /* step 1 */
         if (desc == null) {
             return UNDEFINED;
         }
         /* step 3-4 */
-        ScriptObject obj = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+        ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 5-10 */
         // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {
-            obj.defineOwnProperty(realm, "value", _p(desc.getValue()));
-            obj.defineOwnProperty(realm, "writable", _p(desc.isWritable()));
+            obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
+            obj.defineOwnProperty(cx, "writable", _p(desc.isWritable()));
         } else {
-            obj.defineOwnProperty(realm, "get", _p(undefinedIfNull(desc.getGetter())));
-            obj.defineOwnProperty(realm, "set", _p(undefinedIfNull(desc.getSetter())));
+            obj.defineOwnProperty(cx, "get", _p(undefinedIfNull(desc.getGetter())));
+            obj.defineOwnProperty(cx, "set", _p(undefinedIfNull(desc.getSetter())));
         }
-        obj.defineOwnProperty(realm, "enumerable", _p(desc.isEnumerable()));
-        obj.defineOwnProperty(realm, "configurable", _p(desc.isConfigurable()));
+        obj.defineOwnProperty(cx, "enumerable", _p(desc.isEnumerable()));
+        obj.defineOwnProperty(cx, "configurable", _p(desc.isConfigurable()));
         /* step 11 */
         return obj;
     }
@@ -227,7 +227,7 @@ public final class PropertyDescriptor {
      * Returns {@code undefined} if the input property descriptor is {@code null}, otherwise returns
      * a {@link ScriptObject} representing the fields of this property descriptor.
      */
-    public static Object FromPropertyDescriptor(Realm realm, PropertyDescriptor desc)
+    public static Object FromPropertyDescriptor(ExecutionContext cx, PropertyDescriptor desc)
             throws IllegalArgumentException {
         // FromPropertyDescriptor assumes that Desc is a fully populated descriptor
         if (desc != null) {
@@ -246,18 +246,18 @@ public final class PropertyDescriptor {
             return desc.origin;
         }
         /* step 3-4 */
-        ScriptObject obj = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+        ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 5-10 */
         // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {
-            obj.defineOwnProperty(realm, "value", _p(desc.getValue()));
-            obj.defineOwnProperty(realm, "writable", _p(desc.isWritable()));
+            obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
+            obj.defineOwnProperty(cx, "writable", _p(desc.isWritable()));
         } else {
-            obj.defineOwnProperty(realm, "get", _p(undefinedIfNull(desc.getGetter())));
-            obj.defineOwnProperty(realm, "set", _p(undefinedIfNull(desc.getSetter())));
+            obj.defineOwnProperty(cx, "get", _p(undefinedIfNull(desc.getGetter())));
+            obj.defineOwnProperty(cx, "set", _p(undefinedIfNull(desc.getSetter())));
         }
-        obj.defineOwnProperty(realm, "enumerable", _p(desc.isEnumerable()));
-        obj.defineOwnProperty(realm, "configurable", _p(desc.isConfigurable()));
+        obj.defineOwnProperty(cx, "enumerable", _p(desc.isEnumerable()));
+        obj.defineOwnProperty(cx, "configurable", _p(desc.isConfigurable()));
         /* step 11 */
         return obj;
     }
@@ -276,47 +276,47 @@ public final class PropertyDescriptor {
      * Returns a new property descriptor from the input argument {@code object}, if {@code object}
      * is not an instance of {@link ScriptObject}, a TypeError is thrown.
      */
-    public static PropertyDescriptor ToPropertyDescriptor(Realm realm, Object object) {
+    public static PropertyDescriptor ToPropertyDescriptor(ExecutionContext cx, Object object) {
         /* step 1-2 */
         if (!Type.isObject(object)) {
-            throwTypeError(realm, Messages.Key.NotObjectType);
+            throwTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject obj = Type.objectValue(object);
         /* step 3-9 */
         PropertyDescriptor desc = new PropertyDescriptor();
-        if (HasProperty(realm, obj, "enumerable")) {
-            Object enumerable = Get(realm, obj, "enumerable");
+        if (HasProperty(cx, obj, "enumerable")) {
+            Object enumerable = Get(cx, obj, "enumerable");
             desc.setEnumerable(ToBoolean(enumerable));
         }
-        if (HasProperty(realm, obj, "configurable")) {
-            Object configurable = Get(realm, obj, "configurable");
+        if (HasProperty(cx, obj, "configurable")) {
+            Object configurable = Get(cx, obj, "configurable");
             desc.setConfigurable(ToBoolean(configurable));
         }
-        if (HasProperty(realm, obj, "value")) {
-            Object value = Get(realm, obj, "value");
+        if (HasProperty(cx, obj, "value")) {
+            Object value = Get(cx, obj, "value");
             desc.setValue(value);
         }
-        if (HasProperty(realm, obj, "writable")) {
-            Object writable = Get(realm, obj, "writable");
+        if (HasProperty(cx, obj, "writable")) {
+            Object writable = Get(cx, obj, "writable");
             desc.setWritable(ToBoolean(writable));
         }
-        if (HasProperty(realm, obj, "get")) {
-            Object getter = Get(realm, obj, "get");
+        if (HasProperty(cx, obj, "get")) {
+            Object getter = Get(cx, obj, "get");
             if (!(IsCallable(getter) || Type.isUndefined(getter))) {
-                throwTypeError(realm, Messages.Key.InvalidGetter);
+                throwTypeError(cx, Messages.Key.InvalidGetter);
             }
             desc.setGetter(callableOrNull(getter));
         }
-        if (HasProperty(realm, obj, "set")) {
-            Object setter = Get(realm, obj, "set");
+        if (HasProperty(cx, obj, "set")) {
+            Object setter = Get(cx, obj, "set");
             if (!(IsCallable(setter) || Type.isUndefined(setter))) {
-                throwTypeError(realm, Messages.Key.InvalidSetter);
+                throwTypeError(cx, Messages.Key.InvalidSetter);
             }
             desc.setSetter(callableOrNull(setter));
         }
         /* step 10 */
         if ((desc.present & (GET | SET)) != 0 && (desc.present & (VALUE | WRITABLE)) != 0) {
-            throwTypeError(realm, Messages.Key.InvalidDescriptor);
+            throwTypeError(cx, Messages.Key.InvalidDescriptor);
         }
         /* step 11 */
         desc.origin = obj;

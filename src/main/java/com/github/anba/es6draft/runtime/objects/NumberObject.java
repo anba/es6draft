@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -50,9 +51,9 @@ public class NumberObject extends OrdinaryObject {
     /**
      * Custom helper function
      */
-    public static NumberObject NumberCreate(Realm realm, double numberData) {
-        NumberObject obj = new NumberObject(realm);
-        obj.setPrototype(realm, realm.getIntrinsic(Intrinsics.NumberPrototype));
+    public static NumberObject NumberCreate(ExecutionContext cx, double numberData) {
+        NumberObject obj = new NumberObject(cx.getRealm());
+        obj.setPrototype(cx, cx.getIntrinsic(Intrinsics.NumberPrototype));
         obj.setNumberData(numberData);
         return obj;
     }

@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import java.lang.invoke.MethodHandle;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -28,17 +29,18 @@ public class NativeFunction extends BuiltinFunction {
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
         super(realm);
         this.mh = mh;
-        setPrototype(realm, realm.getIntrinsic(Intrinsics.FunctionPrototype));
-        defineOwnProperty(realm, "name", new PropertyDescriptor(name, false, false, false));
-        defineOwnProperty(realm, "length", new PropertyDescriptor(arity, false, false, false));
-        AddRestrictedFunctionProperties(realm, this);
+        ExecutionContext cx = realm.defaultContext();
+        setPrototype(cx, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+        defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
+        defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, false));
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * [[Call]]
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
             return mh.invokeExact(thisValue, args);
         } catch (RuntimeException | Error e) {

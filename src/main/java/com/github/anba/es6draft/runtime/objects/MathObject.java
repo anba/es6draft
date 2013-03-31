@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -32,11 +33,11 @@ public class MathObject extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        setPrototype(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
+    public void initialise(ExecutionContext cx) {
+        setPrototype(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
 
-        createProperties(this, realm, ValueProperties.class);
-        createProperties(this, realm, FunctionProperties.class);
+        createProperties(this, cx, ValueProperties.class);
+        createProperties(this, cx, FunctionProperties.class);
     }
 
     /**
@@ -112,90 +113,90 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.1 Math.abs (x)
          */
         @Function(name = "abs", arity = 1)
-        public static Object abs(Realm realm, Object thisValue, Object x) {
-            return Math.abs(ToNumber(realm, x));
+        public static Object abs(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.abs(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.2 Math.acos (x)
          */
         @Function(name = "acos", arity = 1)
-        public static Object acos(Realm realm, Object thisValue, Object x) {
-            return Math.acos(ToNumber(realm, x));
+        public static Object acos(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.acos(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.3 Math.asin (x)
          */
         @Function(name = "asin", arity = 1)
-        public static Object asin(Realm realm, Object thisValue, Object x) {
-            return Math.asin(ToNumber(realm, x));
+        public static Object asin(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.asin(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.4 Math.atan (x)
          */
         @Function(name = "atan", arity = 1)
-        public static Object atan(Realm realm, Object thisValue, Object x) {
-            return Math.atan(ToNumber(realm, x));
+        public static Object atan(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.atan(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.5 Math.atan2 (y, x)
          */
         @Function(name = "atan2", arity = 2)
-        public static Object atan2(Realm realm, Object thisValue, Object y, Object x) {
-            return Math.atan2(ToNumber(realm, y), ToNumber(realm, x));
+        public static Object atan2(ExecutionContext cx, Object thisValue, Object y, Object x) {
+            return Math.atan2(ToNumber(cx, y), ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.6 Math.ceil (x)
          */
         @Function(name = "ceil", arity = 1)
-        public static Object ceil(Realm realm, Object thisValue, Object x) {
-            return Math.ceil(ToNumber(realm, x));
+        public static Object ceil(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.ceil(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.7 Math.cos (x)
          */
         @Function(name = "cos", arity = 1)
-        public static Object cos(Realm realm, Object thisValue, Object x) {
-            return Math.cos(ToNumber(realm, x));
+        public static Object cos(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.cos(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.8 Math.exp (x)
          */
         @Function(name = "exp", arity = 1)
-        public static Object exp(Realm realm, Object thisValue, Object x) {
-            return Math.exp(ToNumber(realm, x));
+        public static Object exp(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.exp(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.9 Math.floor (x)
          */
         @Function(name = "floor", arity = 1)
-        public static Object floor(Realm realm, Object thisValue, Object x) {
-            return Math.floor(ToNumber(realm, x));
+        public static Object floor(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.floor(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.10 Math.log (x)
          */
         @Function(name = "log", arity = 1)
-        public static Object log(Realm realm, Object thisValue, Object x) {
-            return Math.log(ToNumber(realm, x));
+        public static Object log(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.log(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.11 Math.max ( [ value1 [ , value2 [ , ... ] ] ] )
          */
         @Function(name = "max", arity = 2)
-        public static Object max(Realm realm, Object thisValue, Object... values) {
+        public static Object max(ExecutionContext cx, Object thisValue, Object... values) {
             double max = Double.NEGATIVE_INFINITY;
             for (Object value : values) {
-                double v = ToNumber(realm, value);
+                double v = ToNumber(cx, value);
                 // Do not call `Double.compare(v, max)` (parameter order!), to handle NaN properly
                 // N.B. Double.compare() includes all necessary checks to be compliant to Abstract
                 // Relational Comparison Algorithm (11.8.1)
@@ -210,10 +211,10 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.12 Math.min ( [ value1 [ , value2 [ , ... ] ] ] )
          */
         @Function(name = "min", arity = 2)
-        public static Object min(Realm realm, Object thisValue, Object... values) {
+        public static Object min(ExecutionContext cx, Object thisValue, Object... values) {
             double min = Double.POSITIVE_INFINITY;
             for (Object value : values) {
-                double v = ToNumber(realm, value);
+                double v = ToNumber(cx, value);
                 // Do not call `Double.compare(-v, -min)` (parameter order!), to handle NaN properly
                 // N.B. Double.compare() includes all necessary checks to be compliant to Abstract
                 // Relational Comparison Algorithm (11.8.1)
@@ -228,15 +229,15 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.13 Math.pow (x, y)
          */
         @Function(name = "pow", arity = 2)
-        public static Object pow(Realm realm, Object thisValue, Object x, Object y) {
-            return Math.pow(ToNumber(realm, x), ToNumber(realm, y));
+        public static Object pow(ExecutionContext cx, Object thisValue, Object x, Object y) {
+            return Math.pow(ToNumber(cx, x), ToNumber(cx, y));
         }
 
         /**
          * 15.8.2.14 Math.random ( )
          */
         @Function(name = "random", arity = 0)
-        public static Object random(Realm realm, Object thisValue) {
+        public static Object random(ExecutionContext cx, Object thisValue) {
             return Math.random();
         }
 
@@ -244,8 +245,8 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.15 Math.round (x)
          */
         @Function(name = "round", arity = 1)
-        public static Object round(Realm realm, Object thisValue, Object x) {
-            double d = ToNumber(realm, x);
+        public static Object round(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
             if (d != d || d == 0 || Double.isInfinite(d)) {
                 return d;
             }
@@ -263,88 +264,88 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.16 Math.sin (x)
          */
         @Function(name = "sin", arity = 1)
-        public static Object sin(Realm realm, Object thisValue, Object x) {
-            return Math.sin(ToNumber(realm, x));
+        public static Object sin(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.sin(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.17 Math.sqrt (x)
          */
         @Function(name = "sqrt", arity = 1)
-        public static Object sqrt(Realm realm, Object thisValue, Object x) {
-            return Math.sqrt(ToNumber(realm, x));
+        public static Object sqrt(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.sqrt(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.18 Math.tan (x)
          */
         @Function(name = "tan", arity = 1)
-        public static Object tan(Realm realm, Object thisValue, Object x) {
-            return Math.tan(ToNumber(realm, x));
+        public static Object tan(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.tan(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.19 Math.log10 (x)
          */
         @Function(name = "log10", arity = 1)
-        public static Object log10(Realm realm, Object thisValue, Object x) {
-            return Math.log10(ToNumber(realm, x));
+        public static Object log10(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.log10(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.20 Math.log2 (x)
          */
         @Function(name = "log2", arity = 1)
-        public static Object log2(Realm realm, Object thisValue, Object x) {
-            return Math.log(ToNumber(realm, x)) / Math.log(2d);
+        public static Object log2(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.log(ToNumber(cx, x)) / Math.log(2d);
         }
 
         /**
          * 15.8.2.21 Math.log1p (x)
          */
         @Function(name = "log1p", arity = 1)
-        public static Object log1p(Realm realm, Object thisValue, Object x) {
-            return Math.log1p(ToNumber(realm, x));
+        public static Object log1p(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.log1p(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.22 Math.expm1 (x)
          */
         @Function(name = "expm1", arity = 1)
-        public static Object expm1(Realm realm, Object thisValue, Object x) {
-            return Math.expm1(ToNumber(realm, x));
+        public static Object expm1(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.expm1(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.23 Math.cosh(x)
          */
         @Function(name = "cosh", arity = 1)
-        public static Object cosh(Realm realm, Object thisValue, Object x) {
-            return Math.cosh(ToNumber(realm, x));
+        public static Object cosh(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.cosh(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.24 Math.sinh(x)
          */
         @Function(name = "sinh", arity = 1)
-        public static Object sinh(Realm realm, Object thisValue, Object x) {
-            return Math.sinh(ToNumber(realm, x));
+        public static Object sinh(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.sinh(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.25 Math.tanh(x)
          */
         @Function(name = "tanh", arity = 1)
-        public static Object tanh(Realm realm, Object thisValue, Object x) {
-            return Math.tanh(ToNumber(realm, x));
+        public static Object tanh(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.tanh(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.26 Math.acosh(x)
          */
         @Function(name = "acosh", arity = 1)
-        public static Object acosh(Realm realm, Object thisValue, Object x) {
-            double d = ToNumber(realm, x);
+        public static Object acosh(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
             if (Double.isNaN(d) || d < 1.0) {
                 return Double.NaN;
             }
@@ -361,8 +362,8 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.27 Math.asinh(x)
          */
         @Function(name = "asinh", arity = 1)
-        public static Object asinh(Realm realm, Object thisValue, Object x) {
-            double d = ToNumber(realm, x);
+        public static Object asinh(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
             if (Double.isNaN(d) || d == 0.0 || Double.isInfinite(d)) {
                 return d;
             }
@@ -373,8 +374,8 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.28 Math.atanh(x)
          */
         @Function(name = "atanh", arity = 1)
-        public static Object atanh(Realm realm, Object thisValue, Object x) {
-            double d = ToNumber(realm, x);
+        public static Object atanh(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
             if (Double.isNaN(d) || d < -1.0 || d > 1.0) {
                 return Double.NaN;
             }
@@ -394,13 +395,12 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.29 Math.hypot( value1 , value2, value3 = 0 )
          */
         @Function(name = "hypot", arity = 2)
-        public static Object hypot(Realm realm, Object thisValue, Object value1, Object value2,
-                @Optional(Optional.Default.NONE) Object value3) {
+        public static Object hypot(ExecutionContext cx, Object thisValue, Object value1,
+                Object value2, @Optional(Optional.Default.NONE) Object value3) {
             if (value3 == null) {
-                return Math.hypot(ToNumber(realm, value1), ToNumber(realm, value2));
+                return Math.hypot(ToNumber(cx, value1), ToNumber(cx, value2));
             }
-            double v1 = ToNumber(realm, value1), v2 = ToNumber(realm, value2), v3 = ToNumber(realm,
-                    value3);
+            double v1 = ToNumber(cx, value1), v2 = ToNumber(cx, value2), v3 = ToNumber(cx, value3);
             if (Double.isInfinite(v1) || Double.isInfinite(v2) || Double.isInfinite(v3)) {
                 return Double.POSITIVE_INFINITY;
             }
@@ -417,8 +417,8 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.30 Math.trunc(x)
          */
         @Function(name = "trunc", arity = 1)
-        public static Object trunc(Realm realm, Object thisValue, Object x) {
-            double d = ToNumber(realm, x);
+        public static Object trunc(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
             return d < 0 ? Math.ceil(d) : Math.floor(d);
         }
 
@@ -426,16 +426,16 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          * 15.8.2.31 Math.sign(x)
          */
         @Function(name = "sign", arity = 1)
-        public static Object sign(Realm realm, Object thisValue, Object x) {
-            return Math.signum(ToNumber(realm, x));
+        public static Object sign(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.signum(ToNumber(cx, x));
         }
 
         /**
          * 15.8.2.32 Math.cbrt(x)
          */
         @Function(name = "cbrt", arity = 1)
-        public static Object cbrt(Realm realm, Object thisValue, Object x) {
-            return Math.cbrt(ToNumber(realm, x));
+        public static Object cbrt(ExecutionContext cx, Object thisValue, Object x) {
+            return Math.cbrt(ToNumber(cx, x));
         }
     }
 

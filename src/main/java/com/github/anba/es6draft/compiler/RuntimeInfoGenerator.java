@@ -41,9 +41,9 @@ class RuntimeInfoGenerator {
 
         static String functionInit = Type.getMethodDescriptor(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
-        static String globalInit = Type.getMethodDescriptor(Type.VOID_TYPE, Types.Realm,
+        static String globalInit = Type.getMethodDescriptor(Type.VOID_TYPE, Types.ExecutionContext,
                 Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
-        static String evalInit = Type.getMethodDescriptor(Type.VOID_TYPE, Types.Realm,
+        static String evalInit = Type.getMethodDescriptor(Type.VOID_TYPE, Types.ExecutionContext,
                 Types.LexicalEnvironment, Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
 
         static String functionCode = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);

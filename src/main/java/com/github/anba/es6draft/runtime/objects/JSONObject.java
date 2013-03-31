@@ -21,6 +21,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.parser.JSONParser;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -49,8 +50,8 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     public enum Properties {
@@ -63,19 +64,20 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
          * 15.12.2 JSON.parse ( text [ , reviver ] )
          */
         @Function(name = "parse", arity = 2)
-        public static Object parse(Realm realm, Object thisValue, Object text, Object reviver) {
-            CharSequence jtext = ToString(realm, text);
+        public static Object parse(ExecutionContext cx, Object thisValue, Object text,
+                Object reviver) {
+            CharSequence jtext = ToString(cx, text);
             Object unfiltered;
             try {
-                JSONParser parser = new JSONParser(realm, jtext);
+                JSONParser parser = new JSONParser(cx, jtext);
                 unfiltered = parser.parse();
             } catch (ParserException e) {
-                throw throwSyntaxError(realm, Messages.Key.InvalidJSONLiteral);
+                throw throwSyntaxError(cx, Messages.Key.InvalidJSONLiteral);
             }
             if (IsCallable(reviver)) {
-                ScriptObject root = ObjectCreate(realm, Intrinsics.ObjectPrototype);
-                CreateOwnDataProperty(realm, root, "", unfiltered);
-                return Walk(realm, (Callable) reviver, root, "");
+                ScriptObject root = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+                CreateOwnDataProperty(cx, root, "", unfiltered);
+                return Walk(cx, (Callable) reviver, root, "");
             }
             return unfiltered;
         }
@@ -84,7 +86,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
          * 15.12.3 JSON.stringify ( value [ , replacer [ , space ] ] )
          */
         @Function(name = "stringify", arity = 3)
-        public static Object stringify(Realm realm, Object thisValue, Object value,
+        public static Object stringify(ExecutionContext cx, Object thisValue, Object value,
                 Object replacer, Object space) {
             HashSet<ScriptObject> stack = new HashSet<>();
             String indent = "";
@@ -97,18 +99,18 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                     // https://bugs.ecmascript.org/show_bug.cgi?id=170
                     propertyList = new LinkedHashSet<>();
                     ScriptObject objReplacer = Type.objectValue(replacer);
-                    long len = ToUint32(realm, Get(realm, objReplacer, "length"));
+                    long len = ToUint32(cx, Get(cx, objReplacer, "length"));
                     for (long i = 0; i < len; ++i) {
                         String item = null;
-                        Object v = Get(realm, objReplacer, ToString(i));
+                        Object v = Get(cx, objReplacer, ToString(i));
                         if (Type.isString(v)) {
                             item = Type.stringValue(v).toString();
                         } else if (Type.isNumber(v)) {
-                            item = ToFlatString(realm, v);
+                            item = ToFlatString(cx, v);
                         } else if (Type.isObject(v)) {
                             ScriptObject o = Type.objectValue(v);
                             if (o instanceof ExoticString || o instanceof NumberObject) {
-                                item = ToFlatString(realm, v);
+                                item = ToFlatString(cx, v);
                             }
                         }
                         if (item != null && !propertyList.contains(item)) {
@@ -120,15 +122,15 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             if (Type.isObject(space)) {
                 ScriptObject o = Type.objectValue(space);
                 if (o instanceof NumberObject) {
-                    space = ToNumber(realm, space);
+                    space = ToNumber(cx, space);
                 } else if (o instanceof ExoticString) {
-                    space = ToString(realm, space);
+                    space = ToString(cx, space);
                 }
             }
             String gap;
             if (Type.isNumber(space)) {
-                int nspace = (int) Math.max(0,
-                        Math.min(10, ToInteger(realm, Type.numberValue(space))));
+                int nspace = (int) Math
+                        .max(0, Math.min(10, ToInteger(cx, Type.numberValue(space))));
                 char[] a = new char[nspace];
                 Arrays.fill(a, ' ');
                 gap = new String(a);
@@ -138,10 +140,9 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             } else {
                 gap = "";
             }
-            ScriptObject wrapper = ObjectCreate(realm, Intrinsics.ObjectPrototype);
-            CreateOwnDataProperty(realm, wrapper, "", value);
-            String result = Str(realm, stack, propertyList, replacerFunction, indent, gap, "",
-                    wrapper);
+            ScriptObject wrapper = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            CreateOwnDataProperty(cx, wrapper, "", value);
+            String result = Str(cx, stack, propertyList, replacerFunction, indent, gap, "", wrapper);
             if (result == null) {
                 return UNDEFINED;
             }
@@ -152,59 +153,61 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
     /**
      * Runtime Semantics: Walk Abstract Operation
      */
-    public static Object Walk(Realm realm, Callable reviver, ScriptObject holder, String name) {
-        Object val = Get(realm, holder, name);
+    public static Object Walk(ExecutionContext cx, Callable reviver, ScriptObject holder,
+            String name) {
+        Object val = Get(cx, holder, name);
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
             if (objVal instanceof ExoticArray) {
-                long len = ToUint32(realm, Get(realm, objVal, "length"));
+                long len = ToUint32(cx, Get(cx, objVal, "length"));
                 for (long i = 0; i < len; ++i) {
-                    Object newElement = Walk(realm, reviver, objVal, ToString(i));
+                    Object newElement = Walk(cx, reviver, objVal, ToString(i));
                     if (Type.isUndefined(newElement)) {
-                        objVal.delete(realm, ToString(i));
+                        objVal.delete(cx, ToString(i));
                     } else {
-                        objVal.defineOwnProperty(realm, ToString(i), new PropertyDescriptor(
+                        objVal.defineOwnProperty(cx, ToString(i), new PropertyDescriptor(
                                 newElement, true, true, true));
                     }
                 }
             } else {
-                Iterable<String> keys = GetOwnPropertyKeys(realm, objVal);
+                Iterable<String> keys = GetOwnPropertyKeys(cx, objVal);
                 for (String p : keys) {
-                    Object newElement = Walk(realm, reviver, objVal, p);
+                    Object newElement = Walk(cx, reviver, objVal, p);
                     if (Type.isUndefined(newElement)) {
-                        objVal.delete(realm, p);
+                        objVal.delete(cx, p);
                     } else {
-                        objVal.defineOwnProperty(realm, p, new PropertyDescriptor(newElement, true,
+                        objVal.defineOwnProperty(cx, p, new PropertyDescriptor(newElement, true,
                                 true, true));
                     }
                 }
             }
         }
-        return reviver.call(holder, name, val);
+        return reviver.call(cx, holder, name, val);
     }
 
     /**
      * Runtime Semantics: Str Abstract Operation
      */
-    public static String Str(Realm realm, Set<ScriptObject> stack, Set<String> propertyList,
-            Callable replacerFunction, String indent, String gap, String key, ScriptObject holder) {
-        Object value = Get(realm, holder, key);
+    public static String Str(ExecutionContext cx, Set<ScriptObject> stack,
+            Set<String> propertyList, Callable replacerFunction, String indent, String gap,
+            String key, ScriptObject holder) {
+        Object value = Get(cx, holder, key);
         if (Type.isObject(value)) {
             ScriptObject objValue = Type.objectValue(value);
-            Object toJSON = Get(realm, objValue, "toJSON");
+            Object toJSON = Get(cx, objValue, "toJSON");
             if (IsCallable(toJSON)) {
-                value = ((Callable) toJSON).call(value, key);
+                value = ((Callable) toJSON).call(cx, value, key);
             }
         }
         if (replacerFunction != null) {
-            value = replacerFunction.call(holder, key, value);
+            value = replacerFunction.call(cx, holder, key, value);
         }
         if (Type.isObject(value)) {
             ScriptObject o = Type.objectValue(value);
             if (o instanceof NumberObject) {
-                value = ToNumber(realm, value);
+                value = ToNumber(cx, value);
             } else if (o instanceof ExoticString) {
-                value = ToString(realm, value);
+                value = ToString(cx, value);
             } else if (o instanceof BooleanObject) {
                 value = ((BooleanObject) value).getBooleanData();
             }
@@ -217,14 +220,14 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         case String:
             return Quote(Type.stringValue(value));
         case Number:
-            return isFinite(Type.numberValue(value)) ? ToFlatString(realm, value) : "null";
+            return isFinite(Type.numberValue(value)) ? ToFlatString(cx, value) : "null";
         case Object:
             if (!IsCallable(value)) {
                 if (value instanceof ExoticArray) {
-                    return JA(realm, stack, propertyList, replacerFunction, indent, gap,
+                    return JA(cx, stack, propertyList, replacerFunction, indent, gap,
                             Type.objectValue(value));
                 } else {
-                    return JO(realm, stack, propertyList, replacerFunction, indent, gap,
+                    return JO(cx, stack, propertyList, replacerFunction, indent, gap,
                             Type.objectValue(value));
                 }
             } else {
@@ -290,10 +293,10 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
     /**
      * Runtime Semantics: JO Abstract Operation
      */
-    public static String JO(Realm realm, Set<ScriptObject> stack, Set<String> propertyList,
+    public static String JO(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
         if (stack.contains(value)) {
-            throw throwTypeError(realm, Messages.Key.CyclicValue);
+            throw throwTypeError(cx, Messages.Key.CyclicValue);
         }
         stack.add(value);
         String stepback = indent;
@@ -303,11 +306,11 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             k = propertyList;
         } else {
             // FIXME: spec bug (should possibly use [[Keys]]) (Bug 1142)
-            k = GetOwnPropertyKeys(realm, value);
+            k = GetOwnPropertyKeys(cx, value);
         }
         List<String> partial = new ArrayList<>();
         for (String p : k) {
-            String strP = Str(realm, stack, propertyList, replacerFunction, indent, gap, p, value);
+            String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap, p, value);
             if (strP != null) {
                 StringBuilder member = new StringBuilder(p.length() + strP.length() + 4);
                 member.append(Quote(p)).append(":");
@@ -346,18 +349,18 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
     /**
      * Runtime Semantics: JA Abstract Operation
      */
-    public static String JA(Realm realm, Set<ScriptObject> stack, Set<String> propertyList,
+    public static String JA(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
         if (stack.contains(value)) {
-            throw throwTypeError(realm, Messages.Key.CyclicValue);
+            throw throwTypeError(cx, Messages.Key.CyclicValue);
         }
         stack.add(value);
         String stepback = indent;
         indent = indent + gap;
         List<String> partial = new ArrayList<>();
-        long len = ToUint32(realm, Get(realm, value, "length"));
+        long len = ToUint32(cx, Get(cx, value, "length"));
         for (long index = 0; index < len; ++index) {
-            String strP = Str(realm, stack, propertyList, replacerFunction, indent, gap,
+            String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap,
                     ToString(index), value);
             if (strP == null) {
                 partial.add("null");

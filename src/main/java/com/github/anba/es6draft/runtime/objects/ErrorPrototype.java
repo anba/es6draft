@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -35,8 +36,8 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -70,15 +71,15 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
          * 15.11.4.4 Error.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
-        public static Object toString(Realm realm, Object thisValue) {
+        public static Object toString(ExecutionContext cx, Object thisValue) {
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject o = Type.objectValue(thisValue);
-            Object name = Get(realm, o, "name");
-            CharSequence sname = (Type.isUndefined(name) ? "Error" : ToString(realm, name));
-            Object msg = Get(realm, o, "message");
-            CharSequence smsg = (Type.isUndefined(msg) ? "" : ToString(realm, msg));
+            Object name = Get(cx, o, "name");
+            CharSequence sname = (Type.isUndefined(name) ? "Error" : ToString(cx, name));
+            Object msg = Get(cx, o, "message");
+            CharSequence smsg = (Type.isUndefined(msg) ? "" : ToString(cx, msg));
             if (sname.length() == 0) {
                 return smsg;
             }

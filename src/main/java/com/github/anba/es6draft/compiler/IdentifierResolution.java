@@ -13,7 +13,6 @@ import com.github.anba.es6draft.ast.Identifier;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  *
@@ -44,7 +43,7 @@ class IdentifierResolution {
     }
 
     private ValType resolve(String identifierName, ExpressionVisitor mv) {
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.aconst(identifierName);
         mv.iconst(mv.isStrict());
         mv.invoke(Methods.ExecutionContext_identifierResolution);
@@ -53,7 +52,7 @@ class IdentifierResolution {
     }
 
     private ValType resolveValue(String identifierName, ExpressionVisitor mv) {
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.aconst(identifierName);
         mv.iconst(mv.isStrict());
         mv.invoke(Methods.ExecutionContext_identifierValue);

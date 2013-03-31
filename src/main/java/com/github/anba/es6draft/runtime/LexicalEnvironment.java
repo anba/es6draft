@@ -21,18 +21,18 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * </ul>
  */
 public final class LexicalEnvironment {
-    private final Realm realm;
+    private final ExecutionContext cx;
     private final LexicalEnvironment outer;
     private final EnvironmentRecord envRec;
 
-    public LexicalEnvironment(Realm realm, EnvironmentRecord envRec) {
-        this.realm = realm;
+    public LexicalEnvironment(ExecutionContext cx, EnvironmentRecord envRec) {
+        this.cx = cx;
         this.outer = null;
         this.envRec = envRec;
     }
 
     public LexicalEnvironment(LexicalEnvironment outer, EnvironmentRecord envRec) {
-        this.realm = outer.realm;
+        this.cx = outer.cx;
         this.outer = outer;
         this.envRec = envRec;
     }
@@ -69,14 +69,14 @@ public final class LexicalEnvironment {
         if (envRec != null) {
             return envRec.getBindingValue(name, strict);
         }
-        throw throwReferenceError(lex.realm, Messages.Key.UnresolvableReference, name);
+        throw throwReferenceError(lex.cx, Messages.Key.UnresolvableReference, name);
     }
 
     /**
      * 10.2.2.2 NewDeclarativeEnvironment (E)
      */
     public static LexicalEnvironment newDeclarativeEnvironment(LexicalEnvironment e) {
-        EnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.realm);
+        EnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx);
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);
         return env;
     }
@@ -85,7 +85,7 @@ public final class LexicalEnvironment {
      * 10.2.2.3 NewObjectEnvironment (O, E)
      */
     public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e) {
-        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.realm, o, false);
+        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, false);
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);
         return env;
     }
@@ -95,7 +95,7 @@ public final class LexicalEnvironment {
      */
     public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e,
             boolean withEnvironment) {
-        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.realm, o, withEnvironment);
+        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, withEnvironment);
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);
         return env;
     }
@@ -103,8 +103,9 @@ public final class LexicalEnvironment {
     /**
      * 10.2.2.4 NewFunctionEnvironment (F, T)
      */
-    public static LexicalEnvironment newFunctionEnvironment(FunctionObject f, Object t) {
-        EnvironmentRecord envRec = new FunctionEnvironmentRecord(f.getRealm(), t, f.getHome(),
+    public static LexicalEnvironment newFunctionEnvironment(ExecutionContext cx, FunctionObject f,
+            Object t) {
+        EnvironmentRecord envRec = new FunctionEnvironmentRecord(cx, t, f.getHome(),
                 f.getMethodName());
         LexicalEnvironment env = new LexicalEnvironment(f.getScope(), envRec);
         return env;

@@ -16,7 +16,6 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  * <h1>11 Expressions</h1><br>
@@ -29,30 +28,31 @@ class DestructuringAssignmentGenerator {
     private static class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "Get",
-                Type.getMethodType(Types.Object, Types.Realm, Types.ScriptObject, Types.String));
+                Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
+                        Types.ExecutionContext, Types.ScriptObject, Types.String));
 
         static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.ScriptObject, Types.Realm, Types.Object));
+                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         // class: Reference
         static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
                 Types.Reference, "GetValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.Realm));
+                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Static,
-                Types.Reference, "PutValue",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.Realm));
+                Types.Reference, "PutValue", Type.getMethodType(Type.VOID_TYPE, Types.Object,
+                        Types.Object, Types.ExecutionContext));
 
         static final MethodDesc Reference_PutValue_ = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "PutValue",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Realm));
+                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
-                        Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE, Types.Realm));
+                        Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
+                        Types.ExecutionContext));
 
         // class: Type
         static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
@@ -77,10 +77,10 @@ class DestructuringAssignmentGenerator {
 
         if (node.accept(IsReference.INSTANCE, null)) {
             if (type == ValType.Reference) {
-                mv.load(Register.Realm);
+                mv.loadExecutionContext();
                 mv.invoke(Methods.Reference_PutValue_);
             } else {
-                mv.load(Register.Realm);
+                mv.loadExecutionContext();
                 mv.invoke(Methods.Reference_PutValue);
             }
         }
@@ -123,7 +123,7 @@ class DestructuringAssignmentGenerator {
          */
         protected final void invokeGetValue(Expression node, ExpressionVisitor mv) {
             if (node.accept(IsReference.INSTANCE, null)) {
-                mv.load(Register.Realm);
+                mv.loadExecutionContext();
                 mv.invoke(Methods.Reference_GetValue);
             }
         }
@@ -209,7 +209,7 @@ class DestructuringAssignmentGenerator {
             mv.swap();
 
             mv.iconst(index);
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             // stack: [lref, obj, index, cx] -> [lref, rest]
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
@@ -242,7 +242,7 @@ class DestructuringAssignmentGenerator {
                 String propertyName) {
             // step 1-2:
             // stack: [obj] -> [v]
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.swap();
             mv.aconst(propertyName);
             mv.invoke(Methods.AbstractOperations_Get);
@@ -267,7 +267,7 @@ class DestructuringAssignmentGenerator {
             // step 4:
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> [vObj]
-                mv.load(Register.Realm);
+                mv.loadExecutionContext();
                 mv.swap();
                 mv.invoke(Methods.AbstractOperations_ToObject);
 

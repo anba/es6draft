@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.DefineProperty
 
 import java.util.Collection;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -77,8 +78,8 @@ public class ExoticString extends OrdinaryObject {
      * 8.4.3.1 [[HasOwnProperty]] (P)
      */
     @Override
-    public boolean hasOwnProperty(Realm realm, String propertyKey) {
-        boolean has = super.hasOwnProperty(realm, propertyKey);
+    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+        boolean has = super.hasOwnProperty(cx, propertyKey);
         if (has) {
             return true;
         }
@@ -98,7 +99,7 @@ public class ExoticString extends OrdinaryObject {
      * 8.4.3.2 [[GetOwnProperty]] ( P )
      */
     @Override
-    public Property getOwnProperty(Realm realm, String propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         Property desc = ordinaryGetOwnProperty(propertyKey);
         if (desc != null) {
             return desc;
@@ -120,8 +121,9 @@ public class ExoticString extends OrdinaryObject {
      * 8.4.3.3 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
-        Property current = getOwnProperty(realm, propertyKey);
+    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
+            PropertyDescriptor desc) {
+        Property current = getOwnProperty(cx, propertyKey);
         boolean extensible = isExtensible();
         return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
     }
@@ -158,21 +160,21 @@ public class ExoticString extends OrdinaryObject {
     /**
      * 8.4.6.6 StringCreate Abstract Operation
      */
-    public static ExoticString StringCreate(Realm realm, ScriptObject prototype) {
+    public static ExoticString StringCreate(ExecutionContext cx, ScriptObject prototype) {
         // step 1, 2-6, 9 (implicit)
-        ExoticString obj = new ExoticString(realm);
+        ExoticString obj = new ExoticString(cx.getRealm());
         // step 8
-        obj.setPrototype(realm, prototype);
+        obj.setPrototype(cx, prototype);
         return obj;
     }
 
     /**
      * Custom helper function
      */
-    public static ExoticString StringCreate(Realm realm, CharSequence stringData) {
-        ExoticString obj = StringCreate(realm, realm.getIntrinsic(Intrinsics.StringPrototype));
-        DefinePropertyOrThrow(realm, obj, "length", new PropertyDescriptor(stringData.length(),
-                false, false, false));
+    public static ExoticString StringCreate(ExecutionContext cx, CharSequence stringData) {
+        ExoticString obj = StringCreate(cx, cx.getIntrinsic(Intrinsics.StringPrototype));
+        DefinePropertyOrThrow(cx, obj, "length", new PropertyDescriptor(stringData.length(), false,
+                false, false));
         obj.setStringData(stringData);
         return obj;
     }

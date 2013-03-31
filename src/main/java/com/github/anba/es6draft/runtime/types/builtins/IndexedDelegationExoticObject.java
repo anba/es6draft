@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.isArrayIndex;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -31,36 +32,36 @@ public class IndexedDelegationExoticObject extends OrdinaryObject {
      * 8.4.6.1 [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(Realm realm, String propertyKey, Object receiver) {
+    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         if (SameValue(this, receiver) && isArrayIndex(propertyKey)) {
             // FIXME: spec bug (variable 'index' not defined) (bug 1207)
-            return Invoke(realm, this, BuiltinSymbol.elementGet.get(), propertyKey);
+            return Invoke(cx, this, BuiltinSymbol.elementGet.get(), propertyKey);
         }
-        return super.get(realm, propertyKey, receiver);
+        return super.get(cx, propertyKey, receiver);
     }
 
     /**
      * 8.4.6.2 [[Set]] ( P, V, Receiver)
      */
     @Override
-    public boolean set(Realm realm, String propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         if (SameValue(this, receiver) && isArrayIndex(propertyKey)) {
             // FIXME: spec bug (variable 'index' not defined) (bug 1207)
             // FIXME: spec bug (missing ToBoolean() conversion?) (bug 1207)
-            return ToBoolean(Invoke(realm, this, BuiltinSymbol.elementSet.get(), propertyKey, value));
+            return ToBoolean(Invoke(cx, this, BuiltinSymbol.elementSet.get(), propertyKey, value));
         }
-        return super.set(realm, propertyKey, value, receiver);
+        return super.set(cx, propertyKey, value, receiver);
     }
 
     /**
      * 8.4.6.3 IndexedDelegator Create Abstract Operation
      */
-    public static ScriptObject IndexedDelegatorCreate(Realm realm, ScriptObject prototype) {
+    public static ScriptObject IndexedDelegatorCreate(ExecutionContext cx, ScriptObject prototype) {
         // FIXME: spec bug stray '(' is introductory text (bug 1172)
         /* step 1-4 (implicit) */
-        ScriptObject obj = new IndexedDelegationExoticObject(realm);
+        ScriptObject obj = new IndexedDelegationExoticObject(cx.getRealm());
         /* step 5 */
-        obj.setPrototype(realm, prototype);
+        obj.setPrototype(cx, prototype);
         /* step 6 (implicit) */
         // obj.[[Extensible]] = true;
         return obj;

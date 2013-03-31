@@ -17,6 +17,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayC
 import java.text.Normalizer;
 import java.util.Locale;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -47,8 +48,8 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -60,7 +61,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         /**
          * Abstract operation thisStringValue(value)
          */
-        private static CharSequence thisStringValue(Realm realm, Object object) {
+        private static CharSequence thisStringValue(ExecutionContext cx, Object object) {
             if (Type.isString(object)) {
                 return Type.stringValue(object);
             }
@@ -70,7 +71,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                     return s;
                 }
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -86,26 +87,26 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.2 String.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
-        public static Object toString(Realm realm, Object thisValue) {
-            return thisStringValue(realm, thisValue);
+        public static Object toString(ExecutionContext cx, Object thisValue) {
+            return thisStringValue(cx, thisValue);
         }
 
         /**
          * 15.5.4.3 String.prototype.valueOf ( )
          */
         @Function(name = "valueOf", arity = 0)
-        public static Object valueOf(Realm realm, Object thisValue) {
-            return thisStringValue(realm, thisValue);
+        public static Object valueOf(ExecutionContext cx, Object thisValue) {
+            return thisStringValue(cx, thisValue);
         }
 
         /**
          * 15.5.4.4 String.prototype.charAt (pos)
          */
         @Function(name = "charAt", arity = 1)
-        public static Object charAt(Realm realm, Object thisValue, Object pos) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, obj);
-            double position = ToInteger(realm, pos);
+        public static Object charAt(ExecutionContext cx, Object thisValue, Object pos) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            CharSequence s = ToString(cx, obj);
+            double position = ToInteger(cx, pos);
             int size = s.length();
             if (position < 0 || position >= size) {
                 return "";
@@ -117,10 +118,10 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.5 String.prototype.charCodeAt (pos)
          */
         @Function(name = "charCodeAt", arity = 1)
-        public static Object charCodeAt(Realm realm, Object thisValue, Object pos) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, obj);
-            double position = ToInteger(realm, pos);
+        public static Object charCodeAt(ExecutionContext cx, Object thisValue, Object pos) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            CharSequence s = ToString(cx, obj);
+            double position = ToInteger(cx, pos);
             int size = s.length();
             if (position < 0 || position >= size) {
                 return Double.NaN;
@@ -132,13 +133,13 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.6 String.prototype.concat ( ...args )
          */
         @Function(name = "concat", arity = 1)
-        public static Object concat(Realm realm, Object thisValue, Object... args) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, obj);
+        public static Object concat(ExecutionContext cx, Object thisValue, Object... args) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            CharSequence s = ToString(cx, obj);
             StringBuilder r = new StringBuilder(s);
             for (int i = 0; i < args.length; ++i) {
                 Object next = args[i];
-                CharSequence nextString = ToString(realm, next);
+                CharSequence nextString = ToString(cx, next);
                 r.append(nextString);
             }
             return r.toString();
@@ -148,12 +149,12 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.7 String.prototype.indexOf (searchString, position)
          */
         @Function(name = "indexOf", arity = 1)
-        public static Object indexOf(Realm realm, Object thisValue, Object searchString,
+        public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchString,
                 Object position) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            String searchStr = ToFlatString(realm, searchString);
-            double pos = ToInteger(realm, position);
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            String searchStr = ToFlatString(cx, searchString);
+            double pos = ToInteger(cx, position);
             int len = s.length();
             int start = (int) Math.min(Math.max(pos, 0), len);
             return s.indexOf(searchStr, start);
@@ -163,14 +164,13 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.8 String.prototype.lastIndexOf (searchString, position)
          */
         @Function(name = "lastIndexOf", arity = 1)
-        public static Object lastIndexOf(Realm realm, Object thisValue, Object searchString,
-                Object position) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            String searchStr = ToFlatString(realm, searchString);
-            double numPos = ToNumber(realm, position);
-            double pos = Double.isNaN(numPos) ? Double.POSITIVE_INFINITY : ToInteger(realm,
-                    position);
+        public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
+                Object searchString, Object position) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            String searchStr = ToFlatString(cx, searchString);
+            double numPos = ToNumber(cx, position);
+            double pos = Double.isNaN(numPos) ? Double.POSITIVE_INFINITY : ToInteger(cx, position);
             int len = s.length();
             int start = (int) Math.min(Math.max(pos, 0), len);
             return s.lastIndexOf(searchStr, start);
@@ -180,45 +180,44 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.9 String.prototype.localeCompare (that)
          */
         @Function(name = "localeCompare", arity = 1)
-        public static Object localeCompare(Realm realm, Object thisValue, Object that) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            String t = ToFlatString(realm, that);
-            return realm.getCollator().compare(s, t);
+        public static Object localeCompare(ExecutionContext cx, Object thisValue, Object that) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            String t = ToFlatString(cx, that);
+            return cx.getRealm().getCollator().compare(s, t);
         }
 
         /**
          * 15.5.4.10 String.prototype.match (regexp)
          */
         @Function(name = "match", arity = 1)
-        public static Object match(Realm realm, Object thisValue, Object regexp) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, obj);
+        public static Object match(ExecutionContext cx, Object thisValue, Object regexp) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            CharSequence s = ToString(cx, obj);
             ScriptObject rx;
             if (Type.isObject(regexp)
-                    && HasProperty(realm, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
+                    && HasProperty(cx, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
                 rx = Type.objectValue(regexp);
             } else {
-                String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
-                rx = RegExpCreate(realm, p, "");
+                String p = Type.isUndefined(regexp) ? "" : ToFlatString(cx, regexp);
+                rx = RegExpCreate(cx, p, "");
             }
-            return Invoke(realm, rx, "match", s);
+            return Invoke(cx, rx, "match", s);
         }
 
         /**
          * 15.5.4.11 String.prototype.replace (searchValue, replaceValue)
          */
         @Function(name = "replace", arity = 2)
-        public static Object replace(Realm realm, Object thisValue, Object searchValue,
+        public static Object replace(ExecutionContext cx, Object thisValue, Object searchValue,
                 Object replaceValue) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String string = ToFlatString(realm, obj);
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String string = ToFlatString(cx, obj);
             if (Type.isObject(searchValue)
-                    && HasProperty(realm, Type.objectValue(searchValue),
-                            BuiltinSymbol.isRegExp.get())) {
-                return Invoke(realm, Type.objectValue(searchValue), "replace", string, replaceValue);
+                    && HasProperty(cx, Type.objectValue(searchValue), BuiltinSymbol.isRegExp.get())) {
+                return Invoke(cx, Type.objectValue(searchValue), "replace", string, replaceValue);
             }
-            String searchString = ToFlatString(realm, searchValue);
+            String searchString = ToFlatString(cx, searchValue);
             int pos = string.indexOf(searchString);
             if (pos < 0) {
                 return string;
@@ -226,10 +225,11 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             String matched = searchString;
             String replStr;
             if (IsCallable(replaceValue)) {
-                Object replValue = ((Callable) replaceValue).call(UNDEFINED, matched, pos, string);
-                replStr = ToFlatString(realm, replValue);
+                Object replValue = ((Callable) replaceValue).call(cx, UNDEFINED, matched, pos,
+                        string);
+                replStr = ToFlatString(cx, replValue);
             } else {
-                String replValue = ToFlatString(realm, replaceValue);
+                String replValue = ToFlatString(cx, replaceValue);
                 replStr = GetReplaceSubstitution(matched, replValue, string, pos);
             }
             int tailPos = pos + searchString.length();
@@ -281,30 +281,30 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.12 String.prototype.search (regexp)
          */
         @Function(name = "search", arity = 1)
-        public static Object search(Realm realm, Object thisValue, Object regexp) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence string = ToString(realm, obj);
+        public static Object search(ExecutionContext cx, Object thisValue, Object regexp) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            CharSequence string = ToString(cx, obj);
             ScriptObject rx;
             if (Type.isObject(regexp)
-                    && HasProperty(realm, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
+                    && HasProperty(cx, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
                 rx = Type.objectValue(regexp);
             } else {
-                String p = Type.isUndefined(regexp) ? "" : ToFlatString(realm, regexp);
-                rx = RegExpCreate(realm, p, "");
+                String p = Type.isUndefined(regexp) ? "" : ToFlatString(cx, regexp);
+                rx = RegExpCreate(cx, p, "");
             }
-            return Invoke(realm, rx, "search", string);
+            return Invoke(cx, rx, "search", string);
         }
 
         /**
          * 15.5.4.13 String.prototype.slice (start, end)
          */
         @Function(name = "slice", arity = 2)
-        public static Object slice(Realm realm, Object thisValue, Object start, Object end) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, obj);
+        public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            CharSequence s = ToString(cx, obj);
             int len = s.length();
-            double intStart = ToInteger(realm, start);
-            double intEnd = (Type.isUndefined(end) ? len : ToInteger(realm, end));
+            double intStart = ToInteger(cx, start);
+            double intEnd = (Type.isUndefined(end) ? len : ToInteger(cx, end));
             int from = (int) (intStart < 0 ? Math.max(len + intStart, 0) : Math.min(intStart, len));
             int to = (int) (intEnd < 0 ? Math.max(len + intEnd, 0) : Math.min(intEnd, len));
             int span = Math.max(to - from, 0);
@@ -315,31 +315,32 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.14 String.prototype.split (separator, limit)
          */
         @Function(name = "split", arity = 2)
-        public static Object split(Realm realm, Object thisValue, Object separator, Object limit) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
+        public static Object split(ExecutionContext cx, Object thisValue, Object separator,
+                Object limit) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
             if (Type.isObject(separator)
-                    && HasProperty(realm, Type.objectValue(separator), BuiltinSymbol.isRegExp.get())) {
-                return Invoke(realm, separator, "split", s, limit);
+                    && HasProperty(cx, Type.objectValue(separator), BuiltinSymbol.isRegExp.get())) {
+                return Invoke(cx, separator, "split", s, limit);
             }
-            ScriptObject a = ArrayCreate(realm, 0);
+            ScriptObject a = ArrayCreate(cx, 0);
             int lengthA = 0;
-            long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(realm, limit);
+            long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(cx, limit);
             int size = s.length();
             int p = 0;
-            String r = ToFlatString(realm, separator);
+            String r = ToFlatString(cx, separator);
             if (lim == 0) {
                 return a;
             }
             if (Type.isUndefined(separator)) {
-                a.defineOwnProperty(realm, "0", new PropertyDescriptor(s, true, true, true));
+                a.defineOwnProperty(cx, "0", new PropertyDescriptor(s, true, true, true));
                 return a;
             }
             if (size == 0) {
                 if (s.startsWith(r)) {
                     return a;
                 }
-                a.defineOwnProperty(realm, "0", new PropertyDescriptor(s, true, true, true));
+                a.defineOwnProperty(cx, "0", new PropertyDescriptor(s, true, true, true));
                 return a;
             }
             int q = p;
@@ -353,8 +354,8 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                         q = q + 1;
                     } else {
                         String t = s.substring(p, z);
-                        a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(t,
-                                true, true, true));
+                        a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(t, true,
+                                true, true));
                         lengthA += 1;
                         if (lengthA == lim) {
                             return a;
@@ -365,8 +366,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                 }
             }
             String t = s.substring(p, size);
-            a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(t, true, true,
-                    true));
+            a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(t, true, true, true));
             return a;
         }
 
@@ -382,12 +382,13 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.15 String.prototype.substring (start, end)
          */
         @Function(name = "substring", arity = 2)
-        public static Object substring(Realm realm, Object thisValue, Object start, Object end) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, obj);
+        public static Object substring(ExecutionContext cx, Object thisValue, Object start,
+                Object end) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            CharSequence s = ToString(cx, obj);
             int len = s.length();
-            double intStart = ToInteger(realm, start);
-            double intEnd = (Type.isUndefined(end) ? len : ToInteger(realm, end));
+            double intStart = ToInteger(cx, start);
+            double intEnd = (Type.isUndefined(end) ? len : ToInteger(cx, end));
             int finalStart = (int) Math.min(Math.max(intStart, 0), len);
             int finalEnd = (int) Math.min(Math.max(intEnd, 0), len);
             int from = Math.min(finalStart, finalEnd);
@@ -399,9 +400,9 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.16 String.prototype.toLowerCase ( )
          */
         @Function(name = "toLowerCase", arity = 0)
-        public static Object toLowerCase(Realm realm, Object thisValue) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
+        public static Object toLowerCase(ExecutionContext cx, Object thisValue) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
             return s.toLowerCase(Locale.ROOT);
         }
 
@@ -409,19 +410,19 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.17 String.prototype.toLocaleLowerCase ( )
          */
         @Function(name = "toLocaleLowerCase", arity = 0)
-        public static Object toLocaleLowerCase(Realm realm, Object thisValue) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            return s.toLowerCase(realm.getLocale());
+        public static Object toLocaleLowerCase(ExecutionContext cx, Object thisValue) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            return s.toLowerCase(cx.getRealm().getLocale());
         }
 
         /**
          * 15.5.4.18 String.prototype.toUpperCase ( )
          */
         @Function(name = "toUpperCase", arity = 0)
-        public static Object toUpperCase(Realm realm, Object thisValue) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
+        public static Object toUpperCase(ExecutionContext cx, Object thisValue) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
             return s.toUpperCase(Locale.ROOT);
         }
 
@@ -429,19 +430,19 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.19 String.prototype.toLocaleUpperCase ( )
          */
         @Function(name = "toLocaleUpperCase", arity = 0)
-        public static Object toLocaleUpperCase(Realm realm, Object thisValue) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            return s.toUpperCase(realm.getLocale());
+        public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            return s.toUpperCase(cx.getRealm().getLocale());
         }
 
         /**
          * 15.5.4.20 String.prototype.trim ( )
          */
         @Function(name = "trim", arity = 0)
-        public static Object trim(Realm realm, Object thisValue) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, obj);
+        public static Object trim(ExecutionContext cx, Object thisValue) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            CharSequence s = ToString(cx, obj);
             return Strings.trim(s);
         }
 
@@ -449,14 +450,14 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.21 String.prototype.repeat (count)
          */
         @Function(name = "repeat", arity = 1)
-        public static Object repeat(Realm realm, Object thisValue, Object count) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            double n = ToInteger(realm, count);
+        public static Object repeat(ExecutionContext cx, Object thisValue, Object count) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            double n = ToInteger(cx, count);
             if (n == 0) {
                 return "";
             } else if (n < 0 || n == Double.POSITIVE_INFINITY) {
-                throw throwRangeError(realm, Messages.Key.InvalidStringRepeat);
+                throw throwRangeError(cx, Messages.Key.InvalidStringRepeat);
             }
             int capacity = Math.max(s.length() * (int) n, 0);
             StringBuilder t = new StringBuilder(capacity);
@@ -470,12 +471,12 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.22 String.prototype.startsWith (searchString [, position ] )
          */
         @Function(name = "startsWith", arity = 1)
-        public static Object startsWith(Realm realm, Object thisValue, Object searchString,
+        public static Object startsWith(ExecutionContext cx, Object thisValue, Object searchString,
                 Object position) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            String searchStr = ToFlatString(realm, searchString);
-            double pos = ToInteger(realm, position);
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            String searchStr = ToFlatString(cx, searchString);
+            double pos = ToInteger(cx, position);
             int len = s.length();
             int start = (int) Math.min(Math.max(pos, 0), len);
             int searchLength = searchStr.length();
@@ -489,13 +490,13 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.23 String.prototype.endsWith (searchString [, endPosition] )
          */
         @Function(name = "endsWith", arity = 1)
-        public static Object endsWith(Realm realm, Object thisValue, Object searchString,
+        public static Object endsWith(ExecutionContext cx, Object thisValue, Object searchString,
                 Object endPosition) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            String searchStr = ToFlatString(realm, searchString);
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            String searchStr = ToFlatString(cx, searchString);
             int len = s.length();
-            double pos = Type.isUndefined(endPosition) ? len : ToInteger(realm, endPosition);
+            double pos = Type.isUndefined(endPosition) ? len : ToInteger(cx, endPosition);
             int end = (int) Math.min(Math.max(pos, 0), len);
             int searchLength = searchStr.length();
             int start = end - searchLength;
@@ -509,12 +510,12 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.24 String.prototype.contains (searchString, position = 0 )
          */
         @Function(name = "contains", arity = 1)
-        public static Object contains(Realm realm, Object thisValue, Object searchString,
+        public static Object contains(ExecutionContext cx, Object thisValue, Object searchString,
                 Object position /* = 0 */) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            String searchStr = ToFlatString(realm, searchString);
-            double pos = ToInteger(realm, position);
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            String searchStr = ToFlatString(cx, searchString);
+            double pos = ToInteger(cx, position);
             int len = s.length();
             int start = (int) Math.min(Math.max(pos, 0), len);
             // int searchLen = searchStr.length();
@@ -525,10 +526,10 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.25 String.prototype.codePointAt (pos)
          */
         @Function(name = "codePointAt", arity = 1)
-        public static Object codePointAt(Realm realm, Object thisValue, Object pos) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            double position = ToInteger(realm, pos);
+        public static Object codePointAt(ExecutionContext cx, Object thisValue, Object pos) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            double position = ToInteger(cx, pos);
             int size = s.length();
             if (position < 0 || position >= size) {
                 // FIXME: spec bug undefined /= NaN (Bug 1153)
@@ -542,15 +543,15 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.26 String.prototype.normalize ( form = "NFC" )
          */
         @Function(name = "normalize", arity = 1)
-        public static Object normalize(Realm realm, Object thisValue, Object form) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            CharSequence s = ToString(realm, obj);
+        public static Object normalize(ExecutionContext cx, Object thisValue, Object form) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            CharSequence s = ToString(cx, obj);
             String f = "NFC";
             if (!Type.isUndefined(form)) {
-                f = ToFlatString(realm, form);
+                f = ToFlatString(cx, form);
             }
             if (!("NFC".equals(f) || "NFD".equals(f) || "NFKC".equals(f) || "NFKD".equals(f))) {
-                throw throwRangeError(realm, Messages.Key.InvalidNormalizationForm);
+                throw throwRangeError(cx, Messages.Key.InvalidNormalizationForm);
             }
             return Normalizer.normalize(s, Normalizer.Form.valueOf(f));
         }
@@ -559,11 +560,12 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * B.2.2.1 String.prototype.substr (start, length)
          */
         @Function(name = "substr", arity = 2)
-        public static Object substr(Realm realm, Object thisValue, Object start, Object length) {
-            Object obj = CheckObjectCoercible(realm, thisValue);
-            String s = ToFlatString(realm, obj);
-            double intStart = ToInteger(realm, start);
-            double end = (Type.isUndefined(length) ? Double.POSITIVE_INFINITY : ToInteger(realm,
+        public static Object substr(ExecutionContext cx, Object thisValue, Object start,
+                Object length) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            double intStart = ToInteger(cx, start);
+            double end = (Type.isUndefined(length) ? Double.POSITIVE_INFINITY : ToInteger(cx,
                     length));
             int size = s.length();
             if (intStart < 0) {
@@ -580,13 +582,13 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         /**
          * Abstract operation CreateHTML
          */
-        private static String CreateHTML(Realm realm, Object string, String tag, String attribute,
-                Object value) {
-            Object str = CheckObjectCoercible(realm, string);
-            String s = ToFlatString(realm, str);
+        private static String CreateHTML(ExecutionContext cx, Object string, String tag,
+                String attribute, Object value) {
+            Object str = CheckObjectCoercible(cx, string);
+            String s = ToFlatString(cx, str);
             StringBuilder p = new StringBuilder().append("<").append(tag);
             if (!attribute.isEmpty()) {
-                String v = ToFlatString(realm, value);
+                String v = ToFlatString(cx, value);
                 String escapedV = v.replace("\"", "&quot;");
                 p.append(" ").append(attribute).append("=").append('"').append(escapedV)
                         .append('"');
@@ -599,117 +601,117 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * B.2.2.2 String.prototype.anchor ( name )
          */
         @Function(name = "anchor", arity = 1)
-        public static Object anchor(Realm realm, Object thisValue, Object name) {
+        public static Object anchor(ExecutionContext cx, Object thisValue, Object name) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "a", "name", name);
+            return CreateHTML(cx, s, "a", "name", name);
         }
 
         /**
          * B.2.2.3 String.prototype.big ()
          */
         @Function(name = "big", arity = 0)
-        public static Object big(Realm realm, Object thisValue) {
+        public static Object big(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "big", "", "");
+            return CreateHTML(cx, s, "big", "", "");
         }
 
         /**
          * B.2.2.4 String.prototype.blink ()
          */
         @Function(name = "blink", arity = 0)
-        public static Object blink(Realm realm, Object thisValue) {
+        public static Object blink(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "blink", "", "");
+            return CreateHTML(cx, s, "blink", "", "");
         }
 
         /**
          * B.2.2.5 String.prototype.bold ()
          */
         @Function(name = "bold", arity = 0)
-        public static Object bold(Realm realm, Object thisValue) {
+        public static Object bold(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "b", "", "");
+            return CreateHTML(cx, s, "b", "", "");
         }
 
         /**
          * B.2.2.6 String.prototype.fixed ()
          */
         @Function(name = "fixed", arity = 0)
-        public static Object fixed(Realm realm, Object thisValue) {
+        public static Object fixed(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "tt", "", "");
+            return CreateHTML(cx, s, "tt", "", "");
         }
 
         /**
          * B.2.2.7 String.prototype.fontcolor ( color )
          */
         @Function(name = "fontcolor", arity = 1)
-        public static Object fontcolor(Realm realm, Object thisValue, Object color) {
+        public static Object fontcolor(ExecutionContext cx, Object thisValue, Object color) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "font", "color", color);
+            return CreateHTML(cx, s, "font", "color", color);
         }
 
         /**
          * B.2.2.8 String.prototype.fontsize ( size )
          */
         @Function(name = "fontsize", arity = 1)
-        public static Object fontsize(Realm realm, Object thisValue, Object size) {
+        public static Object fontsize(ExecutionContext cx, Object thisValue, Object size) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "font", "size", size);
+            return CreateHTML(cx, s, "font", "size", size);
         }
 
         /**
          * B.2.2.9 String.prototype.italics ()
          */
         @Function(name = "italics", arity = 0)
-        public static Object italics(Realm realm, Object thisValue) {
+        public static Object italics(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "i", "", "");
+            return CreateHTML(cx, s, "i", "", "");
         }
 
         /**
          * B.2.2.10 String.prototype.link ( url )
          */
         @Function(name = "link", arity = 1)
-        public static Object link(Realm realm, Object thisValue, Object url) {
+        public static Object link(ExecutionContext cx, Object thisValue, Object url) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "a", "href", url);
+            return CreateHTML(cx, s, "a", "href", url);
         }
 
         /**
          * B.2.2.11 String.prototype.small ()
          */
         @Function(name = "small", arity = 0)
-        public static Object small(Realm realm, Object thisValue) {
+        public static Object small(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "small", "", "");
+            return CreateHTML(cx, s, "small", "", "");
         }
 
         /**
          * B.2.2.12 String.prototype.strike ()
          */
         @Function(name = "strike", arity = 0)
-        public static Object strike(Realm realm, Object thisValue) {
+        public static Object strike(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "strike", "", "");
+            return CreateHTML(cx, s, "strike", "", "");
         }
 
         /**
          * B.2.2.13 String.prototype.sub ()
          */
         @Function(name = "sub", arity = 0)
-        public static Object sub(Realm realm, Object thisValue) {
+        public static Object sub(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "sub", "", "");
+            return CreateHTML(cx, s, "sub", "", "");
         }
 
         /**
          * B.2.2.14 String.prototype.sup ()
          */
         @Function(name = "sup", arity = 0)
-        public static Object sup(Realm realm, Object thisValue) {
+        public static Object sup(ExecutionContext cx, Object thisValue) {
             Object s = thisValue;
-            return CreateHTML(realm, s, "sup", "", "");
+            return CreateHTML(cx, s, "sup", "", "");
         }
     }
 }

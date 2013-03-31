@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.CreateProxy;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -31,21 +32,21 @@ public class ProxyConstructor extends BuiltinFunction implements Constructor, In
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
-    public Object call(Object thisValue, Object... args) {
-        return construct(args);
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        return construct(callerContext, args);
     }
 
     @Override
-    public Object construct(Object... args) {
+    public Object construct(ExecutionContext callerContext, Object... args) {
         Object target = args.length > 0 ? args[0] : UNDEFINED;
         Object handler = args.length > 1 ? args[1] : UNDEFINED;
-        return CreateProxy(realm(), target, handler);
+        return CreateProxy(callerContext, target, handler);
     }
 
     public enum Properties {

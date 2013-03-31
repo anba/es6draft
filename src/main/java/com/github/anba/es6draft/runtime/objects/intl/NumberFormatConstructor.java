@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -63,9 +64,9 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     @SafeVarargs
@@ -76,24 +77,24 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
     /**
      * 11.1.1.1 InitializeNumberFormat (numberFormat, locales, options)
      */
-    public static void InitializeNumberFormat(Realm realm, ScriptObject obj, Object locales,
-            Object opts) {
+    public static void InitializeNumberFormat(ExecutionContext cx, ScriptObject obj,
+            Object locales, Object opts) {
         if (!(obj instanceof NumberFormatObject)) {
-            throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         NumberFormatObject numberFormat = (NumberFormatObject) obj;
         if (numberFormat.isInitializedIntlObject()) {
-            throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        Set<String> requestedLocales = CanonicalizeLocaleList(realm, locales);
+        Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
         ScriptObject options;
         if (Type.isUndefined(opts)) {
-            options = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+            options = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         } else {
-            options = ToObject(realm, opts);
+            options = ToObject(cx, opts);
         }
-        String matcher = getStringOption(realm, options, "localeMatcher",
-                set("lookup", "best fit"), "best fit");
+        String matcher = getStringOption(cx, options, "localeMatcher", set("lookup", "best fit"),
+                "best fit");
 
     }
 
@@ -101,17 +102,17 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
      * 11.1.2.1 Intl.NumberFormat.call (this [, locales [, options]])
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
-        if (Type.isUndefined(thisValue) || thisValue == realm().getIntrinsic(Intrinsics.Intl)) {
-            return construct(args);
+        if (Type.isUndefined(thisValue) || thisValue == callerContext.getIntrinsic(Intrinsics.Intl)) {
+            return construct(callerContext, args);
         }
-        ScriptObject obj = ToObject(realm(), thisValue);
-        if (!IsExtensible(realm(), obj)) {
-            throwTypeError(realm(), Messages.Key.NotExtensible);
+        ScriptObject obj = ToObject(callerContext, thisValue);
+        if (!IsExtensible(callerContext, obj)) {
+            throwTypeError(callerContext, Messages.Key.NotExtensible);
         }
-        InitializeNumberFormat(realm(), obj, locales, options);
+        InitializeNumberFormat(callerContext, obj, locales, options);
         return obj;
     }
 
@@ -119,12 +120,13 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
      * 11.1.3.1 new Intl.NumberFormat ([locales [, options]])
      */
     @Override
-    public Object construct(Object... args) {
+    public Object construct(ExecutionContext callerContext, Object... args) {
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
-        NumberFormatObject obj = new NumberFormatObject(realm());
-        obj.setPrototype(realm(), realm().getIntrinsic(Intrinsics.Intl_NumberFormatPrototype));
-        InitializeNumberFormat(realm(), obj, locales, options);
+        NumberFormatObject obj = new NumberFormatObject(callerContext.getRealm());
+        obj.setPrototype(callerContext,
+                callerContext.getIntrinsic(Intrinsics.Intl_NumberFormatPrototype));
+        InitializeNumberFormat(callerContext, obj, locales, options);
         return obj;
     }
 
@@ -156,9 +158,9 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
          * 11.2.2 Intl.NumberFormat.supportedLocalesOf (locales [, options])
          */
         @Function(name = "supportedLocalesOf", arity = 1)
-        public static Object supportedLocalesOf(Realm realm, Object thisValue, Object locales,
-                Object options) {
-            return CreateArrayFromList(realm, emptyList());
+        public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
+                Object locales, Object options) {
+            return CreateArrayFromList(cx, emptyList());
         }
 
         /**
@@ -169,8 +171,8 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue,
                     Intrinsics.Intl_NumberFormatPrototype, NumberFormatObjectAllocator.INSTANCE);
         }
     }

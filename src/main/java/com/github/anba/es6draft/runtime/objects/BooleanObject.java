@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -50,9 +51,9 @@ public class BooleanObject extends OrdinaryObject {
     /**
      * Custom helper function
      */
-    public static BooleanObject BooleanCreate(Realm realm, boolean booleanData) {
-        BooleanObject obj = new BooleanObject(realm);
-        obj.setPrototype(realm, realm.getIntrinsic(Intrinsics.BooleanPrototype));
+    public static BooleanObject BooleanCreate(ExecutionContext cx, boolean booleanData) {
+        BooleanObject obj = new BooleanObject(cx.getRealm());
+        obj.setPrototype(cx, cx.getIntrinsic(Intrinsics.BooleanPrototype));
         obj.setBooleanData(booleanData);
         return obj;
     }

@@ -10,7 +10,6 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.ArrayComprehension;
 import com.github.anba.es6draft.ast.Expression;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -24,7 +23,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_CreateArrayFromList = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "CreateArrayFromList",
-                Type.getMethodType(Types.ScriptObject, Types.Realm, Types.List));
+                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.List));
 
         // class: ArrayList
         static final MethodDesc ArrayList_init = MethodDesc.create(MethodType.Special,
@@ -50,7 +49,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
 
         node.getComprehension().accept(this, mv);
 
-        mv.load(Register.Realm);
+        mv.loadExecutionContext();
         mv.load(result, Types.ArrayList);
         mv.invoke(Methods.AbstractOperations_CreateArrayFromList);
         mv.freeVariable(result);

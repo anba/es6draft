@@ -50,13 +50,13 @@ abstract class DeclarationBindingInstantiationGenerator {
         // class: OrdinaryFunction
         static final MethodDesc OrdinaryFunction_InstantiateFunctionObject = MethodDesc.create(
                 MethodType.Static, Types.OrdinaryFunction, "InstantiateFunctionObject", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.Realm,
+                        .getMethodType(Types.OrdinaryFunction, Types.ExecutionContext,
                                 Types.LexicalEnvironment, Types.RuntimeInfo$Function));
 
         // class: OrdinaryGenerator
         static final MethodDesc OrdinaryGenerator_InstantiateGeneratorObject = MethodDesc.create(
                 MethodType.Static, Types.OrdinaryGenerator, "InstantiateGeneratorObject", Type
-                        .getMethodType(Types.OrdinaryGenerator, Types.Realm,
+                        .getMethodType(Types.OrdinaryGenerator, Types.ExecutionContext,
                                 Types.LexicalEnvironment, Types.RuntimeInfo$Function));
     }
 
@@ -113,11 +113,11 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.invoke(Methods.EnvironmentRecord_setMutableBinding);
     }
 
-    protected void InstantiateFunctionObject(int realm, int env, FunctionDeclaration f,
+    protected void InstantiateFunctionObject(int context, int env, FunctionDeclaration f,
             InstructionVisitor mv) {
         codegen.compile(f);
 
-        mv.load(realm, Types.Realm);
+        mv.load(context, Types.ExecutionContext);
         mv.load(env, Types.LexicalEnvironment);
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
@@ -125,11 +125,11 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.invoke(Methods.OrdinaryFunction_InstantiateFunctionObject);
     }
 
-    protected void InstantiateGeneratorObject(int realm, int env, GeneratorDeclaration f,
+    protected void InstantiateGeneratorObject(int context, int env, GeneratorDeclaration f,
             InstructionVisitor mv) {
         codegen.compile(f);
 
-        mv.load(realm, Types.Realm);
+        mv.load(context, Types.ExecutionContext);
         mv.load(env, Types.LexicalEnvironment);
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));

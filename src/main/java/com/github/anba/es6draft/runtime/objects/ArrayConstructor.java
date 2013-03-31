@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayC
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -46,9 +47,9 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
@@ -56,41 +57,40 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
      * 15.4.1.2 Array (len)
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
-        Realm realm = realm();
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         int numberOfArgs = args.length;
         if (numberOfArgs != 1) {
             // [15.4.1.1]
-            ExoticArray array = maybeCreateArray(realm, thisValue, numberOfArgs);
+            ExoticArray array = maybeCreateArray(callerContext, thisValue, numberOfArgs);
             for (int k = 0; k < numberOfArgs; ++k) {
                 String pk = ToString(k);
                 Object itemK = args[k];
-                DefinePropertyOrThrow(realm, array, pk, new PropertyDescriptor(itemK, true, true,
-                        true));
+                DefinePropertyOrThrow(callerContext, array, pk, new PropertyDescriptor(itemK, true,
+                        true, true));
             }
-            Put(realm, array, "length", numberOfArgs, true);
+            Put(callerContext, array, "length", numberOfArgs, true);
             return array;
         } else {
             // [15.4.1.2]
-            ExoticArray array = maybeCreateArray(realm, thisValue, 0);
+            ExoticArray array = maybeCreateArray(callerContext, thisValue, 0);
             Object len = args[0];
             long intLen;
             if (!Type.isNumber(len)) {
-                DefinePropertyOrThrow(realm, array, "0", new PropertyDescriptor(len, true, true,
-                        true));
+                DefinePropertyOrThrow(callerContext, array, "0", new PropertyDescriptor(len, true,
+                        true, true));
                 intLen = 1;
             } else {
-                intLen = ToUint32(realm, len);
+                intLen = ToUint32(callerContext, len);
                 if (intLen != Type.numberValue(len)) {
-                    throw throwRangeError(realm, Messages.Key.InvalidArrayLength);
+                    throw throwRangeError(callerContext, Messages.Key.InvalidArrayLength);
                 }
             }
-            Put(realm, array, "length", intLen, true);
+            Put(callerContext, array, "length", intLen, true);
             return array;
         }
     }
 
-    private ExoticArray maybeCreateArray(Realm realm, Object thisValue, long length) {
+    private ExoticArray maybeCreateArray(ExecutionContext cx, Object thisValue, long length) {
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
             if (!array.getArrayInitializationState()) {
@@ -98,16 +98,16 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
                 return array;
             }
         }
-        ScriptObject proto = GetPrototypeFromConstructor(realm, this, Intrinsics.ArrayPrototype);
-        return ArrayCreate(realm, length, proto);
+        ScriptObject proto = GetPrototypeFromConstructor(cx, this, Intrinsics.ArrayPrototype);
+        return ArrayCreate(cx, length, proto);
     }
 
     /**
      * 15.4.2 The Array Constructor
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -138,7 +138,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
          * 15.4.3.2 Array.isArray ( arg )
          */
         @Function(name = "isArray", arity = 1)
-        public static Object isArray(Realm realm, Object thisValue, Object arg) {
+        public static Object isArray(ExecutionContext cx, Object thisValue, Object arg) {
             /* step 1 */
             if (!Type.isObject(arg)) {
                 return false;
@@ -155,7 +155,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
          * 15.4.3.3 Array.of ( ...items )
          */
         @Function(name = "of", arity = 0)
-        public static Object of(Realm realm, Object thisValue, Object... items) {
+        public static Object of(ExecutionContext cx, Object thisValue, Object... items) {
             /* step 1-2 */
             int len = items.length;
             /* step 3 */
@@ -163,21 +163,20 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
             ScriptObject a;
             if (IsConstructor(c)) {
                 /* step 4, 6 */
-                Object newObj = ((Constructor) c).construct(len);
-                a = ToObject(realm, newObj);
+                Object newObj = ((Constructor) c).construct(cx, len);
+                a = ToObject(cx, newObj);
             } else {
                 /* step 5, 6 */
-                a = ArrayCreate(realm, len);
+                a = ArrayCreate(cx, len);
             }
             /* step 7-8 */
             for (int k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 Object kValue = items[k];
-                DefinePropertyOrThrow(realm, a, pk,
-                        new PropertyDescriptor(kValue, true, true, true));
+                DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(kValue, true, true, true));
             }
             /* step 9-10 */
-            Put(realm, a, "length", len, true);
+            Put(cx, a, "length", len, true);
             /* step 11 */
             return a;
         }
@@ -186,50 +185,50 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
          * 15.4.3.4 Array.from ( arrayLike, mapfn=undefined, thisArg=undefined )
          */
         @Function(name = "from", arity = 1)
-        public static Object from(Realm realm, Object thisValue, Object arrayLike, Object mapfn,
-                Object thisArg) {
+        public static Object from(ExecutionContext cx, Object thisValue, Object arrayLike,
+                Object mapfn, Object thisArg) {
             /* step 1-2 */
-            ScriptObject items = ToObject(realm, arrayLike);
+            ScriptObject items = ToObject(cx, arrayLike);
             // FIXME: spec bug (mapfn and thisArg unused)
             Callable mapper = null;
             if (!Type.isUndefined(mapfn)) {
                 if (!IsCallable(mapfn)) {
-                    throw throwTypeError(realm, Messages.Key.NotCallable);
+                    throw throwTypeError(cx, Messages.Key.NotCallable);
                 }
                 mapper = (Callable) mapfn;
             }
             /* step 3 */
-            Object lenValue = Get(realm, items, "length");
+            Object lenValue = Get(cx, items, "length");
             /* step 4-5 */
-            double len = ToInteger(realm, lenValue);
+            double len = ToInteger(cx, lenValue);
             long llen = (long) len;
             /* step 6 */
             Object c = thisValue;
             ScriptObject a;
             if (IsConstructor(c)) {
                 /* step 7, 9 */
-                Object newObj = ((Constructor) c).construct(len);
-                a = ToObject(realm, newObj);
+                Object newObj = ((Constructor) c).construct(cx, len);
+                a = ToObject(cx, newObj);
             } else {
                 /* step 8, 9 */
-                a = ArrayCreate(realm, llen);
+                a = ArrayCreate(cx, llen);
             }
             /* step 10-11 */
             for (long k = 0; k < llen; ++k) {
                 String pk = ToString(k);
-                boolean kPresent = HasProperty(realm, items, pk);
+                boolean kPresent = HasProperty(cx, items, pk);
                 if (kPresent) {
-                    Object kValue = Get(realm, items, pk);
+                    Object kValue = Get(cx, items, pk);
                     if (mapper != null) {
-                        kValue = mapper.call(thisArg, kValue);
+                        kValue = mapper.call(cx, thisArg, kValue);
                     }
                     // FIXME: spec bug (Bug 1139)
-                    DefinePropertyOrThrow(realm, a, pk, new PropertyDescriptor(kValue, true, true,
+                    DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(kValue, true, true,
                             true));
                 }
             }
             /* step 12-13 */
-            Put(realm, a, "length", len, true);
+            Put(cx, a, "length", len, true);
             /* step 14 */
             return a;
         }
@@ -242,10 +241,10 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            ScriptObject proto = GetPrototypeFromConstructor(realm, thisValue,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
                     Intrinsics.ArrayPrototype);
-            return ArrayCreate(realm, -1, proto);
+            return ArrayCreate(cx, -1, proto);
         }
     }
 }

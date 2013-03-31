@@ -10,7 +10,6 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -43,7 +42,7 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
         ValType type = expression(node, mv);
         mv.toBoxed(type);
         invokeGetValue(node, mv);
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_yield);
         mv.pop();

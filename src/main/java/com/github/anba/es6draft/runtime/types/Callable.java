@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
+
 /**
  * <h1>8 Types</h1><br>
  * <h2>8.1 ECMAScript Language Types</h2><br>
@@ -20,7 +22,7 @@ public interface Callable extends ScriptObject {
     /**
      * [[Call]]
      */
-    Object call(Object thisValue, Object... args);
+    Object call(ExecutionContext callerContext, Object thisValue, Object... args);
 
     /**
      * Source representation of this callable

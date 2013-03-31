@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -211,11 +212,11 @@ public final class Properties {
      * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
      * {@link Accessor} fields
      */
-    public static void createProperties(ScriptObject owner, Realm realm, Class<?> holder) {
+    public static void createProperties(ScriptObject owner, ExecutionContext cx, Class<?> holder) {
         if (holder.getPackage().getName().startsWith(INTERNAL_PACKAGE)) {
-            createInternalProperties(owner, realm, holder);
+            createInternalProperties(owner, cx.getRealm(), holder);
         } else {
-            createExternalProperties(owner, realm, holder);
+            createExternalProperties(owner, cx.getRealm(), holder);
         }
     }
 
@@ -228,12 +229,12 @@ public final class Properties {
         final MethodHandle ToNumberMH;
         final MethodHandle ToObjectMH;
 
-        private Converter(Realm realm) {
+        private Converter(ExecutionContext cx) {
             ToBooleanMH = _ToBooleanMH;
-            ToStringMH = MethodHandles.insertArguments(_ToStringMH, 0, realm);
-            ToFlatStringMH = MethodHandles.insertArguments(_ToFlatStringMH, 0, realm);
-            ToNumberMH = MethodHandles.insertArguments(_ToNumberMH, 0, realm);
-            ToObjectMH = MethodHandles.insertArguments(_ToObjectMH, 0, realm);
+            ToStringMH = MethodHandles.insertArguments(_ToStringMH, 0, cx);
+            ToFlatStringMH = MethodHandles.insertArguments(_ToFlatStringMH, 0, cx);
+            ToNumberMH = MethodHandles.insertArguments(_ToNumberMH, 0, cx);
+            ToObjectMH = MethodHandles.insertArguments(_ToObjectMH, 0, cx);
         }
 
         private static final MethodHandle _ToBooleanMH;
@@ -244,16 +245,16 @@ public final class Properties {
         static {
             Lookup lookup = MethodHandles.publicLookup();
             try {
-                _ToStringMH = lookup.findStatic(AbstractOperations.class, "ToString",
-                        MethodType.methodType(CharSequence.class, Realm.class, Object.class));
+                _ToStringMH = lookup.findStatic(AbstractOperations.class, "ToString", MethodType
+                        .methodType(CharSequence.class, ExecutionContext.class, Object.class));
                 _ToFlatStringMH = lookup.findStatic(AbstractOperations.class, "ToFlatString",
-                        MethodType.methodType(String.class, Realm.class, Object.class));
+                        MethodType.methodType(String.class, ExecutionContext.class, Object.class));
                 _ToNumberMH = lookup.findStatic(AbstractOperations.class, "ToNumber",
-                        MethodType.methodType(Double.TYPE, Realm.class, Object.class));
+                        MethodType.methodType(Double.TYPE, ExecutionContext.class, Object.class));
                 _ToBooleanMH = lookup.findStatic(AbstractOperations.class, "ToBoolean",
                         MethodType.methodType(Boolean.TYPE, Object.class));
-                _ToObjectMH = lookup.findStatic(AbstractOperations.class, "ToObject",
-                        MethodType.methodType(ScriptObject.class, Realm.class, Object.class));
+                _ToObjectMH = lookup.findStatic(AbstractOperations.class, "ToObject", MethodType
+                        .methodType(ScriptObject.class, ExecutionContext.class, Object.class));
             } catch (NoSuchMethodException | IllegalAccessException e) {
                 throw new IllegalStateException(e);
             }
@@ -263,17 +264,18 @@ public final class Properties {
     private static void createExternalProperties(ScriptObject owner, Realm realm, Class<?> holder) {
         ObjectLayout layout = externalLayouts.get(holder);
         if (layout.functions != null) {
-            Converter converter = new Converter(realm);
+            ExecutionContext cx = realm.defaultContext();
+            Converter converter = new Converter(cx);
             for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
                 Function function = entry.getKey();
                 MethodHandle unreflect = entry.getValue();
 
-                MethodHandle handle = getInstanceMethodHandle(converter, unreflect, owner, realm);
+                MethodHandle handle = getInstanceMethodHandle(converter, unreflect, owner);
                 String name = function.name();
                 int arity = function.arity();
                 Attributes attrs = function.attributes();
                 NativeFunction fun = new NativeFunction(realm, name, arity, handle);
-                owner.defineOwnProperty(realm, name, propertyDescriptor(fun, attrs));
+                owner.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
             }
         }
     }
@@ -380,7 +382,7 @@ public final class Properties {
     }
 
     private static <T> MethodHandle getInstanceMethodHandle(Converter converter,
-            MethodHandle unreflect, T owner, Realm realm) {
+            MethodHandle unreflect, T owner) {
         MethodHandle handle = unreflect;
         handle = handle.bindTo(owner);
 
@@ -555,7 +557,7 @@ public final class Properties {
         Object value = resolveValue(realm, rawValue);
         assert value == null || value instanceof ScriptObject;
         ScriptObject prototype = (ScriptObject) value;
-        owner.setPrototype(realm, prototype);
+        owner.setPrototype(realm.defaultContext(), prototype);
     }
 
     private static void createValue(ScriptObject owner, Realm realm, Value val, Object rawValue) {
@@ -564,9 +566,10 @@ public final class Properties {
         Attributes attrs = val.attributes();
         Object value = resolveValue(realm, rawValue);
         if (sym == BuiltinSymbol.NONE) {
-            owner.defineOwnProperty(realm, name, propertyDescriptor(value, attrs));
+            owner.defineOwnProperty(realm.defaultContext(), name, propertyDescriptor(value, attrs));
         } else {
-            owner.defineOwnProperty(realm, sym.get(), propertyDescriptor(value, attrs));
+            owner.defineOwnProperty(realm.defaultContext(), sym.get(),
+                    propertyDescriptor(value, attrs));
         }
     }
 
@@ -577,13 +580,14 @@ public final class Properties {
         int arity = function.arity();
         Attributes attrs = function.attributes();
 
-        mh = MethodHandles.insertArguments(mh, 0, realm);
+        mh = MethodHandles.insertArguments(mh, 0, realm.defaultContext());
 
         NativeFunction fun = new NativeFunction(realm, name, arity, mh);
         if (sym == BuiltinSymbol.NONE) {
-            owner.defineOwnProperty(realm, name, propertyDescriptor(fun, attrs));
+            owner.defineOwnProperty(realm.defaultContext(), name, propertyDescriptor(fun, attrs));
         } else {
-            owner.defineOwnProperty(realm, sym.get(), propertyDescriptor(fun, attrs));
+            owner.defineOwnProperty(realm.defaultContext(), sym.get(),
+                    propertyDescriptor(fun, attrs));
         }
     }
 
@@ -596,7 +600,7 @@ public final class Properties {
         int arity = (type == Accessor.Type.Getter ? 0 : 1);
         Attributes attrs = accessor.attributes();
 
-        mh = MethodHandles.insertArguments(mh, 0, realm);
+        mh = MethodHandles.insertArguments(mh, 0, realm.defaultContext());
 
         NativeFunction fun = new NativeFunction(realm, name, arity, mh);
         PropertyDescriptor desc;
@@ -626,12 +630,13 @@ public final class Properties {
             Map<BuiltinSymbol, PropertyDescriptor> accessors2) {
         if (accessors1 != null) {
             for (Entry<String, PropertyDescriptor> entry : accessors1.entrySet()) {
-                owner.defineOwnProperty(realm, entry.getKey(), entry.getValue());
+                owner.defineOwnProperty(realm.defaultContext(), entry.getKey(), entry.getValue());
             }
         }
         if (accessors2 != null) {
             for (Entry<BuiltinSymbol, PropertyDescriptor> entry : accessors2.entrySet()) {
-                owner.defineOwnProperty(realm, entry.getKey().get(), entry.getValue());
+                owner.defineOwnProperty(realm.defaultContext(), entry.getKey().get(),
+                        entry.getValue());
             }
         }
     }
@@ -653,8 +658,8 @@ public final class Properties {
             return StaticMethodKind.Invalid;
         Class<?>[] params = type.parameterArray();
         int p = 0;
-        // first two parameters are (Realm, Object=ThisValue)
-        if (!(Realm.class.equals(params[p++]) && Object.class.equals(params[p++]))) {
+        // first two parameters are (ExecutionContext, Object=ThisValue)
+        if (!(ExecutionContext.class.equals(params[p++]) && Object.class.equals(params[p++]))) {
             return StaticMethodKind.Invalid;
         }
         // always required to return Object (for now at least)

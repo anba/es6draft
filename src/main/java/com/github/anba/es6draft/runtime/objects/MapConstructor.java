@@ -15,6 +15,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -48,31 +49,31 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.14.1.1 Map (iterable = undefined , comparator = undefined )
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
-        Realm realm = realm();
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        Realm realm = callerContext.getRealm();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
         Object comparator = args.length > 1 ? args[1] : UNDEFINED;
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
             // FIXME: spec bug ? `Map()` no longer allowed
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(callerContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof MapObject)) {
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
         MapObject map = (MapObject) thisValue;
         if (map.isInitialised()) {
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
 
         /* steps 5-7 */
@@ -80,17 +81,17 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         if (Type.isUndefinedOrNull(iterable)) {
             itr = UNDEFINED;
         } else {
-            ScriptObject _iterable = ToObject(realm, iterable);
-            boolean hasValues = HasProperty(realm, _iterable, "entries");
+            ScriptObject _iterable = ToObject(callerContext, iterable);
+            boolean hasValues = HasProperty(callerContext, _iterable, "entries");
             if (hasValues) {
-                itr = Invoke(realm, _iterable, "entries");
+                itr = Invoke(callerContext, _iterable, "entries");
             } else {
                 Symbol iterator = BuiltinSymbol.iterator.get();
-                itr = Invoke(realm, _iterable, iterator);
+                itr = Invoke(callerContext, _iterable, iterator);
             }
-            adder = Get(realm, map, "set");
+            adder = Get(callerContext, map, "set");
             if (!IsCallable(adder)) {
-                throw throwTypeError(realm, Messages.Key.NotCallable);
+                throw throwTypeError(callerContext, Messages.Key.NotCallable);
             }
         }
 
@@ -98,7 +99,7 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         MapObject.Comparator _comparator = MapObject.Comparator.SameValueZero;
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
-                throw throwRangeError(realm, Messages.Key.MapInvalidComparator);
+                throw throwRangeError(callerContext, Messages.Key.MapInvalidComparator);
             }
             _comparator = MapObject.Comparator.SameValue;
         }
@@ -111,17 +112,17 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         for (;;) {
             Object next;
             try {
-                next = Invoke(realm, itr, "next");
+                next = Invoke(callerContext, itr, "next");
             } catch (ScriptException e) {
                 if (IteratorComplete(realm, e)) {
                     return map;
                 }
                 throw e;
             }
-            ScriptObject entry = ToObject(realm, next);
-            Object k = Get(realm, entry, "0");
-            Object v = Get(realm, entry, "1");
-            ((Callable) adder).call(map, k, v);
+            ScriptObject entry = ToObject(callerContext, next);
+            Object k = Get(callerContext, entry, "0");
+            Object v = Get(callerContext, entry, "1");
+            ((Callable) adder).call(callerContext, map, k, v);
         }
     }
 
@@ -129,8 +130,8 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
      * 15.14.2.1 new Map ( ... args )
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -165,8 +166,8 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.MapPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.MapPrototype,
                     MapObjectAllocator.INSTANCE);
         }
     }

@@ -23,6 +23,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -52,8 +53,8 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -62,22 +63,22 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     public enum Properties {
         ;
 
-        private static RegExpObject thisRegExpValue(Realm realm, Object object) {
+        private static RegExpObject thisRegExpValue(ExecutionContext cx, Object object) {
             if (object instanceof RegExpObject) {
                 RegExpObject obj = (RegExpObject) object;
                 if (obj.isInitialised()) {
                     return obj;
                 }
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         @Function(name = "toSource", arity = 0)
-        public static Object toSource(Realm realm, Object thisValue) {
-            return toString(realm, thisValue);
+        public static Object toSource(ExecutionContext cx, Object thisValue) {
+            return toString(cx, thisValue);
         }
 
         /**
@@ -90,18 +91,18 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.6.2 RegExp.prototype.exec(string)
          */
         @Function(name = "exec", arity = 1)
-        public static Object exec(Realm realm, Object thisValue, Object string) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
-            CharSequence s = ToString(realm, string);
-            return RegExpExec(realm, r, s);
+        public static Object exec(ExecutionContext cx, Object thisValue, Object string) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
+            CharSequence s = ToString(cx, string);
+            return RegExpExec(cx, r, s);
         }
 
         /**
          * 15.10.6.3 get RegExp.prototype.global
          */
         @Accessor(name = "global", type = Accessor.Type.Getter)
-        public static Object global(Realm realm, Object thisValue) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
+        public static Object global(ExecutionContext cx, Object thisValue) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
             return r.getOriginalFlags().indexOf('g') != -1;
         }
 
@@ -109,8 +110,8 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.6.4 get RegExp.prototype.ignoreCase
          */
         @Accessor(name = "ignoreCase", type = Accessor.Type.Getter)
-        public static Object ignoreCase(Realm realm, Object thisValue) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
+        public static Object ignoreCase(ExecutionContext cx, Object thisValue) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
             return r.getOriginalFlags().indexOf('i') != -1;
         }
 
@@ -118,8 +119,8 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.6.5 get RegExp.prototype.multiline
          */
         @Accessor(name = "multiline", type = Accessor.Type.Getter)
-        public static Object multiline(Realm realm, Object thisValue) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
+        public static Object multiline(ExecutionContext cx, Object thisValue) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
             return r.getOriginalFlags().indexOf('m') != -1;
         }
 
@@ -127,17 +128,17 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.6.6 get RegExp.prototype.source
          */
         @Accessor(name = "source", type = Accessor.Type.Getter)
-        public static Object source(Realm realm, Object thisValue) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
-            return EscapeRegExpPattern(realm, r.getOriginalSource(), r.getOriginalFlags());
+        public static Object source(ExecutionContext cx, Object thisValue) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
+            return EscapeRegExpPattern(r.getOriginalSource(), r.getOriginalFlags());
         }
 
         /**
          * 15.10.6.7 get RegExp.prototype.sticky
          */
         @Accessor(name = "sticky", type = Accessor.Type.Getter)
-        public static Object sticky(Realm realm, Object thisValue) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
+        public static Object sticky(ExecutionContext cx, Object thisValue) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
             return r.getOriginalFlags().indexOf('y') != -1;
         }
 
@@ -145,18 +146,18 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.6.8 RegExp.prototype.test(string)
          */
         @Function(name = "test", arity = 1)
-        public static Object test(Realm realm, Object thisValue, Object string) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
-            CharSequence s = ToString(realm, string);
-            return getMatcherOrNull(realm, r, s) != null;
+        public static Object test(ExecutionContext cx, Object thisValue, Object string) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
+            CharSequence s = ToString(cx, string);
+            return getMatcherOrNull(cx, r, s) != null;
         }
 
         /**
          * 15.10.6.9 get RegExp.prototype.unicode
          */
         @Accessor(name = "unicode", type = Accessor.Type.Getter)
-        public static Object unicode(Realm realm, Object thisValue) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
+        public static Object unicode(ExecutionContext cx, Object thisValue) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
             return r.getOriginalFlags().indexOf('u') != -1;
         }
 
@@ -164,26 +165,26 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.6.10 RegExp.prototype.toString()
          */
         @Function(name = "toString", arity = 0)
-        public static Object toString(Realm realm, Object thisValue) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
-            CharSequence source = ToString(realm, Get(realm, r, "source"));
+        public static Object toString(ExecutionContext cx, Object thisValue) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
+            CharSequence source = ToString(cx, Get(cx, r, "source"));
             if (source.length() == 0) {
                 source = "(?:)";
             }
             StringBuilder sb = new StringBuilder().append('/').append(source).append('/');
-            if (ToBoolean(Get(realm, r, "global"))) {
+            if (ToBoolean(Get(cx, r, "global"))) {
                 sb.append('g');
             }
-            if (ToBoolean(Get(realm, r, "ignoreCase"))) {
+            if (ToBoolean(Get(cx, r, "ignoreCase"))) {
                 sb.append('i');
             }
-            if (ToBoolean(Get(realm, r, "multiline"))) {
+            if (ToBoolean(Get(cx, r, "multiline"))) {
                 sb.append('m');
             }
-            if (ToBoolean(Get(realm, r, "sticky"))) {
+            if (ToBoolean(Get(cx, r, "sticky"))) {
                 sb.append('y');
             }
-            if (ToBoolean(Get(realm, r, "unicode"))) {
+            if (ToBoolean(Get(cx, r, "unicode"))) {
                 sb.append('u');
             }
             return sb.toString();
@@ -193,34 +194,34 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.6.11 RegExp.prototype.match (string)
          */
         @Function(name = "match", arity = 1)
-        public static Object match(Realm realm, Object thisValue, Object string) {
-            RegExpObject rx = thisRegExpValue(realm, thisValue);
-            String s = ToFlatString(realm, string);
-            boolean global = ToBoolean(Get(realm, rx, "global"));
+        public static Object match(ExecutionContext cx, Object thisValue, Object string) {
+            RegExpObject rx = thisRegExpValue(cx, thisValue);
+            String s = ToFlatString(cx, string);
+            boolean global = ToBoolean(Get(cx, rx, "global"));
             if (!global) {
-                return RegExpExec(realm, rx, s);
+                return RegExpExec(cx, rx, s);
             } else {
-                Put(realm, rx, "lastIndex", 0, true);
-                ScriptObject array = ArrayCreate(realm, 0);
+                Put(cx, rx, "lastIndex", 0, true);
+                ScriptObject array = ArrayCreate(cx, 0);
                 int previousLastIndex = 0;
                 int n = 0;
                 boolean lastMatch = true;
                 while (lastMatch) {
                     // Object result = RegExpExec(realm, rx, s);
-                    Matcher result = getMatcherOrNull(realm, rx, s);
+                    Matcher result = getMatcherOrNull(cx, rx, s);
                     if (result == null) {
                         lastMatch = false;
                     } else {
-                        int thisIndex = (int) ToInteger(realm, Get(realm, rx, "lastIndex"));
+                        int thisIndex = (int) ToInteger(cx, Get(cx, rx, "lastIndex"));
                         if (thisIndex == previousLastIndex) {
-                            Put(realm, rx, "lastIndex", thisIndex + 1, true);
+                            Put(cx, rx, "lastIndex", thisIndex + 1, true);
                             previousLastIndex = thisIndex + 1;
                         } else {
                             previousLastIndex = thisIndex;
                         }
                         // Object matchStr = Get(Type.objectValue(result), "0");
                         CharSequence matchStr = s.subSequence(result.start(), result.end());
-                        DefinePropertyOrThrow(realm, array, ToString(n), new PropertyDescriptor(
+                        DefinePropertyOrThrow(cx, array, ToString(n), new PropertyDescriptor(
                                 matchStr, true, true, true));
                         n += 1;
                     }
@@ -236,39 +237,40 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.6.12 RegExp.prototype.replace (S, replaceValue)
          */
         @Function(name = "replace", arity = 2)
-        public static Object replace(Realm realm, Object thisValue, Object s, Object replaceValue) {
-            RegExpObject rx = thisRegExpValue(realm, thisValue);
-            String string = ToFlatString(realm, s);
+        public static Object replace(ExecutionContext cx, Object thisValue, Object s,
+                Object replaceValue) {
+            RegExpObject rx = thisRegExpValue(cx, thisValue);
+            String string = ToFlatString(cx, s);
             List<MatchResult> matches = new ArrayList<>();
             // cf. RegExp.prototype.match
-            boolean global = ToBoolean(Get(realm, rx, "global"));
+            boolean global = ToBoolean(Get(cx, rx, "global"));
             if (!global) {
                 // cf. RegExpExec
-                Object lastIndex = Get(realm, rx, "lastIndex");
+                Object lastIndex = Get(cx, rx, "lastIndex");
                 // call ToInteger(realm,) in order to trigger possible side-effects...
-                ToInteger(realm, lastIndex);
+                ToInteger(cx, lastIndex);
                 Matcher m = rx.getRegExpMatcher().matcher(string);
                 boolean matchSucceeded = m.find(0);
                 if (!matchSucceeded) {
-                    Put(realm, rx, "lastIndex", 0, true);
+                    Put(cx, rx, "lastIndex", 0, true);
                     return string;
                 }
                 matches.add(m.toMatchResult());
             } else {
                 // cf. RegExpExec
-                Put(realm, rx, "lastIndex", 0, true);
+                Put(cx, rx, "lastIndex", 0, true);
                 int previousLastIndex = 0;
                 int n = 0;
                 boolean lastMatch = true;
                 while (lastMatch) {
                     // Object result = RegExpExec(realm, rx, s);
-                    Matcher result = getMatcherOrNull(realm, rx, string);
+                    Matcher result = getMatcherOrNull(cx, rx, string);
                     if (result == null) {
                         lastMatch = false;
                     } else {
-                        int thisIndex = (int) ToInteger(realm, Get(realm, rx, "lastIndex"));
+                        int thisIndex = (int) ToInteger(cx, Get(cx, rx, "lastIndex"));
                         if (thisIndex == previousLastIndex) {
-                            Put(realm, rx, "lastIndex", thisIndex + 1, true);
+                            Put(cx, rx, "lastIndex", thisIndex + 1, true);
                             previousLastIndex = thisIndex + 1;
                         } else {
                             previousLastIndex = thisIndex;
@@ -298,7 +300,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                     arguments[m + 1] = matchResult.start();
                     arguments[m + 2] = string;
 
-                    CharSequence replacement = ToString(realm, fun.call(UNDEFINED, arguments));
+                    CharSequence replacement = ToString(cx, fun.call(cx, UNDEFINED, arguments));
                     result.append(string, lastMatch, matchResult.start());
                     result.append(replacement);
                     lastMatch = matchResult.end();
@@ -306,7 +308,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 result.append(string, lastMatch, string.length());
                 return result.toString();
             } else {
-                String replValue = ToFlatString(realm, replaceValue);
+                String replValue = ToFlatString(cx, replaceValue);
                 StringBuilder result = new StringBuilder();
                 int lastMatch = 0;
                 for (MatchResult matchResult : matches) {
@@ -391,9 +393,9 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.4.13 RegExp.prototype.search (S)
          */
         @Function(name = "search", arity = 1)
-        public static Object search(Realm realm, Object thisValue, Object s) {
-            RegExpObject rx = thisRegExpValue(realm, thisValue);
-            String string = ToFlatString(realm, s);
+        public static Object search(ExecutionContext cx, Object thisValue, Object s) {
+            RegExpObject rx = thisRegExpValue(cx, thisValue);
+            String string = ToFlatString(cx, s);
             Matcher matcher = rx.getRegExpMatcher().matcher(string);
             int result = (matcher.find() ? matcher.start() : -1);
             return result;
@@ -403,12 +405,13 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * 15.10.4.14 RegExp.prototype.split (string, limit)
          */
         @Function(name = "split", arity = 2)
-        public static Object split(Realm realm, Object thisValue, Object string, Object limit) {
-            RegExpObject rx = thisRegExpValue(realm, thisValue);
-            String s = ToFlatString(realm, string);
-            ScriptObject a = ArrayCreate(realm, 0);
+        public static Object split(ExecutionContext cx, Object thisValue, Object string,
+                Object limit) {
+            RegExpObject rx = thisRegExpValue(cx, thisValue);
+            String s = ToFlatString(cx, string);
+            ScriptObject a = ArrayCreate(cx, 0);
             int lengthA = 0;
-            long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(realm, limit);
+            long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(cx, limit);
             int size = s.length();
             int p = 0;
             if (lim == 0) {
@@ -419,7 +422,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 if (matcher.find()) {
                     return a;
                 }
-                a.defineOwnProperty(realm, "0", new PropertyDescriptor(s, true, true, true));
+                a.defineOwnProperty(cx, "0", new PropertyDescriptor(s, true, true, true));
                 return a;
             }
             // Note: omitted index q in the following code
@@ -428,7 +431,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 int e = matcher.end();
                 if (e != p) {
                     String t = s.substring(p, lastStart = matcher.start());
-                    a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(t, true,
+                    a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(t, true,
                             true, true));
                     lengthA += 1;
                     if (lengthA == lim) {
@@ -438,7 +441,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                     GroupIterator iterator = newGroupIterator(rx, matcher);
                     while (iterator.hasNext()) {
                         Object cap = iterator.next();
-                        a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(cap,
+                        a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(cap,
                                 true, true, true));
                         lengthA += 1;
                         if (lengthA == lim) {
@@ -451,8 +454,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 return a;
             }
             String t = s.substring(p, size);
-            a.defineOwnProperty(realm, ToString(lengthA), new PropertyDescriptor(t, true, true,
-                    true));
+            a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(t, true, true, true));
             return a;
         }
 
@@ -466,52 +468,53 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
          * RegExp.prototype.compile(pattern, flags)
          */
         @Function(name = "compile", arity = 2)
-        public static Object compile(Realm realm, Object thisValue, Object pattern, Object flags) {
-            RegExpObject r = thisRegExpValue(realm, thisValue);
-            String p = Type.isUndefined(pattern) ? "" : ToFlatString(realm, pattern);
-            String f = Type.isUndefined(flags) ? "" : ToFlatString(realm, flags);
-            return RegExpInitialize(realm, r, p, f);
+        public static Object compile(ExecutionContext cx, Object thisValue, Object pattern,
+                Object flags) {
+            RegExpObject r = thisRegExpValue(cx, thisValue);
+            String p = Type.isUndefined(pattern) ? "" : ToFlatString(cx, pattern);
+            String f = Type.isUndefined(flags) ? "" : ToFlatString(cx, flags);
+            return RegExpInitialize(cx, r, p, f);
         }
     }
 
     /**
      * Runtime Semantics: RegExpExec Abstract Operation
      */
-    public static Object RegExpExec(Realm realm, RegExpObject r, CharSequence s) {
+    public static Object RegExpExec(ExecutionContext cx, RegExpObject r, CharSequence s) {
         assert r.isInitialised();
-        Matcher m = getMatcherOrNull(realm, r, s);
+        Matcher m = getMatcherOrNull(cx, r, s);
         if (m == null) {
             return NULL;
         }
-        return toMatchResult(realm, r, s, m);
+        return toMatchResult(cx, r, s, m);
     }
 
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (1)
      */
-    private static Matcher getMatcherOrNull(Realm realm, RegExpObject r, CharSequence s) {
+    private static Matcher getMatcherOrNull(ExecutionContext cx, RegExpObject r, CharSequence s) {
         assert r.isInitialised();
         Pattern matcher = r.getRegExpMatcher();
         int length = s.length();
-        Object lastIndex = Get(realm, r, "lastIndex");
-        double i = ToInteger(realm, lastIndex);
-        boolean global = ToBoolean(Get(realm, r, "global"));
+        Object lastIndex = Get(cx, r, "lastIndex");
+        double i = ToInteger(cx, lastIndex);
+        boolean global = ToBoolean(Get(cx, r, "global"));
         if (!global) {
             i = 0;
         }
         if (i < 0 || i > length) {
-            Put(realm, r, "lastIndex", 0, true);
+            Put(cx, r, "lastIndex", 0, true);
             return null;
         }
         Matcher m = matcher.matcher(s);
         boolean matchSucceeded = m.find((int) i);
         if (!matchSucceeded) {
-            Put(realm, r, "lastIndex", 0, true);
+            Put(cx, r, "lastIndex", 0, true);
             return null;
         }
         int e = m.end();
         if (global) {
-            Put(realm, r, "lastIndex", e, true);
+            Put(cx, r, "lastIndex", e, true);
         }
         return m;
     }
@@ -519,25 +522,24 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (2)
      */
-    private static ScriptObject toMatchResult(Realm realm, RegExpObject r, CharSequence s,
+    private static ScriptObject toMatchResult(ExecutionContext cx, RegExpObject r, CharSequence s,
             MatchResult m) {
         assert r.isInitialised();
         int matchIndex = m.start();
         int e = m.end();
         int n = m.groupCount();
 
-        ScriptObject array = ArrayCreate(realm, 0);
-        array.defineOwnProperty(realm, "index",
-                new PropertyDescriptor(matchIndex, true, true, true));
-        array.defineOwnProperty(realm, "input", new PropertyDescriptor(s, true, true, true));
-        array.defineOwnProperty(realm, "length", new PropertyDescriptor(n + 1));
+        ScriptObject array = ArrayCreate(cx, 0);
+        array.defineOwnProperty(cx, "index", new PropertyDescriptor(matchIndex, true, true, true));
+        array.defineOwnProperty(cx, "input", new PropertyDescriptor(s, true, true, true));
+        array.defineOwnProperty(cx, "length", new PropertyDescriptor(n + 1));
 
         CharSequence matchedSubstr = s.subSequence(matchIndex, e);
-        array.defineOwnProperty(realm, "0", new PropertyDescriptor(matchedSubstr, true, true, true));
+        array.defineOwnProperty(cx, "0", new PropertyDescriptor(matchedSubstr, true, true, true));
         GroupIterator iterator = newGroupIterator(r, m);
         for (int i = 1; iterator.hasNext(); ++i) {
             Object capture = iterator.next();
-            array.defineOwnProperty(realm, ToString(i), new PropertyDescriptor(capture, true, true,
+            array.defineOwnProperty(cx, ToString(i), new PropertyDescriptor(capture, true, true,
                     true));
         }
         return array;

@@ -17,7 +17,6 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  * <h1>13 Functions and Generators</h1><br>
@@ -30,12 +29,12 @@ class BindingInitialisationGenerator {
     private static class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "Get",
-                Type.getMethodType(Types.Object, Types.Realm, Types.ScriptObject, Types.String));
+                Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
+                        Types.ExecutionContext, Types.ScriptObject, Types.String));
 
         static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.ScriptObject, Types.Realm, Types.Object));
+                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
@@ -50,16 +49,17 @@ class BindingInitialisationGenerator {
         // class: Reference
         static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
                 Types.Reference, "GetValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.Realm));
+                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc Reference_PutValue_ = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "PutValue",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Realm));
+                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
-                        Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE, Types.Realm));
+                        Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
+                        Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_throw = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "_throw",
@@ -138,7 +138,7 @@ class BindingInitialisationGenerator {
          */
         protected final void invokeGetValue(Expression node, ExpressionVisitor mv) {
             if (node.accept(IsReference.INSTANCE, null)) {
-                mv.load(Register.Realm);
+                mv.loadExecutionContext();
                 mv.invoke(Methods.Reference_GetValue);
             }
         }
@@ -261,7 +261,7 @@ class BindingInitialisationGenerator {
                 identifierResolution.resolve(node, mv);
                 mv.swap();
                 // stack: [ref, value] -> []
-                mv.load(Register.Realm);
+                mv.loadExecutionContext();
                 mv.invoke(Methods.Reference_PutValue_);
             }
 
@@ -307,7 +307,7 @@ class BindingInitialisationGenerator {
                 // step 1-3:
                 // stack: [(env), value] -> [(env), v]
                 String name = ToString(index);
-                mv.load(Register.Realm);
+                mv.loadExecutionContext();
                 mv.swap();
                 mv.aconst(name);
                 mv.invoke(Methods.AbstractOperations_Get);
@@ -325,7 +325,7 @@ class BindingInitialisationGenerator {
                         mv.toBoxed(type);
                         // FIXME: spec bug - missing GetValue() call (Bug 1242)
                         invokeGetValue(initialiser, mv);
-                        mv.load(Register.Realm);
+                        mv.loadExecutionContext();
                         mv.swap();
                         mv.invoke(Methods.AbstractOperations_ToObject);
                     }
@@ -342,7 +342,7 @@ class BindingInitialisationGenerator {
         @Override
         public Void visit(BindingRestElement node, Integer index) {
             mv.iconst(index);
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             // stack: [(env), value, index, cx] -> [(env), rest]
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
@@ -393,7 +393,7 @@ class BindingInitialisationGenerator {
         private void generate(Binding binding, Expression initialiser, String propertyName) {
             // step 1-2:
             // stack: [(env), value] -> [(env), v]
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.swap();
             mv.aconst(propertyName);
             mv.invoke(Methods.AbstractOperations_Get);
@@ -412,7 +412,7 @@ class BindingInitialisationGenerator {
                     // FIXME: spec bug - missing GetValue() call (Bug 1242)
                     invokeGetValue(initialiser, mv);
                     if (binding instanceof BindingPattern) {
-                        mv.load(Register.Realm);
+                        mv.loadExecutionContext();
                         mv.swap();
                         mv.invoke(Methods.AbstractOperations_ToObject);
                     }

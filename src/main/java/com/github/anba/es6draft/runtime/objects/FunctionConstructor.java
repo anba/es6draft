@@ -42,59 +42,60 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.3.1.1 Function (p1, p2, ... , pn, body)
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
-        return construct(args);
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        return construct(callerContext, args);
     }
 
     /**
      * 15.3.2.1 new Function (p1, p2, ... , pn, body)
      */
     @Override
-    public Object construct(Object... args) {
+    public Object construct(ExecutionContext callerContext, Object... args) {
         int argCount = args.length;
         StringBuilder p = new StringBuilder();
         CharSequence bodyText;
         if (argCount == 0) {
             bodyText = "";
         } else if (argCount == 1) {
-            bodyText = ToString(realm(), args[0]);
+            bodyText = ToString(callerContext, args[0]);
         } else {
             Object firstArg = args[0];
-            p.append(ToString(realm(), firstArg));
+            p.append(ToString(callerContext, firstArg));
             int k = 2;
             for (; k < argCount; ++k) {
                 Object nextArg = args[k - 1];
-                CharSequence nextArgString = ToString(realm(), nextArg);
+                CharSequence nextArgString = ToString(callerContext, nextArg);
                 p.append(',').append(nextArgString);
             }
-            bodyText = ToString(realm(), args[k - 1]);
+            bodyText = ToString(callerContext, args[k - 1]);
         }
 
-        Script script = script(realm(), p, bodyText);
-        ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(realm());
+        Script script = script(callerContext, p, bodyText);
+        ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(callerContext
+                .getRealm());
         return script.evaluate(scriptCxt);
     }
 
-    private static Script script(Realm realm, CharSequence p, CharSequence bodyText) {
+    private static Script script(ExecutionContext cx, CharSequence p, CharSequence bodyText) {
         try {
             Parser parser = new Parser("<Function>", 1);
             com.github.anba.es6draft.ast.Script parsedScript = parser.parseFunction(p, bodyText);
-            String className = realm.nextFunctionName();
+            String className = cx.getRealm().nextFunctionName();
             return ScriptLoader.load(className, parsedScript);
         } catch (ParserException e) {
             if (e.getExceptionType() == ExceptionType.ReferenceError) {
-                throw throwReferenceError(realm, e.getMessageKey(), e.getMessageArguments());
+                throw throwReferenceError(cx, e.getMessageKey(), e.getMessageArguments());
             }
-            throw throwSyntaxError(realm, e.getMessageKey(), e.getMessageArguments());
+            throw throwSyntaxError(cx, e.getMessageKey(), e.getMessageArguments());
         }
     }
 

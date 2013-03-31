@@ -33,6 +33,7 @@ import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserEOFException;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -127,10 +128,10 @@ public class Repl {
     /**
      * REPL: Print
      */
-    private void print(Realm realm, Object result) {
+    private void print(ExecutionContext cx, Object result) {
         try {
             if (result != UNDEFINED) {
-                console.writer().println(ToSource(realm, result));
+                console.writer().println(ToSource(cx, result));
             }
         } catch (ScriptException e) {
             console.printf("uncaught exception: %s\n", e.getMessage());
@@ -147,7 +148,8 @@ public class Repl {
                 return new ReplGlobalObject(realm, Repl.this);
             }
         });
-        createProperties(realm.getGlobalThis(), realm, ReplGlobalObject.class);
+        ExecutionContext cx = realm.defaultContext();
+        createProperties(realm.getGlobalThis(), cx, ReplGlobalObject.class);
 
         for (int line = 1;; line += 1) {
             console.printf("js> ");
@@ -159,7 +161,7 @@ public class Repl {
             if (result == null) {
                 continue;
             }
-            print(realm, result);
+            print(cx, result);
         }
     }
 
@@ -212,7 +214,7 @@ public class Repl {
 
         private static ScriptException throwError(Realm realm, String message) {
             Object error = EvaluateConstructorCall(realm.getIntrinsic(Intrinsics.Error),
-                    new Object[] { message }, realm);
+                    new Object[] { message }, realm.defaultContext());
             return _throw(error);
         }
 
@@ -289,10 +291,11 @@ public class Repl {
         public void assertEq(Object actual, Object expected, Object message) {
             if (!SameValue(actual, expected)) {
                 StringBuilder msg = new StringBuilder();
+                ExecutionContext cx = realm.defaultContext();
                 msg.append(String.format("Assertion failed: got %s, expected %s",
-                        ToSource(realm, actual), ToSource(realm, expected)));
+                        ToSource(cx, actual), ToSource(cx, expected)));
                 if (!Type.isUndefined(message)) {
-                    msg.append(": ").append(ToFlatString(realm, message));
+                    msg.append(": ").append(ToFlatString(cx, message));
                 }
                 throwError(realm, msg.toString());
             }

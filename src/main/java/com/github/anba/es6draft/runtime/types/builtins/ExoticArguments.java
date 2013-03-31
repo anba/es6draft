@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -123,19 +124,19 @@ public class ExoticArguments extends OrdinaryObject {
     /**
      * [10.6 Arguments Object] InstantiateArgumentsObject
      */
-    public static ExoticArguments InstantiateArgumentsObject(Realm realm, Object[] args) {
+    public static ExoticArguments InstantiateArgumentsObject(ExecutionContext cx, Object[] args) {
         /* [10.6] step 1 */
         int len = args.length;
         /* [10.6] step 2-3 */
-        ExoticArguments obj = new ExoticArguments(realm);
-        obj.setPrototype(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
+        ExoticArguments obj = new ExoticArguments(cx.getRealm());
+        obj.setPrototype(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
         /* [10.6] step 4 */
-        obj.defineOwnProperty(realm, "length", new PropertyDescriptor(len, true, false, true));
+        obj.defineOwnProperty(cx, "length", new PropertyDescriptor(len, true, false, true));
         /* [10.6] step 5-6 */
         for (int index = 0; index < len; ++index) {
             Object val = args[index];
-            obj.defineOwnProperty(realm, ToString(index), new PropertyDescriptor(val, true, true,
-                    true));
+            obj.defineOwnProperty(cx, ToString(index),
+                    new PropertyDescriptor(val, true, true, true));
         }
         return obj;
     }
@@ -143,33 +144,31 @@ public class ExoticArguments extends OrdinaryObject {
     /**
      * [10.6 Arguments Object] CompleteStrictArgumentsObject
      */
-    public static void CompleteStrictArgumentsObject(Realm realm, ExoticArguments obj) {
+    public static void CompleteStrictArgumentsObject(ExecutionContext cx, ExoticArguments obj) {
         /* [10.6] step 1-2 */
-        AddRestrictedFunctionProperties(realm, obj);
+        AddRestrictedFunctionProperties(cx, obj);
     }
 
     /**
      * [13.6 Creating Function Objects and Constructors] AddRestrictedFunctionProperties
      */
-    private static void AddRestrictedFunctionProperties(Realm realm, ExoticArguments obj) {
+    private static void AddRestrictedFunctionProperties(ExecutionContext cx, ExoticArguments obj) {
         /*  step 1  */
-        Callable thrower = realm.getThrowTypeError();
+        Callable thrower = cx.getRealm().getThrowTypeError();
         /*  step 2  */
-        obj.defineOwnProperty(realm, "caller", new PropertyDescriptor(thrower, thrower, false,
-                false));
+        obj.defineOwnProperty(cx, "caller", new PropertyDescriptor(thrower, thrower, false, false));
         /*  step 3  */
         // FIXME: spec bug ("arguments" per spec!) (Bug 1158)
-        obj.defineOwnProperty(realm, "callee", new PropertyDescriptor(thrower, thrower, false,
-                false));
+        obj.defineOwnProperty(cx, "callee", new PropertyDescriptor(thrower, thrower, false, false));
     }
 
     /**
      * [10.6 Arguments Object] CompleteMappedArgumentsObject
      */
-    public static void CompleteMappedArgumentsObject(Realm realm, ExoticArguments obj,
+    public static void CompleteMappedArgumentsObject(ExecutionContext cx, ExoticArguments obj,
             FunctionObject func, String[] formals, LexicalEnvironment env) {
         // added ToInt32()
-        int len = ToInt32(realm, Get(realm, obj, "length"));
+        int len = ToInt32(cx, Get(cx, obj, "length"));
         boolean hasMapped = false;
         int numberOfNonRestFormals = formals.length;
         ParameterMap map = new ParameterMap(env, len);
@@ -185,28 +184,28 @@ public class ExoticArguments extends OrdinaryObject {
             obj.parameterMap = map;
         }
         /*  step 9  */
-        obj.defineOwnProperty(realm, "callee", new PropertyDescriptor(func, true, false, true));
+        obj.defineOwnProperty(cx, "callee", new PropertyDescriptor(func, true, false, true));
     }
 
     /**
      * [[Set]]
      */
     @Override
-    public boolean set(Realm realm, String propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         // FIXME: spec bug (not overriden in spec -> 10.6-10-c-ii-2) (bug 1160)
-        return super.set(realm, propertyKey, value, receiver);
+        return super.set(cx, propertyKey, value, receiver);
     }
 
     /**
      * [[Get]]
      */
     @Override
-    public Object get(Realm realm, String propertyKey, Object accessorThisValue) {
+    public Object get(ExecutionContext cx, String propertyKey, Object accessorThisValue) {
         /*  step 1-2  */
         ParameterMap map = this.parameterMap;
         /*  [[ParameterMap]] not present  */
         if (map == null) {
-            return super.get(realm, propertyKey, accessorThisValue);
+            return super.get(cx, propertyKey, accessorThisValue);
         }
         /*  step 3  */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
@@ -214,9 +213,9 @@ public class ExoticArguments extends OrdinaryObject {
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 4  */
         if (!isMapped) {
-            Object v = super.get(realm, propertyKey, accessorThisValue);
+            Object v = super.get(cx, propertyKey, accessorThisValue);
             if ("caller".equals(propertyKey) && isStrictFunction(v)) {
-                throw throwTypeError(realm, Messages.Key.StrictModePoisonPill);
+                throw throwTypeError(cx, Messages.Key.StrictModePoisonPill);
             }
             return v;
         }
@@ -229,9 +228,9 @@ public class ExoticArguments extends OrdinaryObject {
      * [[GetOwnProperty]]
      */
     @Override
-    public Property getOwnProperty(Realm realm, String propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         /*  step 1  */
-        Property desc = super.getOwnProperty(realm, propertyKey);
+        Property desc = super.getOwnProperty(cx, propertyKey);
         /*  step 3  */
         if (desc == null) {
             return desc;
@@ -261,19 +260,20 @@ public class ExoticArguments extends OrdinaryObject {
      * [[DefineOwnProperty]]
      */
     @Override
-    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
+    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
+            PropertyDescriptor desc) {
         /*  step 1  */
         ParameterMap map = this.parameterMap;
         /*  [[ParameterMap]] not present  */
         if (map == null) {
-            return super.defineOwnProperty(realm, propertyKey, desc);
+            return super.defineOwnProperty(cx, propertyKey, desc);
         }
         /*  step 2  */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 3-4  */
-        boolean allowed = super.defineOwnProperty(realm, propertyKey, desc);
+        boolean allowed = super.defineOwnProperty(cx, propertyKey, desc);
         /*  step 5  */
         if (!allowed) {
             return false;
@@ -299,19 +299,19 @@ public class ExoticArguments extends OrdinaryObject {
      * [[Delete]]
      */
     @Override
-    public boolean delete(Realm realm, String propertyKey) {
+    public boolean delete(ExecutionContext cx, String propertyKey) {
         /*  step 1  */
         ParameterMap map = this.parameterMap;
         /*  [[ParameterMap]] not present  */
         if (map == null) {
-            return super.delete(realm, propertyKey);
+            return super.delete(cx, propertyKey);
         }
         /*  step 2  */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 3  */
-        boolean result = super.delete(realm, propertyKey);
+        boolean result = super.delete(cx, propertyKey);
         if (result && isMapped) {
             map.delete(propertyKey);
         }

@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -35,28 +36,28 @@ public class NativeErrorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     @Override
-    public void initialise(Realm realm) {
+    public void initialise(ExecutionContext cx) {
         switch (type) {
         case EvalError:
-            createProperties(this, realm, EvalErrorPrototypeProperties.class);
+            createProperties(this, cx, EvalErrorPrototypeProperties.class);
             break;
         case RangeError:
-            createProperties(this, realm, RangeErrorPrototypeProperties.class);
+            createProperties(this, cx, RangeErrorPrototypeProperties.class);
             break;
         case ReferenceError:
-            createProperties(this, realm, ReferenceErrorPrototypeProperties.class);
+            createProperties(this, cx, ReferenceErrorPrototypeProperties.class);
             break;
         case SyntaxError:
-            createProperties(this, realm, SyntaxErrorPrototypeProperties.class);
+            createProperties(this, cx, SyntaxErrorPrototypeProperties.class);
             break;
         case TypeError:
-            createProperties(this, realm, TypeErrorPrototypeProperties.class);
+            createProperties(this, cx, TypeErrorPrototypeProperties.class);
             break;
         case URIError:
-            createProperties(this, realm, URIErrorPrototypeProperties.class);
+            createProperties(this, cx, URIErrorPrototypeProperties.class);
             break;
         case InternalError:
-            createProperties(this, realm, InternalErrorPrototypeProperties.class);
+            createProperties(this, cx, InternalErrorPrototypeProperties.class);
             break;
         default:
             throw new IllegalStateException();

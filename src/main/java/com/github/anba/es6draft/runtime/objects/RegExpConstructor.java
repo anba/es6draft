@@ -24,6 +24,7 @@ import java.util.regex.PatternSyntaxException;
 
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.parser.RegExpParser;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -54,17 +55,16 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.10.3.1 RegExp(pattern, flags)
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
-        Realm realm = realm();
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         Object pattern = args.length > 0 ? args[0] : UNDEFINED;
         Object flags = args.length > 1 ? args[1] : UNDEFINED;
 
@@ -75,7 +75,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
                     && Type.isUndefined(flags)) {
                 return pattern;
             }
-            obj = RegExpAllocate(realm, this);
+            obj = RegExpAllocate(callerContext, this);
         } else {
             obj = (RegExpObject) thisValue;
         }
@@ -84,27 +84,27 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
         if (Type.isObject(pattern) && pattern instanceof RegExpObject) {
             RegExpObject regexp = (RegExpObject) pattern;
             if (!regexp.isInitialised()) {
-                throwTypeError(realm, Messages.Key.RegExpNotInitialised);
+                throwTypeError(callerContext, Messages.Key.RegExpNotInitialised);
             }
             if (!Type.isUndefined(flags)) {
-                throw throwTypeError(realm, Messages.Key.NotUndefined);
+                throw throwTypeError(callerContext, Messages.Key.NotUndefined);
             }
             p = regexp.getOriginalSource();
             f = regexp.getOriginalFlags();
         } else {
-            p = (Type.isUndefined(pattern) ? "" : ToFlatString(realm, pattern));
-            f = (Type.isUndefined(flags) ? "" : ToFlatString(realm, flags));
+            p = (Type.isUndefined(pattern) ? "" : ToFlatString(callerContext, pattern));
+            f = (Type.isUndefined(flags) ? "" : ToFlatString(callerContext, flags));
         }
 
-        return RegExpInitialize(realm, obj, p, f);
+        return RegExpInitialize(callerContext, obj, p, f);
     }
 
     /**
      * 15.10.4.1 new RegExp(pattern, flags)
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     private static class RegExpObjectAllocator implements ObjectAllocator<RegExpObject> {
@@ -119,18 +119,19 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     /**
      * Runtime Semantics: RegExpAlloc Abstract Operation
      */
-    public static RegExpObject RegExpAllocate(Realm realm, Object constructor) {
-        RegExpObject obj = OrdinaryCreateFromConstructor(realm, constructor,
+    public static RegExpObject RegExpAllocate(ExecutionContext cx, Object constructor) {
+        RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
-        DefinePropertyOrThrow(realm, obj, "lastIndex", new PropertyDescriptor(UNDEFINED, true,
-                false, false));
+        DefinePropertyOrThrow(cx, obj, "lastIndex", new PropertyDescriptor(UNDEFINED, true, false,
+                false));
         return obj;
     }
 
     /**
      * Runtime Semantics: RegExpInitialize Abstract Operation
      */
-    public static RegExpObject RegExpInitialize(Realm realm, RegExpObject obj, String p, String f) {
+    public static RegExpObject RegExpInitialize(ExecutionContext cx, RegExpObject obj, String p,
+            String f) {
         // flags :: g | i | m | u | y
         final int global = 0b00001, ignoreCase = 0b00010, multiline = 0b00100, unicode = 0b01000, sticky = 0b10000;
         int flags = 0b00000;
@@ -143,17 +144,17 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
             } else {
                 switch (flag) {
                 case global:
-                    throw throwSyntaxError(realm, Messages.Key.DuplicateRegExpFlag, "global");
+                    throw throwSyntaxError(cx, Messages.Key.DuplicateRegExpFlag, "global");
                 case ignoreCase:
-                    throw throwSyntaxError(realm, Messages.Key.DuplicateRegExpFlag, "ignoreCase");
+                    throw throwSyntaxError(cx, Messages.Key.DuplicateRegExpFlag, "ignoreCase");
                 case multiline:
-                    throw throwSyntaxError(realm, Messages.Key.DuplicateRegExpFlag, "multiline");
+                    throw throwSyntaxError(cx, Messages.Key.DuplicateRegExpFlag, "multiline");
                 case unicode:
-                    throw throwSyntaxError(realm, Messages.Key.DuplicateRegExpFlag, "unicode");
+                    throw throwSyntaxError(cx, Messages.Key.DuplicateRegExpFlag, "unicode");
                 case sticky:
-                    throw throwSyntaxError(realm, Messages.Key.DuplicateRegExpFlag, "sticky");
+                    throw throwSyntaxError(cx, Messages.Key.DuplicateRegExpFlag, "sticky");
                 default:
-                    throw throwSyntaxError(realm, Messages.Key.InvalidRegExpFlag, String.valueOf(c));
+                    throw throwSyntaxError(cx, Messages.Key.InvalidRegExpFlag, String.valueOf(c));
                 }
             }
         }
@@ -175,15 +176,15 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
             match = Pattern.compile(regexp, iflags);
             negativeLAGroups = parser.negativeLookaheadGroups();
         } catch (ParserException | PatternSyntaxException e) {
-            throw throwSyntaxError(realm, Messages.Key.InvalidRegExpPattern, e.getMessage());
+            throw throwSyntaxError(cx, Messages.Key.InvalidRegExpPattern, e.getMessage());
         }
 
         obj.initialise(p, f, match, negativeLAGroups);
 
         // FIXME: spec bug (result from function not used)
-        EscapeRegExpPattern(realm, p, f);
+        EscapeRegExpPattern(p, f);
 
-        Put(realm, obj, "lastIndex", 0, true);
+        Put(cx, obj, "lastIndex", 0, true);
 
         return obj;
     }
@@ -191,15 +192,15 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     /**
      * Runtime Semantics: RegExpCreate Abstract Operation
      */
-    public static RegExpObject RegExpCreate(Realm realm, String pattern, String flags) {
-        RegExpObject obj = RegExpAllocate(realm, realm.getIntrinsic(Intrinsics.RegExp));
-        return RegExpInitialize(realm, obj, pattern, flags);
+    public static RegExpObject RegExpCreate(ExecutionContext cx, String pattern, String flags) {
+        RegExpObject obj = RegExpAllocate(cx, cx.getIntrinsic(Intrinsics.RegExp));
+        return RegExpInitialize(cx, obj, pattern, flags);
     }
 
     /**
      * Runtime Semantics: EscapeRegExpPattern Abstract Operation
      */
-    public static String EscapeRegExpPattern(Realm realm, String p, String f) {
+    public static String EscapeRegExpPattern(String p, String f) {
         StringBuilder sb = new StringBuilder(p.length());
         for (int i = 0, len = p.length(); i < len; ++i) {
             char c = p.charAt(i);
@@ -287,8 +288,8 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return RegExpAllocate(realm, thisValue);
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return RegExpAllocate(cx, thisValue);
         }
     }
 }

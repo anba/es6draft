@@ -15,6 +15,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 import java.text.NumberFormat;
 import java.util.Locale;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -40,8 +41,8 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -50,12 +51,12 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
     public enum Properties {
         ;
 
-        private static NumberFormatObject numberFormat(Realm realm, Object object) {
+        private static NumberFormatObject numberFormat(ExecutionContext cx, Object object) {
             if (object instanceof NumberFormatObject) {
                 // TODO: test for initialised state
                 return (NumberFormatObject) object;
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -71,11 +72,11 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
          * 11.3.2 Intl.NumberFormat.prototype.format
          */
         @Accessor(name = "format", type = Accessor.Type.Getter)
-        public static Object format(Realm realm, Object thisValue) {
-            NumberFormatObject numberFormat = numberFormat(realm, thisValue);
+        public static Object format(ExecutionContext cx, Object thisValue) {
+            NumberFormatObject numberFormat = numberFormat(cx, thisValue);
             if (numberFormat.getBoundFormat() == null) {
-                FormatFunction f = new FormatFunction(realm);
-                Callable bf = (Callable) FunctionPrototype.Properties.bind(realm, f, thisValue);
+                FormatFunction f = new FormatFunction(cx.getRealm());
+                Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
                 numberFormat.setBoundFormat(bf);
             }
             return numberFormat.getBoundFormat();
@@ -85,8 +86,8 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
          * 11.3.3 Intl.NumberFormat.prototype.resolvedOptions ()
          */
         @Function(name = "resolvedOptions", arity = 0)
-        public static Object resolvedOptions(Realm realm, Object thisValue) {
-            numberFormat(realm, thisValue);
+        public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
+            numberFormat(cx, thisValue);
             return UNDEFINED;
         }
     }
@@ -102,7 +103,7 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
     /**
      * Abstract Operation: FormatNumber
      */
-    public static String FormatNumber(Realm realm, NumberFormatObject numberFormat, double x) {
+    public static String FormatNumber(ExecutionContext cx, NumberFormatObject numberFormat, double x) {
         Locale locale = getLocale(numberFormat);
         NumberFormat nf = NumberFormat.getNumberInstance(locale);
         String n;
@@ -126,21 +127,22 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
     private static class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm);
-            setPrototype(realm, realm.getIntrinsic(Intrinsics.FunctionPrototype));
-            defineOwnProperty(realm, "name", new PropertyDescriptor("format", false, false, false));
-            defineOwnProperty(realm, "length", new PropertyDescriptor(1, false, false, false));
-            AddRestrictedFunctionProperties(realm, this);
+            ExecutionContext cx = realm.defaultContext();
+            setPrototype(cx, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+            defineOwnProperty(cx, "name", new PropertyDescriptor("format", false, false, false));
+            defineOwnProperty(cx, "length", new PropertyDescriptor(1, false, false, false));
+            AddRestrictedFunctionProperties(cx, this);
         }
 
         /**
          * [[Call]]
          */
         @Override
-        public Object call(Object thisValue, Object... args) {
+        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof NumberFormatObject;
             Object value = args.length > 0 ? args[0] : UNDEFINED;
-            double x = ToNumber(realm(), value);
-            return FormatNumber(realm(), (NumberFormatObject) thisValue, x);
+            double x = ToNumber(callerContext, value);
+            return FormatNumber(callerContext, (NumberFormatObject) thisValue, x);
         }
     }
 }

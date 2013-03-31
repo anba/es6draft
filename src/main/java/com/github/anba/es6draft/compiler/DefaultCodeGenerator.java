@@ -24,7 +24,6 @@ import com.github.anba.es6draft.ast.ConditionalExpression;
 import com.github.anba.es6draft.ast.DefaultNodeVisitor;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.MethodDefinition;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -42,9 +41,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
     private static class Methods {
         // class: AbstractOperations
-        static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "ToPrimitive",
-                Type.getMethodType(Types.Object, Types.Realm, Types.Object, Types._Type));
+        static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc
+                .create(MethodType.Static, Types.AbstractOperations, "ToPrimitive", Type
+                        .getMethodType(Types.Object, Types.ExecutionContext, Types.Object,
+                                Types._Type));
 
         static final MethodDesc AbstractOperations_ToBoolean = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToBoolean",
@@ -56,11 +56,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc AbstractOperations_ToFlatString = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "ToFlatString",
-                Type.getMethodType(Types.String, Types.Realm, Types.Object));
+                Type.getMethodType(Types.String, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToNumber = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToNumber",
-                Type.getMethodType(Type.DOUBLE_TYPE, Types.Realm, Types.Object));
+                Type.getMethodType(Type.DOUBLE_TYPE, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToNumber_CharSequence = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "ToNumber",
@@ -68,7 +68,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc AbstractOperations_ToInt32 = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToInt32",
-                Type.getMethodType(Type.INT_TYPE, Types.Realm, Types.Object));
+                Type.getMethodType(Type.INT_TYPE, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToInt32_double = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "ToInt32",
@@ -76,7 +76,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc AbstractOperations_ToUint32 = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToUint32",
-                Type.getMethodType(Type.LONG_TYPE, Types.Realm, Types.Object));
+                Type.getMethodType(Type.LONG_TYPE, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToUint32_double = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "ToUint32",
@@ -84,11 +84,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.ScriptObject, Types.Realm, Types.Object));
+                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToString = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToString",
-                Type.getMethodType(Types.CharSequence, Types.Realm, Types.Object));
+                Type.getMethodType(Types.CharSequence, Types.ExecutionContext, Types.Object));
 
         static final MethodDesc AbstractOperations_ToString_double = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "ToString",
@@ -141,11 +141,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // class: Reference
         static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
                 Types.Reference, "GetValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.Realm));
+                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Static,
-                Types.Reference, "PutValue",
-                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.Object, Types.Realm));
+                Types.Reference, "PutValue", Type.getMethodType(Type.VOID_TYPE, Types.Object,
+                        Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_CreateDefaultConstructor = MethodDesc.create(
@@ -160,11 +160,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
         static final MethodDesc ScriptRuntime_getClassProto = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "getClassProto",
-                Type.getMethodType(Types.ScriptObject_, Types.Object, Types.Realm));
+                Type.getMethodType(Types.ScriptObject_, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getDefaultClassProto = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "getDefaultClassProto",
-                Type.getMethodType(Types.ScriptObject_, Types.Realm));
+                Type.getMethodType(Types.ScriptObject_, Types.ExecutionContext));
 
         // class: Type
         static final MethodDesc Type_isUndefinedOrNull = MethodDesc.create(MethodType.Static,
@@ -195,7 +195,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [] -> [lexEnv]
      */
     protected final void getLexicalEnvironment(ExpressionVisitor mv) {
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
     }
 
@@ -203,7 +203,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [] -> [envRec]
      */
     protected final void getEnvironmentRecord(ExpressionVisitor mv) {
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
     }
@@ -212,7 +212,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [obj] -> [lexEnv]
      */
     protected final void newObjectEnvironment(ExpressionVisitor mv, boolean withEnvironment) {
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.iconst(withEnvironment);
         mv.invoke(Methods.LexicalEnvironment_newObjectEnvironment);
@@ -222,7 +222,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [] -> [lexEnv]
      */
     protected final void newDeclarativeEnvironment(ExpressionVisitor mv) {
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
         mv.invoke(Methods.LexicalEnvironment_newDeclarativeEnvironment);
     }
@@ -231,7 +231,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [lexEnv] -> []
      */
     protected final void pushLexicalEnvironment(ExpressionVisitor mv) {
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.swap();
         mv.invoke(Methods.ExecutionContext_pushLexicalEnvironment);
     }
@@ -240,7 +240,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [] -> []
      */
     protected final void popLexicalEnvironment(ExpressionVisitor mv) {
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_popLexicalEnvironment);
     }
 
@@ -322,7 +322,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [Object] -> [Object]
      */
     protected final void GetValue(ExpressionVisitor mv) {
-        mv.load(Register.Realm);
+        mv.loadExecutionContext();
         mv.invoke(Methods.Reference_GetValue);
     }
 
@@ -330,7 +330,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [Object, Object] -> []
      */
     protected final void PutValue(ExpressionVisitor mv) {
-        mv.load(Register.Realm);
+        mv.loadExecutionContext();
         mv.invoke(Methods.Reference_PutValue);
     }
 
@@ -351,7 +351,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Object:
         case Any:
         default:
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.swap();
             assert preferredType == null : "NYI"; // TODO: load enum value?
             mv.aconst(null);
@@ -432,7 +432,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Object:
         case Any:
         default:
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToNumber);
             return;
@@ -466,7 +466,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Object:
         case Any:
         default:
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToInt32);
             return;
@@ -501,7 +501,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Object:
         case Any:
         default:
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToUint32);
             return;
@@ -540,7 +540,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Object:
         case Any:
         default:
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToString);
             return;
@@ -579,7 +579,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Object:
         case Any:
         default:
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToFlatString);
             return;
@@ -606,7 +606,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             break;
         }
 
-        mv.load(Register.Realm);
+        mv.loadExecutionContext();
         mv.swap();
         mv.invoke(Methods.AbstractOperations_ToObject);
     }
@@ -633,14 +633,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             ExpressionVisitor mv) {
         // stack: [] -> [<proto,ctor>]
         if (def.getHeritage() == null) {
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getDefaultClassProto);
         } else {
             // FIXME: spec bug (ClassHeritage runtime evaluation not defined)
             ValType type = codegen.expression(def.getHeritage(), mv);
             mv.toBoxed(type);
             invokeGetValue(def.getHeritage(), mv);
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getClassProto);
         }
 
@@ -691,14 +691,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.dupX1();
             mv.invokestatic(codegen.getClassName(), codegen.methodName(constructor) + "_rti",
                     Type.getMethodDescriptor(Types.RuntimeInfo$Function));
-            mv.load(Register.ExecutionContext);
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
         } else {
             // default constructor
             // stack: [ctor, proto] -> [proto, F]
             mv.dupX1();
             mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
-            mv.load(Register.ExecutionContext);
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
         }
 

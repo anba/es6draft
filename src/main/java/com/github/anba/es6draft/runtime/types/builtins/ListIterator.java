@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -42,70 +43,70 @@ public class ListIterator<T> extends OrdinaryObject {
         }
 
         @Override
-        public void initialise(Realm realm) {
-            createProperties(this, realm, Properties.class);
-            setIntegrity(realm, IntegrityLevel.Frozen);
+        public void initialise(ExecutionContext cx) {
+            createProperties(this, cx, Properties.class);
+            setIntegrity(cx, IntegrityLevel.Frozen);
         }
     }
 
-    public static <T> ListIterator<T> MakeListIterator(Realm realm, Iterator<T> iterator) {
-        ListIterator<T> itr = new ListIterator<>(realm, iterator);
+    public static <T> ListIterator<T> MakeListIterator(ExecutionContext cx, Iterator<T> iterator) {
+        ListIterator<T> itr = new ListIterator<>(cx.getRealm(), iterator);
         // createProperties(itr, realm, Properties.class);
-        itr.setPrototype(realm, realm.getIntrinsic(Intrinsics.ListIteratorPrototype));
-        itr.setIntegrity(realm, IntegrityLevel.NonExtensible);
+        itr.setPrototype(cx, cx.getIntrinsic(Intrinsics.ListIteratorPrototype));
+        itr.setIntegrity(cx, IntegrityLevel.NonExtensible);
         return itr;
     }
 
-    public static Iterator<?> FromListIterator(Realm realm, Object obj) {
+    public static Iterator<?> FromListIterator(ExecutionContext cx, Object obj) {
         if (obj instanceof ListIterator) {
             return ((ListIterator<?>) obj).iterator;
         }
-        return new IteratorWrapper(realm, obj);
+        return new IteratorWrapper(cx, obj);
     }
 
     public enum Properties {
         ;
 
-        private static ListIterator<?> listIterator(Realm realm, Object object) {
+        private static ListIterator<?> listIterator(ExecutionContext cx, Object object) {
             if (object instanceof ListIterator) {
                 return (ListIterator<?>) object;
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         @Function(name = "next", arity = 0)
-        public static Object send(Realm realm, Object thisValue) {
-            ListIterator<?> itr = listIterator(realm, thisValue);
+        public static Object send(ExecutionContext cx, Object thisValue) {
+            ListIterator<?> itr = listIterator(cx, thisValue);
             if (!itr.iterator.hasNext()) {
-                return _throw(realm.getIntrinsic(Intrinsics.StopIteration));
+                return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
             }
             return itr.iterator.next();
         }
 
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
-        public static Object iterator(Realm realm, Object thisValue) {
+        public static Object iterator(ExecutionContext cx, Object thisValue) {
             return thisValue;
         }
     }
 
     private static class IteratorWrapper implements Iterator<Object> {
-        private Realm realm;
+        private ExecutionContext cx;
         private Object object;
         private Object next = null;
 
-        IteratorWrapper(Realm realm, Object object) {
-            this.realm = realm;
+        IteratorWrapper(ExecutionContext cx, Object object) {
+            this.cx = cx;
             this.object = object;
         }
 
         private Object tryNext() {
             try {
-                return Invoke(realm, object, "next");
+                return Invoke(cx, object, "next");
             } catch (ScriptException e) {
-                if (StopIterationObject.IteratorComplete(realm, e)) {
+                if (StopIterationObject.IteratorComplete(cx.getRealm(), e)) {
                     return null;
                 }
                 throw e;

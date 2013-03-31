@@ -36,11 +36,11 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         }
     }
 
-    protected final Realm realm;
+    protected final ExecutionContext cx;
     private Map<String, Binding> bindings = new HashMap<>();
 
-    public DeclarativeEnvironmentRecord(Realm realm) {
-        this.realm = realm;
+    public DeclarativeEnvironmentRecord(ExecutionContext cx) {
+        this.cx = cx;
     }
 
     /**
@@ -99,15 +99,15 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
         // FIXME: spec bug
         if (b.value == null) {
-            throw throwReferenceError(realm, Messages.Key.UninitialisedBinding, name);
+            throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         }
 
         if (b.mutable) {
             b.value = value;
         } else if (b.value == null) {
-            throw throwReferenceError(realm, Messages.Key.UninitialisedBinding, name);
+            throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         } else if (strict) {
-            throw throwTypeError(realm, Messages.Key.ImmutableBinding, name);
+            throw throwTypeError(cx, Messages.Key.ImmutableBinding, name);
         }
     }
 
@@ -124,7 +124,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             if (!strict) {
                 return UNDEFINED;
             }
-            throw throwReferenceError(realm, Messages.Key.UninitialisedBinding, name);
+            throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         }
         return b.value;
     }

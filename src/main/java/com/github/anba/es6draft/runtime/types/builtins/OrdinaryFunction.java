@@ -47,35 +47,36 @@ public class OrdinaryFunction extends FunctionObject {
          * 8.3.15.2 [[Construct]] Internal Method
          */
         @Override
-        public Object construct(Object... args) {
-            return OrdinaryConstruct(realm, this, args);
+        public Object construct(ExecutionContext callerContext, Object... args) {
+            return OrdinaryConstruct(callerContext, this, args);
         }
     }
 
     /**
      * [13.6 Creating Function Objects and Constructors] FunctionCreate
      */
-    public static OrdinaryFunction FunctionCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
-        return FunctionCreate(realm, kind, function, scope, null, null, null);
+        return FunctionCreate(cx, kind, function, scope, null, null, null);
     }
 
     /**
      * [13.6 Creating Function Objects and Constructors] FunctionCreate
      */
-    public static OrdinaryFunction FunctionCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype) {
-        return FunctionCreate(realm, kind, function, scope, prototype, null, null);
+        return FunctionCreate(cx, kind, function, scope, prototype, null, null);
     }
 
     /**
      * [13.6 Creating Function Objects and Constructors] FunctionCreate
      */
-    public static OrdinaryFunction FunctionCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
             ScriptObject homeObject, String methodName) {
         assert !function.isGenerator();
 
+        Realm realm = cx.getRealm();
         boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
         /* step 1 */
         OrdinaryFunction f;
@@ -90,7 +91,7 @@ public class OrdinaryFunction extends FunctionObject {
             prototype = realm.getIntrinsic(Intrinsics.FunctionPrototype);
         }
         /* step 6 */
-        f.setPrototype(realm, prototype);
+        f.setPrototype(cx, prototype);
         /* step 7 */
         f.scope = scope;
         /* step 8-9 */
@@ -117,12 +118,12 @@ public class OrdinaryFunction extends FunctionObject {
         /*  step 18 */
         int len = function.expectedArgumentCount();
         /* step 19 */
-        f.defineOwnProperty(realm, "length", new PropertyDescriptor(len, false, false, false));
+        f.defineOwnProperty(cx, "length", new PropertyDescriptor(len, false, false, false));
         String name = function.functionName() != null ? function.functionName() : "";
-        f.defineOwnProperty(realm, "name", new PropertyDescriptor(name, false, false, false));
+        f.defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
         /* step 20 */
         if (strict) {
-            AddRestrictedFunctionProperties(realm, f);
+            AddRestrictedFunctionProperties(cx, f);
         }
         /* step 21 */
         return f;
@@ -131,40 +132,40 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    public static void MakeConstructor(Realm realm, OrdinaryFunction f) {
+    public static void MakeConstructor(ExecutionContext cx, OrdinaryFunction f) {
         /*  step 2 */
         boolean installNeeded = true;
-        ScriptObject prototype = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+        ScriptObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /*  step 3 */
         boolean writablePrototype = true;
-        MakeConstructor(realm, f, writablePrototype, prototype, installNeeded);
+        MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
     }
 
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    public static void MakeConstructor(Realm realm, OrdinaryFunction f, boolean writablePrototype,
-            ScriptObject prototype) {
+    public static void MakeConstructor(ExecutionContext cx, OrdinaryFunction f,
+            boolean writablePrototype, ScriptObject prototype) {
         /* step 1 */
         boolean installNeeded = false;
-        MakeConstructor(realm, f, writablePrototype, prototype, installNeeded);
+        MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
     }
 
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    private static void MakeConstructor(Realm realm, OrdinaryFunction f, boolean writablePrototype,
-            ScriptObject prototype, boolean installNeeded) {
+    private static void MakeConstructor(ExecutionContext cx, OrdinaryFunction f,
+            boolean writablePrototype, ScriptObject prototype, boolean installNeeded) {
         assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
         /* step 4 (implicit) */
         /* step 5 */
         if (installNeeded) {
-            prototype.defineOwnProperty(realm, "constructor", new PropertyDescriptor(f,
+            prototype.defineOwnProperty(cx, "constructor", new PropertyDescriptor(f,
                     writablePrototype, false, writablePrototype));
         }
         /* step 7 */
-        f.defineOwnProperty(realm, "prototype", new PropertyDescriptor(prototype,
-                writablePrototype, false, false));
+        f.defineOwnProperty(cx, "prototype", new PropertyDescriptor(prototype, writablePrototype,
+                false, false));
     }
 
     /**
@@ -176,28 +177,28 @@ public class OrdinaryFunction extends FunctionObject {
         }
 
         @Override
-        public Object call(Object thisValue, Object... args) {
+        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             /* step 8 */
-            throw throwTypeError(realm(), Messages.Key.StrictModePoisonPill);
+            throw throwTypeError(callerContext, Messages.Key.StrictModePoisonPill);
         }
     }
 
     /**
      * [13.6.3] The [[ThrowTypeError]] Function Object
      */
-    public static Callable createThrowTypeError(Realm realm) {
+    public static Callable createThrowTypeError(ExecutionContext cx) {
         // FIXME: spec bug (section 8.12 does not exist) (bug 1057)
         /* step 1-3 (implicit) */
-        TypeErrorThrower f = new TypeErrorThrower(realm);
+        TypeErrorThrower f = new TypeErrorThrower(cx.getRealm());
         /* step 4 */
-        f.setPrototype(realm, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+        f.setPrototype(cx, cx.getIntrinsic(Intrinsics.FunctionPrototype));
         /* step 5-8 (implicit) */
         /* step 9 */
-        f.defineOwnProperty(realm, "length", new PropertyDescriptor(0, false, false, false));
-        f.defineOwnProperty(realm, "name", new PropertyDescriptor("ThrowTypeError", false, false,
+        f.defineOwnProperty(cx, "length", new PropertyDescriptor(0, false, false, false));
+        f.defineOwnProperty(cx, "name", new PropertyDescriptor("ThrowTypeError", false, false,
                 false));
         /* step 10 */
-        f.setIntegrity(realm, IntegrityLevel.NonExtensible);
+        f.setIntegrity(cx, IntegrityLevel.NonExtensible);
 
         return f;
     }
@@ -205,26 +206,25 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * [13.6 Creating Function Objects and Constructors] AddRestrictedFunctionProperties
      */
-    public static void AddRestrictedFunctionProperties(Realm realm, ScriptObject obj) {
+    public static void AddRestrictedFunctionProperties(ExecutionContext cx, ScriptObject obj) {
         /*  step 1  */
-        Callable thrower = realm.getThrowTypeError();
+        Callable thrower = cx.getRealm().getThrowTypeError();
         /*  step 2  */
-        obj.defineOwnProperty(realm, "caller", new PropertyDescriptor(thrower, thrower, false,
-                false));
+        obj.defineOwnProperty(cx, "caller", new PropertyDescriptor(thrower, thrower, false, false));
         /*  step 3  */
-        obj.defineOwnProperty(realm, "arguments", new PropertyDescriptor(thrower, thrower, false,
+        obj.defineOwnProperty(cx, "arguments", new PropertyDescriptor(thrower, thrower, false,
                 false));
     }
 
     /**
      * [Runtime Semantics: InstantiateFunctionObject]
      */
-    public static OrdinaryFunction InstantiateFunctionObject(Realm realm, LexicalEnvironment scope,
-            RuntimeInfo.Function fd) {
+    public static OrdinaryFunction InstantiateFunctionObject(ExecutionContext cx,
+            LexicalEnvironment scope, RuntimeInfo.Function fd) {
         /* step 1-2 */
-        OrdinaryFunction f = FunctionCreate(realm, FunctionKind.Normal, fd, scope);
+        OrdinaryFunction f = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 3 */
-        MakeConstructor(realm, f);
+        MakeConstructor(cx, f);
         /* step 4 */
         return f;
     }
@@ -233,7 +233,7 @@ public class OrdinaryFunction extends FunctionObject {
      * 8.3.15.1 [[Call]] Internal Method
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         /* step 1-11 */
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
                 thisValue);
@@ -249,18 +249,18 @@ public class OrdinaryFunction extends FunctionObject {
      * 8.3.15.2.1 OrdinaryConstruct (F, argumentsList)
      */
     public static <FUNCTION extends ScriptObject & Callable & Constructor> Object OrdinaryConstruct(
-            Realm realm, FUNCTION f, Object[] args) {
-        Object creator = Get(realm, f, BuiltinSymbol.create.get());
+            ExecutionContext cx, FUNCTION f, Object[] args) {
+        Object creator = Get(cx, f, BuiltinSymbol.create.get());
         Object obj;
         if (!Type.isUndefined(creator)) {
             if (!IsCallable(creator)) {
-                throw throwTypeError(realm, Messages.Key.NotCallable);
+                throw throwTypeError(cx, Messages.Key.NotCallable);
             }
-            obj = ((Callable) creator).call(f);
+            obj = ((Callable) creator).call(cx, f);
         } else {
-            obj = OrdinaryCreateFromConstructor(realm, f, Intrinsics.ObjectPrototype);
+            obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
         }
-        Object result = f.call(obj, args);
+        Object result = f.call(cx, obj, args);
         if (Type.isObject(result)) {
             return result;
         }

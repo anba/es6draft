@@ -57,54 +57,55 @@ public final class ScriptRuntime {
     /**
      * EvalDeclarationInstantiation
      */
-    public static void bindingNotPresentOrThrow(Realm realm, EnvironmentRecord envRec, String name) {
+    public static void bindingNotPresentOrThrow(ExecutionContext cx, EnvironmentRecord envRec,
+            String name) {
         if (envRec.hasBinding(name)) {
-            throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
+            throw throwSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
 
     /**
      * GlobalDeclarationInstantiation
      */
-    public static void canDeclareLexicalScopedOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
-            String name) {
+    public static void canDeclareLexicalScopedOrThrow(ExecutionContext cx,
+            GlobalEnvironmentRecord envRec, String name) {
         if (envRec.hasVarDeclaration(name)) {
-            throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
+            throw throwSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
         if (envRec.hasLexicalDeclaration(name)) {
-            throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
+            throw throwSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
 
     /**
      * GlobalDeclarationInstantiation
      */
-    public static void canDeclareVarScopedOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
-            String name) {
+    public static void canDeclareVarScopedOrThrow(ExecutionContext cx,
+            GlobalEnvironmentRecord envRec, String name) {
         if (envRec.hasLexicalDeclaration(name)) {
-            throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
+            throw throwSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
 
     /**
      * GlobalDeclarationInstantiation
      */
-    public static void canDeclareGlobalFunctionOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
-            String fn) {
+    public static void canDeclareGlobalFunctionOrThrow(ExecutionContext cx,
+            GlobalEnvironmentRecord envRec, String fn) {
         boolean fnDefinable = envRec.canDeclareGlobalFunction(fn);
         if (!fnDefinable) {
-            throw throwTypeError(realm, Messages.Key.InvalidDeclaration, fn);
+            throw throwTypeError(cx, Messages.Key.InvalidDeclaration, fn);
         }
     }
 
     /**
      * GlobalDeclarationInstantiation
      */
-    public static void canDeclareGlobalVarOrThrow(Realm realm, GlobalEnvironmentRecord envRec,
-            String vn) {
+    public static void canDeclareGlobalVarOrThrow(ExecutionContext cx,
+            GlobalEnvironmentRecord envRec, String vn) {
         boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
         if (!vnDefinable) {
-            throw throwTypeError(realm, Messages.Key.InvalidDeclaration, vn);
+            throw throwTypeError(cx, Messages.Key.InvalidDeclaration, vn);
         }
     }
 
@@ -116,12 +117,11 @@ public final class ScriptRuntime {
      */
     public static ScriptObject EvaluateGeneratorComprehension(MethodHandle handle,
             ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         ExecutionContext calleeContext = ExecutionContext.newGeneratorComprehensionContext(cx);
         RuntimeInfo.Code newCode = RuntimeInfo.newCode(handle);
-        GeneratorObject result = new GeneratorObject(realm, newCode, calleeContext);
-        ScriptObject proto = realm.getIntrinsic(Intrinsics.GeneratorPrototype);
-        result.setPrototype(realm, proto);
+        GeneratorObject result = new GeneratorObject(cx.getRealm(), newCode, calleeContext);
+        ScriptObject proto = cx.getIntrinsic(Intrinsics.GeneratorPrototype);
+        result.setPrototype(cx, proto);
         return result;
     }
 
@@ -136,7 +136,6 @@ public final class ScriptRuntime {
      */
     public static OrdinaryFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         String identifier = fd.functionName();
         if (identifier != null) {
@@ -144,8 +143,8 @@ public final class ScriptRuntime {
             EnvironmentRecord envRec = scope.getEnvRec();
             envRec.createImmutableBinding(identifier);
         }
-        OrdinaryFunction closure = FunctionCreate(realm, FunctionKind.Normal, fd, scope);
-        MakeConstructor(realm, closure);
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        MakeConstructor(cx, closure);
         if (identifier != null) {
             scope.getEnvRec().initializeBinding(identifier, closure);
         }
@@ -162,9 +161,8 @@ public final class ScriptRuntime {
      */
     public static OrdinaryFunction EvaluateArrowFunction(RuntimeInfo.Function fd,
             ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure = FunctionCreate(realm, FunctionKind.Arrow, fd, scope);
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Arrow, fd, scope);
         return closure;
     }
 
@@ -173,12 +171,12 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: ClassDefinitionEvaluation
      */
-    public static ScriptObject[] getDefaultClassProto(Realm realm) {
+    public static ScriptObject[] getDefaultClassProto(ExecutionContext cx) {
         // step 1
-        ScriptObject protoParent = realm.getIntrinsic(Intrinsics.ObjectPrototype);
-        ScriptObject constructorParent = realm.getIntrinsic(Intrinsics.FunctionPrototype);
+        ScriptObject protoParent = cx.getIntrinsic(Intrinsics.ObjectPrototype);
+        ScriptObject constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         // step 3
-        ScriptObject proto = ObjectCreate(realm, protoParent);
+        ScriptObject proto = ObjectCreate(cx, protoParent);
         return new ScriptObject[] { proto, constructorParent };
     }
 
@@ -187,27 +185,27 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: ClassDefinitionEvaluation
      */
-    public static ScriptObject[] getClassProto(Object superClass, Realm realm) {
+    public static ScriptObject[] getClassProto(Object superClass, ExecutionContext cx) {
         ScriptObject protoParent;
         ScriptObject constructorParent;
         // step 2
         if (Type.isNull(superClass)) {
             protoParent = null;
-            constructorParent = realm.getIntrinsic(Intrinsics.FunctionPrototype);
+            constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         } else if (!Type.isObject(superClass)) {
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
         } else if (!IsConstructor(superClass)) {
-            throw throwTypeError(realm, Messages.Key.NotConstructor);
+            throw throwTypeError(cx, Messages.Key.NotConstructor);
         } else {
-            Object p = Get(realm, Type.objectValue(superClass), "prototype");
+            Object p = Get(cx, Type.objectValue(superClass), "prototype");
             if (!(Type.isObject(p) || Type.isNull(p))) {
-                throw throwTypeError(realm, Messages.Key.NotObjectOrNull);
+                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             protoParent = (Type.isNull(p) ? null : Type.objectValue(p));
             constructorParent = Type.objectValue(superClass);
         }
         // step 3
-        ScriptObject proto = ObjectCreate(realm, protoParent);
+        ScriptObject proto = ObjectCreate(cx, protoParent);
         return new ScriptObject[] { proto, constructorParent };
     }
 
@@ -246,7 +244,6 @@ public final class ScriptRuntime {
     }
 
     public static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
-        Realm realm = cx.getRealm();
         LexicalEnvironment env = cx.getVariableEnvironment();
         EnvironmentRecord envRec = env.getEnvRec();
 
@@ -254,27 +251,26 @@ public final class ScriptRuntime {
         envRec.initializeBinding("args", UNDEFINED);
 
         envRec.createImmutableBinding("arguments");
-        ExoticArguments ao = InstantiateArgumentsObject(realm, args);
+        ExoticArguments ao = InstantiateArgumentsObject(cx, args);
 
-        cx.identifierResolution("args", true).PutValue(createRestArray(ao, 0, realm), realm);
+        cx.identifierResolution("args", true).PutValue(createRestArray(ao, 0, cx), cx);
 
-        CompleteStrictArgumentsObject(realm, ao);
+        CompleteStrictArgumentsObject(cx, ao);
         envRec.initializeBinding("arguments", ao);
     }
 
     public static Object DefaultConstructor(ExecutionContext cx) {
         Object completionValue = UNDEFINED;
 
-        Realm realm = cx.getRealm();
         // super()
         Reference ref = MakeSuperReference(cx, null, true);
         // EvaluateCall: super(...args)
-        Object func = ref.GetValue(realm);
-        Object[] argList = SpreadArray(cx.identifierValue("args", true), realm);
-        Callable f = CheckCallable(func, realm);
-        Object thisValue = GetCallThisValue(ref, realm);
-        Object result = f.call(thisValue, argList);
-        GetValue(result, realm);
+        Object func = ref.GetValue(cx);
+        Object[] argList = SpreadArray(cx.identifierValue("args", true), cx);
+        Callable f = CheckCallable(func, cx);
+        Object thisValue = GetCallThisValue(ref, cx);
+        Object result = f.call(cx, thisValue, argList);
+        GetValue(result, cx);
 
         return completionValue;
     }
@@ -287,25 +283,24 @@ public final class ScriptRuntime {
      */
     public static OrdinaryFunction EvaluateConstructorMethod(ScriptObject constructorParent,
             ScriptObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         String propName = "constructor";
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction constructor;
         if (fd.hasSuperReference()) {
             // FIXME: spec bug (constructorParent not used)
-            constructor = FunctionCreate(realm, FunctionKind.ConstructorMethod, fd, scope,
+            constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
                     constructorParent, proto, propName);
         } else {
             // FIXME: spec bug (constructorParent not used)
-            constructor = FunctionCreate(realm, FunctionKind.ConstructorMethod, fd, scope,
+            constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
                     constructorParent);
         }
-        DefinePropertyOrThrow(realm, proto, propName, new PropertyDescriptor(constructor, true,
-                true, true));
-
-        MakeConstructor(realm, constructor, false, proto);
-        proto.defineOwnProperty(realm, propName, new PropertyDescriptor(constructor, true, false,
+        DefinePropertyOrThrow(cx, proto, propName, new PropertyDescriptor(constructor, true, true,
                 true));
+
+        MakeConstructor(cx, constructor, false, proto);
+        proto.defineOwnProperty(cx, propName,
+                new PropertyDescriptor(constructor, true, false, true));
 
         return constructor;
     }
@@ -320,16 +315,15 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinition(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction closure;
         if (fd.hasSuperReference()) {
-            closure = FunctionCreate(realm, FunctionKind.Method, fd, scope, null, object, propName);
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
         } else {
-            closure = FunctionCreate(realm, FunctionKind.Method, fd, scope);
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
-        DefinePropertyOrThrow(realm, object, propName, desc);
+        DefinePropertyOrThrow(cx, object, propName, desc);
     }
 
     /**
@@ -342,16 +336,15 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryGenerator closure;
         if (fd.hasSuperReference()) {
-            closure = GeneratorCreate(realm, FunctionKind.Method, fd, scope, null, object, propName);
+            closure = GeneratorCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
         } else {
-            closure = GeneratorCreate(realm, FunctionKind.Method, fd, scope);
+            closure = GeneratorCreate(cx, FunctionKind.Method, fd, scope);
         }
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
-        DefinePropertyOrThrow(realm, object, propName, desc);
+        DefinePropertyOrThrow(cx, object, propName, desc);
     }
 
     /**
@@ -364,20 +357,19 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionGetter(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction closure;
         if (fd.hasSuperReference()) {
-            closure = FunctionCreate(realm, FunctionKind.Method, fd, scope, null, object, propName);
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
         } else {
-            closure = FunctionCreate(realm, FunctionKind.Method, fd, scope);
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setGetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
         // FIXME: spec bug (not updated to use DefinePropertyOrThrow)
-        DefinePropertyOrThrow(realm, object, propName, desc);
+        DefinePropertyOrThrow(cx, object, propName, desc);
     }
 
     /**
@@ -390,19 +382,18 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionSetter(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction closure;
         if (fd.hasSuperReference()) {
-            closure = FunctionCreate(realm, FunctionKind.Method, fd, scope, null, object, propName);
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
         } else {
-            closure = FunctionCreate(realm, FunctionKind.Method, fd, scope);
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setSetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        DefinePropertyOrThrow(realm, object, propName, desc);
+        DefinePropertyOrThrow(cx, object, propName, desc);
     }
 
     /**
@@ -416,7 +407,6 @@ public final class ScriptRuntime {
      */
     public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         String identifier = fd.functionName();
         if (identifier != null) {
@@ -424,8 +414,8 @@ public final class ScriptRuntime {
             EnvironmentRecord envRec = scope.getEnvRec();
             envRec.createImmutableBinding(identifier);
         }
-        OrdinaryGenerator closure = GeneratorCreate(realm, FunctionKind.Normal, fd, scope);
-        MakeConstructor(realm, closure);
+        OrdinaryGenerator closure = GeneratorCreate(cx, FunctionKind.Normal, fd, scope);
+        MakeConstructor(cx, closure);
         if (identifier != null) {
             scope.getEnvRec().initializeBinding(identifier, closure);
         }
@@ -435,20 +425,20 @@ public final class ScriptRuntime {
     /**
      * Runtime Semantics: ArgumentListEvaluation
      */
-    public static Object[] SpreadArray(Object spreadValue, Realm realm) {
+    public static Object[] SpreadArray(Object spreadValue, ExecutionContext cx) {
         /* step 1-3 (cf. generated code) */
         /* step 4-5 */
-        ScriptObject spreadObj = ToObject(realm, spreadValue);
+        ScriptObject spreadObj = ToObject(cx, spreadValue);
         /* step 6 */
-        Object lenVal = Get(realm, spreadObj, "length");
+        Object lenVal = Get(cx, spreadObj, "length");
         /* step 7-8 */
-        long spreadLen = ToUint32(realm, lenVal);
+        long spreadLen = ToUint32(cx, lenVal);
         assert spreadLen <= Integer.MAX_VALUE;
         Object[] list = new Object[(int) spreadLen];
         /* step 9-10 */
         for (int n = 0; n < spreadLen; ++n) {
             // FIXME: possible spec bug -> HasProperty() check missing?
-            Object nextArg = Get(realm, spreadObj, ToString(n));
+            Object nextArg = Get(cx, spreadObj, ToString(n));
             list[n] = nextArg;
         }
         return list;
@@ -496,23 +486,22 @@ public final class ScriptRuntime {
         /* step 4 */
         int count = strings.length >>> 1;
         /* step 5-6 */
-        ScriptObject siteObj = ExoticArray.ArrayCreate(realm, count);
-        ScriptObject rawObj = ExoticArray.ArrayCreate(realm, count);
+        ScriptObject siteObj = ExoticArray.ArrayCreate(cx, count);
+        ScriptObject rawObj = ExoticArray.ArrayCreate(cx, count);
         /* step 7-8 */
         for (int i = 0, n = strings.length; i < n; i += 2) {
             int index = i >>> 1;
             String prop = ToString(index);
             String cookedValue = strings[i];
-            siteObj.defineOwnProperty(realm, prop, new PropertyDescriptor(cookedValue, false, true,
+            siteObj.defineOwnProperty(cx, prop, new PropertyDescriptor(cookedValue, false, true,
                     false));
             String rawValue = strings[i + 1];
-            rawObj.defineOwnProperty(realm, prop, new PropertyDescriptor(rawValue, false, true,
-                    false));
+            rawObj.defineOwnProperty(cx, prop, new PropertyDescriptor(rawValue, false, true, false));
         }
         /* step 9-11 */
-        rawObj.setIntegrity(realm, IntegrityLevel.Frozen);
-        siteObj.defineOwnProperty(realm, "raw", new PropertyDescriptor(rawObj, false, false, false));
-        siteObj.setIntegrity(realm, IntegrityLevel.Frozen);
+        rawObj.setIntegrity(cx, IntegrityLevel.Frozen);
+        siteObj.defineOwnProperty(cx, "raw", new PropertyDescriptor(rawObj, false, false, false));
+        siteObj.setIntegrity(cx, IntegrityLevel.Frozen);
         /* step 12 */
         realm.addTemplateCallSite(key, siteObj);
 
@@ -539,31 +528,32 @@ public final class ScriptRuntime {
      * <li>MemberExpression : new super Arguments<sub>opt</sub>
      * </ul>
      */
-    public static Object EvaluateConstructorCall(Object constructor, Object[] args, Realm realm) {
+    public static Object EvaluateConstructorCall(Object constructor, Object[] args,
+            ExecutionContext cx) {
         /* step 1-3 (generated code) */
         /* step 4/6 */
         if (!Type.isObject(constructor)) {
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 5/7 */
         if (!(constructor instanceof Constructor)) {
-            throw throwTypeError(realm, Messages.Key.NotConstructor);
+            throw throwTypeError(cx, Messages.Key.NotConstructor);
         }
         /* step 6/8 */
-        return ((Constructor) constructor).construct(args);
+        return ((Constructor) constructor).construct(cx, args);
     }
 
     /**
      * 11.2.3 Function Calls: EvaluateCall
      */
-    public static Callable CheckCallable(Object func, Realm realm) {
+    public static Callable CheckCallable(Object func, ExecutionContext cx) {
         /* step 5 */
         if (!Type.isObject(func)) {
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 6 */
         if (!IsCallable(func)) {
-            throw throwTypeError(realm, Messages.Key.NotCallable);
+            throw throwTypeError(cx, Messages.Key.NotCallable);
         }
         return (Callable) func;
     }
@@ -571,13 +561,13 @@ public final class ScriptRuntime {
     /**
      * 11.2.3 Function Calls: EvaluateCall
      */
-    public static Object GetCallThisValue(Object ref, Realm realm) {
+    public static Object GetCallThisValue(Object ref, ExecutionContext cx) {
         Object thisValue;
         if (ref instanceof Reference) {
             /* step 7 */
             Reference r = (Reference) ref;
             if (r.isPropertyReference()) {
-                thisValue = GetThisValue(realm, r);
+                thisValue = GetThisValue(cx, r);
             } else {
                 assert r.getBase() instanceof EnvironmentRecord;
                 thisValue = ((EnvironmentRecord) r.getBase()).withBaseObject();
@@ -595,12 +585,12 @@ public final class ScriptRuntime {
     /**
      * 11.2.3 Function Calls: EvaluateCall
      */
-    public static boolean IsBuiltinEval(Object ref, Callable f, Realm realm) {
+    public static boolean IsBuiltinEval(Object ref, Callable f, ExecutionContext cx) {
         if (ref instanceof Reference) {
             Reference r = (Reference) ref;
             if (!r.isPropertyReference()) {
                 assert !r.isUnresolvableReference() && r.getBase() instanceof EnvironmentRecord;
-                return (f == realm.getBuiltinEval());
+                return (f == cx.getRealm().getBuiltinEval());
             }
         }
         return false;
@@ -613,14 +603,14 @@ public final class ScriptRuntime {
             boolean strict) {
         EnvironmentRecord envRec = cx.getThisEnvironment();
         if (!envRec.hasSuperBinding()) {
-            throwReferenceError(cx.getRealm(), Messages.Key.MissingSuperBinding);
+            throwReferenceError(cx, Messages.Key.MissingSuperBinding);
         }
         assert envRec instanceof FunctionEnvironmentRecord;
         Object actualThis = envRec.getThisBinding();
         ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
         // CheckObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
-            throw throwTypeError(cx.getRealm(), Messages.Key.UndefinedOrNull);
+            throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         if (propertyKey == null) {
             propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
@@ -631,7 +621,7 @@ public final class ScriptRuntime {
     /**
      * 11.4.1 The delete Operator
      */
-    public static boolean delete(Object expr, Realm realm) {
+    public static boolean delete(Object expr, ExecutionContext cx) {
         /* step 1-2 (generated code) */
         /* step 3 */
         if (!(expr instanceof Reference)) {
@@ -641,27 +631,27 @@ public final class ScriptRuntime {
         /* step 4 */
         if (ref.isUnresolvableReference()) {
             if (ref.isStrictReference()) {
-                throw throwSyntaxError(realm, Messages.Key.UnqualifiedDelete);
+                throw throwSyntaxError(cx, Messages.Key.UnqualifiedDelete);
             }
             return true;
         }
         /* step 5 */
         if (ref.isPropertyReference()) {
             if (ref.isSuperReference()) {
-                throw throwReferenceError(realm, Messages.Key.SuperDelete);
+                throw throwReferenceError(cx, Messages.Key.SuperDelete);
             }
-            ScriptObject obj = ToObject(realm, ref.getBase());
+            ScriptObject obj = ToObject(cx, ref.getBase());
             boolean deleteStatus;
             Object referencedName = ref.getReferencedName();
             if (referencedName instanceof String) {
-                deleteStatus = obj.delete(realm, (String) referencedName);
+                deleteStatus = obj.delete(cx, (String) referencedName);
             } else {
-                deleteStatus = obj.delete(realm, (Symbol) referencedName);
+                deleteStatus = obj.delete(cx, (Symbol) referencedName);
             }
             if (!deleteStatus && ref.isStrictReference()) {
                 // FIXME: spec bug (typing 'typeError')
-                throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, ref
-                        .getReferencedName().toString());
+                throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
+                        .toString());
             }
             // FIXME: spec bug (return value)
             return deleteStatus;
@@ -676,13 +666,13 @@ public final class ScriptRuntime {
     /**
      * 11.4.3 The typeof Operator
      */
-    public static String typeof(Object val, Realm realm) {
+    public static String typeof(Object val, ExecutionContext cx) {
         if (val instanceof Reference) {
             Reference ref = (Reference) val;
             if (ref.isUnresolvableReference()) {
                 return "undefined";
             }
-            val = ref.GetValue(realm);
+            val = ref.GetValue(cx);
         }
         switch (Type.of(val)) {
         case Undefined:
@@ -707,15 +697,15 @@ public final class ScriptRuntime {
     /**
      * 11.6.1 The Addition operator ( + )
      */
-    public static Object add(Object lval, Object rval, Realm realm) {
-        Object lprim = ToPrimitive(realm, lval, null);
-        Object rprim = ToPrimitive(realm, rval, null);
+    public static Object add(Object lval, Object rval, ExecutionContext cx) {
+        Object lprim = ToPrimitive(cx, lval, null);
+        Object rprim = ToPrimitive(cx, rval, null);
         if (Type.isString(lprim) || Type.isString(rprim)) {
-            CharSequence lstr = ToString(realm, lprim);
-            CharSequence rstr = ToString(realm, rprim);
+            CharSequence lstr = ToString(cx, lprim);
+            CharSequence rstr = ToString(cx, rprim);
             return add(lstr, rstr);
         }
-        return ToNumber(realm, lprim) + ToNumber(realm, rprim);
+        return ToNumber(cx, lprim) + ToNumber(cx, rprim);
     }
 
     /**
@@ -738,21 +728,22 @@ public final class ScriptRuntime {
     /**
      * 11.8.1 The Abstract Relational Comparison Algorithm
      */
-    public static int relationalComparison(Object x, Object y, boolean leftFirst, Realm realm) {
+    public static int relationalComparison(Object x, Object y, boolean leftFirst,
+            ExecutionContext cx) {
         // true -> 1
         // false -> 0
         // undefined -> -1
         Object px, py;
         if (leftFirst) {
-            px = ToPrimitive(realm, x, Type.Number);
-            py = ToPrimitive(realm, y, Type.Number);
+            px = ToPrimitive(cx, x, Type.Number);
+            py = ToPrimitive(cx, y, Type.Number);
         } else {
-            py = ToPrimitive(realm, y, Type.Number);
-            px = ToPrimitive(realm, x, Type.Number);
+            py = ToPrimitive(cx, y, Type.Number);
+            px = ToPrimitive(cx, x, Type.Number);
         }
         if (!(Type.isString(px) && Type.isString(py))) {
-            double nx = ToNumber(realm, px);
-            double ny = ToNumber(realm, py);
+            double nx = ToNumber(cx, px);
+            double ny = ToNumber(cx, py);
             if (Double.isNaN(nx) || Double.isNaN(ny)) {
                 return -1;
             }
@@ -781,15 +772,15 @@ public final class ScriptRuntime {
     /**
      * 11.8 Relational Operators
      */
-    public static boolean in(Object lval, Object rval, Realm realm) {
+    public static boolean in(Object lval, Object rval, ExecutionContext cx) {
         if (!Type.isObject(rval)) {
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
-        Object p = ToPropertyKey(realm, lval);
+        Object p = ToPropertyKey(cx, lval);
         if (p instanceof String) {
-            return HasProperty(realm, Type.objectValue(rval), (String) p);
+            return HasProperty(cx, Type.objectValue(rval), (String) p);
         } else {
-            return HasProperty(realm, Type.objectValue(rval), (Symbol) p);
+            return HasProperty(cx, Type.objectValue(rval), (Symbol) p);
         }
     }
 
@@ -797,27 +788,27 @@ public final class ScriptRuntime {
      * 11.8.1 Runtime Semantics<br>
      * Runtime Semantics: Evaluation
      */
-    public static boolean instanceOfOperator(Object obj, Object constructor, Realm realm) {
+    public static boolean instanceOfOperator(Object obj, Object constructor, ExecutionContext cx) {
         if (!Type.isObject(constructor)) {
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
-        Callable instOfHandler = GetMethod(realm, Type.objectValue(constructor),
+        Callable instOfHandler = GetMethod(cx, Type.objectValue(constructor),
                 BuiltinSymbol.hasInstance.get());
         if (instOfHandler != null) {
-            Object result = instOfHandler.call(constructor, obj);
+            Object result = instOfHandler.call(cx, constructor, obj);
             // FIXME: spec bug (missing ToBoolean)
             return ToBoolean(result);
         }
         if (!IsCallable(constructor)) {
-            throw throwTypeError(realm, Messages.Key.NotCallable);
+            throw throwTypeError(cx, Messages.Key.NotCallable);
         }
-        return OrdinaryHasInstance(realm, constructor, obj);
+        return OrdinaryHasInstance(cx, constructor, obj);
     }
 
     /**
      * 11.9.1 The Abstract Equality Comparison Algorithm
      */
-    public static boolean equalityComparison(Object x, Object y, Realm realm) {
+    public static boolean equalityComparison(Object x, Object y, ExecutionContext cx) {
         if (x == y) {
             if (x instanceof Double) {
                 return !((Double) x).isNaN();
@@ -837,23 +828,23 @@ public final class ScriptRuntime {
         }
         if (tx == Type.Number && ty == Type.String) {
             // return equalityComparison(realm, x, ToNumber(realm, y));
-            return Type.numberValue(x) == ToNumber(realm, y);
+            return Type.numberValue(x) == ToNumber(cx, y);
         }
         if (tx == Type.String && ty == Type.Number) {
             // return equalityComparison(realm, ToNumber(realm, x), y);
-            return ToNumber(realm, x) == Type.numberValue(y);
+            return ToNumber(cx, x) == Type.numberValue(y);
         }
         if (tx == Type.Boolean) {
-            return equalityComparison(ToNumber(realm, x), y, realm);
+            return equalityComparison(ToNumber(cx, x), y, cx);
         }
         if (ty == Type.Boolean) {
-            return equalityComparison(x, ToNumber(realm, y), realm);
+            return equalityComparison(x, ToNumber(cx, y), cx);
         }
         if ((tx == Type.String || tx == Type.Number) && ty == Type.Object) {
-            return equalityComparison(x, ToPrimitive(realm, y, null), realm);
+            return equalityComparison(x, ToPrimitive(cx, y, null), cx);
         }
         if (tx == Type.Object && (ty == Type.String || ty == Type.Number)) {
-            return equalityComparison(ToPrimitive(realm, x, null), y, realm);
+            return equalityComparison(ToPrimitive(cx, x, null), y, cx);
         }
         return false;
     }
@@ -913,14 +904,14 @@ public final class ScriptRuntime {
         boolean send = true;
         Object received = UNDEFINED;
         Object result = UNDEFINED;
-        ScriptObject g = ToObject(realm, expr);
+        ScriptObject g = ToObject(cx, expr);
         try {
             while (true) {
                 Object next;
                 if (send) {
-                    next = Invoke(realm, g, "send", received);
+                    next = Invoke(cx, g, "send", received);
                 } else {
-                    next = Invoke(realm, g, "throw", received);
+                    next = Invoke(cx, g, "throw", received);
                 }
                 try {
                     received = yield(next, cx);
@@ -939,7 +930,7 @@ public final class ScriptRuntime {
             result = UNDEFINED;
         } finally {
             try {
-                Invoke(realm, g, "close");
+                Invoke(cx, g, "close");
             } catch (ScriptException ignore) {
             }
         }
@@ -951,27 +942,27 @@ public final class ScriptRuntime {
         return (realm.getIntrinsic(Intrinsics.StopIteration) == e.getValue());
     }
 
-    public static Object RegExp(Realm realm, String re, String flags) {
+    public static Object RegExp(ExecutionContext cx, String re, String flags) {
         // FIXME: spec bug (call abstract operation RegExpCreate?!)
-        Constructor ctor = (Constructor) realm.getIntrinsic(Intrinsics.RegExp);
-        return ctor.construct(re, flags);
+        Constructor ctor = (Constructor) cx.getIntrinsic(Intrinsics.RegExp);
+        return ctor.construct(cx, re, flags);
     }
 
     /**
      * Helper function
      */
-    public static Iterator<?> enumerate(Object o, Realm realm) {
-        ScriptObject obj = ToObject(realm, o);
-        return FromListIterator(realm, obj.enumerate(realm));
+    public static Iterator<?> enumerate(Object o, ExecutionContext cx) {
+        ScriptObject obj = ToObject(cx, o);
+        return FromListIterator(cx, obj.enumerate(cx));
     }
 
     /**
      * Helper function
      */
-    public static Iterator<?> iterate(Object o, Realm realm) {
-        ScriptObject obj = ToObject(realm, o);
-        Object keys = Invoke(realm, obj, BuiltinSymbol.iterator.get());
-        return FromListIterator(realm, keys);
+    public static Iterator<?> iterate(Object o, ExecutionContext cx) {
+        ScriptObject obj = ToObject(cx, o);
+        Object keys = Invoke(cx, obj, BuiltinSymbol.iterator.get());
+        return FromListIterator(cx, keys);
     }
 
     /**
@@ -980,19 +971,19 @@ public final class ScriptRuntime {
      * Runtime Semantics: Indexed Binding Initialisation<br>
      * BindingRestElement : ... BindingIdentifier
      */
-    public static ScriptObject createRestArray(ScriptObject array, int index, Realm realm) {
-        Object lenVal = Get(realm, array, "length");
-        long arrayLength = ToUint32(realm, lenVal);
-        ScriptObject result = ExoticArray.ArrayCreate(realm, 0);
+    public static ScriptObject createRestArray(ScriptObject array, int index, ExecutionContext cx) {
+        Object lenVal = Get(cx, array, "length");
+        long arrayLength = ToUint32(cx, lenVal);
+        ScriptObject result = ExoticArray.ArrayCreate(cx, 0);
         long n = 0;
         while (index < arrayLength) {
             String p = ToString(index);
-            boolean exists = HasProperty(realm, array, p);
+            boolean exists = HasProperty(cx, array, p);
             // TODO: assert exists iff FunctionRestParameter
             if (exists) {
-                Object v = Get(realm, array, p);
+                Object v = Get(cx, array, p);
                 PropertyDescriptor desc = new PropertyDescriptor(v, true, true, true);
-                result.defineOwnProperty(realm, ToString(n), desc);
+                result.defineOwnProperty(cx, ToString(n), desc);
             }
             n = n + 1;
             index = index + 1;
@@ -1006,11 +997,11 @@ public final class ScriptRuntime {
      * Runtime Semantics: Evaluation<br>
      * MemberExpression : MemberExpression . IdentifierName
      */
-    public static Reference getProperty(Object baseValue, String propertyNameString, Realm realm,
-            boolean strict) {
+    public static Reference getProperty(Object baseValue, String propertyNameString,
+            ExecutionContext cx, boolean strict) {
         /* step 1-6 (generated code) */
         /* step 7 */
-        CheckObjectCoercible(realm, baseValue);
+        CheckObjectCoercible(cx, baseValue);
         /* step 8-10 */
         return new Reference.PropertyNameReference(baseValue, propertyNameString, strict);
     }
@@ -1021,13 +1012,13 @@ public final class ScriptRuntime {
      * Runtime Semantics: Evaluation<br>
      * MemberExpression : MemberExpression [ Expression ]
      */
-    public static Reference getElement(Object baseValue, Object propertyNameValue, Realm realm,
-            boolean strict) {
+    public static Reference getElement(Object baseValue, Object propertyNameValue,
+            ExecutionContext cx, boolean strict) {
         /* step 1-6 (generated code) */
         /* step 7 */
-        CheckObjectCoercible(realm, baseValue);
+        CheckObjectCoercible(cx, baseValue);
         /* step 8 */
-        Object propertyKey = ToPropertyKey(realm, propertyNameValue);
+        Object propertyKey = ToPropertyKey(cx, propertyNameValue);
         /* step 9-10 */
         if (propertyKey instanceof String) {
             return new Reference.PropertyNameReference(baseValue, (String) propertyKey, strict);
@@ -1041,17 +1032,17 @@ public final class ScriptRuntime {
      * Runtime Semantics: Property Definition Evaluation
      */
     public static void defineProperty(ScriptObject object, String propertyName, Object value,
-            Realm realm) {
-        DefinePropertyOrThrow(realm, object, propertyName, new PropertyDescriptor(value, true,
-                true, true));
+            ExecutionContext cx) {
+        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
+                true));
     }
 
     /**
      * B.3.1.3 __proto___ Object Initialisers
      */
-    public static void defineProtoProperty(ScriptObject object, Object value, Realm realm) {
+    public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
         // use Put() to comply with current SpiderMonkey/JSC behaviour
-        Put(realm, object, "__proto__", value, true);
+        Put(cx, object, "__proto__", value, true);
     }
 
     /**
@@ -1059,11 +1050,11 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Array Accumulation
      */
-    public static void defineProperty(ScriptObject array, int nextIndex, Object value, Realm realm) {
+    public static void defineProperty(ScriptObject array, int nextIndex, Object value,
+            ExecutionContext cx) {
         // String propertyName = ToString(ToUint32(nextIndex));
         String propertyName = ToString(nextIndex);
-        array.defineOwnProperty(realm, propertyName,
-                new PropertyDescriptor(value, true, true, true));
+        array.defineOwnProperty(cx, propertyName, new PropertyDescriptor(value, true, true, true));
     }
 
     /**
@@ -1073,21 +1064,21 @@ public final class ScriptRuntime {
      * Runtime Semantics: Evaluation
      */
     public static int ArrayAccumulationSpreadElement(ScriptObject array, int nextIndex,
-            Object spreadValue, Realm realm) {
+            Object spreadValue, ExecutionContext cx) {
         /* step 1-2 (cf. generated code) */
         /* step 3-4 */
-        ScriptObject spreadObj = ToObject(realm, spreadValue);
+        ScriptObject spreadObj = ToObject(cx, spreadValue);
         /* step 5 */
-        Object lenVal = Get(realm, spreadObj, "length");
+        Object lenVal = Get(cx, spreadObj, "length");
         /* step 6-7 */
-        long spreadLen = ToUint32(realm, lenVal);
+        long spreadLen = ToUint32(cx, lenVal);
         /* step 8-9 */
         for (long n = 0; n < spreadLen; ++n, ++nextIndex) {
-            boolean exists = HasProperty(realm, spreadObj, ToString(n));
+            boolean exists = HasProperty(cx, spreadObj, ToString(n));
             if (exists) {
                 // FIXME: possible spec bug
-                Object v = spreadObj.get(realm, ToString(n), spreadObj);
-                defineProperty(array, nextIndex, v, realm);
+                Object v = spreadObj.get(cx, ToString(n), spreadObj);
+                defineProperty(array, nextIndex, v, cx);
             }
         }
         return nextIndex;

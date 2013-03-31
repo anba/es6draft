@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
@@ -45,12 +46,12 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
 
         // 15.14.4.12 Map.prototype.@@iterator ( )
-        defineOwnProperty(realm, BuiltinSymbol.iterator.get(),
-                new PropertyDescriptor(Get(realm, this, "entries"), true, false, true));
+        defineOwnProperty(cx, BuiltinSymbol.iterator.get(),
+                new PropertyDescriptor(Get(cx, this, "entries"), true, false, true));
     }
 
     /**
@@ -59,14 +60,14 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
     public enum Properties {
         ;
 
-        private static MapObject thisMapValue(Realm realm, Object obj) {
+        private static MapObject thisMapValue(ExecutionContext cx, Object obj) {
             if (Type.isObject(obj) && obj instanceof MapObject) {
                 MapObject map = (MapObject) obj;
                 if (map.isInitialised()) {
                     return map;
                 }
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -82,8 +83,8 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          * 15.14.4.2 Map.prototype.clear ()
          */
         @Function(name = "clear", arity = 0)
-        public static Object clear(Realm realm, Object thisValue) {
-            MapObject m = thisMapValue(realm, thisValue);
+        public static Object clear(ExecutionContext cx, Object thisValue) {
+            MapObject m = thisMapValue(cx, thisValue);
             LinkedMap<Object, Object> entries = m.getMapData();
             entries.clear();
             return UNDEFINED;
@@ -93,8 +94,8 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          * 15.14.4.3 Map.prototype.delete ( key )
          */
         @Function(name = "delete", arity = 1)
-        public static Object delete(Realm realm, Object thisValue, Object key) {
-            MapObject m = thisMapValue(realm, thisValue);
+        public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
+            MapObject m = thisMapValue(cx, thisValue);
             LinkedMap<Object, Object> entries = m.getMapData();
             return entries.delete(key);
         }
@@ -103,18 +104,18 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          * 15.14.4.4 Map.prototype.forEach ( callbackfn , thisArg = undefined )
          */
         @Function(name = "forEach", arity = 1)
-        public static Object forEach(Realm realm, Object thisValue, Object callbackfn,
+        public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            MapObject m = thisMapValue(realm, thisValue);
+            MapObject m = thisMapValue(cx, thisValue);
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, Messages.Key.NotCallable);
+                throw throwTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             LinkedMap<Object, Object> entries = m.getMapData();
             for (Iterator<Entry<Object, Object>> itr = entries.iterator(); itr.hasNext();) {
                 Entry<Object, Object> e = itr.next();
                 assert e != null;
-                callback.call(thisArg, e.getValue(), e.getKey(), m);
+                callback.call(cx, thisArg, e.getValue(), e.getKey(), m);
             }
             return UNDEFINED;
         }
@@ -123,8 +124,8 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          * 15.14.4.5 Map.prototype.get ( key )
          */
         @Function(name = "get", arity = 1)
-        public static Object get(Realm realm, Object thisValue, Object key) {
-            MapObject m = thisMapValue(realm, thisValue);
+        public static Object get(ExecutionContext cx, Object thisValue, Object key) {
+            MapObject m = thisMapValue(cx, thisValue);
             LinkedMap<Object, Object> entries = m.getMapData();
             Object value = entries.get(key);
             return (value != null ? value : UNDEFINED);
@@ -134,8 +135,8 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          * 15.14.4.6 Map.prototype.has ( key )
          */
         @Function(name = "has", arity = 1)
-        public static Object has(Realm realm, Object thisValue, Object key) {
-            MapObject m = thisMapValue(realm, thisValue);
+        public static Object has(ExecutionContext cx, Object thisValue, Object key) {
+            MapObject m = thisMapValue(cx, thisValue);
             LinkedMap<Object, Object> entries = m.getMapData();
             return entries.has(key);
         }
@@ -144,26 +145,26 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          * 15.14.4.7 Map.prototype.entries ( )
          */
         @Function(name = "entries", arity = 0)
-        public static Object entries(Realm realm, Object thisValue) {
-            MapObject m = thisMapValue(realm, thisValue);
-            return CreateMapIterator(realm, m, MapIterationKind.KeyValue);
+        public static Object entries(ExecutionContext cx, Object thisValue) {
+            MapObject m = thisMapValue(cx, thisValue);
+            return CreateMapIterator(cx, m, MapIterationKind.KeyValue);
         }
 
         /**
          * 15.14.4.8 Map.prototype.keys ( )
          */
         @Function(name = "keys", arity = 0)
-        public static Object keys(Realm realm, Object thisValue) {
-            MapObject m = thisMapValue(realm, thisValue);
-            return CreateMapIterator(realm, m, MapIterationKind.Key);
+        public static Object keys(ExecutionContext cx, Object thisValue) {
+            MapObject m = thisMapValue(cx, thisValue);
+            return CreateMapIterator(cx, m, MapIterationKind.Key);
         }
 
         /**
          * 15.14.4.9 Map.prototype.set ( key , value )
          */
         @Function(name = "set", arity = 2)
-        public static Object set(Realm realm, Object thisValue, Object key, Object value) {
-            MapObject m = thisMapValue(realm, thisValue);
+        public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
+            MapObject m = thisMapValue(cx, thisValue);
             LinkedMap<Object, Object> entries = m.getMapData();
             entries.set(key, value);
             return m;
@@ -173,8 +174,8 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          * 15.14.4.10 get Map.prototype.size
          */
         @Accessor(name = "size", type = Accessor.Type.Getter)
-        public static Object size(Realm realm, Object thisValue) {
-            MapObject m = thisMapValue(realm, thisValue);
+        public static Object size(ExecutionContext cx, Object thisValue) {
+            MapObject m = thisMapValue(cx, thisValue);
             LinkedMap<Object, Object> entries = m.getMapData();
             return entries.size();
         }
@@ -183,9 +184,9 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          * 15.14.4.11 Map.prototype.values ( )
          */
         @Function(name = "values", arity = 0)
-        public static Object values(Realm realm, Object thisValue) {
-            MapObject m = thisMapValue(realm, thisValue);
-            return CreateMapIterator(realm, m, MapIterationKind.Value);
+        public static Object values(ExecutionContext cx, Object thisValue) {
+            MapObject m = thisMapValue(cx, thisValue);
+            return CreateMapIterator(cx, m, MapIterationKind.Value);
         }
 
         /**

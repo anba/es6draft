@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -42,22 +43,22 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.11.1.1 Error (message)
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         Object message = args.length > 0 ? args[0] : UNDEFINED;
 
         ErrorObject obj;
         if (!Type.isObject(thisValue) || !(thisValue instanceof ErrorObject)
                 || ((ErrorObject) thisValue).isInitialised()) {
-            obj = OrdinaryCreateFromConstructor(realm(), this, Intrinsics.ErrorPrototype,
+            obj = OrdinaryCreateFromConstructor(callerContext, this, Intrinsics.ErrorPrototype,
                     ErrorObjectAllocator.INSTANCE);
         } else {
             obj = (ErrorObject) thisValue;
@@ -66,8 +67,8 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
         obj.initialise();
 
         if (!Type.isUndefined(message)) {
-            CharSequence msg = ToString(realm(), message);
-            CreateOwnDataProperty(realm(), obj, "message", msg);
+            CharSequence msg = ToString(callerContext, message);
+            CreateOwnDataProperty(callerContext, obj, "message", msg);
         }
 
         return obj;
@@ -77,8 +78,8 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
      * 15.11.2.1 new Error (message)
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -113,8 +114,8 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.ErrorPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ErrorPrototype,
                     ErrorObjectAllocator.INSTANCE);
         }
     }

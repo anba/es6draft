@@ -32,31 +32,11 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         super(mv, methodName, methodDescriptor);
         this.strict = strict;
         this.globalCode = globalCode;
-        reserveFixedSlot(Register.Realm);
-        reserveFixedSlot(Register.ExecutionContext);
+        reserveFixedSlot(0, Types.ExecutionContext);
     }
 
-    enum Register {
-        ExecutionContext(Types.ExecutionContext), Realm(Types.Realm);
-        final Type type;
-
-        Register(Type type) {
-            this.type = type;
-        }
-    }
-
-    abstract protected int var(Register reg);
-
-    private void reserveFixedSlot(Register reg) {
-        reserveFixedSlot(var(reg), reg.type);
-    }
-
-    void load(Register reg) {
-        load(var(reg), reg.type);
-    }
-
-    void store(Register reg) {
-        store(var(reg), reg.type);
+    void loadExecutionContext() {
+        load(0, Types.ExecutionContext);
     }
 
     boolean isStrict() {

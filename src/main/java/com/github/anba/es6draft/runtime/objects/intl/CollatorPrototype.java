@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -31,8 +32,8 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -41,12 +42,12 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
     public enum Properties {
         ;
 
-        private static CollatorObject collator(Realm realm, Object object) {
+        private static CollatorObject collator(ExecutionContext cx, Object object) {
             if (object instanceof CollatorObject) {
                 // TODO: test for initialised state
                 return (CollatorObject) object;
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -62,8 +63,8 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
          * 10.3.2 Intl.Collator.prototype.compare
          */
         @Accessor(name = "compare", type = Accessor.Type.Getter)
-        public static Object compare(Realm realm, Object thisValue) {
-            collator(realm, thisValue);
+        public static Object compare(ExecutionContext cx, Object thisValue) {
+            collator(cx, thisValue);
             return UNDEFINED;
         }
 
@@ -71,8 +72,8 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
          * 10.3.3 Intl.Collator.prototype.resolvedOptions ()
          */
         @Function(name = "resolvedOptions", arity = 0)
-        public static Object resolvedOptions(Realm realm, Object thisValue) {
-            collator(realm, thisValue);
+        public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
+            collator(cx, thisValue);
             return UNDEFINED;
         }
     }

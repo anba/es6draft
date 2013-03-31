@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -39,11 +40,11 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        setPrototype(realm, null);
-        setIntegrity(realm, IntegrityLevel.NonExtensible);
+    public void initialise(ExecutionContext cx) {
+        setPrototype(cx, null);
+        setIntegrity(cx, IntegrityLevel.NonExtensible);
 
-        createProperties(this, realm, ReflectedFunctions.class);
+        createProperties(this, cx, ReflectedFunctions.class);
     }
 
     /**
@@ -56,55 +57,56 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.1 Reflect.getPrototypeOf (target)
          */
         @Function(name = "getPrototypeOf", arity = 1)
-        public static Object getPrototypeOf(Realm realm, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(realm, target);
-            return obj.getPrototype(realm);
+        public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object target) {
+            ScriptObject obj = ToObject(cx, target);
+            return obj.getPrototype(cx);
         }
 
         /**
          * 15.17.1.2 Reflect.setPrototypeOf (target, proto)
          */
         @Function(name = "setPrototypeOf", arity = 2)
-        public static Object setPrototypeOf(Realm realm, Object thisValue, Object target,
+        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object target,
                 Object proto) {
-            ScriptObject obj = ToObject(realm, target);
+            ScriptObject obj = ToObject(cx, target);
             if (!(Type.isObject(proto) || Type.isNull(proto))) {
-                throw throwTypeError(realm, Messages.Key.NotObjectOrNull);
+                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
-            return obj.setPrototype(realm, p);
+            return obj.setPrototype(cx, p);
         }
 
         /**
          * 15.17.1.3 Reflect.isExtensible (target)
          */
         @Function(name = "isExtensible", arity = 1)
-        public static Object isExtensible(Realm realm, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(realm, target);
-            return IsExtensible(realm, obj);
+        public static Object isExtensible(ExecutionContext cx, Object thisValue, Object target) {
+            ScriptObject obj = ToObject(cx, target);
+            return IsExtensible(cx, obj);
         }
 
         /**
          * 15.17.1.4 Reflect.preventExtensions (target)
          */
         @Function(name = "preventExtensions", arity = 1)
-        public static Object preventExtensions(Realm realm, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(realm, target);
-            return obj.setIntegrity(realm, IntegrityLevel.NonExtensible);
+        public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object target) {
+            ScriptObject obj = ToObject(cx, target);
+            return obj.setIntegrity(cx, IntegrityLevel.NonExtensible);
         }
 
         /**
          * 15.17.1.5 Reflect.has (target, propertyKey)
          */
         @Function(name = "has", arity = 2)
-        public static Object has(Realm realm, Object thisValue, Object target, Object propertyKey) {
-            ScriptObject obj = ToObject(realm, target);
-            Object key = ToPropertyKey(realm, propertyKey);
+        public static Object has(ExecutionContext cx, Object thisValue, Object target,
+                Object propertyKey) {
+            ScriptObject obj = ToObject(cx, target);
+            Object key = ToPropertyKey(cx, propertyKey);
             if (key instanceof String) {
-                return obj.hasProperty(realm, (String) key);
+                return obj.hasProperty(cx, (String) key);
             } else {
                 assert key instanceof Symbol;
-                return obj.hasProperty(realm, (Symbol) key);
+                return obj.hasProperty(cx, (Symbol) key);
             }
         }
 
@@ -112,14 +114,15 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.6 Reflect.hasOwn (target, propertyKey)
          */
         @Function(name = "hasOwn", arity = 2)
-        public static Object hasOwn(Realm realm, Object thisValue, Object target, Object propertyKey) {
-            ScriptObject obj = ToObject(realm, target);
-            Object key = ToPropertyKey(realm, propertyKey);
+        public static Object hasOwn(ExecutionContext cx, Object thisValue, Object target,
+                Object propertyKey) {
+            ScriptObject obj = ToObject(cx, target);
+            Object key = ToPropertyKey(cx, propertyKey);
             if (key instanceof String) {
-                return obj.hasOwnProperty(realm, (String) key);
+                return obj.hasOwnProperty(cx, (String) key);
             } else {
                 assert key instanceof Symbol;
-                return obj.hasOwnProperty(realm, (Symbol) key);
+                return obj.hasOwnProperty(cx, (Symbol) key);
             }
         }
 
@@ -127,16 +130,16 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.7 Reflect.getOwnPropertyDescriptor(target, propertyKey)
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
-        public static Object getOwnPropertyDescriptor(Realm realm, Object thisValue, Object target,
-                Object propertyKey) {
-            ScriptObject obj = ToObject(realm, target);
-            Object key = ToPropertyKey(realm, propertyKey);
+        public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
+                Object target, Object propertyKey) {
+            ScriptObject obj = ToObject(cx, target);
+            Object key = ToPropertyKey(cx, propertyKey);
             // FIXME: spec bug [[GetOwnProperty]] return value returned as-is!
             if (key instanceof String) {
-                return obj.getOwnProperty(realm, (String) key);
+                return obj.getOwnProperty(cx, (String) key);
             } else {
                 assert key instanceof Symbol;
-                return obj.getOwnProperty(realm, (Symbol) key);
+                return obj.getOwnProperty(cx, (Symbol) key);
             }
         }
 
@@ -144,18 +147,18 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.8 Reflect.get (target, propertyKey, receiver=target)
          */
         @Function(name = "get", arity = 3)
-        public static Object get(Realm realm, Object thisValue, Object target, Object propertyKey,
-                @Optional(Optional.Default.NONE) Object receiver) {
+        public static Object get(ExecutionContext cx, Object thisValue, Object target,
+                Object propertyKey, @Optional(Optional.Default.NONE) Object receiver) {
             if (receiver == null) {
                 receiver = target;
             }
-            ScriptObject obj = ToObject(realm, target);
-            Object key = ToPropertyKey(realm, propertyKey);
+            ScriptObject obj = ToObject(cx, target);
+            Object key = ToPropertyKey(cx, propertyKey);
             if (key instanceof String) {
-                return obj.get(realm, (String) key, receiver);
+                return obj.get(cx, (String) key, receiver);
             } else {
                 assert key instanceof Symbol;
-                return obj.get(realm, (Symbol) key, receiver);
+                return obj.get(cx, (Symbol) key, receiver);
             }
         }
 
@@ -163,18 +166,18 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.9 Reflect.set (target, propertyKey, V, receiver=target)
          */
         @Function(name = "set", arity = 4)
-        public static Object set(Realm realm, Object thisValue, Object target, Object propertyKey,
-                Object value, @Optional(Optional.Default.NONE) Object receiver) {
+        public static Object set(ExecutionContext cx, Object thisValue, Object target,
+                Object propertyKey, Object value, @Optional(Optional.Default.NONE) Object receiver) {
             if (receiver == null) {
                 receiver = target;
             }
-            ScriptObject obj = ToObject(realm, target);
-            Object key = ToPropertyKey(realm, propertyKey);
+            ScriptObject obj = ToObject(cx, target);
+            Object key = ToPropertyKey(cx, propertyKey);
             if (key instanceof String) {
-                return obj.set(realm, (String) key, value, receiver);
+                return obj.set(cx, (String) key, value, receiver);
             } else {
                 assert key instanceof Symbol;
-                return obj.set(realm, (Symbol) key, value, receiver);
+                return obj.set(cx, (Symbol) key, value, receiver);
             }
         }
 
@@ -182,15 +185,15 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.10 Reflect.deleteProperty (target, propertyKey)
          */
         @Function(name = "deleteProperty", arity = 2)
-        public static Object deleteProperty(Realm realm, Object thisValue, Object target,
+        public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey) {
-            ScriptObject obj = ToObject(realm, target);
-            Object key = ToPropertyKey(realm, propertyKey);
+            ScriptObject obj = ToObject(cx, target);
+            Object key = ToPropertyKey(cx, propertyKey);
             if (key instanceof String) {
-                return obj.delete(realm, (String) key);
+                return obj.delete(cx, (String) key);
             } else {
                 assert key instanceof Symbol;
-                return obj.delete(realm, (Symbol) key);
+                return obj.delete(cx, (Symbol) key);
             }
         }
 
@@ -198,16 +201,16 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.11 Reflect.defineProperty(target, propertyKey, Attributes)
          */
         @Function(name = "defineProperty", arity = 3)
-        public static Object defineProperty(Realm realm, Object thisValue, Object target,
+        public static Object defineProperty(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey, Object attributes) {
-            ScriptObject obj = ToObject(realm, target);
-            Object key = ToPropertyKey(realm, propertyKey);
-            PropertyDescriptor desc = ToPropertyDescriptor(realm, attributes);
+            ScriptObject obj = ToObject(cx, target);
+            Object key = ToPropertyKey(cx, propertyKey);
+            PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
             if (key instanceof String) {
-                return obj.defineOwnProperty(realm, (String) key, desc);
+                return obj.defineOwnProperty(cx, (String) key, desc);
             } else {
                 assert key instanceof Symbol;
-                return obj.defineOwnProperty(realm, (Symbol) key, desc);
+                return obj.defineOwnProperty(cx, (Symbol) key, desc);
             }
         }
 
@@ -215,9 +218,9 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.12 Reflect.enumerate (target)
          */
         @Function(name = "enumerate", arity = 1)
-        public static Object enumerate(Realm realm, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(realm, target);
-            ScriptObject itr = obj.enumerate(realm);
+        public static Object enumerate(ExecutionContext cx, Object thisValue, Object target) {
+            ScriptObject obj = ToObject(cx, target);
+            ScriptObject itr = obj.enumerate(cx);
             return itr;
         }
 
@@ -225,9 +228,9 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.13 Reflect.ownKeys (target)
          */
         @Function(name = "ownKeys", arity = 1)
-        public static Object ownKeys(Realm realm, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(realm, target);
-            ScriptObject keys = obj.ownPropertyKeys(realm);
+        public static Object ownKeys(ExecutionContext cx, Object thisValue, Object target) {
+            ScriptObject obj = ToObject(cx, target);
+            ScriptObject keys = obj.ownPropertyKeys(cx);
             // FIXME: spec bug (algorithm end at step 4 without return)
             return keys;
         }
@@ -236,36 +239,36 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.17.1.14 Reflect.freeze (target)
          */
         @Function(name = "freeze", arity = 1)
-        public static Object freeze(Realm realm, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(realm, target);
-            return obj.setIntegrity(realm, IntegrityLevel.Frozen);
+        public static Object freeze(ExecutionContext cx, Object thisValue, Object target) {
+            ScriptObject obj = ToObject(cx, target);
+            return obj.setIntegrity(cx, IntegrityLevel.Frozen);
         }
 
         /**
          * 15.17.1.15 Reflect.seal (target)
          */
         @Function(name = "seal", arity = 1)
-        public static Object seal(Realm realm, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(realm, target);
-            return obj.setIntegrity(realm, IntegrityLevel.Sealed);
+        public static Object seal(ExecutionContext cx, Object thisValue, Object target) {
+            ScriptObject obj = ToObject(cx, target);
+            return obj.setIntegrity(cx, IntegrityLevel.Sealed);
         }
 
         /**
          * 15.17.1.16 Reflect.isFrozen (target)
          */
         @Function(name = "isFrozen", arity = 1)
-        public static Object isFrozen(Realm realm, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(realm, target);
-            return obj.hasIntegrity(realm, IntegrityLevel.Frozen);
+        public static Object isFrozen(ExecutionContext cx, Object thisValue, Object target) {
+            ScriptObject obj = ToObject(cx, target);
+            return obj.hasIntegrity(cx, IntegrityLevel.Frozen);
         }
 
         /**
          * 15.17.1.17 Reflect.isSealed (target)
          */
         @Function(name = "isSealed", arity = 1)
-        public static Object isSealed(Realm realm, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(realm, target);
-            return obj.hasIntegrity(realm, IntegrityLevel.Sealed);
+        public static Object isSealed(ExecutionContext cx, Object thisValue, Object target) {
+            ScriptObject obj = ToObject(cx, target);
+            return obj.hasIntegrity(cx, IntegrityLevel.Sealed);
         }
     }
 }

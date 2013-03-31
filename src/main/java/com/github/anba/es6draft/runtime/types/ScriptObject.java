@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types;
 
-import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
  * <h1>8 Types</h1><br>
@@ -18,65 +18,65 @@ import com.github.anba.es6draft.runtime.Realm;
  */
 public interface ScriptObject {
     /** [[GetPrototype]] ( ) */
-    ScriptObject getPrototype(Realm realm);
+    ScriptObject getPrototype(ExecutionContext cx);
 
     /** [[SetPrototype]] (V) */
-    boolean setPrototype(Realm realm, ScriptObject prototype);
+    boolean setPrototype(ExecutionContext cx, ScriptObject prototype);
 
     /** [[HasIntegrity]] (Level) */
-    boolean hasIntegrity(Realm realm, IntegrityLevel level);
+    boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level);
 
     /** [[SetIntegrity]] (Level) */
-    boolean setIntegrity(Realm realm, IntegrityLevel level);
+    boolean setIntegrity(ExecutionContext cx, IntegrityLevel level);
 
     /** [[HasOwnProperty]] (P) */
-    boolean hasOwnProperty(Realm realm, String propertyKey);
+    boolean hasOwnProperty(ExecutionContext cx, String propertyKey);
 
     /** [[HasOwnProperty]] (P) */
-    boolean hasOwnProperty(Realm realm, Symbol propertyKey);
+    boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey);
 
     /** [[GetOwnProperty]] (P) */
-    Property getOwnProperty(Realm realm, String propertyKey);
+    Property getOwnProperty(ExecutionContext cx, String propertyKey);
 
     /** [[GetOwnProperty]] (P) */
-    Property getOwnProperty(Realm realm, Symbol propertyKey);
+    Property getOwnProperty(ExecutionContext cx, Symbol propertyKey);
 
     /** [[HasProperty]](P) */
-    boolean hasProperty(Realm realm, String propertyKey);
+    boolean hasProperty(ExecutionContext cx, String propertyKey);
 
     /** [[HasProperty]](P) */
-    boolean hasProperty(Realm realm, Symbol propertyKey);
+    boolean hasProperty(ExecutionContext cx, Symbol propertyKey);
 
     // FIXME: spec bug ([[Get]] missing in 8.1.6.2)
 
     /** [[Get]] (P, Receiver) */
-    Object get(Realm realm, String propertyKey, Object receiver);
+    Object get(ExecutionContext cx, String propertyKey, Object receiver);
 
     /** [[Get]] (P, Receiver) */
-    Object get(Realm realm, Symbol propertyKey, Object receiver);
+    Object get(ExecutionContext cx, Symbol propertyKey, Object receiver);
 
     /** [[Set] (P, V, Receiver) */
-    boolean set(Realm realm, String propertyKey, Object value, Object receiver);
+    boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver);
 
     /** [[Set] (P, V, Receiver) */
-    boolean set(Realm realm, Symbol propertyKey, Object value, Object receiver);
+    boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver);
 
     /** [[Delete]] (P) */
-    boolean delete(Realm realm, String propertyKey);
+    boolean delete(ExecutionContext cx, String propertyKey);
 
     /** [[Delete]] (P) */
-    boolean delete(Realm realm, Symbol propertyKey);
+    boolean delete(ExecutionContext cx, Symbol propertyKey);
 
     /** [[DefineOwnProperty]] (P, Desc) */
-    boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc);
+    boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc);
 
     /** [[DefineOwnProperty]] (P, Desc) */
-    boolean defineOwnProperty(Realm realm, Symbol propertyKey, PropertyDescriptor desc);
+    boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc);
 
     /** [[Enumerate]] () */
-    ScriptObject enumerate(Realm realm);
+    ScriptObject enumerate(ExecutionContext cx);
 
     /** [[OwnPropertyKeys]] ( ) */
-    ScriptObject ownPropertyKeys(Realm realm);
+    ScriptObject ownPropertyKeys(ExecutionContext cx);
 
 }

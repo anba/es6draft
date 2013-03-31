@@ -20,7 +20,6 @@ import com.github.anba.es6draft.ast.ComprehensionFor;
 import com.github.anba.es6draft.ast.ComprehensionIf;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -49,7 +48,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "iterate",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.Realm));
+                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
     }
 
     private Iterator<Node> elements;
@@ -121,7 +120,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         mv.pop();
         mv.goTo(lblBreak);
         mv.mark(loopstart);
-        mv.load(Register.Realm);
+        mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_iterate);
 
         int var = mv.newVariable(Types.Iterator);

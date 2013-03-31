@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayC
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
@@ -43,8 +44,8 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     public enum MapIterationKind {
@@ -91,9 +92,10 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
     /**
      * 15.14.6.1 CreateMapIterator Abstract Operation
      */
-    public static OrdinaryObject CreateMapIterator(Realm realm, MapObject m, MapIterationKind kind) {
+    public static OrdinaryObject CreateMapIterator(ExecutionContext cx, MapObject m,
+            MapIterationKind kind) {
         LinkedMap<Object, Object> entries = m.getMapData();
-        MapIterator itr = ObjectCreate(realm, Intrinsics.MapIteratorPrototype,
+        MapIterator itr = ObjectCreate(cx, Intrinsics.MapIteratorPrototype,
                 MapIteratorAllocator.INSTANCE);
         itr.map = m;
         itr.nextIndex = 0;
@@ -122,12 +124,12 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
          * 15.14.6.2.2 MapIterator.prototype.next( )
          */
         @Function(name = "next", arity = 0)
-        public static Object next(Realm realm, Object thisValue) {
+        public static Object next(ExecutionContext cx, Object thisValue) {
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             if (!(thisValue instanceof MapIterator)) {
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             MapIterator o = (MapIterator) thisValue;
             // ScriptObject m = o.map;
@@ -144,21 +146,21 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
                     result = e.getValue();
                 } else {
                     assert itemKind == MapIterationKind.KeyValue;
-                    ScriptObject array = ArrayCreate(realm, 2);
-                    CreateOwnDataProperty(realm, array, "0", e.getKey());
-                    CreateOwnDataProperty(realm, array, "1", e.getValue());
+                    ScriptObject array = ArrayCreate(cx, 2);
+                    CreateOwnDataProperty(cx, array, "0", e.getKey());
+                    CreateOwnDataProperty(cx, array, "1", e.getValue());
                     result = array;
                 }
                 return result;
             }
-            return _throw(realm.getIntrinsic(Intrinsics.StopIteration));
+            return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
         }
 
         /**
          * 15.14.6.2.3 MapIterator.prototype.@@iterator ()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
-        public static Object iterator(Realm realm, Object thisValue) {
+        public static Object iterator(ExecutionContext cx, Object thisValue) {
             return thisValue;
         }
 

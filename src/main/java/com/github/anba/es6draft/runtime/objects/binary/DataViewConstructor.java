@@ -15,6 +15,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -43,44 +44,45 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.13.7.1 The DataView Constructor Called as a Function
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
-        return construct(args);
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        return construct(callerContext, args);
     }
 
     /**
      * 15.13.7.2.1 new DataView(buffer [, byteOffset [, byteLength]])
      */
     @Override
-    public Object construct(Object... args) {
-        Realm realm = realm();
+    public Object construct(ExecutionContext callerContext, Object... args) {
         Object buffer = args.length > 0 ? args[0] : UNDEFINED;
-        ScriptObject obj = ToObject(realm, buffer);
+        ScriptObject obj = ToObject(callerContext, buffer);
         if (!(obj instanceof ArrayBufferObject)) {
-            throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
-        long byteOffset = args.length > 1 ? ToUint32(realm, args[1]) : 0;
-        long bufferLength = ToUint32(realm, Get(realm, obj, "byteLength"));
-        long byteLength = args.length > 2 ? ToUint32(realm, args[2]) : (bufferLength - byteOffset);
+        long byteOffset = args.length > 1 ? ToUint32(callerContext, args[1]) : 0;
+        long bufferLength = ToUint32(callerContext, Get(callerContext, obj, "byteLength"));
+        long byteLength = args.length > 2 ? ToUint32(callerContext, args[2])
+                : (bufferLength - byteOffset);
         if (byteOffset + byteLength > bufferLength) {
-            throwRangeError(realm, Messages.Key.ArrayOffsetOutOfRange);
+            throwRangeError(callerContext, Messages.Key.ArrayOffsetOutOfRange);
         }
 
-        DataViewObject view = new DataViewObject(realm);
-        view.setPrototype(realm, realm.getIntrinsic(Intrinsics.DataViewPrototype));
-        view.defineOwnProperty(realm, "byteLength", new PropertyDescriptor(byteLength, false,
-                false, false));
-        view.defineOwnProperty(realm, "buffer", new PropertyDescriptor(obj, false, false, false));
-        view.defineOwnProperty(realm, "byteOffset", new PropertyDescriptor(byteOffset, false,
-                false, false));
+        DataViewObject view = new DataViewObject(callerContext.getRealm());
+        view.setPrototype(callerContext, callerContext.getIntrinsic(Intrinsics.DataViewPrototype));
+        view.defineOwnProperty(callerContext, "byteLength", new PropertyDescriptor(byteLength,
+                false, false, false));
+        view.defineOwnProperty(callerContext, "buffer", new PropertyDescriptor(obj, false, false,
+                false));
+        view.defineOwnProperty(callerContext, "byteOffset", new PropertyDescriptor(byteOffset,
+                false, false, false));
 
         return view;
     }

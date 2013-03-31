@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -30,18 +31,18 @@ public class GeneratorPrototype extends OrdinaryObject implements Initialisable 
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     public enum Properties {
         ;
 
-        private static GeneratorObject generatorObject(Realm realm, Object object) {
+        private static GeneratorObject generatorObject(ExecutionContext cx, Object object) {
             if (object instanceof GeneratorObject) {
                 return (GeneratorObject) object;
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -51,27 +52,27 @@ public class GeneratorPrototype extends OrdinaryObject implements Initialisable 
         public static final Intrinsics constructor = Intrinsics.Generator;
 
         @Function(name = "next", arity = 0)
-        public static Object next(Realm realm, Object thisValue) {
-            return generatorObject(realm, thisValue).send(realm, UNDEFINED);
+        public static Object next(ExecutionContext cx, Object thisValue) {
+            return generatorObject(cx, thisValue).send(cx, UNDEFINED);
         }
 
         @Function(name = "send", arity = 1)
-        public static Object send(Realm realm, Object thisValue, Object value) {
-            return generatorObject(realm, thisValue).send(realm, value);
+        public static Object send(ExecutionContext cx, Object thisValue, Object value) {
+            return generatorObject(cx, thisValue).send(cx, value);
         }
 
         @Function(name = "throw", arity = 1)
-        public static Object _throw(Realm realm, Object thisValue, Object value) {
-            return generatorObject(realm, thisValue)._throw(realm, value);
+        public static Object _throw(ExecutionContext cx, Object thisValue, Object value) {
+            return generatorObject(cx, thisValue)._throw(cx, value);
         }
 
         @Function(name = "close", arity = 0)
-        public static Object close(Realm realm, Object thisValue) {
-            return generatorObject(realm, thisValue).close(realm);
+        public static Object close(ExecutionContext cx, Object thisValue) {
+            return generatorObject(cx, thisValue).close(cx);
         }
 
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
-        public static Object iterator(Realm realm, Object thisValue) {
+        public static Object iterator(ExecutionContext cx, Object thisValue) {
             return thisValue;
         }
     }

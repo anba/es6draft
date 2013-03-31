@@ -38,8 +38,8 @@ public final class Eval {
     /**
      * 15.1.2.1 eval (x)
      */
-    public static Object indirectEval(Realm evalRealm, Object source) {
-        return eval(evalRealm, null, false, true, source);
+    public static Object indirectEval(ExecutionContext ctx, Object source) {
+        return eval(ctx, false, false, true, source);
     }
 
     /**
@@ -47,10 +47,10 @@ public final class Eval {
      */
     public static Object directEval(Object source, ExecutionContext ctx, boolean strictCaller,
             boolean globalCode) {
-        return eval(ctx.getRealm(), ctx, strictCaller, globalCode, source);
+        return eval(ctx, true, strictCaller, globalCode, source);
     }
 
-    private static Object eval(Realm evalRealm, ExecutionContext ctx, boolean strictCaller,
+    private static Object eval(ExecutionContext ctx, boolean direct, boolean strictCaller,
             boolean globalCode, Object source) {
         assert !(ctx == null && strictCaller);
         /* step 1 */
@@ -58,12 +58,12 @@ public final class Eval {
             return source;
         }
         /* step 5 */
-        boolean direct = (ctx != null);
+        Realm evalRealm = ctx.getRealm();
         boolean globalScope = direct && (ctx.getLexicalEnvironment() == evalRealm.getGlobalEnv());
 
         /* step 2 */
-        Script script = script(evalRealm, Type.stringValue(source), strictCaller, globalCode,
-                direct, globalScope);
+        Script script = script(ctx, Type.stringValue(source), strictCaller, globalCode, direct,
+                globalScope);
         /* step 3 */
         if (script == null) {
             return UNDEFINED;
@@ -105,7 +105,7 @@ public final class Eval {
             // end-modification
         }
         /* step 15-16 */
-        script.getScriptBody().evalDeclarationInstantiation(evalRealm, lexEnv, varEnv, true);
+        script.getScriptBody().evalDeclarationInstantiation(ctx, lexEnv, varEnv, true);
         /* step 17-20 */
         ExecutionContext evalCxt = ExecutionContext.newEvalExecutionContext(evalRealm, lexEnv,
                 varEnv);
@@ -115,7 +115,7 @@ public final class Eval {
         return result;
     }
 
-    private static Script script(Realm realm, CharSequence source, boolean strict,
+    private static Script script(ExecutionContext cx, CharSequence source, boolean strict,
             boolean globalCode, boolean directEval, boolean globalScope) {
         try {
             EnumSet<Parser.Option> options = EnumSet.of(Parser.Option.EvalScript);
@@ -136,13 +136,13 @@ public final class Eval {
             if (parsedScript.getStatements().isEmpty()) {
                 return null;
             }
-            String className = realm.nextEvalName();
+            String className = cx.getRealm().nextEvalName();
             return ScriptLoader.load(className, parsedScript);
         } catch (ParserException e) {
             if (e.getExceptionType() == ExceptionType.ReferenceError) {
-                throw throwReferenceError(realm, e.getMessageKey(), e.getMessageArguments());
+                throw throwReferenceError(cx, e.getMessageKey(), e.getMessageArguments());
             }
-            throw throwSyntaxError(realm, e.getMessageKey(), e.getMessageArguments());
+            throw throwSyntaxError(cx, e.getMessageKey(), e.getMessageArguments());
         }
     }
 }

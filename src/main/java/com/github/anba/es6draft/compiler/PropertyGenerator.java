@@ -17,7 +17,6 @@ import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.PropertyName;
 import com.github.anba.es6draft.ast.PropertyNameDefinition;
 import com.github.anba.es6draft.ast.PropertyValueDefinition;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -50,11 +49,11 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
 
         static final MethodDesc ScriptRuntime_defineProperty = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "defineProperty", Type.getMethodType(Type.VOID_TYPE,
-                        Types.ScriptObject, Types.String, Types.Object, Types.Realm));
+                        Types.ScriptObject, Types.String, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_defineProtoProperty = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "defineProtoProperty",
-                Type.getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.Object, Types.Realm));
+                MethodType.Static, Types.ScriptRuntime, "defineProtoProperty", Type.getMethodType(
+                        Type.VOID_TYPE, Types.ScriptObject, Types.Object, Types.ExecutionContext));
     }
 
     public PropertyGenerator(CodeGenerator codegen) {
@@ -82,7 +81,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         mv.aconst(PropName(node));
         mv.invokestatic(codegen.getClassName(), codegen.methodName(node) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
 
         switch (node.getType()) {
         case Function:
@@ -113,13 +112,13 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         if ("__proto__".equals(propName)) {
             propertyName.accept(this, mv);
             invokeGetValue(propertyName, mv);
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else {
             mv.aconst(propName);
             propertyName.accept(this, mv);
             invokeGetValue(propertyName, mv);
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty);
         }
 
@@ -135,13 +134,13 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         if ("__proto__".equals(propName)) {
             propertyValue.accept(this, mv);
             invokeGetValue(propertyValue, mv);
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else {
             mv.aconst(propName);
             propertyValue.accept(this, mv);
             invokeGetValue(propertyValue, mv);
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty);
         }
 

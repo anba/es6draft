@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -50,28 +51,28 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.2.1.1 Object ( [ value ] )
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         Object value = args.length > 0 ? args[0] : UNDEFINED;
         if (Type.isUndefinedOrNull(value)) {
-            return ObjectCreate(realm(), Intrinsics.ObjectPrototype);
+            return ObjectCreate(callerContext, Intrinsics.ObjectPrototype);
         }
-        return ToObject(realm(), value);
+        return ToObject(callerContext, value);
     }
 
     /**
      * 15.2.2.1 new Object ( [ value ] )
      */
     @Override
-    public Object construct(Object... args) {
+    public Object construct(ExecutionContext callerContext, Object... args) {
         if (args.length > 0) {
             Object value = args[0];
             switch (Type.of(value)) {
@@ -80,14 +81,14 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             case String:
             case Boolean:
             case Number:
-                return ToObject(realm(), value);
+                return ToObject(callerContext, value);
             case Null:
             case Undefined:
             default:
                 break;
             }
         }
-        return ObjectCreate(realm(), Intrinsics.ObjectPrototype);
+        return ObjectCreate(callerContext, Intrinsics.ObjectPrototype);
     }
 
     /**
@@ -118,11 +119,11 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          * 15.2.3.2 Object.getPrototypeOf ( O )
          */
         @Function(name = "getPrototypeOf", arity = 1)
-        public static Object getPrototypeOf(Realm realm, Object thisValue, Object o) {
+        public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            ScriptObject proto = Type.objectValue(o).getPrototype(realm);
+            ScriptObject proto = Type.objectValue(o).getPrototype(cx);
             if (proto != null) {
                 return proto;
             }
@@ -133,45 +134,46 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          * 15.2.3.3 Object.getOwnPropertyDescriptor ( O, P )
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
-        public static Object getOwnPropertyDescriptor(Realm realm, Object thisValue, Object o,
-                Object p) {
+        public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
+                Object o, Object p) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            Object key = ToPropertyKey(realm, p);
+            Object key = ToPropertyKey(cx, p);
             Property desc;
             if (key instanceof String) {
-                desc = Type.objectValue(o).getOwnProperty(realm, (String) key);
+                desc = Type.objectValue(o).getOwnProperty(cx, (String) key);
             } else {
-                desc = Type.objectValue(o).getOwnProperty(realm, (Symbol) key);
+                desc = Type.objectValue(o).getOwnProperty(cx, (Symbol) key);
             }
-            return FromPropertyDescriptor(realm, desc);
+            return FromPropertyDescriptor(cx, desc);
         }
 
         /**
          * 15.2.3.4 Object.getOwnPropertyNames ( O )
          */
         @Function(name = "getOwnPropertyNames", arity = 1)
-        public static Object getOwnPropertyNames(Realm realm, Object thisValue, Object o) {
+        public static Object getOwnPropertyNames(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            List<String> nameList = GetOwnPropertyNames(realm, Type.objectValue(o));
-            return CreateArrayFromList(realm, nameList);
+            List<String> nameList = GetOwnPropertyNames(cx, Type.objectValue(o));
+            return CreateArrayFromList(cx, nameList);
         }
 
         /**
          * 15.2.3.5 Object.create ( O [, Properties] )
          */
         @Function(name = "create", arity = 2)
-        public static Object create(Realm realm, Object thisValue, Object o, Object properties) {
+        public static Object create(ExecutionContext cx, Object thisValue, Object o,
+                Object properties) {
             if (!(Type.isObject(o) || Type.isNull(o))) {
-                throw throwTypeError(realm, Messages.Key.NotObjectOrNull);
+                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             ScriptObject proto = Type.isObject(o) ? Type.objectValue(o) : null;
-            ScriptObject obj = ObjectCreate(realm, proto);
+            ScriptObject obj = ObjectCreate(cx, proto);
             if (!Type.isUndefined(properties)) {
-                return ObjectDefineProperties(realm, obj, properties);
+                return ObjectDefineProperties(cx, obj, properties);
             }
             return obj;
         }
@@ -180,17 +182,17 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          * 15.2.3.6 Object.defineProperty ( O, P, Attributes )
          */
         @Function(name = "defineProperty", arity = 3)
-        public static Object defineProperty(Realm realm, Object thisValue, Object o, Object p,
-                Object attributes) {
+        public static Object defineProperty(ExecutionContext cx, Object thisValue, Object o,
+                Object p, Object attributes) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            Object key = ToPropertyKey(realm, p);
-            PropertyDescriptor desc = ToPropertyDescriptor(realm, attributes);
+            Object key = ToPropertyKey(cx, p);
+            PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
             if (key instanceof String) {
-                DefinePropertyOrThrow(realm, Type.objectValue(o), (String) key, desc);
+                DefinePropertyOrThrow(cx, Type.objectValue(o), (String) key, desc);
             } else {
-                DefinePropertyOrThrow(realm, Type.objectValue(o), (Symbol) key, desc);
+                DefinePropertyOrThrow(cx, Type.objectValue(o), (Symbol) key, desc);
             }
             return o;
         }
@@ -199,22 +201,22 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          * 15.2.3.7 Object.defineProperties ( O, Properties )
          */
         @Function(name = "defineProperties", arity = 2)
-        public static Object defineProperties(Realm realm, Object thisValue, Object o,
+        public static Object defineProperties(ExecutionContext cx, Object thisValue, Object o,
                 Object properties) {
-            return ObjectDefineProperties(realm, o, properties);
+            return ObjectDefineProperties(cx, o, properties);
         }
 
         /**
          * 15.2.3.8 Object.seal ( O )
          */
         @Function(name = "seal", arity = 1)
-        public static Object seal(Realm realm, Object thisValue, Object o) {
+        public static Object seal(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            boolean status = Type.objectValue(o).setIntegrity(realm, IntegrityLevel.Sealed);
+            boolean status = Type.objectValue(o).setIntegrity(cx, IntegrityLevel.Sealed);
             if (!status) {
-                throw throwTypeError(realm, Messages.Key.ObjectSealFailed);
+                throw throwTypeError(cx, Messages.Key.ObjectSealFailed);
             }
             return o;
         }
@@ -223,13 +225,13 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          * 15.2.3.9 Object.freeze ( O )
          */
         @Function(name = "freeze", arity = 1)
-        public static Object freeze(Realm realm, Object thisValue, Object o) {
+        public static Object freeze(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            boolean status = Type.objectValue(o).setIntegrity(realm, IntegrityLevel.Frozen);
+            boolean status = Type.objectValue(o).setIntegrity(cx, IntegrityLevel.Frozen);
             if (!status) {
-                throw throwTypeError(realm, Messages.Key.ObjectFreezeFailed);
+                throw throwTypeError(cx, Messages.Key.ObjectFreezeFailed);
             }
             return o;
         }
@@ -238,13 +240,13 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          * 15.2.3.10 Object.preventExtensions ( O )
          */
         @Function(name = "preventExtensions", arity = 1)
-        public static Object preventExtensions(Realm realm, Object thisValue, Object o) {
+        public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            boolean status = Type.objectValue(o).setIntegrity(realm, IntegrityLevel.NonExtensible);
+            boolean status = Type.objectValue(o).setIntegrity(cx, IntegrityLevel.NonExtensible);
             if (!status) {
-                throw throwTypeError(realm, Messages.Key.ObjectPreventExtensionsFailed);
+                throw throwTypeError(cx, Messages.Key.ObjectPreventExtensionsFailed);
             }
             return o;
         }
@@ -253,64 +255,64 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          * 15.2.3.11 Object.isSealed ( O )
          */
         @Function(name = "isSealed", arity = 1)
-        public static Object isSealed(Realm realm, Object thisValue, Object o) {
+        public static Object isSealed(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            return Type.objectValue(o).hasIntegrity(realm, IntegrityLevel.Sealed);
+            return Type.objectValue(o).hasIntegrity(cx, IntegrityLevel.Sealed);
         }
 
         /**
          * 15.2.3.12 Object.isFrozen ( O )
          */
         @Function(name = "isFrozen", arity = 1)
-        public static Object isFrozen(Realm realm, Object thisValue, Object o) {
+        public static Object isFrozen(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            return Type.objectValue(o).hasIntegrity(realm, IntegrityLevel.Frozen);
+            return Type.objectValue(o).hasIntegrity(cx, IntegrityLevel.Frozen);
         }
 
         /**
          * 15.2.3.13 Object.isExtensible ( O )
          */
         @Function(name = "isExtensible", arity = 1)
-        public static Object isExtensible(Realm realm, Object thisValue, Object o) {
+        public static Object isExtensible(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            return IsExtensible(realm, Type.objectValue(o));
+            return IsExtensible(cx, Type.objectValue(o));
         }
 
         /**
          * 15.2.3.14 Object.keys ( O )
          */
         @Function(name = "keys", arity = 1)
-        public static Object keys(Realm realm, Object thisValue, Object o) {
+        public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
             // FIXME: spec bug - steps start at 8
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            List<String> nameList = GetOwnPropertyKeys(realm, Type.objectValue(o));
-            return CreateArrayFromList(realm, nameList);
+            List<String> nameList = GetOwnPropertyKeys(cx, Type.objectValue(o));
+            return CreateArrayFromList(cx, nameList);
         }
 
         /**
          * 15.2.3.15 Object.getOwnPropertyKeys ( O )
          */
         @Function(name = "getOwnPropertyKeys", arity = 1)
-        public static Object getOwnPropertyKeys(Realm realm, Object thisValue, Object o) {
+        public static Object getOwnPropertyKeys(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            return Type.objectValue(o).ownPropertyKeys(realm);
+            return Type.objectValue(o).ownPropertyKeys(cx);
         }
 
         /**
          * 15.2.3.16 Object.is ( value1, value2 )
          */
         @Function(name = "is", arity = 2)
-        public static Object is(Realm realm, Object thisValue, Object value1, Object value2) {
+        public static Object is(ExecutionContext cx, Object thisValue, Object value1, Object value2) {
             return SameValue(value1, value2);
         }
 
@@ -318,26 +320,27 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          * 15.2.3.17 Object.assign ( target, source )
          */
         @Function(name = "assign", arity = 2)
-        public static Object assign(Realm realm, Object thisValue, Object target, Object source) {
+        public static Object assign(ExecutionContext cx, Object thisValue, Object target,
+                Object source) {
             if (!Type.isObject(target)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             if (!Type.isObject(source)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject _target = Type.objectValue(target);
             ScriptObject _source = Type.objectValue(source);
             ScriptException pendingException = null;
-            List<Object> keys = GetOwnEnumerableKeys(realm, _source);
+            List<Object> keys = GetOwnEnumerableKeys(cx, _source);
             for (Object key : keys) {
                 if (key instanceof String) {
                     String ownKey = (String) key;
-                    Object value = Get(realm, _source, ownKey);
+                    Object value = Get(cx, _source, ownKey);
                     if (isSuperBoundTo(value, _source)) {
-                        value = superBindTo(realm, value, _target);
+                        value = superBindTo(cx, value, _target);
                     }
                     try {
-                        Put(realm, _target, ownKey, value, true);
+                        Put(cx, _target, ownKey, value, true);
                     } catch (ScriptException e) {
                         if (pendingException == null) {
                             pendingException = e;
@@ -346,12 +349,12 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                 } else {
                     assert key instanceof Symbol;
                     Symbol ownKey = (Symbol) key;
-                    Object value = Get(realm, _source, ownKey);
+                    Object value = Get(cx, _source, ownKey);
                     if (isSuperBoundTo(value, _source)) {
-                        value = superBindTo(realm, value, _target);
+                        value = superBindTo(cx, value, _target);
                     }
                     try {
-                        Put(realm, _target, ownKey, value, true);
+                        Put(cx, _target, ownKey, value, true);
                     } catch (ScriptException e) {
                         if (pendingException == null) {
                             pendingException = e;
@@ -369,26 +372,27 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          * 15.2.3.18 Object.mixin ( target, source )
          */
         @Function(name = "mixin", arity = 2)
-        public static Object mixin(Realm realm, Object thisValue, Object target, Object source) {
+        public static Object mixin(ExecutionContext cx, Object thisValue, Object target,
+                Object source) {
             if (!Type.isObject(target)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             if (!Type.isObject(source)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject _target = Type.objectValue(target);
             ScriptObject _source = Type.objectValue(source);
             ScriptException pendingException = null;
-            List<Object> keys = GetOwnEnumerableKeys(realm, _source);
+            List<Object> keys = GetOwnEnumerableKeys(cx, _source);
             for (Object key : keys) {
                 if (key instanceof String) {
                     String ownKey = (String) key;
-                    Property desc = _source.getOwnProperty(realm, ownKey);
+                    Property desc = _source.getOwnProperty(cx, ownKey);
                     if (desc != null) {
                         try {
-                            PropertyDescriptor desc2 = fromDescriptor(realm,
+                            PropertyDescriptor desc2 = fromDescriptor(cx,
                                     desc.toPropertyDescriptor(), _source, _target);
-                            DefinePropertyOrThrow(realm, _target, ownKey, desc2);
+                            DefinePropertyOrThrow(cx, _target, ownKey, desc2);
                         } catch (ScriptException e) {
                             if (pendingException == null) {
                                 pendingException = e;
@@ -398,12 +402,12 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                 } else {
                     assert key instanceof Symbol;
                     Symbol ownKey = (Symbol) key;
-                    Property desc = _source.getOwnProperty(realm, ownKey);
+                    Property desc = _source.getOwnProperty(cx, ownKey);
                     if (desc != null) {
                         try {
-                            PropertyDescriptor desc2 = fromDescriptor(realm,
+                            PropertyDescriptor desc2 = fromDescriptor(cx,
                                     desc.toPropertyDescriptor(), _source, _target);
-                            DefinePropertyOrThrow(realm, _target, ownKey, desc2);
+                            DefinePropertyOrThrow(cx, _target, ownKey, desc2);
                         } catch (ScriptException e) {
                             if (pendingException == null) {
                                 pendingException = e;
@@ -424,18 +428,19 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      * <p>
      * Runtime Semantics: ObjectDefineProperties Abstract Operation
      */
-    public static ScriptObject ObjectDefineProperties(Realm realm, Object o, Object properties) {
+    public static ScriptObject ObjectDefineProperties(ExecutionContext cx, Object o,
+            Object properties) {
         if (!Type.isObject(o)) {
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject obj = Type.objectValue(o);
-        ScriptObject props = ToObject(realm, properties);
+        ScriptObject props = ToObject(cx, properties);
         // FIXME: spec bug ('keys of each enumerable own property' -> string/symbol/private ?)
-        List<String> names = GetOwnPropertyKeys(realm, props);
+        List<String> names = GetOwnPropertyKeys(cx, props);
         List<PropertyDescriptor> descriptors = new ArrayList<>();
         for (String p : names) {
-            Object descObj = Get(realm, props, p);
-            PropertyDescriptor desc = ToPropertyDescriptor(realm, descObj);
+            Object descObj = Get(cx, props, p);
+            PropertyDescriptor desc = ToPropertyDescriptor(cx, descObj);
             descriptors.add(desc);
         }
         ScriptException pendingException = null;
@@ -443,7 +448,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             String p = names.get(i);
             PropertyDescriptor desc = descriptors.get(i);
             try {
-                DefinePropertyOrThrow(realm, obj, p, desc);
+                DefinePropertyOrThrow(cx, obj, p, desc);
             } catch (ScriptException e) {
                 if (pendingException == null) {
                     pendingException = e;
@@ -459,14 +464,14 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
     /**
      * Returns a list of all enumerable, non-private own property keys
      */
-    private static List<Object> GetOwnEnumerableKeys(Realm realm, ScriptObject object) {
+    private static List<Object> GetOwnEnumerableKeys(ExecutionContext cx, ScriptObject object) {
         List<Object> ownKeys = new ArrayList<>();
-        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys(realm));
+        Iterator<?> keys = FromListIterator(cx, object.ownPropertyKeys(cx));
         while (keys.hasNext()) {
-            Object key = ToPropertyKey(realm, keys.next());
+            Object key = ToPropertyKey(cx, keys.next());
             if (key instanceof String) {
                 String ownKey = (String) key;
-                Property desc = object.getOwnProperty(realm, ownKey);
+                Property desc = object.getOwnProperty(cx, ownKey);
                 if (desc != null && desc.isEnumerable()) {
                     ownKeys.add(ownKey);
                 }
@@ -474,7 +479,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                 assert key instanceof Symbol;
                 Symbol ownKey = (Symbol) key;
                 if (!ownKey.isPrivate()) {
-                    Property desc = object.getOwnProperty(realm, ownKey);
+                    Property desc = object.getOwnProperty(cx, ownKey);
                     if (desc != null && desc.isEnumerable()) {
                         ownKeys.add(ownKey);
                     }
@@ -488,22 +493,22 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      * Returns {@code desc} with [[Value]] resp. [[Get]] and [[Set]] super-rebound from
      * {@code source} to {@code target}
      */
-    private static PropertyDescriptor fromDescriptor(Realm realm, PropertyDescriptor desc,
+    private static PropertyDescriptor fromDescriptor(ExecutionContext cx, PropertyDescriptor desc,
             ScriptObject source, ScriptObject target) {
         if (desc.isDataDescriptor()) {
             Object value = desc.getValue();
             if (isSuperBoundTo(value, source)) {
-                desc.setValue(superBindTo(realm, value, target));
+                desc.setValue(superBindTo(cx, value, target));
             }
         } else {
             assert desc.isAccessorDescriptor();
             Callable getter = desc.getGetter();
             if (isSuperBoundTo(getter, source)) {
-                desc.setGetter(superBindTo(realm, getter, target));
+                desc.setGetter(superBindTo(cx, getter, target));
             }
             Callable setter = desc.getSetter();
             if (isSuperBoundTo(setter, source)) {
-                desc.setSetter(superBindTo(realm, setter, target));
+                desc.setSetter(superBindTo(cx, setter, target));
             }
         }
         return desc;
@@ -527,16 +532,16 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
     /**
      * Super-binds {@code value} to {@code target}
      */
-    private static Callable superBindTo(Realm realm, Object value, ScriptObject target) {
+    private static Callable superBindTo(ExecutionContext cx, Object value, ScriptObject target) {
         if (value instanceof OrdinaryGenerator) {
             OrdinaryGenerator gen = (OrdinaryGenerator) value;
-            return GeneratorCreate(gen.getRealm(), gen.getFunctionKind(), gen.getFunction(),
-                    gen.getScope(), gen.getPrototype(realm), target, gen.getMethodName());
+            return GeneratorCreate(cx, gen.getFunctionKind(), gen.getFunction(), gen.getScope(),
+                    gen.getPrototype(cx), target, gen.getMethodName());
         } else {
             assert value instanceof OrdinaryFunction;
             OrdinaryFunction fn = (OrdinaryFunction) value;
-            return FunctionCreate(fn.getRealm(), fn.getFunctionKind(), fn.getFunction(),
-                    fn.getScope(), fn.getPrototype(realm), target, fn.getMethodName());
+            return FunctionCreate(cx, fn.getFunctionKind(), fn.getFunction(), fn.getScope(),
+                    fn.getPrototype(cx), target, fn.getMethodName());
         }
     }
 }

@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -54,8 +55,8 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     public enum Properties {
@@ -74,14 +75,14 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          * 15.2.4.2 Object.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
-        public static Object toString(Realm realm, Object thisValue) {
+        public static Object toString(ExecutionContext cx, Object thisValue) {
             if (Type.isUndefined(thisValue)) {
                 return "[object Undefined]";
             }
             if (Type.isNull(thisValue)) {
                 return "[object Null]";
             }
-            ScriptObject o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(cx, thisValue);
             if (o instanceof Symbol) {
                 return "[object Symbol]";
             }
@@ -113,12 +114,12 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                 builtinTag = "Object";
             }
             String tag;
-            boolean hasTag = HasProperty(realm, o, BuiltinSymbol.toStringTag.get());
+            boolean hasTag = HasProperty(cx, o, BuiltinSymbol.toStringTag.get());
             if (!hasTag) {
                 tag = builtinTag;
             } else {
                 try {
-                    Object ttag = Get(realm, o, BuiltinSymbol.toStringTag.get());
+                    Object ttag = Get(cx, o, BuiltinSymbol.toStringTag.get());
                     if (Type.isString(ttag)) {
                         tag = Type.stringValue(ttag).toString();
                     } else {
@@ -146,16 +147,16 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          * 15.2.4.3 Object.prototype.toLocaleString ( )
          */
         @Function(name = "toLocaleString", arity = 0)
-        public static Object toLocaleString(Realm realm, Object thisValue) {
-            return Invoke(realm, thisValue, "toString");
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
+            return Invoke(cx, thisValue, "toString");
         }
 
         /**
          * 15.2.4.4 Object.prototype.valueOf ( )
          */
         @Function(name = "valueOf", arity = 0)
-        public static Object valueOf(Realm realm, Object thisValue) {
-            ScriptObject o = ToObject(realm, thisValue);
+        public static Object valueOf(ExecutionContext cx, Object thisValue) {
+            ScriptObject o = ToObject(cx, thisValue);
             return o;
         }
 
@@ -163,13 +164,13 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          * 15.2.4.5 Object.prototype.hasOwnProperty (V)
          */
         @Function(name = "hasOwnProperty", arity = 1)
-        public static Object hasOwnProperty(Realm realm, Object thisValue, Object v) {
-            Object p = ToPropertyKey(realm, v);
-            ScriptObject o = ToObject(realm, thisValue);
+        public static Object hasOwnProperty(ExecutionContext cx, Object thisValue, Object v) {
+            Object p = ToPropertyKey(cx, v);
+            ScriptObject o = ToObject(cx, thisValue);
             if (p instanceof String) {
-                return o.hasOwnProperty(realm, (String) p);
+                return o.hasOwnProperty(cx, (String) p);
             } else {
-                return o.hasOwnProperty(realm, (Symbol) p);
+                return o.hasOwnProperty(cx, (Symbol) p);
             }
         }
 
@@ -177,14 +178,14 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          * 15.2.4.6 Object.prototype.isPrototypeOf (V)
          */
         @Function(name = "isPrototypeOf", arity = 1)
-        public static Object isPrototypeOf(Realm realm, Object thisValue, Object v) {
+        public static Object isPrototypeOf(ExecutionContext cx, Object thisValue, Object v) {
             if (!Type.isObject(v)) {
                 return false;
             }
             ScriptObject w = Type.objectValue(v);
-            ScriptObject o = ToObject(realm, thisValue);
+            ScriptObject o = ToObject(cx, thisValue);
             for (;;) {
-                w = w.getPrototype(realm);
+                w = w.getPrototype(cx);
                 if (w == null) {
                     return false;
                 }
@@ -198,10 +199,10 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          * 15.2.4.7 Object.prototype.propertyIsEnumerable (V)
          */
         @Function(name = "propertyIsEnumerable", arity = 1)
-        public static Object propertyIsEnumerable(Realm realm, Object thisValue, Object v) {
-            String p = ToFlatString(realm, v);
-            ScriptObject o = ToObject(realm, thisValue);
-            Property desc = o.getOwnProperty(realm, p);
+        public static Object propertyIsEnumerable(ExecutionContext cx, Object thisValue, Object v) {
+            String p = ToFlatString(cx, v);
+            ScriptObject o = ToObject(cx, thisValue);
+            Property desc = o.getOwnProperty(cx, p);
             if (desc == null) {
                 return false;
             }
@@ -212,9 +213,9 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          * B.3.1.1 Object.prototype.__proto__
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Getter)
-        public static Object getPrototype(Realm realm, Object thisValue) {
-            ScriptObject o = ToObject(realm, thisValue);
-            ScriptObject p = o.getPrototype(realm);
+        public static Object getPrototype(ExecutionContext cx, Object thisValue) {
+            ScriptObject o = ToObject(cx, thisValue);
+            ScriptObject p = o.getPrototype(cx);
             return (p != null ? p : NULL);
         }
 
@@ -222,15 +223,15 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          * B.3.1.1 Object.prototype.__proto__
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
-        public static Object setPrototype(Realm realm, Object thisValue, Object p) {
-            ScriptObject o = ToObject(realm, thisValue);
-            if (!IsExtensible(realm, o)) {
-                throwTypeError(realm, Messages.Key.NotExtensible);
+        public static Object setPrototype(ExecutionContext cx, Object thisValue, Object p) {
+            ScriptObject o = ToObject(cx, thisValue);
+            if (!IsExtensible(cx, o)) {
+                throwTypeError(cx, Messages.Key.NotExtensible);
             }
             if (Type.isNull(p)) {
-                o.setPrototype(realm, null);
+                o.setPrototype(cx, null);
             } else if (Type.isObject(p)) {
-                o.setPrototype(realm, Type.objectValue(p));
+                o.setPrototype(cx, Type.objectValue(p));
             }
             return UNDEFINED;
         }

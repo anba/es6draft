@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -41,18 +42,18 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.7.1.1 Number ( [ value ] )
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         // FIXME: spec bug (`Number(undefined)` no longer returns NaN)
-        double n = (args.length > 0 ? ToNumber(realm(), args[0]) : +0.0);
+        double n = (args.length > 0 ? ToNumber(callerContext, args[0]) : +0.0);
         if (thisValue instanceof NumberObject) {
             NumberObject obj = (NumberObject) thisValue;
             if (!obj.isInitialised()) {
@@ -67,8 +68,8 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
      * 15.7.2.1 new Number ( [ value ] )
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -148,23 +149,24 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
          * 15.7.3.9 Number.parseInt (string, radix)
          */
         @Function(name = "parseInt", arity = 2)
-        public static Object parseInt(Realm realm, Object thisValue, Object string, Object radix) {
-            return GlobalObject.FunctionProperties.parseInt(realm, thisValue, string, radix);
+        public static Object parseInt(ExecutionContext cx, Object thisValue, Object string,
+                Object radix) {
+            return GlobalObject.FunctionProperties.parseInt(cx, thisValue, string, radix);
         }
 
         /**
          * 15.7.3.10 Number.parseFloat (string)
          */
         @Function(name = "parseFloat", arity = 1)
-        public static Object parseFloat(Realm realm, Object thisValue, Object string) {
-            return GlobalObject.FunctionProperties.parseFloat(realm, thisValue, string);
+        public static Object parseFloat(ExecutionContext cx, Object thisValue, Object string) {
+            return GlobalObject.FunctionProperties.parseFloat(cx, thisValue, string);
         }
 
         /**
          * 15.7.3.11 Number.isNaN (number)
          */
         @Function(name = "isNaN", arity = 1)
-        public static Object isNaN(Realm realm, Object thisValue, Object number) {
+        public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
             if (!Type.isNumber(number)) {
                 return false;
             }
@@ -175,7 +177,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
          * 15.7.3.12 Number.isFinite (number)
          */
         @Function(name = "isFinite", arity = 1)
-        public static Object isFinite(Realm realm, Object thisValue, Object number) {
+        public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
             if (!Type.isNumber(number)) {
                 return false;
             }
@@ -187,19 +189,19 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
          * 15.7.3.13 Number.isInteger (number)
          */
         @Function(name = "isInteger", arity = 1)
-        public static Object isInteger(Realm realm, Object thisValue, Object number) {
+        public static Object isInteger(ExecutionContext cx, Object thisValue, Object number) {
             if (!Type.isNumber(number)) {
                 return false;
             }
-            return ToInteger(realm, number) == Type.numberValue(number);
+            return ToInteger(cx, number) == Type.numberValue(number);
         }
 
         /**
          * 15.7.3.14 Number.toInteger (number)
          */
         @Function(name = "toInteger", arity = 1)
-        public static Object toInt(Realm realm, Object thisValue, Object number) {
-            return ToInteger(realm, number);
+        public static Object toInt(ExecutionContext cx, Object thisValue, Object number) {
+            return ToInteger(cx, number);
         }
 
         /**
@@ -210,8 +212,8 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.NumberPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.NumberPrototype,
                     NumberObjectAllocator.INSTANCE);
         }
     }

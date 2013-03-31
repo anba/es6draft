@@ -104,7 +104,7 @@ public class Test262GlobalObject extends GlobalObject {
             enumerable = true, configurable = false))
     public void runTestCase(Object testcase) {
         Callable fn = (Callable) testcase;
-        Object value = fn.call(UNDEFINED);
+        Object value = fn.call(realm.defaultContext(), UNDEFINED);
         if (!ToBoolean(value)) {
             failure(info.getDescription());
         }

@@ -23,7 +23,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  *
@@ -68,13 +67,13 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         // class: OrdinaryFunction
         static final MethodDesc OrdinaryFunction_InstantiateFunctionObject = MethodDesc.create(
                 MethodType.Static, Types.OrdinaryFunction, "InstantiateFunctionObject", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.Realm,
+                        .getMethodType(Types.OrdinaryFunction, Types.ExecutionContext,
                                 Types.LexicalEnvironment, Types.RuntimeInfo$Function));
 
         // class: OrdinaryGenerator
         static final MethodDesc OrdinaryGenerator_InstantiateGeneratorObject = MethodDesc.create(
                 MethodType.Static, Types.OrdinaryGenerator, "InstantiateGeneratorObject", Type
-                        .getMethodType(Types.OrdinaryGenerator, Types.Realm,
+                        .getMethodType(Types.OrdinaryGenerator, Types.ExecutionContext,
                                 Types.LexicalEnvironment, Types.RuntimeInfo$Function));
 
         // class: ScriptException
@@ -84,11 +83,11 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "enumerate",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.Realm));
+                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "iterate",
-                Type.getMethodType(Types.Iterator, Types.Object, Types.Realm));
+                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_strictEqualityComparison = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "strictEqualityComparison",
@@ -111,7 +110,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
     }
 
     private void restoreEnvironment(StatementVisitor mv, int savedEnv) {
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.load(savedEnv, Types.LexicalEnvironment);
         mv.invoke(Methods.ExecutionContext_restoreLexicalEnvironment);
     }
@@ -161,7 +160,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
                 // stack: [envRec, env] -> [envRec, env, envRec, realm, env, fd]
                 mv.dup2();
-                mv.load(Register.Realm);
+                mv.loadExecutionContext();
                 mv.swap();
                 mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
                         Type.getMethodDescriptor(Types.RuntimeInfo$Function));
@@ -181,7 +180,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
                 // stack: [envRec, env] -> [envRec, env, envRec, realm, env, fd]
                 mv.dup2();
-                mv.load(Register.Realm);
+                mv.loadExecutionContext();
                 mv.swap();
                 mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
                         Type.getMethodDescriptor(Types.RuntimeInfo$Function));
@@ -374,7 +373,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.pop();
         mv.goTo(lblBreak);
         mv.mark(loopstart);
-        mv.load(Register.Realm);
+        mv.loadExecutionContext();
         if (iterationKind == IterationKind.Enumerate) {
             mv.invoke(Methods.ScriptRuntime_enumerate);
         } else {

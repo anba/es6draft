@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
 
 import java.text.Collator;
 import java.util.EnumMap;
@@ -74,6 +75,8 @@ public class Realm {
 
     private Callable builtinEval;
 
+    private ExecutionContext defaultContext;
+
     private Locale locale = Locale.getDefault();
     private TimeZone timezone = TimeZone.getDefault();
     private Messages messages = Messages.create(locale);
@@ -118,6 +121,10 @@ public class Realm {
     public Callable getThrowTypeError() {
         assert throwTypeError != null : "throwTypeError not yet initialized";
         return throwTypeError;
+    }
+
+    public ExecutionContext defaultContext() {
+        return defaultContext;
     }
 
     private AtomicInteger evalCounter = new AtomicInteger(0);
@@ -182,12 +189,14 @@ public class Realm {
     public static Realm newRealm(GlobalObjectCreator<? extends GlobalObject> creator) {
         Realm realm = new Realm();
         GlobalObject globalThis = creator.createGlobal(realm);
-        GlobalEnvironmentRecord envRec = new GlobalEnvironmentRecord(realm, globalThis);
-        LexicalEnvironment globalEnv = new LexicalEnvironment(realm, envRec);
+        ExecutionContext defaultContext = newScriptExecutionContext(realm);
+        GlobalEnvironmentRecord envRec = new GlobalEnvironmentRecord(defaultContext, globalThis);
+        LexicalEnvironment globalEnv = new LexicalEnvironment(defaultContext, envRec);
 
         //
         realm.globalThis = globalThis;
         realm.globalEnv = globalEnv;
+        realm.defaultContext = defaultContext;
 
         // intrinsics (1)
         ObjectConstructor objectConstructor = new ObjectConstructor(realm);
@@ -400,106 +409,106 @@ public class Realm {
         intrinsics.put(Intrinsics.ListIteratorPrototype, listIteratorPrototype);
 
         // create [[ThrowTypeError]] unique function (needs to be done before init'ing intrinsics)
-        realm.throwTypeError = OrdinaryFunction.createThrowTypeError(realm);
+        realm.throwTypeError = OrdinaryFunction.createThrowTypeError(defaultContext);
 
         // intrinsics (3)
-        objectConstructor.initialise(realm);
-        objectPrototype.initialise(realm);
-        functionConstructor.initialise(realm);
-        functionPrototype.initialise(realm);
-        arrayConstructor.initialise(realm);
-        arrayPrototype.initialise(realm);
-        arrayIteratorPrototype.initialise(realm);
-        stringConstructor.initialise(realm);
-        stringPrototype.initialise(realm);
-        booleanConstructor.initialise(realm);
-        booleanPrototype.initialise(realm);
-        numberConstructor.initialise(realm);
-        numberPrototype.initialise(realm);
-        mathObject.initialise(realm);
-        dateConstructor.initialise(realm);
-        datePrototype.initialise(realm);
-        regExpConstructor.initialise(realm);
-        regExpPrototype.initialise(realm);
-        errorConstructor.initialise(realm);
-        errorPrototype.initialise(realm);
-        jsonObject.initialise(realm);
-        mapConstructor.initialise(realm);
-        mapPrototype.initialise(realm);
-        mapIteratorPrototype.initialise(realm);
-        weakMapConstructor.initialise(realm);
-        weakMapPrototype.initialise(realm);
-        setConstructor.initialise(realm);
-        setPrototype.initialise(realm);
-        setIteratorPrototype.initialise(realm);
-        stopIterationObject.initialise(realm);
+        objectConstructor.initialise(defaultContext);
+        objectPrototype.initialise(defaultContext);
+        functionConstructor.initialise(defaultContext);
+        functionPrototype.initialise(defaultContext);
+        arrayConstructor.initialise(defaultContext);
+        arrayPrototype.initialise(defaultContext);
+        arrayIteratorPrototype.initialise(defaultContext);
+        stringConstructor.initialise(defaultContext);
+        stringPrototype.initialise(defaultContext);
+        booleanConstructor.initialise(defaultContext);
+        booleanPrototype.initialise(defaultContext);
+        numberConstructor.initialise(defaultContext);
+        numberPrototype.initialise(defaultContext);
+        mathObject.initialise(defaultContext);
+        dateConstructor.initialise(defaultContext);
+        datePrototype.initialise(defaultContext);
+        regExpConstructor.initialise(defaultContext);
+        regExpPrototype.initialise(defaultContext);
+        errorConstructor.initialise(defaultContext);
+        errorPrototype.initialise(defaultContext);
+        jsonObject.initialise(defaultContext);
+        mapConstructor.initialise(defaultContext);
+        mapPrototype.initialise(defaultContext);
+        mapIteratorPrototype.initialise(defaultContext);
+        weakMapConstructor.initialise(defaultContext);
+        weakMapPrototype.initialise(defaultContext);
+        setConstructor.initialise(defaultContext);
+        setPrototype.initialise(defaultContext);
+        setIteratorPrototype.initialise(defaultContext);
+        stopIterationObject.initialise(defaultContext);
 
-        generatorFunctionConstructor.initialise(realm);
-        generatorPrototype.initialise(realm);
-        generator.initialise(realm);
-        proxyConstructor.initialise(realm);
+        generatorFunctionConstructor.initialise(defaultContext);
+        generatorPrototype.initialise(defaultContext);
+        generator.initialise(defaultContext);
+        proxyConstructor.initialise(defaultContext);
 
         // native errors
-        evalErrorConstructor.initialise(realm);
-        evalErrorPrototype.initialise(realm);
-        rangeErrorConstructor.initialise(realm);
-        rangeErrorPrototype.initialise(realm);
-        referenceErrorConstructor.initialise(realm);
-        referenceErrorPrototype.initialise(realm);
-        syntaxErrorConstructor.initialise(realm);
-        syntaxErrorPrototype.initialise(realm);
-        typeErrorConstructor.initialise(realm);
-        typeErrorPrototype.initialise(realm);
-        uriErrorConstructor.initialise(realm);
-        uriErrorPrototype.initialise(realm);
-        internalErrorConstructor.initialise(realm);
-        internalErrorPrototype.initialise(realm);
+        evalErrorConstructor.initialise(defaultContext);
+        evalErrorPrototype.initialise(defaultContext);
+        rangeErrorConstructor.initialise(defaultContext);
+        rangeErrorPrototype.initialise(defaultContext);
+        referenceErrorConstructor.initialise(defaultContext);
+        referenceErrorPrototype.initialise(defaultContext);
+        syntaxErrorConstructor.initialise(defaultContext);
+        syntaxErrorPrototype.initialise(defaultContext);
+        typeErrorConstructor.initialise(defaultContext);
+        typeErrorPrototype.initialise(defaultContext);
+        uriErrorConstructor.initialise(defaultContext);
+        uriErrorPrototype.initialise(defaultContext);
+        internalErrorConstructor.initialise(defaultContext);
+        internalErrorPrototype.initialise(defaultContext);
 
         // binary module intrinsics
-        arrayBufferConstructor.initialise(realm);
-        arrayBufferPrototype.initialise(realm);
-        int8ArrayConstructor.initialise(realm);
-        int8ArrayPrototype.initialise(realm);
-        uint8ArrayConstructor.initialise(realm);
-        uint8ArrayPrototype.initialise(realm);
-        uint8CArrayConstructor.initialise(realm);
-        uint8CArrayPrototype.initialise(realm);
-        int16ArrayConstructor.initialise(realm);
-        int16ArrayPrototype.initialise(realm);
-        uint16ArrayConstructor.initialise(realm);
-        uint16ArrayPrototype.initialise(realm);
-        int32ArrayConstructor.initialise(realm);
-        int32ArrayPrototype.initialise(realm);
-        uint32ArrayConstructor.initialise(realm);
-        uint32ArrayPrototype.initialise(realm);
-        float32ArrayConstructor.initialise(realm);
-        float32ArrayPrototype.initialise(realm);
-        float64ArrayConstructor.initialise(realm);
-        float64ArrayPrototype.initialise(realm);
-        dataViewConstructor.initialise(realm);
-        dataViewPrototype.initialise(realm);
+        arrayBufferConstructor.initialise(defaultContext);
+        arrayBufferPrototype.initialise(defaultContext);
+        int8ArrayConstructor.initialise(defaultContext);
+        int8ArrayPrototype.initialise(defaultContext);
+        uint8ArrayConstructor.initialise(defaultContext);
+        uint8ArrayPrototype.initialise(defaultContext);
+        uint8CArrayConstructor.initialise(defaultContext);
+        uint8CArrayPrototype.initialise(defaultContext);
+        int16ArrayConstructor.initialise(defaultContext);
+        int16ArrayPrototype.initialise(defaultContext);
+        uint16ArrayConstructor.initialise(defaultContext);
+        uint16ArrayPrototype.initialise(defaultContext);
+        int32ArrayConstructor.initialise(defaultContext);
+        int32ArrayPrototype.initialise(defaultContext);
+        uint32ArrayConstructor.initialise(defaultContext);
+        uint32ArrayPrototype.initialise(defaultContext);
+        float32ArrayConstructor.initialise(defaultContext);
+        float32ArrayPrototype.initialise(defaultContext);
+        float64ArrayConstructor.initialise(defaultContext);
+        float64ArrayPrototype.initialise(defaultContext);
+        dataViewConstructor.initialise(defaultContext);
+        dataViewPrototype.initialise(defaultContext);
 
         // Internationalization API
-        intlObject.initialise(realm);
-        collatorConstructor.initialise(realm);
-        collatorPrototype.initialise(realm);
-        numberFormatConstructor.initialise(realm);
-        numberFormatPrototype.initialise(realm);
-        dateTimeFormatConstructor.initialise(realm);
-        dateTimeFormatPrototype.initialise(realm);
+        intlObject.initialise(defaultContext);
+        collatorConstructor.initialise(defaultContext);
+        collatorPrototype.initialise(defaultContext);
+        numberFormatConstructor.initialise(defaultContext);
+        numberFormatPrototype.initialise(defaultContext);
+        dateTimeFormatConstructor.initialise(defaultContext);
+        dateTimeFormatPrototype.initialise(defaultContext);
 
         // internal intrinsics
-        listIteratorPrototype.initialise(realm);
+        listIteratorPrototype.initialise(defaultContext);
 
         // intrinsics (4)
-        Object objectPrototypeToString = Get(realm, objectPrototype, "toString");
+        Object objectPrototypeToString = Get(defaultContext, objectPrototype, "toString");
         intrinsics.put(Intrinsics.ObjProto_toString, (ScriptObject) objectPrototypeToString);
 
         // finish initialising global object
-        globalThis.initialise(realm);
+        globalThis.initialise(defaultContext);
 
         // store reference to built-in eval
-        realm.builtinEval = (Callable) Get(realm, globalThis, "eval");
+        realm.builtinEval = (Callable) Get(defaultContext, globalThis, "eval");
 
         return realm;
     }

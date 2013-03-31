@@ -24,7 +24,6 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BinaryExpression.Operator;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
@@ -59,77 +58,77 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
      * 11.3.1 Postfix Increment Operator
      */
-    private static Double postIncrement(Object lhs, Realm realm) {
-        double oldValue = ToNumber(realm, GetValue(lhs, realm));
+    private static Double postIncrement(Object lhs, ExecutionContext cx) {
+        double oldValue = ToNumber(cx, GetValue(lhs, cx));
         double newValue = oldValue + 1;
-        PutValue(lhs, newValue, realm);
+        PutValue(lhs, newValue, cx);
         return oldValue;
     }
 
     /**
      * 11.3.2 Postfix Decrement Operator
      */
-    private static Double postDecrement(Object lhs, Realm realm) {
-        double oldValue = ToNumber(realm, GetValue(lhs, realm));
+    private static Double postDecrement(Object lhs, ExecutionContext cx) {
+        double oldValue = ToNumber(cx, GetValue(lhs, cx));
         double newValue = oldValue - 1;
-        PutValue(lhs, newValue, realm);
+        PutValue(lhs, newValue, cx);
         return oldValue;
     }
 
     /**
      * 11.4.2 The void Operator
      */
-    private static Undefined _void(Object value, Realm realm) {
+    private static Undefined _void(Object value, ExecutionContext cx) {
         return Undefined.UNDEFINED;
     }
 
     /**
      * 11.4.4 Prefix Increment Operator
      */
-    private static Double preIncrement(Object expr, Realm realm) {
-        double oldValue = ToNumber(realm, GetValue(expr, realm));
+    private static Double preIncrement(Object expr, ExecutionContext cx) {
+        double oldValue = ToNumber(cx, GetValue(expr, cx));
         double newValue = oldValue + 1;
-        PutValue(expr, newValue, realm);
+        PutValue(expr, newValue, cx);
         return newValue;
     }
 
     /**
      * 11.4.5 Prefix Decrement Operator
      */
-    private static Double preDecrement(Object expr, Realm realm) {
-        double oldValue = ToNumber(realm, GetValue(expr, realm));
+    private static Double preDecrement(Object expr, ExecutionContext cx) {
+        double oldValue = ToNumber(cx, GetValue(expr, cx));
         double newValue = oldValue - 1;
-        PutValue(expr, newValue, realm);
+        PutValue(expr, newValue, cx);
         return newValue;
     }
 
     /**
      * 11.4.6 Unary + Operator
      */
-    private static Double pos(Object value, Realm realm) {
-        return ToNumber(realm, value);
+    private static Double pos(Object value, ExecutionContext cx) {
+        return ToNumber(cx, value);
     }
 
     /**
      * 11.4.7 Unary - Operator
      */
-    private static Double neg(Object value, Realm realm) {
-        double oldValue = ToNumber(realm, value);
+    private static Double neg(Object value, ExecutionContext cx) {
+        double oldValue = ToNumber(cx, value);
         return -oldValue;
     }
 
     /**
      * 11.4.8 Bitwise NOT Operator ( ~ )
      */
-    private static Integer bitnot(Object value, Realm realm) {
-        int oldValue = ToInt32(realm, value);
+    private static Integer bitnot(Object value, ExecutionContext cx) {
+        int oldValue = ToInt32(cx, value);
         return ~oldValue;
     }
 
     /**
      * 11.4.9 Logical NOT Operator ( ! )
      */
-    private static Boolean not(Object value, Realm realm) {
+    private static Boolean not(Object value, ExecutionContext cx) {
         boolean oldValue = ToBoolean(value);
         return !oldValue;
     }
@@ -137,45 +136,45 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
      * 11.5 Multiplicative Operators
      */
-    private static Double mul(Object leftValue, Object rightValue, Realm realm) {
-        double lnum = ToNumber(realm, leftValue);
-        double rnum = ToNumber(realm, rightValue);
+    private static Double mul(Object leftValue, Object rightValue, ExecutionContext cx) {
+        double lnum = ToNumber(cx, leftValue);
+        double rnum = ToNumber(cx, rightValue);
         return lnum * rnum;
     }
 
     /**
      * 11.5 Multiplicative Operators
      */
-    private static Double div(Object leftValue, Object rightValue, Realm realm) {
-        double lnum = ToNumber(realm, leftValue);
-        double rnum = ToNumber(realm, rightValue);
+    private static Double div(Object leftValue, Object rightValue, ExecutionContext cx) {
+        double lnum = ToNumber(cx, leftValue);
+        double rnum = ToNumber(cx, rightValue);
         return lnum / rnum;
     }
 
     /**
      * 11.5 Multiplicative Operators
      */
-    private static Double mod(Object leftValue, Object rightValue, Realm realm) {
-        double lnum = ToNumber(realm, leftValue);
-        double rnum = ToNumber(realm, rightValue);
+    private static Double mod(Object leftValue, Object rightValue, ExecutionContext cx) {
+        double lnum = ToNumber(cx, leftValue);
+        double rnum = ToNumber(cx, rightValue);
         return lnum % rnum;
     }
 
     /**
      * 11.6.2 The Subtraction Operator ( - )
      */
-    private static Double sub(Object lval, Object rval, Realm realm) {
-        double lnum = ToNumber(realm, lval);
-        double rnum = ToNumber(realm, rval);
+    private static Double sub(Object lval, Object rval, ExecutionContext cx) {
+        double lnum = ToNumber(cx, lval);
+        double rnum = ToNumber(cx, rval);
         return lnum - rnum;
     }
 
     /**
      * 11.7.1 The Left Shift Operator ( << )
      */
-    private static Integer leftShift(Object lval, Object rval, Realm realm) {
-        int lnum = ToInt32(realm, lval);
-        long rnum = ToUint32(realm, rval);
+    private static Integer leftShift(Object lval, Object rval, ExecutionContext cx) {
+        int lnum = ToInt32(cx, lval);
+        long rnum = ToUint32(cx, rval);
         int shiftCount = (int) (rnum & 0x1F);
         return lnum << shiftCount;
     }
@@ -183,9 +182,9 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
      * 11.7.2 The Signed Right Shift Operator ( >> )
      */
-    private static Integer rightShift(Object lval, Object rval, Realm realm) {
-        int lnum = ToInt32(realm, lval);
-        long rnum = ToUint32(realm, rval);
+    private static Integer rightShift(Object lval, Object rval, ExecutionContext cx) {
+        int lnum = ToInt32(cx, lval);
+        long rnum = ToUint32(cx, rval);
         int shiftCount = (int) (rnum & 0x1F);
         return lnum >> shiftCount;
     }
@@ -193,9 +192,9 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
      * 11.7.3 The Unsigned Right Shift Operator ( >>> )
      */
-    private static Long unsignedRightShift(Object lval, Object rval, Realm realm) {
-        long lnum = ToUint32(realm, lval);
-        long rnum = ToUint32(realm, rval);
+    private static Long unsignedRightShift(Object lval, Object rval, ExecutionContext cx) {
+        long lnum = ToUint32(cx, lval);
+        long rnum = ToUint32(cx, rval);
         int shiftCount = (int) (rnum & 0x1F);
         return lnum >>> shiftCount;
     }
@@ -203,94 +202,94 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
      * 11.8 Relational Operators
      */
-    private static Boolean _instanceof(Object lval, Object rval, Realm realm) {
-        return ScriptRuntime.instanceOfOperator(lval, rval, realm);
+    private static Boolean _instanceof(Object lval, Object rval, ExecutionContext cx) {
+        return ScriptRuntime.instanceOfOperator(lval, rval, cx);
     }
 
     /**
      * 11.8 Relational Operators
      */
-    private static Boolean lessThan(Object lval, Object rval, Realm realm) {
-        int c = ScriptRuntime.relationalComparison(lval, rval, true, realm);
+    private static Boolean lessThan(Object lval, Object rval, ExecutionContext cx) {
+        int c = ScriptRuntime.relationalComparison(lval, rval, true, cx);
         return (c == 1);
     }
 
     /**
      * 11.8 Relational Operators
      */
-    private static Boolean lessThanEqual(Object lval, Object rval, Realm realm) {
-        int c = ScriptRuntime.relationalComparison(rval, lval, false, realm);
+    private static Boolean lessThanEqual(Object lval, Object rval, ExecutionContext cx) {
+        int c = ScriptRuntime.relationalComparison(rval, lval, false, cx);
         return (c == 0);
     }
 
     /**
      * 11.8 Relational Operators
      */
-    private static Boolean greaterThan(Object lval, Object rval, Realm realm) {
-        int c = ScriptRuntime.relationalComparison(rval, lval, false, realm);
+    private static Boolean greaterThan(Object lval, Object rval, ExecutionContext cx) {
+        int c = ScriptRuntime.relationalComparison(rval, lval, false, cx);
         return (c == 1);
     }
 
     /**
      * 11.8 Relational Operators
      */
-    private static Boolean greaterThanEqual(Object lval, Object rval, Realm realm) {
-        int c = ScriptRuntime.relationalComparison(lval, rval, true, realm);
+    private static Boolean greaterThanEqual(Object lval, Object rval, ExecutionContext cx) {
+        int c = ScriptRuntime.relationalComparison(lval, rval, true, cx);
         return (c == 0);
     }
 
     /**
      * 11.9 Equality Operators
      */
-    private static Boolean equals(Object lval, Object rval, Realm realm) {
-        return ScriptRuntime.equalityComparison(rval, lval, realm);
+    private static Boolean equals(Object lval, Object rval, ExecutionContext cx) {
+        return ScriptRuntime.equalityComparison(rval, lval, cx);
     }
 
     /**
      * 11.9 Equality Operators
      */
-    private static Boolean notEquals(Object lval, Object rval, Realm realm) {
-        return !ScriptRuntime.equalityComparison(rval, lval, realm);
+    private static Boolean notEquals(Object lval, Object rval, ExecutionContext cx) {
+        return !ScriptRuntime.equalityComparison(rval, lval, cx);
     }
 
     /**
      * 11.9 Equality Operators
      */
-    private static Boolean strictEquals(Object lval, Object rval, Realm realm) {
+    private static Boolean strictEquals(Object lval, Object rval, ExecutionContext cx) {
         return ScriptRuntime.strictEqualityComparison(rval, lval);
     }
 
     /**
      * 11.9 Equality Operators
      */
-    private static Boolean strictNotEquals(Object lval, Object rval, Realm realm) {
+    private static Boolean strictNotEquals(Object lval, Object rval, ExecutionContext cx) {
         return !ScriptRuntime.strictEqualityComparison(rval, lval);
     }
 
     /**
      * 11.10 Binary Bitwise Operators
      */
-    private static Integer bitand(Object lval, Object rval, Realm realm) {
-        int lnum = ToInt32(realm, lval);
-        int rnum = ToInt32(realm, rval);
+    private static Integer bitand(Object lval, Object rval, ExecutionContext cx) {
+        int lnum = ToInt32(cx, lval);
+        int rnum = ToInt32(cx, rval);
         return lnum & rnum;
     }
 
     /**
      * 11.10 Binary Bitwise Operators
      */
-    private static Integer bitxor(Object lval, Object rval, Realm realm) {
-        int lnum = ToInt32(realm, lval);
-        int rnum = ToInt32(realm, rval);
+    private static Integer bitxor(Object lval, Object rval, ExecutionContext cx) {
+        int lnum = ToInt32(cx, lval);
+        int rnum = ToInt32(cx, rval);
         return lnum ^ rnum;
     }
 
     /**
      * 11.10 Binary Bitwise Operators
      */
-    private static Integer bitor(Object lval, Object rval, Realm realm) {
-        int lnum = ToInt32(realm, lval);
-        int rnum = ToInt32(realm, rval);
+    private static Integer bitor(Object lval, Object rval, ExecutionContext cx) {
+        int lnum = ToInt32(cx, lval);
+        int rnum = ToInt32(cx, rval);
         return lnum | rnum;
     }
 
@@ -323,79 +322,76 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
     @Override
     public Object visit(VariableDeclaration node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         BindingIdentifier binding = (BindingIdentifier) node.getBinding();
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
             Object val = initialiser.accept(this, cx);
-            val = GetValue(val, realm);
-            cx.identifierResolution(binding.getName(), strict).PutValue(val, realm);
+            val = GetValue(val, cx);
+            cx.identifierResolution(binding.getName(), strict).PutValue(val, cx);
         }
         return null;
     }
 
     @Override
     public Object visit(ExpressionStatement node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         Object value = node.getExpression().accept(this, cx);
-        value = GetValue(value, realm);
+        value = GetValue(value, cx);
         return value;
     }
 
     @Override
     public Object visit(AssignmentExpression node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         if (node.getOperator() == AssignmentExpression.Operator.ASSIGN) {
             Object lref = node.getLeft().accept(this, cx);
             Object rval = node.getRight().accept(this, cx);
-            rval = GetValue(rval, realm);
-            PutValue(lref, rval, realm);
+            rval = GetValue(rval, cx);
+            PutValue(lref, rval, cx);
             return rval;
         } else {
             Object lref = node.getLeft().accept(this, cx);
-            Object lval = GetValue(lref, realm);
+            Object lval = GetValue(lref, cx);
             Object rval = node.getRight().accept(this, cx);
-            rval = GetValue(rval, realm);
+            rval = GetValue(rval, cx);
 
             switch (node.getOperator()) {
             case ASSIGN_ADD:
-                rval = ScriptRuntime.add(lval, rval, realm);
+                rval = ScriptRuntime.add(lval, rval, cx);
                 break;
             case ASSIGN_BITAND:
-                rval = bitand(lval, rval, realm);
+                rval = bitand(lval, rval, cx);
                 break;
             case ASSIGN_BITOR:
-                rval = bitor(lval, rval, realm);
+                rval = bitor(lval, rval, cx);
                 break;
             case ASSIGN_BITXOR:
-                rval = bitxor(lval, rval, realm);
+                rval = bitxor(lval, rval, cx);
                 break;
             case ASSIGN_DIV:
-                rval = div(lval, rval, realm);
+                rval = div(lval, rval, cx);
                 break;
             case ASSIGN_MOD:
-                rval = mod(lval, rval, realm);
+                rval = mod(lval, rval, cx);
                 break;
             case ASSIGN_MUL:
-                rval = mul(lval, rval, realm);
+                rval = mul(lval, rval, cx);
                 break;
             case ASSIGN_SHL:
-                rval = leftShift(lval, rval, realm);
+                rval = leftShift(lval, rval, cx);
                 break;
             case ASSIGN_SHR:
-                rval = rightShift(lval, rval, realm);
+                rval = rightShift(lval, rval, cx);
                 break;
             case ASSIGN_SUB:
-                rval = sub(lval, rval, realm);
+                rval = sub(lval, rval, cx);
                 break;
             case ASSIGN_USHR:
-                rval = unsignedRightShift(lval, rval, realm);
+                rval = unsignedRightShift(lval, rval, cx);
                 break;
             case ASSIGN:
             default:
                 throw new IllegalStateException();
             }
-            PutValue(lref, rval, realm);
+            PutValue(lref, rval, cx);
             return rval;
         }
     }
@@ -408,57 +404,56 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
 
         // evaluate lhs/rhs and call GetValue()
-        Realm realm = cx.getRealm();
         /* step 1-6 */
         Object lval = node.getLeft().accept(this, cx);
-        lval = GetValue(lval, realm);
+        lval = GetValue(lval, cx);
         Object rval = node.getRight().accept(this, cx);
-        rval = GetValue(rval, realm);
+        rval = GetValue(rval, cx);
 
         // call binary operator specific code
         switch (node.getOperator()) {
         case ADD:
-            return ScriptRuntime.add(lval, rval, realm);
+            return ScriptRuntime.add(lval, rval, cx);
         case BITAND:
-            return bitand(lval, rval, realm);
+            return bitand(lval, rval, cx);
         case BITOR:
-            return bitor(lval, rval, realm);
+            return bitor(lval, rval, cx);
         case BITXOR:
-            return bitxor(lval, rval, realm);
+            return bitxor(lval, rval, cx);
         case DIV:
-            return div(lval, rval, realm);
+            return div(lval, rval, cx);
         case EQ:
-            return equals(lval, rval, realm);
+            return equals(lval, rval, cx);
         case GE:
-            return greaterThanEqual(lval, rval, realm);
+            return greaterThanEqual(lval, rval, cx);
         case GT:
-            return greaterThan(lval, rval, realm);
+            return greaterThan(lval, rval, cx);
         case IN:
-            return ScriptRuntime.in(lval, rval, realm);
+            return ScriptRuntime.in(lval, rval, cx);
         case INSTANCEOF:
-            return _instanceof(lval, rval, realm);
+            return _instanceof(lval, rval, cx);
         case LE:
-            return lessThanEqual(lval, rval, realm);
+            return lessThanEqual(lval, rval, cx);
         case LT:
-            return lessThan(lval, rval, realm);
+            return lessThan(lval, rval, cx);
         case MOD:
-            return mod(lval, rval, realm);
+            return mod(lval, rval, cx);
         case MUL:
-            return mul(lval, rval, realm);
+            return mul(lval, rval, cx);
         case NE:
-            return notEquals(lval, rval, realm);
+            return notEquals(lval, rval, cx);
         case SHEQ:
-            return strictEquals(lval, rval, realm);
+            return strictEquals(lval, rval, cx);
         case SHL:
-            return leftShift(lval, rval, realm);
+            return leftShift(lval, rval, cx);
         case SHNE:
-            return strictNotEquals(lval, rval, realm);
+            return strictNotEquals(lval, rval, cx);
         case SHR:
-            return rightShift(lval, rval, realm);
+            return rightShift(lval, rval, cx);
         case SUB:
-            return sub(lval, rval, realm);
+            return sub(lval, rval, cx);
         case USHR:
-            return unsignedRightShift(lval, rval, realm);
+            return unsignedRightShift(lval, rval, cx);
         case AND:
         case OR:
         default:
@@ -467,45 +462,43 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     private Object visitAndOr(BinaryExpression node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         Object lval = node.getLeft().accept(this, cx);
-        lval = GetValue(lval, realm);
+        lval = GetValue(lval, cx);
         if (ToBoolean(lval) ^ node.getOperator() == Operator.AND) {
             return lval;
         } else {
             Object rval = node.getRight().accept(this, cx);
-            rval = GetValue(rval, realm);
+            rval = GetValue(rval, cx);
             return rval;
         }
     }
 
     @Override
     public Object visit(UnaryExpression node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         Object val = node.getOperand().accept(this, cx);
         switch (node.getOperator()) {
         case BITNOT:
-            return bitnot(GetValue(val, realm), realm);
+            return bitnot(GetValue(val, cx), cx);
         case DELETE:
-            return ScriptRuntime.delete(val, realm);
+            return ScriptRuntime.delete(val, cx);
         case NEG:
-            return neg(GetValue(val, realm), realm);
+            return neg(GetValue(val, cx), cx);
         case NOT:
-            return not(GetValue(val, realm), realm);
+            return not(GetValue(val, cx), cx);
         case POS:
-            return pos(GetValue(val, realm), realm);
+            return pos(GetValue(val, cx), cx);
         case POST_DEC:
-            return postDecrement(val, realm);
+            return postDecrement(val, cx);
         case POST_INC:
-            return postIncrement(val, realm);
+            return postIncrement(val, cx);
         case PRE_DEC:
-            return preDecrement(val, realm);
+            return preDecrement(val, cx);
         case PRE_INC:
-            return preIncrement(val, realm);
+            return preIncrement(val, cx);
         case TYPEOF:
-            return ScriptRuntime.typeof(val, realm);
+            return ScriptRuntime.typeof(val, cx);
         case VOID:
-            return _void(GetValue(val, realm), realm);
+            return _void(GetValue(val, cx), cx);
         default:
             throw new IllegalStateException();
         }
@@ -514,26 +507,24 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     @Override
     public Object visit(CommaExpression node, ExecutionContext cx) {
         assert !node.getOperands().isEmpty();
-        Realm realm = cx.getRealm();
         Object val = null;
         for (Expression expression : node.getOperands()) {
-            val = GetValue(expression.accept(this, cx), realm);
+            val = GetValue(expression.accept(this, cx), cx);
         }
         return val;
     }
 
     @Override
     public Object visit(ConditionalExpression node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         Object test = node.getTest().accept(this, cx);
-        test = GetValue(test, realm);
+        test = GetValue(test, cx);
         Object val;
         if (ToBoolean(test)) {
             val = node.getThen().accept(this, cx);
         } else {
             val = node.getOtherwise().accept(this, cx);
         }
-        return GetValue(val, realm);
+        return GetValue(val, cx);
     }
 
     @Override
@@ -558,28 +549,27 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
     @Override
     public Object visit(RegularExpressionLiteral node, ExecutionContext cx) {
-        return ScriptRuntime.RegExp(cx.getRealm(), node.getRegexp(), node.getFlags());
+        return ScriptRuntime.RegExp(cx, node.getRegexp(), node.getFlags());
     }
 
     @Override
     public Object visit(CallExpression node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         Object ref = node.getBase().accept(this, cx);
-        Object func = GetValue(ref, realm);
+        Object func = GetValue(ref, cx);
         List<Expression> arguments = node.getArguments();
         int size = arguments.size();
         Object[] args = new Object[size];
         for (int i = 0; i < size; ++i) {
             Object arg = arguments.get(i).accept(this, cx);
-            args[i] = GetValue(arg, realm);
+            args[i] = GetValue(arg, cx);
         }
-        Callable f = CheckCallable(func, realm);
-        if (directEval(node) && IsBuiltinEval(ref, f, realm)) {
+        Callable f = CheckCallable(func, cx);
+        if (directEval(node) && IsBuiltinEval(ref, f, cx)) {
             Object x = args.length > 0 ? args[0] : Undefined.UNDEFINED;
             return Eval.directEval(x, cx, strict, globalCode);
         }
-        Object thisValue = GetCallThisValue(ref, realm);
-        Object result = f.call(thisValue, args);
+        Object thisValue = GetCallThisValue(ref, cx);
+        Object result = f.call(cx, thisValue, args);
         return result;
     }
 
@@ -593,35 +583,32 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
     @Override
     public Object visit(NewExpression node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         Object constructor = node.getExpression().accept(this, cx);
-        constructor = GetValue(constructor, realm);
+        constructor = GetValue(constructor, cx);
         List<Expression> arguments = node.getArguments();
         int size = arguments.size();
         Object[] args = new Object[size];
         for (int i = 0; i < size; ++i) {
             Object arg = arguments.get(i).accept(this, cx);
-            args[i] = GetValue(arg, realm);
+            args[i] = GetValue(arg, cx);
         }
-        return ScriptRuntime.EvaluateConstructorCall(constructor, args, realm);
+        return ScriptRuntime.EvaluateConstructorCall(constructor, args, cx);
     }
 
     @Override
     public Object visit(ElementAccessor node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         Object base = node.getBase().accept(this, cx);
-        base = GetValue(base, realm);
+        base = GetValue(base, cx);
         Object element = node.getElement().accept(this, cx);
-        element = GetValue(element, realm);
-        return ScriptRuntime.getElement(base, element, realm, strict);
+        element = GetValue(element, cx);
+        return ScriptRuntime.getElement(base, element, cx, strict);
     }
 
     @Override
     public Object visit(PropertyAccessor node, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
         Object base = node.getBase().accept(this, cx);
-        base = GetValue(base, realm);
-        return ScriptRuntime.getProperty(base, node.getName(), realm, strict);
+        base = GetValue(base, cx);
+        return ScriptRuntime.getProperty(base, node.getName(), cx, strict);
     }
 
     @Override
@@ -647,16 +634,16 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
 
         @Override
-        public void globalDeclarationInstantiation(Realm realm, LexicalEnvironment globalEnv,
-                boolean deletableBindings) {
-            DeclarationBindingInstantiation.GlobalDeclarationInstantiation(realm, globalEnv,
+        public void globalDeclarationInstantiation(ExecutionContext cx,
+                LexicalEnvironment globalEnv, boolean deletableBindings) {
+            DeclarationBindingInstantiation.GlobalDeclarationInstantiation(cx, globalEnv,
                     parsedScript, deletableBindings);
         }
 
         @Override
-        public void evalDeclarationInstantiation(Realm realm, LexicalEnvironment lexEnv,
+        public void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment lexEnv,
                 LexicalEnvironment varEnv, boolean deletableBindings) {
-            DeclarationBindingInstantiation.EvalDeclarationInstantiation(realm, lexEnv, varEnv,
+            DeclarationBindingInstantiation.EvalDeclarationInstantiation(cx, lexEnv, varEnv,
                     parsedScript, deletableBindings);
         }
 

@@ -20,6 +20,7 @@ import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.Locale;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -58,22 +59,22 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 10.1.1.1 InitializeCollator (collator, locales, options)
      */
-    public static void InitializeCollator(Realm realm, ScriptObject obj, Object locales,
+    public static void InitializeCollator(ExecutionContext cx, ScriptObject obj, Object locales,
             Object options) {
         if (!(obj instanceof CollatorObject)) {
-            throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         CollatorObject collator = (CollatorObject) obj;
         if (collator.isInitialized()) {
-            throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         collator.setInitialized(true);
 
@@ -83,17 +84,17 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
      * 10.1.2.1 Intl.Collator.call (this [, locales [, options]])
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
-        if (Type.isUndefined(thisValue) || thisValue == realm().getIntrinsic(Intrinsics.Intl)) {
-            return construct(args);
+        if (Type.isUndefined(thisValue) || thisValue == callerContext.getIntrinsic(Intrinsics.Intl)) {
+            return construct(callerContext, args);
         }
-        ScriptObject obj = ToObject(realm(), thisValue);
-        if (!IsExtensible(realm(), obj)) {
-            throwTypeError(realm(), Messages.Key.NotExtensible);
+        ScriptObject obj = ToObject(callerContext, thisValue);
+        if (!IsExtensible(callerContext, obj)) {
+            throwTypeError(callerContext, Messages.Key.NotExtensible);
         }
-        InitializeCollator(realm(), obj, locales, options);
+        InitializeCollator(callerContext, obj, locales, options);
         return obj;
     }
 
@@ -101,12 +102,13 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
      * 10.1.3.1 new Intl.Collator ([locales [, options]])
      */
     @Override
-    public Object construct(Object... args) {
+    public Object construct(ExecutionContext callerContext, Object... args) {
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
-        CollatorObject obj = new CollatorObject(realm());
-        obj.setPrototype(realm(), realm().getIntrinsic(Intrinsics.Intl_CollatorPrototype));
-        InitializeCollator(realm(), obj, locales, options);
+        CollatorObject obj = new CollatorObject(callerContext.getRealm());
+        obj.setPrototype(callerContext,
+                callerContext.getIntrinsic(Intrinsics.Intl_CollatorPrototype));
+        InitializeCollator(callerContext, obj, locales, options);
         return obj;
     }
 
@@ -138,9 +140,9 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
          * 10.2.2 Intl.Collator.supportedLocalesOf (locales [, options])
          */
         @Function(name = "supportedLocalesOf", arity = 1)
-        public static Object supportedLocalesOf(Realm realm, Object thisValue, Object locales,
-                Object options) {
-            return CreateArrayFromList(realm, emptyList());
+        public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
+                Object locales, Object options) {
+            return CreateArrayFromList(cx, emptyList());
         }
 
         /**
@@ -151,9 +153,9 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue,
-                    Intrinsics.Intl_CollatorPrototype, CollatorObjectAllocator.INSTANCE);
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.Intl_CollatorPrototype,
+                    CollatorObjectAllocator.INSTANCE);
         }
     }
 

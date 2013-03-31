@@ -37,28 +37,29 @@ public class OrdinaryGenerator extends FunctionObject {
          * 8.3.15.2 [[Construct]] Internal Method
          */
         @Override
-        public Object construct(Object... args) {
-            return OrdinaryConstruct(realm, this, args);
+        public Object construct(ExecutionContext callerContext, Object... args) {
+            return OrdinaryConstruct(callerContext, this, args);
         }
     }
 
     /**
      * 
      */
-    public static OrdinaryGenerator GeneratorCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryGenerator GeneratorCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
-        return GeneratorCreate(realm, kind, function, scope, null, null, null);
+        return GeneratorCreate(cx, kind, function, scope, null, null, null);
     }
 
     /**
      * 
      */
-    public static OrdinaryGenerator GeneratorCreate(Realm realm, FunctionKind kind,
+    public static OrdinaryGenerator GeneratorCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
             ScriptObject homeObject, String methodName) {
         assert function.isGenerator();
         assert kind != FunctionKind.Arrow && kind != FunctionKind.ConstructorMethod;
 
+        Realm realm = cx.getRealm();
         boolean strict = function.isStrict();
         /* step 1 */
         OrdinaryGenerator f;
@@ -73,7 +74,7 @@ public class OrdinaryGenerator extends FunctionObject {
             prototype = realm.getIntrinsic(Intrinsics.Generator);
         }
         /* step 6 */
-        f.setPrototype(realm, prototype);
+        f.setPrototype(cx, prototype);
         /* step 7 */
         f.scope = scope;
         /* step 8-9 */
@@ -98,12 +99,12 @@ public class OrdinaryGenerator extends FunctionObject {
         /*  step 18 */
         int len = function.expectedArgumentCount();
         /* step 19 */
-        f.defineOwnProperty(realm, "length", new PropertyDescriptor(len, false, false, false));
+        f.defineOwnProperty(cx, "length", new PropertyDescriptor(len, false, false, false));
         String name = function.functionName() != null ? function.functionName() : "";
-        f.defineOwnProperty(realm, "name", new PropertyDescriptor(name, false, false, false));
+        f.defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
         /* step 20 */
         if (strict) {
-            AddRestrictedFunctionProperties(realm, f);
+            AddRestrictedFunctionProperties(cx, f);
         }
         /* step 21 */
         return f;
@@ -112,34 +113,34 @@ public class OrdinaryGenerator extends FunctionObject {
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    public static void MakeConstructor(Realm realm, OrdinaryGenerator f) {
+    public static void MakeConstructor(ExecutionContext cx, OrdinaryGenerator f) {
         /*  step 2 */
-        ScriptObject prototype = ObjectCreate(realm, Intrinsics.GeneratorPrototype);
+        ScriptObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /*  step 3 */
         boolean writablePrototype = true;
-        MakeConstructor(realm, f, writablePrototype, prototype);
+        MakeConstructor(cx, f, writablePrototype, prototype);
     }
 
     /**
      * [13.6 Creating Function Objects and Constructors] MakeConstructor
      */
-    public static void MakeConstructor(Realm realm, OrdinaryGenerator f, boolean writablePrototype,
-            ScriptObject prototype) {
+    public static void MakeConstructor(ExecutionContext cx, OrdinaryGenerator f,
+            boolean writablePrototype, ScriptObject prototype) {
         assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
         // not "constructor" property on `prototype`
-        f.defineOwnProperty(realm, "prototype", new PropertyDescriptor(prototype,
-                writablePrototype, false, false));
+        f.defineOwnProperty(cx, "prototype", new PropertyDescriptor(prototype, writablePrototype,
+                false, false));
     }
 
     /**
      * 
      */
-    public static OrdinaryGenerator InstantiateGeneratorObject(Realm realm,
+    public static OrdinaryGenerator InstantiateGeneratorObject(ExecutionContext cx,
             LexicalEnvironment scope, RuntimeInfo.Function fd) {
         /* step 1-2 */
-        OrdinaryGenerator f = GeneratorCreate(realm, FunctionKind.Normal, fd, scope);
+        OrdinaryGenerator f = GeneratorCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 3 */
-        MakeConstructor(realm, f);
+        MakeConstructor(cx, f);
         /* step 4 */
         return f;
     }
@@ -148,7 +149,7 @@ public class OrdinaryGenerator extends FunctionObject {
      * 8.3.19.1 [[Call]] Internal Method
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         /* step 1-11 */
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
                 thisValue);
@@ -156,8 +157,9 @@ public class OrdinaryGenerator extends FunctionObject {
         getFunction().functionDeclarationInstantiation(calleeContext, this, args);
         /* step 14-15 */
         GeneratorObject result = new GeneratorObject(getRealm(), getCode(), calleeContext);
-        ScriptObject proto = GetPrototypeFromConstructor(realm, this, Intrinsics.GeneratorPrototype);
-        result.setPrototype(realm, proto);
+        ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
+                Intrinsics.GeneratorPrototype);
+        result.setPrototype(calleeContext, proto);
         /* step 16 */
         return result;
     }

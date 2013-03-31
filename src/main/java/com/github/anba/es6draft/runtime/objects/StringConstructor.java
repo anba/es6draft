@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.Strin
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -44,24 +45,24 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.5.1.1 String ( [ value ] )
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         // FIXME: spec bug (`ToString(undefined)` no longer returns "undefined")
-        CharSequence s = (args.length > 0 ? ToString(realm(), args[0]) : "");
+        CharSequence s = (args.length > 0 ? ToString(callerContext, args[0]) : "");
         if (thisValue instanceof ExoticString) {
             ExoticString obj = (ExoticString) thisValue;
             if (obj.getStringData() == null) {
                 int length = s.length();
-                DefinePropertyOrThrow(realm(), obj, "length", new PropertyDescriptor(length, false,
-                        false, false));
+                DefinePropertyOrThrow(callerContext, obj, "length", new PropertyDescriptor(length,
+                        false, false, false));
                 obj.setStringData(s);
                 return obj;
             }
@@ -73,8 +74,8 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
      * 15.5.2.1 new String ( [ value ] )
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -105,12 +106,13 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
          * 15.5.3.2 String.fromCharCode ( ...codeUnits)
          */
         @Function(name = "fromCharCode", arity = 1)
-        public static Object fromCharCode(Realm realm, Object thisValue, Object... codeUnits) {
+        public static Object fromCharCode(ExecutionContext cx, Object thisValue,
+                Object... codeUnits) {
             int length = codeUnits.length;
             char elements[] = new char[length];
             for (int nextIndex = 0; nextIndex < length; ++nextIndex) {
                 Object next = codeUnits[nextIndex];
-                char nextCU = ToUint16(realm, next);
+                char nextCU = ToUint16(cx, next);
                 elements[nextIndex] = nextCU;
             }
             return new String(elements);
@@ -120,17 +122,18 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
          * 15.5.3.3 String.fromCodePoint ( ...codePoints)
          */
         @Function(name = "fromCodePoint", arity = 0)
-        public static Object fromCodePoint(Realm realm, Object thisValue, Object... codePoints) {
+        public static Object fromCodePoint(ExecutionContext cx, Object thisValue,
+                Object... codePoints) {
             int length = codePoints.length;
             int elements[] = new int[length];
             for (int nextIndex = 0; nextIndex < length; ++nextIndex) {
                 Object next = codePoints[nextIndex];
-                double nextCP = ToNumber(realm, next);
-                if (!SameValue(nextCP, ToInteger(realm, nextCP))) {
-                    throw throwRangeError(realm, Messages.Key.InvalidCodePoint);
+                double nextCP = ToNumber(cx, next);
+                if (!SameValue(nextCP, ToInteger(cx, nextCP))) {
+                    throw throwRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
                 if (nextCP < 0 || nextCP > 0x10FFFF) {
-                    throw throwRangeError(realm, Messages.Key.InvalidCodePoint);
+                    throw throwRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
                 elements[nextIndex] = (int) nextCP;
             }
@@ -141,13 +144,13 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
          * 15.5.3.4 String.raw ( callSite, ...substitutions)
          */
         @Function(name = "raw", arity = 1)
-        public static Object raw(Realm realm, Object thisValue, Object callSite,
+        public static Object raw(ExecutionContext cx, Object thisValue, Object callSite,
                 Object... substitutions) {
-            ScriptObject cooked = ToObject(realm, callSite);
-            Object rawValue = Get(realm, cooked, "raw");
-            ScriptObject raw = ToObject(realm, rawValue);
-            Object len = Get(realm, raw, "length");
-            long literalSegments = ToUint32(realm, len); // FIXME: spec bug (bug 492)
+            ScriptObject cooked = ToObject(cx, callSite);
+            Object rawValue = Get(cx, cooked, "raw");
+            ScriptObject raw = ToObject(cx, rawValue);
+            Object len = Get(cx, raw, "length");
+            long literalSegments = ToUint32(cx, len); // FIXME: spec bug (bug 492)
             if (literalSegments == 0) {
                 return "";
             }
@@ -155,14 +158,14 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
             StringBuilder stringElements = new StringBuilder();
             for (long nextIndex = 0;; ++nextIndex) {
                 String nextKey = ToString(nextIndex);
-                Object next = Get(realm, raw, nextKey);
-                CharSequence nextSeg = ToString(realm, next);
+                Object next = Get(cx, raw, nextKey);
+                CharSequence nextSeg = ToString(cx, next);
                 stringElements.append(nextSeg);
                 if (nextIndex + 1 == literalSegments) {
                     return stringElements.toString();
                 }
                 next = (nextIndex < substlength ? substitutions[(int) nextIndex] : UNDEFINED);
-                CharSequence nextSub = ToString(realm, next);
+                CharSequence nextSub = ToString(cx, next);
                 stringElements.append(nextSub);
             }
         }
@@ -175,10 +178,10 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            ScriptObject proto = GetPrototypeFromConstructor(realm, thisValue,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
                     Intrinsics.StringPrototype);
-            return StringCreate(realm, proto);
+            return StringCreate(cx, proto);
         }
     }
 }

@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayC
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
@@ -43,8 +44,8 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     public enum SetIterationKind {
@@ -85,9 +86,10 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
     /**
      * 15.16.7.1 CreateSetIterator Abstract Operation
      */
-    public static OrdinaryObject CreateSetIterator(Realm realm, SetObject set, SetIterationKind kind) {
+    public static OrdinaryObject CreateSetIterator(ExecutionContext cx, SetObject set,
+            SetIterationKind kind) {
         LinkedMap<Object, Void> entries = set.getSetData();
-        SetIterator itr = ObjectCreate(realm, Intrinsics.SetIteratorPrototype,
+        SetIterator itr = ObjectCreate(cx, Intrinsics.SetIteratorPrototype,
                 SetIteratorAllocator.INSTANCE);
         itr.set = set;
         itr.nextIndex = 0;
@@ -115,12 +117,12 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
          * 15.16.7.2.2 SetIterator.prototype.next( )
          */
         @Function(name = "next", arity = 0)
-        public static Object next(Realm realm, Object thisValue) {
+        public static Object next(ExecutionContext cx, Object thisValue) {
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             if (!(thisValue instanceof SetIterator)) {
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             SetIterator o = (SetIterator) thisValue;
             // ScriptObject m = o.set;
@@ -131,21 +133,21 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
                 Entry<Object, Void> e = itr.next();
                 assert e != null;
                 if (itemKind == SetIterationKind.KeyValue) {
-                    ExoticArray result = ArrayCreate(realm, 2);
-                    CreateOwnDataProperty(realm, result, "0", e.getKey());
-                    CreateOwnDataProperty(realm, result, "1", e.getKey());
+                    ExoticArray result = ArrayCreate(cx, 2);
+                    CreateOwnDataProperty(cx, result, "0", e.getKey());
+                    CreateOwnDataProperty(cx, result, "1", e.getKey());
                     return result;
                 }
                 return e.getKey();
             }
-            return _throw(realm.getIntrinsic(Intrinsics.StopIteration));
+            return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
         }
 
         /**
          * 15.16.7.2.3 SetIterator.prototype.@@iterator()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
-        public static Object iterator(Realm realm, Object thisValue) {
+        public static Object iterator(ExecutionContext cx, Object thisValue) {
             return thisValue;
         }
 

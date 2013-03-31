@@ -23,6 +23,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -82,7 +83,7 @@ public class MozTestGlobalObject extends GlobalObject {
 
     private static ScriptException throwError(Realm realm, String message) {
         Object error = EvaluateConstructorCall(realm.getIntrinsic(Intrinsics.Error),
-                new Object[] { message }, realm);
+                new Object[] { message }, realm.defaultContext());
         return _throw(error);
     }
 
@@ -142,11 +143,12 @@ public class MozTestGlobalObject extends GlobalObject {
     @Function(name = "assertEq", arity = 2)
     public void assertEq(Object actual, Object expected, Object message) {
         if (!SameValue(actual, expected)) {
+            ExecutionContext cx = realm.defaultContext();
             StringBuilder msg = new StringBuilder();
-            msg.append(String.format("Assertion failed: got %s, expected %s",
-                    ToSource(realm, actual), ToSource(realm, expected)));
+            msg.append(String.format("Assertion failed: got %s, expected %s", ToSource(cx, actual),
+                    ToSource(cx, expected)));
             if (!Type.isUndefined(message)) {
-                msg.append(": ").append(ToFlatString(realm, message));
+                msg.append(": ").append(ToFlatString(cx, message));
             }
             throwError(realm, msg.toString());
         }

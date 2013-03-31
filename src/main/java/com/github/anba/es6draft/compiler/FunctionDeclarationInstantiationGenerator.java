@@ -28,7 +28,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -45,9 +44,6 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
 
     private static class Methods {
         // class: ExecutionContext
-        static final MethodDesc ExecutionContext_getRealm = MethodDesc.create(MethodType.Virtual,
-                Types.ExecutionContext, "getRealm", Type.getMethodType(Types.Realm));
-
         static final MethodDesc ExecutionContext_getVariableEnvironment = MethodDesc.create(
                 MethodType.Virtual, Types.ExecutionContext, "getVariableEnvironment",
                 Type.getMethodType(Types.LexicalEnvironment));
@@ -55,16 +51,17 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         // class: ExoticArguments
         static final MethodDesc ExoticArguments_InstantiateArgumentsObject = MethodDesc.create(
                 MethodType.Static, Types.ExoticArguments, "InstantiateArgumentsObject",
-                Type.getMethodType(Types.ExoticArguments, Types.Realm, Types.Object_));
+                Type.getMethodType(Types.ExoticArguments, Types.ExecutionContext, Types.Object_));
 
         static final MethodDesc ExoticArguments_CompleteStrictArgumentsObject = MethodDesc.create(
                 MethodType.Static, Types.ExoticArguments, "CompleteStrictArgumentsObject",
-                Type.getMethodType(Type.VOID_TYPE, Types.Realm, Types.ExoticArguments));
+                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext, Types.ExoticArguments));
 
         static final MethodDesc ExoticArguments_CompleteMappedArgumentsObject = MethodDesc.create(
                 MethodType.Static, Types.ExoticArguments, "CompleteMappedArgumentsObject", Type
-                        .getMethodType(Type.VOID_TYPE, Types.Realm, Types.ExoticArguments,
-                                Types.FunctionObject, Types.String_, Types.LexicalEnvironment));
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                                Types.ExoticArguments, Types.FunctionObject, Types.String_,
+                                Types.LexicalEnvironment));
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
@@ -81,31 +78,9 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
                     methodName, methodDescriptor, strict, false, false);
         }
-
-        @Override
-        public void begin() {
-            super.begin();
-            load(Register.ExecutionContext);
-            invoke(Methods.ExecutionContext_getRealm);
-            store(Register.Realm);
-        }
-
-        @Override
-        protected int var(Register reg) {
-            switch (reg) {
-            case ExecutionContext:
-                return 0;
-                // 1 = Function
-                // 2 = Object[]
-            case Realm:
-                return 3;
-            default:
-                assert false : reg;
-                return -1;
-            }
-        }
     }
 
+    private static final int EXECUTION_CONTEXT = 0;
     private static final int FUNCTION = 1;
     private static final int ARGUMENTS = 2;
 
@@ -127,10 +102,10 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     }
 
     private void generate(FunctionNode func, ExpressionVisitor mv) {
-        int realm = mv.var(Register.Realm);
+        int context = EXECUTION_CONTEXT;
 
         int env = mv.newVariable(Types.LexicalEnvironment);
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getVariableEnvironment);
         mv.store(env, Types.LexicalEnvironment);
 
@@ -227,9 +202,9 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             String fn = BoundName(f);
             // stack: [] -> [fo]
             if (f instanceof GeneratorDeclaration) {
-                InstantiateGeneratorObject(realm, env, (GeneratorDeclaration) f, mv);
+                InstantiateGeneratorObject(context, env, (GeneratorDeclaration) f, mv);
             } else {
-                InstantiateFunctionObject(realm, env, (FunctionDeclaration) f, mv);
+                InstantiateFunctionObject(context, env, (FunctionDeclaration) f, mv);
             }
             // stack: [fo] -> []
             // setMutableBinding(envRec, fn, false, mv);
@@ -258,7 +233,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     }
 
     private void InstantiateArgumentsObject(ExpressionVisitor mv) {
-        mv.load(Register.Realm);
+        mv.loadExecutionContext();
         mv.load(ARGUMENTS, Types.Object_);
         mv.invoke(Methods.ExoticArguments_InstantiateArgumentsObject);
     }
@@ -272,7 +247,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     private void CompleteStrictArgumentsObject(ExpressionVisitor mv) {
         // stack: [ao] -> [ao]
         mv.dup();
-        mv.load(Register.Realm);
+        mv.loadExecutionContext();
         mv.swap();
         mv.invoke(Methods.ExoticArguments_CompleteStrictArgumentsObject);
     }
@@ -281,7 +256,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             ExpressionVisitor mv) {
         // stack: [ao] -> [ao]
         mv.dup();
-        mv.load(Register.Realm);
+        mv.loadExecutionContext();
         mv.swap();
         mv.load(FUNCTION, Types.FunctionObject);
         astore_string(mv, mappedNames(formals));

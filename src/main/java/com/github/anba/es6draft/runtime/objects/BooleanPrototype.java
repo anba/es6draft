@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -32,8 +33,8 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -45,7 +46,7 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
         /**
          * Abstract operation thisBooleanValue(value)
          */
-        private static boolean thisBooleanValue(Realm realm, Object object) {
+        private static boolean thisBooleanValue(ExecutionContext cx, Object object) {
             if (Type.isBoolean(object)) {
                 return Type.booleanValue(object);
             }
@@ -55,7 +56,7 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
                     return obj.getBooleanData();
                 }
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -71,8 +72,8 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
          * 15.6.4.2 Boolean.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
-        public static Object toString(Realm realm, Object thisValue) {
-            boolean b = thisBooleanValue(realm, thisValue);
+        public static Object toString(ExecutionContext cx, Object thisValue) {
+            boolean b = thisBooleanValue(cx, thisValue);
             return (b ? "true" : "false");
         }
 
@@ -80,8 +81,8 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
          * 15.6.4.3 Boolean.prototype.valueOf ( )
          */
         @Function(name = "valueOf", arity = 0)
-        public static Object valueOf(Realm realm, Object thisValue) {
-            return thisBooleanValue(realm, thisValue);
+        public static Object valueOf(ExecutionContext cx, Object thisValue) {
+            return thisBooleanValue(cx, thisValue);
         }
     }
 }

@@ -41,7 +41,8 @@ public class ScriptLoader {
         /* step 3 */
         LexicalEnvironment globalEnv = realm.getGlobalEnv();
         /* step 4-5 */
-        scriptBody.globalDeclarationInstantiation(realm, globalEnv, deletableBindings);
+        scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv,
+                deletableBindings);
         /* step 6-9 */
         ExecutionContext progCxt = newScriptExecutionContext(realm);
         /* step 10-14 */

@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -47,30 +48,30 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.15.1.1 WeakMap (iterable = undefined )
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
-        Realm realm = realm();
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        Realm realm = callerContext.getRealm();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
             // FIXME: spec bug ? `WeakMap()` no longer allowed
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(callerContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof WeakMapObject)) {
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
         WeakMapObject map = (WeakMapObject) thisValue;
         if (map.isInitialised()) {
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
 
         /* steps 5-7 */
@@ -79,10 +80,10 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
             itr = UNDEFINED;
         } else {
             Symbol iterator = BuiltinSymbol.iterator.get();
-            itr = Invoke(realm, iterable, iterator);
-            adder = Get(realm, map, "set");
+            itr = Invoke(callerContext, iterable, iterator);
+            adder = Get(callerContext, map, "set");
             if (!IsCallable(adder)) {
-                throw throwTypeError(realm, Messages.Key.NotCallable);
+                throw throwTypeError(callerContext, Messages.Key.NotCallable);
             }
         }
 
@@ -96,17 +97,17 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
         for (;;) {
             Object next;
             try {
-                next = Invoke(realm, itr, "next");
+                next = Invoke(callerContext, itr, "next");
             } catch (ScriptException e) {
                 if (IteratorComplete(realm, e)) {
                     return map;
                 }
                 throw e;
             }
-            ScriptObject entry = ToObject(realm, next);
-            Object k = Get(realm, entry, "0");
-            Object v = Get(realm, entry, "1");
-            ((Callable) adder).call(map, k, v);
+            ScriptObject entry = ToObject(callerContext, next);
+            Object k = Get(callerContext, entry, "0");
+            Object v = Get(callerContext, entry, "1");
+            ((Callable) adder).call(callerContext, map, k, v);
         }
     }
 
@@ -114,8 +115,8 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
      * 15.15.2.1 new WeakMap ( ... args )
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -150,8 +151,8 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.WeakMapPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.WeakMapPrototype,
                     WeakMapObjectAllocator.INSTANCE);
         }
     }

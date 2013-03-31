@@ -26,12 +26,13 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public final class ObjectEnvironmentRecord implements EnvironmentRecord {
-    private final Realm realm;
+    private final ExecutionContext cx;
     private final ScriptObject bindings;
     private final boolean withEnvironment;
 
-    public ObjectEnvironmentRecord(Realm realm, ScriptObject bindings, boolean withEnvironment) {
-        this.realm = realm;
+    public ObjectEnvironmentRecord(ExecutionContext cx, ScriptObject bindings,
+            boolean withEnvironment) {
+        this.cx = cx;
         this.bindings = bindings;
         this.withEnvironment = withEnvironment;
     }
@@ -41,7 +42,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasBinding(String name) {
-        return HasProperty(realm, bindings, name);
+        return HasProperty(cx, bindings, name);
     }
 
     /**
@@ -49,11 +50,11 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void createMutableBinding(String name, boolean deletable) {
-        if (HasProperty(realm, bindings, name)) {
+        if (HasProperty(cx, bindings, name)) {
             throw new IllegalStateException();
         }
         PropertyDescriptor desc = new PropertyDescriptor(UNDEFINED, true, true, deletable);
-        DefinePropertyOrThrow(realm, bindings, name, desc);
+        DefinePropertyOrThrow(cx, bindings, name, desc);
     }
 
     /**
@@ -80,7 +81,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void setMutableBinding(String name, Object value, boolean strict) {
-        Put(realm, bindings, name, value, strict);
+        Put(cx, bindings, name, value, strict);
     }
 
     /**
@@ -88,14 +89,14 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public Object getBindingValue(String name, boolean strict) {
-        boolean value = HasProperty(realm, bindings, name);
+        boolean value = HasProperty(cx, bindings, name);
         if (!value) {
             if (!strict) {
                 return UNDEFINED;
             }
-            throw throwReferenceError(realm, Messages.Key.UnresolvableReference, name);
+            throw throwReferenceError(cx, Messages.Key.UnresolvableReference, name);
         }
-        return Get(realm, bindings, name);
+        return Get(cx, bindings, name);
     }
 
     /**
@@ -103,7 +104,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean deleteBinding(String name) {
-        return bindings.delete(realm, name);
+        return bindings.delete(cx, name);
     }
 
     /**

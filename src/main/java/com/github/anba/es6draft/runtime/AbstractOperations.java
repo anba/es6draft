@@ -48,19 +48,19 @@ public final class AbstractOperations {
     /**
      * 9.1.1 ToPrimitive
      */
-    public static Object ToPrimitive(Realm realm, Object val) {
+    public static Object ToPrimitive(ExecutionContext cx, Object val) {
         // null == no hint
-        return ToPrimitive(realm, val, null);
+        return ToPrimitive(cx, val, null);
     }
 
     /**
      * 9.1.1 ToPrimitive
      */
-    public static Object ToPrimitive(Realm realm, Object argument, Type preferredType) {
+    public static Object ToPrimitive(ExecutionContext cx, Object argument, Type preferredType) {
         if (!Type.isObject(argument)) {
             return argument;
         }
-        return ToPrimitive(realm, Type.objectValue(argument), preferredType);
+        return ToPrimitive(cx, Type.objectValue(argument), preferredType);
     }
 
     /**
@@ -68,11 +68,11 @@ public final class AbstractOperations {
      * <p>
      * ToPrimitive for the Object type
      */
-    private static Object ToPrimitive(Realm realm, ScriptObject argument, Type preferredType) {
-        Object exoticToPrim = Get(realm, argument, BuiltinSymbol.ToPrimitive.get());
+    private static Object ToPrimitive(ExecutionContext cx, ScriptObject argument, Type preferredType) {
+        Object exoticToPrim = Get(cx, argument, BuiltinSymbol.ToPrimitive.get());
         if (!Type.isUndefined(exoticToPrim)) {
             if (!IsCallable(exoticToPrim))
-                throw throwTypeError(realm, Messages.Key.NotCallable);
+                throw throwTypeError(cx, Messages.Key.NotCallable);
             String hint;
             if (preferredType == null) {
                 hint = "default";
@@ -82,16 +82,16 @@ public final class AbstractOperations {
                 assert preferredType == Type.Number;
                 hint = "number";
             }
-            Object result = ((Callable) exoticToPrim).call(argument, hint);
+            Object result = ((Callable) exoticToPrim).call(cx, argument, hint);
             if (!Type.isObject(result)) {
                 return result;
             }
-            throw throwTypeError(realm, Messages.Key.NotPrimitiveType);
+            throw throwTypeError(cx, Messages.Key.NotPrimitiveType);
         }
         if (preferredType == null) {
             preferredType = Type.Number;
         }
-        return OrdinaryToPrimitive(realm, argument, preferredType);
+        return OrdinaryToPrimitive(cx, argument, preferredType);
     }
 
     /**
@@ -99,7 +99,7 @@ public final class AbstractOperations {
      * <p>
      * OrdinaryToPrimitive
      */
-    public static Object OrdinaryToPrimitive(Realm realm, ScriptObject object, Type hint) {
+    public static Object OrdinaryToPrimitive(ExecutionContext cx, ScriptObject object, Type hint) {
         assert hint == Type.String || hint == Type.Number;
         String tryFirst, trySecond;
         if (hint == Type.String) {
@@ -109,23 +109,23 @@ public final class AbstractOperations {
             tryFirst = "valueOf";
             trySecond = "toString";
         }
-        Object first = Get(realm, object, tryFirst);
+        Object first = Get(cx, object, tryFirst);
         if (IsCallable(first)) {
-            Object result = ((Callable) first).call(object);
+            Object result = ((Callable) first).call(cx, object);
             if (!Type.isObject(result)) {
                 return result;
             }
             // FIXME: spec bug!
         }
-        Object second = Get(realm, object, trySecond);
+        Object second = Get(cx, object, trySecond);
         if (IsCallable(second)) {
-            Object result = ((Callable) second).call(object);
+            Object result = ((Callable) second).call(cx, object);
             if (!Type.isObject(result)) {
                 return result;
             }
             // FIXME: spec bug!
         }
-        throw throwTypeError(realm, Messages.Key.NoPrimitiveRepresentation);
+        throw throwTypeError(cx, Messages.Key.NoPrimitiveRepresentation);
     }
 
     /**
@@ -160,7 +160,7 @@ public final class AbstractOperations {
     /**
      * 9.1.3 ToNumber
      */
-    public static double ToNumber(Realm realm, Object val) {
+    public static double ToNumber(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
         case Undefined:
             return Double.NaN;
@@ -174,8 +174,8 @@ public final class AbstractOperations {
             return ToNumber(Type.stringValue(val));
         case Object:
         default:
-            Object primValue = ToPrimitive(realm, val, Type.Number);
-            return ToNumber(realm, primValue);
+            Object primValue = ToPrimitive(cx, val, Type.Number);
+            return ToNumber(cx, primValue);
         }
     }
 
@@ -189,8 +189,8 @@ public final class AbstractOperations {
     /**
      * 9.1.4 ToInteger
      */
-    public static double ToInteger(Realm realm, Object val) {
-        double number = ToNumber(realm, val);
+    public static double ToInteger(ExecutionContext cx, Object val) {
+        double number = ToNumber(cx, val);
         if (Double.isNaN(number))
             return +0.0;
         if (number == 0.0 || Double.isInfinite(number))
@@ -212,8 +212,8 @@ public final class AbstractOperations {
     /**
      * 9.1.5 ToInt32: (Signed 32 Bit Integer)
      */
-    public static int ToInt32(Realm realm, Object val) {
-        double number = ToNumber(realm, val);
+    public static int ToInt32(ExecutionContext cx, Object val) {
+        double number = ToNumber(cx, val);
         return DoubleConversion.doubleToInt32(number);
     }
 
@@ -227,8 +227,8 @@ public final class AbstractOperations {
     /**
      * 9.1.6 ToUint32: (Unsigned 32 Bit Integer)
      */
-    public static long ToUint32(Realm realm, Object val) {
-        double number = ToNumber(realm, val);
+    public static long ToUint32(ExecutionContext cx, Object val) {
+        double number = ToNumber(cx, val);
         return DoubleConversion.doubleToInt32(number) & 0xffffffffL;
     }
 
@@ -242,8 +242,8 @@ public final class AbstractOperations {
     /**
      * 9.1.7 ToUint16: (Unsigned 16 Bit Integer)
      */
-    public static char ToUint16(Realm realm, Object val) {
-        double number = ToNumber(realm, val);
+    public static char ToUint16(ExecutionContext cx, Object val) {
+        double number = ToNumber(cx, val);
         return (char) DoubleConversion.doubleToInt32(number);
     }
 
@@ -257,7 +257,7 @@ public final class AbstractOperations {
     /**
      * 9.1.8 ToString
      */
-    public static CharSequence ToString(Realm realm, Object val) {
+    public static CharSequence ToString(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
         case Undefined:
             return "undefined";
@@ -271,16 +271,16 @@ public final class AbstractOperations {
             return Type.stringValue(val);
         case Object:
         default:
-            Object primValue = ToPrimitive(realm, val, Type.String);
-            return ToString(realm, primValue);
+            Object primValue = ToPrimitive(cx, val, Type.String);
+            return ToString(cx, primValue);
         }
     }
 
     /**
      * 9.1.8 ToString
      */
-    public static String ToFlatString(Realm realm, Object val) {
-        return ToString(realm, val).toString();
+    public static String ToFlatString(ExecutionContext cx, Object val) {
+        return ToString(cx, val).toString();
     }
 
     /**
@@ -312,17 +312,17 @@ public final class AbstractOperations {
     /**
      * 9.1.9 ToObject
      */
-    public static ScriptObject ToObject(Realm realm, Object val) {
+    public static ScriptObject ToObject(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
         case Undefined:
         case Null:
-            throw throwTypeError(realm, Messages.Key.UndefinedOrNull);
+            throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
         case Boolean:
-            return BooleanCreate(realm, Type.booleanValue(val));
+            return BooleanCreate(cx, Type.booleanValue(val));
         case Number:
-            return NumberCreate(realm, Type.numberValue(val));
+            return NumberCreate(cx, Type.numberValue(val));
         case String:
-            return StringCreate(realm, Type.stringValue(val));
+            return StringCreate(cx, Type.stringValue(val));
         case Object:
         default:
             return Type.objectValue(val);
@@ -332,20 +332,20 @@ public final class AbstractOperations {
     /**
      * 9.1.10 ToPropertyKey
      */
-    public static Object ToPropertyKey(Realm realm, Object val) {
+    public static Object ToPropertyKey(ExecutionContext cx, Object val) {
         if (Type.isObject(val)) {
             if (val instanceof Symbol) {
                 return ((Symbol) val);
             }
         }
-        return ToFlatString(realm, val);
+        return ToFlatString(cx, val);
     }
 
     /**
      * 9.1.11 ToPositiveInteger
      */
-    public static double ToPositiveInteger(Realm realm, Object val) {
-        double number = ToNumber(realm, val);
+    public static double ToPositiveInteger(ExecutionContext cx, Object val) {
+        double number = ToNumber(cx, val);
         if (Double.isNaN(number))
             return +0.0;
         if (Double.isInfinite(number))
@@ -358,9 +358,9 @@ public final class AbstractOperations {
     /**
      * 9.2.1 CheckObjectCoercible
      */
-    public static Object CheckObjectCoercible(Realm realm, Object val) {
+    public static Object CheckObjectCoercible(ExecutionContext cx, Object val) {
         if (Type.isUndefinedOrNull(val)) {
-            throw throwTypeError(realm, Messages.Key.UndefinedOrNull);
+            throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         return val;
     }
@@ -466,139 +466,141 @@ public final class AbstractOperations {
     /**
      * 9.2.7 IsExtensible (O)
      */
-    public static boolean IsExtensible(Realm realm, ScriptObject object) {
-        boolean notExtensible = object.hasIntegrity(realm, IntegrityLevel.NonExtensible);
+    public static boolean IsExtensible(ExecutionContext cx, ScriptObject object) {
+        boolean notExtensible = object.hasIntegrity(cx, IntegrityLevel.NonExtensible);
         return !notExtensible;
     }
 
     /**
      * 9.3.1 Get (O, P)
      */
-    public static Object Get(Realm realm, ScriptObject object, String propertyKey) {
-        return object.get(realm, propertyKey, object);
+    public static Object Get(ExecutionContext cx, ScriptObject object, String propertyKey) {
+        return object.get(cx, propertyKey, object);
     }
 
     /**
      * 9.3.1 Get (O, P)
      */
-    public static Object Get(Realm realm, ScriptObject object, Symbol propertyKey) {
-        return object.get(realm, propertyKey, object);
+    public static Object Get(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
+        return object.get(cx, propertyKey, object);
     }
 
     /**
      * 9.3.2 Put (O, P, V, Throw)
      */
-    public static void Put(Realm realm, ScriptObject object, String propertyKey, Object value,
-            boolean _throw) {
-        boolean success = object.set(realm, propertyKey, value, object);
+    public static void Put(ExecutionContext cx, ScriptObject object, String propertyKey,
+            Object value, boolean _throw) {
+        boolean success = object.set(cx, propertyKey, value, object);
         if (!success && _throw) {
-            throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, propertyKey);
+            throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey);
         }
     }
 
     /**
      * 9.3.2 Put (O, P, V, Throw)
      */
-    public static void Put(Realm realm, ScriptObject object, Symbol propertyKey, Object value,
-            boolean _throw) {
-        boolean success = object.set(realm, propertyKey, value, object);
+    public static void Put(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
+            Object value, boolean _throw) {
+        boolean success = object.set(cx, propertyKey, value, object);
         if (!success && _throw) {
-            throw throwTypeError(realm, Messages.Key.PropertyNotModifiable, propertyKey.toString());
+            throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey.toString());
         }
     }
 
     /**
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
-    public static boolean CreateOwnDataProperty(Realm realm, ScriptObject object,
+    public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
-        boolean notExtensible = object.hasIntegrity(realm, IntegrityLevel.NonExtensible);
+        boolean notExtensible = object.hasIntegrity(cx, IntegrityLevel.NonExtensible);
         if (notExtensible) {
             return false;
         }
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
-        return object.defineOwnProperty(realm, propertyKey, newDesc);
+        return object.defineOwnProperty(cx, propertyKey, newDesc);
     }
 
     /**
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
-    public static boolean CreateOwnDataProperty(Realm realm, ScriptObject object,
+    public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey, Object value) {
-        boolean notExtensible = object.hasIntegrity(realm, IntegrityLevel.NonExtensible);
+        boolean notExtensible = object.hasIntegrity(cx, IntegrityLevel.NonExtensible);
         if (notExtensible) {
             return false;
         }
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
-        return object.defineOwnProperty(realm, propertyKey, newDesc);
+        return object.defineOwnProperty(cx, propertyKey, newDesc);
     }
 
     /**
      * 9.3.4 DefinePropertyOrThrow (O, P, desc)
      */
-    public static void DefinePropertyOrThrow(Realm realm, ScriptObject object, String propertyKey,
-            PropertyDescriptor desc) {
-        boolean success = object.defineOwnProperty(realm, propertyKey, desc);
+    public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            String propertyKey, PropertyDescriptor desc) {
+        boolean success = object.defineOwnProperty(cx, propertyKey, desc);
         if (!success) {
-            throw throwTypeError(realm, Messages.Key.PropertyNotCreatable, propertyKey);
+            throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
         }
     }
 
     /**
      * 9.3.4 DefinePropertyOrThrow (O, P, desc)
      */
-    public static void DefinePropertyOrThrow(Realm realm, ScriptObject object, Symbol propertyKey,
-            PropertyDescriptor desc) {
-        boolean success = object.defineOwnProperty(realm, propertyKey, desc);
+    public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            Symbol propertyKey, PropertyDescriptor desc) {
+        boolean success = object.defineOwnProperty(cx, propertyKey, desc);
         if (!success) {
-            throw throwTypeError(realm, Messages.Key.PropertyNotCreatable, propertyKey.toString());
+            throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey.toString());
         }
     }
 
     /**
      * 9.3.5 DeletePropertyOrThrow (O, P)
      */
-    public static void DeletePropertyOrThrow(Realm realm, ScriptObject object, String propertyKey) {
-        boolean success = object.delete(realm, propertyKey);
+    public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            String propertyKey) {
+        boolean success = object.delete(cx, propertyKey);
         if (!success) {
-            throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, propertyKey);
+            throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, propertyKey);
         }
     }
 
     /**
      * 9.3.5 DeletePropertyOrThrow (O, P)
      */
-    public static void DeletePropertyOrThrow(Realm realm, ScriptObject object, Symbol propertyKey) {
-        boolean success = object.delete(realm, propertyKey);
+    public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            Symbol propertyKey) {
+        boolean success = object.delete(cx, propertyKey);
         if (!success) {
-            throw throwTypeError(realm, Messages.Key.PropertyNotDeletable, propertyKey.toString());
+            throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, propertyKey.toString());
         }
     }
 
     /**
      * 9.3.6 HasProperty (O, P)
      */
-    public static boolean HasProperty(Realm realm, ScriptObject object, String propertyKey) {
-        return object.hasProperty(realm, propertyKey);
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, String propertyKey) {
+        return object.hasProperty(cx, propertyKey);
     }
 
     /**
      * 9.3.6 HasProperty (O, P)
      */
-    public static boolean HasProperty(Realm realm, ScriptObject object, Symbol propertyKey) {
-        return object.hasProperty(realm, propertyKey);
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
+        return object.hasProperty(cx, propertyKey);
     }
 
     /**
      * 9.3.7 GetMethod (O, P)
      */
-    public static Callable GetMethod(Realm realm, ScriptObject object, String propertyKey) {
-        Object func = object.get(realm, propertyKey, object);
+    public static Callable GetMethod(ExecutionContext cx, ScriptObject object, String propertyKey) {
+        Object func = object.get(cx, propertyKey, object);
         if (Type.isUndefined(func)) {
             return null;
         }
         if (!IsCallable(func)) {
-            throw throwTypeError(realm, Messages.Key.NotCallable);
+            throw throwTypeError(cx, Messages.Key.NotCallable);
         }
         return (Callable) func;
     }
@@ -606,13 +608,13 @@ public final class AbstractOperations {
     /**
      * 9.3.7 GetMethod (O, P)
      */
-    public static Callable GetMethod(Realm realm, ScriptObject object, Symbol propertyKey) {
-        Object func = object.get(realm, propertyKey, object);
+    public static Callable GetMethod(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
+        Object func = object.get(cx, propertyKey, object);
         if (Type.isUndefined(func)) {
             return null;
         }
         if (!IsCallable(func)) {
-            throw throwTypeError(realm, Messages.Key.NotCallable);
+            throw throwTypeError(cx, Messages.Key.NotCallable);
         }
         return (Callable) func;
     }
@@ -620,35 +622,38 @@ public final class AbstractOperations {
     /**
      * 9.3.8 Invoke(O,P [,args])
      */
-    public static Object Invoke(Realm realm, Object object, String propertyKey, Object... args) {
-        ScriptObject obj = ToObject(realm, object);
-        Callable func = GetMethod(realm, obj, propertyKey);
+    public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
+            Object... args) {
+        ScriptObject obj = ToObject(cx, object);
+        Callable func = GetMethod(cx, obj, propertyKey);
         if (func == null) {
-            throw throwTypeError(realm, Messages.Key.MethodNotFound, propertyKey);
+            throw throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
         }
-        return func.call(object, args);
+        return func.call(cx, object, args);
     }
 
     /**
      * 9.3.8 Invoke(O,P [,args])
      */
-    public static Object Invoke(Realm realm, Object object, Symbol propertyKey, Object... args) {
-        ScriptObject obj = ToObject(realm, object);
-        Callable func = GetMethod(realm, obj, propertyKey);
+    public static Object Invoke(ExecutionContext cx, Object object, Symbol propertyKey,
+            Object... args) {
+        ScriptObject obj = ToObject(cx, object);
+        Callable func = GetMethod(cx, obj, propertyKey);
         if (func == null) {
-            throw throwTypeError(realm, Messages.Key.MethodNotFound, propertyKey.toString());
+            throw throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
         }
-        return func.call(object, args);
+        return func.call(cx, object, args);
     }
 
     /**
      * 9.3.9 SetIntegrityLevel (O, level)
      */
-    public static boolean SetIntegrityLevel(Realm realm, ScriptObject object, IntegrityLevel level) {
+    public static boolean SetIntegrityLevel(ExecutionContext cx, ScriptObject object,
+            IntegrityLevel level) {
         /* step 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* step 3-4 */
-        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys(realm));
+        Iterator<?> keys = FromListIterator(cx, object.ownPropertyKeys(cx));
         /* step 5 */
         ScriptException pendingException = null;
         if (level == IntegrityLevel.Sealed) {
@@ -657,13 +662,13 @@ public final class AbstractOperations {
             nonConfigurable.setConfigurable(false);
             while (keys.hasNext()) {
                 // FIXME: spec bug? (missing call to ToPropertyKey()?)
-                Object key = ToPropertyKey(realm, keys.next());
+                Object key = ToPropertyKey(cx, keys.next());
                 try {
                     if (key instanceof String) {
-                        DefinePropertyOrThrow(realm, object, (String) key, nonConfigurable);
+                        DefinePropertyOrThrow(cx, object, (String) key, nonConfigurable);
                     } else {
                         assert key instanceof Symbol;
-                        DefinePropertyOrThrow(realm, object, (Symbol) key, nonConfigurable);
+                        DefinePropertyOrThrow(cx, object, (Symbol) key, nonConfigurable);
                     }
                 } catch (ScriptException e) {
                     if (pendingException == null) {
@@ -681,13 +686,13 @@ public final class AbstractOperations {
             while (keys.hasNext()) {
                 try {
                     // FIXME: spec bug? (missing call to ToPropertyKey()?)
-                    Object key = ToPropertyKey(realm, keys.next());
+                    Object key = ToPropertyKey(cx, keys.next());
                     Property currentDesc;
                     if (key instanceof String) {
-                        currentDesc = object.getOwnProperty(realm, (String) key);
+                        currentDesc = object.getOwnProperty(cx, (String) key);
                     } else {
                         assert key instanceof Symbol;
-                        currentDesc = object.getOwnProperty(realm, (Symbol) key);
+                        currentDesc = object.getOwnProperty(cx, (Symbol) key);
                     }
                     if (currentDesc != null) {
                         PropertyDescriptor desc;
@@ -697,10 +702,10 @@ public final class AbstractOperations {
                             desc = nonConfigurableWritable;
                         }
                         if (key instanceof String) {
-                            DefinePropertyOrThrow(realm, object, (String) key, desc);
+                            DefinePropertyOrThrow(cx, object, (String) key, desc);
                         } else {
                             assert key instanceof Symbol;
-                            DefinePropertyOrThrow(realm, object, (Symbol) key, desc);
+                            DefinePropertyOrThrow(cx, object, (Symbol) key, desc);
                         }
                     }
                 } catch (ScriptException e) {
@@ -716,23 +721,24 @@ public final class AbstractOperations {
         }
         /* step 9 */
         // FIXME: spec bug ([[PreventExtensions]] -> [[SetIntegrity]] change missing)
-        return object.setIntegrity(realm, IntegrityLevel.NonExtensible);
+        return object.setIntegrity(cx, IntegrityLevel.NonExtensible);
     }
 
     /**
      * 9.3.10 TestIntegrityLevel (O, level)
      */
-    public static boolean TestIntegrityLevel(Realm realm, ScriptObject object, IntegrityLevel level) {
+    public static boolean TestIntegrityLevel(ExecutionContext cx, ScriptObject object,
+            IntegrityLevel level) {
         /* step 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* step 3-4 */
-        boolean status = IsExtensible(realm, object);
+        boolean status = IsExtensible(cx, object);
         /* step 5-6 */
         if (status) {
             return false;
         }
         /* step 7-8 */
-        Iterator<?> keys = FromListIterator(realm, object.ownPropertyKeys(realm));
+        Iterator<?> keys = FromListIterator(cx, object.ownPropertyKeys(cx));
         /* step 9 */
         ScriptException pendingException = null;
         /* step 10 */
@@ -741,15 +747,15 @@ public final class AbstractOperations {
         boolean writable = false;
         while (keys.hasNext()) {
             // FIXME: spec bug? (missing call to ToPropertyKey()?)
-            Object key = ToPropertyKey(realm, keys.next());
+            Object key = ToPropertyKey(cx, keys.next());
             /* step 12 */
             try {
                 Property currentDesc;
                 if (key instanceof String) {
-                    currentDesc = object.getOwnProperty(realm, (String) key);
+                    currentDesc = object.getOwnProperty(cx, (String) key);
                 } else {
                     assert key instanceof Symbol;
-                    currentDesc = object.getOwnProperty(realm, (Symbol) key);
+                    currentDesc = object.getOwnProperty(cx, (Symbol) key);
                 }
                 if (currentDesc != null) {
                     configurable |= currentDesc.isConfigurable();
@@ -783,14 +789,14 @@ public final class AbstractOperations {
     /**
      * 9.3.11 CreateArrayFromList (elements)
      */
-    public static ScriptObject CreateArrayFromList(Realm realm, List<?> elements) {
+    public static ScriptObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
         /* step 2 */
-        ScriptObject array = ArrayCreate(realm, 0);
+        ScriptObject array = ArrayCreate(cx, 0);
         /* step 3 */
         int n = 0;
         /* step 4 */
         for (Object e : elements) {
-            CreateOwnDataProperty(realm, array, ToString(n++), e);
+            CreateOwnDataProperty(cx, array, ToString(n++), e);
         }
         /* step 5 */
         return array;
@@ -799,7 +805,7 @@ public final class AbstractOperations {
     /**
      * 9.3.12 OrdinaryHasInstance (C, O)
      */
-    public static boolean OrdinaryHasInstance(Realm realm, Object c, Object o) {
+    public static boolean OrdinaryHasInstance(ExecutionContext cx, Object c, Object o) {
         /* step 1 */
         if (!IsCallable(c)) {
             return false;
@@ -807,20 +813,20 @@ public final class AbstractOperations {
         /* step 2 */
         if (c instanceof ExoticBoundFunction) {
             Callable boundC = ((ExoticBoundFunction) c).getBoundTargetFunction();
-            return instanceOfOperator(o, boundC, realm);
+            return instanceOfOperator(o, boundC, cx);
         }
         /* step 3 */
         if (!Type.isObject(o)) {
             return false;
         }
         /* step 4-5 */
-        Object p = Get(realm, (ScriptObject) c, "prototype");
+        Object p = Get(cx, (ScriptObject) c, "prototype");
         if (!Type.isObject(p)) {
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 7 */
         for (ScriptObject obj = Type.objectValue(o);;) {
-            obj = obj.getPrototype(realm);
+            obj = obj.getPrototype(cx);
             if (obj == null) {
                 return false;
             }
@@ -833,12 +839,13 @@ public final class AbstractOperations {
     /**
      * 9.3.13 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
      */
-    public static ScriptObject GetPrototypeFromConstructor(Realm realm, Object constructor,
+    public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx, Object constructor,
             Intrinsics intrinsicDefaultProto) {
         if (!IsConstructor(constructor)) {
-            throw throwTypeError(realm, Messages.Key.NotConstructor);
+            throw throwTypeError(cx, Messages.Key.NotConstructor);
         }
-        Object proto = Get(realm, Type.objectValue(constructor), "prototype");
+        Realm realm = cx.getRealm();
+        Object proto = Get(cx, Type.objectValue(constructor), "prototype");
         if (!Type.isObject(proto)) {
             // FIXME: spec bug (step 5a. -> F is not defined)
             if (constructor instanceof FunctionObject) {
@@ -852,24 +859,25 @@ public final class AbstractOperations {
     /**
      * 9.3.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
      */
-    public static OrdinaryObject OrdinaryCreateFromConstructor(Realm realm, Object constructor,
-            Intrinsics intrinsicDefaultProto) {
-        ScriptObject proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
-        return ObjectCreate(realm, proto);
+    public static OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
+            Object constructor, Intrinsics intrinsicDefaultProto) {
+        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
+        return ObjectCreate(cx, proto);
     }
 
     /**
      * 9.3.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
      */
-    public static <OBJECT extends ScriptObject> OBJECT OrdinaryCreateFromConstructor(Realm realm,
-            Object constructor, Intrinsics intrinsicDefaultProto, ObjectAllocator<OBJECT> allocator) {
-        ScriptObject proto = GetPrototypeFromConstructor(realm, constructor, intrinsicDefaultProto);
-        return ObjectCreate(realm, proto, allocator);
+    public static <OBJECT extends ScriptObject> OBJECT OrdinaryCreateFromConstructor(
+            ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,
+            ObjectAllocator<OBJECT> allocator) {
+        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
+        return ObjectCreate(cx, proto, allocator);
     }
 
-    public static List<String> GetOwnPropertyNames(Realm realm, ScriptObject obj) {
+    public static List<String> GetOwnPropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(realm, obj.ownPropertyKeys(realm));
+        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object next = keys.next();
@@ -881,15 +889,15 @@ public final class AbstractOperations {
         return nameList;
     }
 
-    public static List<String> GetOwnPropertyKeys(Realm realm, ScriptObject obj) {
+    public static List<String> GetOwnPropertyKeys(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(realm, obj.ownPropertyKeys(realm));
+        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object next = keys.next();
             if (Type.isString(next)) {
                 String nextKey = Type.stringValue(next).toString();
-                Property desc = obj.getOwnProperty(realm, nextKey);
+                Property desc = obj.getOwnProperty(cx, nextKey);
                 if (desc != null && desc.isEnumerable()) {
                     nameList.add(nextKey);
                 }

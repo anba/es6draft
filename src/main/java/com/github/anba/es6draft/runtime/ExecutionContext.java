@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarative
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnvironment;
 import static java.util.Objects.requireNonNull;
 
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -43,6 +44,10 @@ public final class ExecutionContext {
 
     public LexicalEnvironment getVariableEnvironment() {
         return varEnv;
+    }
+
+    public ScriptObject getIntrinsic(Intrinsics id) {
+        return realm.getIntrinsic(id);
     }
 
     // Helper
@@ -126,7 +131,7 @@ public final class ExecutionContext {
                 case Boolean:
                 case Number:
                 case String:
-                    thisValue = ToObject(calleeRealm, thisArgument);
+                    thisValue = ToObject(calleeContext, thisArgument);
                     break;
                 case Object:
                 default:
@@ -134,7 +139,7 @@ public final class ExecutionContext {
                     break;
                 }
             }
-            localEnv = newFunctionEnvironment(f, thisValue);
+            localEnv = newFunctionEnvironment(calleeContext, f, thisValue);
         }
         calleeContext.lexEnv = localEnv;
         calleeContext.varEnv = localEnv;

@@ -20,6 +20,7 @@ import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.Locale;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -59,9 +60,9 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
@@ -76,15 +77,15 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
      * 12.1.2.1 Intl.DateTimeFormat.call (this [, locales [, options]])
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
-        if (Type.isUndefined(thisValue) || thisValue == realm().getIntrinsic(Intrinsics.Intl)) {
-            return construct(args);
+        if (Type.isUndefined(thisValue) || thisValue == callerContext.getIntrinsic(Intrinsics.Intl)) {
+            return construct(callerContext, args);
         }
-        ScriptObject obj = ToObject(realm(), thisValue);
-        if (!IsExtensible(realm(), obj)) {
-            throwTypeError(realm(), Messages.Key.NotExtensible);
+        ScriptObject obj = ToObject(callerContext, thisValue);
+        if (!IsExtensible(callerContext, obj)) {
+            throwTypeError(callerContext, Messages.Key.NotExtensible);
         }
         InitializeDateTimeFormat(obj, locales, options);
         return obj;
@@ -94,11 +95,12 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
      * 12.1.3.1 new Intl.DateTimeFormat ([locales [, options]])
      */
     @Override
-    public Object construct(Object... args) {
+    public Object construct(ExecutionContext callerContext, Object... args) {
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
-        DateTimeFormatObject obj = new DateTimeFormatObject(realm());
-        obj.setPrototype(realm(), realm().getIntrinsic(Intrinsics.Intl_DateTimeFormatPrototype));
+        DateTimeFormatObject obj = new DateTimeFormatObject(callerContext.getRealm());
+        obj.setPrototype(callerContext,
+                callerContext.getIntrinsic(Intrinsics.Intl_DateTimeFormatPrototype));
         InitializeDateTimeFormat(obj, locales, options);
         return obj;
     }
@@ -131,9 +133,9 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
          * 12.2.2 Intl.DateTimeFormat.supportedLocalesOf (locales [, options])
          */
         @Function(name = "supportedLocalesOf", arity = 1)
-        public static Object supportedLocalesOf(Realm realm, Object thisValue, Object locales,
-                Object options) {
-            return CreateArrayFromList(realm, emptyList());
+        public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
+                Object locales, Object options) {
+            return CreateArrayFromList(cx, emptyList());
         }
 
         /**
@@ -144,8 +146,8 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue,
                     Intrinsics.Intl_DateTimeFormatPrototype, DateTimeFormatObjectAllocator.INSTANCE);
         }
     }

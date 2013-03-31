@@ -20,9 +20,9 @@ import java.util.Set;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
@@ -40,14 +40,14 @@ final class DeclarationBindingInstantiation {
     /**
      * [10.5.1 Global Declaration Instantiation]
      */
-    public static void GlobalDeclarationInstantiation(Realm realm, LexicalEnvironment globalEnv,
-            Script script, boolean deletableBindings) {
+    public static void GlobalDeclarationInstantiation(ExecutionContext cx,
+            LexicalEnvironment globalEnv, Script script, boolean deletableBindings) {
         LexicalEnvironment env = globalEnv;
         GlobalEnvironmentRecord envRec = (GlobalEnvironmentRecord) env.getEnvRec();
 
         for (String name : VarDeclaredNames(script)) {
             if (envRec.hasLexicalDeclaration(name)) {
-                throw throwSyntaxError(realm, Messages.Key.VariableRedeclaration, name);
+                throw throwSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
             }
         }
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
@@ -56,7 +56,7 @@ final class DeclarationBindingInstantiation {
             for (String vn : BoundNames(d)) {
                 boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
                 if (!vnDefinable) {
-                    throw throwTypeError(realm, Messages.Key.InvalidDeclaration, vn);
+                    throw throwTypeError(cx, Messages.Key.InvalidDeclaration, vn);
                 }
                 if (!declaredVarNames.contains(vn)) {
                     declaredVarNames.add(vn);
@@ -72,7 +72,7 @@ final class DeclarationBindingInstantiation {
     /**
      * [10.5.5 Eval Declaration Instantiation]
      */
-    public static void EvalDeclarationInstantiation(Realm realm, LexicalEnvironment lexEnv,
+    public static void EvalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment lexEnv,
             LexicalEnvironment varEnv, Script script, boolean deletableBindings) {
         // FIXME: spec incomplete (using modified ES5.1 algorithm for now...)
 

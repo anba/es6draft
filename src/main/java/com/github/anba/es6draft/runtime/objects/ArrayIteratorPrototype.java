@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -42,8 +43,8 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -80,11 +81,11 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
     /**
      * 15.4.6.1 CreateArrayIterator Abstract Operation
      */
-    public static OrdinaryObject CreateArrayIterator(Realm realm, ScriptObject array,
+    public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array,
             ArrayIterationKind kind) {
         // ObjectCreate()
-        ArrayIterator itr = new ArrayIterator(realm);
-        itr.setPrototype(realm, realm.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
+        ArrayIterator itr = new ArrayIterator(cx.getRealm());
+        itr.setPrototype(cx, cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
         itr.iteratedObject = array;
         itr.nextIndex = 0;
         itr.kind = kind;
@@ -110,23 +111,23 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
          * 15.4.6.2.2 ArrayIterator.prototype.next( )
          */
         @Function(name = "next", arity = 0)
-        public static Object next(Realm realm, Object thisValue) {
+        public static Object next(ExecutionContext cx, Object thisValue) {
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             if (!(thisValue instanceof ArrayIterator)) {
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             ArrayIterator itr = (ArrayIterator) thisValue;
             ScriptObject array = itr.iteratedObject;
             long index = itr.nextIndex;
             ArrayIterationKind itemKind = itr.kind;
-            Object lenValue = Get(realm, array, "length");
-            long len = ToUint32(realm, lenValue);
+            Object lenValue = Get(cx, array, "length");
+            long len = ToUint32(cx, lenValue);
 
             // index == +Infinity => index == -1
             if (index < 0) {
-                return _throw(realm.getIntrinsic(Intrinsics.StopIteration));
+                return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
             }
 
             if (itemKind == ArrayIterationKind.SparseKey
@@ -135,7 +136,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                 boolean found = false;
                 while (!found && index < len) {
                     String elementKey = ToString(index);
-                    found = HasProperty(realm, array, elementKey);
+                    found = HasProperty(cx, array, elementKey);
                     if (!found) {
                         index += 1;
                     }
@@ -143,7 +144,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             }
             if (index >= len) {
                 index = -1; // actually +Infinity!
-                return _throw(realm.getIntrinsic(Intrinsics.StopIteration));
+                return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
             }
             String elementKey = ToString(index);
             itr.nextIndex = index + 1;
@@ -151,16 +152,16 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             if (itemKind == ArrayIterationKind.Value || itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
-                elementValue = Get(realm, array, elementKey);
+                elementValue = Get(cx, array, elementKey);
             }
             if (itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
                 assert elementValue != null;
-                ScriptObject result = ArrayCreate(realm, 2);
-                result.defineOwnProperty(realm, "0", new PropertyDescriptor(elementKey, true, true,
+                ScriptObject result = ArrayCreate(cx, 2);
+                result.defineOwnProperty(cx, "0", new PropertyDescriptor(elementKey, true, true,
                         true));
-                result.defineOwnProperty(realm, "1", new PropertyDescriptor(elementValue, true,
-                        true, true));
+                result.defineOwnProperty(cx, "1", new PropertyDescriptor(elementValue, true, true,
+                        true));
                 return result;
             } else if (itemKind == ArrayIterationKind.Key
                     || itemKind == ArrayIterationKind.SparseKey) {
@@ -179,7 +180,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
          * 15.4.6.2.3 ArrayIterator.prototype.@@iterator ()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
-        public static Object iterator(Realm realm, Object thisValue) {
+        public static Object iterator(ExecutionContext cx, Object thisValue) {
             return thisValue;
         }
 

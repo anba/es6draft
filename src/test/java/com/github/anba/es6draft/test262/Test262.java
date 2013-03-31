@@ -33,6 +33,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
@@ -93,9 +94,11 @@ public final class Test262 {
             }
         });
 
+        // start initialization
+        ExecutionContext cx = realm.defaultContext();
         Test262GlobalObject global = (Test262GlobalObject) realm.getGlobalThis();
         global.include("sta.js");
-        createProperties(global, realm, Test262GlobalObject.class);
+        createProperties(global, cx, Test262GlobalObject.class);
 
         Matcher<Object> m = anyInstanceOf(exceptions());
         if (info.isNegative()) {

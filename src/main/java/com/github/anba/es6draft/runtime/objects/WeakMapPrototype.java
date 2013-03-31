@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -37,8 +38,8 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -47,14 +48,14 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
     public enum Properties {
         ;
 
-        private static WeakMapObject thisWeakMapValue(Realm realm, Object obj) {
+        private static WeakMapObject thisWeakMapValue(ExecutionContext cx, Object obj) {
             if (Type.isObject(obj) && obj instanceof WeakMapObject) {
                 WeakMapObject map = (WeakMapObject) obj;
                 if (map.isInitialised()) {
                     return map;
                 }
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -70,8 +71,8 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          * 15.15.4.2 WeakMap.prototype.clear ()
          */
         @Function(name = "clear", arity = 0)
-        public static Object clear(Realm realm, Object thisValue) {
-            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+        public static Object clear(ExecutionContext cx, Object thisValue) {
+            WeakMapObject m = thisWeakMapValue(cx, thisValue);
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             entries.clear();
             return UNDEFINED;
@@ -81,11 +82,11 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          * 15.15.4.3 WeakMap.prototype.delete ( key )
          */
         @Function(name = "delete", arity = 1)
-        public static Object delete(Realm realm, Object thisValue, Object key) {
-            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+        public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
+            WeakMapObject m = thisWeakMapValue(cx, thisValue);
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             if (!Type.isObject(key)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             return entries.remove(key);
         }
@@ -94,11 +95,11 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          * 15.15.4.4 WeakMap.prototype.get ( key )
          */
         @Function(name = "get", arity = 1)
-        public static Object get(Realm realm, Object thisValue, Object key) {
-            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+        public static Object get(ExecutionContext cx, Object thisValue, Object key) {
+            WeakMapObject m = thisWeakMapValue(cx, thisValue);
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             if (!Type.isObject(key)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             Object value = entries.get(key);
             return (value != null ? value : UNDEFINED);
@@ -108,11 +109,11 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          * 15.15.4.5 WeakMap.prototype.has ( key )
          */
         @Function(name = "has", arity = 1)
-        public static Object has(Realm realm, Object thisValue, Object key) {
-            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+        public static Object has(ExecutionContext cx, Object thisValue, Object key) {
+            WeakMapObject m = thisWeakMapValue(cx, thisValue);
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             if (!Type.isObject(key)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             return entries.containsKey(key);
         }
@@ -121,11 +122,11 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          * 15.15.4.6 WeakMap.prototype.set ( key , value )
          */
         @Function(name = "set", arity = 2)
-        public static Object set(Realm realm, Object thisValue, Object key, Object value) {
-            WeakMapObject m = thisWeakMapValue(realm, thisValue);
+        public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
+            WeakMapObject m = thisWeakMapValue(cx, thisValue);
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             if (!Type.isObject(key)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             entries.put(key, new WeakReference<>(value));
             return m;

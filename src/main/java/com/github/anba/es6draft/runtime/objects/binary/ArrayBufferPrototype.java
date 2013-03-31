@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyBlockElements;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -43,8 +44,8 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -53,11 +54,11 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
     public enum Properties {
         ;
 
-        private static ArrayBufferObject ArrayBufferObject(Realm realm, ScriptObject m) {
+        private static ArrayBufferObject ArrayBufferObject(ExecutionContext cx, ScriptObject m) {
             if (m instanceof ArrayBufferObject) {
                 return (ArrayBufferObject) m;
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -73,9 +74,9 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
          * 15.13.5.5.2 get ArrayBuffer.prototype.byteLength
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
-        public static Object byteLength(Realm realm, Object thisValue) {
-            ScriptObject obj = ToObject(realm, thisValue);
-            long length = ArrayBufferObject(realm, obj).getByteLength();
+        public static Object byteLength(ExecutionContext cx, Object thisValue) {
+            ScriptObject obj = ToObject(cx, thisValue);
+            long length = ArrayBufferObject(cx, obj).getByteLength();
             return length;
         }
 
@@ -83,24 +84,24 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
          * 15.13.5.5.3 ArrayBuffer.prototype.slice (start , end)
          */
         @Function(name = "slice", arity = 2)
-        public static Object slice(Realm realm, Object thisValue, Object start, Object end) {
-            ScriptObject obj = ToObject(realm, thisValue);
-            ArrayBufferObject buf = ArrayBufferObject(realm, obj);
+        public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
+            ScriptObject obj = ToObject(cx, thisValue);
+            ArrayBufferObject buf = ArrayBufferObject(cx, obj);
             long len = buf.getByteLength();
-            double relativeStart = ToInteger(realm, start);
+            double relativeStart = ToInteger(cx, start);
             double first = relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(
                     relativeStart, len);
-            double relativeEnd = (Type.isUndefined(end) ? len : ToInteger(realm, end));
+            double relativeEnd = (Type.isUndefined(end) ? len : ToInteger(cx, end));
             double _final = relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(
                     relativeEnd, len);
             // FIXME: spec bug (check for negative, cf. SpiderMonkey/V8)
             double newLen = _final - first;
-            Callable ctor = GetMethod(realm, obj, "constructor");
+            Callable ctor = GetMethod(cx, obj, "constructor");
             if (ctor == null || !IsConstructor(ctor)) {
-                throwTypeError(realm, Messages.Key.NotConstructor);
+                throwTypeError(cx, Messages.Key.NotConstructor);
             }
-            ArrayBufferObject _new = ArrayBufferObject(realm,
-                    ToObject(realm, ((Constructor) ctor).construct(newLen)));
+            ArrayBufferObject _new = ArrayBufferObject(cx,
+                    ToObject(cx, ((Constructor) ctor).construct(cx, newLen)));
             CopyBlockElements(buf.getData(), first, _new.getData(), 0, newLen);
             return _new;
         }

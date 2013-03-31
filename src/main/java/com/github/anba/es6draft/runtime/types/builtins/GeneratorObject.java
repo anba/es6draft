@@ -95,7 +95,7 @@ public class GeneratorObject extends OrdinaryObject {
         }
     }
 
-    private Object execute0(Realm realm) {
+    private Object execute0(ExecutionContext cx) {
         if (!future.isDone()) {
             Object result;
             try {
@@ -120,7 +120,7 @@ public class GeneratorObject extends OrdinaryObject {
             }
             // TODO: StopIteration with value
             // throw new StopIteration(result);
-            return ScriptRuntime._throw(realm.getIntrinsic(Intrinsics.StopIteration));
+            return ScriptRuntime._throw(cx.getIntrinsic(Intrinsics.StopIteration));
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -129,24 +129,24 @@ public class GeneratorObject extends OrdinaryObject {
     /**
      * [[Send]]
      */
-    public Object send(Realm realm, Object value) {
+    public Object send(ExecutionContext cx, Object value) {
         GeneratorState state = this.state;
         switch (state) {
         case Executing:
-            throw throwTypeError(realm, Messages.Key.GeneratorExecuting);
+            throw throwTypeError(cx, Messages.Key.GeneratorExecuting);
         case Closed:
-            throw throwTypeError(realm, Messages.Key.GeneratorClosed);
+            throw throwTypeError(cx, Messages.Key.GeneratorClosed);
         case Newborn: {
             if (value != UNDEFINED) {
-                throw throwTypeError(realm, Messages.Key.GeneratorNewbornSend);
+                throw throwTypeError(cx, Messages.Key.GeneratorNewbornSend);
             }
             start0();
-            return execute0(realm);
+            return execute0(cx);
         }
         case Suspended:
         default: {
             resume0(value);
-            return execute0(realm);
+            return execute0(cx);
         }
         }
     }
@@ -154,13 +154,13 @@ public class GeneratorObject extends OrdinaryObject {
     /**
      * [[Throw]]
      */
-    public Object _throw(Realm realm, Object value) {
+    public Object _throw(ExecutionContext cx, Object value) {
         GeneratorState state = this.state;
         switch (state) {
         case Executing:
-            throw throwTypeError(realm, Messages.Key.GeneratorExecuting);
+            throw throwTypeError(cx, Messages.Key.GeneratorExecuting);
         case Closed:
-            throw throwTypeError(realm, Messages.Key.GeneratorClosed);
+            throw throwTypeError(cx, Messages.Key.GeneratorClosed);
         case Newborn: {
             this.state = GeneratorState.Closed;
             throw ScriptRuntime._throw(value);
@@ -168,7 +168,7 @@ public class GeneratorObject extends OrdinaryObject {
         case Suspended:
         default: {
             resume0(new ScriptException(value));
-            return execute0(realm);
+            return execute0(cx);
         }
         }
     }
@@ -176,11 +176,11 @@ public class GeneratorObject extends OrdinaryObject {
     /**
      * [[Close]]
      */
-    public Object close(Realm realm) {
+    public Object close(ExecutionContext cx) {
         GeneratorState state = this.state;
         switch (state) {
         case Executing:
-            throw throwTypeError(realm, Messages.Key.GeneratorExecuting);
+            throw throwTypeError(cx, Messages.Key.GeneratorExecuting);
         case Closed:
             return UNDEFINED;
         case Newborn: {
@@ -190,7 +190,7 @@ public class GeneratorObject extends OrdinaryObject {
         case Suspended:
         default: {
             resume0(new CloseGenerator());
-            return execute0(realm);
+            return execute0(cx);
         }
         }
     }

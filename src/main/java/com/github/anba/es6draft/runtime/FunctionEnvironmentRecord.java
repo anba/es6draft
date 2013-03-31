@@ -21,9 +21,9 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     private final ScriptObject homeObject;
     private final String methodName;
 
-    public FunctionEnvironmentRecord(Realm realm, Object thisValue, ScriptObject homeObject,
-            String methodName) {
-        super(realm);
+    public FunctionEnvironmentRecord(ExecutionContext cx, Object thisValue,
+            ScriptObject homeObject, String methodName) {
+        super(cx);
         this.thisValue = thisValue;
         this.homeObject = homeObject;
         this.methodName = methodName;
@@ -61,7 +61,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
         if (home == null) {
             return null;
         }
-        return home.getPrototype(realm);
+        return home.getPrototype(cx);
     }
 
     /**

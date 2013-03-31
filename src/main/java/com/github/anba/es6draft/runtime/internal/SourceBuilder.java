@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
@@ -26,12 +26,12 @@ public final class SourceBuilder {
     private SourceBuilder() {
     }
 
-    public static String ToSource(Realm realm, Object val) {
+    public static String ToSource(ExecutionContext cx, Object val) {
         HashSet<ScriptObject> stack = new HashSet<>();
-        return toSource(realm, stack, val);
+        return toSource(cx, stack, val);
     }
 
-    private static String toSource(Realm realm, Set<ScriptObject> stack, Object value) {
+    private static String toSource(ExecutionContext cx, Set<ScriptObject> stack, Object value) {
         switch (Type.of(value)) {
         case Null:
             return "null";
@@ -40,12 +40,12 @@ public final class SourceBuilder {
         case String:
             return stringToSource(Type.stringValue(value));
         case Number:
-            return ToFlatString(realm, value);
+            return ToFlatString(cx, value);
         case Object:
             ScriptObject objValue = Type.objectValue(value);
-            Object toSource = Get(realm, objValue, "toSource");
+            Object toSource = Get(cx, objValue, "toSource");
             if (IsCallable(toSource)) {
-                return ToFlatString(realm, ((Callable) toSource).call(objValue));
+                return ToFlatString(cx, ((Callable) toSource).call(cx, objValue));
             }
             if (IsCallable(objValue)) {
                 return ((Callable) objValue).toSource();
@@ -59,9 +59,9 @@ public final class SourceBuilder {
             stack.add(objValue);
             try {
                 if (objValue instanceof ExoticArray) {
-                    return arrayToSource(realm, stack, objValue);
+                    return arrayToSource(cx, stack, objValue);
                 } else {
-                    return objectToSource(realm, stack, objValue);
+                    return objectToSource(cx, stack, objValue);
                 }
             } finally {
                 stack.remove(objValue);
@@ -114,28 +114,30 @@ public final class SourceBuilder {
         return sb.toString();
     }
 
-    private static String objectToSource(Realm realm, Set<ScriptObject> stack, ScriptObject value) {
-        List<String> keys = GetOwnPropertyKeys(realm, value);
+    private static String objectToSource(ExecutionContext cx, Set<ScriptObject> stack,
+            ScriptObject value) {
+        List<String> keys = GetOwnPropertyKeys(cx, value);
         if (keys.isEmpty()) {
             return "{}";
         }
         StringBuilder properties = new StringBuilder();
         for (String k : keys) {
-            String p = toSource(realm, stack, Get(realm, value, k));
+            String p = toSource(cx, stack, Get(cx, value, k));
             properties.append(',').append(k).append(':').append(p);
         }
         properties.append('}').setCharAt(0, '{');
         return properties.toString();
     }
 
-    private static String arrayToSource(Realm realm, Set<ScriptObject> stack, ScriptObject value) {
-        long len = ToUint32(realm, Get(realm, value, "length"));
+    private static String arrayToSource(ExecutionContext cx, Set<ScriptObject> stack,
+            ScriptObject value) {
+        long len = ToUint32(cx, Get(cx, value, "length"));
         if (len <= 0) {
             return "[]";
         }
         StringBuilder properties = new StringBuilder();
         for (long index = 0; index < len; ++index) {
-            String p = toSource(realm, stack, Get(realm, value, ToString(index)));
+            String p = toSource(cx, stack, Get(cx, value, ToString(index)));
             properties.append(',').append(p);
         }
         properties.append(']').setCharAt(0, '[');

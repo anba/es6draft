@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -51,9 +52,9 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      * 8.3.19.3 [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(Realm realm, String propertyKey, Object receiver) {
+    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         /* step 1-2 */
-        Object v = super.get(realm, propertyKey, receiver);
+        Object v = super.get(cx, propertyKey, receiver);
         /* step 3 */
         if ("caller".equals(propertyKey) && isStrictFunction(v)) {
             // TODO: spec bug? [[Get]] override necessary, cf. AddRestrictedFunctionProperties
@@ -67,9 +68,9 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      * 8.3.19.4 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(Realm realm, String propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         /* step 1-2 */
-        Property v = super.getOwnProperty(realm, propertyKey);
+        Property v = super.getOwnProperty(cx, propertyKey);
         if (v != null && v.isDataDescriptor()) {
             // TODO: spec bug? [[GetOwnProperty]] override necessary, cf.
             // AddRestrictedFunctionProperties

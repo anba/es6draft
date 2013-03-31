@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import org.mozilla.javascript.DToA;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -39,8 +40,8 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
     }
 
     /**
@@ -52,7 +53,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         /**
          * Abstract operation thisNumberValue(value)
          */
-        private static double thisNumberValue(Realm realm, Object object) {
+        private static double thisNumberValue(ExecutionContext cx, Object object) {
             if (Type.isNumber(object)) {
                 return Type.numberValue(object);
             }
@@ -62,7 +63,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
                     return obj.getNumberData();
                 }
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -78,18 +79,18 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
          * 15.7.4.2 Number.prototype.toString ( [ radix ] )
          */
         @Function(name = "toString", arity = 1)
-        public static Object toString(Realm realm, Object thisValue, Object radix) {
+        public static Object toString(ExecutionContext cx, Object thisValue, Object radix) {
             double r = 10;
             if (!Type.isUndefined(radix)) {
-                r = ToInteger(realm, radix);
+                r = ToInteger(cx, radix);
             }
             if (r < 2 || r > 36) {
-                throw throwRangeError(realm, Messages.Key.InvalidRadix);
+                throw throwRangeError(cx, Messages.Key.InvalidRadix);
             }
             if (r == 10) {
-                return ToString(thisNumberValue(realm, thisValue));
+                return ToString(thisNumberValue(cx, thisValue));
             }
-            double val = thisNumberValue(realm, thisValue);
+            double val = thisNumberValue(cx, thisValue);
 
             // 9.1.8.1 ToString Applied to the Number Type
             // steps 1-4
@@ -109,28 +110,28 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
          * 15.7.4.3 Number.prototype.toLocaleString()
          */
         @Function(name = "toLocaleString", arity = 0)
-        public static Object toLocaleString(Realm realm, Object thisValue) {
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
             // N.B. permissible but no encouraged
-            return ToString(thisNumberValue(realm, thisValue));
+            return ToString(thisNumberValue(cx, thisValue));
         }
 
         /**
          * 15.7.4.4 Number.prototype.valueOf ( )
          */
         @Function(name = "valueOf", arity = 0)
-        public static Object valueOf(Realm realm, Object thisValue) {
-            return thisNumberValue(realm, thisValue);
+        public static Object valueOf(ExecutionContext cx, Object thisValue) {
+            return thisNumberValue(cx, thisValue);
         }
 
         /**
          * 15.7.4.5 Number.prototype.toFixed (fractionDigits)
          */
         @Function(name = "toFixed", arity = 1)
-        public static Object toFixed(Realm realm, Object thisValue, Object fractionDigits) {
-            double x = thisNumberValue(realm, thisValue);
-            double f = ToInteger(realm, fractionDigits);
+        public static Object toFixed(ExecutionContext cx, Object thisValue, Object fractionDigits) {
+            double x = thisNumberValue(cx, thisValue);
+            double f = ToInteger(cx, fractionDigits);
             if (f < 0 || f > 20) {
-                throw throwRangeError(realm, Messages.Key.InvalidPrecision);
+                throw throwRangeError(cx, Messages.Key.InvalidPrecision);
             }
             if (x != x) {
                 return "NaN";
@@ -144,9 +145,10 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
          * 15.7.4.6 Number.prototype.toExponential (fractionDigits)
          */
         @Function(name = "toExponential", arity = 1)
-        public static Object toExponential(Realm realm, Object thisValue, Object fractionDigits) {
-            double x = thisNumberValue(realm, thisValue);
-            double f = ToInteger(realm, fractionDigits);
+        public static Object toExponential(ExecutionContext cx, Object thisValue,
+                Object fractionDigits) {
+            double x = thisNumberValue(cx, thisValue);
+            double f = ToInteger(cx, fractionDigits);
             if (x != x) {
                 return "NaN";
             } else if (x == Double.POSITIVE_INFINITY) {
@@ -155,7 +157,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
                 return "-Infinity";
             }
             if (f < 0 || f > 20) {
-                throw throwRangeError(realm, Messages.Key.InvalidPrecision);
+                throw throwRangeError(cx, Messages.Key.InvalidPrecision);
             }
             StringBuilder sb = new StringBuilder();
             if (fractionDigits == UNDEFINED) {
@@ -170,12 +172,12 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
          * 15.7.4.7 Number.prototype.toPrecision (precision)
          */
         @Function(name = "toPrecision", arity = 1)
-        public static Object toPrecision(Realm realm, Object thisValue, Object precision) {
-            double x = thisNumberValue(realm, thisValue);
+        public static Object toPrecision(ExecutionContext cx, Object thisValue, Object precision) {
+            double x = thisNumberValue(cx, thisValue);
             if (precision == UNDEFINED) {
                 return ToString(x);
             }
-            double p = ToInteger(realm, precision);
+            double p = ToInteger(cx, precision);
             if (x != x) {
                 return "NaN";
             } else if (x == Double.POSITIVE_INFINITY) {
@@ -184,7 +186,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
                 return "-Infinity";
             }
             if (p < 1 || p > 21) {
-                throw throwRangeError(realm, Messages.Key.InvalidPrecision);
+                throw throwRangeError(cx, Messages.Key.InvalidPrecision);
             }
             StringBuilder sb = new StringBuilder();
             DToA.JS_dtostr(sb, DToA.DTOSTR_PRECISION, (int) p, x);
@@ -195,9 +197,9 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
          * 15.7.4.8 Number.prototype.clz ()
          */
         @Function(name = "clz", arity = 0)
-        public static Object clz(Realm realm, Object thisValue) {
-            double x = thisNumberValue(realm, thisValue);
-            long n = ToUint32(realm, x);
+        public static Object clz(ExecutionContext cx, Object thisValue) {
+            double x = thisNumberValue(cx, thisValue);
+            long n = ToUint32(cx, x);
             return Integer.numberOfLeadingZeros((int) n);
         }
     }

@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -47,9 +48,9 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
@@ -58,23 +59,23 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
      * 15.9.2.3 Date ( )<br>
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
-        Realm realm = realm();
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        Realm realm = callerContext.getRealm();
         int numberOfArgs = args.length;
         if (numberOfArgs >= 2) {
             // [15.9.2.1]
             if (isUninitialisedDateObject(thisValue)) {
                 DateObject obj = (DateObject) thisValue;
-                double year = ToNumber(realm, args[0]);
-                double month = ToNumber(realm, args[1]);
-                double date = (args.length > 2 ? ToNumber(realm, args[2]) : 1);
-                double hour = (args.length > 3 ? ToNumber(realm, args[3]) : 0);
-                double min = (args.length > 4 ? ToNumber(realm, args[4]) : 0);
-                double sec = (args.length > 5 ? ToNumber(realm, args[5]) : 0);
-                double ms = (args.length > 6 ? ToNumber(realm, args[6]) : 0);
-                if (!Double.isNaN(year) && 0 <= ToInteger(realm, year)
-                        && ToInteger(realm, year) <= 99) {
-                    year = 1900 + ToInteger(realm, year);
+                double year = ToNumber(callerContext, args[0]);
+                double month = ToNumber(callerContext, args[1]);
+                double date = (args.length > 2 ? ToNumber(callerContext, args[2]) : 1);
+                double hour = (args.length > 3 ? ToNumber(callerContext, args[3]) : 0);
+                double min = (args.length > 4 ? ToNumber(callerContext, args[4]) : 0);
+                double sec = (args.length > 5 ? ToNumber(callerContext, args[5]) : 0);
+                double ms = (args.length > 6 ? ToNumber(callerContext, args[6]) : 0);
+                if (!Double.isNaN(year) && 0 <= ToInteger(callerContext, year)
+                        && ToInteger(callerContext, year) <= 99) {
+                    year = 1900 + ToInteger(callerContext, year);
                 }
                 double finalDate = MakeDate(MakeDay(year, month, date),
                         MakeTime(hour, min, sec, ms));
@@ -85,12 +86,12 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
             // [15.9.2.2]
             if (isUninitialisedDateObject(thisValue)) {
                 DateObject obj = (DateObject) thisValue;
-                Object v = ToPrimitive(realm, args[0]);
+                Object v = ToPrimitive(callerContext, args[0]);
                 double d;
                 if (Type.isString(v)) {
-                    d = (double) Properties.parse(realm, null, v);
+                    d = (double) Properties.parse(callerContext, null, v);
                 } else {
-                    d = ToNumber(realm, v);
+                    d = ToNumber(callerContext, v);
                 }
                 obj.setDateValue(TimeClip(d));
                 return obj;
@@ -104,10 +105,10 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
             }
         }
         long now = System.currentTimeMillis();
-        DateObject obj = new DateObject(realm());
-        obj.setPrototype(realm(), realm().getIntrinsic(Intrinsics.DatePrototype));
+        DateObject obj = new DateObject(realm);
+        obj.setPrototype(callerContext, realm.getIntrinsic(Intrinsics.DatePrototype));
         obj.setDateValue(now);
-        return DatePrototype.Properties.toString(realm(), obj);
+        return DatePrototype.Properties.toString(callerContext, obj);
     }
 
     private static boolean isUninitialisedDateObject(Object thisValue) {
@@ -121,8 +122,8 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
      * 15.9.3.1 new Date ( ...args )
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -153,9 +154,9 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
          * 15.9.4.2 Date.parse (string)
          */
         @Function(name = "parse", arity = 1)
-        public static Object parse(Realm realm, Object thisValue, Object string) {
-            CharSequence s = ToString(realm, string);
-            double d = parseISOString(realm, s, true);
+        public static Object parse(ExecutionContext cx, Object thisValue, Object string) {
+            CharSequence s = ToString(cx, string);
+            double d = parseISOString(cx.getRealm(), s, true);
             if (Double.isNaN(d)) {
                 SimpleDateFormat df = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)",
                         Locale.US);
@@ -175,21 +176,21 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
          * 15.9.4.3 Date.UTC (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )
          */
         @Function(name = "UTC", arity = 7)
-        public static Object UTC(Realm realm, Object thisValue, Object year, Object month,
+        public static Object UTC(ExecutionContext cx, Object thisValue, Object year, Object month,
                 @Optional(value = Default.Number, numberValue = 1) Object date, @Optional(
                         value = Default.Number, numberValue = 0) Object hours, @Optional(
                         value = Default.Number, numberValue = 0) Object minutes, @Optional(
                         value = Default.Number, numberValue = 0) Object seconds, @Optional(
                         value = Default.Number, numberValue = 0) Object ms) {
-            double y = ToNumber(realm, year);
-            double m = ToNumber(realm, month);
-            double dt = ToNumber(realm, date);
-            double h = ToNumber(realm, hours);
-            double min = ToNumber(realm, minutes);
-            double sec = ToNumber(realm, seconds);
-            double milli = ToNumber(realm, ms);
-            if (!Double.isNaN(y) && 0 <= ToInteger(realm, y) && ToInteger(realm, y) <= 99) {
-                y = 1900 + ToInteger(realm, y);
+            double y = ToNumber(cx, year);
+            double m = ToNumber(cx, month);
+            double dt = ToNumber(cx, date);
+            double h = ToNumber(cx, hours);
+            double min = ToNumber(cx, minutes);
+            double sec = ToNumber(cx, seconds);
+            double milli = ToNumber(cx, ms);
+            if (!Double.isNaN(y) && 0 <= ToInteger(cx, y) && ToInteger(cx, y) <= 99) {
+                y = 1900 + ToInteger(cx, y);
             }
             double finalDate = MakeDate(MakeDay(y, m, dt), MakeTime(h, min, sec, milli));
             return TimeClip(finalDate);
@@ -199,7 +200,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
          * 15.9.4.4 Date.now ( )
          */
         @Function(name = "now", arity = 0)
-        public static Object now(Realm realm, Object thisValue) {
+        public static Object now(ExecutionContext cx, Object thisValue) {
             return (double) System.currentTimeMillis();
         }
 
@@ -211,8 +212,8 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.DatePrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.DatePrototype,
                     DateObjectAllocator.INSTANCE);
         }
     }

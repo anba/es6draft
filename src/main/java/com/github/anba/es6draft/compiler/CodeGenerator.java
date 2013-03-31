@@ -29,7 +29,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.ExpressionVisitor.Register;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 
@@ -43,14 +42,10 @@ class CodeGenerator {
     }
 
     private static class Methods {
-        // class: ExecutionContext
-        static final MethodDesc ExecutionContext_getRealm = MethodDesc.create(MethodType.Virtual,
-                Types.ExecutionContext, "getRealm", Type.getMethodType(Types.Realm));
-
         // class: Reference
         static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
                 Types.Reference, "GetValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.Realm));
+                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
@@ -232,7 +227,7 @@ class CodeGenerator {
         // GetTemplateCallSite
         mv.aconst(templateKey(node));
         mv.invokeStaticMH(className, methodName, desc);
-        mv.load(Register.ExecutionContext);
+        mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_GetTemplateCallSite);
     }
 
@@ -323,7 +318,7 @@ class CodeGenerator {
         mv.begin();
 
         for (int i = 0; i < index; ++i) {
-            mv.load(Register.ExecutionContext);
+            mv.loadExecutionContext();
             mv.loadCompletionValue();
             mv.invokestatic(getClassName(), "script_" + i, desc);
             mv.storeCompletionValue();
@@ -405,7 +400,7 @@ class CodeGenerator {
 
     private void invokeGetValue(Expression node, ExpressionVisitor mv) {
         if (node.accept(IsReference.INSTANCE, null)) {
-            mv.load(Register.Realm);
+            mv.loadExecutionContext();
             mv.invoke(Methods.Reference_GetValue);
         }
     }
@@ -456,23 +451,6 @@ class CodeGenerator {
                 get(Fields.Undefined_UNDEFINED);
                 storeCompletionValue();
             }
-            load(Register.ExecutionContext);
-            invoke(Methods.ExecutionContext_getRealm);
-            store(Register.Realm);
-        }
-
-        @Override
-        protected int var(Register reg) {
-            switch (reg) {
-            case ExecutionContext:
-                return 0;
-                // 1 = completion slot
-            case Realm:
-                return 2;
-            default:
-                assert false : reg;
-                return -1;
-            }
         }
     }
 
@@ -481,27 +459,6 @@ class CodeGenerator {
                 Type methodDescriptor, boolean strict, boolean globalCode) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
                     methodName, methodDescriptor, strict, globalCode, false);
-        }
-
-        @Override
-        public void begin() {
-            super.begin();
-            load(Register.ExecutionContext);
-            invoke(Methods.ExecutionContext_getRealm);
-            store(Register.Realm);
-        }
-
-        @Override
-        protected int var(Register reg) {
-            switch (reg) {
-            case ExecutionContext:
-                return 0;
-            case Realm:
-                return 1;
-            default:
-                assert false : reg;
-                return -1;
-            }
         }
     }
 

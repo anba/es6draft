@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -45,16 +46,16 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * [[Call]]
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         return UNDEFINED;
     }
 
@@ -85,9 +86,9 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
          * 15.3.4.2 Function.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
-        public static Object toString(Realm realm, Object thisValue) {
+        public static Object toString(ExecutionContext cx, Object thisValue) {
             if (!IsCallable(thisValue)) {
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             return ((Callable) thisValue).toSource();
         }
@@ -96,62 +97,65 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
          * 15.3.4.3 Function.prototype.apply (thisArg, argArray)
          */
         @Function(name = "apply", arity = 2)
-        public static Object apply(Realm realm, Object thisValue, Object thisArg, Object argArray) {
+        public static Object apply(ExecutionContext cx, Object thisValue, Object thisArg,
+                Object argArray) {
             if (!IsCallable(thisValue)) {
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             Callable func = (Callable) thisValue;
             if (Type.isUndefinedOrNull(argArray)) {
-                return func.call(thisArg);
+                return func.call(cx, thisArg);
             }
             if (!Type.isObject(argArray)) {
-                throw throwTypeError(realm, Messages.Key.NotObjectType);
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject argarray = Type.objectValue(argArray);
-            Object len = Get(realm, argarray, "length");
-            long n = ToUint32(realm, len);
+            Object len = Get(cx, argarray, "length");
+            long n = ToUint32(cx, len);
             assert n <= 0x10000 : n;// TODO: actual limit?!
             Object[] argList = new Object[(int) n];
             for (int index = 0; index < n; ++index) {
                 String indexName = ToString(index);
-                Object nextArg = Get(realm, argarray, indexName);
+                Object nextArg = Get(cx, argarray, indexName);
                 argList[index] = nextArg;
             }
-            return func.call(thisArg, argList);
+            return func.call(cx, thisArg, argList);
         }
 
         /**
          * 15.3.4.4 Function.prototype.call (thisArg [ , arg1 [ , arg2, ... ] ] )
          */
         @Function(name = "call", arity = 1)
-        public static Object call(Realm realm, Object thisValue, Object thisArg, Object... args) {
+        public static Object call(ExecutionContext cx, Object thisValue, Object thisArg,
+                Object... args) {
             if (!IsCallable(thisValue)) {
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             Callable func = (Callable) thisValue;
-            return func.call(thisArg, args);
+            return func.call(cx, thisArg, args);
         }
 
         /**
          * 15.3.4.5 Function.prototype.bind (thisArg [, arg1 [, arg2, ...]])
          */
         @Function(name = "bind", arity = 1)
-        public static Object bind(Realm realm, Object thisValue, Object thisArg, Object... args) {
+        public static Object bind(ExecutionContext cx, Object thisValue, Object thisArg,
+                Object... args) {
             if (!IsCallable(thisValue)) {
-                throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             Callable target = (Callable) thisValue;
-            ExoticBoundFunction f = BoundFunctionCreate(realm, target, thisArg, args);
+            ExoticBoundFunction f = BoundFunctionCreate(cx, target, thisArg, args);
             int l;
             if (target instanceof OrdinaryFunction || target instanceof OrdinaryGenerator
                     || target instanceof BuiltinFunction || target instanceof ExoticBoundFunction) {
-                Object targetLen = Get(realm, target, "length");
-                l = (int) Math.max(0, ToInteger(realm, targetLen) - args.length);
+                Object targetLen = Get(cx, target, "length");
+                l = (int) Math.max(0, ToInteger(cx, targetLen) - args.length);
             } else {
                 l = 0;
             }
-            f.defineOwnProperty(realm, "length", new PropertyDescriptor(l, false, false, false));
-            AddRestrictedFunctionProperties(realm, f);
+            f.defineOwnProperty(cx, "length", new PropertyDescriptor(l, false, false, false));
+            AddRestrictedFunctionProperties(cx, f);
             return f;
         }
 
@@ -159,16 +163,16 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
          * 15.3.4.6 Function.prototype[ @@create ] ( )
          */
         @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create)
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.ObjectPrototype);
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ObjectPrototype);
         }
 
         /**
          * 15.3.4.7 Function.prototype[@@hasInstance] (V)
          */
         @Function(name = "@@hasInstance", arity = 1, symbol = BuiltinSymbol.hasInstance)
-        public static Object hasInstance(Realm realm, Object thisValue, Object v) {
-            return OrdinaryHasInstance(realm, thisValue, v);
+        public static Object hasInstance(ExecutionContext cx, Object thisValue, Object v) {
+            return OrdinaryHasInstance(cx, thisValue, v);
         }
     }
 }

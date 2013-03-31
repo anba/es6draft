@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
@@ -45,16 +46,16 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
 
         // 15.16.4.8 Set.prototype.keys ( )
-        defineOwnProperty(realm, "keys", new PropertyDescriptor(Get(realm, this, "values"), true,
-                false, true));
+        defineOwnProperty(cx, "keys", new PropertyDescriptor(Get(cx, this, "values"), true, false,
+                true));
 
         // 15.16.4.11 Set.prototype.@@iterator ( )
-        defineOwnProperty(realm, BuiltinSymbol.iterator.get(),
-                new PropertyDescriptor(Get(realm, this, "values"), true, false, true));
+        defineOwnProperty(cx, BuiltinSymbol.iterator.get(),
+                new PropertyDescriptor(Get(cx, this, "values"), true, false, true));
     }
 
     /**
@@ -63,14 +64,14 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
     public enum Properties {
         ;
 
-        private static SetObject thisSetValue(Realm realm, Object obj) {
+        private static SetObject thisSetValue(ExecutionContext cx, Object obj) {
             if (Type.isObject(obj) && obj instanceof SetObject) {
                 SetObject set = (SetObject) obj;
                 if (set.isInitialised()) {
                     return set;
                 }
             }
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -86,8 +87,8 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          * 15.16.4.2 Set.prototype.add (value )
          */
         @Function(name = "add", arity = 1)
-        public static Object add(Realm realm, Object thisValue, Object value) {
-            SetObject s = thisSetValue(realm, thisValue);
+        public static Object add(ExecutionContext cx, Object thisValue, Object value) {
+            SetObject s = thisSetValue(cx, thisValue);
             LinkedMap<Object, Void> entries = s.getSetData();
             entries.set(value, null);
             return s;
@@ -97,8 +98,8 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          * 15.16.4.3 Set.prototype.clear ()
          */
         @Function(name = "clear", arity = 0)
-        public static Object clear(Realm realm, Object thisValue) {
-            SetObject s = thisSetValue(realm, thisValue);
+        public static Object clear(ExecutionContext cx, Object thisValue) {
+            SetObject s = thisSetValue(cx, thisValue);
             LinkedMap<Object, Void> entries = s.getSetData();
             entries.clear();
             return UNDEFINED;
@@ -108,8 +109,8 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          * 15.16.4.4 Set.prototype.delete ( value )
          */
         @Function(name = "delete", arity = 1)
-        public static Object delete(Realm realm, Object thisValue, Object value) {
-            SetObject s = thisSetValue(realm, thisValue);
+        public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
+            SetObject s = thisSetValue(cx, thisValue);
             LinkedMap<Object, Void> entries = s.getSetData();
             return entries.delete(value);
         }
@@ -118,27 +119,27 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          * 15.16.4.5 Set.prototype.entries ( )
          */
         @Function(name = "entries", arity = 0)
-        public static Object entries(Realm realm, Object thisValue) {
-            SetObject s = thisSetValue(realm, thisValue);
-            return CreateSetIterator(realm, s, SetIterationKind.KeyValue);
+        public static Object entries(ExecutionContext cx, Object thisValue) {
+            SetObject s = thisSetValue(cx, thisValue);
+            return CreateSetIterator(cx, s, SetIterationKind.KeyValue);
         }
 
         /**
          * 15.16.4.6 Set.prototype.forEach ( callbackfn , thisArg = undefined )
          */
         @Function(name = "forEach", arity = 1)
-        public static Object forEach(Realm realm, Object thisValue, Object callbackfn,
+        public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
-            SetObject s = thisSetValue(realm, thisValue);
+            SetObject s = thisSetValue(cx, thisValue);
             LinkedMap<Object, Void> entries = s.getSetData();
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(realm, Messages.Key.NotCallable);
+                throw throwTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             for (Iterator<Entry<Object, Void>> itr = entries.iterator(); itr.hasNext();) {
                 Entry<Object, Void> e = itr.next();
                 assert e != null;
-                callback.call(thisArg, e.getKey(), s);
+                callback.call(cx, thisArg, e.getKey(), s);
             }
             return UNDEFINED;
         }
@@ -147,8 +148,8 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          * 15.16.4.7 Set.prototype.has ( value )
          */
         @Function(name = "has", arity = 1)
-        public static Object has(Realm realm, Object thisValue, Object key) {
-            SetObject s = thisSetValue(realm, thisValue);
+        public static Object has(ExecutionContext cx, Object thisValue, Object key) {
+            SetObject s = thisSetValue(cx, thisValue);
             LinkedMap<Object, Void> entries = s.getSetData();
             return entries.has(key);
         }
@@ -157,8 +158,8 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          * 15.16.4.9 get Set.prototype.size
          */
         @Accessor(name = "size", type = Accessor.Type.Getter)
-        public static Object size(Realm realm, Object thisValue) {
-            SetObject s = thisSetValue(realm, thisValue);
+        public static Object size(ExecutionContext cx, Object thisValue) {
+            SetObject s = thisSetValue(cx, thisValue);
             LinkedMap<Object, Void> entries = s.getSetData();
             return entries.size();
         }
@@ -167,9 +168,9 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          * 15.16.4.10 Set.prototype.values ( )
          */
         @Function(name = "values", arity = 0)
-        public static Object values(Realm realm, Object thisValue) {
-            SetObject s = thisSetValue(realm, thisValue);
-            return CreateSetIterator(realm, s, SetIterationKind.Value);
+        public static Object values(ExecutionContext cx, Object thisValue) {
+            SetObject s = thisSetValue(cx, thisValue);
+            return CreateSetIterator(cx, s, SetIterationKind.Value);
         }
 
         /**

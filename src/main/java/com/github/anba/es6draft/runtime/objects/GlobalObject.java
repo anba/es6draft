@@ -17,6 +17,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import org.mozilla.javascript.StringToNumber;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -45,15 +46,15 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
     }
 
     @Override
-    public void initialise(Realm realm) {
+    public void initialise(ExecutionContext cx) {
         // implementation defined behaviour
-        setPrototype(realm, realm.getIntrinsic(Intrinsics.ObjectPrototype));
+        setPrototype(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
 
-        createProperties(this, realm, ValueProperties.class);
-        createProperties(this, realm, FunctionProperties.class);
-        createProperties(this, realm, URIFunctionProperties.class);
-        createProperties(this, realm, ConstructorProperties.class);
-        createProperties(this, realm, OtherProperties.class);
+        createProperties(this, cx, ValueProperties.class);
+        createProperties(this, cx, FunctionProperties.class);
+        createProperties(this, cx, URIFunctionProperties.class);
+        createProperties(this, cx, ConstructorProperties.class);
+        createProperties(this, cx, OtherProperties.class);
     }
 
     /**
@@ -94,16 +95,17 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * 15.1.2.1 eval (x)
          */
         @Function(name = "eval", arity = 1)
-        public static Object eval(Realm realm, Object thisValue, Object x) {
-            return indirectEval(realm, x);
+        public static Object eval(ExecutionContext cx, Object thisValue, Object x) {
+            return indirectEval(cx, x);
         }
 
         /**
          * 15.1.2.2 parseInt (string , radix)
          */
         @Function(name = "parseInt", arity = 2)
-        public static Object parseInt(Realm realm, Object thisValue, Object string, Object radix) {
-            CharSequence inputString = ToString(realm, string);
+        public static Object parseInt(ExecutionContext cx, Object thisValue, Object string,
+                Object radix) {
+            CharSequence inputString = ToString(cx, string);
             CharSequence s = Strings.trimLeft(inputString);
             int len = s.length();
             int index = 0;
@@ -114,7 +116,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
                 index += 1;
             }
             /* step 7-8 */
-            int r = ToInt32(realm, radix);
+            int r = ToInt32(cx, radix);
             /* step 9 */
             boolean stripPrefix = true;
             if (r != 0) {
@@ -143,8 +145,8 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * 15.1.2.3 parseFloat (string)
          */
         @Function(name = "parseFloat", arity = 1)
-        public static Object parseFloat(Realm realm, Object thisValue, Object string) {
-            CharSequence inputString = ToString(realm, string);
+        public static Object parseFloat(ExecutionContext cx, Object thisValue, Object string) {
+            CharSequence inputString = ToString(cx, string);
             String trimmedString = Strings.trimLeft(inputString).toString();
             if (trimmedString.isEmpty()) {
                 return Double.NaN;
@@ -156,8 +158,8 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * 15.1.2.4 isNaN (number)
          */
         @Function(name = "isNaN", arity = 1)
-        public static Object isNaN(Realm realm, Object thisValue, Object number) {
-            double num = ToNumber(realm, number);
+        public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
+            double num = ToNumber(cx, number);
             if (Double.isNaN(num)) {
                 return true;
             }
@@ -168,8 +170,8 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * 15.1.2.5 isFinite (number)
          */
         @Function(name = "isFinite", arity = 1)
-        public static Object isFinite(Realm realm, Object thisValue, Object number) {
-            double num = ToNumber(realm, number);
+        public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
+            double num = ToNumber(cx, number);
             if (Double.isNaN(num) || Double.isInfinite(num)) {
                 return false;
             }
@@ -195,9 +197,9 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * B.2.1.1 escape (string)
          */
         @Function(name = "escape", arity = 1)
-        public static Object escape(Realm realm, Object thisValue, Object string) {
+        public static Object escape(ExecutionContext cx, Object thisValue, Object string) {
             // FIXME: spec bug (spec language still in ES3 style)
-            String s = ToFlatString(realm, string);
+            String s = ToFlatString(cx, string);
             int length = s.length();
             StringBuilder r = new StringBuilder(length);
             for (int k = 0; k < length; ++k) {
@@ -220,9 +222,9 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * B.2.1.2 unescape (string)
          */
         @Function(name = "unescape", arity = 1)
-        public static Object unescape(Realm realm, Object thisValue, Object string) {
+        public static Object unescape(ExecutionContext cx, Object thisValue, Object string) {
             // FIXME: spec bug (spec language still in ES3 style)
-            String s = ToFlatString(realm, string);
+            String s = ToFlatString(cx, string);
             int length = s.length();
             StringBuilder r = new StringBuilder(length);
             for (int k = 0; k < length; ++k) {
@@ -265,11 +267,11 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * 15.1.3.1 decodeURI (encodedURI)
          */
         @Function(name = "decodeURI", arity = 1)
-        public static Object decodeURI(Realm realm, Object thisValue, Object encodedURI) {
-            String uriString = ToFlatString(realm, encodedURI);
+        public static Object decodeURI(ExecutionContext cx, Object thisValue, Object encodedURI) {
+            String uriString = ToFlatString(cx, encodedURI);
             String decoded = URIFunctions.decodeURI(uriString);
             if (decoded == null) {
-                throw throwURIError(realm, Messages.Key.MalformedURI);
+                throw throwURIError(cx, Messages.Key.MalformedURI);
             }
             return decoded;
         }
@@ -278,12 +280,12 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * 15.1.3.2 decodeURIComponent (encodedURIComponent)
          */
         @Function(name = "decodeURIComponent", arity = 1)
-        public static Object decodeURIComponent(Realm realm, Object thisValue,
+        public static Object decodeURIComponent(ExecutionContext cx, Object thisValue,
                 Object encodedURIComponent) {
-            String componentString = ToFlatString(realm, encodedURIComponent);
+            String componentString = ToFlatString(cx, encodedURIComponent);
             String decoded = URIFunctions.decodeURIComponent(componentString);
             if (decoded == null) {
-                throw throwURIError(realm, Messages.Key.MalformedURI);
+                throw throwURIError(cx, Messages.Key.MalformedURI);
             }
             return decoded;
         }
@@ -292,11 +294,11 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * 15.1.3.3 encodeURI (uri)
          */
         @Function(name = "encodeURI", arity = 1)
-        public static Object encodeURI(Realm realm, Object thisValue, Object uri) {
-            String uriString = ToFlatString(realm, uri);
+        public static Object encodeURI(ExecutionContext cx, Object thisValue, Object uri) {
+            String uriString = ToFlatString(cx, uri);
             String encoded = URIFunctions.encodeURI(uriString);
             if (encoded == null) {
-                throw throwURIError(realm, Messages.Key.MalformedURI);
+                throw throwURIError(cx, Messages.Key.MalformedURI);
             }
             return encoded;
         }
@@ -305,11 +307,12 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * 15.1.3.4 encodeURIComponent (uriComponent)
          */
         @Function(name = "encodeURIComponent", arity = 1)
-        public static Object encodeURIComponent(Realm realm, Object thisValue, Object uriComponent) {
-            String componentString = ToFlatString(realm, uriComponent);
+        public static Object encodeURIComponent(ExecutionContext cx, Object thisValue,
+                Object uriComponent) {
+            String componentString = ToFlatString(cx, uriComponent);
             String encoded = URIFunctions.encodeURIComponent(componentString);
             if (encoded == null) {
-                throw throwURIError(realm, Messages.Key.MalformedURI);
+                throw throwURIError(cx, Messages.Key.MalformedURI);
             }
             return encoded;
         }

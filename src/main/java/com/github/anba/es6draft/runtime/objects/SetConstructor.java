@@ -15,6 +15,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -47,31 +48,31 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.16.1.1 Set (iterable = undefined, comparator = undefined )
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
-        Realm realm = realm();
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        Realm realm = callerContext.getRealm();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
         Object comparator = args.length > 1 ? args[1] : UNDEFINED;
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
             // FIXME: spec bug ? `Set()` no longer allowed
-            throw throwTypeError(realm, Messages.Key.NotObjectType);
+            throw throwTypeError(callerContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof SetObject)) {
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
         SetObject set = (SetObject) thisValue;
         if (set.isInitialised()) {
-            throw throwTypeError(realm, Messages.Key.IncompatibleObject);
+            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
 
         /* steps 5-7 */
@@ -80,10 +81,10 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
             itr = UNDEFINED;
         } else {
             Symbol iterator = BuiltinSymbol.iterator.get();
-            itr = Invoke(realm, iterable, iterator);
-            adder = Get(realm, set, "add");
+            itr = Invoke(callerContext, iterable, iterator);
+            adder = Get(callerContext, set, "add");
             if (!IsCallable(adder)) {
-                throw throwTypeError(realm, Messages.Key.NotCallable);
+                throw throwTypeError(callerContext, Messages.Key.NotCallable);
             }
         }
 
@@ -92,7 +93,7 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
                 // TODO: error message
-                throw throwRangeError(realm, Messages.Key.InvalidPrecision);
+                throw throwRangeError(callerContext, Messages.Key.InvalidPrecision);
             }
             _comparator = SetObject.Comparator.SameValue;
         }
@@ -105,14 +106,14 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
         for (;;) {
             Object next;
             try {
-                next = Invoke(realm, itr, "next");
+                next = Invoke(callerContext, itr, "next");
             } catch (ScriptException e) {
                 if (IteratorComplete(realm, e)) {
                     return set;
                 }
                 throw e;
             }
-            ((Callable) adder).call(set, next);
+            ((Callable) adder).call(callerContext, set, next);
         }
     }
 
@@ -120,8 +121,8 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
      * 15.16.2.1 new Set ( ... args)
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -156,8 +157,8 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.SetPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.SetPrototype,
                     SetObjectAllocator.INSTANCE);
         }
     }

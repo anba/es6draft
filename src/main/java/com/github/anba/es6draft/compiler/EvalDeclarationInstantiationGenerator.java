@@ -49,22 +49,23 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_bindingNotPresentOrThrow = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "bindingNotPresentOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.Realm, Types.EnvironmentRecord,
-                                Types.String));
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                                Types.EnvironmentRecord, Types.String));
     }
 
     EvalDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);
     }
 
-    private static final int REALM = 0;
+    private static final int EXECUTION_CONTEXT = 0;
     private static final int LEX_ENV = 1;
     private static final int VAR_ENV = 2;
     private static final int DELETABLE_BINDINGS = 3;
 
     private static final String methodName = "script_evalinit";
-    private static final Type methodType = Type.getMethodType(Type.VOID_TYPE, Types.Realm,
-            Types.LexicalEnvironment, Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
+    private static final Type methodType = Type.getMethodType(Type.VOID_TYPE,
+            Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
+            Type.BOOLEAN_TYPE);
 
     void generate(Script evalScript) {
         InstructionVisitor init = codegen.publicStaticMethod(methodName, methodType);
@@ -77,7 +78,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
     private void generate(Script evalScript, InstructionVisitor mv) {
         // FIXME: spec incomplete (using modified ES5.1 algorithm for now...)
 
-        int realm = REALM;
+        int context = EXECUTION_CONTEXT;
         int lexEnv = LEX_ENV;
         int varEnv = VAR_ENV;
         int deletableBindings = DELETABLE_BINDINGS;
@@ -95,7 +96,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
 
         // begin-modification
         for (String name : LexicallyDeclaredNames(evalScript)) {
-            mv.load(realm, Types.Realm);
+            mv.load(context, Types.ExecutionContext);
             mv.load(lexEnvRec, Types.EnvironmentRecord);
             mv.aconst(name);
             mv.invoke(Methods.ScriptRuntime_bindingNotPresentOrThrow);
@@ -115,9 +116,9 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
 
                 // stack: [] -> [fo]
                 if (f instanceof GeneratorDeclaration) {
-                    InstantiateGeneratorObject(realm, lexEnv, (GeneratorDeclaration) f, mv);
+                    InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) f, mv);
                 } else {
-                    InstantiateFunctionObject(realm, lexEnv, (FunctionDeclaration) f, mv);
+                    InstantiateFunctionObject(context, lexEnv, (FunctionDeclaration) f, mv);
                 }
 
                 hasBinding(envRec, fn, mv);

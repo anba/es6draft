@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -77,7 +78,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable, Con
      * 8.4.1.1 [[Call]]
      */
     @Override
-    public Object call(Object thisValue, Object... argumentsList) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... argumentsList) {
         /* step 1 */
         Object[] boundArgs = boundArguments;
         /* step 2 */
@@ -89,19 +90,19 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable, Con
         System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);
         System.arraycopy(argumentsList, 0, args, boundArgs.length, argumentsList.length);
         /* step 5 */
-        return target.call(boundThis, args);
+        return target.call(callerContext, boundThis, args);
     }
 
     /**
      * 8.4.1.2 [[Construct]]
      */
     @Override
-    public Object construct(Object... extraArgs) {
+    public Object construct(ExecutionContext callerContext, Object... extraArgs) {
         /* step 1 */
         Callable target = boundTargetFunction;
         /* step 2 */
         if (!(target instanceof Constructor)) {
-            throw throwTypeError(realm(), Messages.Key.NotConstructor);
+            throw throwTypeError(callerContext, Messages.Key.NotConstructor);
         }
         /* step 3 */
         Object[] boundArgs = boundArguments;
@@ -110,20 +111,20 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable, Con
         System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);
         System.arraycopy(extraArgs, 0, args, boundArgs.length, extraArgs.length);
         /* step 5 */
-        return ((Constructor) target).construct(args);
+        return ((Constructor) target).construct(callerContext, args);
     }
 
     /**
      * 8.4.1.3 BoundFunctionCreate Abstract Operation
      */
-    public static ExoticBoundFunction BoundFunctionCreate(Realm realm, Callable targetFunction,
-            Object boundThis, Object[] boundArgs) {
+    public static ExoticBoundFunction BoundFunctionCreate(ExecutionContext cx,
+            Callable targetFunction, Object boundThis, Object[] boundArgs) {
         /* step 1 */
-        ScriptObject proto = realm.getIntrinsic(Intrinsics.FunctionPrototype);
+        ScriptObject proto = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         /* step 2-5 (implicit) */
-        ExoticBoundFunction obj = new ExoticBoundFunction(realm);
+        ExoticBoundFunction obj = new ExoticBoundFunction(cx.getRealm());
         /* step 6 */
-        obj.setPrototype(realm, proto);
+        obj.setPrototype(cx, proto);
         /* step 7 (implicit) */
         /* step 8 */
         obj.boundTargetFunction = targetFunction;

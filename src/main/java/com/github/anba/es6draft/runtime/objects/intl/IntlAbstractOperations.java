@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolveLocaleOptions.MatcherType;
@@ -68,8 +69,8 @@ public final class IntlAbstractOperations {
     /**
      * 6.3.1 IsWellFormedCurrencyCode (currency)
      */
-    public static boolean IsWellFormedCurrencyCode(Realm realm, Object currency) {
-        String s = ToFlatString(realm, currency);
+    public static boolean IsWellFormedCurrencyCode(ExecutionContext cx, Object currency) {
+        String s = ToFlatString(cx, currency);
         if (s.length() != 3) {
             return false;
         }
@@ -96,30 +97,30 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.1 CanonicalizeLocaleList (locales)
      */
-    public static Set<String> CanonicalizeLocaleList(Realm realm, Object locales) {
+    public static Set<String> CanonicalizeLocaleList(ExecutionContext cx, Object locales) {
         if (Type.isUndefined(locales)) {
             return emptySet();
         }
         Set<String> seen = new LinkedHashSet<>();
         if (Type.isString(locales)) {
-            locales = CreateArrayFromList(realm, singletonList(locales));
+            locales = CreateArrayFromList(cx, singletonList(locales));
         }
-        ScriptObject o = ToObject(realm, locales);
-        Object lenValue = Get(realm, o, "length");
-        long len = ToUint32(realm, lenValue);
+        ScriptObject o = ToObject(cx, locales);
+        Object lenValue = Get(cx, o, "length");
+        long len = ToUint32(cx, lenValue);
         for (long k = 0; k < len; ++k) {
             String pk = ToString(k);
-            boolean kPresent = HasProperty(realm, o, pk);
+            boolean kPresent = HasProperty(cx, o, pk);
             if (kPresent) {
-                Object kValue = Get(realm, o, pk);
+                Object kValue = Get(cx, o, pk);
                 if (!(Type.isString(kValue) || Type.isObject(pk))) {
                     // TODO: error message
-                    throwTypeError(realm, Messages.Key.IncompatibleObject);
+                    throwTypeError(cx, Messages.Key.IncompatibleObject);
                 }
-                String tag = ToFlatString(realm, kValue);
+                String tag = ToFlatString(cx, kValue);
                 if (!IsStructurallyValidLanguageTag(tag)) {
                     // TODO: error message
-                    throwRangeError(realm, Messages.Key.InvalidDescriptor);
+                    throwRangeError(cx, Messages.Key.InvalidDescriptor);
                 }
                 tag = CanonicalizeLanguageTag(tag);
                 if (seen.contains(tag)) {
@@ -174,7 +175,7 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.3 LookupMatcher (availableLocales, requestedLocales)
      */
-    public static LocaleMatch LookupMatcher(Realm realm, Set<String> availableLocales,
+    public static LocaleMatch LookupMatcher(ExecutionContext cx, Set<String> availableLocales,
             Set<String> requestedLocales) {
         for (String locale : requestedLocales) {
             String noExtensionsLocale = removeUnicodeLocaleExtSequence(locale);
@@ -190,16 +191,16 @@ public final class IntlAbstractOperations {
             }
         }
         LocaleMatch result = new LocaleMatch();
-        result.locale = DefaultLocale(realm);
+        result.locale = DefaultLocale(cx.getRealm());
         return result;
     }
 
     /**
      * 9.2.4 BestFitMatcher (availableLocales, requestedLocales)
      */
-    public static LocaleMatch BestFitMatcher(Realm realm, Set<String> availableLocales,
+    public static LocaleMatch BestFitMatcher(ExecutionContext cx, Set<String> availableLocales,
             Set<String> requestedLocales) {
-        return LookupMatcher(realm, availableLocales, requestedLocales);
+        return LookupMatcher(cx, availableLocales, requestedLocales);
     }
 
     public static final class ResolveLocaleOptions {
@@ -221,15 +222,15 @@ public final class IntlAbstractOperations {
      * 9.2.5 ResolveLocale (availableLocales, requestedLocales, options, relevantExtensionKeys,
      * localeData)
      */
-    public static ResolvedLocale ResolveLocale(Realm realm, Set<String> availableLocales,
+    public static ResolvedLocale ResolveLocale(ExecutionContext cx, Set<String> availableLocales,
             Set<String> requestedLocales, ResolveLocaleOptions options,
             ScriptObject relevantExtensionKeys, ScriptObject localeData) {
         MatcherType matcher = options.localeMatcher;
         LocaleMatch r;
         if (matcher == MatcherType.Lookup) {
-            r = LookupMatcher(realm, availableLocales, requestedLocales);
+            r = LookupMatcher(cx, availableLocales, requestedLocales);
         } else {
-            r = BestFitMatcher(realm, availableLocales, requestedLocales);
+            r = BestFitMatcher(cx, availableLocales, requestedLocales);
         }
         String foundLocale = r.locale;
         List<String> extensionSubtags = null;
@@ -241,12 +242,12 @@ public final class IntlAbstractOperations {
         ResolvedLocale result = new ResolvedLocale();
         result.dataLocale = foundLocale;
         String supportedExtension = "-u";
-        long len = ToUint32(realm, Get(realm, relevantExtensionKeys, "length"));
+        long len = ToUint32(cx, Get(cx, relevantExtensionKeys, "length"));
         for (long i = 0; i < len; ++i) {
-            String key = (String) Get(realm, relevantExtensionKeys, ToString(i));
-            ScriptObject foundLocaleData = (ScriptObject) Get(realm, localeData, foundLocale);
-            ScriptObject keyLocaleData = (ScriptObject) Get(realm, foundLocaleData, key);
-            Object value = Get(realm, keyLocaleData, "0");
+            String key = (String) Get(cx, relevantExtensionKeys, ToString(i));
+            ScriptObject foundLocaleData = (ScriptObject) Get(cx, localeData, foundLocale);
+            ScriptObject keyLocaleData = (ScriptObject) Get(cx, foundLocaleData, key);
+            Object value = Get(cx, keyLocaleData, "0");
             String supportedExtensionAddition = "";
             if (extensionSubtags != null) {
                 int keyPos = extensionSubtags.indexOf(key);
@@ -265,8 +266,8 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.6 LookupSupportedLocales (availableLocales, requestedLocales)
      */
-    public static ScriptObject LookupSupportedLocales(Realm realm, Set<String> availableLocales,
-            Set<String> requestedLocales) {
+    public static ScriptObject LookupSupportedLocales(ExecutionContext cx,
+            Set<String> availableLocales, Set<String> requestedLocales) {
         List<String> subset = new ArrayList<>();
         for (String locale : requestedLocales) {
             String noExtensionsLocale = removeUnicodeLocaleExtSequence(locale);
@@ -275,53 +276,53 @@ public final class IntlAbstractOperations {
                 subset.add(locale);
             }
         }
-        ScriptObject subsetArray = AbstractOperations.CreateArrayFromList(realm, subset);
+        ScriptObject subsetArray = AbstractOperations.CreateArrayFromList(cx, subset);
         return subsetArray;
     }
 
     /**
      * 9.2.7 BestFitSupportedLocales (availableLocales, requestedLocales)
      */
-    public static ScriptObject BestFitSupportedLocales(Realm realm, Set<String> availableLocales,
-            Set<String> requestedLocales) {
-        return LookupSupportedLocales(realm, availableLocales, requestedLocales);
+    public static ScriptObject BestFitSupportedLocales(ExecutionContext cx,
+            Set<String> availableLocales, Set<String> requestedLocales) {
+        return LookupSupportedLocales(cx, availableLocales, requestedLocales);
     }
 
     /**
      * 9.2.8 SupportedLocales (availableLocales, requestedLocales, options)
      */
-    public static ScriptObject SupportedLocales(Realm realm, Set<String> availableLocales,
+    public static ScriptObject SupportedLocales(ExecutionContext cx, Set<String> availableLocales,
             Set<String> requestedLocales, Object options) {
         boolean useBestFit = true;
         if (!Type.isUndefined(options)) {
-            ScriptObject opts = ToObject(realm, options);
-            Object matcher = Get(realm, opts, "localeMatcher");
+            ScriptObject opts = ToObject(cx, options);
+            Object matcher = Get(cx, opts, "localeMatcher");
             if (!Type.isUndefined(matcher)) {
-                String m = ToFlatString(realm, matcher);
+                String m = ToFlatString(cx, matcher);
                 if ("lookup".equals(m)) {
                     useBestFit = false;
                 } else if (!"best fit".equals(m)) {
-                    throwRangeError(realm, Messages.Key.InvalidPrecision);
+                    throwRangeError(cx, Messages.Key.InvalidPrecision);
                 }
             }
         }
         ScriptObject subset;
         if (useBestFit) {
-            subset = BestFitSupportedLocales(realm, availableLocales, requestedLocales);
+            subset = BestFitSupportedLocales(cx, availableLocales, requestedLocales);
         } else {
-            subset = LookupSupportedLocales(realm, availableLocales, requestedLocales);
+            subset = LookupSupportedLocales(cx, availableLocales, requestedLocales);
         }
         PropertyDescriptor nonConfigurableWritable = new PropertyDescriptor();
         nonConfigurableWritable.setConfigurable(false);
         nonConfigurableWritable.setWritable(false);
-        Iterator<?> keys = FromListIterator(realm, subset.ownPropertyKeys(realm));
+        Iterator<?> keys = FromListIterator(cx, subset.ownPropertyKeys(cx));
         while (keys.hasNext()) {
-            Object key = ToPropertyKey(realm, keys.next());
+            Object key = ToPropertyKey(cx, keys.next());
             if (key instanceof String) {
-                DefinePropertyOrThrow(realm, subset, (String) key, nonConfigurableWritable);
+                DefinePropertyOrThrow(cx, subset, (String) key, nonConfigurableWritable);
             } else {
                 assert key instanceof Symbol;
-                DefinePropertyOrThrow(realm, subset, (Symbol) key, nonConfigurableWritable);
+                DefinePropertyOrThrow(cx, subset, (Symbol) key, nonConfigurableWritable);
             }
         }
         return subset;
@@ -330,19 +331,19 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.9 GetOption (options, property, type, values, fallback)
      */
-    public static <T> T getOption(Realm realm, ScriptObject options, String property, Type type,
-            Set<T> values, T fallback) {
-        Object value = Get(realm, options, property);
+    public static <T> T getOption(ExecutionContext cx, ScriptObject options, String property,
+            Type type, Set<T> values, T fallback) {
+        Object value = Get(cx, options, property);
         if (!Type.isUndefined(value)) {
             assert type == Type.Boolean || type == Type.String;
             if (type == Type.Boolean) {
                 value = ToBoolean(value);
             }
             if (type == Type.String) {
-                value = ToFlatString(realm, value);
+                value = ToFlatString(cx, value);
             }
             if (values != null && values.contains(value)) {
-                throwRangeError(realm, Messages.Key.InvalidPrecision);
+                throwRangeError(cx, Messages.Key.InvalidPrecision);
             }
             @SuppressWarnings("unchecked")
             T val = (T) value;
@@ -354,13 +355,13 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.9 GetOption (options, property, type, values, fallback)
      */
-    public static String getStringOption(Realm realm, ScriptObject options, String property,
-            Set<String> values, String fallback) {
-        Object value = Get(realm, options, property);
+    public static String getStringOption(ExecutionContext cx, ScriptObject options,
+            String property, Set<String> values, String fallback) {
+        Object value = Get(cx, options, property);
         if (!Type.isUndefined(value)) {
-            String val = ToFlatString(realm, value);
+            String val = ToFlatString(cx, value);
             if (values != null && values.contains(val)) {
-                throwRangeError(realm, Messages.Key.InvalidPrecision);
+                throwRangeError(cx, Messages.Key.InvalidPrecision);
             }
             return val;
         }
@@ -370,9 +371,9 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.9 GetOption (options, property, type, values, fallback)
      */
-    public static boolean getBooleanOption(Realm realm, ScriptObject options, String property,
-            boolean fallback) {
-        Object value = Get(realm, options, property);
+    public static boolean getBooleanOption(ExecutionContext cx, ScriptObject options,
+            String property, boolean fallback) {
+        Object value = Get(cx, options, property);
         if (!Type.isUndefined(value)) {
             return ToBoolean(value);
         }
@@ -382,13 +383,13 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.10 GetNumberOption (options, property, minimum, maximum, fallback)
      */
-    public static double GetNumberOption(Realm realm, ScriptObject options, String property,
-            double minimum, double maximum, double fallback) {
-        Object value = Get(realm, options, property);
+    public static double GetNumberOption(ExecutionContext cx, ScriptObject options,
+            String property, double minimum, double maximum, double fallback) {
+        Object value = Get(cx, options, property);
         if (!Type.isUndefined(value)) {
-            double val = ToNumber(realm, value);
+            double val = ToNumber(cx, value);
             if (Double.isNaN(val) || val < minimum || val > maximum) {
-                throwRangeError(realm, Messages.Key.InvalidPrecision);
+                throwRangeError(cx, Messages.Key.InvalidPrecision);
             }
             return Math.floor(val);
         }

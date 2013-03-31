@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -85,46 +86,46 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     @Override
-    public void initialise(Realm realm) {
+    public void initialise(ExecutionContext cx) {
         switch (type) {
         case EvalError:
-            createProperties(this, realm, EvalErrorConstructorProperties.class);
+            createProperties(this, cx, EvalErrorConstructorProperties.class);
             break;
         case RangeError:
-            createProperties(this, realm, RangeErrorConstructorProperties.class);
+            createProperties(this, cx, RangeErrorConstructorProperties.class);
             break;
         case ReferenceError:
-            createProperties(this, realm, ReferenceErrorConstructorProperties.class);
+            createProperties(this, cx, ReferenceErrorConstructorProperties.class);
             break;
         case SyntaxError:
-            createProperties(this, realm, SyntaxErrorConstructorProperties.class);
+            createProperties(this, cx, SyntaxErrorConstructorProperties.class);
             break;
         case TypeError:
-            createProperties(this, realm, TypeErrorConstructorProperties.class);
+            createProperties(this, cx, TypeErrorConstructorProperties.class);
             break;
         case URIError:
-            createProperties(this, realm, URIErrorConstructorProperties.class);
+            createProperties(this, cx, URIErrorConstructorProperties.class);
             break;
         case InternalError:
-            createProperties(this, realm, InternalErrorConstructorProperties.class);
+            createProperties(this, cx, InternalErrorConstructorProperties.class);
             break;
         default:
             throw new IllegalStateException();
         }
-        AddRestrictedFunctionProperties(realm, this);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     /**
      * 15.11.7.1.1 NativeError (message)
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         Object message = args.length > 0 ? args[0] : UNDEFINED;
 
         ErrorObject obj;
         if (!Type.isObject(thisValue) || !(thisValue instanceof ErrorObject)
                 || ((ErrorObject) thisValue).isInitialised()) {
-            obj = OrdinaryCreateFromConstructor(realm(), this, type.prototype(),
+            obj = OrdinaryCreateFromConstructor(callerContext, this, type.prototype(),
                     NativeErrorObjectAllocator.INSTANCE);
         } else {
             obj = (ErrorObject) thisValue;
@@ -133,8 +134,8 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         obj.initialise();
 
         if (!Type.isUndefined(message)) {
-            CharSequence msg = ToString(realm(), message);
-            CreateOwnDataProperty(realm(), obj, "message", msg);
+            CharSequence msg = ToString(callerContext, message);
+            CreateOwnDataProperty(callerContext, obj, "message", msg);
         }
 
         return obj;
@@ -144,8 +145,8 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
      * 15.11.7.2.1 new NativeError (... args)
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -180,8 +181,8 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.EvalErrorPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.EvalErrorPrototype,
                     NativeErrorObjectAllocator.INSTANCE);
         }
     }
@@ -218,8 +219,8 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.RangeErrorPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.RangeErrorPrototype,
                     NativeErrorObjectAllocator.INSTANCE);
         }
     }
@@ -256,9 +257,9 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue,
-                    Intrinsics.ReferenceErrorPrototype, NativeErrorObjectAllocator.INSTANCE);
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ReferenceErrorPrototype,
+                    NativeErrorObjectAllocator.INSTANCE);
         }
     }
 
@@ -294,8 +295,8 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.SyntaxErrorPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.SyntaxErrorPrototype,
                     NativeErrorObjectAllocator.INSTANCE);
         }
     }
@@ -332,8 +333,8 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.TypeErrorPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.TypeErrorPrototype,
                     NativeErrorObjectAllocator.INSTANCE);
         }
     }
@@ -370,8 +371,8 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue, Intrinsics.URIErrorPrototype,
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.URIErrorPrototype,
                     NativeErrorObjectAllocator.INSTANCE);
         }
     }
@@ -408,9 +409,9 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return OrdinaryCreateFromConstructor(realm, thisValue,
-                    Intrinsics.InternalErrorPrototype, NativeErrorObjectAllocator.INSTANCE);
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.InternalErrorPrototype,
+                    NativeErrorObjectAllocator.INSTANCE);
         }
     }
 

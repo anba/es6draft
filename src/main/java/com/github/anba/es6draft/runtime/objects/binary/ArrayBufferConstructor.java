@@ -18,6 +18,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -49,9 +50,9 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     }
 
     @Override
-    public void initialise(Realm realm) {
-        createProperties(this, realm, Properties.class);
-        AddRestrictedFunctionProperties(realm, this);
+    public void initialise(ExecutionContext cx) {
+        createProperties(this, cx, Properties.class);
+        AddRestrictedFunctionProperties(cx, this);
     }
 
     private static class ArrayBufferObjectAllocator implements ObjectAllocator<ArrayBufferObject> {
@@ -66,16 +67,16 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     /**
      * FIXME: spec bug (function CreateByteArrayBlock not defined)
      */
-    public static ByteBuffer CreateByteArrayBlock(Realm realm, long bytes) {
+    public static ByteBuffer CreateByteArrayBlock(ExecutionContext cx, long bytes) {
         // assert (bytes >= 0 && bytes <= Integer.MAX_VALUE);
         if (bytes > Integer.MAX_VALUE) {
-            throwInternalError(realm, Messages.Key.OutOfMemory);
+            throwInternalError(cx, Messages.Key.OutOfMemory);
         }
         try {
             // default byte-order is little-endian
             return ByteBuffer.allocate((int) bytes).order(ByteOrder.LITTLE_ENDIAN);
         } catch (OutOfMemoryError e) {
-            throw throwInternalError(realm, Messages.Key.OutOfMemoryVM);
+            throw throwInternalError(cx, Messages.Key.OutOfMemoryVM);
         }
     }
 
@@ -98,11 +99,11 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     /**
      * FIXME: spec bug (not defined in spec)
      */
-    public static ArrayBufferObject CloneArrayBuffer(Realm realm, ArrayBufferObject srcData,
-            ElementKind srcType, ElementKind destType, long length) {
-        ArrayBufferObject destData = AllocateArrayBuffer(realm,
-                realm.getIntrinsic(Intrinsics.ArrayBuffer));
-        SetArrayBufferData(realm, destData, length * destType.size());
+    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
+            ArrayBufferObject srcData, ElementKind srcType, ElementKind destType, long length) {
+        ArrayBufferObject destData = AllocateArrayBuffer(cx,
+                cx.getIntrinsic(Intrinsics.ArrayBuffer));
+        SetArrayBufferData(cx, destData, length * destType.size());
 
         for (long index = 0; index < length; ++index) {
             double value = GetValueFromBuffer(srcData, index * srcType.size(), srcType, false);
@@ -115,9 +116,9 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     /**
      * 15.13.5.1.1 AllocateArrayBuffer(constructor)
      */
-    public static ArrayBufferObject AllocateArrayBuffer(Realm realm, Object constructor) {
+    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Object constructor) {
         /* step 1-2 */
-        ArrayBufferObject obj = OrdinaryCreateFromConstructor(realm, constructor,
+        ArrayBufferObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.ArrayBufferPrototype, ArrayBufferObjectAllocator.INSTANCE);
         /* step 3 */
         obj.setData(null);
@@ -129,13 +130,13 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     /**
      * 15.13.5.1.2 (arrayBuffer, bytes)
      */
-    public static ArrayBufferObject SetArrayBufferData(Realm realm, ArrayBufferObject arrayBuffer,
-            long bytes) {
+    public static ArrayBufferObject SetArrayBufferData(ExecutionContext cx,
+            ArrayBufferObject arrayBuffer, long bytes) {
         /* step 1 (implicit) */
         /* step 2 (TODO: Uint32 range) */
         assert !(bytes < 0 || bytes > 0xFFFFFFFFL);
         /* step 3-4 */
-        ByteBuffer block = CreateByteArrayBlock(realm, bytes);
+        ByteBuffer block = CreateByteArrayBlock(cx, bytes);
         /* step 5 */
         arrayBuffer.setData(block);
         /* step 6 */
@@ -243,29 +244,29 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
      * 15.13.5.2.1 ArrayBuffer(length)
      */
     @Override
-    public Object call(Object thisValue, Object... args) {
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         Object length = args.length > 0 ? args[0] : UNDEFINED;
         if (!(Type.isUndefined(thisValue) || Type.isObject(thisValue))) {
-            throwTypeError(realm(), Messages.Key.IncompatibleObject);
+            throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
         if (Type.isUndefined(thisValue) || !(thisValue instanceof ArrayBufferObject)) {
-            return OrdinaryConstruct(realm(), this, args);
+            return OrdinaryConstruct(callerContext, this, args);
         }
         ArrayBufferObject buf = (ArrayBufferObject) thisValue;
         if (buf.getData() != null) {
-            throwTypeError(realm(), Messages.Key.IncompatibleObject);
+            throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
         // FIXME: spec bug (check for negative, cf. SpiderMonkey/V8)
-        long byteLength = ToUint32(realm(), length);
-        return SetArrayBufferData(realm(), buf, byteLength);
+        long byteLength = ToUint32(callerContext, length);
+        return SetArrayBufferData(callerContext, buf, byteLength);
     }
 
     /**
      * 15.13.5.3.1 new ArrayBuffer( ...args )
      */
     @Override
-    public Object construct(Object... args) {
-        return OrdinaryConstruct(realm(), this, args);
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -300,8 +301,8 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
                 symbol = BuiltinSymbol.create,
                 arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(Realm realm, Object thisValue) {
-            return AllocateArrayBuffer(realm, thisValue);
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return AllocateArrayBuffer(cx, thisValue);
         }
     }
 }

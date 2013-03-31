@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import java.util.Collection;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -76,15 +77,16 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
-        Property current = getOwnProperty(realm, propertyKey);
+    public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
+            PropertyDescriptor desc) {
+        Property current = getOwnProperty(cx, propertyKey);
         boolean extensible = isExtensible();
         return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
     }
 
     @Override
-    public boolean hasOwnProperty(Realm realm, String propertyKey) {
-        boolean has = super.hasOwnProperty(realm, propertyKey);
+    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+        boolean has = super.hasOwnProperty(cx, propertyKey);
         if (has) {
             return true;
         }
@@ -108,9 +110,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * 8.3.15.3 [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(Realm realm, String propertyKey, Object receiver) {
+    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         // no override necessary
-        return super.get(realm, propertyKey, receiver);
+        return super.get(cx, propertyKey, receiver);
     }
 
     // FIXME: spec bug (caption not updated from 8.3.19.4 to 8.3.15.4)
@@ -118,7 +120,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * 8.3.15.4 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(Realm realm, String propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         Property desc = ordinaryGetOwnProperty(propertyKey);
         if (desc != null) {
             return desc;

@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayC
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
-import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -31,10 +31,10 @@ public class JSONParser {
 
     private boolean parseCalled = false;
     private JSONTokenStream ts;
-    private Realm realm;
+    private ExecutionContext cx;
 
-    public JSONParser(Realm realm, CharSequence source) {
-        this.realm = realm;
+    public JSONParser(ExecutionContext cx, CharSequence source) {
+        this.cx = cx;
         ts = new JSONTokenStream(new StringTokenStreamInput(source));
     }
 
@@ -131,7 +131,7 @@ public class JSONParser {
      * </pre>
      */
     private ScriptObject jsonObject() {
-        ScriptObject object = ObjectCreate(realm, Intrinsics.ObjectPrototype);
+        ScriptObject object = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         consume(Token.LC);
         if (token() != Token.RC) {
             jsonMember(object);
@@ -155,7 +155,7 @@ public class JSONParser {
         String name = ts.getString();
         consume(Token.COLON);
         Object value = jsonValue();
-        object.defineOwnProperty(realm, name, new PropertyDescriptor(value, true, true, true));
+        object.defineOwnProperty(cx, name, new PropertyDescriptor(value, true, true, true));
     }
 
     /**
@@ -169,18 +169,18 @@ public class JSONParser {
      * </pre>
      */
     private Object jsonArray() {
-        ScriptObject array = ArrayCreate(realm, 0);
+        ScriptObject array = ArrayCreate(cx, 0);
         consume(Token.LB);
         if (token() != Token.RB) {
             long index = 0;
             Object value = jsonValue();
-            array.defineOwnProperty(realm, ToString(index++), new PropertyDescriptor(value, true,
+            array.defineOwnProperty(cx, ToString(index++), new PropertyDescriptor(value, true,
                     true, true));
             while (token() != Token.RB) {
                 consume(Token.COMMA);
                 value = jsonValue();
-                array.defineOwnProperty(realm, ToString(index++), new PropertyDescriptor(value,
-                        true, true, true));
+                array.defineOwnProperty(cx, ToString(index++), new PropertyDescriptor(value, true,
+                        true, true));
             }
         }
         consume(Token.RB);

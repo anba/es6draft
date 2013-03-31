@@ -10,7 +10,6 @@ import java.lang.invoke.MethodHandle;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
@@ -135,10 +134,10 @@ public final class RuntimeInfo {
             // TODO: create ScriptBody and EvalScriptBody interfaces
 
             @Override
-            public void globalDeclarationInstantiation(Realm realm, LexicalEnvironment globalEnv,
-                    boolean deletableBindings) {
+            public void globalDeclarationInstantiation(ExecutionContext cx,
+                    LexicalEnvironment globalEnv, boolean deletableBindings) {
                 try {
-                    initialisation.invokeExact(realm, globalEnv, deletableBindings);
+                    initialisation.invokeExact(cx, globalEnv, deletableBindings);
                 } catch (RuntimeException | Error e) {
                     throw e;
                 } catch (Throwable e) {
@@ -147,10 +146,10 @@ public final class RuntimeInfo {
             }
 
             @Override
-            public void evalDeclarationInstantiation(Realm realm, LexicalEnvironment lexEnv,
-                    LexicalEnvironment varEnv, boolean deletableBindings) {
+            public void evalDeclarationInstantiation(ExecutionContext cx,
+                    LexicalEnvironment lexEnv, LexicalEnvironment varEnv, boolean deletableBindings) {
                 try {
-                    evalinitialisation.invokeExact(realm, lexEnv, varEnv, deletableBindings);
+                    evalinitialisation.invokeExact(cx, lexEnv, varEnv, deletableBindings);
                 } catch (RuntimeException | Error e) {
                     throw e;
                 } catch (Throwable e) {
@@ -177,10 +176,10 @@ public final class RuntimeInfo {
     public static interface ScriptBody {
         boolean isStrict();
 
-        void globalDeclarationInstantiation(Realm realm, LexicalEnvironment globalEnv,
+        void globalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment globalEnv,
                 boolean deletableBindings);
 
-        void evalDeclarationInstantiation(Realm realm, LexicalEnvironment lexEnv,
+        void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment lexEnv,
                 LexicalEnvironment varEnv, boolean deletableBindings);
 
         Object evaluate(ExecutionContext cx);

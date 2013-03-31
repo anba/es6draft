@@ -36,6 +36,7 @@ import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -109,8 +110,9 @@ public class MozillaJitTest extends BaseMozillaTest {
         });
 
         // start initialization
+        ExecutionContext cx = realm.defaultContext();
         MozTestGlobalObject global = (MozTestGlobalObject) realm.getGlobalThis();
-        createProperties(global, realm, MozTestGlobalObject.class);
+        createProperties(global, cx, MozTestGlobalObject.class);
 
         // load legacy mozilla
         global.evaluate(legacyMozilla);
@@ -119,9 +121,9 @@ public class MozillaJitTest extends BaseMozillaTest {
         global.include(Paths.get("lib/prolog.js"));
 
         // set required global variables
-        global.set(realm, "libdir", "lib/", global);
-        global.set(realm, "environment",
-                OrdinaryObject.ObjectCreate(realm, Intrinsics.ObjectPrototype), global);
+        global.set(cx, "libdir", "lib/", global);
+        global.set(cx, "environment", OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype),
+                global);
 
         // evaluate actual test-script
         Path js = testDir().resolve(moztest.script);
