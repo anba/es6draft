@@ -8,6 +8,8 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
+import java.util.Collection;
+
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -34,6 +36,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected Realm realm;
     protected ThisMode thisMode;
     protected String source = null;
+
+    protected Property caller = new PropertyDescriptor(NULL, false, false, false).toProperty();
+    protected Property arguments = new PropertyDescriptor(NULL, false, false, false).toProperty();
 
     protected FunctionObject(Realm realm) {
         super(realm);
@@ -70,19 +75,42 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return source;
     }
 
+    @Override
+    public boolean defineOwnProperty(Realm realm, String propertyKey, PropertyDescriptor desc) {
+        Property current = getOwnProperty(realm, propertyKey);
+        boolean extensible = isExtensible();
+        return ValidateAndApplyPropertyDescriptor(this, propertyKey, extensible, desc, current);
+    }
+
+    @Override
+    public boolean hasOwnProperty(Realm realm, String propertyKey) {
+        boolean has = super.hasOwnProperty(realm, propertyKey);
+        if (has) {
+            return true;
+        }
+        if (!isStrict() && ("caller".equals(propertyKey) || "arguments".equals(propertyKey))) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected Collection<Object> enumerateOwnKeys() {
+        Collection<Object> ownKeys = super.enumerateOwnKeys();
+        if (!isStrict()) {
+            ownKeys.add("caller");
+            ownKeys.add("arguments");
+        }
+        return ownKeys;
+    }
+
     /**
      * 8.3.15.3 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(Realm realm, String propertyKey, Object receiver) {
-        /* step 1-2 */
-        Object v = super.get(realm, propertyKey, receiver);
-        /* step 3 */
-        if ("caller".equals(propertyKey) && isStrictFunction(v)) {
-            return NULL;
-        }
-        /* step 4 */
-        return v;
+        // no override necessary
+        return super.get(realm, propertyKey, receiver);
     }
 
     // FIXME: spec bug (caption not updated from 8.3.19.4 to 8.3.15.4)
@@ -91,16 +119,20 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     @Override
     public Property getOwnProperty(Realm realm, String propertyKey) {
-        /* step 1-2 */
-        Property v = super.getOwnProperty(realm, propertyKey);
-        if (v != null && v.isDataDescriptor()) {
-            if ("caller".equals(propertyKey) && isStrictFunction(v)) {
-                PropertyDescriptor desc = v.toPropertyDescriptor();
-                desc.setValue(NULL);
-                v = desc.toProperty();
+        Property desc = ordinaryGetOwnProperty(propertyKey);
+        if (desc != null) {
+            return desc;
+        }
+        if (!isStrict()) {
+            if ("caller".equals(propertyKey)) {
+                assert !isStrictFunction(caller.getValue());
+                return caller;
+            }
+            if ("arguments".equals(propertyKey)) {
+                return arguments;
             }
         }
-        return v;
+        return null;
     }
 
     public FunctionKind getFunctionKind() {
