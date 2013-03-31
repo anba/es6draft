@@ -155,7 +155,7 @@ public class OrdinaryGenerator extends FunctionObject {
         /* step 12-13 */
         getFunction().functionDeclarationInstantiation(calleeContext, this, args);
         /* step 14-15 */
-        GeneratorObject result = new GeneratorObject(getRealm(), this, calleeContext);
+        GeneratorObject result = new GeneratorObject(getRealm(), getCode(), calleeContext);
         ScriptObject proto = GetPrototypeFromConstructor(realm, this, Intrinsics.GeneratorPrototype);
         result.setPrototype(realm, proto);
         /* step 16 */

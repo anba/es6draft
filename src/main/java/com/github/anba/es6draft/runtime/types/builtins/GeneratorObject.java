@@ -51,10 +51,6 @@ public class GeneratorObject extends OrdinaryObject {
     private SynchronousQueue<Object> out;
     private SynchronousQueue<Object> in;
 
-    public GeneratorObject(Realm realm, OrdinaryGenerator generator, ExecutionContext context) {
-        this(realm, generator.getCode(), context);
-    }
-
     public GeneratorObject(Realm realm, RuntimeInfo.Code code, ExecutionContext context) {
         super(realm);
         this.code = code;
