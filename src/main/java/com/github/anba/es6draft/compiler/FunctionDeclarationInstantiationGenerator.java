@@ -70,7 +70,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     }
 
     private static class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
+        static final Type methodDescriptor = Type.getMethodType(Types.ExoticArguments,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
 
         private FunctionDeclInitMethodGenerator(CodeGenerator codegen, String methodName,
@@ -222,13 +222,13 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             } else {
                 CompleteMappedArgumentsObject(env, formals, mv);
             }
-            // stack: [ao] -> []
+            // stack: [ao] -> [ao]
+            mv.dup();
             initializeBinding(envRec, "arguments", mv);
-        } else {
-            // stack: [ao] -> []
-            mv.pop();
         }
         /* [10.5.3] step 23 */
+        // stack: [ao] -> []
+        mv.areturn();
         return;
     }
 

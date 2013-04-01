@@ -6,12 +6,14 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.evaluateCode;
+
 import java.lang.invoke.MethodHandle;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
 /**
  * Classes for bootstrapping of functions and script code
@@ -19,34 +21,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
  */
 public final class RuntimeInfo {
     private RuntimeInfo() {
-    }
-
-    private static Object evaluateCode(ExecutionContext cx, Code code) {
-        try {
-            Object result = code.handle().invokeExact(cx);
-            // tail-call with trampoline
-            while (result instanceof Object[]) {
-                // <func(Callable), thisValue, args>
-                Object[] h = (Object[]) result;
-                OrdinaryFunction f = (OrdinaryFunction) h[0];
-                Object thisValue = h[1];
-                Object[] args = (Object[]) h[2];
-
-                // see OrdinaryFunction#call()
-                /* step 1-11 */
-                ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(f,
-                        thisValue);
-                /* step 12-13 */
-                f.getFunction().functionDeclarationInstantiation(calleeContext, f, args);
-
-                result = f.getCode().handle().invokeExact(calleeContext);
-            }
-            return result;
-        } catch (RuntimeException | Error e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static Code newCode(final MethodHandle handle) {
@@ -94,10 +68,10 @@ public final class RuntimeInfo {
             }
 
             @Override
-            public void functionDeclarationInstantiation(ExecutionContext cx,
+            public ExoticArguments functionDeclarationInstantiation(ExecutionContext cx,
                     FunctionObject function, Object[] args) {
                 try {
-                    initialisation.invokeExact(cx, function, args);
+                    return (ExoticArguments) initialisation.invokeExact(cx, function, args);
                 } catch (RuntimeException | Error e) {
                     throw e;
                 } catch (Throwable e) {
@@ -199,8 +173,8 @@ public final class RuntimeInfo {
 
         int expectedArgumentCount();
 
-        void functionDeclarationInstantiation(ExecutionContext cx, FunctionObject function,
-                Object[] args);
+        ExoticArguments functionDeclarationInstantiation(ExecutionContext cx,
+                FunctionObject function, Object[] args);
 
         String source();
     }

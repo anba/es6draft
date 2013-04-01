@@ -109,28 +109,9 @@ js1_5/Scope/regress-185485.js
 js1_7/extensions/regress-368224.js
 js1_7/extensions/regress-355410.js
 
-# Function.prototype.{arguments,caller} restricted
-ecma/FunctionObjects/15.3.1.1-1.js
-ecma/FunctionObjects/15.3.1.1-2.js
-ecma/FunctionObjects/15.3.2.1-1.js
-ecma/FunctionObjects/15.3.2.1-2.js
-ecma/FunctionObjects/15.3.5.3.js
-ecma/FunctionObjects/15.3.5-2.js
-ecma_3/Function/regress-85880.js
-ecma_5/extensions/arguments-property-access-in-function.js
-ecma_5/extensions/function-caller-skips-eval-frames.js
-ecma_5/extensions/function-properties.js
-js1_4/Functions/function-001.js
+# Special IE Function.prototype.{apply,call} behaviour not supported
 js1_5/Function/regress-222029-001.js
 js1_5/Function/regress-222029-002.js
-js1_8_5/regress/regress-577648-1.js
-js1_8_5/regress/regress-577648-2.js
-js1_8_5/regress/regress-584355.js
-js1_8_5/regress/regress-586482-1.js
-js1_8_5/regress/regress-586482-2.js
-js1_8_5/regress/regress-586482-3.js
-js1_8_5/regress/regress-586482-4.js
-js1_8_5/regress/regress-586482-5.js
 
 # Java-Pattern vs ECMAScript-RegExp issues
 ecma_3/RegExp/15.10.2-1.js
@@ -158,6 +139,9 @@ js1_7/extensions/regress-354945-02.js
 
 # SpecialCasings.txt not supported in SpiderMonkey (https://bugzilla.mozilla.org/show_bug.cgi?id=672042)
 ecma/String/15.5.4.12-5.js
+
+# different function source representation
+js1_8_5/regress/regress-584355.js
 
 # Extended toPrecision() range
 js1_5/Regress/regress-452346.js

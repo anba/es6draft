@@ -6,16 +6,16 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo.Code;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -234,15 +234,69 @@ public class OrdinaryFunction extends FunctionObject {
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        /* step 1-11 */
-        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
-                thisValue);
-        /* step 12-13 */
-        getFunction().functionDeclarationInstantiation(calleeContext, this, args);
-        /* step 14-15 */
-        Object result = getCode().evaluate(calleeContext);
-        /* step 16 */
-        return result;
+        Object oldCaller = caller.getValue();
+        Object oldArguments = arguments.getValue();
+        try {
+            FunctionObject caller = callerContext.getCurrentFunction();
+            /* step 1-11 */
+            ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
+                    thisValue);
+            /* step 12-13 */
+            ExoticArguments arguments = getFunction().functionDeclarationInstantiation(
+                    calleeContext, this, args);
+            if (!isStrict()) {
+                updateLegacyProperties(calleeContext, caller, arguments);
+            }
+            /* step 14-15 */
+            Object result = evaluateCode(calleeContext, getCode());
+            /* step 16 */
+            return result;
+        } finally {
+            if (!isStrict()) {
+                caller.apply(new PropertyDescriptor(oldCaller));
+                arguments.apply(new PropertyDescriptor(oldArguments));
+            }
+        }
+    }
+
+    public static Object evaluateCode(ExecutionContext calleeContext, Code code) {
+        try {
+            Object result = code.handle().invokeExact(calleeContext);
+            // tail-call with trampoline
+            while (result instanceof Object[]) {
+                // <func(Callable), thisValue, args>
+                Object[] h = (Object[]) result;
+                OrdinaryFunction f = (OrdinaryFunction) h[0];
+                Object thisValue = h[1];
+                Object[] args = (Object[]) h[2];
+
+                Object oldCaller = f.caller.getValue();
+                Object oldArguments = f.arguments.getValue();
+                try {
+                    FunctionObject caller = calleeContext.getCurrentFunction();
+                    /* step 1-11 */
+                    calleeContext = ExecutionContext.newFunctionExecutionContext(f, thisValue);
+                    /* step 12-13 */
+                    ExoticArguments arguments = f.getFunction().functionDeclarationInstantiation(
+                            calleeContext, f, args);
+                    if (!f.isStrict()) {
+                        f.updateLegacyProperties(calleeContext, caller, arguments);
+                    }
+                    /* step 14-15 */
+                    result = f.getCode().handle().invokeExact(calleeContext);
+                } finally {
+                    if (!f.isStrict()) {
+                        f.caller.apply(new PropertyDescriptor(oldCaller));
+                        f.arguments.apply(new PropertyDescriptor(oldArguments));
+                    }
+                }
+            }
+            return result;
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -264,6 +318,33 @@ public class OrdinaryFunction extends FunctionObject {
         if (Type.isObject(result)) {
             return result;
         }
+        return obj;
+    }
+
+    private void updateLegacyProperties(ExecutionContext cx, FunctionObject caller,
+            ExoticArguments arguments) {
+        if (!(caller == null || caller.isStrict())) {
+            this.caller.apply(new PropertyDescriptor(caller));
+        } else {
+            this.caller.apply(new PropertyDescriptor(NULL));
+        }
+        ExoticArguments args = CreateLegacyArguments(cx, arguments, this);
+        this.arguments.apply(new PropertyDescriptor(args));
+    }
+
+    private static ExoticArguments CreateLegacyArguments(ExecutionContext cx,
+            ExoticArguments arguments, FunctionObject func) {
+        int len = ToInt32(cx, Get(cx, arguments, "length"));
+        ExoticArguments obj = new ExoticArguments(cx.getRealm());
+        obj.setPrototype(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
+        obj.defineOwnProperty(cx, "length", new PropertyDescriptor(len, false, false, false));
+        obj.defineOwnProperty(cx, "callee", new PropertyDescriptor(func, false, false, false));
+        for (int index = 0; index < len; ++index) {
+            String pk = ToString(index);
+            Object val = arguments.getOwnProperty(cx, pk).getValue();
+            obj.defineOwnProperty(cx, pk, new PropertyDescriptor(val, false, true, false));
+        }
+        obj.setIntegrity(cx, IntegrityLevel.NonExtensible);
         return obj;
     }
 }

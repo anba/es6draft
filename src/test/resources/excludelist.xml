@@ -24,52 +24,6 @@
   <test id="15.2.3.7-6-a-93-4">ES6-change: Object.defineProperties no longer stops at first exception</test>
   <test id="15.9.1.15-1">ES6-change: ISO date without timezone specifier now defaults to local time</test>
 
-  <!-- ES6 changes + no 'caller' support -->
-  <test id="10.6-13-a-2">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="10.6-13-a-3">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-12gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-14gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-75gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-76gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-77gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-78gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-79gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-80gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-81gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-82gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-83gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-84gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-85gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-86gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-87gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-88gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-90gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-91gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-92gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-  <test id="15.3.5.4_2-93gs">ES6-change: AddRestrictedFunctionProperties on Function.prototype + no support for
-    'caller'</test>
-
   <!-- rev14 changes -->
   <test id="S11.2.1_A4_T5">ES6-change: String.prototype no longer String 'String.prototype.length'</test>
   <test id="15.2.3.3-4-212">ES6-change: 'RegExp.prototype.source' accessor on prototype</test>

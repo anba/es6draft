@@ -51,6 +51,29 @@ public class ScriptLoader {
         return result;
     }
 
+    /**
+     * [14.1 ScriptEvaluation]
+     */
+    public static Object ScriptEvaluation(Script script, ExecutionContext cx,
+            boolean deletableBindings) {
+        Realm realm = cx.getRealm();
+        /* step 1-2 */
+        RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
+        if (scriptBody == null)
+            return null;
+        /* step 3 */
+        LexicalEnvironment globalEnv = realm.getGlobalEnv();
+        /* step 4-5 */
+        scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv,
+                deletableBindings);
+        /* step 6-9 */
+        ExecutionContext progCxt = newScriptExecutionContext(cx);
+        /* step 10-14 */
+        Object result = script.evaluate(progCxt);
+        /* step 15 */
+        return result;
+    }
+
     public static Script load(String sourceFile, String className, String source)
             throws ParserException {
         Parser parser = new Parser(sourceFile, 1);

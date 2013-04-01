@@ -29,6 +29,7 @@ public final class ExecutionContext {
     private Realm realm;
     private LexicalEnvironment lexEnv;
     private LexicalEnvironment varEnv;
+    private FunctionObject function = null;
     private GeneratorObject generator = null;
 
     public ExecutionContext() {
@@ -79,15 +80,29 @@ public final class ExecutionContext {
     }
 
     /**
+     * [14] Runtime Semantics: Script Evaluation
+     */
+    public static ExecutionContext newScriptExecutionContext(ExecutionContext cx) {
+        /* step 3-6 */
+        ExecutionContext progCxt = new ExecutionContext();
+        progCxt.realm = cx.realm;
+        progCxt.lexEnv = cx.realm.getGlobalEnv();
+        progCxt.varEnv = cx.realm.getGlobalEnv();
+        progCxt.function = cx.function;
+        return progCxt;
+    }
+
+    /**
      * 15.1.2.1 eval (x)
      */
-    public static ExecutionContext newEvalExecutionContext(Realm realm, LexicalEnvironment lexEnv,
-            LexicalEnvironment varEnv) {
+    public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
+            LexicalEnvironment lexEnv, LexicalEnvironment varEnv) {
         /* step 20-23 */
         ExecutionContext progCxt = new ExecutionContext();
-        progCxt.realm = realm;
+        progCxt.realm = callerContext.realm;
         progCxt.lexEnv = lexEnv;
         progCxt.varEnv = varEnv;
+        progCxt.function = callerContext.function;
         return progCxt;
     }
 
@@ -102,6 +117,7 @@ public final class ExecutionContext {
         progCxt.realm = callerContext.realm;
         progCxt.lexEnv = callerContext.lexEnv;
         progCxt.varEnv = callerContext.varEnv;
+        progCxt.function = callerContext.function;
         return progCxt;
     }
 
@@ -143,6 +159,7 @@ public final class ExecutionContext {
         }
         calleeContext.lexEnv = localEnv;
         calleeContext.varEnv = localEnv;
+        calleeContext.function = f;
         return calleeContext;
     }
 
@@ -186,6 +203,10 @@ public final class ExecutionContext {
     public ScriptObject getGlobalObject() {
         Realm currentRealm = realm;
         return currentRealm.getGlobalThis();
+    }
+
+    public FunctionObject getCurrentFunction() {
+        return function;
     }
 
     public GeneratorObject getCurrentGenerator() {

@@ -248,16 +248,8 @@ tests/auto-regress/bug666599.js
 # Spidermonkey: Array.prototype.toString internal recursion
 tests/auto-regress/bug635389.js
 
-# Function.prototype.{arguments,caller} not supported
-tests/auto-regress/bug686179.js
-tests/auto-regress/bug757428.js
-tests/basic/bug592927.js
-tests/basic/bug632901.js
-tests/basic/bug633752.js
-tests/basic/bug643285.js
+# ES6-change: AddRestrictedFunctionProperties for built-ins (Function.prototype)
 tests/basic/bug675889.js
-tests/basic/runOnceClosures.js
-tests/basic/testBug668479.js
 
 # ES6-change: let-block scope even in global scope
 tests/basic/bug646968-3.js

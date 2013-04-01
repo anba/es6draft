@@ -73,11 +73,11 @@ public final class Eval {
         /* step 6-8 (implicit) */
         /* step 9 */
         if (!direct && !strictScript) {
-            return ScriptEvaluation(script, evalRealm, true);
+            return ScriptEvaluation(script, ctx, true);
         }
         /* step 10 */
         if (direct && !strictScript && !strictCaller && globalScope) {
-            return ScriptEvaluation(script, evalRealm, true);
+            return ScriptEvaluation(script, ctx, true);
         }
         /* step 11 */
         if (direct) {
@@ -107,8 +107,7 @@ public final class Eval {
         /* step 15-16 */
         script.getScriptBody().evalDeclarationInstantiation(ctx, lexEnv, varEnv, true);
         /* step 17-20 */
-        ExecutionContext evalCxt = ExecutionContext.newEvalExecutionContext(evalRealm, lexEnv,
-                varEnv);
+        ExecutionContext evalCxt = ExecutionContext.newEvalExecutionContext(ctx, lexEnv, varEnv);
         /* step 21-25 */
         Object result = script.evaluate(evalCxt);
         /* step 26 */
