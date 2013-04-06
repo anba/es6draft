@@ -663,7 +663,6 @@ public class Parser {
         if (ts != null)
             throw new IllegalStateException();
         ts = new TokenStream(this, new StringTokenStreamInput(source), sourceLine);
-        ts.init();
         return script();
     }
 
@@ -796,6 +795,7 @@ public class Parser {
     private Script script() {
         newContext(ContextKind.Script);
         try {
+            ts.init();
             List<StatementListItem> prologue = directivePrologue();
             List<StatementListItem> body = outerStatementList();
             boolean strict = (context.strictMode == StrictMode.Strict);
@@ -3788,7 +3788,7 @@ public class Parser {
 
     /**
      * <strong>[11.1.8] Regular Expression Literals</strong>
-     *
+     * 
      * <pre>
      * </pre>
      */
