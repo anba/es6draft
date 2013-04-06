@@ -35,18 +35,12 @@ tests/proxy/testDirectProxyKeys8.js
 tests/proxy/testDirectProxyKeys9.js
 
 # SpiderMonkey uses 'iterator' instead of '@@iterator'
-tests/for-of/arguments-1.js
-tests/for-of/arguments-2.js
-tests/for-of/arguments-3.js
-tests/for-of/arguments-4.js
-tests/for-of/arguments-5.js
-tests/for-of/arguments-6.js
-tests/for-of/arguments-7.js
-tests/for-of/array-holes-4.js
-tests/for-of/non-iterable.js
 tests/for-of/proxy-1.js
 tests/for-of/proxy-3.js
 tests/for-of/semantics-01.js
+
+# for-of and null/undefined
+tests/for-of/non-iterable.js
 
 # SpiderMonkey different implementation for Array iterators..
 tests/for-of/array-iterator-null.js
@@ -223,8 +217,6 @@ tests/basic/bug732087.js
 
 # __iterator__
 tests/basic/testCustomIterator.js
-
-
 
 # werror/strict shell options
 tests/basic/bug629858.js

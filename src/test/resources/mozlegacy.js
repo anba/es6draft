@@ -20,7 +20,10 @@ const Object = global.Object,
       Error = global.Error,
       TypeError = global.TypeError,
       JSON = global.JSON,
-      Proxy = global.Proxy;
+      Proxy = global.Proxy,
+      Map = global.Map,
+      Set = global.Set,
+      WeakMap = global.WeakMap;
 
 const Object_defineProperty = Object.defineProperty,
       Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
@@ -473,8 +476,7 @@ Object.defineProperty(Object.assign(JSON, {
   }
 }), "toSource", {enumerable: false});
 
-
-Object.defineProperty(Object.mixin(Array.prototype, {
+Object.defineProperty(Object.mixin(Object.prototype, {
   get iterator() {
     return this[getSym("@@iterator")];
   },
@@ -482,25 +484,6 @@ Object.defineProperty(Object.mixin(Array.prototype, {
     this[getSym("@@iterator")] = it;
   }
 }), "iterator", {enumerable: false});
-
-Object.defineProperty(Object.mixin(Map.prototype, {
-  get iterator() {
-    return this[getSym("@@iterator")];
-  },
-  set iterator(it) {
-    this[getSym("@@iterator")] = it;
-  }
-}), "iterator", {enumerable: false});
-
-Object.defineProperty(Object.mixin(Set.prototype, {
-  get iterator() {
-    return this[getSym("@@iterator")];
-  },
-  set iterator(it) {
-    this[getSym("@@iterator")] = it;
-  }
-}), "iterator", {enumerable: false});
-
 
 function toProxyHandler(handler) {
   var proxyHandler = {};
