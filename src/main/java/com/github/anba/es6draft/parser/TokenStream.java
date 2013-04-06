@@ -1043,12 +1043,6 @@ public class TokenStream {
             case 'v':
                 c = '\u000B';
                 break;
-            case '0':
-                if (isDecimalDigit(peek())) {
-                    throw error(Messages.Key.InvalidNULLEscape);
-                }
-                c = '\0';
-                break;
             case 'x':
                 c = (hexDigit(input.get()) << 4) | hexDigit(input.get());
                 if (c < 0) {
@@ -1058,6 +1052,13 @@ public class TokenStream {
             case 'u':
                 c = readUnicode();
                 break;
+            case '0':
+                if (isDecimalDigit(peek())) {
+                    c = readOctalEscape(c);
+                } else {
+                    c = '\0';
+                }
+                break;
             case '1':
             case '2':
             case '3':
@@ -1065,8 +1066,11 @@ public class TokenStream {
             case '5':
             case '6':
             case '7':
-                parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
-                // fall-through
+                c = readOctalEscape(c);
+                break;
+            case '8':
+            case '9':
+                // FIXME: spec bug - undefined behaviour for \8 and \9
             case '"':
             case '\'':
             case '\\':
@@ -1079,6 +1083,28 @@ public class TokenStream {
         return Token.STRING;
     }
 
+    private int readOctalEscape(int c) {
+        parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
+        int d = (c - '0');
+        c = input.get();
+        if (c < '0' || c > '7') {
+            // FIXME: spec bug? behaviour for non-octal decimal digits?
+            input.unget(c);
+        } else {
+            d = d * 8 + (c - '0');
+            if (d <= 037) {
+                c = input.get();
+                if (c < '0' || c > '7') {
+                    // FIXME: spec bug? behaviour for non-octal decimal digits?
+                    input.unget(c);
+                } else {
+                    d = d * 8 + (c - '0');
+                }
+            }
+        }
+        return d;
+    }
+
     private Token readNumberLiteral(int c) {
         if (c == '0') {
             int d = input.get();
@@ -1089,9 +1115,8 @@ public class TokenStream {
             } else if (d == 'o' || d == 'O') {
                 number = readOctalIntegerLiteral();
             } else if (isDecimalDigit(d)) {
-                parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalIntegerLiteral);
                 input.unget(d);
-                number = readOctalIntegerLiteral();
+                number = readLegacyOctalIntegerLiteral();
             } else {
                 input.unget(d);
                 number = readDecimalLiteral(c);
@@ -1127,7 +1152,7 @@ public class TokenStream {
             buffer.add(c);
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
-            throw error(Messages.Key.InvalidHexIntegerLiteral);
+            throw error(Messages.Key.InvalidBinaryIntegerLiteral);
         }
         input.unget(c);
         if (buffer.length == 0) {
@@ -1144,7 +1169,30 @@ public class TokenStream {
             buffer.add(c);
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
-            throw error(Messages.Key.InvalidHexIntegerLiteral);
+            throw error(Messages.Key.InvalidOctalIntegerLiteral);
+        }
+        input.unget(c);
+        if (buffer.length == 0) {
+            throw error(Messages.Key.InvalidOctalIntegerLiteral);
+        }
+        return parseOctal(buffer.cbuf, buffer.length);
+    }
+
+    private double readLegacyOctalIntegerLiteral() {
+        TokenStreamInput input = this.input;
+        StringBuffer buffer = this.buffer();
+        int c;
+        while (isOctalDigit(c = input.get())) {
+            buffer.add(c);
+        }
+        if (c == '8' || c == '9') {
+            // invalid octal integer literal -> treat as decimal literal, no strict-mode error
+            // FIXME: spec bug? undefined behaviour - SM reports a strict-mode error in this case
+            return readDecimalLiteral(c, false);
+        }
+        parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalIntegerLiteral);
+        if (isDecimalDigitOrIdentifierStart(c)) {
+            throw error(Messages.Key.InvalidOctalIntegerLiteral);
         }
         input.unget(c);
         if (buffer.length == 0) {
@@ -1154,9 +1202,13 @@ public class TokenStream {
     }
 
     private double readDecimalLiteral(int c) {
+        return readDecimalLiteral(c, true);
+    }
+
+    private double readDecimalLiteral(int c, boolean reset) {
         assert c == '.' || isDecimalDigit(c);
         TokenStreamInput input = this.input;
-        StringBuffer buffer = this.buffer();
+        StringBuffer buffer = reset ? this.buffer() : this.buffer;
         if (c != '.' && c != '0') {
             buffer.add(c);
             while (isDecimalDigit(c = input.get())) {
@@ -1188,7 +1240,7 @@ public class TokenStream {
             }
         }
         if (isDecimalDigitOrIdentifierStart(c)) {
-            throw error(Messages.Key.InvalidHexIntegerLiteral);
+            throw error(Messages.Key.InvalidNumberLiteral);
         }
         input.unget(c);
         return parseDecimal(buffer.cbuf, buffer.length);
