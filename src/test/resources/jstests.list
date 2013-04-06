@@ -675,7 +675,7 @@ js1_8_5/regress/regress-500528.js
 js1_8_5/regress/regress-596805-2.js
 js1_8_5/regress/regress-597945-1.js
 
-# lambda function expressions not supported
+# function expression closure not supported
 ecma_3/FunExpr/regress-545980.js
 ecma_5/extensions/uneval-strict-functions.js
 js1_8/extensions/expclo.js
