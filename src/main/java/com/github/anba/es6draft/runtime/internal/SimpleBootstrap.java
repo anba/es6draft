@@ -129,7 +129,8 @@ public class SimpleBootstrap {
                     MethodType.methodType(boolean.class, Object.class, Object.class));
 
             addStringMH = lookup.findStatic(thisClass, "addString", MethodType.methodType(
-                    CharSequence.class, CharSequence.class, CharSequence.class));
+                    CharSequence.class, CharSequence.class, CharSequence.class,
+                    ExecutionContext.class));
             addNumberMH = lookup.findStatic(thisClass, "addNumber",
                     MethodType.methodType(Double.class, Number.class, Number.class));
             addGenericMH = lookup.findStatic(thisClass, "addGeneric", MethodType.methodType(
@@ -174,8 +175,8 @@ public class SimpleBootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static CharSequence addString(CharSequence arg1, CharSequence arg2) {
-        return ScriptRuntime.add(arg1, arg2);
+    private static CharSequence addString(CharSequence arg1, CharSequence arg2, ExecutionContext cx) {
+        return ScriptRuntime.add(arg1, arg2, cx);
     }
 
     @SuppressWarnings("unused")
@@ -249,8 +250,7 @@ public class SimpleBootstrap {
             ExecutionContext cx) throws Throwable {
         MethodHandle callSiteTarget, target;
         if (testString(arg1, arg2)) {
-            target = MethodHandles.dropArguments(addStringMH, 2, ExecutionContext.class).asType(
-                    callsite.type());
+            target = addStringMH.asType(callsite.type());
             callSiteTarget = MethodHandles.guardWithTest(testStringMH, target, addGenericMH);
         } else if (testNumber(arg1, arg2)) {
             target = MethodHandles.dropArguments(addNumberMH, 2, ExecutionContext.class).asType(

@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -40,8 +41,8 @@ import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
+import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
@@ -703,7 +704,7 @@ public final class ScriptRuntime {
         if (Type.isString(lprim) || Type.isString(rprim)) {
             CharSequence lstr = ToString(cx, lprim);
             CharSequence rstr = ToString(cx, rprim);
-            return add(lstr, rstr);
+            return add(lstr, rstr, cx);
         }
         return ToNumber(cx, lprim) + ToNumber(cx, rprim);
     }
@@ -711,7 +712,7 @@ public final class ScriptRuntime {
     /**
      * 11.6.1 The Addition operator ( + )
      */
-    public static CharSequence add(CharSequence lstr, CharSequence rstr) {
+    public static CharSequence add(CharSequence lstr, CharSequence rstr, ExecutionContext cx) {
         int llen = lstr.length(), rlen = rstr.length();
         if (llen == 0) {
             return rstr;
@@ -719,8 +720,12 @@ public final class ScriptRuntime {
         if (rlen == 0) {
             return lstr;
         }
-        if (llen + rlen <= 10) {
-            return new StringBuilder(llen + rlen).append(lstr).append(rstr).toString();
+        int newlen = llen + rlen;
+        if (newlen < 0) {
+            throwInternalError(cx, Messages.Key.OutOfMemory);
+        }
+        if (newlen <= 10) {
+            return new StringBuilder(newlen).append(lstr).append(rstr).toString();
         }
         return new ConsString(lstr, rstr);
     }

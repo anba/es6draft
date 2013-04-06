@@ -88,8 +88,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_add_str = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "add",
-                Type.getMethodType(Types.CharSequence, Types.CharSequence, Types.CharSequence));
+                Types.ScriptRuntime, "add", Type.getMethodType(Types.CharSequence,
+                        Types.CharSequence, Types.CharSequence, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_delete = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "delete",
@@ -631,6 +631,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                     ToString(ltype, mv);
                     if (!((StringLiteral) right).getValue().isEmpty()) {
                         right.accept(this, mv);
+                        mv.loadExecutionContext();
                         mv.invoke(Methods.ScriptRuntime_add_str);
                     }
                     // r lref r
@@ -866,6 +867,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                     ValType rtype = evalAndGetValue(right, mv);
                     rtype = ToPrimitive(rtype, null, mv);
                     ToString(rtype, mv);
+                    mv.loadExecutionContext();
                     mv.invoke(Methods.ScriptRuntime_add_str);
                 }
                 return ValType.String;
@@ -880,6 +882,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                     ltype = ToPrimitive(ltype, null, mv);
                     ToString(ltype, mv);
                     right.accept(this, mv);
+                    mv.loadExecutionContext();
                     mv.invoke(Methods.ScriptRuntime_add_str);
                 }
                 return ValType.String;
