@@ -101,12 +101,13 @@ public class RegExpParser {
         assert pos == 0;
         disjunction(0, 0);
         if (backrefmax > groups) {
+            out.setLength(0);
+            pos = 0;
+            groups = 0;
             backreflimit = groups;
             backrefmax = 0;
-            pos = 0;
             negativeLAGroups.clear();
             validGroups.clear();
-            out.setLength(0);
             disjunction(0, 0);
             assert backrefmax <= groups;
         }
