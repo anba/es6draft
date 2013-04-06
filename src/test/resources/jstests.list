@@ -439,6 +439,7 @@ js1_8_5/regress/regress-621814.js
 # newGlobal() not supported
 ecma_5/extensions/cross-global-eval-is-indirect.js
 ecma_5/extensions/cross-global-getPrototypeOf.js
+ecma_5/extensions/preventExtensions-cross-global.js
 ecma_5/Global/cross-global-implicit-this.js
 
 # shapeOf() not supported
@@ -800,6 +801,7 @@ js1_8_5/extensions/findReferences-04.js
 js1_8_5/extensions/is-generator.js
 js1_8_5/extensions/proxy-enumerateOwn-duplicates.js
 js1_8_5/extensions/proxy-proto-setter.js
+js1_8_5/extensions/sps-generators.js
 js1_8_5/extensions/recursion.js
 js1_8_5/extensions/reflect-parse.js
 js1_8_5/extensions/regress-558541.js
@@ -895,6 +897,7 @@ js1_5/extensions/regress-369696-03.js
 # OutOfMemory: Java heap space
 js1_5/Regress/regress-422348.js
 ecma_5/String/string-object-length.js
+ecma_5/String/replace-math.js
 ecma_5/RegExp/regress-617935.js
 
 # Timeout

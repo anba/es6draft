@@ -372,6 +372,7 @@ tests/pic/watch4.js
 # RegExp support for legacy feature $1, lastMatch
 tests/basic/bug691797-regexp-2.js
 tests/basic/bug820124-2.js
+tests/basic/bug854124.js
 tests/basic/regexp-multiline.js
 tests/basic/regexp-reset-input.js
 tests/basic/testStaticsInRegExp.js
@@ -572,6 +573,8 @@ tests/basic/test-jitinfo.js
 tests/basic/perf-smoketest.js
 # timeout
 tests/basic/shell-watchdog.js
+tests/basic/properly-remove-timeout-root-before-shutdown.js
+tests/basic/timeout-check.js
 # deserialize
 tests/basic/testBug616454.js
 # clone
