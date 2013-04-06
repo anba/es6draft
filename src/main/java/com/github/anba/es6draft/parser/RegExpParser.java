@@ -350,14 +350,6 @@ public class RegExpParser {
      *      Assertion
      *      Atom
      *      Atom Quantifier
-     * 
-     * 
-     * Disjunction' ::
-     *      ( Term' | `|` )*
-     * Term' ::
-     *      Assertion
-     *      Atom Quantifier?
-     * 
      * </pre>
      */
     private void disjunction(int depth, int negativedepth) {
@@ -374,18 +366,19 @@ public class RegExpParser {
             }
 
             final int c = get();
-            boolean ignoreQuantifier = false;
-            boolean hasAtom = true;
 
             /* Disjunction, Assertion and Atom */
             atom: switch (c) {
+            case '|':
+                /* Disjunction */
+                out.append((char) c);
+                continue term;
+
             case '^':
             case '$':
-            case '|':
-                /* Disjunction, Assertion */
+                /* Assertion */
                 out.append((char) c);
-                hasAtom = false;
-                break atom;
+                continue term;
 
             case '\\': {
                 /* Assertion, AtomEscape */
@@ -394,8 +387,7 @@ public class RegExpParser {
                 case 'B':
                     // Assertion
                     out.append('\\').append((char) get());
-                    hasAtom = false;
-                    break atom;
+                    continue term;
                 case 'f':
                 case 'n':
                 case 'r':
@@ -526,7 +518,7 @@ public class RegExpParser {
                                 }
                                 out.append("\\0").append(Integer.toOctalString(num));
                             }
-                            continue term;
+                            break atom;
                         }
                         if (num > backrefmax) {
                             backrefmax = num;
@@ -569,9 +561,6 @@ public class RegExpParser {
                     case '!':
                         negativeLA = true;
                     case '=':
-                        // parse but ignore quantifier
-                        ignoreQuantifier = true;
-                        // fall-through
                     case ':':
                         out.append("(?").append((char) d);
                         break;
@@ -654,6 +643,7 @@ public class RegExpParser {
                     pos = start;
                     break atom;
                 }
+                // parsed quantifier, but there was no applicable atom -> error!
                 throw error(Messages.Key.RegExpInvalidQualifier);
             }
 
@@ -677,9 +667,7 @@ public class RegExpParser {
             case '*':
             case '+':
             case '?':
-                if (!ignoreQuantifier) {
-                    out.append((char) get());
-                }
+                out.append((char) get());
                 break quantifier;
             case '{': {
                 // make web-reality aware
@@ -708,17 +696,15 @@ public class RegExpParser {
                 }
 
                 // output result
-                if (!ignoreQuantifier) {
-                    out.append('{').append(Integer.toString(min));
-                    if (comma) {
-                        if (max != -1) {
-                            out.append(',').append(Integer.toString(max));
-                        } else {
-                            out.append(',');
-                        }
+                out.append('{').append(Integer.toString(min));
+                if (comma) {
+                    if (max != -1) {
+                        out.append(',').append(Integer.toString(max));
+                    } else {
+                        out.append(',');
                     }
-                    out.append('}');
                 }
+                out.append('}');
                 break quantifier;
             }
             default:
@@ -726,16 +712,11 @@ public class RegExpParser {
             }
 
             // Reluctant quantifiers
-            if (match('?') && !ignoreQuantifier) {
+            if (match('?')) {
                 out.append('?');
             }
 
-            if (hasAtom) {
-                continue term;
-            }
-
-            // parsed quantifier, but there was no applicable atom -> error!
-            throw error(Messages.Key.RegExpInvalidQualifier);
+            continue term;
         }
     }
 }
