@@ -425,11 +425,17 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 a.defineOwnProperty(cx, "0", new PropertyDescriptor(s, true, true, true));
                 return a;
             }
-            // Note: omitted index q in the following code
+            int q = p;
             int lastStart = -1;
-            while (matcher.find()) {
+            while (q != size) {
+                boolean match = matcher.find();
+                if (!match) {
+                    break;
+                }
                 int e = matcher.end();
-                if (e != p) {
+                if (e == p) {
+                    q = q + 1;
+                } else {
                     String t = s.substring(p, lastStart = matcher.start());
                     a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(t, true,
                             true, true));
@@ -448,6 +454,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                             return a;
                         }
                     }
+                    q = p;
                 }
             }
             if (p == lastStart) {

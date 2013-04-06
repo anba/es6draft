@@ -106,7 +106,6 @@ js1_5/Function/regress-222029-002.js
 ecma_3/RegExp/15.10.2-1.js
 ecma_3/RegExp/perlstress-001.js
 ecma_3/RegExp/regress-209919.js
-ecma_3/String/15.5.4.14.js
 ecma_5/RegExp/regress-613820-2.js
 ecma_5/RegExp/regress-613820-3.js
 ecma_5/String/split-xregexp.js
