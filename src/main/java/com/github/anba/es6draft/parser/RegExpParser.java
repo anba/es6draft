@@ -25,9 +25,9 @@ public class RegExpParser {
             'A', 'B', 'C', 'D', 'E', 'F' };
 
     // CharacterClass \s
-    private static final String characterClass_s = "[\\s\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
+    private static final String characterClass_s = "[ \\t\\n\\v\\f\\r\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
     // CharacterClass \S
-    private static final String characterClass_S = "[^\\s\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
+    private static final String characterClass_S = "[^ \\t\\n\\v\\f\\r\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
     // [] => matches nothing
     private static final String emptyCharacterClass = "(?:\\Z )";
     // [^] => matches everything
@@ -175,6 +175,7 @@ public class RegExpParser {
 
     private void characterclass(boolean negation) {
         // TODO: check range [start-end] is valid
+        int startpos = pos;
         boolean inrange = false;
         charclass: for (;;) {
             if (eof()) {
@@ -202,14 +203,28 @@ public class RegExpParser {
                     if (inrange)
                         throw error(Messages.Key.RegExpInvalidCharacterRange);
                     mustMatch('s');
-                    out.append(!negation ? characterClass_s : characterClass_S);
+                    if (!negation) {
+                        out.append(characterClass_s);
+                    } else {
+                        if (pos - 2 != startpos) {
+                            out.append("&&");
+                        }
+                        out.append(characterClass_S);
+                    }
                     continue charclass;
                 case 'S':
                     // class escape (cannot start/end range)
                     if (inrange)
                         throw error(Messages.Key.RegExpInvalidCharacterRange);
                     mustMatch('S');
-                    out.append(!negation ? characterClass_S : characterClass_s);
+                    if (!negation) {
+                        out.append(characterClass_S);
+                    } else {
+                        if (pos - 2 != startpos) {
+                            out.append("&&");
+                        }
+                        out.append(characterClass_s);
+                    }
                     continue charclass;
 
                 case 'b':
@@ -221,20 +236,18 @@ public class RegExpParser {
                 case 'n':
                 case 'r':
                 case 't':
-                    // CharacterEscape :: ControlEscape
-                    out.append('\\').append((char) get());
-                    break classatom;
                 case 'v':
                     // CharacterEscape :: ControlEscape
-                    mustMatch('v');
-                    // rewrite since Java does not support \v
-                    out.append("\\x0B");
+                    out.append('\\').append((char) get());
                     break classatom;
                 case 'c': {
                     // CharacterEscape :: c ControlLetter
                     int cc = peek(1);
-                    if ((cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z')) {
-                        out.append('\\').append((char) get()).append((char) (get() & ~0x20));
+                    if ((cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z')
+                            || (cc >= '0' && cc <= '9') || cc == '_') {
+                        // extended control letters with 0-9 and _
+                        out.append('\\').append((char) get())
+                                .append((char) ((get() | 0x40) & ~0x20));
                         break classatom;
                     }
                     // convert invalid ControlLetter to \\
@@ -393,14 +406,9 @@ public class RegExpParser {
                 case 'n':
                 case 'r':
                 case 't':
-                    // CharacterEscape :: ControlEscape
-                    out.append('\\').append((char) get());
-                    break atom;
                 case 'v':
                     // CharacterEscape :: ControlEscape
-                    mustMatch('v');
-                    // rewrite since Java does not support \v
-                    out.append("\\x0B");
+                    out.append('\\').append((char) get());
                     break atom;
                 case 'c': {
                     // CharacterEscape :: c ControlLetter
