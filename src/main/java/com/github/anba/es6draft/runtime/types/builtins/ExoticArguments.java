@@ -13,14 +13,19 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
+import java.util.Arrays;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  * <h1>8 Types</h1><br>
@@ -39,14 +44,20 @@ public class ExoticArguments extends OrdinaryObject {
     private ParameterMap parameterMap = null;
 
     private static class ParameterMap {
-        private LexicalEnvironment env;
-        private int length;
-        private String[] args;
+        private final LexicalEnvironment env;
+        private final int length;
+        private final String[] parameters;
+
+        ParameterMap(ParameterMap original) {
+            this.env = original.env;
+            this.length = original.length;
+            this.parameters = Arrays.copyOf(original.parameters, length, String[].class);
+        }
 
         ParameterMap(LexicalEnvironment env, int length) {
             this.env = env;
             this.length = length;
-            this.args = new String[length];
+            this.parameters = new String[length];
         }
 
         static int toArgumentIndex(String p) {
@@ -72,13 +83,13 @@ public class ExoticArguments extends OrdinaryObject {
         }
 
         void defineOwnProperty(int propertyKey, String name) {
-            args[propertyKey] = name;
+            parameters[propertyKey] = name;
         }
 
         Object get(String propertyKey) {
             int index = toArgumentIndex(propertyKey);
             if (index >= 0 && index < length) {
-                String name = args[index];
+                String name = parameters[index];
                 if (name != null) {
                     Object value = env.getEnvRec().getBindingValue(name, true);
                     return value;
@@ -91,7 +102,7 @@ public class ExoticArguments extends OrdinaryObject {
         void put(String propertyKey, Object value) {
             int index = toArgumentIndex(propertyKey);
             if (index >= 0 && index < length) {
-                String name = args[index];
+                String name = parameters[index];
                 if (name != null) {
                     env.getEnvRec().setMutableBinding(name, value, true);
                     return;
@@ -103,7 +114,7 @@ public class ExoticArguments extends OrdinaryObject {
         boolean hasOwnProperty(String propertyKey) {
             int index = toArgumentIndex(propertyKey);
             if (index >= 0 && index < length) {
-                return args[index] != null;
+                return parameters[index] != null;
             }
             return false;
         }
@@ -111,7 +122,7 @@ public class ExoticArguments extends OrdinaryObject {
         boolean delete(String propertyKey) {
             int index = toArgumentIndex(propertyKey);
             if (index >= 0 && index < length) {
-                args[index] = null;
+                parameters[index] = null;
             }
             return true;
         }
@@ -187,13 +198,64 @@ public class ExoticArguments extends OrdinaryObject {
         obj.defineOwnProperty(cx, "callee", new PropertyDescriptor(func, true, false, true));
     }
 
-    /**
-     * [[Set]]
-     */
-    @Override
-    public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
-        // FIXME: spec bug (not overriden in spec -> 10.6-10-c-ii-2) (bug 1160)
-        return super.set(cx, propertyKey, value, receiver);
+    private static class ExoticLegacyArguments extends ExoticArguments {
+        public ExoticLegacyArguments(Realm realm) {
+            super(realm);
+        }
+
+        boolean ordinarySetPrototype(ExecutionContext cx, ScriptObject prototype) {
+            return super.setPrototype(cx, prototype);
+        }
+
+        @Override
+        public boolean setPrototype(ExecutionContext cx, ScriptObject prototype) {
+            // ignore attempts to change [[Prototype]]
+            return true;
+        }
+
+        @Override
+        public boolean setIntegrity(ExecutionContext cx, IntegrityLevel level) {
+            // ignore attempts to change integrity level
+            return true;
+        }
+
+        @Override
+        public boolean delete(ExecutionContext cx, String propertyKey) {
+            // this object is effectively unmodifiable
+            return true;
+        }
+
+        @Override
+        public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
+                PropertyDescriptor desc) {
+            // this object is effectively unmodifiable
+            return true;
+        }
+
+        @Override
+        public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
+                PropertyDescriptor desc) {
+            // this object is effectively unmodifiable
+            return true;
+        }
+    }
+
+    public static ExoticArguments CreateLegacyArguments(ExecutionContext cx,
+            ExoticArguments arguments, FunctionObject func) {
+        int length = ToInt32(cx, Get(cx, arguments, "length"));
+        ExoticLegacyArguments obj = new ExoticLegacyArguments(cx.getRealm());
+        obj.ordinarySetPrototype(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
+        obj.ordinaryDefineOwnProperty("length", new PropertyDescriptor(length, true, false, true));
+        obj.ordinaryDefineOwnProperty("callee", new PropertyDescriptor(func, true, false, true));
+        for (int index = 0; index < length; ++index) {
+            String pk = ToString(index);
+            Object value = arguments.getOwnProperty(cx, pk).getValue();
+            obj.ordinaryDefineOwnProperty(pk, new PropertyDescriptor(value, true, true, true));
+        }
+        if (arguments.parameterMap != null) {
+            ((ExoticArguments) obj).parameterMap = new ParameterMap(arguments.parameterMap);
+        }
+        return obj;
     }
 
     /**
@@ -213,6 +275,7 @@ public class ExoticArguments extends OrdinaryObject {
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 4  */
         if (!isMapped) {
+            // FIXME: spec bug (does not work as intended)
             Object v = super.get(cx, propertyKey, accessorThisValue);
             if ("caller".equals(propertyKey) && isStrictFunction(v)) {
                 throw throwTypeError(cx, Messages.Key.StrictModePoisonPill);

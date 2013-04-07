@@ -6,9 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CreateLegacyArguments;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -330,21 +333,5 @@ public class OrdinaryFunction extends FunctionObject {
         }
         ExoticArguments args = CreateLegacyArguments(cx, arguments, this);
         this.arguments.apply(new PropertyDescriptor(args));
-    }
-
-    private static ExoticArguments CreateLegacyArguments(ExecutionContext cx,
-            ExoticArguments arguments, FunctionObject func) {
-        int len = ToInt32(cx, Get(cx, arguments, "length"));
-        ExoticArguments obj = new ExoticArguments(cx.getRealm());
-        obj.setPrototype(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
-        obj.defineOwnProperty(cx, "length", new PropertyDescriptor(len, false, false, false));
-        obj.defineOwnProperty(cx, "callee", new PropertyDescriptor(func, false, false, false));
-        for (int index = 0; index < len; ++index) {
-            String pk = ToString(index);
-            Object val = arguments.getOwnProperty(cx, pk).getValue();
-            obj.defineOwnProperty(cx, pk, new PropertyDescriptor(val, false, true, false));
-        }
-        obj.setIntegrity(cx, IntegrityLevel.NonExtensible);
-        return obj;
     }
 }
