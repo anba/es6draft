@@ -83,9 +83,6 @@ ecma_5/strict/15.10.7.js
 # BOM is also whitespace in RegExp
 ecma_5/RegExp/regexp-space-character-class.js
 
-# GlobalObject [[Class]] is "[object global]"
-ecma_3/Object/class-001.js
-
 # unknown 2-byte function name problem
 ecma_3/Function/regress-58274.js
 ecma_3/Unicode/uc-005.js

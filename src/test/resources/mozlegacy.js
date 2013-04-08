@@ -75,6 +75,10 @@ function ToSource(o) {
   }
 }
 
+Object.defineProperty(global, getSym("@@toStringTag"), {
+  value: "global", writable: true, enumerable: false, configurable: true
+});
+
 Object.defineProperties(Object.assign(Object.prototype, {
   __defineGetter__(name, getter) {
     var obj = (this != null ? Object(this) : global);
