@@ -31,7 +31,7 @@ const Object_defineProperty = Object.defineProperty,
       Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
       Object_keys = Object.keys;
 
-function Quote(s) {
+function Quote(s, qc = '"') {
   var r = '';
   for (var i = 0, len = s.length; i < len; ++i) {
     var c = s.charCodeAt(i);
@@ -44,6 +44,9 @@ function Quote(s) {
       case 0x22: r += "\\\""; continue;
       case 0x5C: r += "\\\\"; continue;
     }
+    if (c == 0x27 && qc == "'") {
+      r += "\\\'";
+    }
     if (c < 20) {
       r += "\\x" + (c < 0x10 ? "0" : "") + c.toString(16).toUpperCase();
     } else if (c < 0x7F) {
@@ -54,7 +57,19 @@ function Quote(s) {
       r += "\\u" + (c < 0x1000 ? "0" : "") + c.toString(16).toUpperCase();
     }
   }
-  return '"' + r + '"';
+  return qc + r + qc;
+}
+
+const ASCII_Ident = /^[_$a-zA-Z][_$a-zA-Z0-9]*$/;
+
+function ToPropertyName(name) {
+  if (ASCII_Ident.test(name)) {
+    return name;
+  }
+  if ((name | 0) >= 0 && (name | 0) <= 0x7fffffff && (name | 0) + "" == name) {
+    return name;
+  }
+  return Quote(name, "'");
 }
 
 function ToSource(o) {
@@ -78,6 +93,12 @@ function ToSource(o) {
 Object.defineProperty(global, getSym("@@toStringTag"), {
   value: "global", writable: true, enumerable: false, configurable: true
 });
+
+Object.defineProperty(Object.assign(global, {
+  uneval(o) {
+    return ToSource(o);
+  }
+}), "uneval", {enumerable: false});
 
 Object.defineProperties(Object.assign(Object.prototype, {
   __defineGetter__(name, getter) {
@@ -110,13 +131,15 @@ Object.defineProperties(Object.assign(Object.prototype, {
 });
 
 const wm = new WeakMap();
+var depth = 0;
 
 Object.defineProperty(Object.assign(Object.prototype, {
   toSource() {
     if (wm.has(this)) {
-      return "({})";
+      return "{}";
     }
     wm.set(this, null);
+    depth += 1;
     try {
       var s = "";
       var names = Object_keys(this);
@@ -126,23 +149,27 @@ Object.defineProperty(Object.assign(Object.prototype, {
         if (desc == null) {
           // ignore removed properties
         } else if ('value' in desc) {
-          s += name + ":" + ToSource(desc.value);
+          s += ToPropertyName(name) + ":" + ToSource(desc.value);
         } else {
           if (desc.get !== void 0) {
             var fsrc = ToSource(desc.get);
-            s += "get " + name + fsrc.substr(fsrc.indexOf('('));
+            s += "get " + ToPropertyName(name) + fsrc.substr(fsrc.indexOf('('));
             if (desc.set !== void 0) s += ", ";
           }
           if (desc.set !== void 0) {
             var fsrc = ToSource(desc.set);
-            s += "set " + name + fsrc.substr(fsrc.indexOf('('));
+            s += "set " + ToPropertyName(name) + fsrc.substr(fsrc.indexOf('('));
           }
         }
         if (i + 1 < len) s += ", ";
       }
+      if (depth > 1) {
+        return "{" + s + "}";
+      }
       return "({" + s + "})";
     } finally {
       wm.delete(this);
+      depth -= 1;
     }
   }
 }), "toSource", {enumerable: false});
@@ -163,6 +190,7 @@ Object.defineProperty(Object.assign(Array.prototype, {
       return "[]";
     }
     wm.set(this, null);
+    depth += 1;
     try {
       var s = "";
       for (var i = 0, len = this.length; i < len; ++i) {
@@ -177,6 +205,7 @@ Object.defineProperty(Object.assign(Array.prototype, {
       return "[" + s + "]";
     } finally {
       wm.delete(this);
+      depth -= 1;
     }
   }
 }), "toSource", {enumerable: false});

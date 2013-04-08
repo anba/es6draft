@@ -126,6 +126,10 @@ js1_7/extensions/regress-354945-02.js
 ecma/String/15.5.4.12-5.js
 
 # different function source representation
+ecma_5/extensions/strict-function-toSource.js
+js1_5/extensions/regress-313803.js
+js1_7/extensions/regress-367629.js
+js1_7/extensions/regress-381301.js
 js1_8_5/regress/regress-584355.js
 
 # Extended toPrecision() range
@@ -174,6 +178,7 @@ js1_5/extensions/toLocaleFormat-02.js
 # different error message
 ecma_3/Array/15.4.5.1-01.js
 ecma_3/Exceptions/15.11.5.js
+ecma_3/extensions/7.9.1.js
 ecma_3/extensions/regress-274152.js
 ecma_3/LexicalConventions/7.8.3-01.js
 ecma_3/LexicalConventions/7.9.1.js
@@ -395,43 +400,6 @@ js1_8_5/regress/regress-476088.js
 
 # evaluate() not supported
 ecma_5/misc/function-definition-evaluate.js
-
-# uneval() not supported
-ecma_3/extensions/7.9.1.js
-ecma_3/extensions/regress-385393-03.js
-ecma_5/extensions/regress-bug567606.js
-ecma_5/extensions/bug566661.js
-ecma_5/extensions/strict-function-toSource.js
-js1_5/extensions/regress-96284-002.js
-js1_5/extensions/regress-311792-01.js
-js1_5/extensions/regress-322957.js
-js1_5/extensions/regress-328556.js
-js1_5/extensions/regress-313803.js
-js1_5/extensions/regress-311583.js
-js1_5/extensions/regress-306738.js
-js1_5/extensions/regress-304897.js
-js1_5/extensions/regress-358594-01.js
-js1_5/extensions/regress-358594-02.js
-js1_5/extensions/regress-358594-03.js
-js1_5/extensions/regress-358594-04.js
-js1_5/extensions/regress-358594-05.js
-js1_5/extensions/regress-358594-06.js
-js1_5/extensions/regress-363988.js
-js1_5/extensions/regress-381211.js
-js1_5/extensions/regress-380581.js
-js1_5/extensions/regress-375801.js
-js1_5/extensions/regress-407501.js
-js1_5/extensions/regress-465276.js
-js1_5/extensions/regress-90596-002.js
-js1_5/GC/regress-418128.js
-js1_7/block/regress-352267.js
-js1_7/extensions/regress-354499-01.js
-js1_7/extensions/regress-367629.js
-js1_7/extensions/regress-381301.js
-js1_8/extensions/regress-465337.js
-js1_7/extensions/regress-380933.js
-js1_8_5/regress/regress-624199.js
-js1_8_5/regress/regress-621814.js
 
 # newGlobal() not supported
 ecma_5/extensions/cross-global-eval-is-indirect.js
@@ -678,6 +646,7 @@ ecma_3/FunExpr/regress-545980.js
 ecma_5/extensions/uneval-strict-functions.js
 js1_8/extensions/expclo.js
 js1_8/extensions/expclo2.js
+js1_8/extensions/regress-385729.js
 js1_8/extensions/regress-422269.js
 js1_8/extensions/regress-452913.js
 js1_8/extensions/regress-454744.js

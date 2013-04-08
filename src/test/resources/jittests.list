@@ -248,6 +248,8 @@ tests/auto-regress/bug771946.js
 # RegExp.prototype no longer RegExp instance
 tests/basic/bug649771.js
 
+# String.prototype no longer String instance
+tests/basic/bug699166.js
 
 ############################################
 # Arrow functions tests don't match draft  #
@@ -472,21 +474,6 @@ tests/basic/testOOMInAutoEnterCompartment.js
 tests/pic/callname-eager-this1.js
 tests/pic/callname-eager-this2.js
 
-# uneval() shell function not supported
-tests/auto-regress/bug486139.js
-tests/auto-regress/bug491806.js
-tests/auto-regress/bug522624.js
-tests/auto-regress/bug562028.js
-tests/auto-regress/bug580694.js
-tests/auto-regress/bug584423.js
-tests/auto-regress/bug745452.js
-tests/basic/bug699166.js
-tests/basic/parseIntTests.js
-tests/basic/testDenseArrayProp.js
-tests/basic/testGCWhileRecording.js
-tests/basic/testNEWINIT.js
-tests/for-of/decompiler.js
-
 # newGlobal() shell function not supported
 tests/arguments/rest-basic.js
 tests/arguments/rest-debugger.js
@@ -669,6 +656,7 @@ tests/closures/bug541239.js
 tests/collections/Map-constructor-generator-1.js
 tests/collections/Map-constructor-generator-exception.js
 tests/collections/Set-constructor-generator-1.js
+tests/for-of/decompiler.js
 tests/for-of/generators-1.js
 tests/for-of/generators-3.js
 tests/for-of/generators-4.js
@@ -872,6 +860,7 @@ tests/basic/function-tosource-getset.js
 tests/basic/testInterpreterReentry4.js
 
 # let-scoped expression block
+tests/auto-regress/bug491806.js
 tests/auto-regress/bug496251.js
 tests/auto-regress/bug521163.js
 tests/auto-regress/bug523793.js
@@ -944,6 +933,7 @@ tests/basic/bug787848.js
 tests/basic/testBug673066.js
 
 # Method code too large
+tests/auto-regress/bug562028.js
 tests/auto-regress/bug601393.js
 tests/basic/bug586917.js
 tests/basic/bug641235.js
