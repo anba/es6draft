@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
 import com.github.anba.es6draft.util.ScriptCache;
 
 /**
@@ -131,6 +132,14 @@ public class MozTestGlobalObject extends GlobalObject {
         } catch (IllegalArgumentException e) {
         }
         return UNDEFINED;
+    }
+
+    /**
+     * Creates a new Symbol object
+     */
+    @Function(name = "newSym", arity = 2)
+    public Object newSym(String name, boolean _private) {
+        return new ExoticSymbolObject(name, _private);
     }
 
     /** shell-function: {@code quit()} */

@@ -13,6 +13,9 @@ tests/arguments/rest-alias-function.js
 
 # ES6 spec bug: `Map()` etc. must be called with explicit `new`
 tests/collections/iterator-gc.js
+tests/collections/iterator-proto-1.js
+tests/collections/iterator-proto-2.js
+tests/collections/iterator-proto-surfaces.js
 tests/collections/Map-clear-1.js
 tests/collections/Map-clear-2.js
 tests/collections/Map-clear-3.js
@@ -126,6 +129,7 @@ tests/basic/bug576823-regexp.js
 
 # __iterator__
 tests/basic/testCustomIterator.js
+tests/basic/bug684922.js
 
 # SpiderMonkey uses 'iterator' instead of '@@iterator'
 tests/for-of/proxy-1.js
@@ -134,6 +138,7 @@ tests/for-of/semantics-01.js
 
 # SpiderMonkey different implementation for Array iterators..
 tests/for-of/array-iterator-null.js
+tests/for-of/array-iterator-surfaces-2.js
 
 # SpiderMonkey supports iteration for String and TypedArrays
 tests/for-of/array-iterator-surfaces-1.js
@@ -142,16 +147,6 @@ tests/for-of/typedarrays-1.js
 tests/for-of/typedarrays-2.js
 tests/for-of/typedarrays-3.js
 tests/for-of/typedarrays-6.js
-
-# Iterator.prototype, (Map|Set|Array).iterator() instanceof Iterator
-tests/collections/iterator-1.js
-tests/collections/iterator-proto-1.js
-tests/collections/iterator-proto-2.js
-tests/collections/iterator-proto-surfaces.js
-tests/for-of/array-iterator-surfaces-2.js
-tests/for-of/next-surfaces.js
-tests/basic/bug649939.js
-tests/basic/bug684922.js
 
 
 ############################################

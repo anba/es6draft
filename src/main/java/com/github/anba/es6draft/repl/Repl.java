@@ -42,6 +42,7 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
 
 /**
  * Simple REPL
@@ -353,6 +354,9 @@ public class Repl {
             return (double) TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - startNano);
         }
 
+        /**
+         * Returns the well-known symbol {@code name} or undefined if there is no such symbol
+         */
         @Function(name = "getSym", arity = 1)
         public Object getSym(String name) {
             try {
@@ -362,6 +366,14 @@ public class Repl {
             } catch (IllegalArgumentException e) {
             }
             return UNDEFINED;
+        }
+
+        /**
+         * Creates a new Symbol object
+         */
+        @Function(name = "newSym", arity = 2)
+        public Object newSym(String name, boolean _private) {
+            return new ExoticSymbolObject(name, _private);
         }
     }
 }

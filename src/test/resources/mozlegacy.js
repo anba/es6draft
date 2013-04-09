@@ -509,15 +509,6 @@ Object.defineProperty(Object.assign(JSON, {
   }
 }), "toSource", {enumerable: false});
 
-Object.defineProperty(Object.mixin(Object.prototype, {
-  get iterator() {
-    return this[getSym("@@iterator")];
-  },
-  set iterator(it) {
-    this[getSym("@@iterator")] = it;
-  }
-}), "iterator", {enumerable: false});
-
 function toProxyHandler(handler) {
   var proxyHandler = {};
   if ('hasOwn' in handler) {
@@ -579,7 +570,18 @@ Object.defineProperties(Object.assign(Proxy, {
   createFunction: {enumerable: false},
 });
 
-function Iterator(obj, keys) {
+Object.defineProperty(Object.mixin(Object.prototype, {
+  get iterator() {
+    return this[getSym("@@iterator")];
+  },
+  set iterator(it) {
+    this[getSym("@@iterator")] = it;
+  }
+}), "iterator", {enumerable: false});
+
+const nextSym = newSym("next");
+
+function ToIterator(instance, obj, keys) {
   var iter = (
     Array.isArray(obj) && keys ? obj.map((_, k) => k) :
     Array.isArray(obj) ? obj.map((v, k) => [k, v]) :
@@ -587,11 +589,48 @@ function Iterator(obj, keys) {
     Object_keys(Object(obj)).map(k => [k, obj[k]])
   ).values();
   var next = iter.next.bind(iter);
-  return new Proxy(iter, {
-    get: (target, pk, receiver) => (pk == 'next' ? next : target[pk]),
-    enumerate: () => iter,
-  });
+  Object_defineProperty(instance, nextSym, {value: next, configurable: false});
+  return new Proxy(instance, {enumerate: () => iter});
 }
+
+function IsIterator(o) {
+  return Object(o) === o && Object_hasOwnProperty(o, nextSym);
+}
+
+function Iterator(obj, keys) {
+  if (IsIterator(this) && this[nextSym] === null) {
+    return ToIterator(this, obj, keys);
+  } else {
+    return new Iterator(obj, keys);
+  }
+}
+
+Object.defineProperty(Iterator, getSym("@@create"), {
+  value: function() {
+    var o = Object.create(Iterator.prototype);
+    Object_defineProperty(o, nextSym, {value: null, configurable: true});
+    return o;
+  }
+});
+
+Iterator.prototype = ToIterator(Object.create(Object.prototype), []);
+
+Object.defineProperty(Iterator.prototype, getSym("@@iterator"), {
+  value: function() { return this },
+  writable: true, enumerable: false, configurable: true
+});
+
+Object.defineProperty(Object.assign(Iterator.prototype, {
+  next() {
+    if (!IsIterator(this)) {
+      throw TypeError();
+    }
+    return this[nextSym]();
+  }
+}), "next", {enumerable: false});
+
+// adjust prototype chain for built-in iterators
+[[], new Map, new Set].forEach(v => v.values().__proto__.__proto__ = Iterator.prototype);
 
 global.Iterator = Iterator;
 

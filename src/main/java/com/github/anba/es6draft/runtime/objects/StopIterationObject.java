@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -52,5 +53,13 @@ public class StopIterationObject extends OrdinaryObject implements Initialisable
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "StopIteration";
+
+        /**
+         * 
+         */
+        @Function(name = "@@hasInstance", arity = 1, symbol = BuiltinSymbol.hasInstance)
+        public static Object hasInstance(ExecutionContext cx, Object thisValue, Object v) {
+            return cx.getIntrinsic(Intrinsics.StopIteration) == v;
+        }
     }
 }
