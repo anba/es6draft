@@ -135,18 +135,12 @@ tests/basic/bug684922.js
 tests/for-of/proxy-1.js
 tests/for-of/proxy-3.js
 tests/for-of/semantics-01.js
+tests/for-of/semantics-02.js
+tests/for-of/semantics-05.js
 
 # SpiderMonkey different implementation for Array iterators..
 tests/for-of/array-iterator-null.js
 tests/for-of/array-iterator-surfaces-2.js
-
-# SpiderMonkey supports iteration for String and TypedArrays
-tests/for-of/array-iterator-surfaces-1.js
-tests/for-of/strings.js
-tests/for-of/typedarrays-1.js
-tests/for-of/typedarrays-2.js
-tests/for-of/typedarrays-3.js
-tests/for-of/typedarrays-6.js
 
 
 ############################################

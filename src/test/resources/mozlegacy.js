@@ -570,12 +570,14 @@ Object.defineProperties(Object.assign(Proxy, {
   createFunction: {enumerable: false},
 });
 
+const iteratorSym = getSym("@@iterator");
+
 Object.defineProperty(Object.mixin(Object.prototype, {
   get iterator() {
-    return this[getSym("@@iterator")];
+    return this[iteratorSym];
   },
   set iterator(it) {
-    this[getSym("@@iterator")] = it;
+    this[iteratorSym] = it;
   }
 }), "iterator", {enumerable: false});
 
@@ -604,6 +606,7 @@ function Iterator(obj, keys) {
     return new Iterator(obj, keys);
   }
 }
+global.Iterator = Iterator;
 
 Object.defineProperty(Iterator, getSym("@@create"), {
   value: function() {
@@ -615,8 +618,8 @@ Object.defineProperty(Iterator, getSym("@@create"), {
 
 Iterator.prototype = ToIterator(Object.create(Object.prototype), []);
 
-Object.defineProperty(Iterator.prototype, getSym("@@iterator"), {
-  value: function() { return this },
+Object.defineProperty(Iterator.prototype, iteratorSym, {
+  value() { return this },
   writable: true, enumerable: false, configurable: true
 });
 
@@ -632,6 +635,26 @@ Object.defineProperty(Object.assign(Iterator.prototype, {
 // adjust prototype chain for built-in iterators
 [[], new Map, new Set].forEach(v => v.values().__proto__.__proto__ = Iterator.prototype);
 
-global.Iterator = Iterator;
+const TypedArrays = [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array];
+
+// make Strings and TypedArrays iterable
+[String, ...TypedArrays].forEach(
+  ctor => {
+    Object.defineProperty(ctor.prototype, iteratorSym, {
+      value() { return Array.prototype.values.apply(this, arguments) },
+      writable: true, enumerable: false, configurable: true
+    });
+  }
+);
+
+// make prototype.iterator() an own data property
+[Array, Map, Set, String, ...TypedArrays].forEach(
+  ctor => {
+    Object.defineProperty(ctor.prototype, "iterator", {
+      value: ctor.prototype[iteratorSym],
+      writable: true, enumerable: false, configurable: true
+    });
+  }
+);
 
 })(this);
