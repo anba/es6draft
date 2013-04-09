@@ -132,11 +132,7 @@ tests/basic/testCustomIterator.js
 tests/basic/bug684922.js
 
 # SpiderMonkey uses 'iterator' instead of '@@iterator'
-tests/for-of/proxy-1.js
 tests/for-of/proxy-3.js
-tests/for-of/semantics-01.js
-tests/for-of/semantics-02.js
-tests/for-of/semantics-05.js
 
 # SpiderMonkey different implementation for Array iterators..
 tests/for-of/array-iterator-null.js
@@ -185,6 +181,7 @@ tests/auto-regress/bug635389.js
 ############################################
 
 # Spidermonkey: Proxy vs. __proto__ on global
+tests/auto-regress/bug568855.js
 tests/auto-regress/bug589103.js
 tests/auto-regress/bug609287.js
 
@@ -197,8 +194,6 @@ tests/basic/bug821850.js
 # Old Proxy API not completely emulated
 tests/auto-regress/bug578015.js
 tests/auto-regress/bug727330.js
-tests/basic/bug787847.js
-tests/basic/testProxyConstructors.js
 
 # SpiderMonkey does not support [[Origin]] for PropertyDescriptors
 tests/proxy/testDirectProxyDefineProperty2.js
@@ -524,6 +519,7 @@ tests/basic/bug632778-2.js
 tests/basic/bug639529.js
 tests/basic/testBug748212.js
 tests/basic/testBug761439.js
+tests/basic/testProxyConstructors.js
 
 # other unsupported shell functions
 # it object

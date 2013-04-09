@@ -510,33 +510,90 @@ Object.defineProperty(Object.assign(JSON, {
 }), "toSource", {enumerable: false});
 
 function toProxyHandler(handler) {
-  var proxyHandler = {};
-  if ('hasOwn' in handler) {
-    proxyHandler['hasOwn'] = (_, pk) => handler['hasOwn'](pk);
-  }
+  var TypeErrorThrower = () => { throw TypeError };
+  var proxyHandler = {
+    getOwnPropertyDescriptor: TypeErrorThrower,
+    getPropertyDescriptor: TypeErrorThrower,
+    getOwnPropertyNames: TypeErrorThrower,
+    getPropertyNames: TypeErrorThrower,
+    defineProperty: TypeErrorThrower,
+    delete: TypeErrorThrower,
+    ownKeys: TypeErrorThrower,
+  };
+
+  // fundamental traps
   if ('getOwnPropertyDescriptor' in handler) {
     proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getOwnPropertyDescriptor'](pk);
   }
-  if ('defineProperty' in handler) {
-    proxyHandler['defineProperty'] = (_, pk, desc) => (handler['defineProperty'](pk, desc), true);
-  }
-  if ('has' in handler) {
-    proxyHandler['has'] = (_, pk) => handler['has'](pk);
-  }
-  if ('get' in handler) {
-    proxyHandler['get'] = (_, pk, receiver) => handler['get'](receiver, pk);
-  }
-  if ('set' in handler) {
-    proxyHandler['set'] = (_, pk, value, receiver) => handler['set'](receiver, pk, value);
-  }
-  if ('delete' in handler) {
-    proxyHandler['deleteProperty'] = (_, pk) => handler['delete'](pk);
+  if (!('getOwnPropertyDescriptor' in handler) && 'getPropertyDescriptor' in handler) {
+    proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getPropertyDescriptor'](pk);
   }
   if ('getOwnPropertyNames' in handler) {
     proxyHandler['ownKeys'] = () => Array.from(handler['getOwnPropertyNames']()).values();
   }
+  if ('defineProperty' in handler) {
+    proxyHandler['defineProperty'] = (_, pk, desc) => (handler['defineProperty'](pk, desc), true);
+  }
+  if ('delete' in handler) {
+    proxyHandler['deleteProperty'] = (_, pk) => handler['delete'](pk);
+  }
+
+  // derived traps
+  if ('has' in handler) {
+    proxyHandler['has'] = (_, pk) => handler['has'](pk);
+  } else {
+    proxyHandler['has'] = (_, pk) => !!handler['getPropertyDescriptor'](pk);
+  }
+  if ('hasOwn' in handler) {
+    proxyHandler['hasOwn'] = (_, pk) => handler['hasOwn'](pk);
+  } else {
+    proxyHandler['hasOwn'] = (_, pk) => !!handler['getOwnPropertyDescriptor'](pk);
+  }
+  if ('get' in handler) {
+    proxyHandler['get'] = (_, pk, receiver) => handler['get'](receiver, pk);
+  } else {
+    proxyHandler['get'] = (_, pk, receiver) => {
+      var desc = handler['getPropertyDescriptor'](pk);
+      if (desc !== undefined && 'value' in desc) {
+        return desc.value;
+      }
+      if (desc !== undefined && desc.get !== undefined) {
+        return desc.get.call(receiver);
+      }
+    };
+  }
+  if ('set' in handler) {
+    proxyHandler['set'] = (_, pk, value, receiver) => handler['set'](receiver, pk, value);
+  } else {
+    proxyHandler['set'] = (_, pk, value, receiver) => {
+      var desc = handler['getOwnPropertyDescriptor'](pk);
+      if (!desc) {
+        desc = handler['getPropertyDescriptor'](pk);
+        if (!desc) {
+          desc = {
+            writable: true, enumerable: true, configurable: true
+          };
+        }
+      }
+      if (('writable' in desc) && desc.writable) {
+        handler['defineProperty'](pk, (desc.value = value, desc));
+        return true;
+      }
+      if (!('writable' in desc) && desc.set) {
+        desc.set.call(receiver, value);
+        return true;
+      }
+      return false;
+    };
+  }
   if ('enumerate' in handler) {
     proxyHandler['enumerate'] = () => Array.from(handler['enumerate']()).values();
+  } else if ('iterate' in handler) {
+    proxyHandler['enumerate'] = () => handler['iterate']();
+  } else {
+    proxyHandler['enumerate'] = () => handler['getPropertyNames'].filter(
+      pk => handler['getPropertyDescriptor'](pk).enumerable
+    ).values();
   }
   if ('keys' in handler) {
     proxyHandler['ownKeys'] = () => Array.from(handler['keys']()).values();
@@ -572,14 +629,9 @@ Object.defineProperties(Object.assign(Proxy, {
 
 const iteratorSym = getSym("@@iterator");
 
-Object.defineProperty(Object.mixin(Object.prototype, {
-  get iterator() {
-    return this[iteratorSym];
-  },
-  set iterator(it) {
-    this[iteratorSym] = it;
-  }
-}), "iterator", {enumerable: false});
+Object.defineProperty(Object.prototype, iteratorSym, {
+  get() { return this.iterator }
+});
 
 const nextSym = newSym("next");
 
@@ -618,7 +670,7 @@ Object.defineProperty(Iterator, getSym("@@create"), {
 
 Iterator.prototype = ToIterator(Object.create(Object.prototype), []);
 
-Object.defineProperty(Iterator.prototype, iteratorSym, {
+Object.defineProperty(Iterator.prototype, "iterator", {
   value() { return this },
   writable: true, enumerable: false, configurable: true
 });
@@ -635,23 +687,24 @@ Object.defineProperty(Object.assign(Iterator.prototype, {
 // adjust prototype chain for built-in iterators
 [[], new Map, new Set].forEach(v => v.values().__proto__.__proto__ = Iterator.prototype);
 
+// make prototype.iterator() an own data property and remove @@iterator hook
+[Array, Map, Set].forEach(
+  ctor => {
+    Object.defineProperty(ctor.prototype, "iterator", {
+      value: ctor.prototype[iteratorSym],
+      writable: true, enumerable: false, configurable: true
+    });
+    delete ctor.prototype[iteratorSym];
+  }
+);
+
 const TypedArrays = [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array];
 
 // make Strings and TypedArrays iterable
 [String, ...TypedArrays].forEach(
   ctor => {
-    Object.defineProperty(ctor.prototype, iteratorSym, {
-      value() { return Array.prototype.values.apply(this, arguments) },
-      writable: true, enumerable: false, configurable: true
-    });
-  }
-);
-
-// make prototype.iterator() an own data property
-[Array, Map, Set, String, ...TypedArrays].forEach(
-  ctor => {
     Object.defineProperty(ctor.prototype, "iterator", {
-      value: ctor.prototype[iteratorSym],
+      value() { return Array.prototype.values.apply(this, arguments) },
       writable: true, enumerable: false, configurable: true
     });
   }
