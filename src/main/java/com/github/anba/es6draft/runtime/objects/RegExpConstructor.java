@@ -175,7 +175,9 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
             // System.out.printf("pattern = '%s'\n", regexp);
             match = Pattern.compile(regexp, iflags);
             negativeLAGroups = parser.negativeLookaheadGroups();
-        } catch (ParserException | PatternSyntaxException e) {
+        } catch (ParserException e) {
+            throw throwSyntaxError(cx, e.getMessageKey(), e.getMessageArguments());
+        } catch (PatternSyntaxException e) {
             throw throwSyntaxError(cx, Messages.Key.InvalidRegExpPattern, e.getMessage());
         }
 

@@ -553,6 +553,10 @@ function toProxyHandler(handler) {
     proxyHandler['get'] = (_, pk, receiver) => handler['get'](receiver, pk);
   } else {
     proxyHandler['get'] = (_, pk, receiver) => {
+      // XXX: special case for 'tests/for-of/proxy-3.js'
+      if (pk === iteratorSym) {
+        pk = "iterator";
+      }
       var desc = handler['getPropertyDescriptor'](pk);
       if (desc !== undefined && 'value' in desc) {
         return desc.value;
@@ -670,25 +674,26 @@ Object.defineProperty(Iterator, getSym("@@create"), {
 
 Iterator.prototype = ToIterator(Object.create(Object.prototype), []);
 
-Object.defineProperty(Iterator.prototype, "iterator", {
-  value() { return this },
-  writable: true, enumerable: false, configurable: true
-});
-
-Object.defineProperty(Object.assign(Iterator.prototype, {
+Object.defineProperties(Object.assign(Iterator.prototype, {
+  iterator() {
+    return this;
+  },
   next() {
     if (!IsIterator(this)) {
       throw TypeError();
     }
     return this[nextSym]();
   }
-}), "next", {enumerable: false});
+}), {
+  iterator: {enumerable: false},
+  next: {enumerable: false},
+});
 
 // adjust prototype chain for built-in iterators
 [[], new Map, new Set].forEach(v => v.values().__proto__.__proto__ = Iterator.prototype);
 
 // make prototype.iterator() an own data property and remove @@iterator hook
-[Array, Map, Set].forEach(
+[Map, Set].forEach(
   ctor => {
     Object.defineProperty(ctor.prototype, "iterator", {
       value: ctor.prototype[iteratorSym],
@@ -698,13 +703,26 @@ Object.defineProperty(Object.assign(Iterator.prototype, {
   }
 );
 
+const ArrayPrototype_iterator = (function() {
+  const arrayIterator = Array.prototype[iteratorSym];
+  const throwsOnGet = new Proxy({}, {get: () => { throw TypeError() }});
+  return {
+    iterator() {
+      return arrayIterator.call(this != null ? this : throwsOnGet);
+    }
+  }.iterator;
+})();
+
+// remove @@iterator on Array.prototype
+delete Array.prototype[iteratorSym];
+
 const TypedArrays = [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array];
 
 // make Strings and TypedArrays iterable
-[String, ...TypedArrays].forEach(
+[Array, String, ...TypedArrays].forEach(
   ctor => {
     Object.defineProperty(ctor.prototype, "iterator", {
-      value() { return Array.prototype.values.apply(this, arguments) },
+      value() { return ArrayPrototype_iterator.call(this) },
       writable: true, enumerable: false, configurable: true
     });
   }

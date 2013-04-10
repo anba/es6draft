@@ -125,15 +125,26 @@ public class RegExpParser {
         for (;;) {
             c = peek(0);
             if (!(c >= '0' && c <= '9')) {
-                break;
+                return num;
             }
             num = num * 10 + (get() - '0');
-            if (num < 0) {
-                // overflow
+            if (num >= 0x0CCCCCCC) {
+                return decimal(num);
+            }
+        }
+    }
+
+    private int decimal(long num) {
+        for (;;) {
+            int c = peek(0);
+            if (!(c >= '0' && c <= '9')) {
+                return (int) Math.min(num, Integer.MAX_VALUE);
+            }
+            num = num * 10 + (get() - '0');
+            if (num >= 0xFFFFFFFFL) {
                 throw error(Messages.Key.RegExpInvalidQualifier);
             }
         }
-        return num;
     }
 
     private static int hexDigit(int c) {

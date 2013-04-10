@@ -115,28 +115,16 @@ tests/basic/testBug720695.js
 tests/basic/testBug753158.js
 tests/basic/testDestructuringVarInsideWith.js
 
-# __noSuchMethod__
+# __noSuchMethod__ not supported
 tests/basic/bug717208.js
 tests/basic/bug732087.js
 
-# RegExp sticky-flag
-tests/basic/bug576823-regexp.js
-
-
-############################################
-# Old iteration protocol issues            #
-############################################
-
-# __iterator__
+# __iterator__ not supported
 tests/basic/testCustomIterator.js
 tests/basic/bug684922.js
 
-# SpiderMonkey uses 'iterator' instead of '@@iterator'
-tests/for-of/proxy-3.js
-
-# SpiderMonkey different implementation for Array iterators..
-tests/for-of/array-iterator-null.js
-tests/for-of/array-iterator-surfaces-2.js
+# RegExp sticky-flag
+tests/basic/bug576823-regexp.js
 
 
 ############################################
@@ -167,10 +155,6 @@ tests/basic/testErrorReportIn_getPrototypeOf.js
 tests/basic/testInitSingletons.js
 tests/basic/testSlowNativeBail.js
 tests/self-hosting/invoke-self-hosted-with-primitive-this.js
-
-# RegExp quantifier limitation to signed int32
-tests/basic/bug653672.js
-tests/basic/bug691299-regexp.js
 
 # Spidermonkey: Array.prototype.toString internal recursion
 tests/auto-regress/bug635389.js
