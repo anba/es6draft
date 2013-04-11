@@ -180,7 +180,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             if (!alreadyDeclared) {
                 bindings.add(varName);
                 createMutableBinding(envRec, varName, false, mv);
-                // FIXME: spec bug
+                // FIXME: spec bug (partially report in Bug 1420)
                 mv.load(undef, Types.Undefined);
                 initializeBinding(envRec, varName, mv);
             }

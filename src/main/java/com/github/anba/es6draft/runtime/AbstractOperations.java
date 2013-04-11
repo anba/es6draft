@@ -847,7 +847,7 @@ public final class AbstractOperations {
         Realm realm = cx.getRealm();
         Object proto = Get(cx, Type.objectValue(constructor), "prototype");
         if (!Type.isObject(proto)) {
-            // FIXME: spec bug (step 5a. -> F is not defined)
+            // FIXME: spec bug (step 5a. -> F is not defined) (bug 1369)
             if (constructor instanceof FunctionObject) {
                 realm = ((FunctionObject) constructor).getRealm();
             }
@@ -875,31 +875,36 @@ public final class AbstractOperations {
         return ObjectCreate(cx, proto, allocator);
     }
 
+    /**
+     * Returns a list of all string-valued [[OwnPropertyKeys]] of {@code obj}
+     */
     public static List<String> GetOwnPropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
         Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
-            Object next = keys.next();
-            if (Type.isString(next)) {
-                String nextKey = Type.stringValue(next).toString();
-                nameList.add(nextKey);
+            Object key = ToPropertyKey(cx, keys.next());
+            if (key instanceof String) {
+                nameList.add((String) key);
             }
         }
         return nameList;
     }
 
+    /**
+     * Returns a list of all string-valued, enumerable [[OwnPropertyKeys]] of {@code obj}
+     */
     public static List<String> GetOwnPropertyKeys(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
         Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
-            Object next = keys.next();
-            if (Type.isString(next)) {
-                String nextKey = Type.stringValue(next).toString();
-                Property desc = obj.getOwnProperty(cx, nextKey);
+            Object key = ToPropertyKey(cx, keys.next());
+            if (key instanceof String) {
+                String skey = (String) key;
+                Property desc = obj.getOwnProperty(cx, skey);
                 if (desc != null && desc.isEnumerable()) {
-                    nameList.add(nextKey);
+                    nameList.add(skey);
                 }
             }
         }

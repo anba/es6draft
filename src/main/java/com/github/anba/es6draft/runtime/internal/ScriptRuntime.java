@@ -229,7 +229,7 @@ public final class ScriptRuntime {
         Lookup lookup = MethodHandles.publicLookup();
         try {
             DefaultConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
-                    "DefaultConstructorInit", MethodType.methodType(Void.TYPE,
+                    "DefaultConstructorInit", MethodType.methodType(ExoticArguments.class,
                             ExecutionContext.class, FunctionObject.class, Object[].class));
             DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
                     MethodType.methodType(Object.class, ExecutionContext.class));
@@ -244,7 +244,8 @@ public final class ScriptRuntime {
         }
     }
 
-    public static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
+    public static ExoticArguments DefaultConstructorInit(ExecutionContext cx, FunctionObject f,
+            Object[] args) {
         LexicalEnvironment env = cx.getVariableEnvironment();
         EnvironmentRecord envRec = env.getEnvRec();
 
@@ -258,6 +259,8 @@ public final class ScriptRuntime {
 
         CompleteStrictArgumentsObject(cx, ao);
         envRec.initializeBinding("arguments", ao);
+
+        return ao;
     }
 
     public static Object DefaultConstructor(ExecutionContext cx) {
@@ -288,11 +291,11 @@ public final class ScriptRuntime {
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction constructor;
         if (fd.hasSuperReference()) {
-            // FIXME: spec bug (constructorParent not used)
+            // FIXME: spec bug (constructorParent not used) (Bug 1416)
             constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
                     constructorParent, proto, propName);
         } else {
-            // FIXME: spec bug (constructorParent not used)
+            // FIXME: spec bug (constructorParent not used) (Bug 1416)
             constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
                     constructorParent);
         }
@@ -369,7 +372,7 @@ public final class ScriptRuntime {
         desc.setGetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        // FIXME: spec bug (not updated to use DefinePropertyOrThrow)
+        // FIXME: spec bug (not updated to use DefinePropertyOrThrow) (Bug 1417)
         DefinePropertyOrThrow(cx, object, propName, desc);
     }
 
@@ -438,7 +441,6 @@ public final class ScriptRuntime {
         Object[] list = new Object[(int) spreadLen];
         /* step 9-10 */
         for (int n = 0; n < spreadLen; ++n) {
-            // FIXME: possible spec bug -> HasProperty() check missing?
             Object nextArg = Get(cx, spreadObj, ToString(n));
             list[n] = nextArg;
         }
@@ -650,7 +652,6 @@ public final class ScriptRuntime {
                 deleteStatus = obj.delete(cx, (Symbol) referencedName);
             }
             if (!deleteStatus && ref.isStrictReference()) {
-                // FIXME: spec bug (typing 'typeError')
                 throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
                         .toString());
             }
@@ -801,7 +802,7 @@ public final class ScriptRuntime {
                 BuiltinSymbol.hasInstance.get());
         if (instOfHandler != null) {
             Object result = instOfHandler.call(cx, constructor, obj);
-            // FIXME: spec bug (missing ToBoolean)
+            // FIXME: spec bug (missing ToBoolean) (Bug 1418)
             return ToBoolean(result);
         }
         if (!IsCallable(constructor)) {
@@ -948,7 +949,7 @@ public final class ScriptRuntime {
     }
 
     public static Object RegExp(ExecutionContext cx, String re, String flags) {
-        // FIXME: spec bug (call abstract operation RegExpCreate?!)
+        // FIXME: spec bug (call abstract operation RegExpCreate?!) (bug 749)
         Constructor ctor = (Constructor) cx.getIntrinsic(Intrinsics.RegExp);
         return ctor.construct(cx, re, flags);
     }
@@ -1081,7 +1082,6 @@ public final class ScriptRuntime {
         for (long n = 0; n < spreadLen; ++n, ++nextIndex) {
             boolean exists = HasProperty(cx, spreadObj, ToString(n));
             if (exists) {
-                // FIXME: possible spec bug
                 Object v = spreadObj.get(cx, ToString(n), spreadObj);
                 defineProperty(array, nextIndex, v, cx);
             }

@@ -636,7 +636,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getDefaultClassProto);
         } else {
-            // FIXME: spec bug (ClassHeritage runtime evaluation not defined)
+            // FIXME: spec bug (ClassHeritage runtime evaluation not defined) (Bug 1416)
             ValType type = codegen.expression(def.getHeritage(), mv);
             mv.toBoxed(type);
             invokeGetValue(def.getHeritage(), mv);
@@ -670,7 +670,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.aconst(className);
             mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
 
-            // FIXME: spec bug - InitializeBinding not called!
+            // FIXME: spec bug - InitializeBinding not called! (Bug 1416)
             // stack: [ctor, proto, scope, proto, envRec] -> [ctor, proto, scope]
             mv.swap();
             mv.aconst(className);
@@ -709,7 +709,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         List<MethodDefinition> protoMethods = PrototypeMethodDefinitions(def);
         for (MethodDefinition method : protoMethods) {
             if (method == constructor) {
-                // FIXME: spec bug? (not handled in draft)
+                // FIXME: spec bug? (not handled in draft) (Bug 1416)
                 continue;
             }
             mv.dup();

@@ -111,7 +111,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
             return declEnv.deleteBinding(name);
         }
         if (objectEnv.hasBinding(name)) {
-            // FIXME: spec bug (draft calls `declEnv.deleteBinding(name)`)
+            // FIXME: spec bug (draft calls `declEnv.deleteBinding(name)`) (Bug 1419)
             boolean status = objectEnv.deleteBinding(name);
             if (status) {
                 varNames.remove(name);

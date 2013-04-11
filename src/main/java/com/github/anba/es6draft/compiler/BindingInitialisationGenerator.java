@@ -323,7 +323,6 @@ class BindingInitialisationGenerator {
                         mv.pop();
                         ValType type = codegen.expression(initialiser, mv);
                         mv.toBoxed(type);
-                        // FIXME: spec bug - missing GetValue() call (Bug 1242)
                         invokeGetValue(initialiser, mv);
                         mv.loadExecutionContext();
                         mv.swap();
@@ -409,7 +408,6 @@ class BindingInitialisationGenerator {
                     mv.pop();
                     ValType type = codegen.expression(initialiser, mv);
                     mv.toBoxed(type);
-                    // FIXME: spec bug - missing GetValue() call (Bug 1242)
                     invokeGetValue(initialiser, mv);
                     if (binding instanceof BindingPattern) {
                         mv.loadExecutionContext();

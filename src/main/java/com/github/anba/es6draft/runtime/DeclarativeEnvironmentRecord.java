@@ -97,7 +97,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             throw new IllegalStateException();
         }
 
-        // FIXME: spec bug
+        // FIXME: spec bug (Bug 1420)
         if (b.value == null) {
             throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         }

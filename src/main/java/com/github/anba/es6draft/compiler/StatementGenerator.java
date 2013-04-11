@@ -362,7 +362,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             savedEnv = saveEnvironment(mv);
         }
 
-        // FIXME: spec bug (For In/Of Expression Evaluation called with 'statement')
+        // FIXME: spec bug (For In/Of Expression Evaluation called with 'statement') (Bug 1421)
         // Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
         expr.accept(this, mv);
         invokeGetValue(expr, mv);
