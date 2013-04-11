@@ -593,7 +593,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                 p.append(" ").append(attribute).append("=").append('"').append(escapedV)
                         .append('"');
             }
-            // FIXME: spec bug (string 'S' not added to final string)
+            // FIXME: spec bug (string 'S' not added to final string) (Bug 1411)
             return p.append(">").append(s).append("</").append(tag).append(">").toString();
         }
 

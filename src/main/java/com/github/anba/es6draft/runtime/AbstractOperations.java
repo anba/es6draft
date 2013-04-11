@@ -115,7 +115,7 @@ public final class AbstractOperations {
             if (!Type.isObject(result)) {
                 return result;
             }
-            // FIXME: spec bug!
+            // FIXME: spec bug! (Bug 1415)
         }
         Object second = Get(cx, object, trySecond);
         if (IsCallable(second)) {
@@ -123,7 +123,7 @@ public final class AbstractOperations {
             if (!Type.isObject(result)) {
                 return result;
             }
-            // FIXME: spec bug!
+            // FIXME: spec bug! (Bug 1415)
         }
         throw throwTypeError(cx, Messages.Key.NoPrimitiveRepresentation);
     }

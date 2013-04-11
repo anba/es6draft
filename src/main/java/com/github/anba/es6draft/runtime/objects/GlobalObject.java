@@ -198,7 +198,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "escape", arity = 1)
         public static Object escape(ExecutionContext cx, Object thisValue, Object string) {
-            // FIXME: spec bug (spec language still in ES3 style)
+            // FIXME: spec bug (spec language still in ES3 style) (Bug 1405)
             String s = ToFlatString(cx, string);
             int length = s.length();
             StringBuilder r = new StringBuilder(length);
@@ -223,7 +223,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "unescape", arity = 1)
         public static Object unescape(ExecutionContext cx, Object thisValue, Object string) {
-            // FIXME: spec bug (spec language still in ES3 style)
+            // FIXME: spec bug (spec language still in ES3 style) (Bug 1405)
             String s = ToFlatString(cx, string);
             int length = s.length();
             StringBuilder r = new StringBuilder(length);

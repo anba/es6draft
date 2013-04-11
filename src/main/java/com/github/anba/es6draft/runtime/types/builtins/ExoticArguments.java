@@ -270,12 +270,12 @@ public class ExoticArguments extends OrdinaryObject {
             return super.get(cx, propertyKey, accessorThisValue);
         }
         /*  step 3  */
-        // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
+        // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 4  */
         if (!isMapped) {
-            // FIXME: spec bug (does not work as intended)
+            // FIXME: spec bug (does not work as intended) (Bug 1413)
             Object v = super.get(cx, propertyKey, accessorThisValue);
             if ("caller".equals(propertyKey) && isStrictFunction(v)) {
                 throw throwTypeError(cx, Messages.Key.StrictModePoisonPill);
@@ -305,7 +305,7 @@ public class ExoticArguments extends OrdinaryObject {
             return desc;
         }
         /*  step 4  */
-        // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
+        // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 5  */
@@ -332,7 +332,7 @@ public class ExoticArguments extends OrdinaryObject {
             return super.defineOwnProperty(cx, propertyKey, desc);
         }
         /*  step 2  */
-        // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
+        // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 3-4  */
@@ -370,7 +370,7 @@ public class ExoticArguments extends OrdinaryObject {
             return super.delete(cx, propertyKey);
         }
         /*  step 2  */
-        // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]])
+        // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /*  step 3  */

@@ -128,7 +128,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                 } catch (ScriptException e) {
                     tag = "???";
                 }
-                // FIXME: spec bug? (censor 'Object' again, but see Bug 1148)
+                // FIXME: spec bug? (censor 'Object' again, but see Bug 1148) (Bug 1408)
                 if (censoredNames.contains(tag) && !builtinTag.equals(tag)) {
                     tag = "~" + tag;
                 }

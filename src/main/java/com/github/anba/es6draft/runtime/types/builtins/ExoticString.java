@@ -33,7 +33,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     private CharSequence getStringDataOrEmpty() {
-        // FIXME: spec bug (undefined [[StringData]] not handled in spec)
+        // FIXME: spec bug (undefined [[StringData]] not handled in spec) (Bug 1414)
         return (stringData != null ? stringData : "");
     }
 

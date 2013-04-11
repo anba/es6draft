@@ -68,6 +68,7 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
 
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(callerContext, message);
+            // FIXME: spec bug - no longer non-enumerable (Bug 1404)
             CreateOwnDataProperty(callerContext, obj, "message", msg);
         }
 

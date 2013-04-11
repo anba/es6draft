@@ -183,7 +183,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
 
         obj.initialise(p, f, match, negativeLAGroups);
 
-        // FIXME: spec bug (result from function not used)
+        // FIXME: spec bug (result from function not used) (Bug 1409)
         EscapeRegExpPattern(p, f);
 
         Put(cx, obj, "lastIndex", 0, true);

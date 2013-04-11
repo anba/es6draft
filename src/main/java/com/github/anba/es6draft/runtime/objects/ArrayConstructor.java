@@ -189,7 +189,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
                 Object mapfn, Object thisArg) {
             /* step 1-2 */
             ScriptObject items = ToObject(cx, arrayLike);
-            // FIXME: spec bug (mapfn and thisArg unused)
+            // FIXME: spec bug (mapfn and thisArg unused) (bug 1276)
             Callable mapper = null;
             if (!Type.isUndefined(mapfn)) {
                 if (!IsCallable(mapfn)) {
@@ -222,7 +222,6 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
                     if (mapper != null) {
                         kValue = mapper.call(cx, thisArg, kValue);
                     }
-                    // FIXME: spec bug (Bug 1139)
                     DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(kValue, true, true,
                             true));
                 }

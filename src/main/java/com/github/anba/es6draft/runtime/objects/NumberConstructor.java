@@ -52,7 +52,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        // FIXME: spec bug (`Number(undefined)` no longer returns NaN)
+        // FIXME: spec bug (`Number(undefined)` no longer returns NaN) (Bug 1407)
         double n = (args.length > 0 ? ToNumber(callerContext, args[0]) : +0.0);
         if (thisValue instanceof NumberObject) {
             NumberObject obj = (NumberObject) thisValue;

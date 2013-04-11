@@ -315,7 +315,8 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 finall = (long) Math.min(relativeEnd, len);
             }
-            for (long n = 0; k < finall; ++k, ++n) {
+            long n = 0;
+            for (; k < finall; ++k, ++n) {
                 String pk = ToString(k);
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
@@ -323,13 +324,13 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     String p = ToString(n);
                     boolean status = CreateOwnDataProperty(cx, a, p, kvalue);
                     if (!status) {
-                        // FIXME: spec bug? (Assert instead of throw TypeError?)
+                        // FIXME: spec bug? (Assert instead of throw TypeError?) (Bug 1402)
                         throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, p);
                     }
                 }
             }
-            // FIXME: spec bug (call to Put does make sense with the supplied args)
-            // Put(cx, a, "length", finall, true);
+            // FIXME: spec bug (call to Put does make sense with the supplied args) (Bug 1402)
+            Put(cx, a, "length", n, true);
             return a;
         }
 
@@ -405,15 +406,11 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
 
             for (int i = 0, offset = 0; i < count; ++i) {
                 String p = ToString(offset + i);
-                if (!obj.set(cx, p, elements.get(i), obj)) {
-                    throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, p);
-                }
+                Put(cx, obj, p, elements.get(i), true);
             }
             for (int i = 0, offset = count; i < undefCount; ++i) {
                 String p = ToString(offset + i);
-                if (!obj.set(cx, p, UNDEFINED, obj)) {
-                    throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, p);
-                }
+                Put(cx, obj, p, UNDEFINED, true);
             }
             for (int i = 0, offset = count + undefCount; i < emptyCount; ++i) {
                 DeletePropertyOrThrow(cx, obj, ToString(offset + i));
@@ -857,7 +854,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             Object lenVal = Get(cx, o, "length");
             long len = ToUint32(cx, lenVal);
-            // FIXME: spec bug (IsCallable() check should occur before return)
+            // FIXME: spec bug (IsCallable() check should occur before return) (bug 1342)
             if (!IsCallable(predicate)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
             }
@@ -888,7 +885,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             Object lenVal = Get(cx, o, "length");
             long len = ToUint32(cx, lenVal);
-            // FIXME: spec bug (IsCallable() check should occur before return)
+            // FIXME: spec bug (IsCallable() check should occur before return) (bug 1342)
             if (!IsCallable(predicate)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
             }

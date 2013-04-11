@@ -65,7 +65,7 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
-            // FIXME: spec bug ? `Map()` no longer allowed
+            // FIXME: spec bug ? `Map()` no longer allowed (Bug 1406)
             throw throwTypeError(callerContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof MapObject)) {

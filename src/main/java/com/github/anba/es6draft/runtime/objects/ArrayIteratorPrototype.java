@@ -168,7 +168,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                 return elementKey;
             } else {
                 // FIXME: spec bug (wrong assertion, itemKind is not "value" -> it's either "value"
-                // or "sparse-value")
+                // or "sparse-value") (bug 1401)
                 assert itemKind == ArrayIterationKind.Value
                         || itemKind == ArrayIterationKind.SparseValue;
                 assert elementValue != null;
