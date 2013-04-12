@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -20,6 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
@@ -134,12 +136,14 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
                 Object target, Object propertyKey) {
             ScriptObject obj = ToObject(cx, target);
             Object key = ToPropertyKey(cx, propertyKey);
-            // FIXME: spec bug [[GetOwnProperty]] return value returned as-is!
+            // FIXME: spec bug [[GetOwnProperty]] return value returned as-is! (Bug 1438)
             if (key instanceof String) {
-                return obj.getOwnProperty(cx, (String) key);
+                Property desc = obj.getOwnProperty(cx, (String) key);
+                return FromPropertyDescriptor(cx, desc);
             } else {
                 assert key instanceof Symbol;
-                return obj.getOwnProperty(cx, (Symbol) key);
+                Property desc = obj.getOwnProperty(cx, (Symbol) key);
+                return FromPropertyDescriptor(cx, desc);
             }
         }
 

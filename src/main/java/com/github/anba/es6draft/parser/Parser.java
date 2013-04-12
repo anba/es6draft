@@ -2935,7 +2935,7 @@ public class Parser {
                 // AssignmentRestElement : ... DestructuringAssignmentTarget
                 // DestructuringAssignmentTarget : LeftHandSideExpression
                 Expression expression = ((SpreadElement) e).getExpression();
-                // FIXME: spec bug (need to assert only simple-assignment-target)
+                // FIXME: spec bug (need to assert only simple-assignment-target) (Bug 1439)
                 LeftHandSideExpression target = destructuringSimpleAssignmentTarget(expression);
                 element = new AssignmentRestElement(target);
             } else {
@@ -3002,7 +3002,7 @@ public class Parser {
                 return superExpr;
             }
         }
-        // FIXME: spec bug (IsInvalidAssignmentPattern not defined)
+        // FIXME: spec bug (IsInvalidAssignmentPattern not defined) (Bug 716)
         // everything else => invalid lhs
         throw reportSyntaxError(Messages.Key.InvalidDestructuring, lhs.getLine());
     }
