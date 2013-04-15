@@ -802,6 +802,7 @@ js1_8_5/extensions/typedarray-subarray-of-subarray.js
 js1_8_5/extensions/typedarray.js
 js1_8_5/extensions/watch-undefined-setter.js
 js1_8_5/extensions/weakmap.js
+js1_8_5/extensions/clone-v1-typed-array.js
 
 
 #######################################

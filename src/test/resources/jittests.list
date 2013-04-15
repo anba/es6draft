@@ -546,6 +546,7 @@ tests/basic/testBug552248.js
 # gcparam
 tests/basic/bug720675.js
 tests/basic/testBug756919.js
+tests/basic/bug858097.js
 # countHeap
 tests/basic/bug734196.js
 tests/basic/bug747926.js
