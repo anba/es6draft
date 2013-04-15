@@ -137,7 +137,7 @@ public final class StaticSemantics {
      * Static Semantics: IsStrict
      */
     public static boolean IsStrict(FunctionNode node) {
-        return node.isStrict();
+        return node.getStrictMode() != FunctionNode.StrictMode.NonStrict;
     }
 
     /**

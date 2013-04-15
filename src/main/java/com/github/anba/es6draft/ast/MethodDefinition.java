@@ -20,9 +20,9 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
     private PropertyName propertyName;
     private FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private boolean strict;
+    private StrictMode strictMode;
     private boolean superReference;
-    private String source;
+    private String headerSource, bodySource;
 
     public enum MethodType {
         Function, Generator, Getter, Setter
@@ -30,14 +30,15 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
 
     public MethodDefinition(FunctionScope scope, MethodType type, PropertyName propertyName,
             FormalParameterList parameters, List<StatementListItem> statements,
-            boolean superReference, String source) {
+            boolean superReference, String headerSource, String bodySource) {
         this.scope = scope;
         this.type = type;
         this.propertyName = propertyName;
         this.parameters = parameters;
         this.statements = statements;
         this.superReference = superReference;
-        this.source = source;
+        this.headerSource = headerSource;
+        this.bodySource = bodySource;
     }
 
     @Override
@@ -65,18 +66,23 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
     }
 
     @Override
-    public boolean isStrict() {
-        return strict;
+    public StrictMode getStrictMode() {
+        return strictMode;
     }
 
     @Override
-    public void setStrict(boolean strict) {
-        this.strict = strict;
+    public void setStrictMode(StrictMode strictMode) {
+        this.strictMode = strictMode;
     }
 
     @Override
-    public String getSource() {
-        return source;
+    public String getHeaderSource() {
+        return headerSource;
+    }
+
+    @Override
+    public String getBodySource() {
+        return bodySource;
     }
 
     public boolean hasSuperReference() {

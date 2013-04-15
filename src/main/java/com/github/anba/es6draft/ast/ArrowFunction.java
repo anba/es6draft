@@ -19,25 +19,27 @@ public class ArrowFunction extends Expression implements FunctionNode {
     private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private Expression expression;
-    private boolean strict;
-    private String source;
+    private StrictMode strictMode;
+    private String headerSource, bodySource;
 
     public ArrowFunction(FunctionScope scope, FormalParameterList parameters,
-            List<StatementListItem> statements, String source) {
+            List<StatementListItem> statements, String headerSource,String bodySource) {
         this.scope = scope;
         this.parameters = parameters;
         this.statements = statements;
         this.expression = null;
-        this.source = source;
+        this.headerSource = headerSource;
+        this.bodySource = bodySource;
     }
 
     public ArrowFunction(FunctionScope scope, FormalParameterList parameters,
-            Expression expression, String source) {
+            Expression expression, String headerSource,String bodySource) {
         this.scope = scope;
         this.parameters = parameters;
         this.statements = null;
         this.expression = expression;
-        this.source = source;
+        this.headerSource = headerSource;
+        this.bodySource = bodySource;
     }
 
     @Override
@@ -60,18 +62,23 @@ public class ArrowFunction extends Expression implements FunctionNode {
     }
 
     @Override
-    public boolean isStrict() {
-        return strict;
+    public StrictMode getStrictMode() {
+        return strictMode;
     }
 
     @Override
-    public void setStrict(boolean strict) {
-        this.strict = strict;
+    public void setStrictMode(StrictMode strictMode) {
+        this.strictMode = strictMode;
     }
 
     @Override
-    public String getSource() {
-        return source;
+    public String getHeaderSource() {
+        return headerSource;
+    }
+
+    @Override
+    public String getBodySource() {
+        return bodySource;
     }
 
     @Override

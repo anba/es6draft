@@ -23,12 +23,16 @@ import java.util.List;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.ast.ExpressionStatement;
+import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
@@ -225,5 +229,28 @@ public class MozTestGlobalObject extends GlobalObject {
     @Function(name = "version", arity = 1)
     public String version() {
         return "185";
+    }
+
+    /** shell-function: {@code decompileFunction(function)} */
+    @Function(name = "decompileFunction", arity = 1)
+    public Object decompileFunction(Object function) {
+        if (!(function instanceof Callable)) {
+            return UNDEFINED;
+        }
+        return ((Callable) function).toSource();
+    }
+
+    /** shell-function: {@code decompileBody(function)} */
+    @Function(name = "decompileBody", arity = 1)
+    public Object decompileBody(Object function) {
+        if (!(function instanceof Callable)) {
+            return UNDEFINED;
+        }
+        String source = ((Callable) function).toSource();
+        Parser parser = new Parser("<decompileBody>", 1);
+        com.github.anba.es6draft.ast.Script parsedScript = parser.parse("(" + source + ")");
+        ExpressionStatement expr = (ExpressionStatement) parsedScript.getStatements().get(0);
+        FunctionNode fnode = (FunctionNode) expr.getExpression();
+        return fnode.getBodySource();
     }
 }

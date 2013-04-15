@@ -19,16 +19,18 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     private BindingIdentifier identifier;
     private FormalParameterList parameters;
     private List<StatementListItem> statements;
-    private boolean strict;
-    private String source;
+    private StrictMode strictMode;
+    private String headerSource, bodySource;
 
     public GeneratorDeclaration(FunctionScope scope, BindingIdentifier identifier,
-            FormalParameterList parameters, List<StatementListItem> statements, String source) {
+            FormalParameterList parameters, List<StatementListItem> statements,
+            String headerSource, String bodySource) {
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;
         this.statements = statements;
-        this.source = source;
+        this.headerSource = headerSource;
+        this.bodySource = bodySource;
     }
 
     @Override
@@ -52,18 +54,23 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     }
 
     @Override
-    public boolean isStrict() {
-        return strict;
+    public StrictMode getStrictMode() {
+        return strictMode;
     }
 
     @Override
-    public void setStrict(boolean strict) {
-        this.strict = strict;
+    public void setStrictMode(StrictMode strictMode) {
+        this.strictMode = strictMode;
     }
 
     @Override
-    public String getSource() {
-        return source;
+    public String getHeaderSource() {
+        return headerSource;
+    }
+
+    @Override
+    public String getBodySource() {
+        return bodySource;
     }
 
     @Override

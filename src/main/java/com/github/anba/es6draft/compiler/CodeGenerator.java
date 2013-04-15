@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.tailCall;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TemplateStrings;
 
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.FunctionNode.StrictMode;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
@@ -346,7 +348,15 @@ class CodeGenerator {
 
     void compile(FunctionNode node) {
         if (!isCompiled(node)) {
-            Future<String> source = compressed(node.getSource());
+            StringBuilder sb = new StringBuilder();
+            sb.append(node.getHeaderSource());
+            sb.append('{');
+            if (node.getStrictMode() == StrictMode.ImplicitStrict) {
+                sb.append("\n\"use strict\";\n");
+            }
+            sb.append(node.getBodySource());
+            sb.append('}');
+            Future<String> source = compressed(sb.toString());
 
             // initialisation method
             new FunctionDeclarationInstantiationGenerator(this).generate(node);
@@ -479,7 +489,7 @@ class CodeGenerator {
                 Types.ExecutionContext, Types.Object);
 
         private ScriptChunkStatementVisitor(CodeGenerator codegen, Script node, int index) {
-            super(codegen, methodName + index, methodDescriptor, node.isStrict(), node
+            super(codegen, methodName + index, methodDescriptor, IsStrict(node), node
                     .isGlobalCode(), true, false);
         }
     }
@@ -489,7 +499,7 @@ class CodeGenerator {
                 Types.ExecutionContext);
 
         private FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
-            super(codegen, codegen.methodName(node), methodDescriptor, node.isStrict(), false,
+            super(codegen, codegen.methodName(node), methodDescriptor, IsStrict(node), false,
                     false, true);
         }
     }
@@ -499,7 +509,7 @@ class CodeGenerator {
                 Types.ExecutionContext);
 
         private ArrowFunctionVisitor(CodeGenerator codegen, ArrowFunction node) {
-            super(codegen, codegen.methodName(node), methodDescriptor, node.isStrict(), false);
+            super(codegen, codegen.methodName(node), methodDescriptor, IsStrict(node), false);
         }
     }
 

@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.parser;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.IsSimpleParameterList;
-import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
-import static com.github.anba.es6draft.semantics.StaticSemantics.SpecialMethod;
+import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -74,6 +71,7 @@ public class Parser {
         boolean yieldAllowed = false;
 
         StrictMode strictMode = StrictMode.Unknown;
+        boolean explicitStrict = false;
         ParserException strictError = null;
         List<FunctionNode> deferred = null;
         ArrayDeque<ObjectLiteral> objectLiterals = null;
@@ -140,10 +138,10 @@ public class Parser {
 
         private boolean isStrict() {
             if (node instanceof FunctionNode) {
-                return ((FunctionNode) node).isStrict();
+                return IsStrict((FunctionNode) node);
             } else {
                 assert node instanceof Script;
-                return ((Script) node).isStrict();
+                return IsStrict((Script) node);
             }
         }
 
@@ -685,6 +683,11 @@ public class Parser {
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
+                if (ts.position() != formals.length()) {
+                    // more input after last token (whitespace, comments), add newline to handle
+                    // last token is single-line comment case
+                    formals = formals + "\n";
+                }
 
                 ts = new TokenStream(this, new StringTokenStreamInput(bodyText), sourceLine);
                 ts.init();
@@ -693,14 +696,14 @@ public class Parser {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
 
-                // FIXME: trailing single-line comment in formals
-                String source = String
-                        .format("function anonymous (%s) {\n%s\n}", formals, bodyText);
+                String header = String.format("function anonymous (%s) ", formals);
+                String body = String.format("\n%s\n", bodyText);
 
                 formalParameterList_StaticSemantics(parameters);
 
                 FunctionContext scope = context.funContext;
-                function = new FunctionExpression(scope, identifier, parameters, statements, source);
+                function = new FunctionExpression(scope, identifier, parameters, statements,
+                        header, body);
                 scope.node = function;
 
                 function = inheritStrictness(function);
@@ -742,6 +745,11 @@ public class Parser {
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
+                if (ts.position() != formals.length()) {
+                    // more input after last token (whitespace, comments), add newline to handle
+                    // last token is single-line comment case
+                    formals = formals + "\n";
+                }
 
                 ts = new TokenStream(this, new StringTokenStreamInput(bodyText), sourceLine);
                 ts.init();
@@ -750,15 +758,14 @@ public class Parser {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
                 }
 
-                // FIXME: trailing single-line comment in formals
-                String source = String.format("function* anonymous (%s) {\n%s\n}", formals,
-                        bodyText);
+                String header = String.format("function* anonymous (%s) ", formals);
+                String body = String.format("\n%s\n", bodyText);
 
                 formalParameterList_StaticSemantics(parameters);
 
                 FunctionContext scope = context.funContext;
                 generator = new GeneratorExpression(scope, identifier, parameters, statements,
-                        source);
+                        header, body);
                 scope.node = generator;
 
                 generator = inheritStrictness(generator);
@@ -1218,6 +1225,7 @@ public class Parser {
     private void applyStrictMode(boolean strict) {
         if (strict) {
             context.strictMode = StrictMode.Strict;
+            context.explicitStrict = true;
             if (context.strictError != null) {
                 reportException(context.strictError);
             }
@@ -1228,13 +1236,23 @@ public class Parser {
         }
     }
 
+    private static FunctionNode.StrictMode toFunctionStrictness(boolean strict, boolean explicit) {
+        if (strict) {
+            if (explicit) {
+                return FunctionNode.StrictMode.ExplicitStrict;
+            }
+            return FunctionNode.StrictMode.ImplicitStrict;
+        }
+        return FunctionNode.StrictMode.NonStrict;
+    }
+
     private <FUNCTION extends FunctionNode> FUNCTION inheritStrictness(FUNCTION function) {
         if (context.strictMode != StrictMode.Unknown) {
             boolean strict = (context.strictMode == StrictMode.Strict);
-            function.setStrict(strict);
+            function.setStrictMode(toFunctionStrictness(strict, context.explicitStrict));
             if (context.deferred != null) {
                 for (FunctionNode func : context.deferred) {
-                    func.setStrict(strict);
+                    func.setStrictMode(toFunctionStrictness(strict, false));
                 }
                 context.deferred = null;
             }
@@ -1269,24 +1287,25 @@ public class Parser {
         newContext(ContextKind.Function);
         try {
             consume(Token.FUNCTION);
-            int start = ts.position() - "function".length();
-
+            int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = bindingIdentifier();
             consume(Token.LP);
             FormalParameterList parameters = formalParameterList(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
+            int startBody = ts.position();
             List<StatementListItem> statements = functionBody(Token.RC);
             consume(Token.RC);
+            int endFunction = ts.position() - 1;
 
-            // TODO: insert 'use strict' if in strict-mode
-            String source = ts.range(start, ts.position());
+            String header = ts.range(startFunction, startBody - 1);
+            String body = ts.range(startBody, endFunction);
 
             formalParameterList_StaticSemantics(parameters);
 
             FunctionContext scope = context.funContext;
             FunctionDeclaration function = new FunctionDeclaration(scope, identifier, parameters,
-                    statements, source);
+                    statements, header, body);
             scope.node = function;
 
             addFunctionDecl(function);
@@ -1309,8 +1328,7 @@ public class Parser {
         newContext(ContextKind.Function);
         try {
             consume(Token.FUNCTION);
-            int start = ts.position() - "function".length();
-
+            int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
                 identifier = bindingIdentifier();
@@ -1319,17 +1337,19 @@ public class Parser {
             FormalParameterList parameters = formalParameterList(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
+            int startBody = ts.position();
             List<StatementListItem> statements = functionBody(Token.RC);
             consume(Token.RC);
+            int endFunction = ts.position() - 1;
 
-            // TODO: insert 'use strict' if in strict-mode
-            String source = ts.range(start, ts.position());
+            String header = ts.range(startFunction, startBody - 1);
+            String body = ts.range(startBody, endFunction);
 
             formalParameterList_StaticSemantics(parameters);
 
             FunctionContext scope = context.funContext;
             FunctionExpression function = new FunctionExpression(scope, identifier, parameters,
-                    statements, source);
+                    statements, header, body);
             scope.node = function;
 
             return inheritStrictness(function);
@@ -1482,7 +1502,7 @@ public class Parser {
             FormalParameterList parameters;
             if (token() == Token.LP) {
                 consume(Token.LP);
-                int start = ts.position() - "(".length();
+                int start = ts.position() - 1;
                 parameters = formalParameterList(Token.RP);
                 consume(Token.RP);
 
@@ -1497,17 +1517,19 @@ public class Parser {
             consume(Token.ARROW);
             if (token() == Token.LC) {
                 consume(Token.LC);
-                int start = ts.position() - "{".length();
+                int startBody = ts.position();
                 List<StatementListItem> statements = functionBody(Token.RC);
                 consume(Token.RC);
+                int endFunction = ts.position() - 1;
 
-                source.append(ts.range(start, ts.position()));
+                String header = source.toString();
+                String body = ts.range(startBody, endFunction);
 
                 formalParameterList_StaticSemantics(parameters);
 
                 FunctionContext scope = context.funContext;
-                ArrowFunction function = new ArrowFunction(scope, parameters, statements,
-                        source.toString());
+                ArrowFunction function = new ArrowFunction(scope, parameters, statements, header,
+                        body);
                 scope.node = function;
 
                 return inheritStrictness(function);
@@ -1515,16 +1537,18 @@ public class Parser {
                 // need to call manually b/c functionBody() isn't used here
                 applyStrictMode(false);
 
-                int start = ts.position();
+                int startBody = ts.position();
                 Expression expression = assignmentExpression(true);
+                int endFunction = ts.position();
 
-                source.append("{\nreturn ").append(ts.range(start, ts.position())).append("\n}");
+                String header = source.toString();
+                String body = "return " + ts.range(startBody, endFunction);
 
                 formalParameterList_StaticSemantics(parameters);
 
                 FunctionContext scope = context.funContext;
-                ArrowFunction function = new ArrowFunction(scope, parameters, expression,
-                        source.toString());
+                ArrowFunction function = new ArrowFunction(scope, parameters, expression, header,
+                        body);
                 scope.node = function;
 
                 return inheritStrictness(function);
@@ -1559,30 +1583,34 @@ public class Parser {
             FormalParameterList parameters;
             List<StatementListItem> statements;
 
-            int start;
+            int startFunction, startBody, endFunction;
             switch (type) {
             case Getter:
                 consume(Token.NAME);
                 propertyName = propertyName();
                 consume(Token.LP);
-                start = ts.position() - "(".length();
+                startFunction = ts.position() - 1;
                 parameters = new FormalParameterList(Collections.<FormalParameter> emptyList());
                 consume(Token.RP);
                 consume(Token.LC);
+                startBody = ts.position();
                 statements = functionBody(Token.RC);
                 consume(Token.RC);
+                endFunction = ts.position() - 1;
                 break;
             case Setter:
                 consume(Token.NAME);
                 propertyName = propertyName();
                 consume(Token.LP);
-                start = ts.position() - "(".length();
+                startFunction = ts.position() - 1;
                 FormalParameter setParameter = new BindingElement(binding(), null);
                 parameters = new FormalParameterList(singletonList(setParameter));
                 consume(Token.RP);
                 consume(Token.LC);
+                startBody = ts.position();
                 statements = functionBody(Token.RC);
                 consume(Token.RC);
+                endFunction = ts.position() - 1;
                 break;
             case Generator:
                 consume(Token.MUL);
@@ -1590,28 +1618,30 @@ public class Parser {
             default:
                 propertyName = propertyName();
                 consume(Token.LP);
-                start = ts.position() - "(".length();
+                startFunction = ts.position() - 1;
                 parameters = formalParameterList(Token.RP);
                 consume(Token.RP);
                 consume(Token.LC);
+                startBody = ts.position();
                 statements = functionBody(Token.RC);
                 consume(Token.RC);
+                endFunction = ts.position() - 1;
                 break;
             }
 
-            StringBuilder source = new StringBuilder();
+            String header = ts.range(startFunction, startBody - 1);
             if (type != MethodType.Generator) {
-                source.append("function ");
+                header = "function " + header;
             } else {
-                source.append("function* ");
+                header = "function* " + header;
             }
-            source.append(ts.range(start, ts.position()));
+            String body = ts.range(startBody, endFunction);
 
             formalParameterList_StaticSemantics(parameters);
 
             FunctionContext scope = context.funContext;
             MethodDefinition method = new MethodDefinition(scope, type, propertyName, parameters,
-                    statements, context.hasSuperReference(), source.toString());
+                    statements, context.hasSuperReference(), header, body);
             scope.node = method;
 
             return inheritStrictness(method);
@@ -1650,25 +1680,26 @@ public class Parser {
         newContext(ContextKind.Generator);
         try {
             consume(Token.FUNCTION);
-            int start = ts.position() - "function".length();
-
+            int startFunction = ts.position() - "function".length();
             consume(Token.MUL);
             BindingIdentifier identifier = bindingIdentifier();
             consume(Token.LP);
             FormalParameterList parameters = formalParameterList(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
+            int startBody = ts.position();
             List<StatementListItem> statements = functionBody(Token.RC);
             consume(Token.RC);
+            int endFunction = ts.position() - 1;
 
-            // TODO: insert 'use strict' if in strict-mode
-            String source = ts.range(start, ts.position());
+            String header = ts.range(startFunction, startBody - 1);
+            String body = ts.range(startBody, endFunction);
 
             formalParameterList_StaticSemantics(parameters);
 
             FunctionContext scope = context.funContext;
             GeneratorDeclaration generator = new GeneratorDeclaration(scope, identifier,
-                    parameters, statements, source);
+                    parameters, statements, header, body);
             scope.node = generator;
 
             addGeneratorDecl(generator);
@@ -1691,8 +1722,7 @@ public class Parser {
         newContext(ContextKind.Generator);
         try {
             consume(Token.FUNCTION);
-            int start = ts.position() - "function".length();
-
+            int startFunction = ts.position() - "function".length();
             consume(Token.MUL);
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
@@ -1702,17 +1732,19 @@ public class Parser {
             FormalParameterList parameters = formalParameterList(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
+            int startBody = ts.position();
             List<StatementListItem> statements = functionBody(Token.RC);
             consume(Token.RC);
+            int endFunction = ts.position() - 1;
 
-            // TODO: insert 'use strict' if in strict-mode
-            String source = ts.range(start, ts.position());
+            String header = ts.range(startFunction, startBody - 1);
+            String body = ts.range(startBody, endFunction);
 
             formalParameterList_StaticSemantics(parameters);
 
             FunctionContext scope = context.funContext;
             GeneratorExpression generator = new GeneratorExpression(scope, identifier, parameters,
-                    statements, source);
+                    statements, header, body);
             scope.node = generator;
 
             return inheritStrictness(generator);

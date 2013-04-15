@@ -16,11 +16,17 @@ public interface FunctionNode extends ScopedNode {
 
     List<StatementListItem> getStatements();
 
-    boolean isStrict();
+    enum StrictMode {
+        NonStrict, ImplicitStrict, ExplicitStrict
+    }
 
-    void setStrict(boolean strict);
+    StrictMode getStrictMode();
 
-    String getSource();
+    void setStrictMode(StrictMode strictMode);
+
+    String getHeaderSource();
+
+    String getBodySource();
 
     @Override
     FunctionScope getScope();

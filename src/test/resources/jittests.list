@@ -509,9 +509,6 @@ tests/basic/testProxyConstructors.js
 # it object
 tests/auto-regress/bug674207.js
 tests/auto-regress/bug764850.js
-# decompileBody
-tests/auto-regress/bug776484.js
-tests/basic/function-tosource-statement.js
 # shapeOf
 tests/basic/bug641525.js
 tests/basic/testMethodWriteBarrier3.js

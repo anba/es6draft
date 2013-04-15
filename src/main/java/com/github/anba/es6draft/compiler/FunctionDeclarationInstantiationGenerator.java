@@ -91,7 +91,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     void generate(FunctionNode func) {
         String methodName = codegen.methodName(func) + "_init";
         ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(codegen, methodName,
-                func.isStrict());
+                IsStrict(func));
 
         mv.begin();
         mv.enterScope(func);
@@ -122,7 +122,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         /* [10.5.3] step 1 */
         // RuntimeInfo.Code code = func.getCode();
         /* [10.5.3] step 2 */
-        boolean strict = func.isStrict();
+        boolean strict = IsStrict(func);
         /* [10.5.3] step 3 */
         FormalParameterList formals = func.getParameters();
         /* [10.5.3] step 4 */
