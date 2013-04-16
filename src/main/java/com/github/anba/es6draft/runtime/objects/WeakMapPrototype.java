@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -128,7 +127,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
             if (!Type.isObject(key)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            entries.put(key, new WeakReference<>(value));
+            entries.put(key, value);
             return m;
         }
 
@@ -138,5 +137,4 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "WeakMap";
     }
-
 }
