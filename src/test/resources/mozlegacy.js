@@ -510,7 +510,7 @@ Object.defineProperty(Object.assign(JSON, {
 }), "toSource", {enumerable: false});
 
 function toProxyHandler(handler) {
-  var TypeErrorThrower = () => { throw TypeError };
+  var TypeErrorThrower = () => { throw TypeError() };
   var proxyHandler = {
     getOwnPropertyDescriptor: TypeErrorThrower,
     getPropertyDescriptor: TypeErrorThrower,
