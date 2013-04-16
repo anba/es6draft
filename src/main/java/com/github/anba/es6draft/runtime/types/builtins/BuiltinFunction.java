@@ -58,6 +58,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         /* step 3 */
         if ("caller".equals(propertyKey) && isStrictFunction(v)) {
             // TODO: spec bug? [[Get]] override necessary, cf. AddRestrictedFunctionProperties
+            // (Bug 1223)
             return NULL;
         }
         /* step 4 */
@@ -73,7 +74,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         Property v = super.getOwnProperty(cx, propertyKey);
         if (v != null && v.isDataDescriptor()) {
             // TODO: spec bug? [[GetOwnProperty]] override necessary, cf.
-            // AddRestrictedFunctionProperties
+            // AddRestrictedFunctionProperties (Bug 1223)
             if ("caller".equals(propertyKey) && isStrictFunction(v.getValue())) {
                 PropertyDescriptor desc = v.toPropertyDescriptor();
                 desc.setValue(NULL);

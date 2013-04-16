@@ -127,7 +127,7 @@ public class OrdinaryGenerator extends FunctionObject {
     public static void MakeConstructor(ExecutionContext cx, OrdinaryGenerator f,
             boolean writablePrototype, ScriptObject prototype) {
         assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
-        // not "constructor" property on `prototype`
+        // no "constructor" property on `prototype`
         f.defineOwnProperty(cx, "prototype", new PropertyDescriptor(prototype, writablePrototype,
                 false, false));
     }
