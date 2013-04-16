@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.modules.Loader;
+import com.github.anba.es6draft.runtime.modules.Reflect;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
@@ -238,6 +239,7 @@ public class Realm {
 
         // Proxy
         ProxyConstructor proxyConstructor = new ProxyConstructor(realm);
+        Reflect reflect = new Reflect(realm);
 
         // native errors
         NativeErrorConstructor evalErrorConstructor = new NativeErrorConstructor(realm,
@@ -355,6 +357,7 @@ public class Realm {
         intrinsics.put(Intrinsics.GeneratorPrototype, generatorPrototype);
         intrinsics.put(Intrinsics.Generator, generator);
         intrinsics.put(Intrinsics.Proxy, proxyConstructor);
+        intrinsics.put(Intrinsics.Reflect, reflect);
 
         // native errors
         intrinsics.put(Intrinsics.EvalError, evalErrorConstructor);
@@ -447,6 +450,7 @@ public class Realm {
         generatorPrototype.initialise(defaultContext);
         generator.initialise(defaultContext);
         proxyConstructor.initialise(defaultContext);
+        reflect.initialise(defaultContext);
 
         // native errors
         evalErrorConstructor.initialise(defaultContext);

@@ -61,6 +61,7 @@ public enum Intrinsics {/* @formatter:off */
     URIError,
     JSON,
     Proxy,
+    Reflect,
 
     // Generators
     GeneratorFunction,

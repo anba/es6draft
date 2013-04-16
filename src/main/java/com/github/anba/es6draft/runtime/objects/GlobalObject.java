@@ -441,6 +441,9 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         @Value(name = "Proxy")
         public static final Intrinsics Proxy = Intrinsics.Proxy;
 
+        @Value(name = "Reflect")
+        public static final Intrinsics Reflect = Intrinsics.Reflect;
+
         // TODO: binary module intrinsics
 
         @Value(name = "ArrayBuffer")
