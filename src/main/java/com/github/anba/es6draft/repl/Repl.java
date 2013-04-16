@@ -354,6 +354,11 @@ public class Repl {
             return (double) TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - startNano);
         }
 
+        @Function(name = "gc", arity = 0)
+        public void gc() {
+            System.gc();
+        }
+
         /**
          * Returns the well-known symbol {@code name} or undefined if there is no such symbol
          */
