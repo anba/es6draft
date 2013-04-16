@@ -80,6 +80,7 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
             itr = UNDEFINED;
         } else {
             Symbol iterator = BuiltinSymbol.iterator.get();
+            // FIXME: spec bug? should iterable[@@iterator]() === undefined be an error?
             itr = Invoke(callerContext, iterable, iterator);
             adder = Get(callerContext, map, "set");
             if (!IsCallable(adder)) {

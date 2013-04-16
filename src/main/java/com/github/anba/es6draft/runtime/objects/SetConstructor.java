@@ -81,6 +81,7 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
             itr = UNDEFINED;
         } else {
             Symbol iterator = BuiltinSymbol.iterator.get();
+            // FIXME: spec bug? should iterable[@@iterator]() === undefined be an error?
             itr = Invoke(callerContext, iterable, iterator);
             adder = Get(callerContext, set, "add");
             if (!IsCallable(adder)) {
@@ -92,8 +93,7 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
         SetObject.Comparator _comparator = SetObject.Comparator.SameValueZero;
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
-                // TODO: error message
-                throw throwRangeError(callerContext, Messages.Key.InvalidPrecision);
+                throw throwRangeError(callerContext, Messages.Key.SetInvalidComparator);
             }
             _comparator = SetObject.Comparator.SameValue;
         }

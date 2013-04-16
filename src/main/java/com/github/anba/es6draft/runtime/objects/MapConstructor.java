@@ -83,6 +83,7 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         } else {
             ScriptObject _iterable = ToObject(callerContext, iterable);
             boolean hasValues = HasProperty(callerContext, _iterable, "entries");
+            // FIXME: spec bug? should iterable[@@iterator]() === undefined be an error?
             if (hasValues) {
                 itr = Invoke(callerContext, _iterable, "entries");
             } else {
