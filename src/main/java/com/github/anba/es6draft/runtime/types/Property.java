@@ -17,29 +17,21 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
  * </ul>
  */
 public final class Property {
-    private static final int VALUE = 0x01;
-    private static final int GET = 0x02;
-    private static final int SET = 0x04;
-    private static final int WRITABLE = 0x08;
-    private static final int ENUMERABLE = 0x10;
-    private static final int CONFIGURABLE = 0x20;
+    private enum Type {
+        DataProperty, AccessorProperty
+    }
 
-    private static final int POPULATED_ACCESSOR_DESC = GET | SET | ENUMERABLE | CONFIGURABLE;
-    private static final int POPULATED_DATA_DESC = VALUE | WRITABLE | ENUMERABLE | CONFIGURABLE;
-
-    private int present = 0;
-
-    // default attribute values per 8.1.6.1, table 7
-    private Object value = UNDEFINED;
-    private Callable getter = null; // = Undefined
-    private Callable setter = null; // = Undefined
-    private boolean writable = false;
-    private boolean enumerable = false;
-    private boolean configurable = false;
+    private Type type;
+    private Object value;
+    private Callable getter;
+    private Callable setter;
+    private boolean writable;
+    private boolean enumerable;
+    private boolean configurable;
 
     // package-private for PropertyDescriptor
     Property(PropertyDescriptor original) {
-        present = original.isAccessorDescriptor() ? POPULATED_ACCESSOR_DESC : POPULATED_DATA_DESC;
+        type = original.isAccessorDescriptor() ? Type.AccessorProperty : Type.DataProperty;
         value = original.getValue();
         getter = original.getGetter();
         setter = original.getSetter();
@@ -49,17 +41,17 @@ public final class Property {
     }
 
     public void toDataProperty() {
-        assert present == POPULATED_ACCESSOR_DESC;
-        present = POPULATED_DATA_DESC;
-        value = UNDEFINED;
-        getter = null;
-        setter = null;
-        writable = false;
+        toProperty(Type.DataProperty);
     }
 
     public void toAccessorProperty() {
-        assert present == POPULATED_DATA_DESC;
-        present = POPULATED_ACCESSOR_DESC;
+        toProperty(Type.AccessorProperty);
+    }
+
+    private void toProperty(Type newType) {
+        assert type != newType;
+        type = newType;
+        // default attribute values per 8.1.6.1, table 7
         value = UNDEFINED;
         getter = null;
         setter = null;
@@ -99,7 +91,7 @@ public final class Property {
      * Returns {@code true} if this object is an accessor property descriptor
      */
     public final boolean isAccessorDescriptor() {
-        return (present & (GET | SET)) != 0;
+        return type == Type.AccessorProperty;
     }
 
     /**
@@ -107,7 +99,7 @@ public final class Property {
      * Returns {@code true} if this object is a data property descriptor
      */
     public final boolean isDataDescriptor() {
-        return (present & (VALUE | WRITABLE)) != 0;
+        return type == Type.DataProperty;
     }
 
     /**
@@ -116,109 +108,75 @@ public final class Property {
      * {@code desc} &#8838; {@code this} holds.
      */
     public final boolean isSubset(PropertyDescriptor desc) {
-        if (desc.hasValue() && !(hasValue() && SameValue(desc.getValue(), value))) {
+        if (isDataDescriptor()) {
+            if (desc.hasValue() && !SameValue(desc.getValue(), value)) {
+                return false;
+            }
+            if (desc.hasWritable() && desc.isWritable() != writable) {
+                return false;
+            }
+            if (desc.isAccessorDescriptor()) {
+                return false;
+            }
+        } else {
+            if (desc.hasGetter() && !SameValue(desc.getGetter(), getter)) {
+                return false;
+            }
+            if (desc.hasSetter() && !SameValue(desc.getSetter(), setter)) {
+                return false;
+            }
+            if (desc.isDataDescriptor()) {
+                return false;
+            }
+        }
+        if (desc.hasEnumerable() && desc.isEnumerable() != enumerable) {
             return false;
         }
-        if (desc.hasGetter() && !(hasGetter() && SameValue(desc.getGetter(), getter))) {
-            return false;
-        }
-        if (desc.hasSetter() && !(hasSetter() && SameValue(desc.getSetter(), setter))) {
-            return false;
-        }
-        if (desc.hasWritable() && !(hasWritable() && desc.isWritable() == writable)) {
-            return false;
-        }
-        if (desc.hasEnumerable() && !(hasEnumerable() && desc.isEnumerable() == enumerable)) {
-            return false;
-        }
-        if (desc.hasConfigurable() && !(hasConfigurable() && desc.isConfigurable() == configurable)) {
+        if (desc.hasConfigurable() && desc.isConfigurable() != configurable) {
             return false;
         }
         return true;
     }
 
     /**
-     * Returns {@code true} if the <tt>[[Value]]</tt> field is present
-     */
-    public final boolean hasValue() {
-        return (present & VALUE) != 0;
-    }
-
-    /**
-     * Returns {@code true} if the <tt>[[Get]]</tt> field is present
-     */
-    public final boolean hasGetter() {
-        return (present & GET) != 0;
-    }
-
-    /**
-     * Returns {@code true} if the <tt>[[Set]]</tt> field is present
-     */
-    public final boolean hasSetter() {
-        return (present & SET) != 0;
-    }
-
-    /**
-     * Returns {@code true} if the <tt>[[Writable]]</tt> field is present
-     */
-    public final boolean hasWritable() {
-        return (present & WRITABLE) != 0;
-    }
-
-    /**
-     * Returns {@code true} if the <tt>[[Enumerable]]</tt> field is present
-     */
-    public final boolean hasEnumerable() {
-        return (present & ENUMERABLE) != 0;
-    }
-
-    /**
-     * Returns {@code true} if the <tt>[[Configurable]]</tt> field is present
-     */
-    public final boolean hasConfigurable() {
-        return (present & CONFIGURABLE) != 0;
-    }
-
-    /**
-     * Returns the <tt>[[Value]]</tt> field or its default value
+     * Returns the <tt>[[Value]]</tt> field
      */
     public final Object getValue() {
         return value;
     }
 
     /**
-     * Returns the <tt>[[Get]]</tt> field or its default value
+     * Returns the <tt>[[Get]]</tt> field
      */
     public final Callable getGetter() {
         return getter;
     }
 
     /**
-     * Returns the <tt>[[Set]]</tt> field or its default value
+     * Returns the <tt>[[Set]]</tt> field
      */
     public final Callable getSetter() {
         return setter;
     }
 
     /**
-     * Returns the <tt>[[Writable]]</tt> field or its default value
+     * Returns the <tt>[[Writable]]</tt> field
      */
     public final boolean isWritable() {
         return writable;
     }
 
     /**
-     * Returns the <tt>[[Enumerable]]</tt> field or its default value
+     * Returns the <tt>[[Enumerable]]</tt> field
      */
     public final boolean isEnumerable() {
         return enumerable;
     }
 
     /**
-     * Returns the <tt>[[Configurable]]</tt> field or its default value
+     * Returns the <tt>[[Configurable]]</tt> field
      */
     public final boolean isConfigurable() {
         return configurable;
     }
-
 }
