@@ -546,9 +546,10 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 }
             }
             for (; k < len; ++k) {
-                boolean kpresent = HasProperty(cx, o, ToString(k));
+                String pk = ToString(k);
+                boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
-                    Object elementk = Get(cx, o, ToString(k));
+                    Object elementk = Get(cx, o, pk);
                     boolean same = strictEqualityComparison(searchElement, elementk);
                     if (same) {
                         return k;
@@ -583,9 +584,10 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 k = (long) (len - Math.abs(n));
             }
             for (; k >= 0; --k) {
-                boolean kpresent = HasProperty(cx, o, ToString(k));
+                String pk = ToString(k);
+                boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
-                    Object elementk = Get(cx, o, ToString(k));
+                    Object elementk = Get(cx, o, pk);
                     boolean same = strictEqualityComparison(searchElement, elementk);
                     if (same) {
                         return k;
