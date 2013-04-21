@@ -60,14 +60,6 @@ public final class IntlAbstractOperations {
      * 6.2.1 Unicode Locale Extension Sequences
      */
     private static String[] UnicodeLocaleExtSequence(String languageTag) {
-        // ULocale locale = ULocale.forLanguageTag(languageTag);
-        // ULocale.Builder builder = new ULocale.Builder();
-        // builder.setLocale(locale);
-        // builder.setExtension(ULocale.UNICODE_LOCALE_EXTENSION, "");
-        // String noExtension = builder.build().toLanguageTag();
-        // String extension = locale.getExtension(ULocale.UNICODE_LOCALE_EXTENSION);
-        // return new String[] { noExtension, extension };
-
         unicodeExt: {
             if (languageTag.startsWith("x-")) {
                 // privateuse-only case
@@ -112,19 +104,12 @@ public final class IntlAbstractOperations {
      */
     public static LanguageTag IsStructurallyValidLanguageTag(String locale) {
         return new LanguageTagParser(locale).parse();
-        // try {
-        // new ULocale.Builder().setLanguageTag(locale).build();
-        // return true;
-        // } catch (IllformedLocaleException e) {
-        // return false;
-        // }
     }
 
     /**
      * 6.2.3 CanonicalizeLanguageTag (locale)
      */
     public static String CanonicalizeLanguageTag(LanguageTag locale) {
-        // String s = new ULocale.Builder().setLanguageTag(locale).build().toLanguageTag();
         return locale.canonicalize();
     }
 
