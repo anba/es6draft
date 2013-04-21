@@ -27,7 +27,6 @@ ecma_5/RegExp/exec.js
 # Intl only partially supported    #
 ####################################
 
-Intl/DateTimeFormat/format.js
 Intl/NumberFormat/StringBuffer.js
 test402/ch10/10.1/10.1.1_1.js
 test402/ch10/10.1/10.1.2.1_4.js

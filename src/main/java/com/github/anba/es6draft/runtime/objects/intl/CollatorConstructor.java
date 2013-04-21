@@ -70,7 +70,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
             ExtensionKey.kn, ExtensionKey.kf);
 
     /**
-     * CLDR, rev. 23
+     * Collation type keys (BCP 47; CLDR, version 23)
      */
     private enum CollationType {/* @formatter:off */
         big5han("big5han"),

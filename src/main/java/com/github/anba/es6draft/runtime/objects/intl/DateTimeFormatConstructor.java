@@ -74,6 +74,54 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
     private static List<ExtensionKey> relevantExtensionKeys = asList(ExtensionKey.ca,
             ExtensionKey.nu);
 
+    /**
+     * Calendar algorithm keys (BCP 47; CLDR, version 23)
+     */
+    private enum CalendarAlgorithm {/* @formatter:off */
+        buddhist("buddhist"),
+        chinese("chinese"),
+        coptic("coptic"),
+        dangi("dangi"),
+        ethioaa("ethioaa", "ethiopic-amete-alem"),
+        ethiopic("ethiopic"),
+        gregory("gregory", "gregorian"),
+        hebrew("hebrew"),
+        indian("indian"),
+        islamic("islamic"),
+        islamicc("islamicc", "islamic-civil"),
+        iso8601("iso8601"),
+        japanese("japanese"),
+        persian("persian"),
+        roc("roc");
+        /* @formatter:on */
+
+        private final String name;
+        private final String alias;
+
+        private CalendarAlgorithm(String name) {
+            this.name = name;
+            this.alias = null;
+        }
+
+        private CalendarAlgorithm(String name, String alias) {
+            this.name = name;
+            this.alias = alias;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public static CalendarAlgorithm forName(String name) {
+            for (CalendarAlgorithm co : values()) {
+                if (name.equals(co.name) || name.equals(co.alias)) {
+                    return co;
+                }
+            }
+            throw new IllegalArgumentException(name);
+        }
+    }
+
     /** [[localeData]] */
     private static final class DateTimeFormatLocaleData implements LocaleData {
         @Override
@@ -106,11 +154,8 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
             String[] values = Calendar.getKeywordValuesForLocale("calendar", locale, true);
             List<String> result = new ArrayList<>(values.length);
             for (int i = 0, len = values.length; i < len; ++i) {
-                String value = values[i];
-                if ("gregorian".equals(value)) {
-                    value = "gregory";
-                }
-                result.add(value);
+                CalendarAlgorithm algorithm = CalendarAlgorithm.forName(values[i]);
+                result.add(algorithm.getName());
             }
             return result;
         }
