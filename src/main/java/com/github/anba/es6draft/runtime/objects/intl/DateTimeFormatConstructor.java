@@ -151,7 +151,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         }
 
         private List<String> getCalendarInfo() {
-            String[] values = Calendar.getKeywordValuesForLocale("calendar", locale, true);
+            String[] values = Calendar.getKeywordValuesForLocale("calendar", locale, false);
             List<String> result = new ArrayList<>(values.length);
             for (int i = 0, len = values.length; i < len; ++i) {
                 CalendarAlgorithm algorithm = CalendarAlgorithm.forName(values[i]);

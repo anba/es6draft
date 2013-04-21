@@ -63,7 +63,9 @@ public class DateTimeFormatObject extends OrdinaryObject {
 
     private DateFormat createDateFormat() {
         ULocale locale = ULocale.forLanguageTag(this.locale);
-        // calendar, numberingSystem?
+        // calendar and numberingSystem are already handled in language-tag
+        // assert locale.getKeywordValue("calendar").equals(calendar);
+        // assert locale.getKeywordValue("numbers").equals(numberingSystem);
         SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, locale);
         if (timeZone != null) {
             dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));

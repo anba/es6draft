@@ -383,7 +383,7 @@ public final class IntlAbstractOperations {
                         int valuePos = keyLocaleData.indexOf(requestedValue);
                         if (valuePos != -1) {
                             value = requestedValue;
-                            supportedExtensionAddition = "-" + key + "-" + value;
+                            supportedExtensionAddition = "-" + key.name() + "-" + value;
                         }
                     } else {
                         int valuePos = keyLocaleData.indexOf("true");

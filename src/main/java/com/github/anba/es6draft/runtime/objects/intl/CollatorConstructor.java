@@ -149,7 +149,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
         }
 
         private List<String> getCollationInfo() {
-            String[] values = Collator.getKeywordValuesForLocale("collation", locale, true);
+            String[] values = Collator.getKeywordValuesForLocale("collation", locale, false);
             List<String> result = new ArrayList<>(values.length);
             result.add(null); // null must be first value, cf. 10.2.3
             for (int i = 0, len = values.length; i < len; ++i) {

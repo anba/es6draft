@@ -65,9 +65,12 @@ public class CollatorObject extends OrdinaryObject {
 
     private Collator createCollator() {
         ULocale locale = ULocale.forLanguageTag(this.locale);
+        if ("search".equals(usage)) {
+            // "search" usage cannot be set through unicode extensions (u-co-search), handle here:
+            locale = locale.setKeywordValue("collation", "search");
+        }
         RuleBasedCollator collator = (RuleBasedCollator) Collator.getInstance(locale);
         collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
-        // usage?
         collator.setNumericCollation(numeric);
         switch (caseFirst) {
         case "upper":
