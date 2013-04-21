@@ -8,6 +8,18 @@
 
 -->
 <excludeList>
+  <!-- Intl only partially supported -->
+  <test id="10.1.1_1"></test>
+  <test id="10.1.2.1_4"></test>
+  <test id="10.1.2_a"></test>
+  <test id="11.1.1_1"></test>
+  <test id="11.1.2.1_4"></test>
+  <test id="11.1.2"></test>
+  <test id="11.3.2_TRP"></test>
+  <test id="12.1.1_1"></test>
+  <test id="12.1.2.1_4"></test>
+  <test id="12.1.2"></test>
+
   <!-- current draft issues -->
   <test id="S10.2.1_A4_T1">declaration and parameter binding broken in current draft</test>
 

@@ -193,6 +193,11 @@ public class Messages {
         ProxyNoGetter("proxy.no_getter"),
         ProxyNoSetter("proxy.no_setter"),
         ProxyNoOwnProperty("proxy.no_own_property"),
+
+        // Intl
+        IntlStructurallyInvalidLanguageTag("intl.structurally_invalid_language_tag"),
+        IntlInvalidOption("intl.invalid_option"),
+        IntlInvalidCurrency("intl.invalid_currency"),
         ;
         /* @formatter:on */
 

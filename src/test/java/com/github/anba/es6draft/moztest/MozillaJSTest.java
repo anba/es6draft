@@ -66,7 +66,7 @@ public class MozillaJSTest extends BaseMozillaTest {
         return toObjectArray(tests);
     }
 
-    private static ScriptCache scriptCache = new ScriptCache(StandardCharsets.ISO_8859_1);
+    private static ScriptCache scriptCache = new ScriptCache(StandardCharsets.UTF_8);
     private static Script legacyMozilla;
 
     @Rule
@@ -112,6 +112,9 @@ public class MozillaJSTest extends BaseMozillaTest {
         for (Path shell : shellJS(moztest)) {
             global.include(shell);
         }
+
+        // patch $INCLUDE
+        global.set(cx, "$INCLUDE", global.get(cx, "__$INCLUDE", global), global);
 
         // evaluate actual test-script
         Path js = testDir().resolve(moztest.script);

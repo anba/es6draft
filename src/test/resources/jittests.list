@@ -159,6 +159,9 @@ tests/self-hosting/invoke-self-hosted-with-primitive-this.js
 # Spidermonkey: Array.prototype.toString internal recursion
 tests/auto-regress/bug635389.js
 
+# Different Parser strategy
+tests/basic/bug862228.js
+
 
 ############################################
 # Misc proxy implementation isssues        #
@@ -400,6 +403,7 @@ tests/basic/evaluate-catchTermination.js
 tests/basic/testBug659577-2.js
 tests/basic/testBug736012.js
 tests/basic/testBug752379.js
+tests/basic/testBug840012.js
 tests/basic/null-filename-Error.js
 
 # evalInFrame() shell function not supported

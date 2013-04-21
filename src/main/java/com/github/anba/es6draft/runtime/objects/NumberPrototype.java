@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype.FormatNumber;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import org.mozilla.javascript.DToA;
@@ -23,6 +24,8 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor;
+import com.github.anba.es6draft.runtime.objects.intl.NumberFormatObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -110,9 +113,19 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
          * 15.7.4.3 Number.prototype.toLocaleString()
          */
         @Function(name = "toLocaleString", arity = 0)
-        public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
+                Object options) {
             // N.B. permissible but no encouraged
-            return ToString(thisNumberValue(cx, thisValue));
+            // ES5/6
+            // return ToString(thisNumberValue(cx, thisValue));
+
+            // ECMA-402
+            double x = thisNumberValue(cx, thisValue);
+            NumberFormatConstructor constructor = (NumberFormatConstructor) cx
+                    .getIntrinsic(Intrinsics.Intl_NumberFormat);
+            NumberFormatObject numberFormat = (NumberFormatObject) constructor.construct(cx,
+                    locales, options);
+            return FormatNumber(cx, numberFormat, x);
         }
 
         /**

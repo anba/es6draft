@@ -172,6 +172,8 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
          */
         @Function(name = "@@hasInstance", arity = 1, symbol = BuiltinSymbol.hasInstance)
         public static Object hasInstance(ExecutionContext cx, Object thisValue, Object v) {
+            // FIXME: spec bug? make writable=configurable=(enumerable)=false to prevent exposing
+            // bound functions
             return OrdinaryHasInstance(cx, thisValue, v);
         }
     }

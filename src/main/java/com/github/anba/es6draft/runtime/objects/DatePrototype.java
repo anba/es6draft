@@ -11,6 +11,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.DateAbstractOperations.*;
+import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.ToDateTimeOptions;
+import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatPrototype.FormatDateTime;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import java.util.Locale;
@@ -24,6 +26,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor;
+import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -177,39 +181,66 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
          * 15.9.5.5 Date.prototype.toLocaleString ( )
          */
         @Function(name = "toLocaleString", arity = 0)
-        public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
-            Realm realm = cx.getRealm();
+        public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
+                Object options) {
             double t = thisTimeValue(cx, thisValue);
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format(realm.getLocale(), "%1$tc", (long) t);
+            // ES5/6
+            // return String.format(cx.getRealm().getLocale(), "%1$tc", (long) t);
+
+            // ECMA-402
+            options = ToDateTimeOptions(cx, options, "any", "all");
+            DateTimeFormatConstructor constructor = (DateTimeFormatConstructor) cx
+                    .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
+            DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) constructor.construct(cx,
+                    locales, options);
+            return FormatDateTime(cx, dateTimeFormat, t);
         }
 
         /**
          * 15.9.5.6 Date.prototype.toLocaleDateString ( )
          */
         @Function(name = "toLocaleDateString", arity = 0)
-        public static Object toLocaleDateString(ExecutionContext cx, Object thisValue) {
-            Realm realm = cx.getRealm();
+        public static Object toLocaleDateString(ExecutionContext cx, Object thisValue,
+                Object locales, Object options) {
             double t = thisTimeValue(cx, thisValue);
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format(realm.getLocale(), "%1$ta %1$tb %1$td %1$tY", (long) t);
+            // ES5/6
+            // return String.format(cx.getRealm().getLocale(), "%1$ta %1$tb %1$td %1$tY", (long) t);
+
+            // ECMA-402
+            options = ToDateTimeOptions(cx, options, "date", "date");
+            DateTimeFormatConstructor constructor = (DateTimeFormatConstructor) cx
+                    .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
+            DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) constructor.construct(cx,
+                    locales, options);
+            return FormatDateTime(cx, dateTimeFormat, t);
         }
 
         /**
          * 15.9.5.7 Date.prototype.toLocaleTimeString ( )
          */
         @Function(name = "toLocaleTimeString", arity = 0)
-        public static Object toLocaleTimeString(ExecutionContext cx, Object thisValue) {
-            Realm realm = cx.getRealm();
+        public static Object toLocaleTimeString(ExecutionContext cx, Object thisValue,
+                Object locales, Object options) {
             double t = thisTimeValue(cx, thisValue);
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format(realm.getLocale(), "%1$tT GMT%1$tz (%1$tZ)", (long) t);
+            // ES5/6
+            // return String.format(cx.getRealm().getLocale(), "%1$tT GMT%1$tz (%1$tZ)", (long) t);
+
+            // ECMA-402
+            options = ToDateTimeOptions(cx, options, "time", "time");
+            DateTimeFormatConstructor constructor = (DateTimeFormatConstructor) cx
+                    .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
+            DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) constructor.construct(cx,
+                    locales, options);
+            return FormatDateTime(cx, dateTimeFormat, t);
         }
 
         /**

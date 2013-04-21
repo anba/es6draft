@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
+import static com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype.CompareStrings;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
@@ -25,6 +26,8 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Strings;
+import com.github.anba.es6draft.runtime.objects.intl.CollatorConstructor;
+import com.github.anba.es6draft.runtime.objects.intl.CollatorObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -180,11 +183,20 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.9 String.prototype.localeCompare (that)
          */
         @Function(name = "localeCompare", arity = 1)
-        public static Object localeCompare(ExecutionContext cx, Object thisValue, Object that) {
+        public static Object localeCompare(ExecutionContext cx, Object thisValue, Object that,
+                Object locales, Object options) {
             Object obj = CheckObjectCoercible(cx, thisValue);
             String s = ToFlatString(cx, obj);
             String t = ToFlatString(cx, that);
-            return cx.getRealm().getCollator().compare(s, t);
+
+            // ES5/6
+            // return cx.getRealm().getCollator().compare(s, t);
+
+            // ECMA-402
+            CollatorConstructor constructor = (CollatorConstructor) cx
+                    .getIntrinsic(Intrinsics.Intl_Collator);
+            CollatorObject collator = (CollatorObject) constructor.construct(cx, locales, options);
+            return CompareStrings(cx, collator, s, t);
         }
 
         /**

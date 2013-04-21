@@ -253,4 +253,13 @@ public class MozTestGlobalObject extends GlobalObject {
         FunctionNode fnode = (FunctionNode) expr.getExpression();
         return fnode.getBodySource();
     }
+
+    /**
+     * {@code $INCLUDE} function for canonical test262 tests
+     */
+    @Function(name = "__$INCLUDE", arity = 1)
+    public Object $INCLUDE(String file) throws IOException {
+        // resolve the input file against the test402 lib-path
+        return load(absolutePath("test402/lib/" + file));
+    }
 }

@@ -6,9 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -18,7 +21,12 @@ import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>10 Collator Objects</h1>
@@ -34,6 +42,9 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
+
+        // initialise Intl.Collator.prototype's internal state
+        CollatorConstructor.InitializeCollator(cx, this, UNDEFINED, UNDEFINED);
     }
 
     /**
@@ -44,8 +55,10 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
 
         private static CollatorObject collator(ExecutionContext cx, Object object) {
             if (object instanceof CollatorObject) {
-                // TODO: test for initialised state
-                return (CollatorObject) object;
+                CollatorObject collator = (CollatorObject) object;
+                if (collator.isInitializedCollator()) {
+                    return collator;
+                }
             }
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -64,8 +77,13 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
          */
         @Accessor(name = "compare", type = Accessor.Type.Getter)
         public static Object compare(ExecutionContext cx, Object thisValue) {
-            collator(cx, thisValue);
-            return UNDEFINED;
+            CollatorObject collator = collator(cx, thisValue);
+            if (collator.getBoundCompare() == null) {
+                CompareFunction f = new CompareFunction(cx.getRealm());
+                Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
+                collator.setBoundCompare(bf);
+            }
+            return collator.getBoundCompare();
         }
 
         /**
@@ -73,8 +91,48 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
-            collator(cx, thisValue);
-            return UNDEFINED;
+            CollatorObject collator = collator(cx, thisValue);
+            OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            CreateOwnDataProperty(cx, object, "locale", collator.getLocale());
+            CreateOwnDataProperty(cx, object, "usage", collator.getUsage());
+            CreateOwnDataProperty(cx, object, "sensitivity", collator.getSensitivity());
+            CreateOwnDataProperty(cx, object, "ignorePunctuation", collator.isIgnorePunctuation());
+            CreateOwnDataProperty(cx, object, "collation", collator.getCollation());
+            CreateOwnDataProperty(cx, object, "numeric", collator.isNumeric());
+            CreateOwnDataProperty(cx, object, "caseFirst", collator.getCaseFirst());
+            return object;
+        }
+    }
+
+    /**
+     * Abstract Operation: CompareStrings
+     */
+    public static int CompareStrings(ExecutionContext cx, CollatorObject collator, String x,
+            String y) {
+        return collator.getCollator().compare(x, y);
+    }
+
+    private static class CompareFunction extends BuiltinFunction {
+        public CompareFunction(Realm realm) {
+            super(realm);
+            ExecutionContext cx = realm.defaultContext();
+            setPrototype(cx, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+            defineOwnProperty(cx, "name", new PropertyDescriptor("compare", false, false, false));
+            defineOwnProperty(cx, "length", new PropertyDescriptor(2, false, false, false));
+            AddRestrictedFunctionProperties(cx, this);
+        }
+
+        /**
+         * [[Call]]
+         */
+        @Override
+        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            assert thisValue instanceof CollatorObject;
+            Object arg0 = args.length > 0 ? args[0] : UNDEFINED;
+            Object arg1 = args.length > 1 ? args[1] : UNDEFINED;
+            String x = ToFlatString(callerContext, arg0);
+            String y = ToFlatString(callerContext, arg1);
+            return CompareStrings(callerContext, (CollatorObject) thisValue, x, y);
         }
     }
 }

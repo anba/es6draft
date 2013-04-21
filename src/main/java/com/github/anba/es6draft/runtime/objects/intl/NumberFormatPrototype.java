@@ -6,14 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-
-import java.text.NumberFormat;
-import java.util.Locale;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -28,6 +26,8 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.ibm.icu.text.NumberFormat;
 
 /**
  * <h1>11 NumberFormat Objects</h1>
@@ -43,6 +43,9 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
+
+        // initialise Intl.NumberFormat.prototype's internal state
+        NumberFormatConstructor.InitializeNumberFormat(cx, this, UNDEFINED, UNDEFINED);
     }
 
     /**
@@ -53,8 +56,10 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
 
         private static NumberFormatObject numberFormat(ExecutionContext cx, Object object) {
             if (object instanceof NumberFormatObject) {
-                // TODO: test for initialised state
-                return (NumberFormatObject) object;
+                NumberFormatObject numberFormat = (NumberFormatObject) object;
+                if (numberFormat.isInitializedNumberFormat()) {
+                    return numberFormat;
+                }
             }
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -87,41 +92,47 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
-            numberFormat(cx, thisValue);
-            return UNDEFINED;
+            NumberFormatObject numberFormat = numberFormat(cx, thisValue);
+            OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            CreateOwnDataProperty(cx, object, "locale", numberFormat.getLocale());
+            CreateOwnDataProperty(cx, object, "numberingSystem", numberFormat.getNumberingSystem());
+            CreateOwnDataProperty(cx, object, "style", numberFormat.getStyle());
+            if (numberFormat.getCurrency() != null) {
+                CreateOwnDataProperty(cx, object, "currency", numberFormat.getCurrency());
+            }
+            if (numberFormat.getCurrencyDisplay() != null) {
+                CreateOwnDataProperty(cx, object, "currencyDisplay",
+                        numberFormat.getCurrencyDisplay());
+            }
+            CreateOwnDataProperty(cx, object, "minimumIntegerDigits",
+                    numberFormat.getMinimumIntegerDigits());
+            CreateOwnDataProperty(cx, object, "minimumFractionDigits",
+                    numberFormat.getMinimumFractionDigits());
+            CreateOwnDataProperty(cx, object, "maximumFractionDigits",
+                    numberFormat.getMaximumFractionDigits());
+            if (numberFormat.getMinimumSignificantDigits() != 0) {
+                CreateOwnDataProperty(cx, object, "minimumSignificantDigits",
+                        numberFormat.getMinimumSignificantDigits());
+            }
+            if (numberFormat.getMaximumSignificantDigits() != 0) {
+                CreateOwnDataProperty(cx, object, "maximumSignificantDigits",
+                        numberFormat.getMaximumSignificantDigits());
+            }
+            CreateOwnDataProperty(cx, object, "useGrouping", numberFormat.isUseGrouping());
+            return object;
         }
-    }
-
-    private static boolean isFinite(double x) {
-        return !(Double.isInfinite(x) || Double.isNaN(x));
-    }
-
-    private static Locale getLocale(NumberFormatObject numberFormat) {
-        return Locale.forLanguageTag(numberFormat.getLocale());
     }
 
     /**
      * Abstract Operation: FormatNumber
      */
     public static String FormatNumber(ExecutionContext cx, NumberFormatObject numberFormat, double x) {
-        Locale locale = getLocale(numberFormat);
-        NumberFormat nf = NumberFormat.getNumberInstance(locale);
-        String n;
-        boolean negative = false;
-        if (!isFinite(x)) {
-            if (Double.isNaN(x)) {
-                n = nf.format(x);
-            } else {
-                n = nf.format(Double.POSITIVE_INFINITY);
-                negative = x < 0;
-            }
-        } else {
-            if (x < 0) {
-                negative = true;
-                x = +x;
-            }
+        if (x == -0.0) {
+            // -0 is not considered to be negative, cf. step 3a
+            x = +0.0;
         }
-        return "";
+        NumberFormat format = numberFormat.getNumberFormat();
+        return format.format(x);
     }
 
     private static class FormatFunction extends BuiltinFunction {

@@ -6,23 +6,21 @@
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.CanonicalizeLocaleList;
-import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.getStringOption;
+import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -34,12 +32,20 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ExtensionKey;
+import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LocaleData;
+import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LocaleDataInfo;
+import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord;
+import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.ibm.icu.text.NumberFormat;
+import com.ibm.icu.text.NumberingSystem;
+import com.ibm.icu.util.ULocale;
 
 /**
  * <h1>11 NumberFormat Objects</h1>
@@ -49,15 +55,57 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * </ul>
  */
 public class NumberFormatConstructor extends BuiltinFunction implements Constructor, Initialisable {
-    /**
-     * [[availableLocales]]
-     */
-    private List<Locale> availableLocales = asList(Locale.ENGLISH);
 
-    /**
-     * [[relevantExtensionKeys]]
-     */
-    private List<String> relevantExtensionKeys = asList("nu");
+    /** [[availableLocales]] */
+    private Set<String> availableLocales;
+
+    public static Set<String> getAvailableLocales(ExecutionContext cx) {
+        NumberFormatConstructor numberFormat = (NumberFormatConstructor) cx
+                .getIntrinsic(Intrinsics.Intl_NumberFormat);
+        if (numberFormat.availableLocales == null) {
+            numberFormat.availableLocales = GetAvailableLocales(NumberFormat.getAvailableULocales());
+        }
+        return numberFormat.availableLocales;
+    }
+
+    /** [[relevantExtensionKeys]] */
+    private static List<ExtensionKey> relevantExtensionKeys = asList(ExtensionKey.nu);
+
+    /** [[localeData]] */
+    private static final class NumberFormatLocaleData implements LocaleData {
+        @Override
+        public LocaleDataInfo info(ULocale locale) {
+            return new NumberFormatLocaleDataInfo(locale);
+        }
+    }
+
+    /** [[localeData]] */
+    private static final class NumberFormatLocaleDataInfo implements LocaleDataInfo {
+        private final ULocale locale;
+
+        private NumberFormatLocaleDataInfo(ULocale locale) {
+            this.locale = locale;
+        }
+
+        @Override
+        public List<String> entries(ExtensionKey extensionKey) {
+            switch (extensionKey) {
+            case nu:
+                return getNumberInfo();
+            default:
+                throw new IllegalArgumentException(extensionKey.name());
+            }
+        }
+
+        private List<String> getNumberInfo() {
+            // ICU4J does not provide an API to retrieve the numbering systems per locale, go with
+            // Spidermonkey instead and return default numbering system of locale + Table 2 entries
+            String localeNumberingSystem = NumberingSystem.getInstance(locale).getName();
+            return asList(localeNumberingSystem, "arab", "arabtext", "bali", "beng", "deva",
+                    "fullwide", "gujr", "guru", "hanidec", "khmr", "knda", "laoo", "latn", "limb",
+                    "mlym", "mong", "mymr", "orya", "tamldec", "telu", "thai", "tibt");
+        }
+    }
 
     public NumberFormatConstructor(Realm realm) {
         super(realm);
@@ -79,23 +127,143 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
      */
     public static void InitializeNumberFormat(ExecutionContext cx, ScriptObject obj,
             Object locales, Object opts) {
+        // spec allows any object to become a NumberFormat object, we don't allow this
         if (!(obj instanceof NumberFormatObject)) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
+        /* steps 1-2 */
         NumberFormatObject numberFormat = (NumberFormatObject) obj;
         if (numberFormat.isInitializedIntlObject()) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
+        numberFormat.setInitializedIntlObject(true);
+        /* step 3 */
         Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+        /* steps 4-5 */
         ScriptObject options;
         if (Type.isUndefined(opts)) {
             options = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         } else {
             options = ToObject(cx, opts);
         }
-        String matcher = getStringOption(cx, options, "localeMatcher", set("lookup", "best fit"),
+        /* step 6 */
+        OptionsRecord opt = new OptionsRecord();
+        /* step 7 */
+        String matcher = GetStringOption(cx, options, "localeMatcher", set("lookup", "best fit"),
                 "best fit");
+        /* step 8 */
+        opt.localeMatcher = OptionsRecord.MatcherType.forName(matcher);
+        /* step 9-10 */
+        NumberFormatLocaleData localeData = new NumberFormatLocaleData();
+        /* step 11 */
+        ResolvedLocale r = ResolveLocale(cx, getAvailableLocales(cx), requestedLocales, opt,
+                relevantExtensionKeys, localeData);
+        /* step 12 */
+        numberFormat.setLocale(r.locale);
+        /* step 13 */
+        numberFormat.setNumberingSystem(r.values.get(ExtensionKey.nu));
+        /* step 14 */
+        @SuppressWarnings("unused")
+        String dataLocale = r.dataLocale;
+        /* steps 15-16 */
+        String s = GetStringOption(cx, options, "style", set("decimal", "percent", "currency"),
+                "decimal");
+        numberFormat.setStyle(s);
+        /* step 17 */
+        String c = GetStringOption(cx, options, "currency", null, null);
+        /* step 18 */
+        if (c != null && !IsWellFormedCurrencyCode(cx, c)) {
+            throw throwRangeError(cx, Messages.Key.IntlInvalidCurrency, c);
+        }
+        /* step 19 */
+        if ("currency".equals(s) && c == null) {
+            throw throwTypeError(cx, Messages.Key.IntlInvalidCurrency, "null");
+        }
+        /* step 20 */
+        int cDigits = -1;
+        if ("currency".equals(s)) {
+            c = ToUpperCase(c);
+            numberFormat.setCurrency(c);
+            cDigits = CurrencyDigits(c);
+        }
+        /* steps 21-22 */
+        String cd = GetStringOption(cx, options, "currencyDisplay", set("code", "symbol", "name"),
+                "symbol");
+        if ("currency".equals(s)) {
+            numberFormat.setCurrencyDisplay(cd);
+        }
+        /* steps 23-24 */
+        double mnid = GetNumberOption(cx, options, "minimumIntegerDigits", 1, 21, 1);
+        numberFormat.setMinimumIntegerDigits((int) mnid); // TODO: double?!
+        /* step 25 */
+        int mnfdDefault = "currency".equals(s) ? cDigits : 0;
+        /* steps 26-27 */
+        double mnfd = GetNumberOption(cx, options, "minimumFractionDigits", 0, 20, mnfdDefault);
+        numberFormat.setMinimumFractionDigits((int) mnfd);// TODO: double?!
+        /* step 28 */
+        double mxfdDefault = "currency".equals(s) ? Math.max(mnfd, cDigits)
+                : "percent".equals(s) ? Math.max(mnfd, 0) : Math.max(mnfd, 3);
+        /* steps 29-30 */
+        double mxfd = GetNumberOption(cx, options, "maximumFractionDigits", mnfd, 20, mxfdDefault);
+        numberFormat.setMaximumFractionDigits((int) mxfd);// TODO: double?!
+        /* steps 31-32 */
+        Object mnsd = Get(cx, options, "minimumSignificantDigits");
+        Object mxsd = Get(cx, options, "maximumSignificantDigits");
+        /* step 33 */
+        if (!Type.isUndefined(mnsd) || !Type.isUndefined(mxsd)) {
+            double _mnsd = GetNumberOption(cx, options, "minimumSignificantDigits", 1, 21, 1);
+            double _mxsd = GetNumberOption(cx, options, "maximumSignificantDigits", _mnsd, 21, 21);
+            numberFormat.setMinimumSignificantDigits((int) _mnsd);// TODO: double?!
+            numberFormat.setMaximumSignificantDigits((int) _mxsd);// TODO: double?!
+        }
+        /* steps 34-35 */
+        boolean g = GetBooleanOption(cx, options, "useGrouping", true);
+        numberFormat.setUseGrouping(g);
+        /* step 36-41 */
+        // not applicable
+        /* step 42 */
+        numberFormat.setBoundFormat(null);
+        /* step 43 */
+        numberFormat.setInitializedNumberFormat(true);
+    }
 
+    /**
+     * Abstract Operation: CurrencyDigits
+     */
+    private static int CurrencyDigits(String c) {
+        // http://www.currency-iso.org/dam/downloads/dl_iso_table_a1.xml
+        switch (c) {
+        case "BYR":
+        case "XOF":
+        case "BIF":
+        case "XAF":
+        case "CLF":
+        case "CLP":
+        case "KMF":
+        case "DJF":
+        case "XPF":
+        case "GNF":
+        case "ISK":
+        case "JPY":
+        case "KRW":
+        case "PYG":
+        case "RWF":
+        case "UGX":
+        case "UYI":
+        case "VUV":
+        case "VND":
+            return 0;
+        case "BHD":
+        case "IQD":
+        case "JOD":
+        case "KWD":
+        case "LYD":
+        case "OMR":
+        case "TND":
+            return 3;
+        default:
+            return 2;
+        }
     }
 
     /**
@@ -160,7 +328,9 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
         @Function(name = "supportedLocalesOf", arity = 1)
         public static Object supportedLocalesOf(ExecutionContext cx, Object thisValue,
                 Object locales, Object options) {
-            return CreateArrayFromList(cx, emptyList());
+            Set<String> availableLocales = getAvailableLocales(cx);
+            Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+            return SupportedLocales(cx, availableLocales, requestedLocales, options);
         }
 
         /**

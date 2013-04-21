@@ -9,6 +9,10 @@ package com.github.anba.es6draft.runtime.objects.intl;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.ibm.icu.text.DecimalFormat;
+import com.ibm.icu.text.NumberFormat;
+import com.ibm.icu.util.Currency;
+import com.ibm.icu.util.ULocale;
 
 /**
  * <h1>11 NumberFormat Objects</h1>
@@ -17,96 +21,93 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class NumberFormatObject extends OrdinaryObject {
-    /**
-     * [[initializedIntlObject]]
-     */
-    private boolean initializedIntlObject = false;
+    /** [[initializedIntlObject]] */
+    private boolean initializedIntlObject;
 
-    /**
-     * [[initializedNumberFormat]]
-     */
-    private boolean initializedNumberFormat = false;
+    /** [[initializedNumberFormat]] */
+    private boolean initializedNumberFormat;
 
-    /**
-     * [[locale]]
-     */
+    /** [[locale]] */
     private String locale;
 
-    /**
-     * [[numberingSystem]]
-     */
+    /** [[numberingSystem]] */
     private String numberingSystem;
 
-    /**
-     * [[style]]
-     */
-    private Style style;
+    /** [[style]] */
+    private String style;
 
-    public enum Style {
-        Decimal, Currency, Percent;
-    }
-
-    /**
-     * [[currency]]
-     */
+    /** [[currency]] */
     private String currency;
 
-    /**
-     * [[currencyDisplay]]
-     */
-    private CurrencyDisplay currencyDisplay;
+    /** [[currencyDisplay]] */
+    private String currencyDisplay;
 
-    public enum CurrencyDisplay {
-        Code, Symbol, Name
-    }
-
-    /**
-     * [[minimumIntegerDigits]]
-     */
+    /** [[minimumIntegerDigits]] */
     private int minimumIntegerDigits;
 
-    /**
-     * [[minimumFractionDigits]]
-     */
+    /** [[minimumFractionDigits]] */
     private int minimumFractionDigits;
 
-    /**
-     * [[maximumFractionDigits]]
-     */
+    /** [[maximumFractionDigits]] */
     private int maximumFractionDigits;
 
-    /**
-     * [[minimumSignificantDigits]]
-     */
+    /** [[minimumSignificantDigits]] */
     private int minimumSignificantDigits;
 
-    /**
-     * [[maximumSignificantDigits]]
-     */
+    /** [[maximumSignificantDigits]] */
     private int maximumSignificantDigits;
 
-    /**
-     * [[useGrouping]]
-     */
+    /** [[useGrouping]] */
     private boolean useGrouping;
 
-    /**
-     * [[positivePattern]]
-     */
-    private String positivePattern;
-
-    /**
-     * [[negativePattern]]
-     */
-    private String negativePattern;
-
-    /**
-     * [[boundFormat]]
-     */
+    /** [[boundFormat]] */
     private Callable boundFormat;
+
+    private NumberFormat numberFormat;
 
     public NumberFormatObject(Realm realm) {
         super(realm);
+    }
+
+    public NumberFormat getNumberFormat() {
+        if (numberFormat == null) {
+            numberFormat = createNumberFormat();
+        }
+        return numberFormat;
+    }
+
+    private NumberFormat createNumberFormat() {
+        ULocale locale = ULocale.forLanguageTag(this.locale);
+        int choice;
+        if ("decimal".equals(style)) {
+            choice = NumberFormat.NUMBERSTYLE;
+        } else if ("percent".equals(style)) {
+            choice = NumberFormat.PERCENTSTYLE;
+        } else {
+            if ("code".equals(currencyDisplay)) {
+                choice = NumberFormat.ISOCURRENCYSTYLE;
+            } else if ("symbol".equals(currencyDisplay)) {
+                choice = NumberFormat.CURRENCYSTYLE;
+            } else {
+                choice = NumberFormat.PLURALCURRENCYSTYLE;
+            }
+        }
+        DecimalFormat numberFormat = (DecimalFormat) NumberFormat.getInstance(locale, choice);
+        if ("currency".equals(style)) {
+            numberFormat.setCurrency(Currency.getInstance(currency));
+        }
+        // numberingSystem?
+        if (minimumSignificantDigits != 0 && maximumSignificantDigits != 0) {
+            numberFormat.setSignificantDigitsUsed(true);
+            numberFormat.setMinimumSignificantDigits(minimumSignificantDigits);
+            numberFormat.setMaximumFractionDigits(maximumSignificantDigits);
+        } else {
+            numberFormat.setMinimumIntegerDigits(minimumIntegerDigits);
+            numberFormat.setMinimumFractionDigits(minimumFractionDigits);
+            numberFormat.setMaximumFractionDigits(maximumFractionDigits);
+        }
+        numberFormat.setGroupingUsed(useGrouping);
+        return numberFormat;
     }
 
     /**
@@ -168,14 +169,14 @@ public class NumberFormatObject extends OrdinaryObject {
     /**
      * [[style]]
      */
-    public Style getStyle() {
+    public String getStyle() {
         return style;
     }
 
     /**
      * [[style]]
      */
-    public void setStyle(Style style) {
+    public void setStyle(String style) {
         this.style = style;
     }
 
@@ -196,14 +197,14 @@ public class NumberFormatObject extends OrdinaryObject {
     /**
      * [[currencyDisplay]]
      */
-    public CurrencyDisplay getCurrencyDisplay() {
+    public String getCurrencyDisplay() {
         return currencyDisplay;
     }
 
     /**
      * [[currencyDisplay]]
      */
-    public void setCurrencyDisplay(CurrencyDisplay currencyDisplay) {
+    public void setCurrencyDisplay(String currencyDisplay) {
         this.currencyDisplay = currencyDisplay;
     }
 
@@ -289,34 +290,6 @@ public class NumberFormatObject extends OrdinaryObject {
      */
     public void setUseGrouping(boolean useGrouping) {
         this.useGrouping = useGrouping;
-    }
-
-    /**
-     * [[positivePattern]]
-     */
-    public String getPositivePattern() {
-        return positivePattern;
-    }
-
-    /**
-     * [[positivePattern]]
-     */
-    public void setPositivePattern(String positivePattern) {
-        this.positivePattern = positivePattern;
-    }
-
-    /**
-     * [[negativePattern]]
-     */
-    public String getNegativePattern() {
-        return negativePattern;
-    }
-
-    /**
-     * [[negativePattern]]
-     */
-    public void setNegativePattern(String negativePattern) {
-        this.negativePattern = negativePattern;
     }
 
     /**
