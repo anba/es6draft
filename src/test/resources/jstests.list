@@ -23,6 +23,14 @@ ecma_3/Number/15.7.4.7-1.js
 ecma_5/RegExp/exec.js
 
 
+############################################
+# Intl v2 not supported in SpiderMonkey    #
+############################################
+
+# "timeZone" property is no longer undefined, instead it refers to the host environment timezone
+test402/ch12/12.3/12.3.3.js
+
+
 ####################################
 # Intl only partially supported    #
 ####################################

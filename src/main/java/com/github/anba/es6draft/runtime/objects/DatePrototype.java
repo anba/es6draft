@@ -178,7 +178,8 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.5 Date.prototype.toLocaleString ( )
+         * 15.9.5.5 Date.prototype.toLocaleString ( )<br>
+         * 13.3.1 Date.prototype.toLocaleString ([locales [, options]])
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,
@@ -200,7 +201,8 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.6 Date.prototype.toLocaleDateString ( )
+         * 15.9.5.6 Date.prototype.toLocaleDateString ( )<br>
+         * 13.3.2 Date.prototype.toLocaleDateString ([locales [, options]])
          */
         @Function(name = "toLocaleDateString", arity = 0)
         public static Object toLocaleDateString(ExecutionContext cx, Object thisValue,
@@ -222,7 +224,8 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.7 Date.prototype.toLocaleTimeString ( )
+         * 15.9.5.7 Date.prototype.toLocaleTimeString ( )<br>
+         * 13.3.3 Date.prototype.toLocaleTimeString ([locales [, options]])
          */
         @Function(name = "toLocaleTimeString", arity = 0)
         public static Object toLocaleTimeString(ExecutionContext cx, Object thisValue,

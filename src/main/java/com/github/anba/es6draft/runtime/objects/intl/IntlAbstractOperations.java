@@ -31,7 +31,9 @@ import com.github.anba.es6draft.runtime.objects.intl.LanguageTagParser.LanguageT
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.ibm.icu.util.TimeZone;
 import com.ibm.icu.util.ULocale;
+import com.ibm.icu.util.TimeZone.SystemTimeZoneType;
 
 /**
  * <h1>9 Locale and Parameter Negotiation</h1><br>
@@ -124,15 +126,65 @@ public final class IntlAbstractOperations {
      * 6.3.1 IsWellFormedCurrencyCode (currency)
      */
     public static boolean IsWellFormedCurrencyCode(ExecutionContext cx, Object currency) {
-        String s = ToFlatString(cx, currency);
-        if (s.length() != 3) {
+        String normalized = ToFlatString(cx, currency);
+        if (normalized.length() != 3) {
             return false;
         }
-        return isAlpha(s.charAt(0)) && isAlpha(s.charAt(1)) && isAlpha(s.charAt(2));
+        return isAlpha(normalized.charAt(0)) && isAlpha(normalized.charAt(1))
+                && isAlpha(normalized.charAt(2));
     }
 
     private static final boolean isAlpha(char c) {
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+    }
+
+    private static final Set<String> JDK_TIMEZONE_NAMES = set("ACT", "AET", "AGT", "ART", "AST",
+            "BET", "BST", "CAT", "CNT", "CST", "CTT", "EAT", "ECT", "IET", "IST", "JST", "MIT",
+            "NET", "NST", "PLT", "PNT", "PRT", "PST", "SST", "VST");
+
+    private static final Map<String, String> timezones;
+    static {
+        HashMap<String, String> map = new HashMap<>();
+        Set<String> ids = TimeZone.getAvailableIDs(SystemTimeZoneType.ANY, null, null);
+        for (String id : ids) {
+            if (JDK_TIMEZONE_NAMES.contains(id)) {
+                // ignore non-IANA, JDK-specific timezones
+                continue;
+            }
+            map.put(ToUpperCase(id), id);
+        }
+        timezones = map;
+    }
+
+    /**
+     * 6.4.1 IsValidTimeZoneName (timeZone)
+     */
+    public static boolean IsValidTimeZoneName(String timeZone) {
+        return timezones.containsKey(ToUpperCase(timeZone));
+    }
+
+    /**
+     * 6.4.2 CanonicalizeTimeZoneName (timeZone)
+     */
+    public static String CanonicalizeTimeZoneName(String timeZone) {
+        /* step 1 */
+        String ianaTimeZone = timezones.get(ToUpperCase(timeZone));
+        /* step 2 */
+        ianaTimeZone = TimeZone.getCanonicalID(ianaTimeZone);
+        assert ianaTimeZone != null : "invalid timezone: " + timeZone;
+        /* step 3 */
+        if ("Etc/UTC".equals(ianaTimeZone) || "Etc/GMT".equals(ianaTimeZone)) {
+            return "UTC";
+        }
+        /* step 4 */
+        return ianaTimeZone;
+    }
+
+    /**
+     * 6.4.3 DefaultTimeZone ()
+     */
+    public static String DefaultTimeZone(Realm realm) {
+        return realm.getTimezone().getID();
     }
 
     private static Map<String, String[]> oldStyleLanguageTags;

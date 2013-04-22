@@ -103,11 +103,8 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
             CreateOwnDataProperty(cx, object, "calendar", dateTimeFormat.getCalendar());
             CreateOwnDataProperty(cx, object, "numberingSystem",
                     dateTimeFormat.getNumberingSystem());
-            if (dateTimeFormat.getTimeZone() != null) {
-                CreateOwnDataProperty(cx, object, "timeZone", dateTimeFormat.getTimeZone());
-            } else {
-                CreateOwnDataProperty(cx, object, "timeZone", UNDEFINED);
-            }
+            assert dateTimeFormat.getTimeZone() != null;
+            CreateOwnDataProperty(cx, object, "timeZone", dateTimeFormat.getTimeZone());
             // hour12, weekday, era, year, month, day, hour, minute, second, and timeZoneName
             // properties are restored from pattern field or rather its corresponding skeleton
             DateTimePatternGenerator generator = DateTimePatternGenerator.getEmptyInstance();

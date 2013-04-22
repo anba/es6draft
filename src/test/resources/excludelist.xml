@@ -20,6 +20,9 @@
   <test id="12.1.2.1_4"></test>
   <test id="12.1.2"></test>
 
+  <!-- Intl.v2 changes -->
+  <test id="12.3.3">'timeZone' defaults to host environment timezone, if not specified</test>
+
   <!-- current draft issues -->
   <test id="S10.2.1_A4_T1">declaration and parameter binding broken in current draft</test>
 

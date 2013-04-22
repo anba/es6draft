@@ -110,7 +110,8 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.7.4.3 Number.prototype.toLocaleString()
+         * 15.7.4.3 Number.prototype.toLocaleString()<br>
+         * 13.2.1 Number.prototype.toLocaleString ([locales [, options]])
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue, Object locales,

@@ -12,11 +12,19 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype.CompareStrings;
+import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.CanonicalizeLocaleList;
+import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.DefaultLocale;
+import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LookupSupportedLocales;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
 import java.text.Normalizer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -36,6 +44,8 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.util.ULocale;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -180,7 +190,8 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.4.9 String.prototype.localeCompare (that)
+         * 15.5.4.9 String.prototype.localeCompare (that)<br>
+         * 13.1.1 String.prototype.localeCompare (that [, locales [, options]])
          */
         @Function(name = "localeCompare", arity = 1)
         public static Object localeCompare(ExecutionContext cx, Object thisValue, Object that,
@@ -419,13 +430,28 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.4.17 String.prototype.toLocaleLowerCase ( )
+         * 15.5.4.17 String.prototype.toLocaleLowerCase ( )<br>
+         * 13.1.2 String.prototype.toLocaleLowerCase ([locales])
          */
         @Function(name = "toLocaleLowerCase", arity = 0)
-        public static Object toLocaleLowerCase(ExecutionContext cx, Object thisValue) {
+        public static Object toLocaleLowerCase(ExecutionContext cx, Object thisValue, Object locales) {
             Object obj = CheckObjectCoercible(cx, thisValue);
             String s = ToFlatString(cx, obj);
-            return s.toLowerCase(cx.getRealm().getLocale());
+
+            // ES5/6
+            // return s.toLowerCase(cx.getRealm().getLocale());
+
+            Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+            int len = requestedLocales.size();
+            String requestedLocale = (len > 0 ? requestedLocales.iterator().next()
+                    : DefaultLocale(cx.getRealm()));
+            Set<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
+            // FIXME: spec issue? spec should just call LookupSupportedLocales abstract operation..
+            List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
+                    Collections.singleton(requestedLocale));
+            String supportedLocale = (supportedLocales.isEmpty() ? "und" : supportedLocales.get(0));
+            ULocale locale = ULocale.forLanguageTag(supportedLocale);
+            return UCharacter.toLowerCase(locale, s);
         }
 
         /**
@@ -442,10 +468,24 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          * 15.5.4.19 String.prototype.toLocaleUpperCase ( )
          */
         @Function(name = "toLocaleUpperCase", arity = 0)
-        public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue) {
+        public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue, Object locales) {
             Object obj = CheckObjectCoercible(cx, thisValue);
             String s = ToFlatString(cx, obj);
-            return s.toUpperCase(cx.getRealm().getLocale());
+
+            // ES5/6
+            // return s.toUpperCase(cx.getRealm().getLocale());
+
+            Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
+            int len = requestedLocales.size();
+            String requestedLocale = (len > 0 ? requestedLocales.iterator().next()
+                    : DefaultLocale(cx.getRealm()));
+            Set<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
+            // FIXME: spec issue? spec should just call LookupSupportedLocales abstract operation..
+            List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
+                    Collections.singleton(requestedLocale));
+            String supportedLocale = (supportedLocales.isEmpty() ? "und" : supportedLocales.get(0));
+            ULocale locale = ULocale.forLanguageTag(supportedLocale);
+            return UCharacter.toUpperCase(locale, s);
         }
 
         /**

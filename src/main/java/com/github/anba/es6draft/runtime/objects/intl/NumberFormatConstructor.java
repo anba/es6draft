@@ -172,8 +172,10 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
         /* step 17 */
         String c = GetStringOption(cx, options, "currency", null, null);
         /* step 18 */
-        if (c != null && !IsWellFormedCurrencyCode(cx, c)) {
-            throw throwRangeError(cx, Messages.Key.IntlInvalidCurrency, c);
+        if (c != null) {
+            if (!IsWellFormedCurrencyCode(cx, c)) {
+                throw throwRangeError(cx, Messages.Key.IntlInvalidCurrency, c);
+            }
         }
         /* step 19 */
         if ("currency".equals(s) && c == null) {

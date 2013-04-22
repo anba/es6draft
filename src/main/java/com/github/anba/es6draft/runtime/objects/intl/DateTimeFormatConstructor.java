@@ -227,13 +227,16 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         /* step 14 */
         String dataLocale = r.dataLocale;
         /* step 15-17 */
-        String timeZone = null;
+        String timeZone;
         Object tz = Get(cx, options, "timeZone");
         if (!Type.isUndefined(tz)) {
-            timeZone = ToUpperCase(ToFlatString(cx, tz));
-            if (!"UTC".equals(timeZone)) {
+            timeZone = ToFlatString(cx, tz);
+            if (!IsValidTimeZoneName(timeZone)) {
                 throw throwRangeError(cx, Messages.Key.IntlInvalidOption, timeZone);
             }
+            timeZone = CanonicalizeTimeZoneName(timeZone);
+        } else {
+            timeZone = DefaultTimeZone(cx.getRealm());
         }
         dateTimeFormat.setTimeZone(timeZone);
         /* step 18 */
