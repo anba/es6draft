@@ -26,13 +26,17 @@ To start the shell, use `./src/main/bin/repl.sh`.
 
 ### Implementation Status ###
 
-[ES6 draft rev. 14] [drafts] and additionally:
+[ECMAScript 6 draft rev. 14] [es6drafts] and additionally:
 * Generators
 * Generator expressions
 * Array comprehensions
 * Tail calls (currently limited to user-defined functions)
 
+[ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
+* basic support using the [ICU4J] [icu] library
+* subclassing intentionally restricted to ES6 classes
 
 
-
-[drafts]: http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts "Draft Specification for ES.next"
+[es6drafts]: http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts "Draft Specification for ES.next"
+[intldrafts]: http://wiki.ecmascript.org/doku.php?id=globalization:specification_drafts "Specification Drafts for ECMAScript Internationalization API"
+[icu]: http://site.icu-project.org/
