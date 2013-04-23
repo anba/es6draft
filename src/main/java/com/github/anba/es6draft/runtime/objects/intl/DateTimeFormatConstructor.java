@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -32,6 +33,9 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.ObjectConstructor;
+import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.DateField;
+import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.FieldWeight;
+import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.Skeleton;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ExtensionKey;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LocaleData;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.LocaleDataInfo;
@@ -255,14 +259,20 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         /* steps 20-21 */
         // not applicable
         /* step 22 */
-        GetStringOption(cx, options, "formatMatcher", set("basic", "best fit"), "best fit");
-        /* steps 23-25 */
+        matcher = GetStringOption(cx, options, "formatMatcher", set("basic", "best fit"),
+                "best fit");
+        /* steps 25 */
         // not applicable
         /* step 26 */
         Boolean hr12 = GetBooleanOption(cx, options, "hour12", null);
         opt2.hour12 = hr12;
-        /* steps 27-28 */
-        String pattern = createPattern(opt2, dataLocale);
+        /* steps 23-24, 27-28 */
+        String pattern;
+        if ("basic".equals(matcher)) {
+            pattern = BasicFormatMatcher(opt2, dataLocale);
+        } else {
+            pattern = BestFitFormatMatcher(opt2, dataLocale);
+        }
         /* step 29 */
         dateTimeFormat.setPattern(pattern);
         /* step 30 */
@@ -327,75 +337,192 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         String second;
         String timeZoneName;
         Boolean hour12;
+
+        boolean isDate() {
+            return (year != null || month != null || day != null);
+        }
+
+        boolean isTime() {
+            return (hour != null || minute != null || second != null);
+        }
     }
 
-    private static String createPattern(FormatMatcherRecord opt, String dataLocale) {
+    /**
+     * Abstract Operation: BasicFormatMatcher
+     */
+    public static String BasicFormatMatcher(FormatMatcherRecord opt, String dataLocale) {
+        // ICU4J only provides access to date or time-only skeletons, with the exception of the
+        // weekday property, which may also appear in time-only skeletons or as a single skeleton
+        // property. That means we want to handle four different cases:
+        // 1) opt contains only date properties
+        // 2) opt contains only time properties
+        // 3) opt contains date and time properties
+        // 4) opt contains only the weekday property
+        boolean optDate = opt.isDate(), optTime = opt.isTime(), optDateTime = optDate && optTime;
+
+        // handle date and time patterns separately
+        int bestDateScore = Integer.MIN_VALUE, bestTimeScore = Integer.MIN_VALUE;
+        String bestDateFormat = null, bestTimeFormat = null;
+
+        ULocale locale = ULocale.forLanguageTag(dataLocale);
+        DateTimePatternGenerator generator = DateTimePatternGenerator.getInstance(locale);
+
+        // get the preferred hour representation (12-hour-cycle or 24-hour-cycle)
+        @SuppressWarnings("deprecation")
+        char hourFormat = generator.getDefaultHourFormatChar();
+        boolean hour12 = (hourFormat == 'h' || hourFormat == 'K');
+        boolean optHour12 = (opt.hour12 != null ? opt.hour12 : hour12);
+
+        Map<String, String> skeletons = generator.getSkeletons(null);
+        for (Map.Entry<String, String> entry : skeletons.entrySet()) {
+            Skeleton skeleton = new Skeleton(entry.getKey());
+            // getSkeletons() does not return any date+time skeletons
+            assert !(skeleton.isDate() && skeleton.isTime());
+            // skip skeleton if it contains unsupported fields
+            if (skeleton.has(DateField.Quarter) || skeleton.has(DateField.Week)) {
+                continue;
+            }
+            if (optDateTime) {
+                // skip time-skeletons with weekdays if date+time was requested, weekday gets into
+                // the date-skeleton part
+                if (skeleton.isTime() && skeleton.has(DateField.Weekday)) {
+                    continue;
+                }
+                // skip time-skeleton if hour representation does not match requested value
+                if (skeleton.isTime() && skeleton.isHour12() != optHour12) {
+                    continue;
+                }
+                if (skeleton.isDate()) {
+                    int score = computeScore(opt, skeleton);
+                    if (score > bestDateScore) {
+                        bestDateScore = score;
+                        bestDateFormat = entry.getValue();
+                    }
+                } else {
+                    int score = computeScore(opt, skeleton);
+                    if (score > bestTimeScore) {
+                        bestTimeScore = score;
+                        bestTimeFormat = entry.getValue();
+                    }
+                }
+            } else if (optDate) {
+                // skip time-skeletons if only date fields were requested
+                if (skeleton.isTime()) {
+                    continue;
+                }
+                int score = computeScore(opt, skeleton);
+                if (score > bestDateScore) {
+                    bestDateScore = score;
+                    bestDateFormat = entry.getValue();
+                }
+            } else if (optTime) {
+                // skip date-skeletons if only time fields were requested
+                if (skeleton.isDate()) {
+                    continue;
+                }
+                // skip time-skeleton if hour representation does not match requested value
+                if (skeleton.isHour12() != optHour12) {
+                    continue;
+                }
+                int score = computeScore(opt, skeleton);
+                if (score > bestTimeScore) {
+                    bestTimeScore = score;
+                    bestTimeFormat = entry.getValue();
+                }
+            } else {
+                // weekday-only case
+                int score = computeScore(opt, skeleton);
+                if (score > bestDateScore) {
+                    bestDateScore = score;
+                    bestDateFormat = entry.getValue();
+                }
+            }
+        }
+        assert !optDate || bestDateFormat != null;
+        assert !optTime || bestTimeFormat != null;
+        assert !(!optDate && !optTime) || bestDateFormat != null;
+        if (optDateTime) {
+            return bestDateFormat + ", " + bestTimeFormat;
+        }
+        if (optTime) {
+            return bestTimeFormat;
+        }
+        return bestDateFormat;
+    }
+
+    /**
+     * Abstract Operation: BasicFormatMatcher (score computation)
+     */
+    private static int computeScore(FormatMatcherRecord opt, Skeleton skeleton) {
+        /* step 11.b */
+        int score = 0;
+        /* steps 11.c.i - 11.c.iv */
+        score -= getPenalty(DateField.Weekday, opt.weekday, skeleton);
+        score -= getPenalty(DateField.Era, opt.era, skeleton);
+        score -= getPenalty(DateField.Year, opt.year, skeleton);
+        score -= getPenalty(DateField.Month, opt.month, skeleton);
+        score -= getPenalty(DateField.Day, opt.day, skeleton);
+        score -= getPenalty(DateField.Hour, opt.hour, skeleton);
+        score -= getPenalty(DateField.Minute, opt.minute, skeleton);
+        score -= getPenalty(DateField.Second, opt.second, skeleton);
+        score -= getPenalty(DateField.Timezone, opt.timeZoneName, skeleton);
+        return score;
+    }
+
+    private static final int removalPenalty = 120, additionPenalty = 20, longLessPenalty = 8,
+            longMorePenalty = 6, shortLessPenalty = 6, shortMorePenalty = 3;
+
+    /**
+     * Abstract Operation: BasicFormatMatcher (penalty computation)
+     */
+    private static int getPenalty(DateField field, String weight, Skeleton skeleton) {
+        FieldWeight optionsProp = FieldWeight.forName(weight);
+        FieldWeight formatProp = skeleton.get(field);
+        /* step 11.c.v */
+        if (optionsProp == null && formatProp != null) {
+            return additionPenalty;
+        }
+        /* step 11.c.vi */
+        if (optionsProp != null && formatProp == null) {
+            return removalPenalty;
+        }
+        /* step 11.c.vii */
+        if (optionsProp != formatProp) {
+            int optionsPropIndex = optionsProp.weight();
+            int formatPropIndex = formatProp.weight();
+            int delta = Math.max(Math.min(formatPropIndex - optionsPropIndex, 2), -2);
+            if (delta == 2) {
+                return longMorePenalty;
+            } else if (delta == 1) {
+                return shortMorePenalty;
+            } else if (delta == -1) {
+                return shortLessPenalty;
+            } else if (delta == -2) {
+                return longLessPenalty;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Abstract Operation: BestFitFormatMatcher
+     */
+    public static String BestFitFormatMatcher(FormatMatcherRecord opt, String dataLocale) {
         // Let ICU4J compute the best applicable pattern for the requested input values
         StringBuilder sb = new StringBuilder();
-        PatternField.Weekday.append(sb, opt.weekday);
-        PatternField.Era.append(sb, opt.era);
-        PatternField.Year.append(sb, opt.year);
-        PatternField.Month.append(sb, opt.month);
-        PatternField.Day.append(sb, opt.day);
-        PatternField.Hour.append(sb, opt.hour, opt.hour12);
-        PatternField.Minute.append(sb, opt.minute);
-        PatternField.Second.append(sb, opt.second);
-        PatternField.TimeZone.append(sb, opt.timeZoneName);
+        DateField.Weekday.append(sb, opt.weekday);
+        DateField.Era.append(sb, opt.era);
+        DateField.Year.append(sb, opt.year);
+        DateField.Month.append(sb, opt.month);
+        DateField.Day.append(sb, opt.day);
+        DateField.Hour.append(sb, opt.hour, opt.hour12);
+        DateField.Minute.append(sb, opt.minute);
+        DateField.Second.append(sb, opt.second);
+        DateField.Timezone.append(sb, opt.timeZoneName);
         ULocale locale = ULocale.forLanguageTag(dataLocale);
         DateTimePatternGenerator generator = DateTimePatternGenerator.getInstance(locale);
         String skeleton = sb.toString();
         return generator.getBestPattern(skeleton);
-    }
-
-    private enum PatternField {
-        Era('G'), Year('y'), Month('M'), Day('d'), Weekday('E'), Hour('j') {
-            @Override
-            public void append(StringBuilder sb, String format, Boolean hour12) {
-                char c = (hour12 != null ? hour12 ? 'h' : 'H' : character);
-                for (int i = length(format); i != 0; --i) {
-                    sb.append(c);
-                }
-            }
-        },
-        Minute('m'), Second('s'), TimeZone('z');
-
-        protected final char character;
-
-        private PatternField(char c) {
-            this.character = c;
-        }
-
-        public void append(StringBuilder sb, String format, Boolean option) {
-            throw new UnsupportedOperationException();
-        }
-
-        public void append(StringBuilder sb, String format) {
-            for (int i = length(format); i != 0; --i) {
-                sb.append(character);
-            }
-        }
-
-        private static final int NARROW = 5, LONG = 4, SHORT = 3, TWO_DIGIT = 2, NUMERIC = 1;
-
-        private static int length(String name) {
-            if (name == null) {
-                return 0;
-            }
-            switch (name) {
-            case "narrow":
-                return NARROW;
-            case "long":
-                return LONG;
-            case "short":
-                return SHORT;
-            case "2-digit":
-                return TWO_DIGIT;
-            case "numeric":
-                return NUMERIC;
-            default:
-                throw new IllegalArgumentException();
-            }
-        }
     }
 
     /**
