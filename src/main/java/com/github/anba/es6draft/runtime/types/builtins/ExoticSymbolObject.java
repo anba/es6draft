@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.MakeL
 import static java.util.Collections.emptyIterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -47,6 +48,12 @@ public class ExoticSymbolObject implements ScriptObject, Symbol {
     @Override
     public boolean isPrivate() {
         return _private;
+    }
+
+    /** [[GetRealm]] ( ) */
+    @Override
+    public Realm getRealm() {
+        return null;
     }
 
     /**

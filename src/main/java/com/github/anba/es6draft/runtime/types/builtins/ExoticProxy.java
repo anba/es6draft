@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
+import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -187,12 +188,24 @@ public class ExoticProxy implements ScriptObject {
         }
     }
 
+    /**
+     * Java {@code null} to {@link Null#NULL}
+     */
     private static Object maskNull(Object val) {
         return (val != null ? val : NULL);
     }
 
+    /**
+     * {@link Null#NULL} to Java {@code null}
+     */
     private static Object unmaskNull(Object jsval) {
         return (jsval != NULL ? jsval : null);
+    }
+
+    @Override
+    public Realm getRealm() {
+        // FIXME: unclear whether to return the Proxy's [[Realm]] or the [[ProxyTarget]]'s [[Realm]]
+        return realm;
     }
 
     /**

@@ -225,12 +225,16 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(ExecutionContext cx, Object thisValue, Object p) {
             ScriptObject o = ToObject(cx, thisValue);
+            if (o.getRealm() != cx.getRealm()) {
+                throwTypeError(cx, Messages.Key.ObjectSetProtoCrossRealm);
+            }
             if (!IsExtensible(cx, o)) {
                 throwTypeError(cx, Messages.Key.NotExtensible);
             }
             if (Type.isNull(p)) {
                 o.setPrototype(cx, null);
             } else if (Type.isObject(p)) {
+                // TODO: check for cycles in proto-chain
                 o.setPrototype(cx, Type.objectValue(p));
             }
             return UNDEFINED;

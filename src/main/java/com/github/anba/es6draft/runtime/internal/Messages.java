@@ -147,6 +147,7 @@ public class Messages {
         ObjectSealFailed("object.seal_failed"),
         ObjectFreezeFailed("object.freeze_failed"),
         ObjectPreventExtensionsFailed("object.preventextension_failed"),
+        ObjectSetProtoCrossRealm("object.set_proto_cross_realm"),
         // 15.3 Function Objects
         GeneratorExecuting("generator.executing"),
         GeneratorClosed("generator.closed"),
