@@ -79,7 +79,7 @@ public class MozillaJitTest extends BaseMozillaTest {
     private static Script legacyMozilla;
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(15));
+    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(60));
 
     @Parameter(0)
     public MozTest moztest;
