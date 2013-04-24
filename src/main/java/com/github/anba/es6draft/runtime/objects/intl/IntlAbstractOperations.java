@@ -13,15 +13,10 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayC
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -31,9 +26,11 @@ import com.github.anba.es6draft.runtime.objects.intl.LanguageTagParser.LanguageT
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.ibm.icu.util.LocaleMatcher;
+import com.ibm.icu.util.LocalePriorityList;
 import com.ibm.icu.util.TimeZone;
-import com.ibm.icu.util.ULocale;
 import com.ibm.icu.util.TimeZone.SystemTimeZoneType;
+import com.ibm.icu.util.ULocale;
 
 /**
  * <h1>9 Locale and Parameter Negotiation</h1><br>
@@ -187,7 +184,7 @@ public final class IntlAbstractOperations {
         return realm.getTimezone().getID();
     }
 
-    private static Map<String, String[]> oldStyleLanguageTags;
+    private static final Map<String, String[]> oldStyleLanguageTags;
     static {
         // generated from CLDR-2.0.0
         HashMap<String, String[]> map = new HashMap<>();
@@ -363,7 +360,183 @@ public final class IntlAbstractOperations {
      */
     public static LocaleMatch BestFitMatcher(ExecutionContext cx, Set<String> availableLocales,
             Set<String> requestedLocales) {
-        return LookupMatcher(cx, availableLocales, requestedLocales);
+        LocaleMatcher matcher = CreateDefaultMatcher();
+        Map<String, Entry<ULocale, ULocale>> map = GetMaximizedLocales(matcher, availableLocales);
+
+        final String defaultLocale = DefaultLocale(cx.getRealm());
+        // `BEST_FIT_MIN_MATCH - epsilon` to ensure match is at least BEST_FIT_MIN_MATCH to be
+        // considered 'best-fit'
+        final double initialWeight = BEST_FIT_MIN_MATCH - Double.MIN_VALUE;
+
+        // search for best match, start with default locale and initial weight
+        String bestMatchCandidate = defaultLocale;
+        Entry<String, Double> bestMatch = new SimpleEntry<>(defaultLocale, initialWeight);
+        for (String locale : requestedLocales) {
+            String[] unicodeExt = UnicodeLocaleExtSequence(locale);
+            String noExtensionsLocale = unicodeExt[0];
+            Entry<String, Double> match = BestFitAvailableLocale(matcher, map, noExtensionsLocale);
+            if (match.getValue() > bestMatch.getValue()) {
+                bestMatch = match;
+                bestMatchCandidate = locale;
+            }
+        }
+
+        LocaleMatch result = new LocaleMatch();
+        result.locale = bestMatch.getKey();
+        String[] unicodeExt = UnicodeLocaleExtSequence(bestMatchCandidate);
+        String noExtensionsLocale = unicodeExt[0];
+        if (!bestMatchCandidate.equals(noExtensionsLocale)) {
+            result.extension = unicodeExt[1];
+            result.extensionIndex = bestMatchCandidate.indexOf("-u-");
+        }
+        return result;
+    }
+
+    /**
+     * Minimum match value for best fit matcher, currently set to 0.5 to match ICU4J's defaults
+     */
+    private static final double BEST_FIT_MIN_MATCH = 0.5;
+
+    private static LocaleMatcher CreateDefaultMatcher() {
+        LocalePriorityList priorityList = LocalePriorityList.add(ULocale.ROOT).build();
+        @SuppressWarnings("deprecation")
+        LocaleMatcher matcher = new LocaleMatcher(priorityList, languageMatchData);
+        return matcher;
+    }
+
+    /**
+     * language matcher data shipped with current ICU4J is outdated, use data from CLDR 23 instead
+     * 
+     * TODO: remove when ICU4J is updated
+     */
+    @SuppressWarnings("deprecation")
+    private static final LocaleMatcher.LanguageMatcherData languageMatchData = new LocaleMatcher.LanguageMatcherData()
+    /* @formatter:off */
+    .addDistance("no", "nb", 100, false)
+    .addDistance("nn", "nb", 96, false)
+    .addDistance("nn", "no", 96, false)
+    .addDistance("da", "no", 90, false)
+    .addDistance("da", "nb", 90, false)
+    .addDistance("hr", "bs", 96, false)
+    .addDistance("sh", "bs", 96, false)
+    .addDistance("sr", "bs", 96, false)
+    .addDistance("sh", "hr", 96, false)
+    .addDistance("sr", "hr", 96, false)
+    .addDistance("sh", "sr", 96, false)
+    .addDistance("ms", "id", 90, false)
+    .addDistance("ssy", "aa", 96, false)
+    .addDistance("sr-Latn", "sr-Cyrl", 90, false)
+    .addDistance("*-Hans", "*-Hant", 85, true)
+    .addDistance("*-Hant", "*-Hans", 75, true)
+    .addDistance("gsw-*-*", "de-*-CH", 85, true) // changed from "desired=gsw, supported=de-CH"
+    .addDistance("gsw", "de", 80, true)
+    .addDistance("en-*-US", "en-*-CA", 98, false)
+    .addDistance("en-*-US", "en-*-*", 97, false)
+    .addDistance("en-*-CA", "en-*-*", 98, false)
+    .addDistance("en-*-*", "en-*-*", 99, false)
+    .addDistance("es-*-ES", "es-*-ES", 100, false)
+    .addDistance("es-*-ES", "es-*-*", 93, false)
+    .addDistance("*", "*", 1, false)
+    .addDistance("*-*", "*-*", 20, false)
+    .addDistance("*-*-*", "*-*-*", 96, false)
+    .freeze();
+    /* @formatter:on */
+
+    /**
+     * Hard cache for this entries to reduce time required to finish intl-tests
+     */
+    private static final Map<String, Entry<ULocale, ULocale>> maximizedLocales = new ConcurrentHashMap<>();
+
+    private static Map<String, Entry<ULocale, ULocale>> GetMaximizedLocales(LocaleMatcher matcher,
+            Set<String> availableLocales) {
+        Map<String, Entry<ULocale, ULocale>> map = new LinkedHashMap<>();
+        for (String available : availableLocales) {
+            Entry<ULocale, ULocale> entry = maximizedLocales.get(available);
+            if (entry == null) {
+                ULocale canonicalized = matcher.canonicalize(ULocale.forLanguageTag(available));
+                ULocale maximized = addLikelySubtagsWithDefaults(canonicalized);
+                entry = new SimpleEntry<>(canonicalized, maximized);
+                maximizedLocales.put(available, entry);
+            }
+            map.put(available, entry);
+        }
+        return map;
+    }
+
+    private static Entry<String, Double> BestFitAvailableLocale(LocaleMatcher matcher,
+            Map<String, Entry<ULocale, ULocale>> availableLocales, String requestedLocale) {
+        ULocale canonicalized = matcher.canonicalize(ULocale.forLanguageTag(requestedLocale));
+        ULocale maximized = addLikelySubtagsWithDefaults(canonicalized);
+        String bestMatchLocale = null;
+        Entry<ULocale, ULocale> bestMatchEntry = null;
+        double bestMatch = Double.NEGATIVE_INFINITY;
+        for (String available : availableLocales.keySet()) {
+            Entry<ULocale, ULocale> entry = availableLocales.get(available);
+            double match = matcher
+                    .match(canonicalized, maximized, entry.getKey(), entry.getValue());
+            // if (match > 0.90) {
+            // System.out.printf("[%s; %s, %s] -> [%s; %s, %s]  => %f\n", requestedLocale,
+            // canonicalized, maximized, available, entry.getKey(), entry.getValue(),
+            // match);
+            // }
+            if (match > bestMatch
+                    || (match == bestMatch && isBetterMatch(canonicalized, maximized,
+                            bestMatchEntry, entry))) {
+                bestMatchLocale = available;
+                bestMatchEntry = entry;
+                bestMatch = match;
+            }
+        }
+        return new SimpleEntry<>(bestMatchLocale, bestMatch);
+    }
+
+    /**
+     * Requests for "en-US" gives two results with '1.0' score:
+     * <ul>
+     * <li>[en; en, en_Latn_US]
+     * <li>[en-US; en_US, en_Latn_US]
+     * </ul>
+     * Obviously it's the latter result we're interested in.
+     */
+    private static boolean isBetterMatch(ULocale canonicalized, ULocale maximized,
+            Entry<ULocale, ULocale> oldMatch, Entry<ULocale, ULocale> newMatch) {
+        // prefer more detailled information over less
+        ULocale oldCanonicalized = oldMatch.getKey();
+        ULocale newCanonicalized = newMatch.getKey();
+        String language = canonicalized.getLanguage();
+        if (newCanonicalized.getLanguage().equals(language)
+                && !oldCanonicalized.getLanguage().equals(language)) {
+            return true;
+        }
+        String script = canonicalized.getScript();
+        if (newCanonicalized.getScript().equals(script)
+                && !oldCanonicalized.getScript().equals(script)) {
+            return true;
+        }
+        String region = canonicalized.getCountry();
+        if (newCanonicalized.getCountry().equals(region)
+                && !oldCanonicalized.getCountry().equals(region)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static ULocale addLikelySubtagsWithDefaults(ULocale locale) {
+        ULocale maximized = ULocale.addLikelySubtags(locale);
+        if (maximized == locale) {
+            // already in maximal form, or no data available for maximization, just make sure
+            // language, script and region are not undefined (ICU4J expects all are defined)
+            String language = locale.getLanguage();
+            String script = locale.getScript();
+            String region = locale.getCountry();
+            if (language.isEmpty() || script.isEmpty() || region.isEmpty()) {
+                language = !language.isEmpty() ? language : "und";
+                script = !script.isEmpty() ? script : "Zzzz";
+                region = !region.isEmpty() ? region : "ZZ";
+                return new ULocale(language, script, region);
+            }
+        }
+        return maximized;
     }
 
     public static final class OptionsRecord {
@@ -493,7 +666,18 @@ public final class IntlAbstractOperations {
      */
     public static List<String> BestFitSupportedLocales(ExecutionContext cx,
             Set<String> availableLocales, Set<String> requestedLocales) {
-        return LookupSupportedLocales(cx, availableLocales, requestedLocales);
+        LocaleMatcher matcher = CreateDefaultMatcher();
+        Map<String, Entry<ULocale, ULocale>> map = GetMaximizedLocales(matcher, availableLocales);
+        List<String> subset = new ArrayList<>();
+        for (String locale : requestedLocales) {
+            String noExtensionsLocale = UnicodeLocaleExtSequence(locale)[0];
+            Entry<String, Double> availableLocale = BestFitAvailableLocale(matcher, map,
+                    noExtensionsLocale);
+            if (availableLocale.getValue() >= BEST_FIT_MIN_MATCH) {
+                subset.add(locale);
+            }
+        }
+        return subset;
     }
 
     /**
