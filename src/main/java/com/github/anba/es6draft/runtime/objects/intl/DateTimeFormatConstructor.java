@@ -246,6 +246,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         /* step 18 */
         FormatMatcherRecord opt2 = new FormatMatcherRecord();
         /* step 19 */
+        // FIXME: spec should propably define exact iteration order here
         opt2.weekday = GetStringOption(cx, options, "weekday", set("narrow", "short", "long"), null);
         opt2.era = GetStringOption(cx, options, "era", set("narrow", "short", "long"), null);
         opt2.year = GetStringOption(cx, options, "year", set("2-digit", "numeric"), null);
@@ -294,6 +295,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         boolean needDefaults = true;
         /* step 5 */
         if ("date".equals(required) || "any".equals(required)) {
+            // FIXME: spec vs. impl (short circuit after first undefined value?)
             for (String pk : asList("weekday", "year", "month", "day")) {
                 Object kvalue = Get(cx, options, pk);
                 if (!Type.isUndefined(kvalue)) {
@@ -303,6 +305,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         }
         /* step 6 */
         if ("time".equals(required) || "any".equals(required)) {
+            // FIXME: spec vs. impl (short circuit after first undefined value?)
             for (String pk : asList("hour", "minute", "second")) {
                 Object kvalue = Get(cx, options, pk);
                 if (!Type.isUndefined(kvalue)) {

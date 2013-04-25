@@ -611,6 +611,7 @@ public final class IntlAbstractOperations {
                             supportedExtensionAddition = "-" + key.name() + "-" + value;
                         }
                     } else {
+                        // FIXME: spec bug ("de-u-co-kn" sets the numeric option for Collator)
                         int valuePos = keyLocaleData.indexOf("true");
                         if (valuePos != -1) {
                             value = "true";

@@ -156,6 +156,10 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
                 CollationType type = CollationType.forName(values[i]);
                 if (type == CollationType.standard || type == CollationType.search) {
                     // 'standard' and 'search' must not be elements of 'co' array, cf. 10.2.3
+                    // FIXME: spec issue? this gives slightly akward results for `new
+                    // Intl.Collator("de-u-co-phonebk",{usage:"search"}).resolvedOptions()`
+                    // the resolved locale is "de-u-co-phonebk", that means co=phonebk, but for the
+                    // actual collator co=search will be used...
                     continue;
                 }
                 result.add(type.getName());
@@ -224,6 +228,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
                 "best fit");
         /* step 12 */
         opt.localeMatcher = OptionsRecord.MatcherType.forName(matcher);
+        // FIXME: spec should propably define exact iteration order here
         /* step 13 (kn-numeric) */
         Boolean numeric = GetBooleanOption(cx, options, "numeric", null);
         if (numeric != null) {
