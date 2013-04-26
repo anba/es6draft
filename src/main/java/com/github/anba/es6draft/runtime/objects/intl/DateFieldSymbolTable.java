@@ -15,10 +15,12 @@ final class DateFieldSymbolTable {
     }
 
     static final class Skeleton {
+        private final char[] symbols;
         private final FieldWeight[] fieldWeights;
         private final boolean hour12;
 
         public Skeleton(String skeleton) {
+            char symbols[] = new char[DateField.LENGTH];
             FieldWeight weights[] = new FieldWeight[DateField.LENGTH];
             boolean hour12 = false;
             for (int i = 0, len = skeleton.length(); i < len;) {
@@ -30,11 +32,13 @@ final class DateFieldSymbolTable {
                 DateField field = DateField.forSymbol(sym);
                 FieldWeight weight = field.getWeight(sym, length);
                 assert weight != FieldWeight.Invalid;
+                symbols[field.ordinal()] = sym;
                 weights[field.ordinal()] = weight;
                 if (field == DateField.Hour) {
                     hour12 = (sym == 'h' || sym == 'K');
                 }
             }
+            this.symbols = symbols;
             this.fieldWeights = weights;
             this.hour12 = hour12;
         }
@@ -43,7 +47,11 @@ final class DateFieldSymbolTable {
             return fieldWeights[field.ordinal()] != null;
         }
 
-        public FieldWeight get(DateField field) {
+        public char getSymbol(DateField field) {
+            return symbols[field.ordinal()];
+        }
+
+        public FieldWeight getWeight(DateField field) {
             return fieldWeights[field.ordinal()];
         }
 

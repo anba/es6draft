@@ -117,7 +117,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
                         || field == DateField.Period) {
                     continue;
                 }
-                FieldWeight weight = skeleton.get(field);
+                FieldWeight weight = skeleton.getWeight(field);
                 if (weight != null) {
                     CreateOwnDataProperty(cx, object, field.toString(), weight.toString());
                     if (field == DateField.Hour) {

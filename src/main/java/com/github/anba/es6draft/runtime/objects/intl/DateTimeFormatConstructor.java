@@ -49,7 +49,9 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.ibm.icu.text.DateFormat;
 import com.ibm.icu.text.DateTimePatternGenerator;
+import com.ibm.icu.text.MessageFormat;
 import com.ibm.icu.text.NumberingSystem;
+import com.ibm.icu.text.SimpleDateFormat;
 import com.ibm.icu.util.Calendar;
 import com.ibm.icu.util.ULocale;
 
@@ -371,18 +373,26 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         DateTimePatternGenerator generator = DateTimePatternGenerator.getInstance(locale);
 
         // get the preferred hour representation (12-hour-cycle or 24-hour-cycle)
-        @SuppressWarnings("deprecation")
-        char hourFormat = generator.getDefaultHourFormatChar();
+        char hourFormat = defaultHourFormat(locale);
         boolean hour12 = (hourFormat == 'h' || hourFormat == 'K');
         boolean optHour12 = (opt.hour12 != null ? opt.hour12 : hour12);
 
-        Map<String, String> skeletons = generator.getSkeletons(null);
+        Map<String, String> skeletons = addCanonicalSkeletons(generator.getSkeletons(null));
         for (Map.Entry<String, String> entry : skeletons.entrySet()) {
             Skeleton skeleton = new Skeleton(entry.getKey());
             // getSkeletons() does not return any date+time skeletons
             assert !(skeleton.isDate() && skeleton.isTime());
             // skip skeleton if it contains unsupported fields
             if (skeleton.has(DateField.Quarter) || skeleton.has(DateField.Week)) {
+                continue;
+            }
+            if (skeleton.has(DateField.Year) && skeleton.getSymbol(DateField.Year) != 'y') {
+                continue;
+            }
+            if (skeleton.has(DateField.Day) && skeleton.getSymbol(DateField.Day) != 'd') {
+                continue;
+            }
+            if (skeleton.has(DateField.Second) && skeleton.getSymbol(DateField.Second) != 's') {
                 continue;
             }
             if (optDateTime) {
@@ -445,12 +455,50 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         assert !optTime || bestTimeFormat != null;
         assert !(!optDate && !optTime) || bestDateFormat != null;
         if (optDateTime) {
-            return bestDateFormat + ", " + bestTimeFormat;
+            String dateTimeFormat = generator.getDateTimeFormat();
+            return MessageFormat.format(dateTimeFormat, bestTimeFormat, bestDateFormat);
         }
         if (optTime) {
             return bestTimeFormat;
         }
         return bestDateFormat;
+    }
+
+    /**
+     * Retrieve the default hour format character for the supplied locale.
+     * 
+     * @see <a href="http://bugs.icu-project.org/trac/ticket/9997">ICU bug 9997</a>
+     */
+    private static char defaultHourFormat(ULocale locale) {
+        // use short time format, just as ICU4J does internally
+        int style = DateFormat.SHORT;
+        SimpleDateFormat df = (SimpleDateFormat) DateFormat.getTimeInstance(style, locale);
+        String pattern = df.toPattern();
+        boolean quote = false;
+        for (int i = 0, len = pattern.length(); i < len; ++i) {
+            char c = pattern.charAt(i);
+            if (!quote && (c == 'h' || c == 'H' || c == 'k' || c == 'K')) {
+                return c;
+            } else if (c == '\'') {
+                quote = !quote;
+            }
+        }
+        return 'H';
+    }
+
+    /**
+     * Add canonical skeleton/pattern pairs which might have been omitted in
+     * {@link DateTimePatternGenerator#getSkeletons(Map)}
+     */
+    private static Map<String, String> addCanonicalSkeletons(Map<String, String> skeletons) {
+        String source = "GyQMwWEdDFHmsSv";
+        for (int i = 0, len = source.length(); i < len; ++i) {
+            String k = source.substring(i, i + 1);
+            if (!skeletons.containsKey(k)) {
+                skeletons.put(k, k);
+            }
+        }
+        return skeletons;
     }
 
     /**
@@ -480,7 +528,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
      */
     private static int getPenalty(DateField field, String weight, Skeleton skeleton) {
         FieldWeight optionsProp = FieldWeight.forName(weight);
-        FieldWeight formatProp = skeleton.get(field);
+        FieldWeight formatProp = skeleton.getWeight(field);
         /* step 11.c.v */
         if (optionsProp == null && formatProp != null) {
             return additionPenalty;
