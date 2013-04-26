@@ -12,11 +12,6 @@ import static com.github.anba.es6draft.runtime.objects.DateAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -158,16 +153,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
             CharSequence s = ToString(cx, string);
             double d = parseISOString(cx.getRealm(), s, true);
             if (Double.isNaN(d)) {
-                SimpleDateFormat df = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)",
-                        Locale.US);
-                df.setLenient(false);
-                try {
-                    Date date = df.parse(s.toString());
-                    if (date != null) {
-                        d = date.getTime();
-                    }
-                } catch (ParseException e) {
-                }
+                d = parseDateString(cx.getRealm(), s);
             }
             return d;
         }

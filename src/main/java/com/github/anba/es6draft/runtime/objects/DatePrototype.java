@@ -15,7 +15,9 @@ import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstr
 import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatPrototype.FormatDateTime;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
+import java.text.DateFormatSymbols;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -58,10 +60,10 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
     }
 
     private static final String ISO_FORMAT = "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ";
-    private static final String ISO_EXTENDED_FORMAT = "%06d-%02d-%02dT%02d:%02d:%02d.%03dZ";
+    private static final String ISO_EXTENDED_FORMAT = "%+07d-%02d-%02dT%02d:%02d:%02d.%03dZ";
 
     private static final String UTC_FORMAT = "%04d-%02d-%02d %02d:%02d:%02d.%03dZ";
-    private static final String UTC_EXTENDED_FORMAT = "%06d-%02d-%02d %02d:%02d:%02d.%03dZ";
+    private static final String UTC_EXTENDED_FORMAT = "%+07d-%02d-%02d %02d:%02d:%02d.%03dZ";
 
     private static String toISOString(double t) {
         assert !Double.isNaN(t);
@@ -149,8 +151,20 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format(Locale.US, "%1$ta %1$tb %1$td %1$tY %1$tT GMT%1$tz (%1$tZ)",
-                    (long) t);
+            Realm realm = cx.getRealm();
+            DateFormatSymbols symbols = DateFormatSymbols.getInstance(Locale.US);
+            TimeZone tz = realm.getTimezone();
+            int dstOffset = (int) DaylightSavingTA(realm, t);
+            int tzOffset = (((int) LocalTZA(realm) + dstOffset) / 60000);
+            tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
+            t = LocalTime(realm, t);
+
+            return String.format("%s %s %02d %04d %02d:%02d:%02d GMT%+05d (%s)",
+                    symbols.getShortWeekdays()[1 + (int) WeekDay(t)],
+                    symbols.getShortMonths()[(int) MonthFromTime(t)], (int) DateFromTime(t),
+                    (int) YearFromTime(t), (int) HourFromTime(t), (int) MinFromTime(t),
+                    (int) SecFromTime(t), tzOffset,
+                    tz.getDisplayName(dstOffset != 0, TimeZone.SHORT, Locale.US));
         }
 
         /**
@@ -162,7 +176,14 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format(Locale.US, "%1$ta %1$tb %1$td %1$tY", (long) t);
+            Realm realm = cx.getRealm();
+            DateFormatSymbols symbols = DateFormatSymbols.getInstance(Locale.US);
+            t = LocalTime(realm, t);
+
+            return String.format("%s %s %02d %04d",
+                    symbols.getShortWeekdays()[1 + (int) WeekDay(t)],
+                    symbols.getShortMonths()[(int) MonthFromTime(t)], (int) DateFromTime(t),
+                    (int) YearFromTime(t));
         }
 
         /**
@@ -174,7 +195,16 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            return String.format(Locale.US, "%1$tT GMT%1$tz (%1$tZ)", (long) t);
+            Realm realm = cx.getRealm();
+            TimeZone tz = realm.getTimezone();
+            int dstOffset = (int) DaylightSavingTA(realm, t);
+            int tzOffset = (((int) LocalTZA(realm) + dstOffset) / 60000);
+            tzOffset = (tzOffset / 60) * 100 + tzOffset % 60;
+            t = LocalTime(realm, t);
+
+            return String.format("%02d:%02d:%02d GMT%+05d (%s)", (int) HourFromTime(t),
+                    (int) MinFromTime(t), (int) SecFromTime(t), tzOffset,
+                    tz.getDisplayName(dstOffset != 0, TimeZone.SHORT, Locale.US));
         }
 
         /**
@@ -188,8 +218,6 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            // ES5/6
-            // return String.format(cx.getRealm().getLocale(), "%1$tc", (long) t);
 
             // ECMA-402
             options = ToDateTimeOptions(cx, options, "any", "all");
@@ -211,8 +239,6 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            // ES5/6
-            // return String.format(cx.getRealm().getLocale(), "%1$ta %1$tb %1$td %1$tY", (long) t);
 
             // ECMA-402
             options = ToDateTimeOptions(cx, options, "date", "date");
@@ -234,8 +260,6 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             if (Double.isNaN(t)) {
                 return "Invalid Date";
             }
-            // ES5/6
-            // return String.format(cx.getRealm().getLocale(), "%1$tT GMT%1$tz (%1$tZ)", (long) t);
 
             // ECMA-402
             options = ToDateTimeOptions(cx, options, "time", "time");

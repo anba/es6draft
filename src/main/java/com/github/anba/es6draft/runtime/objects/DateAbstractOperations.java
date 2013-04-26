@@ -8,8 +8,12 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 
+import java.text.DateFormatSymbols;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.Realm;
 
@@ -497,4 +501,64 @@ final class DateAbstractOperations {
         return Double.NaN;
     }
 
+    private static final Pattern dateTimePattern;
+    static {
+        // "EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)"
+        String date = "([a-zA-Z]{3}) ([a-zA-Z]{3}) ([0-3][0-9]) (-?[0-9]{1,6})";
+        String time = "([0-2][0-9]):([0-5][0-9]):([0-5][0-9])";
+        String timezone = "GMT([+-][0-9]{4})(?: \\([a-zA-Z]{3,5}\\))?";
+        dateTimePattern = Pattern.compile(date + " " + time + " " + timezone);
+    }
+
+    /**
+     * Parse a date-time string in "EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)" format, returns
+     * {@link Double#NaN} on mismatch
+     */
+    public static double parseDateString(Realm realm, CharSequence s) {
+        Matcher matcher = dateTimePattern.matcher(s);
+        syntax: if (matcher.matches()) {
+            DateFormatSymbols symbols = DateFormatSymbols.getInstance(Locale.US);
+            int weekday = indexOf(symbols.getShortWeekdays(), matcher.group(1), 1, 7);
+            int month = 1 + indexOf(symbols.getShortMonths(), matcher.group(2), 0, 11);
+            int day = Integer.parseInt(matcher.group(3));
+            int year = Integer.parseInt(matcher.group(4));
+            int hour = Integer.parseInt(matcher.group(5));
+            int min = Integer.parseInt(matcher.group(6));
+            int sec = Integer.parseInt(matcher.group(7));
+            int msec = 0;
+            int tz = Integer.parseInt(matcher.group(8));
+            int tzhour = tz / 100;
+            int tzmin = tz % 100;
+
+            // just parse, but ignore actual value
+            if (weekday == -1) {
+                break syntax;
+            }
+            if (Math.abs(year) > 275943 // ceil(1e8/365) + 1970 = 275943
+                    || (month < 1 || month > 12)
+                    || (day < 1 || day > DaysInMonth(year, month))
+                    || hour > 24 || (hour == 24 && (min > 0 || sec > 0 || msec > 0))
+                    || min > 59
+                    || sec > 59 || Math.abs(tzhour) > 23 || Math.abs(tzmin) > 59) {
+                break syntax;
+            }
+            double date = MakeDate(MakeDay(year, month - 1, day), MakeTime(hour, min, sec, msec));
+            date -= (tzhour * 60 + tzmin) * msPerMinute;
+
+            if (date < -8.64e15 || date > 8.64e15)
+                break syntax;
+            return date;
+        }
+        return Double.NaN;
+    }
+
+    private static final int indexOf(String[] array, String value, int startIndex, int endIndex) {
+        assert startIndex >= 0 && endIndex < array.length && startIndex <= endIndex;
+        for (int i = startIndex; i <= endIndex; ++i) {
+            if (array[i].equals(value)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }
