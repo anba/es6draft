@@ -381,22 +381,45 @@ final class DateAbstractOperations {
             }
         }
         loop: while (state != ERROR) {
-            int m = i + (state == YEAR ? yearlen : state == MSEC ? 3 : 2);
-            if (m > len) {
-                state = ERROR;
-                break;
-            }
-
-            int value = 0;
-            for (; i < m; ++i) {
-                char c = s.charAt(i);
-                if (c < '0' || c > '9') {
+            if (state != MSEC) {
+                int m = i + (state == YEAR ? yearlen : 2);
+                if (m > len) {
                     state = ERROR;
-                    break loop;
+                    break;
                 }
-                value = 10 * value + (c - '0');
+
+                int value = 0;
+                for (; i < m; ++i) {
+                    char c = s.charAt(i);
+                    if (c < '0' || c > '9') {
+                        state = ERROR;
+                        break loop;
+                    }
+                    value = 10 * value + (c - '0');
+                }
+                values[state] = value;
+            } else {
+                // common extension: 1..n milliseconds
+                if (i >= len) {
+                    state = ERROR;
+                    break;
+                }
+
+                // no common behaviour: truncate or round?
+                double value = 0, f = 0.1;
+                for (int start = i; i < len; ++i, f *= 0.1) {
+                    char c = s.charAt(i);
+                    if (c < '0' || c > '9') {
+                        if (i == start) {
+                            state = ERROR;
+                            break loop;
+                        }
+                        break;
+                    }
+                    value += f * (c - '0');
+                }
+                values[state] = (int) (1000 * value);
             }
-            values[state] = value;
 
             if (i == len) {
                 // reached EOF, check for end state
