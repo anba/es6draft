@@ -431,6 +431,7 @@ tests/basic/bug817002.js
 tests/basic/bug831658.js
 tests/basic/bug831846.js
 tests/basic/bug832197-1.js
+tests/basic/bug863084.js
 tests/basic/testBug584650.js
 tests/basic/testBug606138.js
 tests/basic/testBug634590b.js
