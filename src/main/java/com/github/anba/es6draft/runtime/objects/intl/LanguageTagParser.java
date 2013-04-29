@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -66,6 +67,11 @@ final class LanguageTagParser {
             this.input = input;
         }
 
+        /**
+         * Canonicalization for language tags
+         * 
+         * @see <a href="http://tools.ietf.org/html/rfc5646#section-4.5">RFC 5646</a>
+         */
         public String canonicalize() {
             assert grandfathered || language != null || privateuse != null;
             if (grandfathered) {
@@ -132,14 +138,75 @@ final class LanguageTagParser {
             if (extensions != null) {
                 // sorted by singleton
                 for (Map.Entry<Character, String> entry : extensions.entrySet()) {
-                    sb.append('-').append(entry.getKey().charValue()).append('-')
-                            .append(entry.getValue());
+                    char singleton = entry.getKey().charValue();
+                    String value = entry.getValue();
+                    if (singleton == 'u') {
+                        value = canonicalizeUnicodeExtension(value);
+                    }
+                    sb.append('-').append(singleton).append('-').append(value);
                 }
             }
             if (privateuse != null) {
                 sb.append("-x-").append(privateuse);
             }
             return sb.toString();
+        }
+
+        /**
+         * Additional canonicalization for unicode extension sequences
+         * 
+         * @see <a href="http://tools.ietf.org/html/rfc6067#section-2.1.1">RFC 6067</a>
+         */
+        private String canonicalizeUnicodeExtension(String ext) {
+            StringBuilder sb = new StringBuilder(ext.length() + 1);
+            int start = 0, index = indexOf(ext, '-', start);
+            if ((index - start) > 2) {
+                // attributes
+                ArrayList<String> attributes = new ArrayList<>(5);
+                for (;;) {
+                    attributes.add(ext.substring(start, index));
+                    start = index + 1;
+                    index = indexOf(ext, '-', start);
+                    if ((index - start) <= 2) {
+                        break;
+                    }
+                }
+                appendSorted(sb, attributes);
+            }
+            if ((index - start) == 2) {
+                // keywords
+                ArrayList<String> keywords = new ArrayList<>(5);
+                for (int keystart = start;;) {
+                    start = index + 1;
+                    index = indexOf(ext, '-', start);
+                    if ((index - start) <= 2) {
+                        keywords.add(ext.substring(keystart, start - 1));
+                        if ((index - start) == 2) {
+                            keystart = start;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                appendSorted(sb, keywords);
+            }
+            assert sb.length() == ext.length() + 1;
+            sb.setLength(ext.length());
+            return sb.toString();
+        }
+
+        private static final int indexOf(String s, int ch, int fromIndex) {
+            int index = s.indexOf(ch, fromIndex);
+            return (index < 0 ? s.length() : index);
+        }
+
+        private StringBuilder appendSorted(StringBuilder sb, ArrayList<String> list) {
+            String[] ks = list.toArray(new String[list.size()]);
+            Arrays.sort(ks);
+            for (String s : ks) {
+                sb.append(s).append('-');
+            }
+            return sb;
         }
     }
 
