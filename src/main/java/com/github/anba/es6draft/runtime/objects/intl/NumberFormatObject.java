@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.intl;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.ibm.icu.math.BigDecimal;
 import com.ibm.icu.text.DecimalFormat;
 import com.ibm.icu.text.NumberFormat;
 import com.ibm.icu.util.Currency;
@@ -108,6 +109,11 @@ public class NumberFormatObject extends OrdinaryObject {
             numberFormat.setMaximumFractionDigits(maximumFractionDigits);
         }
         numberFormat.setGroupingUsed(useGrouping);
+        // as required by ToRawPrecision/ToRawFixed
+        // FIXME: ICU4J bug:
+        // new Intl.NumberFormat("en",{useGrouping:false}).format(111111111111111)
+        // returns "111111111111111.02"
+        numberFormat.setRoundingMode(BigDecimal.ROUND_HALF_UP);
         return numberFormat;
     }
 
