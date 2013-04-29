@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -437,6 +438,14 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         public static Object cbrt(ExecutionContext cx, Object thisValue, Object x) {
             return Math.cbrt(ToNumber(cx, x));
         }
-    }
 
+        /**
+         * 15.8.2.x Math.imul(x, y)<br>
+         * https://bugs.ecmascript.org/show_bug.cgi?id=1452
+         */
+        @Function(name = "imul", arity = 2)
+        public static Object imul(ExecutionContext cx, Object thisValue, Object x, Object y) {
+            return (int) (ToUint32(cx, x) * ToUint32(cx, y));
+        }
+    }
 }
