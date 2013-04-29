@@ -345,7 +345,7 @@ public final class IntlAbstractOperations {
                 result.locale = availableLocale;
                 if (!locale.equals(noExtensionsLocale)) {
                     result.extension = unicodeExt[1];
-                    result.extensionIndex = locale.indexOf("-u-");
+                    result.extensionIndex = locale.indexOf("-u-") + 2;
                 }
                 return result;
             }
@@ -387,7 +387,7 @@ public final class IntlAbstractOperations {
         String noExtensionsLocale = unicodeExt[0];
         if (!bestMatchCandidate.equals(noExtensionsLocale)) {
             result.extension = unicodeExt[1];
-            result.extensionIndex = bestMatchCandidate.indexOf("-u-");
+            result.extensionIndex = bestMatchCandidate.indexOf("-u-") + 2;
         }
         return result;
     }
@@ -611,7 +611,6 @@ public final class IntlAbstractOperations {
                             supportedExtensionAddition = "-" + key.name() + "-" + value;
                         }
                     } else {
-                        // FIXME: spec bug ("de-u-co-kn" sets the numeric option for Collator)
                         int valuePos = keyLocaleData.indexOf("true");
                         if (valuePos != -1) {
                             value = "true";
