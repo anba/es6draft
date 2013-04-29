@@ -120,17 +120,25 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
 
     /** [[sortLocaleData]] + [[searchLocaleData]] */
     private static final class CollatorLocaleData implements LocaleData {
+        private final String usage;
+
+        public CollatorLocaleData(String usage) {
+            this.usage = usage;
+        }
+
         @Override
         public LocaleDataInfo info(ULocale locale) {
-            return new CollatorLocaleDataInfo(locale);
+            return new CollatorLocaleDataInfo(usage, locale);
         }
     }
 
     /** [[sortLocaleData]] + [[searchLocaleData]] */
     private static final class CollatorLocaleDataInfo implements LocaleDataInfo {
+        private final String usage;
         private final ULocale locale;
 
-        private CollatorLocaleDataInfo(ULocale locale) {
+        private CollatorLocaleDataInfo(String usage, ULocale locale) {
+            this.usage = usage;
             this.locale = locale;
         }
 
@@ -172,6 +180,13 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
         }
 
         private List<String> getCaseFirstInfo() {
+            if ("sort".equals(usage)) {
+                // special case 'sort' usage for Danish and Maltese to use uppercase first defaults
+                String language = locale.getLanguage();
+                if ("da".equals(language) || "mt".equals(language)) {
+                    return asList("upper", "false", "lower");
+                }
+            }
             return asList("false", "lower", "upper");
         }
     }
@@ -220,7 +235,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
         /* step 7 */
         collator.setUsage(u);
         /* steps 8-9 */
-        CollatorLocaleData localeData = new CollatorLocaleData();
+        CollatorLocaleData localeData = new CollatorLocaleData(u);
         /* step 10 */
         OptionsRecord opt = new OptionsRecord();
         /* step 11 */
