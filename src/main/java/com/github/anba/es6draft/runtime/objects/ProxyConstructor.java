@@ -39,14 +39,15 @@ public class ProxyConstructor extends BuiltinFunction implements Constructor, In
 
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        return construct(callerContext, args);
+        ExecutionContext calleeContext = realm().defaultContext();
+        Object target = args.length > 0 ? args[0] : UNDEFINED;
+        Object handler = args.length > 1 ? args[1] : UNDEFINED;
+        return CreateProxy(calleeContext, target, handler);
     }
 
     @Override
     public Object construct(ExecutionContext callerContext, Object... args) {
-        Object target = args.length > 0 ? args[0] : UNDEFINED;
-        Object handler = args.length > 1 ? args[1] : UNDEFINED;
-        return CreateProxy(callerContext, target, handler);
+        return call(callerContext, null, args);
     }
 
     public enum Properties {

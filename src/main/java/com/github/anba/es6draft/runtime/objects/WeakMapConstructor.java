@@ -58,20 +58,21 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        Realm realm = callerContext.getRealm();
+        ExecutionContext calleeContext = realm().defaultContext();
+        Realm realm = calleeContext.getRealm();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
             // FIXME: spec bug ? `WeakMap()` no longer allowed (Bug 1406)
-            throw throwTypeError(callerContext, Messages.Key.NotObjectType);
+            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof WeakMapObject)) {
-            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         WeakMapObject map = (WeakMapObject) thisValue;
         if (map.isInitialised()) {
-            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
 
         /* steps 5-7 */
@@ -81,10 +82,10 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
         } else {
             Symbol iterator = BuiltinSymbol.iterator.get();
             // FIXME: spec bug? should iterable[@@iterator]() === undefined be an error?
-            itr = Invoke(callerContext, iterable, iterator);
-            adder = Get(callerContext, map, "set");
+            itr = Invoke(calleeContext, iterable, iterator);
+            adder = Get(calleeContext, map, "set");
             if (!IsCallable(adder)) {
-                throw throwTypeError(callerContext, Messages.Key.NotCallable);
+                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
             }
         }
 
@@ -98,17 +99,17 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
         for (;;) {
             Object next;
             try {
-                next = Invoke(callerContext, itr, "next");
+                next = Invoke(calleeContext, itr, "next");
             } catch (ScriptException e) {
                 if (IteratorComplete(realm, e)) {
                     return map;
                 }
                 throw e;
             }
-            ScriptObject entry = ToObject(callerContext, next);
-            Object k = Get(callerContext, entry, "0");
-            Object v = Get(callerContext, entry, "1");
-            ((Callable) adder).call(callerContext, map, k, v);
+            ScriptObject entry = ToObject(calleeContext, next);
+            Object k = Get(calleeContext, entry, "0");
+            Object v = Get(calleeContext, entry, "1");
+            ((Callable) adder).call(calleeContext, map, k, v);
         }
     }
 

@@ -55,27 +55,29 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
      */
     @Override
     public Object construct(ExecutionContext callerContext, Object... args) {
+        // FIXME: spec issue? (swap [[Call]] and [[Construct]] code, execution-context/realm!)
+        ExecutionContext calleeContext = realm().defaultContext();
         int argCount = args.length;
         StringBuilder p = new StringBuilder();
         CharSequence bodyText;
         if (argCount == 0) {
             bodyText = "";
         } else if (argCount == 1) {
-            bodyText = ToString(callerContext, args[0]);
+            bodyText = ToString(calleeContext, args[0]);
         } else {
             Object firstArg = args[0];
-            p.append(ToString(callerContext, firstArg));
+            p.append(ToString(calleeContext, firstArg));
             int k = 2;
             for (; k < argCount; ++k) {
                 Object nextArg = args[k - 1];
-                CharSequence nextArgString = ToString(callerContext, nextArg);
+                CharSequence nextArgString = ToString(calleeContext, nextArg);
                 p.append(',').append(nextArgString);
             }
-            bodyText = ToString(callerContext, args[k - 1]);
+            bodyText = ToString(calleeContext, args[k - 1]);
         }
 
-        Script script = script(callerContext, p, bodyText);
-        ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(callerContext
+        Script script = script(calleeContext, p, bodyText);
+        ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(calleeContext
                 .getRealm());
         return script.evaluate(scriptCxt);
     }

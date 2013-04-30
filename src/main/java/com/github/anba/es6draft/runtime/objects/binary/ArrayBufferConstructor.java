@@ -245,20 +245,21 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = realm().defaultContext();
         Object length = args.length > 0 ? args[0] : UNDEFINED;
         if (!(Type.isUndefined(thisValue) || Type.isObject(thisValue))) {
-            throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         if (Type.isUndefined(thisValue) || !(thisValue instanceof ArrayBufferObject)) {
-            return OrdinaryConstruct(callerContext, this, args);
+            return OrdinaryConstruct(calleeContext, this, args);
         }
         ArrayBufferObject buf = (ArrayBufferObject) thisValue;
         if (buf.getData() != null) {
-            throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         // FIXME: spec bug (check for negative, cf. SpiderMonkey/V8)
-        long byteLength = ToUint32(callerContext, length);
-        return SetArrayBufferData(callerContext, buf, byteLength);
+        long byteLength = ToUint32(calleeContext, length);
+        return SetArrayBufferData(calleeContext, buf, byteLength);
     }
 
     /**

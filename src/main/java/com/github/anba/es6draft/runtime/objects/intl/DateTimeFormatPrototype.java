@@ -156,12 +156,13 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof DateTimeFormatObject;
+            ExecutionContext calleeContext = realm().defaultContext();
             Object date = args.length > 0 ? args[0] : UNDEFINED;
             if (Type.isUndefined(date)) {
-                date = DateConstructor.Properties.now(callerContext, null);
+                date = DateConstructor.Properties.now(calleeContext, null);
             }
-            double x = ToNumber(callerContext, date);
-            return FormatDateTime(callerContext, (DateTimeFormatObject) thisValue, x);
+            double x = ToNumber(calleeContext, date);
+            return FormatDateTime(calleeContext, (DateTimeFormatObject) thisValue, x);
         }
     }
 }

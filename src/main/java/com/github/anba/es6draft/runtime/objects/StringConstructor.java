@@ -55,13 +55,14 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = realm().defaultContext();
         // FIXME: spec bug (`ToString(undefined)` no longer returns "undefined")
-        CharSequence s = (args.length > 0 ? ToString(callerContext, args[0]) : "");
+        CharSequence s = (args.length > 0 ? ToString(calleeContext, args[0]) : "");
         if (thisValue instanceof ExoticString) {
             ExoticString obj = (ExoticString) thisValue;
             if (obj.getStringData() == null) {
                 int length = s.length();
-                DefinePropertyOrThrow(callerContext, obj, "length", new PropertyDescriptor(length,
+                DefinePropertyOrThrow(calleeContext, obj, "length", new PropertyDescriptor(length,
                         false, false, false));
                 obj.setStringData(s);
                 return obj;

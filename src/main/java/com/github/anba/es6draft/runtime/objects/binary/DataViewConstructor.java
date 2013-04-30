@@ -54,7 +54,8 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        return construct(callerContext, args);
+        ExecutionContext calleeContext = realm().defaultContext();
+        return construct(calleeContext, args);
     }
 
     /**

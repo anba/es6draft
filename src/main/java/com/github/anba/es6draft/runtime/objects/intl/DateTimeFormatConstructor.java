@@ -581,16 +581,17 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = realm().defaultContext();
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
-        if (Type.isUndefined(thisValue) || thisValue == callerContext.getIntrinsic(Intrinsics.Intl)) {
-            return construct(callerContext, args);
+        if (Type.isUndefined(thisValue) || thisValue == calleeContext.getIntrinsic(Intrinsics.Intl)) {
+            return construct(calleeContext, args);
         }
-        ScriptObject obj = ToObject(callerContext, thisValue);
-        if (!IsExtensible(callerContext, obj)) {
-            throwTypeError(callerContext, Messages.Key.NotExtensible);
+        ScriptObject obj = ToObject(calleeContext, thisValue);
+        if (!IsExtensible(calleeContext, obj)) {
+            throwTypeError(calleeContext, Messages.Key.NotExtensible);
         }
-        InitializeDateTimeFormat(callerContext, obj, locales, options);
+        InitializeDateTimeFormat(calleeContext, obj, locales, options);
         return obj;
     }
 

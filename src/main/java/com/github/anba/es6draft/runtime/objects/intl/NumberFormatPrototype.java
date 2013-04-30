@@ -151,9 +151,10 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof NumberFormatObject;
+            ExecutionContext calleeContext = realm().defaultContext();
             Object value = args.length > 0 ? args[0] : UNDEFINED;
-            double x = ToNumber(callerContext, value);
-            return FormatNumber(callerContext, (NumberFormatObject) thisValue, x);
+            double x = ToNumber(calleeContext, value);
+            return FormatNumber(calleeContext, (NumberFormatObject) thisValue, x);
         }
     }
 }

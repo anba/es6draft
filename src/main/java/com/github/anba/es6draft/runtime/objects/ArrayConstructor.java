@@ -58,34 +58,35 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = realm().defaultContext();
         int numberOfArgs = args.length;
         if (numberOfArgs != 1) {
             // [15.4.1.1]
-            ExoticArray array = maybeCreateArray(callerContext, thisValue, numberOfArgs);
+            ExoticArray array = maybeCreateArray(calleeContext, thisValue, numberOfArgs);
             for (int k = 0; k < numberOfArgs; ++k) {
                 String pk = ToString(k);
                 Object itemK = args[k];
-                DefinePropertyOrThrow(callerContext, array, pk, new PropertyDescriptor(itemK, true,
+                DefinePropertyOrThrow(calleeContext, array, pk, new PropertyDescriptor(itemK, true,
                         true, true));
             }
-            Put(callerContext, array, "length", numberOfArgs, true);
+            Put(calleeContext, array, "length", numberOfArgs, true);
             return array;
         } else {
             // [15.4.1.2]
-            ExoticArray array = maybeCreateArray(callerContext, thisValue, 0);
+            ExoticArray array = maybeCreateArray(calleeContext, thisValue, 0);
             Object len = args[0];
             long intLen;
             if (!Type.isNumber(len)) {
-                DefinePropertyOrThrow(callerContext, array, "0", new PropertyDescriptor(len, true,
+                DefinePropertyOrThrow(calleeContext, array, "0", new PropertyDescriptor(len, true,
                         true, true));
                 intLen = 1;
             } else {
-                intLen = ToUint32(callerContext, len);
+                intLen = ToUint32(calleeContext, len);
                 if (intLen != Type.numberValue(len)) {
-                    throw throwRangeError(callerContext, Messages.Key.InvalidArrayLength);
+                    throw throwRangeError(calleeContext, Messages.Key.InvalidArrayLength);
                 }
             }
-            Put(callerContext, array, "length", intLen, true);
+            Put(calleeContext, array, "length", intLen, true);
             return array;
         }
     }

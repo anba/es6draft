@@ -120,12 +120,13 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = realm().defaultContext();
         Object message = args.length > 0 ? args[0] : UNDEFINED;
 
         ErrorObject obj;
         if (!Type.isObject(thisValue) || !(thisValue instanceof ErrorObject)
                 || ((ErrorObject) thisValue).isInitialised()) {
-            obj = OrdinaryCreateFromConstructor(callerContext, this, type.prototype(),
+            obj = OrdinaryCreateFromConstructor(calleeContext, this, type.prototype(),
                     NativeErrorObjectAllocator.INSTANCE);
         } else {
             obj = (ErrorObject) thisValue;
@@ -134,9 +135,9 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         obj.initialise();
 
         if (!Type.isUndefined(message)) {
-            CharSequence msg = ToString(callerContext, message);
+            CharSequence msg = ToString(calleeContext, message);
             // FIXME: spec bug - no longer non-enumerable (Bug 1404)
-            CreateOwnDataProperty(callerContext, obj, "message", msg);
+            CreateOwnDataProperty(calleeContext, obj, "message", msg);
         }
 
         return obj;

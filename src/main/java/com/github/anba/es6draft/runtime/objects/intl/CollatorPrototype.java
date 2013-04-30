@@ -128,11 +128,12 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
             assert thisValue instanceof CollatorObject;
+            ExecutionContext calleeContext = realm().defaultContext();
             Object arg0 = args.length > 0 ? args[0] : UNDEFINED;
             Object arg1 = args.length > 1 ? args[1] : UNDEFINED;
-            String x = ToFlatString(callerContext, arg0);
-            String y = ToFlatString(callerContext, arg1);
-            return CompareStrings(callerContext, (CollatorObject) thisValue, x, y);
+            String x = ToFlatString(calleeContext, arg0);
+            String y = ToFlatString(calleeContext, arg1);
+            return CompareStrings(calleeContext, (CollatorObject) thisValue, x, y);
         }
     }
 }

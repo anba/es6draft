@@ -61,11 +61,12 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = realm().defaultContext();
         Object value = args.length > 0 ? args[0] : UNDEFINED;
         if (Type.isUndefinedOrNull(value)) {
-            return ObjectCreate(callerContext, Intrinsics.ObjectPrototype);
+            return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         }
-        return ToObject(callerContext, value);
+        return ToObject(calleeContext, value);
     }
 
     /**
@@ -73,6 +74,8 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      */
     @Override
     public Object construct(ExecutionContext callerContext, Object... args) {
+        // FIXME: spec issue? (should possibly call %Object%[[Call]], execution-context/realm!)
+        ExecutionContext calleeContext = realm().defaultContext();
         if (args.length > 0) {
             Object value = args[0];
             switch (Type.of(value)) {
@@ -81,14 +84,14 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             case String:
             case Boolean:
             case Number:
-                return ToObject(callerContext, value);
+                return ToObject(calleeContext, value);
             case Null:
             case Undefined:
             default:
                 break;
             }
         }
-        return ObjectCreate(callerContext, Intrinsics.ObjectPrototype);
+        return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
     }
 
     /**

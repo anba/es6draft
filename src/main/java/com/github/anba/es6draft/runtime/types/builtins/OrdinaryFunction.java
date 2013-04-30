@@ -181,8 +181,9 @@ public class OrdinaryFunction extends FunctionObject {
 
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ExecutionContext calleeContext = realm().defaultContext();
             /* step 8 */
-            throw throwTypeError(callerContext, Messages.Key.StrictModePoisonPill);
+            throw throwTypeError(calleeContext, Messages.Key.StrictModePoisonPill);
         }
     }
 

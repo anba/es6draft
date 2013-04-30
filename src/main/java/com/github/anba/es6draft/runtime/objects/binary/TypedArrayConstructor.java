@@ -96,16 +96,17 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = realm().defaultContext();
         Object arg0 = args.length > 0 ? args[0] : UNDEFINED;
         if (!Type.isObject(arg0)) {
-            return callWithLength(callerContext, thisValue, arg0, args);
+            return callWithLength(calleeContext, thisValue, arg0, args);
         } else {
             if (arg0 instanceof TypedArrayObject) {
-                return callWithTypedArray(callerContext, thisValue, (TypedArrayObject) arg0, args);
+                return callWithTypedArray(calleeContext, thisValue, (TypedArrayObject) arg0, args);
             } else if (arg0 instanceof ArrayBufferObject) {
-                return callWithArrayBuffer(callerContext, thisValue, (ArrayBufferObject) arg0, args);
+                return callWithArrayBuffer(calleeContext, thisValue, (ArrayBufferObject) arg0, args);
             } else {
-                return callWithArray(callerContext, thisValue, (ScriptObject) arg0, args);
+                return callWithArray(calleeContext, thisValue, (ScriptObject) arg0, args);
             }
         }
     }

@@ -55,22 +55,23 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        Realm realm = callerContext.getRealm();
+        ExecutionContext calleeContext = realm().defaultContext();
+        Realm realm = calleeContext.getRealm();
         int numberOfArgs = args.length;
         if (numberOfArgs >= 2) {
             // [15.9.2.1]
             if (isUninitialisedDateObject(thisValue)) {
                 DateObject obj = (DateObject) thisValue;
-                double year = ToNumber(callerContext, args[0]);
-                double month = ToNumber(callerContext, args[1]);
-                double date = (args.length > 2 ? ToNumber(callerContext, args[2]) : 1);
-                double hour = (args.length > 3 ? ToNumber(callerContext, args[3]) : 0);
-                double min = (args.length > 4 ? ToNumber(callerContext, args[4]) : 0);
-                double sec = (args.length > 5 ? ToNumber(callerContext, args[5]) : 0);
-                double ms = (args.length > 6 ? ToNumber(callerContext, args[6]) : 0);
-                if (!Double.isNaN(year) && 0 <= ToInteger(callerContext, year)
-                        && ToInteger(callerContext, year) <= 99) {
-                    year = 1900 + ToInteger(callerContext, year);
+                double year = ToNumber(calleeContext, args[0]);
+                double month = ToNumber(calleeContext, args[1]);
+                double date = (args.length > 2 ? ToNumber(calleeContext, args[2]) : 1);
+                double hour = (args.length > 3 ? ToNumber(calleeContext, args[3]) : 0);
+                double min = (args.length > 4 ? ToNumber(calleeContext, args[4]) : 0);
+                double sec = (args.length > 5 ? ToNumber(calleeContext, args[5]) : 0);
+                double ms = (args.length > 6 ? ToNumber(calleeContext, args[6]) : 0);
+                if (!Double.isNaN(year) && 0 <= ToInteger(calleeContext, year)
+                        && ToInteger(calleeContext, year) <= 99) {
+                    year = 1900 + ToInteger(calleeContext, year);
                 }
                 double finalDate = MakeDate(MakeDay(year, month, date),
                         MakeTime(hour, min, sec, ms));
@@ -81,12 +82,12 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
             // [15.9.2.2]
             if (isUninitialisedDateObject(thisValue)) {
                 DateObject obj = (DateObject) thisValue;
-                Object v = ToPrimitive(callerContext, args[0]);
+                Object v = ToPrimitive(calleeContext, args[0]);
                 double d;
                 if (Type.isString(v)) {
-                    d = (double) Properties.parse(callerContext, null, v);
+                    d = (double) Properties.parse(calleeContext, null, v);
                 } else {
-                    d = ToNumber(callerContext, v);
+                    d = ToNumber(calleeContext, v);
                 }
                 obj.setDateValue(TimeClip(d));
                 return obj;
@@ -101,9 +102,9 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
         }
         long now = System.currentTimeMillis();
         DateObject obj = new DateObject(realm);
-        obj.setPrototype(callerContext, realm.getIntrinsic(Intrinsics.DatePrototype));
+        obj.setPrototype(calleeContext, realm.getIntrinsic(Intrinsics.DatePrototype));
         obj.setDateValue(now);
-        return DatePrototype.Properties.toString(callerContext, obj);
+        return DatePrototype.Properties.toString(calleeContext, obj);
     }
 
     private static boolean isUninitialisedDateObject(Object thisValue) {

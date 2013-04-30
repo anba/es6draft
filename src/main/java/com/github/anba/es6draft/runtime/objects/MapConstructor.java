@@ -59,21 +59,22 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        Realm realm = callerContext.getRealm();
+        ExecutionContext calleeContext = realm().defaultContext();
+        Realm realm = calleeContext.getRealm();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
         Object comparator = args.length > 1 ? args[1] : UNDEFINED;
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
             // FIXME: spec bug ? `Map()` no longer allowed (Bug 1406)
-            throw throwTypeError(callerContext, Messages.Key.NotObjectType);
+            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof MapObject)) {
-            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         MapObject map = (MapObject) thisValue;
         if (map.isInitialised()) {
-            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
 
         /* steps 5-7 */
@@ -81,18 +82,18 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         if (Type.isUndefinedOrNull(iterable)) {
             itr = UNDEFINED;
         } else {
-            ScriptObject _iterable = ToObject(callerContext, iterable);
-            boolean hasValues = HasProperty(callerContext, _iterable, "entries");
+            ScriptObject _iterable = ToObject(calleeContext, iterable);
+            boolean hasValues = HasProperty(calleeContext, _iterable, "entries");
             // FIXME: spec bug? should iterable[@@iterator]() === undefined be an error?
             if (hasValues) {
-                itr = Invoke(callerContext, _iterable, "entries");
+                itr = Invoke(calleeContext, _iterable, "entries");
             } else {
                 Symbol iterator = BuiltinSymbol.iterator.get();
-                itr = Invoke(callerContext, _iterable, iterator);
+                itr = Invoke(calleeContext, _iterable, iterator);
             }
-            adder = Get(callerContext, map, "set");
+            adder = Get(calleeContext, map, "set");
             if (!IsCallable(adder)) {
-                throw throwTypeError(callerContext, Messages.Key.NotCallable);
+                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
             }
         }
 
@@ -100,7 +101,7 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         MapObject.Comparator _comparator = MapObject.Comparator.SameValueZero;
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
-                throw throwRangeError(callerContext, Messages.Key.MapInvalidComparator);
+                throw throwRangeError(calleeContext, Messages.Key.MapInvalidComparator);
             }
             _comparator = MapObject.Comparator.SameValue;
         }
@@ -113,17 +114,17 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         for (;;) {
             Object next;
             try {
-                next = Invoke(callerContext, itr, "next");
+                next = Invoke(calleeContext, itr, "next");
             } catch (ScriptException e) {
                 if (IteratorComplete(realm, e)) {
                     return map;
                 }
                 throw e;
             }
-            ScriptObject entry = ToObject(callerContext, next);
-            Object k = Get(callerContext, entry, "0");
-            Object v = Get(callerContext, entry, "1");
-            ((Callable) adder).call(callerContext, map, k, v);
+            ScriptObject entry = ToObject(calleeContext, next);
+            Object k = Get(calleeContext, entry, "0");
+            Object v = Get(calleeContext, entry, "1");
+            ((Callable) adder).call(calleeContext, map, k, v);
         }
     }
 

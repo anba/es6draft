@@ -65,6 +65,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        ExecutionContext calleeContext = realm().defaultContext();
         Object pattern = args.length > 0 ? args[0] : UNDEFINED;
         Object flags = args.length > 1 ? args[1] : UNDEFINED;
 
@@ -75,7 +76,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
                     && Type.isUndefined(flags)) {
                 return pattern;
             }
-            obj = RegExpAllocate(callerContext, this);
+            obj = RegExpAllocate(calleeContext, this);
         } else {
             obj = (RegExpObject) thisValue;
         }
@@ -84,19 +85,19 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
         if (Type.isObject(pattern) && pattern instanceof RegExpObject) {
             RegExpObject regexp = (RegExpObject) pattern;
             if (!regexp.isInitialised()) {
-                throwTypeError(callerContext, Messages.Key.RegExpNotInitialised);
+                throwTypeError(calleeContext, Messages.Key.RegExpNotInitialised);
             }
             if (!Type.isUndefined(flags)) {
-                throw throwTypeError(callerContext, Messages.Key.NotUndefined);
+                throw throwTypeError(calleeContext, Messages.Key.NotUndefined);
             }
             p = regexp.getOriginalSource();
             f = regexp.getOriginalFlags();
         } else {
-            p = (Type.isUndefined(pattern) ? "" : ToFlatString(callerContext, pattern));
-            f = (Type.isUndefined(flags) ? "" : ToFlatString(callerContext, flags));
+            p = (Type.isUndefined(pattern) ? "" : ToFlatString(calleeContext, pattern));
+            f = (Type.isUndefined(flags) ? "" : ToFlatString(calleeContext, flags));
         }
 
-        return RegExpInitialize(callerContext, obj, p, f);
+        return RegExpInitialize(calleeContext, obj, p, f);
     }
 
     /**

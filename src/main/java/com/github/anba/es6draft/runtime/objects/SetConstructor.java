@@ -58,21 +58,22 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        Realm realm = callerContext.getRealm();
+        ExecutionContext calleeContext = realm().defaultContext();
+        Realm realm = calleeContext.getRealm();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
         Object comparator = args.length > 1 ? args[1] : UNDEFINED;
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
             // FIXME: spec bug ? `Set()` no longer allowed (Bug 1406)
-            throw throwTypeError(callerContext, Messages.Key.NotObjectType);
+            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof SetObject)) {
-            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         SetObject set = (SetObject) thisValue;
         if (set.isInitialised()) {
-            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
 
         /* steps 5-7 */
@@ -82,10 +83,10 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
         } else {
             Symbol iterator = BuiltinSymbol.iterator.get();
             // FIXME: spec bug? should iterable[@@iterator]() === undefined be an error?
-            itr = Invoke(callerContext, iterable, iterator);
-            adder = Get(callerContext, set, "add");
+            itr = Invoke(calleeContext, iterable, iterator);
+            adder = Get(calleeContext, set, "add");
             if (!IsCallable(adder)) {
-                throw throwTypeError(callerContext, Messages.Key.NotCallable);
+                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
             }
         }
 
@@ -93,7 +94,7 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
         SetObject.Comparator _comparator = SetObject.Comparator.SameValueZero;
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
-                throw throwRangeError(callerContext, Messages.Key.SetInvalidComparator);
+                throw throwRangeError(calleeContext, Messages.Key.SetInvalidComparator);
             }
             _comparator = SetObject.Comparator.SameValue;
         }
@@ -106,14 +107,14 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
         for (;;) {
             Object next;
             try {
-                next = Invoke(callerContext, itr, "next");
+                next = Invoke(calleeContext, itr, "next");
             } catch (ScriptException e) {
                 if (IteratorComplete(realm, e)) {
                     return set;
                 }
                 throw e;
             }
-            ((Callable) adder).call(callerContext, set, next);
+            ((Callable) adder).call(calleeContext, set, next);
         }
     }
 
