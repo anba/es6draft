@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.EvaluateCo
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import static com.github.anba.es6draft.runtime.internal.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.CreateWrapProxy;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -34,6 +35,7 @@ import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
 import com.github.anba.es6draft.util.ScriptCache;
@@ -252,6 +254,18 @@ public class MozTestGlobalObject extends GlobalObject {
         ExpressionStatement expr = (ExpressionStatement) parsedScript.getStatements().get(0);
         FunctionNode fnode = (FunctionNode) expr.getExpression();
         return fnode.getBodySource();
+    }
+
+    /** shell-function: {@code wrap(obj)} */
+    @Function(name = "wrap", arity = 1)
+    public Object wrap(Object obj) {
+        if (!Type.isObject(obj)) {
+            return obj;
+        }
+        ExecutionContext cx = realm.defaultContext();
+        ScriptObject target = Type.objectValue(obj);
+        ScriptObject handler = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        return CreateWrapProxy(cx, target, handler);
     }
 
     /**

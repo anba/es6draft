@@ -172,6 +172,10 @@ tests/auto-regress/bug568855.js
 tests/auto-regress/bug589103.js
 tests/auto-regress/bug609287.js
 
+# Proxy for TypedArray/DataView is not supported
+tests/auto-regress/bug743000.js
+tests/basic/testBug761439.js
+
 # missing [object Function] for proxied functions
 tests/basic/bug807623.js
 
@@ -439,6 +443,7 @@ tests/basic/testBug634590.js
 tests/basic/testBug634590c.js
 tests/basic/testBug634590d.js
 tests/basic/testBug634590ma.js
+tests/basic/testBug748212.js
 tests/basic/testBug780712.js
 tests/basic/testBug784639.js
 tests/basic/testDefinePropertyAcrossCompartment.js
@@ -496,19 +501,6 @@ tests/collections/Set-iterator-proxies-2.js
 tests/for-of/next-3.js
 tests/for-of/semantics-08.js
 tests/for-of/wrapper-1.js
-
-# wrap() shell function not supported
-tests/auto-regress/bug571168.js
-tests/auto-regress/bug595923.js
-tests/auto-regress/bug612836.js
-tests/auto-regress/bug638212.js
-tests/auto-regress/bug743000.js
-tests/basic/bug632778-1.js
-tests/basic/bug632778-2.js
-tests/basic/bug639529.js
-tests/basic/testBug748212.js
-tests/basic/testBug761439.js
-tests/basic/testProxyConstructors.js
 
 # other unsupported shell functions
 # it object
@@ -924,6 +916,7 @@ tests/basic/testBug621202.js
 
 # StackOverflow
 tests/auto-regress/bug488203.js
+tests/auto-regress/bug571168.js
 tests/auto-regress/bug653789.js
 tests/auto-regress/bug654392.js
 tests/auto-regress/bug666305.js

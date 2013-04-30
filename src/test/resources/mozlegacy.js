@@ -622,7 +622,7 @@ Object.defineProperties(Object.assign(Proxy, {
     var proxyHandler = Object.assign({
       setPrototypeOf() { throw TypeError() },
       apply(_, thisValue, args) { return callTrap.apply(thisValue, args) },
-      construct(_, args) { return constructTrap.apply(void 0, args) }
+      construct(_, args) { return new constructTrap(...args) }
     }, toProxyHandler(handler));
     return new Proxy(proxyTarget, proxyHandler);
   }
