@@ -856,7 +856,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.freeVariable(savedEnv);
             mv.visitTryCatchBlock(startCatch, endCatch, handlerCatch,
                     Types.ScriptException.getInternalName());
-            mv.visitTryCatchBlock(startCatch, endFinally, handlerFinally, null);
+            mv.visitTryCatchBlock(startCatch, endFinally, handlerFinally,
+                    Types.ScriptException.getInternalName());
         } else if (catchNode != null) {
             Label startCatch = new Label(), endCatch = new Label(), handlerCatch = new Label();
             Label exceptionHandled = new Label();
@@ -933,7 +934,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.mark(exceptionHandled);
 
             mv.freeVariable(savedEnv);
-            mv.visitTryCatchBlock(startFinally, endFinally, handlerFinally, null);
+            mv.visitTryCatchBlock(startFinally, endFinally, handlerFinally,
+                    Types.ScriptException.getInternalName());
         }
 
         return null;
