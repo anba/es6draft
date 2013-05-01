@@ -20,7 +20,9 @@ import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
+import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -43,10 +45,8 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
 
     @Override
     public void initialise(ExecutionContext cx) {
-        setPrototype(cx, null);
-        setIntegrity(cx, IntegrityLevel.NonExtensible);
-
         createProperties(this, cx, ReflectedFunctions.class);
+        setIntegrity(cx, IntegrityLevel.NonExtensible);
     }
 
     /**
@@ -54,6 +54,9 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
      */
     public enum ReflectedFunctions {
         ;
+
+        @Prototype
+        public static final Intrinsics __proto__ = null;
 
         /**
          * 15.17.1.1 Reflect.getPrototypeOf (target)

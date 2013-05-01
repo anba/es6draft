@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.moztest;
 
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobal;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -14,7 +14,6 @@ import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,12 +35,12 @@ import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.repl.MozShellGlobalObject;
+import com.github.anba.es6draft.repl.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
+import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.util.Parallelized;
-import com.github.anba.es6draft.util.ScriptCache;
 
 /**
  * Test suite for the Mozilla js-tests.
@@ -79,34 +78,21 @@ public class MozillaJSTest extends BaseMozillaTest {
     public static ExternalResource resource = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            String sourceName = "mozlegacy.js";
-            InputStream stream = MozillaJSTest.class.getResourceAsStream("/" + sourceName);
-            legacyMozilla = scriptCache.script(sourceName, stream);
+            legacyMozilla = MozShellGlobalObject.compileLegacy(scriptCache);
         }
     };
 
     @Test
     public void runMozillaTest() throws Throwable {
-        final MozTest moztest = this.moztest;
+        MozTest moztest = this.moztest;
         // filter disabled tests
         assumeTrue(moztest.enable);
         // don't run slow tests
         assumeTrue(!moztest.slow);
 
-        Realm realm = Realm.newRealm(new GlobalObjectCreator<MozTestGlobalObject>() {
-            @Override
-            public MozTestGlobalObject createGlobal(Realm realm) {
-                return new MozTestGlobalObject(realm, testDir(), moztest.script, scriptCache);
-            }
-        });
-
-        // start initialization
-        ExecutionContext cx = realm.defaultContext();
-        MozTestGlobalObject global = (MozTestGlobalObject) realm.getGlobalThis();
-        createProperties(global, cx, MozTestGlobalObject.class);
-
-        // load legacy mozilla
-        global.evaluate(legacyMozilla);
+        MozTestConsole console = new MozTestConsole();
+        MozShellGlobalObject global = newGlobal(console, testDir(), moztest.script,
+                Paths.get("test402/lib"), scriptCache, legacyMozilla);
 
         // load and execute shell.js files
         for (Path shell : shellJS(moztest)) {
@@ -114,6 +100,7 @@ public class MozillaJSTest extends BaseMozillaTest {
         }
 
         // patch $INCLUDE
+        ExecutionContext cx = global.getRealm().defaultContext();
         global.set(cx, "$INCLUDE", global.get(cx, "__$INCLUDE", global), global);
 
         // evaluate actual test-script
@@ -122,7 +109,7 @@ public class MozillaJSTest extends BaseMozillaTest {
             global.eval(js);
         } catch (ParserException | ScriptException e) {
             // count towards the overall failure count
-            global.getFailures().add(new AssertionError(e.getMessage(), e));
+            console.getFailures().add(new AssertionError(e.getMessage(), e));
         } catch (StopExecutionException e) {
             // ignore
         } catch (IOException e) {
@@ -131,7 +118,7 @@ public class MozillaJSTest extends BaseMozillaTest {
 
         // fail if any test returns with errors
         List<Throwable> failures = new ArrayList<Throwable>();
-        failures.addAll(global.getFailures());
+        failures.addAll(console.getFailures());
         if (moztest.random) {
             // results from random tests are ignored...
         } else if (moztest.expect) {

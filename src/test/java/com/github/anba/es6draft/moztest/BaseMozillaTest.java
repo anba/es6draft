@@ -42,6 +42,7 @@ public abstract class BaseMozillaTest {
         boolean expect = true;
         boolean random = false;
         boolean slow = false;
+        boolean debug = false;
         Path script = null;
         String error = null;
 
@@ -125,11 +126,13 @@ public abstract class BaseMozillaTest {
                 case "slow":
                     test.slow = true;
                     break;
+                case "debug":
+                    test.debug = true;
+                    break;
                 case "allow-oom":
                 case "valgrind":
                 case "tz-pacific":
                 case "mjitalways":
-                case "debug":
                 case "mjit":
                 case "no-jm":
                 case "ion-eager":

@@ -149,6 +149,7 @@ public class Messages {
         ObjectPreventExtensionsFailed("object.preventextension_failed"),
         ObjectSetProtoCrossRealm("object.set_proto_cross_realm"),
         // 15.3 Function Objects
+        FunctionTooManyArguments("function.too_many_arguments"),
         GeneratorExecuting("generator.executing"),
         GeneratorClosed("generator.closed"),
         GeneratorNewbornSend("generator.newborn_send"),

@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -41,6 +42,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
  * </ul>
  */
 public class FunctionPrototype extends BuiltinFunction implements Initialisable {
+    private static final int MAX_ARGUMENTS = 0x10000;
+
     public FunctionPrototype(Realm realm) {
         super(realm);
     }
@@ -49,6 +52,13 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
+    }
+
+    /**
+     * Returns the number of maximal supported arguments in {@code Function.prototype.apply}
+     */
+    public static final int getMaxArguments() {
+        return MAX_ARGUMENTS;
     }
 
     /**
@@ -112,7 +122,9 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             ScriptObject argarray = Type.objectValue(argArray);
             Object len = Get(cx, argarray, "length");
             long n = ToUint32(cx, len);
-            assert n <= 0x10000 : n;// TODO: actual limit?!
+            if (n > MAX_ARGUMENTS) {
+                throw throwRangeError(cx, Messages.Key.FunctionTooManyArguments);
+            }
             Object[] argList = new Object[(int) n];
             for (int index = 0; index < n; ++index) {
                 String indexName = ToString(index);

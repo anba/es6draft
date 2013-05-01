@@ -35,13 +35,13 @@ import org.junit.runners.Parameterized.Parameters;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.util.ExceptionHandler;
 import com.github.anba.es6draft.util.Functional.Mapper;
 import com.github.anba.es6draft.util.LazyInit;
 import com.github.anba.es6draft.util.Parallelized;
-import com.github.anba.es6draft.util.ScriptCache;
 
 /**
  * The standard test262 test suite

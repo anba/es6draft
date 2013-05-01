@@ -18,9 +18,9 @@ import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.util.ScriptCache;
 
 /**
  * Global object for test262 tests, includes all necessary global function definitions.
@@ -46,7 +46,7 @@ public class Test262GlobalObject extends GlobalObject {
      * Parses, compiles and executes the javascript file
      */
     public void eval(Path file) throws IOException {
-        Script script = cache.script(sourceName, file);
+        Script script = cache.script(sourceName, 1, file);
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 

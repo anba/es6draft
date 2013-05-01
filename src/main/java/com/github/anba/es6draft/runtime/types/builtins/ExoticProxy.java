@@ -119,27 +119,6 @@ public class ExoticProxy implements ScriptObject {
         return proxy;
     }
 
-    /**
-     * Abstract Operation (extension): CreateWrapProxy
-     */
-    public static ExoticProxy CreateWrapProxy(ExecutionContext cx, Object target, Object handler) {
-        if (!Type.isObject(target)) {
-            throwTypeError(cx, Messages.Key.NotObjectType);
-        }
-        if (!Type.isObject(handler)) {
-            throwTypeError(cx, Messages.Key.NotObjectType);
-        }
-        ScriptObject proxyTarget = Type.objectValue(target);
-        ScriptObject proxyHandler = Type.objectValue(handler);
-        ExoticProxy proxy;
-        if (IsCallable(proxyTarget)) {
-            proxy = new CallabeExoticProxy(cx.getRealm(), proxyTarget, proxyHandler);
-        } else {
-            proxy = new ExoticProxy(cx.getRealm(), proxyTarget, proxyHandler);
-        }
-        return proxy;
-    }
-
     private static boolean __hasOwnProperty(ExecutionContext cx, ScriptObject target,
             Object propertyKey) {
         if (propertyKey instanceof String) {

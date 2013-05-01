@@ -4,9 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.util;
-
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+package com.github.anba.es6draft.runtime.internal;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,33 +12,31 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.io.ByteOrderMark;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.BOMInputStream;
-
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.parser.ParserException;
 
 /**
- * Simple cache for the compiled js-files
+ * Simple cache for compiled js-files
  */
-@SuppressWarnings("serial")
 public class ScriptCache {
     private static final int MAX_SIZE = 10;
 
-    private LinkedHashMap<Path, Script> cache = new LinkedHashMap<Path, Script>(16, .75f, true) {
+    @SuppressWarnings("serial")
+    private Map<Path, Script> cache = Collections.synchronizedMap(new LinkedHashMap<Path, Script>(
+            16, .75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Path, Script> eldest) {
             return (size() > MAX_SIZE);
         }
-    };
+    });
 
     private final Charset charset;
     private AtomicInteger scriptCounter = new AtomicInteger(0);
@@ -57,41 +53,56 @@ public class ScriptCache {
      * Returns a new {@link Reader} for the {@code stream} parameter
      */
     private Reader newReader(InputStream stream) throws IOException {
-        if (charset.equals(StandardCharsets.UTF_8)) {
-            BOMInputStream bomstream = new BOMInputStream(stream, ByteOrderMark.UTF_8,
-                    ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE);
-            String charsetName = defaultIfNull(bomstream.getBOMCharsetName(), charset.name());
-            return new BufferedReader(new InputStreamReader(bomstream, charsetName));
-        }
         return new BufferedReader(new InputStreamReader(stream, charset));
     }
 
-    /**
-     * Parses and compiles the javascript file
-     */
-    public Script script(String sourceName, Path file) throws IOException {
-        return script(sourceName, Files.newInputStream(file));
+    private static String readFully(Reader reader) throws IOException {
+        StringBuilder sb = new StringBuilder(4096);
+        char cbuf[] = new char[4096];
+        for (int len; (len = reader.read(cbuf)) != -1;) {
+            sb.append(cbuf, 0, len);
+        }
+        return sb.toString();
     }
 
     /**
      * Parses and compiles the javascript file
      */
-    public Script script(String sourceName, InputStream stream) throws IOException {
+    public Script script(String sourceName, int sourceLine, Path file) throws IOException,
+            ParserException {
+        return script(sourceName, sourceLine, Files.newInputStream(file));
+    }
+
+    /**
+     * Parses and compiles the javascript file
+     */
+    public Script script(String sourceName, int sourceLine, InputStream stream) throws IOException,
+            ParserException {
         String className = nextScriptName();
         try (Reader reader = newReader(stream)) {
-            return ScriptLoader.load(sourceName, className, IOUtils.toString(reader));
+            return ScriptLoader.load(sourceName, sourceLine, className, readFully(reader));
         }
+    }
+
+    /**
+     * Parses and compiles the javascript file
+     */
+    public Script script(String sourceName, int sourceLine, Reader reader) throws IOException,
+            ParserException {
+        String className = nextScriptName();
+        return ScriptLoader.load(sourceName, sourceLine, className, readFully(reader));
     }
 
     /**
      * Compiles {@code file} to a {@link Script} and caches the result
      */
-    public Script get(Path file) throws IOException {
+    public Script get(Path file) throws IOException, ParserException {
         if (cache.containsKey(file)) {
             return cache.get(file);
         }
         String sourceName = file.getFileName().toString();
-        Script script = script(sourceName, file);
+        int sourceLine = 1;
+        Script script = script(sourceName, sourceLine, file);
         cache.put(file, script);
         return script;
     }
