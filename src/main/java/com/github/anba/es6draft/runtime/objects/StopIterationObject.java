@@ -39,7 +39,9 @@ public class StopIterationObject extends OrdinaryObject implements Initialisable
      * FIXME: missing in spec
      */
     public static boolean IteratorComplete(Realm realm, ScriptException e) {
-        return (realm.getIntrinsic(Intrinsics.StopIteration) == e.getValue());
+        // return (realm.getIntrinsic(Intrinsics.StopIteration) == e.getValue());
+        // TODO: IteratorComplete() works cross-realm?
+        return (e.getValue() instanceof StopIterationObject);
     }
 
     public enum Properties {

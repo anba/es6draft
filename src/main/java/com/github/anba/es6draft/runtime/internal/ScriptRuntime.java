@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalErro
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.objects.StopIterationObject.IteratorComplete;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -928,7 +929,7 @@ public final class ScriptRuntime {
                 }
             }
         } catch (ScriptException e) {
-            if (!isStopIteration(realm, e)) {
+            if (!IteratorComplete(realm, e)) {
                 throw e;
             }
             // TODO: StopIteration with value
@@ -941,11 +942,6 @@ public final class ScriptRuntime {
             }
         }
         return result;
-    }
-
-    // same functionality as `IteratorComplete`
-    private static boolean isStopIteration(Realm realm, ScriptException e) {
-        return (realm.getIntrinsic(Intrinsics.StopIteration) == e.getValue());
     }
 
     public static Object RegExp(ExecutionContext cx, String re, String flags) {
