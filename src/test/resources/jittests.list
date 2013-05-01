@@ -36,6 +36,8 @@ tests/collections/Map-iterator-pairs-1.js
 tests/collections/Map-iterator-pairs-2.js
 tests/collections/Map-iterator-add-1.js
 tests/collections/Map-iterator-pairs-3.js
+tests/collections/Map-iterator-proxies-1.js
+tests/collections/Map-iterator-proxies-2.js
 tests/collections/Map-iterator-remove-2.js
 tests/collections/Map-iterator-1.js
 tests/collections/Map-iterator-order.js
@@ -72,6 +74,8 @@ tests/collections/Set-iterator-gc-3.js
 tests/collections/Set-iterator-order.js
 tests/collections/Set-iterator-gc-1.js
 tests/collections/Set-iterator-gc-2.js
+tests/collections/Set-iterator-proxies-1.js
+tests/collections/Set-iterator-proxies-2.js
 tests/collections/Set-iterator-remove-3.js
 tests/collections/Set-iterator-remove-2.js
 tests/collections/Set-iterator-remove-4.js
@@ -80,6 +84,7 @@ tests/collections/Set-size.js
 tests/collections/Set-iterator-remove-6.js
 tests/collections/Set-iterator-3.js
 tests/collections/WeakMap-clear.js
+tests/basic/bug808483.js
 
 # potential ES6 spec bug or deliberate change?
 tests/basic/testTypedArrayOutOfBounds.js
@@ -162,6 +167,9 @@ tests/auto-regress/bug635389.js
 # Different Parser strategy
 tests/basic/bug862228.js
 
+# Different realm change on function calls
+tests/collections/bug-743101.js
+
 
 ############################################
 # Misc proxy implementation isssues        #
@@ -172,8 +180,9 @@ tests/auto-regress/bug568855.js
 tests/auto-regress/bug589103.js
 tests/auto-regress/bug609287.js
 
-# Proxy for TypedArray/DataView is not supported
+# Proxy for RegExp/TypedArray/DataView is not supported
 tests/auto-regress/bug743000.js
+tests/basic/testBug748212.js
 tests/basic/testBug761439.js
 
 # missing [object Function] for proxied functions
@@ -226,6 +235,7 @@ tests/basic/bug649771.js
 # String.prototype no longer String instance
 tests/basic/bug699166.js
 
+
 ############################################
 # Arrow functions tests don't match draft  #
 ############################################
@@ -256,6 +266,12 @@ tests/arrow-functions/syntax-errors.js
 
 # ES6-change: AddRestrictedFunctionProperties for built-ins (Function.prototype)
 tests/basic/bug675889.js
+
+# ES6-change: AddRestrictedFunctionProperties for built-ins (eval)
+tests/basic/bug745360.js
+
+# RegExp.prototype.{source,ignoreCase,global,multiline} now accessor
+tests/basic/bug750307.js
 
 # ES6-change: +0 and -0 map to the same key by default
 tests/auto-regress/bug770954.js
@@ -312,6 +328,7 @@ tests/basic/testWeirdThingsInFunctionConstructor.js
 # CallExpression no longer valid LHS
 tests/auto-regress/bug521279.js
 tests/auto-regress/bug701248.js
+tests/basic/bug728609.js
 tests/basic/bug738841.js
 
 # Initialiser in for-in
@@ -336,6 +353,7 @@ tests/basic/bug510437.js
 tests/basic/bug631305.js
 tests/basic/bug690292.js
 tests/basic/testAssigningWatchedDeletedProperty.js
+tests/basic/testBug584650.js
 tests/basic/testWatchRecursion.js
 tests/pic/fuzz1.js
 tests/pic/watch1.js
@@ -353,6 +371,9 @@ tests/basic/bug854124.js
 tests/basic/regexp-multiline.js
 tests/basic/regexp-reset-input.js
 tests/basic/testStaticsInRegExp.js
+
+# Error.prototype.{stack,columnNumber,fileName,lineNumber}
+tests/basic/null-filename-Error.js
 
 
 #######################################
@@ -373,6 +394,16 @@ tests/auto-regress/bug785305.js
 tests/basic/bug639311.js
 tests/for-of/bug-728079-js17-4.js
 
+# Debugger API
+tests/arguments/rest-debugger.js
+tests/auto-regress/bug677587.js
+tests/auto-regress/bug677977.js
+tests/auto-regress/bug720396.js
+tests/basic/bug713226.js
+tests/basic/bug821340.js
+tests/basic/bug839313.js
+tests/basic/testGeneratorDieButScopeAlive.js
+
 
 #######################################
 # Unsupported shell functions         #
@@ -381,131 +412,7 @@ tests/for-of/bug-728079-js17-4.js
 # Spidermonkey strict/werror options
 tests/basic/bug629858.js
 
-# trap() shell function not supported
-tests/auto-regress/bug432365.js
-tests/basic/bug656381.js
-tests/basic/bug656555.js
-tests/basic/testBug666292.js
-tests/basic/testBug677367.js
-tests/basic/testBug692274-1.js
-tests/basic/testEvalFromTrap.js
-tests/basic/testTrapOnEval.js
-
-# evaluate() shell function not supported
-tests/auto-regress/bug702003.js
-tests/auto-regress/bug743876.js
-tests/auto-regress/bug758164.js
-tests/auto-regress/bug781855.js
-tests/auto-regress/bug782083.js
-tests/auto-regress/bug811612.js
-tests/basic/bug713226.js
-tests/basic/bug753283.js
-tests/basic/bug777776.js
-tests/basic/bug792239.js
-tests/basic/bug846080.js
-tests/basic/evaluate-catchTermination.js
-tests/basic/testBug659577-2.js
-tests/basic/testBug736012.js
-tests/basic/testBug752379.js
-tests/basic/testBug840012.js
-tests/basic/null-filename-Error.js
-
-# evalInFrame() shell function not supported
-tests/basic/testBug663789-2.js
-tests/basic/testEvalInFrameEdgeCase.js
-
-# evalcx() shell function not supported
-tests/auto-regress/bug563127.js
-tests/auto-regress/bug567577.js
-tests/auto-regress/bug610088.js
-tests/auto-regress/bug617485.js
-tests/auto-regress/bug639413.js
-tests/auto-regress/bug697255.js
-tests/auto-regress/bug698899.js
-tests/basic/bug619004.js
-tests/basic/bug642326.js
-tests/basic/bug653262.js
-tests/basic/bug662562.js
-tests/basic/bug665289.js
-tests/basic/bug702426-regexp-gc.js
-tests/basic/bug737384.js
-tests/basic/bug743961.js
-tests/basic/bug767074.js
-tests/basic/bug817002.js
-tests/basic/bug831658.js
-tests/basic/bug831846.js
-tests/basic/bug832197-1.js
-tests/basic/bug863084.js
-tests/basic/testBug584650.js
-tests/basic/testBug606138.js
-tests/basic/testBug634590b.js
-tests/basic/testBug634590.js
-tests/basic/testBug634590c.js
-tests/basic/testBug634590d.js
-tests/basic/testBug634590ma.js
-tests/basic/testBug748212.js
-tests/basic/testBug780712.js
-tests/basic/testBug784639.js
-tests/basic/testDefinePropertyAcrossCompartment.js
-tests/basic/testIteratorReification.js
-tests/basic/testOOMInAutoEnterCompartment.js
-tests/pic/callname-eager-this1.js
-tests/pic/callname-eager-this2.js
-
-# newGlobal() shell function not supported
-tests/arguments/rest-basic.js
-tests/arguments/rest-debugger.js
-tests/auto-regress/bug677587.js
-tests/auto-regress/bug677977.js
-tests/auto-regress/bug687398.js
-tests/auto-regress/bug692300.js
-tests/auto-regress/bug698150.js
-tests/auto-regress/bug718347.js
-tests/auto-regress/bug720396.js
-tests/auto-regress/bug737737.js
-tests/auto-regress/bug781364.js
-tests/auto-regress/bug785576.js
-tests/auto-regress/bug795937.js
-tests/basic/bug596351-1.js
-tests/basic/bug596351-2.js
-tests/basic/bug658539.js
-tests/basic/bug662841.js
-tests/basic/bug673468.js
-tests/basic/bug678211.js
-tests/basic/bug683140.js
-tests/basic/bug688939.js
-tests/basic/bug745360.js
-tests/basic/bug754242.js
-tests/basic/bug750307.js
-tests/basic/bug767273.js
-tests/basic/bug794947.js
-tests/basic/bug808483.js
-tests/basic/bug821340.js
-tests/basic/bug842482.js
-tests/basic/testBug637014.js
-tests/basic/testBug705423.js
-tests/basic/testBug723445.js
-tests/basic/testBug736807.js
-tests/basic/testBug770407.js
-tests/basic/testBug780288-1.js
-tests/basic/testBug780288-2.js
-tests/basic/testCrossCompartmentTransparency2.js
-tests/basic/testGeneratorDieButScopeAlive.js
-tests/basic/testLet.js
-tests/basic/testScriptCloning.js
-tests/collections/bug-743101.js
-tests/collections/Map-iterator-proxies-1.js
-tests/collections/Map-iterator-proxies-2.js
-tests/collections/Set-iterator-proxies-1.js
-tests/collections/Set-iterator-proxies-2.js
-tests/for-of/next-3.js
-tests/for-of/semantics-08.js
-tests/for-of/wrapper-1.js
-
-# other unsupported shell functions
-# it object
-tests/auto-regress/bug674207.js
-tests/auto-regress/bug764850.js
+# Unsupported shell functions
 # shapeOf
 tests/basic/bug641525.js
 tests/basic/testMethodWriteBarrier3.js
@@ -513,9 +420,6 @@ tests/basic/testSetProtoRegeneratesObjectShape.js
 tests/pic/watch3b.js
 # objectEmulatingUndefined
 tests/basic/emulates-undefined.js
-# wrapWithProto
-tests/basic/testProxyPrototypes.js
-tests/proxy/getElementIfPresent-not-present.js
 # FakeDOMObject
 tests/basic/testFakeDOMWeakmapKey.js
 tests/basic/test-jitinfo.js
@@ -526,28 +430,23 @@ tests/basic/shell-watchdog.js
 tests/basic/properly-remove-timeout-root-before-shutdown.js
 tests/basic/timeout-check.js
 # deserialize
+tests/basic/bug754242.js
 tests/basic/testBug616454.js
 # clone
 tests/basic/bug751139.js
-# terminate
-tests/basic/terminate.js
-# getMaxArgs
-tests/basic/testBug653396.js
-
-# Debugger API
-tests/basic/bug839313.js
-# setDebug
-tests/basic/testBug552248.js
+tests/basic/testScriptCloning.js
 
 # Unsupported 'Testing' functions
 # gcparam
 tests/basic/bug720675.js
-tests/basic/testBug756919.js
 tests/basic/bug858097.js
+tests/basic/testBug756919.js
+tests/basic/testBug840012.js
 # countHeap
 tests/basic/bug734196.js
 tests/basic/bug747926.js
 # makeFinalizeObserver
+tests/basic/testBug637014.js
 tests/basic/testStringBufferMallocAccounting.js
 # validategc
 tests/basic/bug782337.js
@@ -557,6 +456,7 @@ tests/basic/bug656261.js
 tests/auto-regress/bug726799.js
 tests/auto-regress/bug728509.js
 tests/auto-regress/bug740654.js
+tests/auto-regress/bug743876.js
 tests/basic/testBug755916.js
 # displayName
 tests/basic/functionnames.js
@@ -592,11 +492,11 @@ tests/auto-regress/bug568281.js
 tests/auto-regress/bug622167.js
 tests/auto-regress/bug678090.js
 tests/auto-regress/bug690396.js
+tests/auto-regress/bug761864.js
 tests/basic/bug528644.js
 tests/basic/bug560234b.js
 tests/basic/bug563243.js
 tests/basic/bug631082.js
-tests/basic/bug657975.js
 tests/basic/bug660538.js
 tests/basic/bug716013.js
 tests/basic/bug744356.js
@@ -658,7 +558,6 @@ tests/basic/bug790629-3.js
 tests/basic/bug790629-4.js
 tests/basic/function-tosource-genexpr.js
 tests/basic/testBug773927.js
-tests/basic/testGCNewbornGenerator.js
 tests/collections/Map-constructor-generator-2.js
 tests/collections/Map-constructor-generator-3.js
 tests/collections/Set-constructor-generator-2.js
@@ -695,6 +594,7 @@ tests/auto-regress/bug652177.js
 tests/auto-regress/bug657986.js
 tests/auto-regress/bug669044.js
 tests/auto-regress/bug690650.js
+tests/auto-regress/bug754712.js
 tests/auto-regress/bug779850.js
 tests/auto-regress/bug811606.js
 tests/basic/bug464403.js
@@ -731,8 +631,8 @@ tests/basic/testBug579646.js
 tests/basic/testBug579647.js
 tests/basic/testBug595916.js
 tests/basic/testBug667915.js
-tests/basic/testBug683470.js
 tests/basic/testBug709929.js
+tests/basic/testBug736012.js
 tests/basic/testBug773108.js
 tests/basic/testDivOverflow.js
 tests/basic/testFewerGlobalsInInnerTree.js
@@ -770,7 +670,9 @@ tests/auto-regress/bug496270.js
 tests/auto-regress/bug580200.js
 tests/auto-regress/bug650658.js
 tests/auto-regress/bug659779.js
+tests/auto-regress/bug698150.js
 tests/auto-regress/bug732719.js
+tests/auto-regress/bug763989.js
 tests/auto-regress/bug830049.js
 tests/basic/bug709634.js
 tests/basic/bug744285.js
@@ -803,6 +705,7 @@ tests/pic/bug558099.js
 tests/auto-regress/bug630770.js
 tests/auto-regress/bug730806.js
 tests/auto-regress/bug746376.js
+tests/auto-regress/bug748119.js
 tests/auto-regress/bug756236.js
 tests/auto-regress/bug778557.js
 tests/basic/bug650148.js
@@ -837,13 +740,10 @@ tests/basic/bug601398.js
 tests/basic/bug601401.js
 tests/basic/bug601428.js
 tests/basic/bug646968-1.js
-tests/basic/bug646968-7.js
 tests/basic/bug646968-6.js
 tests/basic/bug647695.js
-tests/basic/bug646968-8.js
 tests/basic/bug662338.js
 tests/basic/bug727921.js
-tests/basic/eif-generator.js
 tests/basic/expression-autopsy.js
 tests/basic/testAliasedLet.js
 tests/basic/testBadLetBodyWithArguments.js
@@ -856,6 +756,7 @@ tests/basic/testGlobalOptimize-2.js
 tests/basic/testGlobalOptimize-5.js
 tests/basic/testGlobalOptimize-3.js
 tests/basic/testGlobalOptimize-6.js
+tests/basic/testLet.js
 tests/basic/testLetOverridingArgs.js
 tests/basic/testNonStubGetter.js
 tests/basic/testReplaceWithLambda.js
@@ -923,6 +824,7 @@ tests/auto-regress/bug666305.js
 tests/auto-regress/bug675251.js
 tests/auto-regress/bug701332.js
 tests/auto-regress/bug729797.js
+tests/auto-regress/bug737737.js
 tests/auto-regress/bug743094.js
 tests/auto-regress/bug746103.js
 tests/auto-regress/bug746377.js
@@ -934,10 +836,13 @@ tests/basic/bug617139.js
 tests/basic/bug632964-regexp.js
 tests/basic/bug657227.js
 tests/basic/bug708819.js
+tests/basic/bug753283.js
 tests/basic/bug763440.js
 tests/basic/bug836601.js
+tests/basic/bug863084.js
 tests/basic/testBug666003.js
 tests/basic/testBug692274-2.js
+tests/basic/testOOMInAutoEnterCompartment.js
 tests/basic/testOverOOMInFixupArity.js
 tests/basic/testOverRecursed1.js
 tests/basic/testOverRecursed2.js

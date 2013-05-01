@@ -285,6 +285,7 @@ js1_8/regress/regress-459185.js
 js1_8/regress/regress-459186.js
 js1_8_1/regress/regress-452498-052.js
 js1_8_1/regress/regress-452498-123.js
+js1_8_5/regress/regress-600137.js
 js1_8_5/regress/regress-672892.js
 
 # ES6-change: CallExpression no longer valid LHS
@@ -294,6 +295,7 @@ js1_5/Regress/regress-462292.js
 js1_8_5/regress/regress-609617.js
 
 # ES6: const declaration requires initialiser
+ecma_5/Object/freeze-global-eval-const.js
 js1_5/extensions/regress-452565.js
 js1_5/Regress/regress-360969-03.js
 js1_5/Regress/regress-360969-04.js
@@ -409,24 +411,8 @@ js1_8_5/regress/regress-736792.js
 # trap() not supported
 js1_8_5/regress/regress-476088.js
 
-# evaluate() not supported
-ecma_5/misc/function-definition-evaluate.js
-
-# newGlobal() not supported
-ecma_5/extensions/cross-global-eval-is-indirect.js
-ecma_5/extensions/cross-global-getPrototypeOf.js
-ecma_5/extensions/preventExtensions-cross-global.js
-ecma_5/Global/cross-global-implicit-this.js
-
 # shapeOf() not supported
 js1_8_5/regress/regress-595365-2.js
-
-# evalcx() not supported
-ecma_5/Object/freeze-global-eval-const.js
-js1_8_5/regress/regress-595230-1.js
-js1_8_5/regress/regress-595230-2.js
-js1_8_5/regress/regress-607799.js
-js1_8_5/regress/regress-607863.js
 
 # parseLegacyJSON() not supported
 ecma_5/extensions/legacy-JSON.js
@@ -669,6 +655,7 @@ js1_8/regress/regress-465220.js
 js1_8/regress/regress-465460-01.js
 js1_8_1/regress/regress-452498-121.js
 js1_8_1/regress/regress-452498-130.js
+js1_8_5/regress/regress-607863.js
 js1_8_5/regress/regress-646820-1.js
 js1_8_5/regress/regress-646820-2.js
 js1_8_5/regress/regress-646820-3.js
