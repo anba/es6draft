@@ -269,6 +269,9 @@ public class DToA {
             BigInteger b;
 
             buffer = new StringBuilder();
+            if (negative && dfloor == 0) {
+                buffer.append('-');
+            }
             buffer.append(intDigits).append('.');
             df = d - dfloor;
 
