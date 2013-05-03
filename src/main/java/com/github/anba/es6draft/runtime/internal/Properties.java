@@ -451,20 +451,22 @@ public final class Properties {
         }
         if (kind == StaticMethodKind.Spreader) {
             int fixedArguments = 2;
-            Object[] defaults = methodDefaults(method, fixedArguments);
-            assert !(defaults != null && handle.isVarargsCollector());
-            MethodHandle spreader = MethodHandles.spreadInvoker(type, fixedArguments);
-            int actual = type.parameterCount() - fixedArguments;
+            boolean varargs = handle.isVarargsCollector();
+            int actual = type.parameterCount() - fixedArguments - (varargs ? 1 : 0);
+            Object[] defaults = methodDefaults(method, fixedArguments, actual);
             MethodHandle filter;
-            if (defaults != null) {
+            if (defaults != null && varargs) {
+                filter = MethodHandles.insertArguments(ParameterFilter.filterVarArgsDefaults, 0,
+                        actual, defaults);
+            } else if (defaults != null) {
                 filter = MethodHandles.insertArguments(ParameterFilter.filterDefaults, 0, actual,
                         defaults);
-            } else if (handle.isVarargsCollector()) {
-                filter = MethodHandles
-                        .insertArguments(ParameterFilter.filterVarArgs, 0, actual - 1);
+            } else if (varargs) {
+                filter = MethodHandles.insertArguments(ParameterFilter.filterVarArgs, 0, actual);
             } else {
                 filter = filter(actual);
             }
+            MethodHandle spreader = MethodHandles.spreadInvoker(type, fixedArguments);
             spreader = MethodHandles.insertArguments(spreader, 0, handle);
             spreader = MethodHandles.filterArguments(spreader, fixedArguments, filter);
             handle = spreader;
@@ -490,12 +492,16 @@ public final class Properties {
         private ParameterFilter() {
         }
 
+        private static final MethodHandle filterVarArgsDefaults;
         private static final MethodHandle filterDefaults;
         private static final MethodHandle filterVarArgs;
         private static final MethodHandle filter;
         static {
             Lookup lookup = MethodHandles.publicLookup();
             try {
+                filterVarArgsDefaults = lookup.findStatic(ParameterFilter.class,
+                        "filterVarArgsDefaults", MethodType.methodType(Object[].class,
+                                Integer.TYPE, Object[].class, Object[].class));
                 filterDefaults = lookup.findStatic(ParameterFilter.class, "filterDefaults",
                         MethodType.methodType(Object[].class, Integer.TYPE, Object[].class,
                                 Object[].class));
@@ -509,6 +515,21 @@ public final class Properties {
         }
 
         private static final Object[] EMPTY_ARRAY = new Object[] {};
+
+        public static Object[] filterVarArgsDefaults(int n, Object[] defaultValues, Object[] args) {
+            assert n == defaultValues.length;
+            Object[] arguments = Arrays.copyOf(args, n + 1, Object[].class);
+            if (args.length == n) {
+                arguments[n] = EMPTY_ARRAY;
+            } else if (args.length > n) {
+                arguments[n] = Arrays.copyOfRange(args, n, args.length, Object[].class);
+            } else {
+                int argslen = args.length;
+                System.arraycopy(defaultValues, argslen, arguments, argslen, (n - argslen));
+                arguments[n] = EMPTY_ARRAY;
+            }
+            return arguments;
+        }
 
         public static Object[] filterDefaults(int n, Object[] defaultValues, Object[] args) {
             assert n == defaultValues.length;
@@ -683,17 +704,17 @@ public final class Properties {
         return StaticMethodKind.Spreader;
     }
 
-    private static Object[] methodDefaults(Method method, int fixedArguments) {
+    private static Object[] methodDefaults(Method method, int fixedArguments, int actual) {
         Object[] defaults = null;
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
-        for (int i = fixedArguments, parameter = 0; i < parameterAnnotations.length; ++i, ++parameter) {
-            Annotation[] annotations = parameterAnnotations[i];
+        for (int parameter = 0; parameter < actual; ++parameter) {
+            Annotation[] annotations = parameterAnnotations[parameter + fixedArguments];
             for (Annotation annotation : annotations) {
                 Class<? extends Annotation> type = annotation.annotationType();
                 if (type == Optional.class) {
                     Optional optional = (Optional) annotation;
                     if (defaults == null) {
-                        defaults = new Object[parameterAnnotations.length - fixedArguments];
+                        defaults = new Object[actual];
                         Arrays.fill(defaults, UNDEFINED);
                     }
                     defaults[parameter] = Optional.Default.defaultValue(optional);
