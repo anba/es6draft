@@ -121,21 +121,46 @@ class CodeGenerator {
     private Map<Node, String> methodNames = new HashMap<>(32);
     private AtomicInteger methodCounter = new AtomicInteger(0);
 
-    private final int nextMethodInt() {
-        return methodCounter.incrementAndGet();
-    }
-
-    private final boolean __isCompiled(Node node) {
+    private final boolean isCompiled(TemplateLiteral node) {
         return methodNames.containsKey(node);
     }
 
-    private final String __methodName(Node node, String defaultValue) {
+    private final boolean isCompiled(GeneratorComprehension node) {
+        return methodNames.containsKey(node);
+    }
+
+    private final boolean isCompiled(FunctionNode node) {
+        return methodNames.containsKey(node);
+    }
+
+    private final String methodName(TemplateLiteral node) {
         String n = methodNames.get(node);
         if (n == null) {
-            n = node.accept(FunctionName.INSTANCE, defaultValue) + "_" + nextMethodInt();
-            n = mangle(n);
-            methodNames.put(node, n);
+            n = addMethodName(node, "template");
         }
+        return n;
+    }
+
+    final String methodName(GeneratorComprehension node) {
+        String n = methodNames.get(node);
+        if (n == null) {
+            n = addMethodName(node, "gencompr");
+        }
+        return n;
+    }
+
+    final String methodName(FunctionNode node) {
+        String n = methodNames.get(node);
+        if (n == null) {
+            String fname = node.getFunctionName();
+            n = addMethodName(node, !fname.isEmpty() ? fname : "anonymous");
+        }
+        return n;
+    }
+
+    private final String addMethodName(Node node, String name) {
+        String n = mangle(name + "_" + methodCounter.incrementAndGet());
+        methodNames.put(node, n);
         return n;
     }
 
@@ -192,30 +217,6 @@ class CodeGenerator {
         default:
             return c;
         }
-    }
-
-    private final String methodName(TemplateLiteral node) {
-        return __methodName(node, "template");
-    }
-
-    final String methodName(GeneratorComprehension node) {
-        return __methodName(node, "gencompr");
-    }
-
-    final String methodName(FunctionNode node) {
-        return __methodName(node, "anonymous");
-    }
-
-    private final boolean isCompiled(TemplateLiteral node) {
-        return __isCompiled(node);
-    }
-
-    private final boolean isCompiled(GeneratorComprehension node) {
-        return __isCompiled(node);
-    }
-
-    private final boolean isCompiled(FunctionNode node) {
-        return __isCompiled(node);
     }
 
     /**

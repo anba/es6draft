@@ -139,16 +139,15 @@ public final class ScriptRuntime {
     public static OrdinaryFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        String identifier = fd.functionName();
-        if (identifier != null) {
+        if (fd.hasScopedName()) {
             scope = LexicalEnvironment.newDeclarativeEnvironment(scope);
             EnvironmentRecord envRec = scope.getEnvRec();
-            envRec.createImmutableBinding(identifier);
+            envRec.createImmutableBinding(fd.functionName());
         }
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
         MakeConstructor(cx, closure);
-        if (identifier != null) {
-            scope.getEnvRec().initializeBinding(identifier, closure);
+        if (fd.hasScopedName()) {
+            scope.getEnvRec().initializeBinding(fd.functionName(), closure);
         }
         return closure;
     }
@@ -217,8 +216,13 @@ public final class ScriptRuntime {
      * Runtime Semantics: ClassDefinitionEvaluation
      */
     public static RuntimeInfo.Function CreateDefaultConstructor() {
-        RuntimeInfo.Function function = RuntimeInfo.newFunction("constructor", false, true, true,
-                0, DefaultConstructorInitMH, DefaultConstructorMH, DefaultConstructorSource);
+        String functionName = "constructor";
+        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
+                | RuntimeInfo.FunctionFlags.Super.getValue();
+        int expectedArguments = 0;
+        RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
+                expectedArguments, DefaultConstructorInitMH, DefaultConstructorMH,
+                DefaultConstructorSource);
 
         return function;
     }
@@ -413,16 +417,15 @@ public final class ScriptRuntime {
     public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        String identifier = fd.functionName();
-        if (identifier != null) {
+        if (fd.hasScopedName()) {
             scope = LexicalEnvironment.newDeclarativeEnvironment(scope);
             EnvironmentRecord envRec = scope.getEnvRec();
-            envRec.createImmutableBinding(identifier);
+            envRec.createImmutableBinding(fd.functionName());
         }
         OrdinaryGenerator closure = GeneratorCreate(cx, FunctionKind.Normal, fd, scope);
         MakeConstructor(cx, closure);
-        if (identifier != null) {
-            scope.getEnvRec().initializeBinding(identifier, closure);
+        if (fd.hasScopedName()) {
+            scope.getEnvRec().initializeBinding(fd.functionName(), closure);
         }
         return closure;
     }

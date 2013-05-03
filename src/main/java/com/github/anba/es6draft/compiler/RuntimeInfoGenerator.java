@@ -14,12 +14,15 @@ import java.util.concurrent.Future;
 
 import org.objectweb.asm.Type;
 
+import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
+import com.github.anba.es6draft.ast.GeneratorExpression;
 import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo.FunctionFlags;
 
 /**
  * 
@@ -34,8 +37,8 @@ class RuntimeInfoGenerator {
 
         static MethodDesc RTI_newFunction = MethodDesc.create(MethodType.Static, Types.RuntimeInfo,
                 "newFunction", Type.getMethodType(Types.RuntimeInfo$Function, Types.String,
-                        Type.BOOLEAN_TYPE, Type.BOOLEAN_TYPE, Type.BOOLEAN_TYPE, Type.INT_TYPE,
-                        Types.MethodHandle, Types.MethodHandle, Types.String));
+                        Type.INT_TYPE, Type.INT_TYPE, Types.MethodHandle, Types.MethodHandle,
+                        Types.String));
 
         // Method descriptors
 
@@ -59,19 +62,46 @@ class RuntimeInfoGenerator {
         this.codegen = codegen;
     }
 
-    private static boolean isGenerator(FunctionNode node) {
-        if (node instanceof GeneratorDefinition) {
-            return true;
-        } else if (node instanceof MethodDefinition) {
-            return ((MethodDefinition) node).getType() == MethodDefinition.MethodType.Generator;
-        } else {
-            return false;
+    private static int functionFlags(FunctionNode node) {
+        int functionFlags = 0;
+        if (IsStrict(node)) {
+            functionFlags |= FunctionFlags.Strict.getValue();
         }
+        if (hasSuperReference(node)) {
+            functionFlags |= FunctionFlags.Super.getValue();
+        }
+        if (hasScopedName(node)) {
+            functionFlags |= FunctionFlags.ScopedName.getValue();
+        }
+        if (isGenerator(node)) {
+            functionFlags |= FunctionFlags.Generator.getValue();
+        }
+        return functionFlags;
     }
 
     private static boolean hasSuperReference(FunctionNode node) {
         if (node instanceof MethodDefinition) {
             return ((MethodDefinition) node).hasSuperReference();
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean hasScopedName(FunctionNode node) {
+        if (node instanceof FunctionExpression) {
+            return ((FunctionExpression) node).getIdentifier() != null;
+        } else if (node instanceof GeneratorExpression) {
+            return ((GeneratorExpression) node).getIdentifier() != null;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean isGenerator(FunctionNode node) {
+        if (node instanceof GeneratorDefinition) {
+            return true;
+        } else if (node instanceof MethodDefinition) {
+            return ((MethodDefinition) node).getType() == MethodDefinition.MethodType.Generator;
         } else {
             return false;
         }
@@ -86,10 +116,6 @@ class RuntimeInfoGenerator {
     }
 
     void runtimeInfo(FunctionNode node, Future<String> source) {
-        String name = node.accept(FunctionName.INSTANCE, null);
-        boolean isGenerator = isGenerator(node);
-        boolean hasSuperReference = hasSuperReference(node);
-
         String className = codegen.getClassName();
         String methodName = codegen.methodName(node);
         InstructionVisitor mv = codegen
@@ -97,10 +123,8 @@ class RuntimeInfoGenerator {
 
         mv.begin();
 
-        mv.aconst(name);
-        mv.iconst(isGenerator);
-        mv.iconst(hasSuperReference);
-        mv.iconst(IsStrict(node));
+        mv.aconst(node.getFunctionName());
+        mv.iconst(functionFlags(node));
         mv.iconst(ExpectedArgumentCount(node.getParameters()));
         mv.invokeStaticMH(className, methodName + "_init", Methods.functionInit);
         mv.invokeStaticMH(className, methodName, Methods.functionCode);

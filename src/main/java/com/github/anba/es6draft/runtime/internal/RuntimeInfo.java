@@ -37,8 +37,7 @@ public final class RuntimeInfo {
         };
     }
 
-    public static Function newFunction(final String functionName, final boolean isGenerator,
-            final boolean hasSuperReference, final boolean isStrict,
+    public static Function newFunction(final String functionName, final int functionFlags,
             final int expectedArgumentCount, final MethodHandle initialisation,
             final MethodHandle handle, final String source) {
         return new Function() {
@@ -48,18 +47,23 @@ public final class RuntimeInfo {
             }
 
             @Override
-            public boolean isGenerator() {
-                return isGenerator;
+            public boolean isStrict() {
+                return FunctionFlags.Strict.isSet(functionFlags);
             }
 
             @Override
             public boolean hasSuperReference() {
-                return hasSuperReference;
+                return FunctionFlags.Super.isSet(functionFlags);
             }
 
             @Override
-            public boolean isStrict() {
-                return isStrict;
+            public boolean hasScopedName() {
+                return FunctionFlags.ScopedName.isSet(functionFlags);
+            }
+
+            @Override
+            public boolean isGenerator() {
+                return FunctionFlags.Generator.isSet(functionFlags);
             }
 
             @Override
@@ -159,17 +163,37 @@ public final class RuntimeInfo {
         Object evaluate(ExecutionContext cx);
     }
 
+    public static enum FunctionFlags {
+        Strict(0b0001), Super(0b0010), ScopedName(0b0100), Generator(0b1000);
+
+        private final int value;
+
+        private FunctionFlags(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public boolean isSet(int bitmask) {
+            return (value & bitmask) != 0;
+        }
+    }
+
     /**
      * Compiled function information
      */
     public static interface Function extends Code {
         String functionName();
 
-        boolean isGenerator();
+        boolean isStrict();
 
         boolean hasSuperReference();
 
-        boolean isStrict();
+        boolean hasScopedName();
+
+        boolean isGenerator();
 
         int expectedArgumentCount();
 
