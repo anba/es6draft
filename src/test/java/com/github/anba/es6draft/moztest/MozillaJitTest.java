@@ -11,6 +11,7 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -93,13 +94,13 @@ public class MozillaJitTest extends BaseMozillaTest {
 
     @Test
     public void runMozillaTest() throws Throwable {
-        final MozTest moztest = this.moztest;
+        MozTest moztest = this.moztest;
         // filter disabled tests
         assumeTrue(moztest.enable);
         // don't run slow tests
-        assumeTrue(!moztest.slow);
+        assumeFalse(moztest.slow);
         // don't run debug-mode tests
-        assumeTrue(!moztest.debug);
+        assumeFalse(moztest.debug);
 
         MozTestConsole console = new MozTestConsole();
         MozShellGlobalObject global = newGlobal(console, testDir(), moztest.script, Paths.get(""),
