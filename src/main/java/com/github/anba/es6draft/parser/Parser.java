@@ -675,8 +675,6 @@ public class Parser {
             FunctionExpression function;
             newContext(ContextKind.Function);
             try {
-                BindingIdentifier identifier = new BindingIdentifier("anonymous");
-
                 ts = new TokenStream(this, new StringTokenStreamInput(formals), sourceLine);
                 ts.init();
                 FormalParameterList parameters = formalParameterList(Token.EOF);
@@ -702,7 +700,7 @@ public class Parser {
                 formalParameterList_StaticSemantics(parameters);
 
                 FunctionContext scope = context.funContext;
-                function = new FunctionExpression(scope, identifier, parameters, statements,
+                function = new FunctionExpression(scope, "anonymous", parameters, statements,
                         header, body);
                 scope.node = function;
 
@@ -737,8 +735,6 @@ public class Parser {
             GeneratorExpression generator;
             newContext(ContextKind.Generator);
             try {
-                BindingIdentifier identifier = new BindingIdentifier("anonymous");
-
                 ts = new TokenStream(this, new StringTokenStreamInput(formals), sourceLine);
                 ts.init();
                 FormalParameterList parameters = formalParameterList(Token.EOF);
@@ -764,7 +760,7 @@ public class Parser {
                 formalParameterList_StaticSemantics(parameters);
 
                 FunctionContext scope = context.funContext;
-                generator = new GeneratorExpression(scope, identifier, parameters, statements,
+                generator = new GeneratorExpression(scope, "anonymous", parameters, statements,
                         header, body);
                 scope.node = generator;
 
