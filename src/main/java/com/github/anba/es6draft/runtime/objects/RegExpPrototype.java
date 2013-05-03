@@ -203,8 +203,6 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 Put(cx, rx, "lastIndex", 0, true);
                 ScriptObject array = ArrayCreate(cx, 0);
-                @SuppressWarnings("unused")
-                int previousLastIndex = 0;
                 int n = 0;
                 boolean lastMatch = true;
                 while (lastMatch) {
@@ -213,12 +211,10 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                     if (result == null) {
                         lastMatch = false;
                     } else {
-                        int thisIndex = (int) ToInteger(cx, Get(cx, rx, "lastIndex"));
-                        if (thisIndex == result.start()) {
+                        // FIXME: spec issue (bug 1467)
+                        if (result.start() == result.end()) {
+                            int thisIndex = (int) ToInteger(cx, Get(cx, rx, "lastIndex"));
                             Put(cx, rx, "lastIndex", thisIndex + 1, true);
-                            previousLastIndex = thisIndex + 1;
-                        } else {
-                            previousLastIndex = thisIndex;
                         }
                         // Object matchStr = Get(Type.objectValue(result), "0");
                         CharSequence matchStr = s.subSequence(result.start(), result.end());
@@ -260,8 +256,6 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 // cf. RegExpExec
                 Put(cx, rx, "lastIndex", 0, true);
-                @SuppressWarnings("unused")
-                int previousLastIndex = 0;
                 int n = 0;
                 boolean lastMatch = true;
                 while (lastMatch) {
@@ -270,12 +264,10 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                     if (result == null) {
                         lastMatch = false;
                     } else {
-                        int thisIndex = (int) ToInteger(cx, Get(cx, rx, "lastIndex"));
-                        if (thisIndex == result.start()) {
+                        // FIXME: spec issue (bug 1467)
+                        if (result.start() == result.end()) {
+                            int thisIndex = (int) ToInteger(cx, Get(cx, rx, "lastIndex"));
                             Put(cx, rx, "lastIndex", thisIndex + 1, true);
-                            previousLastIndex = thisIndex + 1;
-                        } else {
-                            previousLastIndex = thisIndex;
                         }
                         matches.add(result.toMatchResult());
                         n += 1;
