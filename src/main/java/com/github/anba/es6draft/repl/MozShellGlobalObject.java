@@ -116,7 +116,7 @@ public final class MozShellGlobalObject extends GlobalObject {
      * Parses, compiles and executes the javascript file (uses {@link #scriptCache})
      */
     public void include(Path file) throws IOException, ParserException {
-        Script script = scriptCache.get(basedir.resolve(file));
+        Script script = scriptCache.get(absolutePath(file));
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
@@ -213,9 +213,19 @@ public final class MozShellGlobalObject extends GlobalObject {
      * {@code $INCLUDE} function to load scripts from library directory
      */
     @Function(name = "__$INCLUDE", arity = 1)
-    public Object $INCLUDE(String file) {
-        // resolve the input file against the lib-path
-        return load(absolutePath(libdir.resolve(file)));
+    public void $INCLUDE(String file) {
+        try {
+            // resolve the input file against the lib-path
+            include(libdir.resolve(file));
+        } catch (IOException e) {
+            throw throwError(realm, e.getMessage());
+        } catch (ParserException e) {
+            ExecutionContext cx = realm.defaultContext();
+            if (e.getExceptionType() == ExceptionType.ReferenceError) {
+                throw throwReferenceError(cx, e.getMessageKey(), e.getMessageArguments());
+            }
+            throw throwSyntaxError(cx, e.getMessageKey(), e.getMessageArguments());
+        }
     }
 
     /** shell-function: {@code version([number])} */
