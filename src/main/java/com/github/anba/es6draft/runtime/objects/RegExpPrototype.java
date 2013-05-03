@@ -459,7 +459,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                     q = p;
                 }
             }
-            if (p == lastStart) {
+            if (lastStart == size) {
                 return a;
             }
             String t = s.substring(p, size);
