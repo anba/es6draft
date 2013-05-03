@@ -448,11 +448,19 @@ Object.defineProperties(Object.assign(String.prototype, {
     }
     return String_prototype_replace.call(this, searchValue, replaceValue);
   },
+  trimLeft() {
+    return String_prototype_replace.call(this, /^\s+/, "");
+  },
+  trimRight() {
+    return String_prototype_replace.call(this, /\s+$/, "");
+  },
 }), {
   quote: {enumerable: false},
   match: {enumerable: false},
   search: {enumerable: false},
   replace: {enumerable: false},
+  trimLeft: {enumerable: false},
+  trimRight: {enumerable: false},
 });
 
 Object.defineProperty(Object.assign(String.prototype, {
@@ -478,16 +486,6 @@ Object.defineProperty(Object.assign(Math, {
     return "Math";
   }
 }), "toSource", {enumerable: false});
-
-Object.defineProperty(Object.assign(Math, {
-  imul(u, v) {
-    u = u >>> 0;
-    v = v >>> 0;
-    var u0 = u & 0xFFFF, u1 = u >>> 16,
-        v0 = v & 0xFFFF, v1 = v >>> 16;
-    return (((u1 * v0 + u0 * v1) << 16) + (u0 * v0)) | 0;
-  }
-}), "imul", {enumerable: false});
 
 Object.defineProperty(Object.assign(Date.prototype, {
   toSource() {
