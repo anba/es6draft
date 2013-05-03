@@ -49,8 +49,8 @@ class WrapperProxy implements ScriptObject {
         this.withProto = withProto;
     }
 
-    private static class CallabeExoticProxy extends WrapperProxy implements Callable {
-        public CallabeExoticProxy(Realm realm, ScriptObject target, ScriptObject prototype,
+    private static class CallabeWrapperProxy extends WrapperProxy implements Callable {
+        public CallabeWrapperProxy(Realm realm, ScriptObject target, ScriptObject prototype,
                 boolean withProto) {
             super(realm, target, prototype, withProto);
         }
@@ -80,7 +80,7 @@ class WrapperProxy implements ScriptObject {
         ScriptObject prototype = proxyTarget.getPrototype(cx);
         WrapperProxy proxy;
         if (IsCallable(proxyTarget)) {
-            proxy = new CallabeExoticProxy(cx.getRealm(), proxyTarget, prototype, false);
+            proxy = new CallabeWrapperProxy(cx.getRealm(), proxyTarget, prototype, false);
         } else {
             proxy = new WrapperProxy(cx.getRealm(), proxyTarget, prototype, false);
         }
@@ -101,7 +101,7 @@ class WrapperProxy implements ScriptObject {
         ScriptObject prototype = Type.isObject(proto) ? Type.objectValue(proto) : null;
         WrapperProxy proxy;
         if (IsCallable(proxyTarget)) {
-            proxy = new CallabeExoticProxy(cx.getRealm(), proxyTarget, prototype, true);
+            proxy = new CallabeWrapperProxy(cx.getRealm(), proxyTarget, prototype, true);
         } else {
             proxy = new WrapperProxy(cx.getRealm(), proxyTarget, prototype, true);
         }
@@ -208,7 +208,7 @@ class WrapperProxy implements ScriptObject {
         /* modified 8.3.8 [[HasProperty]](P) */
         boolean hasOwn = proxyTarget.hasOwnProperty(cx, propertyKey);
         if (!hasOwn) {
-            ScriptObject parent = getProto(cx);
+            ScriptObject parent = getProto(cx); // modified
             if (parent != null) {
                 return parent.hasProperty(cx, propertyKey);
             }
@@ -224,7 +224,7 @@ class WrapperProxy implements ScriptObject {
         /* modified 8.3.8 [[HasProperty]](P) */
         boolean hasOwn = proxyTarget.hasOwnProperty(cx, propertyKey);
         if (!hasOwn) {
-            ScriptObject parent = getProto(cx);
+            ScriptObject parent = getProto(cx);// modified
             if (parent != null) {
                 return parent.hasProperty(cx, propertyKey);
             }
@@ -240,7 +240,7 @@ class WrapperProxy implements ScriptObject {
         /* modified 8.3.9 [[Get]] (P, Receiver) */
         Property desc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (desc == null) {
-            ScriptObject parent = getProto(cx);
+            ScriptObject parent = getProto(cx);// modified
             if (parent == null) {
                 return UNDEFINED;
             }
@@ -265,7 +265,7 @@ class WrapperProxy implements ScriptObject {
         /* modified 8.3.9 [[Get]] (P, Receiver) */
         Property desc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (desc == null) {
-            ScriptObject parent = getProto(cx);
+            ScriptObject parent = getProto(cx);// modified
             if (parent == null) {
                 return UNDEFINED;
             }
@@ -290,7 +290,7 @@ class WrapperProxy implements ScriptObject {
         /* modified 8.3.10 [[Set] (P, V, Receiver) */
         Property ownDesc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (ownDesc == null) {
-            ScriptObject parent = getProto(cx);
+            ScriptObject parent = getProto(cx);// modified
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
@@ -333,7 +333,7 @@ class WrapperProxy implements ScriptObject {
         /* modified 8.3.10 [[Set] (P, V, Receiver) */
         Property ownDesc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (ownDesc == null) {
-            ScriptObject parent = getProto(cx);
+            ScriptObject parent = getProto(cx);// modified
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
