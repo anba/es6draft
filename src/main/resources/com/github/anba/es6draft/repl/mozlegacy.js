@@ -63,11 +63,12 @@ function Quote(s, qc = '"') {
 
 const ASCII_Ident = /^[_$a-zA-Z][_$a-zA-Z0-9]*$/;
 
+function IsInt32(name) {
+  return ((name | 0) >= 0 && (name | 0) <= 0x7fffffff && (name | 0) + "" == name);
+}
+
 function ToPropertyName(name) {
-  if (ASCII_Ident.test(name)) {
-    return name;
-  }
-  if ((name | 0) >= 0 && (name | 0) <= 0x7fffffff && (name | 0) + "" == name) {
+  if (ASCII_Ident.test(name) || IsInt32(name)) {
     return name;
   }
   return Quote(name, "'");
@@ -136,17 +137,19 @@ var depth = 0;
 
 Object.defineProperty(Object.assign(Object.prototype, {
   toSource() {
-    if (wm.has(this)) {
+    if (this == null) throw TypeError();
+    var obj = Object(this);
+    if (wm.has(obj)) {
       return "{}";
     }
-    wm.set(this, null);
+    wm.set(obj, null);
     depth += 1;
     try {
       var s = "";
-      var names = Object_keys(this);
+      var names = Object_keys(obj);
       for (var i = 0, len = names.length; i < len; ++i) {
         var name = names[i];
-        var desc = Object_getOwnPropertyDescriptor(this, name);
+        var desc = Object_getOwnPropertyDescriptor(obj, name);
         if (desc == null) {
           // ignore removed properties
         } else if ('value' in desc) {
@@ -169,7 +172,7 @@ Object.defineProperty(Object.assign(Object.prototype, {
       }
       return "({" + s + "})";
     } finally {
-      wm.delete(this);
+      wm.delete(obj);
       depth -= 1;
     }
   }
@@ -663,7 +666,10 @@ function Iterator(obj, keys) {
     return new Iterator(obj, keys);
   }
 }
-global.Iterator = Iterator;
+Object.defineProperty(global, "Iterator", {
+  value: Iterator,
+  writable: true, enumerable: false, configurable: true
+});
 
 Object.defineProperty(Iterator, getSym("@@create"), {
   value: function() {
@@ -736,7 +742,7 @@ const it_mapped = {
   custom: true,
   customRdOnly: false,
 };
-const it = Object.create(Object.prototype, {
+const it_target = Object.create(Object.prototype, {
   color: {writable: true, enumerable: true, configurable: true},
   height: {writable: true, enumerable: true, configurable: true},
   width: {writable: true, enumerable: true, configurable: true},
@@ -746,17 +752,17 @@ const it = Object.create(Object.prototype, {
   custom: {writable: true, enumerable: true, configurable: true},
   customRdOnly: {writable: false, enumerable: true, configurable: true},
   customNative: {
-    get() { if (this === it_proxy) return it_custom },
-    set(v) { if (this === it_proxy) it_custom = v },
+    get() { if (this === it) return it_custom },
+    set(v) { if (this === it) it_custom = v },
     enumerable: true, configurable: true
   }
 });
 
-Object.defineProperty(it, getSym("@@toStringTag"), {
+Object.defineProperty(it_target, getSym("@@toStringTag"), {
   value: "It"
 });
 
-const it_proxy = Proxy(it, {
+const it = Proxy(it_target, {
   getOwnPropertyDescriptor(t, pk) {
     if (pk in it_mapped) {
       return Object.assign(Reflect.getOwnPropertyDescriptor(t, pk), {value: it_custom});
@@ -794,6 +800,9 @@ const it_proxy = Proxy(it, {
   },
 });
 
-global.it = it_proxy;
+Object.defineProperty(global, "it", {
+  value: it,
+  writable: true, enumerable: false, configurable: true
+});
 
 })(this);
