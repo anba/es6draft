@@ -44,6 +44,11 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     }
 
     @Override
+    public String getFunctionName() {
+        return identifier.getName();
+    }
+
+    @Override
     public FormalParameterList getParameters() {
         return parameters;
     }

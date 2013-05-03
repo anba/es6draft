@@ -23,7 +23,7 @@ public class ArrowFunction extends Expression implements FunctionNode {
     private String headerSource, bodySource;
 
     public ArrowFunction(FunctionScope scope, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource,String bodySource) {
+            List<StatementListItem> statements, String headerSource, String bodySource) {
         this.scope = scope;
         this.parameters = parameters;
         this.statements = statements;
@@ -33,7 +33,7 @@ public class ArrowFunction extends Expression implements FunctionNode {
     }
 
     public ArrowFunction(FunctionScope scope, FormalParameterList parameters,
-            Expression expression, String headerSource,String bodySource) {
+            Expression expression, String headerSource, String bodySource) {
         this.scope = scope;
         this.parameters = parameters;
         this.statements = null;
@@ -45,6 +45,11 @@ public class ArrowFunction extends Expression implements FunctionNode {
     @Override
     public FunctionScope getScope() {
         return scope;
+    }
+
+    @Override
+    public String getFunctionName() {
+        return "";
     }
 
     @Override

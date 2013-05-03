@@ -17,6 +17,7 @@ import java.util.List;
 public class FunctionExpression extends Expression implements FunctionDefinition {
     private FunctionScope scope;
     private BindingIdentifier identifier;
+    private String functionName;
     private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private StrictMode strictMode;
@@ -27,6 +28,19 @@ public class FunctionExpression extends Expression implements FunctionDefinition
             String headerSource, String bodySource) {
         this.scope = scope;
         this.identifier = identifier;
+        this.functionName = (identifier != null ? identifier.getName() : "");
+        this.parameters = parameters;
+        this.statements = statements;
+        this.headerSource = headerSource;
+        this.bodySource = bodySource;
+    }
+
+    public FunctionExpression(FunctionScope scope, String functionName,
+            FormalParameterList parameters, List<StatementListItem> statements,
+            String headerSource, String bodySource) {
+        this.scope = scope;
+        this.identifier = null;
+        this.functionName = functionName;
         this.parameters = parameters;
         this.statements = statements;
         this.headerSource = headerSource;
@@ -41,6 +55,11 @@ public class FunctionExpression extends Expression implements FunctionDefinition
     @Override
     public BindingIdentifier getIdentifier() {
         return identifier;
+    }
+
+    @Override
+    public String getFunctionName() {
+        return functionName;
     }
 
     @Override

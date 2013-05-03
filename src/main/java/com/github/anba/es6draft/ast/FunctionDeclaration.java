@@ -44,6 +44,11 @@ public class FunctionDeclaration extends Declaration implements FunctionDefiniti
     }
 
     @Override
+    public String getFunctionName() {
+        return identifier.getName();
+    }
+
+    @Override
     public FormalParameterList getParameters() {
         return parameters;
     }

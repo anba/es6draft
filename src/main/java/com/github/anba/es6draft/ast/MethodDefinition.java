@@ -56,6 +56,11 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
     }
 
     @Override
+    public String getFunctionName() {
+        return propertyName.getName();
+    }
+
+    @Override
     public FormalParameterList getParameters() {
         return parameters;
     }

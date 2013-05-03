@@ -12,6 +12,8 @@ import java.util.List;
  * <h1>13 Functions and Generators</h1>
  */
 public interface FunctionNode extends ScopedNode {
+    String getFunctionName();
+
     FormalParameterList getParameters();
 
     List<StatementListItem> getStatements();
