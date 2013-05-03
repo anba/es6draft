@@ -1,0 +1,314 @@
+#
+# Copyright (c) 2012-2013 André Bargull
+# Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+#
+# <https://github.com/anba/es6draft>
+#
+
+# spec bug: [[HasOwnProperty]] / [[Has]] not overridden for IndexedDelegationExoticObjects
+regress/regress-98773.js
+
+# current spec issue: function declaration binding broken
+regress/regress-540.js
+
+# TypedArray bound checks missing in draft
+harmony/typedarrays.js
+
+# invalid test `function f(x){function x(){}}` is valid syntax
+harmony/block-conflicts.js
+regress/regress-2243.js
+
+# invalid test, assignment on const not early errors
+harmony/block-const-assign.js
+harmony/block-early-errors.js
+harmony/block-let-declaration.js
+
+# V8 generators return values from return statement in next()
+harmony/generators-iteration.js
+
+# yield statement/expression syntax not yet settled
+harmony/generators-parsing.js
+
+# V8 generators don't have close()
+harmony/generators-runtime.js
+
+# modules not yet enabled
+harmony/module-linking.js
+harmony/module-parsing.js
+harmony/module-recompile.js
+harmony/module-resolution.js
+
+# RegExp: invalid test, match/replace call Put("lastIndex", 0) if global
+regress/regress-2438.js
+
+# Static Semantics: Early Error for invalid RegExp flags (unicode escaped)
+regress/regress-136048.js
+
+# invalid test, Array.prototype.sort throws if array is frozen
+regress/regress-2419.js
+
+
+###################
+# Misc issues     #
+###################
+
+# RegExp differences Java<->JavaScript (resp. V8)
+regexp-capture.js
+regexp-lookahead.js
+regexp-loop-capture.js
+regexp-UC16.js
+regexp.js
+regress/regress-126412.js
+regress/regress-176.js
+regress/regress-187.js
+string-match.js
+string-slices-regexp.js
+third_party/regexp-pcre.js
+
+
+############################################
+# Misc proxy implementation isssues        #
+############################################
+
+# old Proxy API not completly emulated
+harmony/proxies-example-membrane.js
+harmony/proxies-for.js
+harmony/proxies-hash.js
+harmony/proxies-json.js
+harmony/proxies-symbols.js
+harmony/proxies.js
+regress/regress-2219.js
+regress/regress-2225.js
+
+
+############################################
+# Implementation specific differences      #
+############################################
+
+# different error message
+apply.js
+array-reduce.js
+error-accessors.js
+function-call.js
+instanceof-2.js
+object-create.js
+object-define-properties.js
+object-freeze.js
+object-get-own-property-names.js
+object-prevent-extensions.js
+object-seal.js
+regress/regress-1980.js
+
+# forward-slash not escaped in RegExp
+compiler/literals.js
+
+# \n\r are two separate line terminators
+newline-in-string.js
+
+# Object.property.__proto__ is poisoned in V8
+proto-poison.js
+
+# String.prototype.trim() removes \u200B in V8
+third_party/string-trim.js
+
+# Date.parse incompatibility
+date-parse.js
+json.js
+regress/regress-396.js
+
+# for-in order
+enumeration-order.js
+
+# experimental `typeof null` tests
+harmony/typeof.js
+
+# cannot seal/freeze TypedArrays in V8
+regress/regress-95920.js
+
+# __defineGetter__ does not throw in V8
+regress/regress-1240.js
+
+# different function source representation
+regress/regress-2470.js
+
+# truncate vs. rounding in milliseconds field of iso-date
+regress/regress-944.js
+
+# Date.prototype.toUTCString and Date.prototype.toGMTString distinct objects in V8
+function-names.js
+
+# non standard Array.prototype.splice
+array-splice.js
+third_party/array-splice-webkit.js
+
+
+############################################
+# Unsupported built-in object functions    #
+############################################
+
+# Error.prototype.stack, Error.prototype.prepareStackTrace
+compiler/regress-stacktrace.js
+eval-stack-trace.js
+regress/regress-1591.js
+regress/regress-798.js
+regress/regress-2564.js
+regress/regress-conditional-position.js
+stack-traces.js
+stack-traces-2.js
+stack-traces-overflow.js
+
+# legacy RegExp properties ($1, etc)
+regexp-cache-replace.js
+regexp-capture-3.js
+regexp-global.js
+regexp-indexof.js
+regexp-static.js
+regress/regress-2058.js
+string-replace.js
+
+
+###############################################################
+# ES6 (rev14) <Object>.prototype no longer instance of <Type> #
+###############################################################
+
+# Array.prototype no longer instanceof Array
+length.js
+
+# String.prototype no longer instanceof String
+regress/regress-1062422.js
+
+# RegExp.prototype no longer instanceof RegExp
+regress/regress-1217.js
+
+
+#######################################
+# ES6 related runtime changes         #
+#######################################
+
+# built-in function poisoned
+function-arguments-null.js
+fuzz-accessors.js
+regress/regress-1548.js
+
+# built-in functions not exposed in caller
+function-caller.js
+regress/regress-105.js
+
+
+#######################################
+# ES6 related syntax changes          #
+#######################################
+
+# various strict-mode restrictions which only apply to ES5
+strict-mode.js
+
+# re-declaration of catch-variable
+throw-and-catch-function.js
+
+# function declaration not in block
+regress/regress-220.js
+
+# 'yield' is now a proper keyword
+keywords-and-reserved_words.js
+
+# temp dead zone const, const redeclarations etc.
+const-declaration.js
+const-redecl.js
+
+# function declarations are block scoped
+regress/regress-91120.js
+
+# different scope for const
+declare-locally.js
+regress/regress-1170.js
+regress/regress-1178598.js
+regress/regress-1182832.js
+regress/regress-186.js
+regress/regress-641.js
+regress/regress-88591.js
+
+# const without initialiser
+global-const-var-conflicts.js
+property-load-across-eval.js
+regress/regress-1130.js
+regress/regress-1201933.js
+regress/regress-1207276.js
+regress/regress-799761.js
+
+# Static Semantics: Early errors for return statement not implemented
+delay-syntax-error.js
+
+# Static Semantics: Early errors invalid LHS
+invalid-lhs.js
+
+# for-in with initialiser
+for-in.js
+
+# var-declaration on global only calls setter when executed
+regress/regress-1119.js
+
+
+#######################################
+# Test for syntax extensions          #
+#######################################
+
+# html-comments not supported
+html-comments.js
+
+
+#######################################
+# Compilation or runtime issues       #
+#######################################
+
+# Method code too large
+array-constructor.js
+limit-locals.js
+numops-fuzz-part1.js
+numops-fuzz-part2.js
+numops-fuzz-part3.js
+numops-fuzz-part4.js
+regress/regress-1122.js
+unicode-test.js
+unicodelctest.js
+unicodelctest-no-optimization.js
+
+# Class file too large
+copy-on-write-assert.js
+
+# StackOverflow
+big-array-literal.js
+big-object-literal.js
+array-join.js
+array-tostring.js
+cyclic-array-to-string.js
+error-tostring.js
+json-stringify-recursive.js
+json-parser-recursive.js
+regress/regress-1129.js
+regress/regress-1132.js
+regress/regress-1215653.js
+regress/regress-148378.js
+regress/regress-233.js
+regress/regress-crbug-100859.js
+
+# Timeout
+array-concat.js
+array-functions-prototype-misc.js
+array-unshift.js
+mul-exhaustive-part1.js
+mul-exhaustive-part2.js
+mul-exhaustive-part3.js
+mul-exhaustive-part4.js
+mul-exhaustive-part5.js
+mul-exhaustive-part6.js
+mul-exhaustive-part7.js
+mul-exhaustive-part8.js
+mul-exhaustive-part9.js
+mul-exhaustive-part10.js
+regress/regress-1200351.js
+regress/regress-581.js
+regress/regress-685.js
+regress/regress-crbug-84186.js
+sparse-array-reverse.js
+compiler/expression-trees.js
+compiler/regress-4.js
