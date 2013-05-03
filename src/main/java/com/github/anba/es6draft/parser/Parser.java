@@ -1374,21 +1374,22 @@ public class Parser {
      */
     private FormalParameterList formalParameterList(Token end) {
         List<FormalParameter> formals = newSmallList();
-        boolean needComma = false;
-        while (token() != end) {
-            if (needComma) {
-                consume(Token.COMMA);
-                needComma = false;
-            } else if (token() == Token.TRIPLE_DOT) {
-                consume(Token.TRIPLE_DOT);
-                formals.add(new BindingRestElement(bindingIdentifierStrict()));
-                break;
-            } else {
-                formals.add(bindingElement());
-                needComma = true;
+        if (token() != end) {
+            for (;;) {
+                if (token() == Token.TRIPLE_DOT) {
+                    consume(Token.TRIPLE_DOT);
+                    formals.add(new BindingRestElement(bindingIdentifierStrict()));
+                    break;
+                } else {
+                    formals.add(bindingElement());
+                    if (token() == Token.COMMA) {
+                        consume(Token.COMMA);
+                    } else {
+                        break;
+                    }
+                }
             }
         }
-
         return new FormalParameterList(formals);
     }
 
@@ -2334,11 +2335,12 @@ public class Parser {
     private ObjectBindingPattern objectBindingPattern() {
         List<BindingProperty> list = newSmallList();
         consume(Token.LC);
-        if (token() != Token.RC) {
+        while (token() != Token.RC) {
             list.add(bindingProperty());
-            while (token() != Token.RC) {
+            if (token() == Token.COMMA) {
                 consume(Token.COMMA);
-                list.add(bindingProperty());
+            } else {
+                break;
             }
         }
         consume(Token.RC);
@@ -4037,13 +4039,9 @@ public class Parser {
      */
     private List<Expression> arguments() {
         List<Expression> args = newSmallList();
-        boolean needComma = false;
         consume(Token.LP);
-        while (token() != Token.RP) {
-            if (needComma) {
-                consume(Token.COMMA);
-                needComma = false;
-            } else {
+        if (token() != Token.RP) {
+            for (;;) {
                 Expression expr;
                 if (token() == Token.TRIPLE_DOT) {
                     consume(Token.TRIPLE_DOT);
@@ -4052,7 +4050,11 @@ public class Parser {
                     expr = assignmentExpression(true);
                 }
                 args.add(expr);
-                needComma = true;
+                if (token() == Token.COMMA) {
+                    consume(Token.COMMA);
+                } else {
+                    break;
+                }
             }
         }
         consume(Token.RP);
