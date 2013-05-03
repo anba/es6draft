@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.internal;
+package com.github.anba.es6draft.repl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 
@@ -22,7 +22,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 /**
  *
  */
-public final class SourceBuilder {
+final class SourceBuilder {
     private SourceBuilder() {
     }
 
@@ -101,7 +101,7 @@ public final class SourceBuilder {
                 sb.append("\\t");
                 break;
             default:
-                if (c < ' ') {
+                if (c < 0x20 || c > 0xff) {
                     sb.append('\\').append('u').append(hexdigits[(c >> 12) & 0xf])
                             .append(hexdigits[(c >> 8) & 0xf]).append(hexdigits[(c >> 4) & 0xf])
                             .append(hexdigits[(c >> 0) & 0xf]);

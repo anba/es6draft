@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.repl;
 
-import static com.github.anba.es6draft.runtime.internal.SourceBuilder.ToSource;
+import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.Console;

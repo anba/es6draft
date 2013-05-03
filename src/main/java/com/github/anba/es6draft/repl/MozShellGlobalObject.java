@@ -6,13 +6,13 @@
  */
 package com.github.anba.es6draft.repl;
 
+import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.repl.WrapperProxy.CreateWrapProxy;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
-import static com.github.anba.es6draft.runtime.internal.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.BufferedReader;
@@ -54,7 +54,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
 /**
  * Global object class with support for multiple moz-shell functions
  */
-public class MozShellGlobalObject extends GlobalObject {
+public final class MozShellGlobalObject extends GlobalObject {
     private final long startMilli = System.currentTimeMillis();
     private final long startNano = System.nanoTime();
     private final Realm realm;
