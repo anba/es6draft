@@ -423,21 +423,28 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
          * 15.4.4.12 Array.prototype.splice (start, deleteCount [ , item1 [ , item2 [ , ... ] ] ] )
          */
         @Function(name = "splice", arity = 2)
-        public static Object splice(ExecutionContext cx, Object thisValue, Object start,
-                Object deleteCount, Object... items) {
+        public static Object splice(ExecutionContext cx, Object thisValue,
+                @Optional(Optional.Default.NONE) Object start,
+                @Optional(Optional.Default.NONE) Object deleteCount, Object... items) {
             ScriptObject o = ToObject(cx, thisValue);
             ScriptObject a = ArrayCreate(cx, 0);
             Object lenVal = Get(cx, o, "length");
             long len = ToUint32(cx, lenVal);
-            double relativeStart = ToInteger(cx, start);
+            double relativeStart = (start != null ? ToInteger(cx, start) : 0);
             long actualStart;
             if (relativeStart < 0) {
                 actualStart = (long) Math.max(len + relativeStart, 0);
             } else {
                 actualStart = (long) Math.min(relativeStart, len);
             }
-            long actualDeleteCount = (long) Math.min(Math.max(ToInteger(cx, deleteCount), 0), len
-                    - actualStart);
+            // TODO: track spec, https://bugs.ecmascript.org/show_bug.cgi?id=429
+            long actualDeleteCount;
+            if (start != null && deleteCount == null) {
+                actualDeleteCount = (len - actualStart);
+            } else {
+                double del = (deleteCount != null ? Math.max(ToInteger(cx, deleteCount), 0) : 0);
+                actualDeleteCount = (long) Math.min(del, len - actualStart);
+            }
             for (long k = 0; k < actualDeleteCount; ++k) {
                 String from = ToString(actualStart + k);
                 boolean fromPresent = HasProperty(cx, o, from);

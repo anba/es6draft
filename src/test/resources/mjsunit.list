@@ -137,10 +137,6 @@ regress/regress-944.js
 # Date.prototype.toUTCString and Date.prototype.toGMTString distinct objects in V8
 function-names.js
 
-# non standard Array.prototype.splice
-array-splice.js
-third_party/array-splice-webkit.js
-
 
 ############################################
 # Unsupported built-in object functions    #
