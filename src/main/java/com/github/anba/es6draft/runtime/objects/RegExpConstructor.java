@@ -163,6 +163,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
         int iflags = 0;
         if ((flags & ignoreCase) != 0) {
             iflags |= Pattern.CASE_INSENSITIVE;
+            iflags |= Pattern.UNICODE_CASE;
         }
         if ((flags & multiline) != 0) {
             iflags |= Pattern.MULTILINE;
@@ -171,7 +172,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
         Pattern match;
         BitSet negativeLAGroups;
         try {
-            RegExpParser parser = new RegExpParser(p);
+            RegExpParser parser = new RegExpParser(p, iflags);
             String regexp = parser.toPattern();
             // System.out.printf("pattern = '%s'\n", regexp);
             match = Pattern.compile(regexp, iflags);

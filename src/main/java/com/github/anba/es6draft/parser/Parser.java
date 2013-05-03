@@ -3860,13 +3860,14 @@ public class Parser {
         int iflags = 0;
         if ((flags & ignoreCase) != 0) {
             iflags |= Pattern.CASE_INSENSITIVE;
+            iflags |= Pattern.UNICODE_CASE;
         }
         if ((flags & multiline) != 0) {
             iflags |= Pattern.MULTILINE;
         }
 
         try {
-            RegExpParser parser = new RegExpParser(p);
+            RegExpParser parser = new RegExpParser(p, iflags, ts.getLine());
             String regexp = parser.toPattern();
             Pattern.compile(regexp, iflags);
         } catch (PatternSyntaxException e) {

@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.parser;
 
 import java.util.BitSet;
+import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -35,6 +36,8 @@ public class RegExpParser {
 
     private final String source;
     private final int length;
+    private final int flags;
+    private int sourceLine = -1;
     private StringBuilder out;
     private int pos = 0;
 
@@ -49,9 +52,17 @@ public class RegExpParser {
     // backref limit
     private int backreflimit = BACKREF_LIMIT;
 
-    public RegExpParser(String source) {
+    public RegExpParser(String source, int flags) {
         this.source = source;
         this.length = source.length();
+        this.flags = flags;
+    }
+
+    RegExpParser(String source, int flags, int sourceLine) {
+        this.source = source;
+        this.length = source.length();
+        this.flags = flags;
+        this.sourceLine = sourceLine;
     }
 
     public String toPattern() throws ParserException {
@@ -67,7 +78,11 @@ public class RegExpParser {
     }
 
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, -1, messageKey, args);
+        throw new ParserException(ExceptionType.SyntaxError, sourceLine, messageKey, args);
+    }
+
+    private boolean isMultiline() {
+        return (flags & Pattern.MULTILINE) != 0;
     }
 
     private int peek(int i) {
@@ -400,9 +415,21 @@ public class RegExpParser {
                 continue term;
 
             case '^':
+                /* Assertion */
+                if (isMultiline()) {
+                    out.append((char) c);
+                } else {
+                    out.append("\\A");
+                }
+                continue term;
+
             case '$':
                 /* Assertion */
-                out.append((char) c);
+                if (isMultiline()) {
+                    out.append((char) c);
+                } else {
+                    out.append("\\z");
+                }
                 continue term;
 
             case '\\': {
