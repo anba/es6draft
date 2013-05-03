@@ -203,6 +203,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 Put(cx, rx, "lastIndex", 0, true);
                 ScriptObject array = ArrayCreate(cx, 0);
+                @SuppressWarnings("unused")
                 int previousLastIndex = 0;
                 int n = 0;
                 boolean lastMatch = true;
@@ -213,7 +214,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                         lastMatch = false;
                     } else {
                         int thisIndex = (int) ToInteger(cx, Get(cx, rx, "lastIndex"));
-                        if (thisIndex == previousLastIndex) {
+                        if (thisIndex == result.start()) {
                             Put(cx, rx, "lastIndex", thisIndex + 1, true);
                             previousLastIndex = thisIndex + 1;
                         } else {
@@ -259,6 +260,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 // cf. RegExpExec
                 Put(cx, rx, "lastIndex", 0, true);
+                @SuppressWarnings("unused")
                 int previousLastIndex = 0;
                 int n = 0;
                 boolean lastMatch = true;
@@ -269,7 +271,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                         lastMatch = false;
                     } else {
                         int thisIndex = (int) ToInteger(cx, Get(cx, rx, "lastIndex"));
-                        if (thisIndex == previousLastIndex) {
+                        if (thisIndex == result.start()) {
                             Put(cx, rx, "lastIndex", thisIndex + 1, true);
                             previousLastIndex = thisIndex + 1;
                         } else {
