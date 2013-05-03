@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.internal;
 import java.util.Objects;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
  * 
@@ -30,6 +31,14 @@ public class ScriptException extends RuntimeException {
     public String getMessage() {
         try {
             return AbstractOperations.ToFlatString(null, value);
+        } catch (Throwable t) {
+            return Objects.toString(value);
+        }
+    }
+
+    public String getMessage(ExecutionContext cx) {
+        try {
+            return AbstractOperations.ToFlatString(cx, value);
         } catch (Throwable t) {
             return Objects.toString(value);
         }
