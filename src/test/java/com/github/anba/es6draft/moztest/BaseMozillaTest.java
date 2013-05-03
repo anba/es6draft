@@ -198,7 +198,7 @@ public abstract class BaseMozillaTest {
         }
         // disable tests
         List<MozTest> disabledTests = new ArrayList<>();
-        InputStream res = MozillaJSTest.class.getResourceAsStream(filename);
+        InputStream res = BaseMozillaTest.class.getResourceAsStream(filename);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(res,
                 StandardCharsets.UTF_8))) {
             String line;
