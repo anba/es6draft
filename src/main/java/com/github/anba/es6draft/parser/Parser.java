@@ -702,6 +702,7 @@ public class Parser {
                 FunctionContext scope = context.funContext;
                 function = new FunctionExpression(scope, "anonymous", parameters, statements,
                         header, body);
+                function.setLine(sourceLine);
                 scope.node = function;
 
                 function = inheritStrictness(function);
@@ -715,6 +716,7 @@ public class Parser {
 
             FunctionContext scope = context.funContext;
             Script script = new Script(sourceFile, scope, body, options, strict);
+            script.setLine(sourceLine);
             scope.node = script;
 
             return script;
@@ -762,6 +764,7 @@ public class Parser {
                 FunctionContext scope = context.funContext;
                 generator = new GeneratorExpression(scope, "anonymous", parameters, statements,
                         header, body);
+                generator.setLine(sourceLine);
                 scope.node = generator;
 
                 generator = inheritStrictness(generator);
@@ -775,6 +778,7 @@ public class Parser {
 
             FunctionContext scope = context.funContext;
             Script script = new Script(sourceFile, scope, body, options, strict);
+            script.setLine(sourceLine);
             scope.node = script;
 
             return script;
@@ -805,6 +809,7 @@ public class Parser {
 
             FunctionContext scope = context.funContext;
             Script script = new Script(sourceFile, scope, merge(prologue, body), options, strict);
+            script.setLine(sourceLine);
             scope.node = script;
 
             return script;
@@ -1282,6 +1287,7 @@ public class Parser {
     private FunctionDeclaration functionDeclaration() {
         newContext(ContextKind.Function);
         try {
+            int line = ts.getLine();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = bindingIdentifier();
@@ -1302,6 +1308,7 @@ public class Parser {
             FunctionContext scope = context.funContext;
             FunctionDeclaration function = new FunctionDeclaration(scope, identifier, parameters,
                     statements, header, body);
+            function.setLine(line);
             scope.node = function;
 
             addFunctionDecl(function);
@@ -1323,6 +1330,7 @@ public class Parser {
     private FunctionExpression functionExpression() {
         newContext(ContextKind.Function);
         try {
+            int line = ts.getLine();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = null;
@@ -1346,6 +1354,7 @@ public class Parser {
             FunctionContext scope = context.funContext;
             FunctionExpression function = new FunctionExpression(scope, identifier, parameters,
                     statements, header, body);
+            function.setLine(line);
             scope.node = function;
 
             return inheritStrictness(function);
@@ -1493,6 +1502,7 @@ public class Parser {
     private ArrowFunction arrowFunction() {
         newContext(ContextKind.ArrowFunction);
         try {
+            int line = ts.getLine();
             StringBuilder source = new StringBuilder();
             source.append("function anonymous");
 
@@ -1527,6 +1537,7 @@ public class Parser {
                 FunctionContext scope = context.funContext;
                 ArrowFunction function = new ArrowFunction(scope, parameters, statements, header,
                         body);
+                function.setLine(line);
                 scope.node = function;
 
                 return inheritStrictness(function);
@@ -1546,6 +1557,7 @@ public class Parser {
                 FunctionContext scope = context.funContext;
                 ArrowFunction function = new ArrowFunction(scope, parameters, expression, header,
                         body);
+                function.setLine(line);
                 scope.node = function;
 
                 return inheritStrictness(function);
@@ -1580,6 +1592,7 @@ public class Parser {
             FormalParameterList parameters;
             List<StatementListItem> statements;
 
+            int line = ts.getLine();
             int startFunction, startBody, endFunction;
             switch (type) {
             case Getter:
@@ -1639,6 +1652,7 @@ public class Parser {
             FunctionContext scope = context.funContext;
             MethodDefinition method = new MethodDefinition(scope, type, propertyName, parameters,
                     statements, context.hasSuperReference(), header, body);
+            method.setLine(line);
             scope.node = method;
 
             return inheritStrictness(method);
@@ -1676,6 +1690,7 @@ public class Parser {
     private GeneratorDeclaration generatorDeclaration() {
         newContext(ContextKind.Generator);
         try {
+            int line = ts.getLine();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
             consume(Token.MUL);
@@ -1697,6 +1712,7 @@ public class Parser {
             FunctionContext scope = context.funContext;
             GeneratorDeclaration generator = new GeneratorDeclaration(scope, identifier,
                     parameters, statements, header, body);
+            generator.setLine(line);
             scope.node = generator;
 
             addGeneratorDecl(generator);
@@ -1718,6 +1734,7 @@ public class Parser {
     private GeneratorExpression generatorExpression() {
         newContext(ContextKind.Generator);
         try {
+            int line = ts.getLine();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
             consume(Token.MUL);
@@ -1742,6 +1759,7 @@ public class Parser {
             FunctionContext scope = context.funContext;
             GeneratorExpression generator = new GeneratorExpression(scope, identifier, parameters,
                     statements, header, body);
+            generator.setLine(line);
             scope.node = generator;
 
             return inheritStrictness(generator);
@@ -3440,7 +3458,10 @@ public class Parser {
         case TEMPLATE:
             return templateLiteral(false);
         default:
-            return new Identifier(identifier());
+            int line = ts.getLine();
+            Identifier identifier = new Identifier(identifier());
+            identifier.setLine(line);
+            return identifier;
         }
     }
 
@@ -3764,10 +3785,15 @@ public class Parser {
         if (LOOKAHEAD(Token.COMMA) || LOOKAHEAD(Token.RC)) {
             // Static Semantics: It is a Syntax Error if IdentifierName is a
             // ReservedWord.
-            return new PropertyNameDefinition(new Identifier(identifier()));
+            int line = ts.getLine();
+            Identifier identifier = new Identifier(identifier());
+            identifier.setLine(line);
+            return new PropertyNameDefinition(identifier);
         }
         if (LOOKAHEAD(Token.ASSIGN)) {
+            int line = ts.getLine();
             Identifier identifier = new Identifier(identifier());
+            identifier.setLine(line);
             consume(Token.ASSIGN);
             Expression initialiser = assignmentExpression(true);
             return new CoverInitialisedName(identifier, initialiser);
@@ -3934,6 +3960,7 @@ public class Parser {
      * </pre>
      */
     private Expression leftHandSideExpression(boolean allowCall) {
+        int line = ts.getLine();
         Expression lhs;
         if (token() == Token.NEW) {
             consume(Token.NEW);
@@ -3985,22 +4012,24 @@ public class Parser {
         } else {
             lhs = primaryExpression();
         }
-        lhs.setLine(ts.getLine());
+        lhs.setLine(line);
 
         for (;;) {
             switch (token()) {
             case DOT:
+                line = ts.getLine();
                 consume(Token.DOT);
                 String name = identifierName();
                 lhs = new PropertyAccessor(lhs, name);
-                lhs.setLine(ts.getLine());
+                lhs.setLine(line);
                 break;
             case LB:
+                line = ts.getLine();
                 consume(Token.LB);
                 Expression expr = expression(true);
                 consume(Token.RB);
                 lhs = new ElementAccessor(lhs, expr);
-                lhs.setLine(ts.getLine());
+                lhs.setLine(line);
                 break;
             case LP:
                 if (!allowCall) {
@@ -4009,14 +4038,16 @@ public class Parser {
                 if (lhs instanceof Identifier && "eval".equals(((Identifier) lhs).getName())) {
                     context.funContext.directEval = true;
                 }
+                line = ts.getLine();
                 List<Expression> args = arguments();
                 lhs = new CallExpression(lhs, args);
-                lhs.setLine(ts.getLine());
+                lhs.setLine(line);
                 break;
             case TEMPLATE:
+                line = ts.getLine();
                 TemplateLiteral templ = templateLiteral(true);
                 lhs = new TemplateCallExpression(lhs, templ);
-                lhs.setLine(ts.getLine());
+                lhs.setLine(line);
                 break;
             default:
                 return lhs;
@@ -4096,10 +4127,11 @@ public class Parser {
         case ADD:
         case SUB:
         case BITNOT:
-        case NOT:
+        case NOT: {
+            int line = ts.getLine();
             consume(tok);
             UnaryExpression unary = new UnaryExpression(unaryOp(tok, false), unaryExpression());
-            unary.setLine(ts.getLine());
+            unary.setLine(line);
             if (tok == Token.INC || tok == Token.DEC) {
                 if (validateSimpleAssignment(unary.getOperand()) == null) {
                     reportReferenceError(Messages.Key.InvalidIncDecTarget);
@@ -4112,7 +4144,8 @@ public class Parser {
                 }
             }
             return unary;
-        default:
+        }
+        default: {
             Expression lhs = leftHandSideExpression(true);
             if (noLineTerminator()) {
                 tok = token();
@@ -4120,11 +4153,15 @@ public class Parser {
                     if (validateSimpleAssignment(lhs) == null) {
                         reportReferenceError(Messages.Key.InvalidIncDecTarget);
                     }
+                    int line = ts.getLine();
                     consume(tok);
-                    return new UnaryExpression(unaryOp(tok, true), lhs);
+                    UnaryExpression unary = new UnaryExpression(unaryOp(tok, true), lhs);
+                    unary.setLine(line);
+                    return unary;
                 }
             }
             return lhs;
+        }
         }
     }
 
