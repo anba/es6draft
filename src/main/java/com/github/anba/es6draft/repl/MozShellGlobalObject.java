@@ -124,7 +124,7 @@ public final class MozShellGlobalObject extends GlobalObject {
      * Compiles the "mozlegacy.js" script-file
      */
     public static Script compileLegacy(ScriptCache scriptCache) throws ParserException, IOException {
-        String sourceName = "mozlegacy.js";
+        String sourceName = "/scripts/mozlegacy.js";
         InputStream stream = MozShellGlobalObject.class.getResourceAsStream(sourceName);
         return scriptCache.script(sourceName, 1, stream);
     }

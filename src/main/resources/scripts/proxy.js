@@ -5,80 +5,19 @@
  * <https://github.com/anba/es6draft>
  */
 
-(function JSLegacyExtensions(global) {
+(function OldProxyAPI(global) {
 "use strict";
 
 const Object = global.Object,
-      Function = global.Function,
       Array = global.Array,
-      String = global.String,
-      Boolean = global.Boolean,
-      Number = global.Number,
-      Math = global.Math,
-      Date = global.Date,
-      RegExp = global.RegExp,
-      Error = global.Error,
-      TypeError = global.TypeError,
-      JSON = global.JSON,
       Proxy = global.Proxy,
-      Map = global.Map,
-      Set = global.Set,
-      WeakMap = global.WeakMap,
-      Reflect = global.Reflect;
+      TypeError = global.TypeError;
 
-const Object_defineProperty = Object.defineProperty,
-      Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
-      Object_getOwnPropertyNames = Object.getOwnPropertyNames,
-      Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
-      Object_keys = Object.keys;
+const Object_create = Object.create,
+      Object_assign = Object.assign,
+      Array_from = Array.from;
 
-Object.defineProperty(global, getSym("@@toStringTag"), {
-  value: "global", writable: true, enumerable: false, configurable: true
-});
-
-Object.defineProperties(Object.assign(Object.prototype, {
-  __defineGetter__(name, getter) {
-    var obj = (this != null ? Object(this) : global);
-    Object_defineProperty(obj, name, {get: getter, enumerable: true, configurable: true});
-  },
-  __defineSetter__(name, setter) {
-    var obj = (this != null ? Object(this) : global);
-    Object_defineProperty(obj, name, {set: setter, enumerable: true, configurable: true});
-  },
-  __lookupGetter__(name) {
-    var p = this;
-    do {
-      var desc = Object_getOwnPropertyDescriptor(p, name);
-      if (desc && desc.get) return desc.get;
-    } while ((p = p.__proto__));
-  },
-  __lookupSetter__(name) {
-    var p = this;
-    do {
-      var desc = Object_getOwnPropertyDescriptor(p, name);
-      if (desc && desc.set) return desc.set;
-    } while ((p = p.__proto__));
-  }
-}), {
-  __defineGetter__: {enumerable: false},
-  __defineSetter__: {enumerable: false},
-  __lookupGetter__: {enumerable: false},
-  __lookupSetter__: {enumerable: false},
-});
-
-const String_prototype_replace = String.prototype.replace;
-
-Object.defineProperties(Object.assign(String.prototype, {
-  trimLeft() {
-    return String_prototype_replace.call(this, /^\s+/, "");
-  },
-  trimRight() {
-    return String_prototype_replace.call(this, /\s+$/, "");
-  },
-}), {
-  trimLeft: {enumerable: false},
-  trimRight: {enumerable: false},
-});
+const iteratorSym = getSym("@@iterator");
 
 function toProxyHandler(handler) {
   var TypeErrorThrower = () => { throw TypeError() };
@@ -100,7 +39,7 @@ function toProxyHandler(handler) {
     proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getPropertyDescriptor'](pk);
   }
   if ('getOwnPropertyNames' in handler) {
-    proxyHandler['ownKeys'] = () => Array.from(handler['getOwnPropertyNames']()).values();
+    proxyHandler['ownKeys'] = () => Array_from(handler['getOwnPropertyNames']()).values();
   }
   if ('defineProperty' in handler) {
     proxyHandler['defineProperty'] = (_, pk, desc) => (handler['defineProperty'](pk, desc), true);
@@ -124,6 +63,10 @@ function toProxyHandler(handler) {
     proxyHandler['get'] = (_, pk, receiver) => handler['get'](receiver, pk);
   } else {
     proxyHandler['get'] = (_, pk, receiver) => {
+      // XXX: special case for 'tests/for-of/proxy-3.js'
+      if (pk === iteratorSym) {
+        pk = "iterator";
+      }
       var desc = handler['getPropertyDescriptor'](pk);
       if (desc !== undefined && 'value' in desc) {
         return desc.value;
@@ -158,7 +101,7 @@ function toProxyHandler(handler) {
     };
   }
   if ('enumerate' in handler) {
-    proxyHandler['enumerate'] = () => Array.from(handler['enumerate']()).values();
+    proxyHandler['enumerate'] = () => Array_from(handler['enumerate']()).values();
   } else if ('iterate' in handler) {
     proxyHandler['enumerate'] = () => handler['iterate']();
   } else {
@@ -167,16 +110,16 @@ function toProxyHandler(handler) {
     ).values();
   }
   if ('keys' in handler) {
-    proxyHandler['ownKeys'] = () => Array.from(handler['keys']()).values();
+    proxyHandler['ownKeys'] = () => Array_from(handler['keys']()).values();
   }
   return proxyHandler;
 }
 
-Object.defineProperties(Object.assign(Proxy, {
+Object.defineProperties(Object_assign(Proxy, {
   create(handler, proto = null) {
     if (Object(handler) !== handler) throw TypeError();
-    var proxyTarget = Object.create(proto);
-    var proxyHandler = Object.assign({
+    var proxyTarget = Object_create(proto);
+    var proxyHandler = Object_assign({
       setPrototypeOf() { throw TypeError() }
     }, toProxyHandler(handler));
     return new Proxy(proxyTarget, proxyHandler);
@@ -186,7 +129,7 @@ Object.defineProperties(Object.assign(Proxy, {
     if (typeof callTrap != 'function') throw TypeError();
     if (typeof constructTrap != 'function') throw TypeError();
     var proxyTarget = function(){};
-    var proxyHandler = Object.assign({
+    var proxyHandler = Object_assign({
       setPrototypeOf() { throw TypeError() },
       apply(_, thisValue, args) { return callTrap.apply(thisValue, args) },
       construct(_, args) { return new constructTrap(...args) }
