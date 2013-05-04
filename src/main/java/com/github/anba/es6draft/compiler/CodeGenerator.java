@@ -133,6 +133,14 @@ class CodeGenerator {
         return methodNames.containsKey(node);
     }
 
+    final String methodName(Script node) {
+        return "!script";
+    }
+
+    final String methodName(Script node, int index) {
+        return "!script_" + index;
+    }
+
     private final String methodName(TemplateLiteral node) {
         String n = methodNames.get(node);
         if (n == null) {
@@ -153,13 +161,16 @@ class CodeGenerator {
         String n = methodNames.get(node);
         if (n == null) {
             String fname = node.getFunctionName();
-            n = addMethodName(node, !fname.isEmpty() ? fname : "anonymous");
+            if (fname.isEmpty()) {
+                fname = "anonymous";
+            }
+            n = addMethodName(node, '!' + fname);
         }
         return n;
     }
 
     private final String addMethodName(Node node, String name) {
-        String n = mangle(name + "_" + methodCounter.incrementAndGet());
+        String n = mangle(name + "~" + methodCounter.incrementAndGet());
         methodNames.put(node, n);
         return n;
     }
@@ -323,7 +334,7 @@ class CodeGenerator {
         for (int i = 0; i < index; ++i) {
             mv.loadExecutionContext();
             mv.loadCompletionValue();
-            mv.invokestatic(getClassName(), "script_" + i, desc);
+            mv.invokestatic(getClassName(), methodName(node, i), desc);
             mv.storeCompletionValue();
         }
 
@@ -474,23 +485,21 @@ class CodeGenerator {
     }
 
     private static class ScriptStatementVisitor extends StatementVisitorImpl {
-        static final String methodName = "script";
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
         private ScriptStatementVisitor(CodeGenerator codegen, Script node) {
-            super(codegen, methodName, methodDescriptor, node.isStrict(), node.isGlobalCode(),
-                    true, true);
+            super(codegen, codegen.methodName(node), methodDescriptor, node.isStrict(), node
+                    .isGlobalCode(), true, true);
         }
     }
 
     private static class ScriptChunkStatementVisitor extends StatementVisitorImpl {
-        static final String methodName = "script_";
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext, Types.Object);
 
         private ScriptChunkStatementVisitor(CodeGenerator codegen, Script node, int index) {
-            super(codegen, methodName + index, methodDescriptor, IsStrict(node), node
+            super(codegen, codegen.methodName(node, index), methodDescriptor, IsStrict(node), node
                     .isGlobalCode(), true, false);
         }
     }

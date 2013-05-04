@@ -95,10 +95,11 @@ public class ScriptLoader {
             com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options)
             throws ParserException {
         try {
+            String clazzName = "#" + className;
             Compiler compiler = new Compiler(options);
-            byte[] bytes = compiler.compile(parsedScript, className);
-            ClassLoader cl = new ByteClassLoader(className, bytes);
-            Class<?> c = cl.loadClass(className);
+            byte[] bytes = compiler.compile(parsedScript, clazzName);
+            ClassLoader cl = new ByteClassLoader(clazzName, bytes);
+            Class<?> c = cl.loadClass(clazzName);
             CompiledScript instance = (CompiledScript) c.newInstance();
             return instance;
         } catch (RuntimeException | Error e) {

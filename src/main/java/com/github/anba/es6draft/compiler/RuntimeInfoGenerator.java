@@ -137,6 +137,7 @@ class RuntimeInfoGenerator {
 
     void runtimeInfo(Script node) {
         String className = codegen.getClassName();
+        String methodName = codegen.methodName(node);
         InstructionVisitor mv = codegen.publicStaticMethod("script_rti", Methods.scriptRTI);
 
         mv.begin();
@@ -144,7 +145,7 @@ class RuntimeInfoGenerator {
         mv.iconst(IsStrict(node));
         mv.invokeStaticMH(className, "script_init", Methods.globalInit);
         mv.invokeStaticMH(className, "script_evalinit", Methods.evalInit);
-        mv.invokeStaticMH(className, "script", Methods.scriptCode);
+        mv.invokeStaticMH(className, methodName, Methods.scriptCode);
         mv.invoke(Methods.RTI_newScriptBody);
         mv.areturn();
 

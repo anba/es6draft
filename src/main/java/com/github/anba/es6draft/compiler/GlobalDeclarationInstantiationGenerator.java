@@ -82,11 +82,12 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     }
 
     void generate(Script script) {
-        InstructionVisitor init = codegen.publicStaticMethod(methodName, methodType);
-        init.begin();
-        generate(script, init);
-        init.areturn();
-        init.end();
+        InstructionVisitor mv = codegen.publicStaticMethod(methodName, methodType);
+        mv.lineInfo(script.getLine());
+        mv.begin();
+        generate(script, mv);
+        mv.areturn();
+        mv.end();
     }
 
     private void generate(Script script, InstructionVisitor mv) {

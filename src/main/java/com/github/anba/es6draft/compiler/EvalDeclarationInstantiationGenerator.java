@@ -68,11 +68,12 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
             Type.BOOLEAN_TYPE);
 
     void generate(Script evalScript) {
-        InstructionVisitor init = codegen.publicStaticMethod(methodName, methodType);
-        init.begin();
-        generate(evalScript, init);
-        init.areturn();
-        init.end();
+        InstructionVisitor mv = codegen.publicStaticMethod(methodName, methodType);
+        mv.lineInfo(evalScript.getLine());
+        mv.begin();
+        generate(evalScript, mv);
+        mv.areturn();
+        mv.end();
     }
 
     private void generate(Script evalScript, InstructionVisitor mv) {

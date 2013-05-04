@@ -93,6 +93,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(codegen, methodName,
                 IsStrict(func));
 
+        mv.lineInfo(func);
         mv.begin();
         mv.enterScope(func);
         generate(func, mv);

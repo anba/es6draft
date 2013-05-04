@@ -31,6 +31,7 @@ class IdentifierResolution {
     }
 
     ValType resolve(Identifier node, ExpressionVisitor mv) {
+        mv.lineInfo(node);
         return resolve(node.getName(), mv);
     }
 
@@ -39,6 +40,7 @@ class IdentifierResolution {
     }
 
     ValType resolveValue(Identifier node, ExpressionVisitor mv) {
+        mv.lineInfo(node);
         return resolveValue(node.getName(), mv);
     }
 
