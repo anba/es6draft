@@ -10,14 +10,18 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -88,5 +92,30 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             }
             return sname + ": " + smsg;
         }
+
+        @Accessor(name = "stack", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = false))
+        public static Object stack(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return getStackTrace(e);
+        }
+    }
+
+    private static String getStackTrace(ScriptException e) {
+        StringBuilder sb = new StringBuilder();
+        for (StackTraceElement element : e.getStackTrace()) {
+            String className = element.getClassName();
+            String methodName = element.getMethodName();
+            if (className.charAt(0) == '#' && methodName.charAt(0) == '!') {
+                int i = methodName.lastIndexOf('~');
+                sb.append(methodName.substring(1, (i != -1 ? i : methodName.length())));
+                sb.append('@').append(element.getFileName()).append(':')
+                        .append(element.getLineNumber()).append('\n');
+            }
+        }
+        return sb.toString();
     }
 }

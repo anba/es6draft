@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -28,10 +29,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public class ErrorObject extends OrdinaryObject {
     private final Realm realm;
     private boolean initialised = false;
+    private ScriptException exception = null;
 
     public ErrorObject(Realm realm) {
         super(realm);
         this.realm = realm;
+        this.exception = new ScriptException(this);
     }
 
     public boolean isInitialised() {
@@ -41,6 +44,10 @@ public class ErrorObject extends OrdinaryObject {
     public void initialise() {
         assert !this.initialised : "ErrorObject already initialised";
         this.initialised = true;
+    }
+
+    public ScriptException getException() {
+        return exception;
     }
 
     @Override
@@ -55,4 +62,5 @@ public class ErrorObject extends OrdinaryObject {
         }
         return "???";
     }
+
 }

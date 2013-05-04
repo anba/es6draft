@@ -38,6 +38,7 @@ import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
@@ -896,6 +897,9 @@ public final class ScriptRuntime {
      * 12.13 The throw Statement
      */
     public static ScriptException _throw(Object val) {
+        if (val instanceof ErrorObject) {
+            throw ((ErrorObject) val).getException();
+        }
         throw new ScriptException(val);
     }
 
