@@ -246,7 +246,10 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 Object replaceValue) {
             RegExpObject rx = thisRegExpValue(cx, thisValue);
             String string = ToFlatString(cx, s);
-            // FIXME: always call ToString(replValue) even if no match
+            // FIXME: spec issue - always call ToString(replValue) even if no match
+            if (!IsCallable(replaceValue)) {
+                replaceValue = ToFlatString(cx, replaceValue);
+            }
             List<Matcher> matches = new ArrayList<>();
             // cf. RegExp.prototype.match
             boolean global = ToBoolean(Get(cx, rx, "global"));
@@ -304,7 +307,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 RegExpConstructor.storeLastMatchResult(cx, rx, string,
                         matches.get(matches.size() - 1));
-                String replValue = ToFlatString(cx, replaceValue);
+                String replValue = (String) replaceValue;
                 StringBuilder result = new StringBuilder();
                 int lastMatch = 0;
                 for (MatchResult matchResult : matches) {
