@@ -303,6 +303,10 @@ public class TokenStream {
                 continue;
             }
 
+            c = input.get();
+            if (c == EOF) {
+                throw error(Messages.Key.UnterminatedTemplateLiteral);
+            }
             // EscapeSequence
             if (isLineTerminator(c)) {
                 // line continuation
