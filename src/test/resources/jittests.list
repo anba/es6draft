@@ -170,6 +170,9 @@ tests/basic/bug862228.js
 # Different realm change on function calls
 tests/collections/bug-743101.js
 
+# RegExp.prototype.replace resets RegExp statics after replacer function call
+tests/basic/testStaticsInRegExp.js
+
 
 ############################################
 # Misc proxy implementation isssues        #
@@ -363,17 +366,6 @@ tests/pic/watch2a.js
 tests/pic/watch3.js
 tests/pic/watch3a.js
 tests/pic/watch4.js
-
-# RegExp support for legacy feature $1, lastMatch
-tests/basic/bug691797-regexp-2.js
-tests/basic/bug820124-2.js
-tests/basic/bug854124.js
-tests/basic/regexp-multiline.js
-tests/basic/regexp-reset-input.js
-tests/basic/testStaticsInRegExp.js
-
-# Error.prototype.{stack,columnNumber,fileName,lineNumber}
-tests/basic/null-filename-Error.js
 
 
 #######################################

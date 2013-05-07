@@ -81,11 +81,6 @@ ecma/Date/15.9.5.js
 # RegExp.prototype
 ecma_5/RegExp/instance-property-storage-introspection.js
 
-# RegExp.prototype.{source,ignoreCase,global,multiline} now accessor
-ecma_5/Object/15.2.3.3-01.js
-ecma_5/Object/15.2.3.4-04.js
-ecma_5/strict/15.10.7.js
-
 
 ###################
 # Misc issues     #
@@ -187,6 +182,9 @@ js1_5/Regress/regress-58116.js
 js1_5/extensions/toLocaleFormat-01.js
 js1_5/extensions/toLocaleFormat-02.js
 
+# Error.prototype.stack vs. tail-calls
+js1_5/Exceptions/errstack-001.js
+
 # different error message
 ecma_3/Array/15.4.5.1-01.js
 ecma_3/Exceptions/15.11.5.js
@@ -238,6 +236,19 @@ js1_5/Regress/regress-259935.js
 # SpiderMonkey restriction test
 js1_8_5/regress/regress-610026.js
 js1_8_5/regress/regress-665355.js
+
+
+#######################################
+# ES6 related runtime changes         #
+#######################################
+
+# built-in functions are poisoned
+js1_8_5/regress/regress-591846.js
+
+# RegExp.prototype.{source,ignoreCase,global,multiline} now accessor
+ecma_5/Object/15.2.3.3-01.js
+ecma_5/Object/15.2.3.4-04.js
+ecma_5/strict/15.10.7.js
 
 
 #######################################
@@ -361,35 +372,11 @@ js1_8_5/regress/regress-533876.js
 js1_8_5/regress/regress-635195.js
 js1_8_5/regress/regress-636394.js
 
-# Error.prototype.{stack,columnNumber,fileName,lineNumber}
+# Error.prototype.columnNumber
 ecma/extensions/errorcolumnblame.js
-js1_5/Exceptions/regress-257751.js
-js1_5/Exceptions/errstack-001.js
-js1_5/extensions/regress-50447-1.js
-js1_5/Regress/regress-139316.js
-js1_5/Regress/regress-167328.js
-js1_5/Regress/regress-243869.js
 
-# RegExp.multiline, RegExp.lastMatch, RegExp.leftContext, RegExp.$n not supported
-ecma_3/Statements/regress-642975.js
-ecma_3/extensions/regress-220367-002.js
-js1_2/regexp/beginLine.js
-js1_2/regexp/endLine.js
-js1_2/regexp/RegExp_dollar_number.js
-js1_2/regexp/RegExp_lastMatch.js
-js1_2/regexp/RegExp_lastMatch_as_array.js
-js1_2/regexp/RegExp_lastParen.js
-js1_2/regexp/RegExp_lastParen_as_array.js
-js1_2/regexp/RegExp_leftContext.js
-js1_2/regexp/RegExp_leftContext_as_array.js
-js1_2/regexp/RegExp_multiline.js
-js1_2/regexp/RegExp_multiline_as_array.js
-js1_2/regexp/RegExp_rightContext.js
-js1_2/regexp/RegExp_rightContext_as_array.js
-js1_5/Regress/regress-330352.js
-js1_5/Regress/regress-418504.js
+# RegExp sticky-flag
 js1_7/regexp/yflag.js
-js1_8_5/regress/regress-591846.js
 
 
 #######################################

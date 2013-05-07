@@ -97,6 +97,7 @@ object-freeze.js
 object-get-own-property-names.js
 object-prevent-extensions.js
 object-seal.js
+regress/regress-1591.js
 regress/regress-1980.js
 
 # forward-slash not escaped in RegExp
@@ -142,25 +143,13 @@ function-names.js
 # Unsupported built-in object functions    #
 ############################################
 
-# Error.prototype.stack, Error.prototype.prepareStackTrace
+# V8 StackTrace API
 compiler/regress-stacktrace.js
-eval-stack-trace.js
-regress/regress-1591.js
-regress/regress-798.js
 regress/regress-2564.js
 regress/regress-conditional-position.js
 stack-traces.js
 stack-traces-2.js
-stack-traces-overflow.js
-
-# legacy RegExp properties ($1, etc)
-regexp-cache-replace.js
-regexp-capture-3.js
-regexp-global.js
-regexp-indexof.js
-regexp-static.js
-regress/regress-2058.js
-string-replace.js
+eval-stack-trace.js
 
 
 ###############################################################
@@ -280,6 +269,7 @@ cyclic-array-to-string.js
 error-tostring.js
 json-stringify-recursive.js
 json-parser-recursive.js
+stack-traces-overflow.js
 regress/regress-1129.js
 regress/regress-1132.js
 regress/regress-1215653.js
@@ -291,6 +281,7 @@ regress/regress-crbug-100859.js
 array-concat.js
 array-functions-prototype-misc.js
 array-unshift.js
+ascii-regexp-subject.js
 mul-exhaustive-part1.js
 mul-exhaustive-part2.js
 mul-exhaustive-part3.js
@@ -301,10 +292,15 @@ mul-exhaustive-part7.js
 mul-exhaustive-part8.js
 mul-exhaustive-part9.js
 mul-exhaustive-part10.js
+regexp-capture-3.js
 regress/regress-1200351.js
 regress/regress-581.js
+regress/regress-634.js
 regress/regress-685.js
 regress/regress-crbug-84186.js
+regress/regress-deep-proto.js
 sparse-array-reverse.js
 compiler/expression-trees.js
 compiler/regress-4.js
+compiler/regress-arguments.js
+compiler/regress-rep-change.js
