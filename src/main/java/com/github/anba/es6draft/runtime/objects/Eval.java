@@ -7,8 +7,6 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.ScriptLoader.ScriptEvaluation;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.EnumSet;
@@ -17,7 +15,6 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -138,10 +135,7 @@ public final class Eval {
             String className = cx.getRealm().nextEvalName();
             return ScriptLoader.load(className, parsedScript);
         } catch (ParserException e) {
-            if (e.getExceptionType() == ExceptionType.ReferenceError) {
-                throw throwReferenceError(cx, e.getMessageKey(), e.getMessageArguments());
-            }
-            throw throwSyntaxError(cx, e.getMessageKey(), e.getMessageArguments());
+            throw e.toScriptException(cx);
         }
     }
 }

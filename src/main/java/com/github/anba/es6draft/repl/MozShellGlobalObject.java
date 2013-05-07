@@ -9,8 +9,6 @@ package com.github.anba.es6draft.repl;
 import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.repl.WrapperProxy.CreateWrapProxy;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -33,7 +31,6 @@ import com.github.anba.es6draft.ast.ExpressionStatement;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
@@ -165,11 +162,7 @@ public final class MozShellGlobalObject extends GlobalObject {
         } catch (IOException e) {
             throw throwError(realm, e.getMessage());
         } catch (ParserException e) {
-            ExecutionContext cx = realm.defaultContext();
-            if (e.getExceptionType() == ExceptionType.ReferenceError) {
-                throw throwReferenceError(cx, e.getMessageKey(), e.getMessageArguments());
-            }
-            throw throwSyntaxError(cx, e.getMessageKey(), e.getMessageArguments());
+            throw e.toScriptException(realm.defaultContext());
         }
     }
 
@@ -179,11 +172,7 @@ public final class MozShellGlobalObject extends GlobalObject {
             Script script = scriptCache.script(sourceName, sourceLine, new StringReader(source));
             return ScriptLoader.ScriptEvaluation(script, realm, false);
         } catch (ParserException e) {
-            ExecutionContext cx = realm.defaultContext();
-            if (e.getExceptionType() == ExceptionType.ReferenceError) {
-                throw throwReferenceError(cx, e.getMessageKey(), e.getMessageArguments());
-            }
-            throw throwSyntaxError(cx, e.getMessageKey(), e.getMessageArguments());
+            throw e.toScriptException(realm.defaultContext());
         }
     }
 
@@ -220,11 +209,7 @@ public final class MozShellGlobalObject extends GlobalObject {
         } catch (IOException e) {
             throw throwError(realm, e.getMessage());
         } catch (ParserException e) {
-            ExecutionContext cx = realm.defaultContext();
-            if (e.getExceptionType() == ExceptionType.ReferenceError) {
-                throw throwReferenceError(cx, e.getMessageKey(), e.getMessageArguments());
-            }
-            throw throwSyntaxError(cx, e.getMessageKey(), e.getMessageArguments());
+            throw e.toScriptException(realm.defaultContext());
         }
     }
 

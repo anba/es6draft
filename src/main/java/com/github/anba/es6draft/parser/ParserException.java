@@ -6,10 +6,15 @@
  */
 package com.github.anba.es6draft.parser;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
+
 import java.text.MessageFormat;
 import java.util.Locale;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 
 /**
  * {@link RuntimeException} subclass for parser exceptions
@@ -50,6 +55,13 @@ public class ParserException extends RuntimeException {
         String pattern = Messages.create(locale).getString(messageKey);
         MessageFormat format = new MessageFormat(pattern, locale);
         return format.format(messageArguments);
+    }
+
+    public ScriptException toScriptException(ExecutionContext cx) {
+        if (getExceptionType() == ExceptionType.ReferenceError) {
+            return throwReferenceError(cx, messageKey, messageArguments);
+        }
+        return throwSyntaxError(cx, messageKey, messageArguments);
     }
 
     public ExceptionType getExceptionType() {

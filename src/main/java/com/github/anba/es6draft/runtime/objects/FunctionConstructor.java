@@ -7,8 +7,6 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
@@ -16,7 +14,6 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -94,10 +91,7 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
             String className = cx.getRealm().nextFunctionName();
             return ScriptLoader.load(className, parsedScript);
         } catch (ParserException e) {
-            if (e.getExceptionType() == ExceptionType.ReferenceError) {
-                throw throwReferenceError(cx, e.getMessageKey(), e.getMessageArguments());
-            }
-            throw throwSyntaxError(cx, e.getMessageKey(), e.getMessageArguments());
+            throw e.toScriptException(cx);
         }
     }
 
