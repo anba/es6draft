@@ -240,6 +240,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                     && HasProperty(cx, Type.objectValue(searchValue), BuiltinSymbol.isRegExp.get())) {
                 return Invoke(cx, Type.objectValue(searchValue), "replace", string, replaceValue);
             }
+            // FIXME: always call ToString(replValue) even if no match
             String searchString = ToFlatString(cx, searchValue);
             int pos = string.indexOf(searchString);
             if (pos < 0) {
@@ -262,7 +263,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         /**
          * Runtime Semantics: GetReplaceSubstitution Abstract Operation
          */
-        public static String GetReplaceSubstitution(String matched, String replValue,
+        private static String GetReplaceSubstitution(String matched, String replValue,
                 String string, int position) {
             int matchLength = matched.length();
             int stringLength = string.length();
