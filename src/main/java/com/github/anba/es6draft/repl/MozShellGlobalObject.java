@@ -266,22 +266,26 @@ public final class MozShellGlobalObject extends GlobalObject {
         boolean catchTermination = false;
         ScriptObject global = realm.getGlobalThis();
         if (Type.isObject(options)) {
-            ScriptObject opts = Type.objectValue(options);
             ExecutionContext cx = realm.defaultContext();
-            if (opts.hasProperty(cx, "fileName")) {
-                sourceName = ToFlatString(cx, opts.get(cx, "fileName", opts));
+            ScriptObject opts = Type.objectValue(options);
+
+            Object fileName = opts.get(cx, "fileName", opts);
+            if (!Type.isUndefined(fileName)) {
+                sourceName = Type.isNull(fileName) ? "" : ToFlatString(cx, fileName);
             }
-            if (opts.hasProperty(cx, "lineNumber")) {
-                sourceLine = ToInt32(cx, opts.get(cx, "lineNumber", opts));
+            Object lineNumber = opts.get(cx, "lineNumber", opts);
+            if (!Type.isUndefined(lineNumber)) {
+                sourceLine = ToInt32(cx, lineNumber);
             }
-            noScriptRval = ToBoolean(opts.get(cx, "noScriptRval", opts));
-            catchTermination = ToBoolean(opts.get(cx, "catchTermination", opts));
-            if (opts.hasProperty(cx, "global")) {
-                global = ToObject(cx, opts.get(cx, "global", opts));
+            Object g = opts.get(cx, "global", opts);
+            if (!Type.isUndefined(g)) {
+                global = ToObject(cx, g);
                 if (!(global instanceof GlobalObject)) {
                     throwError(realm, "invalid global argument");
                 }
             }
+            noScriptRval = ToBoolean(opts.get(cx, "noScriptRval", opts));
+            catchTermination = ToBoolean(opts.get(cx, "catchTermination", opts));
         }
 
         try {
