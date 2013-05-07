@@ -443,6 +443,9 @@
           <includes>
             <include>src/**</include>
           </includes>
+          <mapping>
+            <list>SCRIPT_STYLE</list>
+          </mapping>
           <properties>
             <year>${project.inceptionYear}-${currentYear}</year>
             <name>${owner}</name>
