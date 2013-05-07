@@ -9,37 +9,50 @@
 "use strict";
 
 const Object = global.Object,
-      String = global.String;
+      String = global.String,
+      TypeError = global.TypeError;
 
 Object.defineProperty(global, getSym("@@toStringTag"), {
   value: "global", writable: true, enumerable: false, configurable: true
 });
 
 const Object_defineProperty = Object.defineProperty,
+      Object_getPrototypeOf = Object.getPrototypeOf,
       Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+
+function ToPropertyKey(pk) {
+  // only string valued property keys here
+  return String(pk);
+}
 
 Object.defineProperties(Object.assign(Object.prototype, {
   __defineGetter__(name, getter) {
+    if (typeof getter != 'function') throw TypeError();
+    var pk = ToPropertyKey(name);
     var obj = (this != null ? Object(this) : global);
-    Object_defineProperty(obj, name, {get: getter, enumerable: true, configurable: true});
+    Object_defineProperty(obj, pk, {get: getter, enumerable: true, configurable: true});
   },
   __defineSetter__(name, setter) {
+    if (typeof setter != 'function') throw TypeError();
+    var pk = ToPropertyKey(name);
     var obj = (this != null ? Object(this) : global);
-    Object_defineProperty(obj, name, {set: setter, enumerable: true, configurable: true});
+    Object_defineProperty(obj, pk, {set: setter, enumerable: true, configurable: true});
   },
   __lookupGetter__(name) {
-    var p = this;
+    var pk = ToPropertyKey(name);
+    var p = (this != null ? Object(this) : this);
     do {
-      var desc = Object_getOwnPropertyDescriptor(p, name);
-      if (desc && desc.get) return desc.get;
-    } while ((p = p.__proto__));
+      var desc = Object_getOwnPropertyDescriptor(p, pk);
+      if (desc) return desc.get;
+    } while ((p = Object_getPrototypeOf(p)));
   },
   __lookupSetter__(name) {
-    var p = this;
+    var pk = ToPropertyKey(name);
+    var p = (this != null ? Object(this) : this);
     do {
-      var desc = Object_getOwnPropertyDescriptor(p, name);
-      if (desc && desc.set) return desc.set;
-    } while ((p = p.__proto__));
+      var desc = Object_getOwnPropertyDescriptor(p, pk);
+      if (desc) return desc.set;
+    } while ((p = Object_getPrototypeOf(p)));
   }
 }), {
   __defineGetter__: {enumerable: false},
