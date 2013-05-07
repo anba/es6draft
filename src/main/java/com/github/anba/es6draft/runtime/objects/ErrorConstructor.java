@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -50,6 +51,8 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
 
     /**
      * 15.11.1.1 Error (message)
+     * <p>
+     * <strong>Extension</strong>: Error (message, fileName, lineNumber)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -71,6 +74,14 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
             CharSequence msg = ToString(calleeContext, message);
             // FIXME: spec bug - no longer non-enumerable (Bug 1404)
             CreateOwnDataProperty(calleeContext, obj, "message", msg);
+        }
+        if (args.length > 1) {
+            CharSequence fileName = ToString(calleeContext, args[1]);
+            CreateOwnDataProperty(calleeContext, obj, "fileName", fileName);
+        }
+        if (args.length > 2) {
+            int lineNumber = ToInt32(calleeContext, args[2]);
+            CreateOwnDataProperty(calleeContext, obj, "lineNumber", lineNumber);
         }
 
         return obj;

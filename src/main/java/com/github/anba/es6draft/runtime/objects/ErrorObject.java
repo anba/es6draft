@@ -62,5 +62,4 @@ public class ErrorObject extends OrdinaryObject {
         }
         return "???";
     }
-
 }
