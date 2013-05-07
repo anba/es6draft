@@ -6,11 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
-import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.Strings.isLineTerminator;
@@ -19,6 +15,8 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import java.util.BitSet;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -29,6 +27,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -57,6 +56,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
+        createProperties(this, cx, RegExpStatics.class);
         AddRestrictedFunctionProperties(cx, this);
     }
 
@@ -294,6 +294,280 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return RegExpAllocate(cx, thisValue);
+        }
+    }
+
+    /*
+     * RegExp statics extensions below this point
+     */
+
+    private static RegExpConstructor getRegExp(ExecutionContext cx) {
+        return (RegExpConstructor) cx.getIntrinsic(Intrinsics.RegExp);
+    }
+
+    private static final MatchResult EMPTY_MATCH_RESULT;
+    static {
+        Matcher m = Pattern.compile("").matcher("");
+        m.matches();
+        EMPTY_MATCH_RESULT = m;
+    }
+
+    private boolean defaultMultiline = false;
+    private RegExpObject lastRegExpObject;
+    private CharSequence lastInput = "";
+    private MatchResult lastMatchResult = EMPTY_MATCH_RESULT;
+
+    public boolean isDefaultMultiline() {
+        return defaultMultiline;
+    }
+
+    public void setDefaultMultiline(boolean defaultMultiline) {
+        this.defaultMultiline = defaultMultiline;
+    }
+
+    public RegExpObject getLastRegExpObject() {
+        return lastRegExpObject;
+    }
+
+    public CharSequence getLastInput() {
+        return lastInput;
+    }
+
+    public MatchResult getLastMatchResult() {
+        return lastMatchResult;
+    }
+
+    public static void storeLastMatchResult(ExecutionContext cx, RegExpObject rx,
+            CharSequence input, MatchResult matchResult) {
+        RegExpConstructor re = getRegExp(cx);
+        re.lastRegExpObject = rx;
+        re.lastInput = input;
+        re.lastMatchResult = matchResult;
+    }
+
+    public enum RegExpStatics {
+        ;
+
+        private static String group(RegExpConstructor re, int group) {
+            assert group > 0;
+            if (group > re.getLastMatchResult().groupCount()) {
+                return "";
+            }
+            String[] groups = RegExpPrototype.groups(re.getLastRegExpObject(),
+                    re.getLastMatchResult());
+            return (groups[group] != null ? groups[group] : "");
+        }
+
+        /**
+         * Extension: RegExp.$*
+         */
+        @Accessor(name = "$*", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = false))
+        public static Object get_$multiline(ExecutionContext cx, Object thisValue) {
+            return get_multiline(cx, thisValue);
+        }
+
+        /**
+         * Extension: RegExp.$*
+         */
+        @Accessor(name = "$*", type = Accessor.Type.Setter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = false))
+        public static Object set_$multiline(ExecutionContext cx, Object thisValue, Object value) {
+            return set_multiline(cx, thisValue, value);
+        }
+
+        /**
+         * Extension: RegExp.multiline
+         */
+        @Accessor(name = "multiline", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object get_multiline(ExecutionContext cx, Object thisValue) {
+            return getRegExp(cx).isDefaultMultiline();
+        }
+
+        /**
+         * Extension: RegExp.multiline
+         */
+        @Accessor(name = "multiline", type = Accessor.Type.Setter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object set_multiline(ExecutionContext cx, Object thisValue, Object value) {
+            getRegExp(cx).setDefaultMultiline(ToBoolean(value));
+            return UNDEFINED;
+        }
+
+        /**
+         * Extension: RegExp.$_
+         */
+        @Accessor(name = "$_", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = false))
+        public static Object $input(ExecutionContext cx, Object thisValue) {
+            return input(cx, thisValue);
+        }
+
+        /**
+         * Extension: RegExp.input
+         */
+        @Accessor(name = "input", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object input(ExecutionContext cx, Object thisValue) {
+            return getRegExp(cx).getLastInput();
+        }
+
+        /**
+         * Extension: RegExp.$&
+         */
+        @Accessor(name = "$&", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = false))
+        public static Object $lastMatch(ExecutionContext cx, Object thisValue) {
+            return lastMatch(cx, thisValue);
+        }
+
+        /**
+         * Extension: RegExp.lastMatch
+         */
+        @Accessor(name = "lastMatch", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object lastMatch(ExecutionContext cx, Object thisValue) {
+            return getRegExp(cx).getLastMatchResult().group();
+        }
+
+        /**
+         * Extension: RegExp.$+
+         */
+        @Accessor(name = "$+", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = false))
+        public static Object $lastParen(ExecutionContext cx, Object thisValue) {
+            return lastParen(cx, thisValue);
+        }
+
+        /**
+         * Extension: RegExp.lastParen
+         */
+        @Accessor(name = "lastParen", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object lastParen(ExecutionContext cx, Object thisValue) {
+            RegExpConstructor re = getRegExp(cx);
+            int groups = re.getLastMatchResult().groupCount();
+            return (groups > 0 ? group(re, groups) : "");
+        }
+
+        /**
+         * Extension: RegExp.$`
+         */
+        @Accessor(name = "$`", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = false))
+        public static Object $leftContext(ExecutionContext cx, Object thisValue) {
+            return leftContext(cx, thisValue);
+        }
+
+        /**
+         * Extension: RegExp.leftContext
+         */
+        @Accessor(name = "leftContext", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object leftContext(ExecutionContext cx, Object thisValue) {
+            RegExpConstructor re = getRegExp(cx);
+            return re.getLastInput().toString().substring(0, re.getLastMatchResult().start());
+        }
+
+        /**
+         * Extension: RegExp.$'
+         */
+        @Accessor(name = "$'", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = false))
+        public static Object $rightContext(ExecutionContext cx, Object thisValue) {
+            return rightContext(cx, thisValue);
+        }
+
+        /**
+         * Extension: RegExp.rightContext
+         */
+        @Accessor(name = "rightContext", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object rightContext(ExecutionContext cx, Object thisValue) {
+            RegExpConstructor re = getRegExp(cx);
+            return re.getLastInput().toString().substring(re.getLastMatchResult().end());
+        }
+
+        /**
+         * Extension: RegExp.$1
+         */
+        @Accessor(name = "$1", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object $1(ExecutionContext cx, Object thisValue) {
+            return group(getRegExp(cx), 1);
+        }
+
+        /**
+         * Extension: RegExp.$2
+         */
+        @Accessor(name = "$2", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object $2(ExecutionContext cx, Object thisValue) {
+            return group(getRegExp(cx), 2);
+        }
+
+        /**
+         * Extension: RegExp.$3
+         */
+        @Accessor(name = "$3", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object $3(ExecutionContext cx, Object thisValue) {
+            return group(getRegExp(cx), 3);
+        }
+
+        /**
+         * Extension: RegExp.$4
+         */
+        @Accessor(name = "$4", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object $4(ExecutionContext cx, Object thisValue) {
+            return group(getRegExp(cx), 4);
+        }
+
+        /**
+         * Extension: RegExp.$5
+         */
+        @Accessor(name = "$5", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object $5(ExecutionContext cx, Object thisValue) {
+            return group(getRegExp(cx), 5);
+        }
+
+        /**
+         * Extension: RegExp.$6
+         */
+        @Accessor(name = "$6", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object $6(ExecutionContext cx, Object thisValue) {
+            return group(getRegExp(cx), 6);
+        }
+
+        /**
+         * Extension: RegExp.$7
+         */
+        @Accessor(name = "$7", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object $7(ExecutionContext cx, Object thisValue) {
+            return group(getRegExp(cx), 7);
+        }
+
+        /**
+         * Extension: RegExp.$8
+         */
+        @Accessor(name = "$8", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object $8(ExecutionContext cx, Object thisValue) {
+            return group(getRegExp(cx), 8);
+        }
+
+        /**
+         * Extension: RegExp.$9
+         */
+        @Accessor(name = "$9", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = true, configurable = false))
+        public static Object $9(ExecutionContext cx, Object thisValue) {
+            return group(getRegExp(cx), 9);
         }
     }
 }
