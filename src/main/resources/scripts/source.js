@@ -233,7 +233,7 @@ Object.defineProperty(Object.assign(RegExp.prototype, {
 
 Object.defineProperty(Object.assign(Error.prototype, {
   toSource() {
-    return "(new " + this.name + "(" + ToSource(this.message) + "))";
+    return `(new ${this.name}(${ToSource(this.message)}, ${ToSource(this.fileName)}, ${ToSource(this.lineNumber)}))`;
   }
 }), "toSource", {enumerable: false});
 
