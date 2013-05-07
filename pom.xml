@@ -389,12 +389,14 @@
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/resources/scripts">
                     <include name="*.js" />
+                    <exclude name="stacktrace.js" />
                   </fileset>
                 </concat>
                 <concat destfile="${project.build.outputDirectory}/scripts/jslegacy.js"
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/resources/scripts">
                     <include name="compat.js" />
+                    <include name="stacktrace.js" />
                     <include name="proxy.js" />
                   </fileset>
                 </concat>
