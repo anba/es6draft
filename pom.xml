@@ -389,6 +389,7 @@
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/resources/scripts">
                     <include name="*.js" />
+                    <exclude name="generator.js" />
                     <exclude name="stacktrace.js" />
                   </fileset>
                 </concat>
@@ -396,8 +397,9 @@
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/resources/scripts">
                     <include name="compat.js" />
-                    <include name="stacktrace.js" />
+                    <include name="generator.js" />
                     <include name="proxy.js" />
+                    <include name="stacktrace.js" />
                   </fileset>
                 </concat>
               </target>

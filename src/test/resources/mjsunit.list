@@ -29,7 +29,7 @@ harmony/generators-iteration.js
 # yield statement/expression syntax not yet settled
 harmony/generators-parsing.js
 
-# V8 generators don't have close()
+# V8 generators: (function*(){}).prototype instanceof Object.getPrototypeOf(function*(){}) is true
 harmony/generators-runtime.js
 
 # modules not yet enabled
