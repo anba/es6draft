@@ -147,6 +147,10 @@
           <include>build-date</include>
         </includes>
       </resource>
+      <resource>
+        <directory>${project.basedir}/src/main/scripts</directory>
+        <targetPath>scripts</targetPath>
+      </resource>
     </resources>
     <testResources>
       <testResource>
@@ -298,8 +302,9 @@
           </execution>
         </executions>
         <configuration>
-          <timestampFormat>DD/MMM/YYYY</timestampFormat>
+          <timestampFormat>yyyy-MM-dd HH:mm:ss '('zzz')'</timestampFormat>
           <timestampPropertyName>builddate</timestampPropertyName>
+          <locale>en_US</locale>
         </configuration>
       </plugin>
 
@@ -377,7 +382,7 @@
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
           <execution>
-            <id>antrun-resources</id>
+            <id>antrun-scripts</id>
             <phase>process-resources</phase>
             <goals>
               <goal>run</goal>
@@ -387,15 +392,19 @@
               <target>
                 <concat destfile="${project.build.outputDirectory}/scripts/mozlegacy.js"
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
-                  <fileset dir="${project.basedir}/src/main/resources/scripts">
-                    <include name="*.js" />
-                    <exclude name="generator.js" />
-                    <exclude name="stacktrace.js" />
+                  <fileset dir="${project.basedir}/src/main/scripts">
+                    <include name="compat.js" />
+                    <include name="it_object.js" />
+                    <include name="iterator.js" />
+                    <include name="proxy.js" />
+                    <include name="source.js" />
+                    <include name="statics.js" />
+                    <include name="string.js" />
                   </fileset>
                 </concat>
-                <concat destfile="${project.build.outputDirectory}/scripts/jslegacy.js"
+                <concat destfile="${project.build.outputDirectory}/scripts/v8legacy.js"
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
-                  <fileset dir="${project.basedir}/src/main/resources/scripts">
+                  <fileset dir="${project.basedir}/src/main/scripts">
                     <include name="compat.js" />
                     <include name="generator.js" />
                     <include name="proxy.js" />

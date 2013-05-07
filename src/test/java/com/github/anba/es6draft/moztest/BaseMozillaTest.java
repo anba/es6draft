@@ -135,6 +135,7 @@ public abstract class BaseMozillaTest {
                 case "mjitalways":
                 case "mjit":
                 case "no-jm":
+                case "no-ion":
                 case "ion-eager":
                 case "dump-bytecode":
                     // ignore for now...

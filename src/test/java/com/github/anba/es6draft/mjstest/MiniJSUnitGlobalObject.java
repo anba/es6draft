@@ -72,10 +72,10 @@ public class MiniJSUnitGlobalObject extends GlobalObject {
     }
 
     /**
-     * Compiles the "jslegacy.js" script-file
+     * Compiles the "v8legacy.js" script-file
      */
     public static Script compileLegacy(ScriptCache scriptCache) throws ParserException, IOException {
-        String sourceName = "/scripts/jslegacy.js";
+        String sourceName = "/scripts/v8legacy.js";
         InputStream stream = MiniJSUnitGlobalObject.class.getResourceAsStream(sourceName);
         return scriptCache.script(sourceName, 1, stream);
     }
