@@ -6,15 +6,21 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -93,29 +99,142 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             return sname + ": " + smsg;
         }
 
-        @Accessor(name = "stack", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = false))
-        public static Object stack(ExecutionContext cx, Object thisValue) {
+        /**
+         * Extension: Error.prototype.fileName
+         */
+        @Accessor(name = "fileName", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = true))
+        public static Object get_fileName(ExecutionContext cx, Object thisValue) {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
             ScriptException e = ((ErrorObject) thisValue).getException();
-            return getStackTrace(e);
+            return getTopStackTraceElement(e).getFileName();
+        }
+
+        /**
+         * Extension: Error.prototype.fileName
+         */
+        @Accessor(name = "fileName", type = Accessor.Type.Setter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = true))
+        public static Object set_fileName(ExecutionContext cx, Object thisValue, Object value) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            CreateOwnDataProperty(cx, (ErrorObject) thisValue, "fileName", value);
+            return UNDEFINED;
+        }
+
+        /**
+         * Extension: Error.prototype.lineNumber
+         */
+        @Accessor(name = "lineNumber", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = true))
+        public static Object get_lineNumber(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return getTopStackTraceElement(e).getLineNumber();
+        }
+
+        /**
+         * Extension: Error.prototype.lineNumber
+         */
+        @Accessor(name = "lineNumber", type = Accessor.Type.Setter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = true))
+        public static Object set_lineNumber(ExecutionContext cx, Object thisValue, Object value) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            CreateOwnDataProperty(cx, (ErrorObject) thisValue, "lineNumber", value);
+            return UNDEFINED;
+        }
+
+        /**
+         * Extension: Error.prototype.stack
+         */
+        @Accessor(name = "stack", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = true))
+        public static Object get_stack(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return getStack(e);
+        }
+
+        /**
+         * Extension: Error.prototype.stack
+         */
+        @Accessor(name = "stack", type = Accessor.Type.Setter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = true))
+        public static Object set_stack(ExecutionContext cx, Object thisValue, Object value) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            CreateOwnDataProperty(cx, (ErrorObject) thisValue, "stack", value);
+            return UNDEFINED;
+        }
+
+        /**
+         * Extension: Error.prototype.stacktrace
+         */
+        @Accessor(name = "stacktrace", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = false))
+        public static Object get_stacktrace(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            ScriptException e = ((ErrorObject) thisValue).getException();
+            return getStackTrace(cx, e);
         }
     }
 
-    private static String getStackTrace(ScriptException e) {
+    private static StackTraceElement getTopStackTraceElement(ScriptException e) {
+        for (StackTraceElement element : e.getStackTrace()) {
+            if (isInternalStackFrame(element)) {
+                return element;
+            }
+        }
+        return new StackTraceElement("", "", "", -1);
+    }
+
+    private static String getStack(ScriptException e) {
         StringBuilder sb = new StringBuilder();
         for (StackTraceElement element : e.getStackTrace()) {
-            String className = element.getClassName();
-            String methodName = element.getMethodName();
-            if (className.charAt(0) == '#' && methodName.charAt(0) == '!') {
-                int i = methodName.lastIndexOf('~');
-                sb.append(methodName.substring(1, (i != -1 ? i : methodName.length())));
-                sb.append('@').append(element.getFileName()).append(':')
-                        .append(element.getLineNumber()).append('\n');
+            if (isInternalStackFrame(element)) {
+                sb.append(getMethodName(element)).append('@').append(element.getFileName())
+                        .append(':').append(element.getLineNumber()).append('\n');
             }
         }
         return sb.toString();
+    }
+
+    private static ScriptObject getStackTrace(ExecutionContext cx, ScriptException e) {
+        List<ScriptObject> elements = new ArrayList<>();
+        for (StackTraceElement element : e.getStackTrace()) {
+            if (isInternalStackFrame(element)) {
+                OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+                CreateOwnDataProperty(cx, elem, "methodName", getMethodName(element));
+                CreateOwnDataProperty(cx, elem, "fileName", element.getFileName());
+                CreateOwnDataProperty(cx, elem, "lineNumber", element.getLineNumber());
+                elements.add(elem);
+            }
+        }
+        return CreateArrayFromList(cx, elements);
+    }
+
+    private static boolean isInternalStackFrame(StackTraceElement element) {
+        // filter internal stacktrace elements based on the encoding in CodeGenerator
+        return (element.getClassName().charAt(0) == '#' && JVMNames.fromBytecodeName(
+                element.getMethodName()).charAt(0) == '!');
+    }
+
+    private static String getMethodName(StackTraceElement element) {
+        String methodName = JVMNames.fromBytecodeName(element.getMethodName());
+        assert methodName.charAt(0) == '!';
+        int i = methodName.lastIndexOf('~');
+        return methodName.substring(1, (i != -1 ? i : methodName.length()));
     }
 }
