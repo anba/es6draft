@@ -56,7 +56,7 @@ import com.github.anba.es6draft.util.Parallelized;
  *
  */
 @RunWith(Parallelized.class)
-public class MiniJSUnit {
+public class MiniJSUnitTest {
 
     /**
      * Returns a {@link Path} which points to the test directory 'v8.test.mjsunit'
@@ -223,7 +223,7 @@ public class MiniJSUnit {
         }
         // disable tests
         List<TestInfo> disabledTests = new ArrayList<>();
-        InputStream res = MiniJSUnit.class.getResourceAsStream(filename);
+        InputStream res = MiniJSUnitTest.class.getResourceAsStream(filename);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(res,
                 StandardCharsets.UTF_8))) {
             String line;
