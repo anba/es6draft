@@ -143,9 +143,6 @@ public class TokenStream {
             nextposition = input.position();
             next = scanTokenNoComment();
         }
-        if (hasLineTerminator) {
-            line += 1;
-        }
         current = next;
         position = nextposition;
         hasCurrentLineTerminator = hasLineTerminator;
@@ -392,15 +389,13 @@ public class TokenStream {
                     continue;
                 }
                 if (c == '\n') {
-                    if (hasLineTerminator)
-                        line += 1;
+                    line += 1;
                     hasLineTerminator = true;
                     continue;
                 }
                 if (c == '\r') {
                     match('\n');
-                    if (hasLineTerminator)
-                        line += 1;
+                    line += 1;
                     hasLineTerminator = true;
                     continue;
                 }
@@ -410,8 +405,7 @@ public class TokenStream {
                     continue;
                 }
                 if (isLineTerminator(c)) {
-                    if (hasLineTerminator)
-                        line += 1;
+                    line += 1;
                     hasLineTerminator = true;
                     continue;
                 }
@@ -769,8 +763,6 @@ public class TokenStream {
 
     private Token readMultiComment() {
         final int EOF = TokenStreamInput.EOF;
-        @SuppressWarnings("unused")
-        int start = line;
         TokenStreamInput input = this.input;
         loop: for (;;) {
             int c = input.get();
@@ -782,8 +774,7 @@ public class TokenStream {
                 if (c == '\r') {
                     match('\n');
                 }
-                if (hasLineTerminator)
-                    line += 1;
+                line += 1;
                 hasLineTerminator = true;
             }
             if (c == EOF) {
