@@ -76,11 +76,6 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
-        @Function(name = "toSource", arity = 0)
-        public static Object toSource(ExecutionContext cx, Object thisValue) {
-            return toString(cx, thisValue);
-        }
-
         /**
          * 15.10.6.1 RegExp.prototype.constructor
          */

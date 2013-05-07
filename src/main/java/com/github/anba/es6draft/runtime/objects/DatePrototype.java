@@ -129,13 +129,6 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
-        @Function(name = "toSource", arity = 0)
-        public static Object toSource(ExecutionContext cx, Object thisValue) {
-            double t = thisTimeValue(cx, thisValue);
-            return new StringBuilder().append("(new Date(").append(ToString(t)).append("))")
-                    .toString();
-        }
-
         /**
          * 15.9.5.1 Date.prototype.constructor
          */
