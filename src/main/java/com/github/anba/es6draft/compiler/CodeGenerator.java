@@ -32,6 +32,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
+import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 
 /**
@@ -170,64 +171,9 @@ class CodeGenerator {
     }
 
     private final String addMethodName(Node node, String name) {
-        String n = mangle(name + "~" + methodCounter.incrementAndGet());
+        String n = JVMNames.toBytecodeName(name + "~" + methodCounter.incrementAndGet());
         methodNames.put(node, n);
         return n;
-    }
-
-    private String mangle(String n) {
-        // https://blogs.oracle.com/jrose/entry/symbolic_freedom_in_the_vm
-        int length = n.length();
-        if (length == 0) {
-            return "\\=";
-        }
-        NO_ESCAPE: {
-            for (int i = 0; i < length; ++i) {
-                char c = n.charAt(i);
-                if (getCharacterEscape(c) != c) {
-                    break NO_ESCAPE;
-                }
-            }
-            return n;
-        }
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; ++i) {
-            char c = n.charAt(i);
-            char d = getCharacterEscape(c);
-            if (c == d) {
-                sb.append(c);
-            } else {
-                sb.append('\\').append(d);
-            }
-        }
-        return sb.toString();
-    }
-
-    private static char getCharacterEscape(char c) {
-        switch (c) {
-        case '/':
-            return '|';
-        case '.':
-            return ',';
-        case ';':
-            return '?';
-        case '$':
-            return '%';
-        case '<':
-            return '^';
-        case '>':
-            return '_';
-        case '[':
-            return '{';
-        case ']':
-            return '}';
-        case ':':
-            return '!';
-        case '\\':
-            return '-';
-        default:
-            return c;
-        }
     }
 
     /**
