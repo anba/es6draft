@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.Console;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
@@ -172,7 +171,7 @@ public class Repl {
         Path script = Paths.get("./.");
         Path libDir = Paths.get("");
         ReplConsole console = new ReplConsole(this.console);
-        ScriptCache scriptCache = new ScriptCache(StandardCharsets.UTF_8);
+        ScriptCache scriptCache = new ScriptCache();
         Script initScript = null;
         try {
             initScript = MozShellGlobalObject.compileLegacy(scriptCache);

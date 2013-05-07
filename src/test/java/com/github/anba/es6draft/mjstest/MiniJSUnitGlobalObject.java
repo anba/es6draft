@@ -74,8 +74,7 @@ public class MiniJSUnitGlobalObject extends GlobalObject {
     /**
      * Compiles the "jslegacy.js" script-file
      */
-    public static Script compileLegacy(ScriptCache scriptCache) throws ParserException,
-            IOException {
+    public static Script compileLegacy(ScriptCache scriptCache) throws ParserException, IOException {
         String sourceName = "/scripts/jslegacy.js";
         InputStream stream = MiniJSUnitGlobalObject.class.getResourceAsStream(sourceName);
         return scriptCache.script(sourceName, 1, stream);
@@ -84,8 +83,8 @@ public class MiniJSUnitGlobalObject extends GlobalObject {
     /**
      * Parses, compiles and executes the javascript file
      */
-    public void eval(Path file) throws IOException, ParserException {
-        Script script = scriptCache.script(file.getFileName().toString(), 1, file);
+    public void eval(Path fileName, Path file) throws IOException, ParserException {
+        Script script = scriptCache.script(fileName.toString(), 1, file);
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 

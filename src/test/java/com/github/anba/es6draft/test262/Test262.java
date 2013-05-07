@@ -16,7 +16,6 @@ import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.instanceOf;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -52,7 +51,7 @@ public final class Test262 {
     private static final String TEST_SUITE = "test.suite.test262";
 
     // test script cache (380ms -> 210ms duration)
-    private static final ScriptCache cache = new ScriptCache(StandardCharsets.UTF_8);
+    private static final ScriptCache cache = new ScriptCache();
 
     private static final LazyInit<Configuration> configuration = new LazyInit<Configuration>() {
         @Override
@@ -66,9 +65,6 @@ public final class Test262 {
 
     @Parameter(1)
     public String path;
-
-    // @Rule
-    // public Timeout timeout = new Timeout(4000);
 
     @Rule
     public ExpectedException expected = ExpectedException.none().handleAssertionErrors();

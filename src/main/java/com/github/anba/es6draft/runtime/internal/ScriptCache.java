@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -38,12 +38,7 @@ public class ScriptCache {
         }
     });
 
-    private final Charset charset;
     private AtomicInteger scriptCounter = new AtomicInteger(0);
-
-    public ScriptCache(Charset charset) {
-        this.charset = charset;
-    }
 
     private String nextScriptName() {
         return "Script_" + scriptCounter.incrementAndGet();
@@ -53,7 +48,7 @@ public class ScriptCache {
      * Returns a new {@link Reader} for the {@code stream} parameter
      */
     private Reader newReader(InputStream stream) throws IOException {
-        return new BufferedReader(new InputStreamReader(stream, charset));
+        return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
     }
 
     private static String readFully(Reader reader) throws IOException {

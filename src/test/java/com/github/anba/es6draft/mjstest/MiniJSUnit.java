@@ -75,11 +75,11 @@ public class MiniJSUnit {
         return toObjectArray(tests);
     }
 
-    private static ScriptCache scriptCache = new ScriptCache(StandardCharsets.UTF_8);
+    private static ScriptCache scriptCache = new ScriptCache();
     private static Script legacyJS;
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(60));
+    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
 
     @Parameter(0)
     public TestInfo test;
@@ -112,10 +112,10 @@ public class MiniJSUnit {
         // evaluate actual test-script
         Path js = testDir().resolve(test.script);
         try {
-            global.eval(js);
+            global.eval(test.script, js);
         } catch (ParserException e) {
             // count towards the overall failure count
-            String message = String.format("%s: %s", e.getExceptionType().name(), e.getMessage());
+            String message = String.format("%s: %s", e.getExceptionType(), e.getMessage());
             failures.add(new AssertionError(message, e));
         } catch (ScriptException e) {
             // count towards the overall failure count

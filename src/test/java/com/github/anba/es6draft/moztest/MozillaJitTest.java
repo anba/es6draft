@@ -16,7 +16,6 @@ import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -75,11 +74,11 @@ public class MozillaJitTest extends BaseMozillaTest {
         return toObjectArray(tests);
     }
 
-    private static ScriptCache scriptCache = new ScriptCache(StandardCharsets.ISO_8859_1);
+    private static ScriptCache scriptCache = new ScriptCache();
     private static Script legacyMozilla;
 
     @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(60));
+    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
 
     @Parameter(0)
     public MozTest moztest;
@@ -118,13 +117,13 @@ public class MozillaJitTest extends BaseMozillaTest {
         // evaluate actual test-script
         Path js = testDir().resolve(moztest.script);
         try {
-            global.eval(js);
+            global.eval(moztest.script, js);
             if (moztest.error != null) {
                 fail("Expected exception: " + moztest.error);
             }
         } catch (ParserException e) {
             // count towards the overall failure count
-            String message = String.format("%s: %s", e.getExceptionType().name(), e.getMessage());
+            String message = String.format("%s: %s", e.getExceptionType(), e.getMessage());
             if (moztest.error == null || !(message.contains(moztest.error))) {
                 console.getFailures().add(new AssertionError(message, e));
             }

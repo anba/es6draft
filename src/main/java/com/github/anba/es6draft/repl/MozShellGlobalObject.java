@@ -107,8 +107,8 @@ public final class MozShellGlobalObject extends GlobalObject {
     /**
      * Parses, compiles and executes the javascript file
      */
-    public void eval(Path file) throws IOException, ParserException {
-        Script script = scriptCache.script(file.getFileName().toString(), 1, file);
+    public void eval(Path fileName, Path file) throws IOException, ParserException {
+        Script script = scriptCache.script(fileName.toString(), 1, file);
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
@@ -155,12 +155,12 @@ public final class MozShellGlobalObject extends GlobalObject {
         }
     }
 
-    private Object load(Path path) {
+    private Object load(Path fileName, Path path) {
         if (!Files.exists(path)) {
             _throw(String.format("can't open '%s'", path.toString()));
         }
         try {
-            eval(path);
+            eval(fileName, path);
             return UNDEFINED;
         } catch (IOException e) {
             throw throwError(realm, e.getMessage());
@@ -243,13 +243,13 @@ public final class MozShellGlobalObject extends GlobalObject {
     /** shell-function: {@code load(filename)} */
     @Function(name = "load", arity = 1)
     public Object load(String filename) {
-        return load(absolutePath(Paths.get(filename)));
+        return load(Paths.get(filename), absolutePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code loadRelativeToScript(filename)} */
     @Function(name = "loadRelativeToScript", arity = 1)
     public Object loadRelativeToScript(String filename) {
-        return load(relativePath(Paths.get(filename)));
+        return load(Paths.get(filename), relativePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code evaluate(code, [options])} */
