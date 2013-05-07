@@ -8,6 +8,7 @@ package com.github.anba.es6draft.parser;
 
 import java.util.BitSet;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -37,10 +38,12 @@ public class RegExpParser {
     private final String source;
     private final int length;
     private final int flags;
-    private int sourceLine = -1;
+    private int sourceLine;
     private StringBuilder out;
     private int pos = 0;
 
+    // Java pattern for the input RegExp
+    private Pattern pattern;
     // map of groups created within negative lookahead
     private BitSet negativeLAGroups = new BitSet();
     // map of invalidated groups
@@ -52,29 +55,72 @@ public class RegExpParser {
     // backref limit
     private int backreflimit = BACKREF_LIMIT;
 
-    public RegExpParser(String source, int flags) {
-        this.source = source;
-        this.length = source.length();
-        this.flags = flags;
-    }
-
-    RegExpParser(String source, int flags, int sourceLine) {
+    private RegExpParser(String source, int flags, int sourceLine) {
         this.source = source;
         this.length = source.length();
         this.flags = flags;
         this.sourceLine = sourceLine;
+        this.out = new StringBuilder(length);
     }
 
-    public String toPattern() throws ParserException {
-        if (out == null) {
-            out = new StringBuilder(length);
-            pattern();
+    public static RegExpParser parse(String p, String f, int sourceLine) throws ParserException {
+        // flags :: g | i | m | u | y
+        final int global = 0b00001, ignoreCase = 0b00010, multiline = 0b00100, unicode = 0b01000, sticky = 0b10000;
+        int flags = 0b00000;
+        for (int i = 0, len = f.length(); i < len; ++i) {
+            char c = f.charAt(i);
+            int flag = (c == 'g' ? global : c == 'i' ? ignoreCase : c == 'm' ? multiline
+                    : c == 'u' ? unicode : c == 'y' ? sticky : -1);
+            if (flag != -1 && (flags & flag) == 0) {
+                flags |= flag;
+            } else {
+                switch (flag) {
+                case global:
+                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "global");
+                case ignoreCase:
+                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "ignoreCase");
+                case multiline:
+                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "multiline");
+                case unicode:
+                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "unicode");
+                case sticky:
+                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "sticky");
+                default:
+                    throw error(sourceLine, Messages.Key.InvalidRegExpFlag, String.valueOf(c));
+                }
+            }
         }
-        return out.toString();
+
+        int iflags = 0;
+        if ((flags & ignoreCase) != 0) {
+            iflags |= Pattern.CASE_INSENSITIVE;
+            iflags |= Pattern.UNICODE_CASE;
+        }
+        if ((flags & multiline) != 0) {
+            iflags |= Pattern.MULTILINE;
+        }
+
+        RegExpParser parser = new RegExpParser(p, iflags, sourceLine);
+        parser.pattern();
+        String regexp = parser.out.toString();
+        try {
+            parser.pattern = Pattern.compile(regexp, iflags);
+        } catch (PatternSyntaxException e) {
+            throw error(sourceLine, Messages.Key.InvalidRegExpPattern, e.getMessage());
+        }
+        return parser;
     }
 
-    public BitSet negativeLookaheadGroups() {
-        return (BitSet) negativeLAGroups.clone();
+    public Pattern getPattern() {
+        return pattern;
+    }
+
+    public BitSet getNegativeLookaheadGroups() {
+        return negativeLAGroups;
+    }
+
+    private static ParserException error(int line, Messages.Key messageKey, String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, line, messageKey, args);
     }
 
     private ParserException error(Messages.Key messageKey, String... args) {

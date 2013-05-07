@@ -19,8 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
@@ -3856,49 +3854,8 @@ public class Parser {
     }
 
     private void regularExpressionLiteral_StaticSemantics(String p, String f) {
-        // flags :: g | i | m | u | y
-        final int global = 0b00001, ignoreCase = 0b00010, multiline = 0b00100, unicode = 0b01000, sticky = 0b10000;
-        int flags = 0b00000;
-        for (int i = 0, len = f.length(); i < len; ++i) {
-            char c = f.charAt(i);
-            int flag = (c == 'g' ? global : c == 'i' ? ignoreCase : c == 'm' ? multiline
-                    : c == 'u' ? unicode : c == 'y' ? sticky : -1);
-            if (flag != -1 && (flags & flag) == 0) {
-                flags |= flag;
-            } else {
-                switch (flag) {
-                case global:
-                    throw reportSyntaxError(Messages.Key.DuplicateRegExpFlag, "global");
-                case ignoreCase:
-                    throw reportSyntaxError(Messages.Key.DuplicateRegExpFlag, "ignoreCase");
-                case multiline:
-                    throw reportSyntaxError(Messages.Key.DuplicateRegExpFlag, "multiline");
-                case unicode:
-                    throw reportSyntaxError(Messages.Key.DuplicateRegExpFlag, "unicode");
-                case sticky:
-                    throw reportSyntaxError(Messages.Key.DuplicateRegExpFlag, "sticky");
-                default:
-                    throw reportSyntaxError(Messages.Key.InvalidRegExpFlag, String.valueOf(c));
-                }
-            }
-        }
-
-        int iflags = 0;
-        if ((flags & ignoreCase) != 0) {
-            iflags |= Pattern.CASE_INSENSITIVE;
-            iflags |= Pattern.UNICODE_CASE;
-        }
-        if ((flags & multiline) != 0) {
-            iflags |= Pattern.MULTILINE;
-        }
-
-        try {
-            RegExpParser parser = new RegExpParser(p, iflags, ts.getLine());
-            String regexp = parser.toPattern();
-            Pattern.compile(regexp, iflags);
-        } catch (PatternSyntaxException e) {
-            throw reportSyntaxError(Messages.Key.InvalidRegExpPattern, e.getMessage());
-        }
+        // parse to validate regular expression, but ignore actual result
+        RegExpParser.parse(p, f, ts.getLine());
     }
 
     /**

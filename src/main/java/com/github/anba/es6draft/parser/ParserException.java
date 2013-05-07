@@ -71,12 +71,4 @@ public class ParserException extends RuntimeException {
     public int getLine() {
         return line;
     }
-
-    public Messages.Key getMessageKey() {
-        return messageKey;
-    }
-
-    public String[] getMessageArguments() {
-        return messageArguments;
-    }
 }
