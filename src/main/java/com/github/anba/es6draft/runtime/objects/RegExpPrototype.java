@@ -238,7 +238,8 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 Object replaceValue) {
             RegExpObject rx = thisRegExpValue(cx, thisValue);
             String string = ToFlatString(cx, s);
-            List<MatchResult> matches = new ArrayList<>();
+            // FIXME: always call ToString(replValue) even if no match
+            List<Matcher> matches = new ArrayList<>();
             // cf. RegExp.prototype.match
             boolean global = ToBoolean(Get(cx, rx, "global"));
             if (!global) {
@@ -252,7 +253,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                     Put(cx, rx, "lastIndex", 0, true);
                     return string;
                 }
-                matches.add(m.toMatchResult());
+                matches.add(m);
             } else {
                 // cf. RegExpExec
                 Put(cx, rx, "lastIndex", 0, true);
@@ -269,7 +270,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                             int thisIndex = (int) ToInteger(cx, Get(cx, rx, "lastIndex"));
                             Put(cx, rx, "lastIndex", thisIndex + 1, true);
                         }
-                        matches.add(result.toMatchResult());
+                        matches.add(result);
                         n += 1;
                     }
                 }
@@ -279,21 +280,11 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             }
 
             if (IsCallable(replaceValue)) {
+                Callable fun = (Callable) replaceValue;
                 StringBuilder result = new StringBuilder();
                 int lastMatch = 0;
-                Callable fun = (Callable) replaceValue;
-                for (MatchResult matchResult : matches) {
-                    int m = matchResult.groupCount();
-                    Object[] arguments = new Object[m + 3];
-                    arguments[0] = matchResult.group();
-                    GroupIterator iterator = newGroupIterator(rx, matchResult);
-                    for (int i = 1; iterator.hasNext(); ++i) {
-                        Object group = iterator.next();
-                        arguments[i] = group;
-                    }
-                    arguments[m + 1] = matchResult.start();
-                    arguments[m + 2] = string;
-
+                for (Matcher matchResult : matches) {
+                    Object[] arguments = GetReplaceArguments(rx, matchResult, string);
                     CharSequence replacement = ToString(cx, fun.call(cx, UNDEFINED, arguments));
                     result.append(string, lastMatch, matchResult.start());
                     result.append(replacement);
@@ -306,74 +297,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 StringBuilder result = new StringBuilder();
                 int lastMatch = 0;
                 for (MatchResult matchResult : matches) {
-                    int m = matchResult.groupCount();
-                    Object[] groups = null;
-                    StringBuilder replacement = new StringBuilder();
-                    for (int cursor = 0, len = replValue.length(); cursor < len;) {
-                        char c = replValue.charAt(cursor++);
-                        if (c == '$' && cursor < len) {
-                            c = replValue.charAt(cursor++);
-                            switch (c) {
-                            case '0':
-                            case '1':
-                            case '2':
-                            case '3':
-                            case '4':
-                            case '5':
-                            case '6':
-                            case '7':
-                            case '8':
-                            case '9': {
-                                int n = c - '0';
-                                if (cursor < len) {
-                                    char d = replValue.charAt(cursor);
-                                    if (d >= (n == 0 ? '1' : '0') && d <= '9') {
-                                        int nn = n * 10 + (d - '0');
-                                        if (nn <= m) {
-                                            cursor += 1;
-                                            n = nn;
-                                        }
-                                    }
-                                }
-                                if (n == 0) {
-                                    replacement.append("$0");
-                                } else {
-                                    assert n >= 1 && n <= 99;
-                                    if (n <= m) {
-                                        if (groups == null) {
-                                            groups = RegExpPrototype.groups(rx, matchResult);
-                                        }
-                                        Object group = groups[n];
-                                        if (group != UNDEFINED) {
-                                            replacement.append((String) group);
-                                        }
-                                    } else {
-                                        replacement.append('$').append(n);
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-                            case '&':
-                                replacement.append(matchResult.group());
-                                break;
-                            case '`':
-                                replacement.append(string, 0, matchResult.start());
-                                break;
-                            case '\'':
-                                replacement.append(string, matchResult.end(), string.length());
-                                break;
-                            case '$':
-                                replacement.append('$');
-                                break;
-                            default:
-                                replacement.append('$').append(c);
-                                break;
-                            }
-                        } else {
-                            replacement.append(c);
-                        }
-                    }
+                    String replacement = GetReplaceSubstitution(rx, matchResult, replValue, string);
                     result.append(string, lastMatch, matchResult.start());
                     result.append(replacement);
                     lastMatch = matchResult.end();
@@ -381,6 +305,96 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 result.append(string, lastMatch, string.length());
                 return result.toString();
             }
+        }
+
+        private static Object[] GetReplaceArguments(RegExpObject rx, MatchResult matchResult,
+                String string) {
+            int m = matchResult.groupCount();
+            Object[] arguments = new Object[m + 3];
+            arguments[0] = matchResult.group();
+            GroupIterator iterator = newGroupIterator(rx, matchResult);
+            for (int i = 1; iterator.hasNext(); ++i) {
+                String group = iterator.next();
+                arguments[i] = (group != null ? group : UNDEFINED);
+            }
+            arguments[m + 1] = matchResult.start();
+            arguments[m + 2] = string;
+
+            return arguments;
+        }
+
+        /**
+         * Runtime Semantics: GetReplaceSubstitution Abstract Operation
+         */
+        private static String GetReplaceSubstitution(RegExpObject rx, MatchResult matchResult,
+                String replValue, String string) {
+            int m = matchResult.groupCount();
+            String[] groups = null;
+            StringBuilder replacement = new StringBuilder();
+
+            for (int cursor = 0, len = replValue.length(); cursor < len;) {
+                char c = replValue.charAt(cursor++);
+                if (c == '$' && cursor < len) {
+                    c = replValue.charAt(cursor++);
+                    switch (c) {
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9': {
+                        int n = c - '0';
+                        if (cursor < len) {
+                            char d = replValue.charAt(cursor);
+                            if (d >= (n == 0 ? '1' : '0') && d <= '9') {
+                                int nn = n * 10 + (d - '0');
+                                if (nn <= m) {
+                                    cursor += 1;
+                                    n = nn;
+                                }
+                            }
+                        }
+                        if (n == 0 || n > m) {
+                            assert n >= 0 && n <= 9;
+                            replacement.append('$').append(c);
+                        } else {
+                            assert n >= 1 && n <= 99;
+                            if (groups == null) {
+                                groups = RegExpPrototype.groups(rx, matchResult);
+                            }
+                            String group = groups[n];
+                            if (group != null) {
+                                replacement.append(group);
+                            }
+                        }
+                        break;
+                    }
+                    case '&':
+                        replacement.append(matchResult.group());
+                        break;
+                    case '`':
+                        replacement.append(string, 0, matchResult.start());
+                        break;
+                    case '\'':
+                        replacement.append(string, matchResult.end(), string.length());
+                        break;
+                    case '$':
+                        replacement.append('$');
+                        break;
+                    default:
+                        replacement.append('$').append(c);
+                        break;
+                    }
+                } else {
+                    replacement.append(c);
+                }
+            }
+
+            return replacement.toString();
         }
 
         /**
@@ -440,9 +454,9 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                     p = e;
                     GroupIterator iterator = newGroupIterator(rx, matcher);
                     while (iterator.hasNext()) {
-                        Object cap = iterator.next();
-                        a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(cap,
-                                true, true, true));
+                        String cap = iterator.next();
+                        a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(
+                                (cap != null ? cap : UNDEFINED), true, true, true));
                         lengthA += 1;
                         if (lengthA == lim) {
                             return a;
@@ -539,18 +553,21 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         array.defineOwnProperty(cx, "0", new PropertyDescriptor(matchedSubstr, true, true, true));
         GroupIterator iterator = newGroupIterator(r, m);
         for (int i = 1; iterator.hasNext(); ++i) {
-            Object capture = iterator.next();
-            array.defineOwnProperty(cx, ToString(i), new PropertyDescriptor(capture, true, true,
-                    true));
+            String capture = iterator.next();
+            array.defineOwnProperty(cx, ToString(i), new PropertyDescriptor(
+                    (capture != null ? capture : UNDEFINED), true, true, true));
         }
         return array;
     }
 
-    private static Object[] groups(RegExpObject r, MatchResult m) {
+    /**
+     * Returns the filtered capturing groups of the {@link MatchResult} argument
+     */
+    public static String[] groups(RegExpObject r, MatchResult m) {
         assert r.isInitialised();
         GroupIterator iterator = newGroupIterator(r, m);
         int c = m.groupCount();
-        Object[] groups = new Object[c + 1];
+        String[] groups = new String[c + 1];
         groups[0] = m.group();
         for (int i = 1; iterator.hasNext(); ++i) {
             groups[i] = iterator.next();
@@ -563,7 +580,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         return new GroupIterator(m, r.getNegativeLookaheadGroups());
     }
 
-    private static class GroupIterator implements Iterator<Object> {
+    private static class GroupIterator implements Iterator<String> {
         private final MatchResult result;
         private final BitSet negativeLAGroups;
         private int group = 1;
@@ -582,14 +599,13 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         @Override
-        public Object next() {
+        public String next() {
             int group = this.group++;
             if (result.start(group) >= last && !negativeLAGroups.get(group)) {
                 last = result.start(group);
-                Object capture = result.group(group);
-                return (capture != null ? capture : UNDEFINED);
+                return result.group(group);
             } else {
-                return UNDEFINED;
+                return null;
             }
         }
 
