@@ -14,9 +14,15 @@
 REL_PATH="$( dirname "$0" )"
 BUILD_DIR="${REL_PATH}/../../../target"
 
+if [[ $OSTYPE == "cygwin" ]] ; then
+  PATH_SEP=";"
+else
+  PATH_SEP=":"
+fi
+
 CLASSES="${BUILD_DIR}/classes"
 DEP_DIR="${BUILD_DIR}/dependencies"
-DEPENDENCIES=`ls -1 "${DEP_DIR}" | sed 's,^,'"${DEP_DIR}"'/&,' | sed ':a;{N; s/\n/;/; ta}'`
+DEPENDENCIES=`ls -1 "${DEP_DIR}" | sed 's,^,'"${DEP_DIR}"'/&,' | sed ':a;{N; s/\n/'"${PATH_SEP}"'/; ta}'`
 MAINCLASS="com.github.anba.es6draft.repl.Repl"
 
-java -ea -esa -Xbootclasspath/a:"${CLASSES};${DEPENDENCIES}" "${MAINCLASS}" "$@"
+java -ea -esa -Xbootclasspath/a:"${CLASSES}${PATH_SEP}${DEPENDENCIES}" "${MAINCLASS}" "$@"
