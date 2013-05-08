@@ -128,9 +128,6 @@ tests/basic/bug732087.js
 tests/basic/testCustomIterator.js
 tests/basic/bug684922.js
 
-# RegExp sticky-flag
-tests/basic/bug576823-regexp.js
-
 
 ############################################
 # Implementation specific differences      #

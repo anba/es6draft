@@ -88,7 +88,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "exec", arity = 1)
         public static Object exec(ExecutionContext cx, Object thisValue, Object string) {
             RegExpObject r = thisRegExpValue(cx, thisValue);
-            CharSequence s = ToString(cx, string);
+            String s = ToFlatString(cx, string);
             return RegExpExec(cx, r, s);
         }
 
@@ -143,7 +143,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "test", arity = 1)
         public static Object test(ExecutionContext cx, Object thisValue, Object string) {
             RegExpObject r = thisRegExpValue(cx, thisValue);
-            CharSequence s = ToString(cx, string);
+            String s = ToFlatString(cx, string);
             Matcher m = getMatcherOrNull(cx, r, s);
             if (m == null) {
                 return false;
@@ -249,19 +249,13 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             // cf. RegExp.prototype.match
             boolean global = ToBoolean(Get(cx, rx, "global"));
             if (!global) {
-                // cf. RegExpExec
-                Object lastIndex = Get(cx, rx, "lastIndex");
-                // call ToInteger(realm,) in order to trigger possible side-effects...
-                ToInteger(cx, lastIndex);
-                Matcher m = rx.getRegExpMatcher().matcher(string);
-                boolean matchSucceeded = m.find(0);
-                if (!matchSucceeded) {
-                    Put(cx, rx, "lastIndex", 0, true);
+                Matcher result = getMatcherOrNull(cx, rx, string);
+                if (result == null) {
                     return string;
                 }
-                matches.add(m);
+                matches.add(result);
             } else {
-                // cf. RegExpExec
+                // cf. RegExp.prototype.match, step 10.a
                 Put(cx, rx, "lastIndex", 0, true);
                 int n = 0;
                 boolean lastMatch = true;
@@ -530,7 +524,8 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         Object lastIndex = Get(cx, r, "lastIndex");
         double i = ToInteger(cx, lastIndex);
         boolean global = ToBoolean(Get(cx, r, "global"));
-        if (!global) {
+        boolean sticky = ToBoolean(Get(cx, r, "sticky"));
+        if (!global && !sticky) {
             i = 0;
         }
         if (i < 0 || i > length) {
@@ -538,23 +533,37 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             return null;
         }
         Matcher m = matcher.matcher(s);
-        boolean matchSucceeded = m.find((int) i);
-        if (!matchSucceeded) {
-            Put(cx, r, "lastIndex", 0, true);
-            return null;
-        }
-        int e = m.end();
-        if (global) {
+        if (!sticky) {
+            boolean matchSucceeded = m.find((int) i);
+            if (!matchSucceeded) {
+                Put(cx, r, "lastIndex", 0, true);
+                return null;
+            }
+            int e = m.end();
+            if (global) {
+                Put(cx, r, "lastIndex", e, true);
+            }
+            return m;
+        } else {
+            m.region((int) i, m.regionEnd());
+            boolean matchSucceeded = m.lookingAt();
+            if (!matchSucceeded) {
+                if (global) {
+                    Put(cx, r, "lastIndex", 0, true);
+                }
+                return null;
+            }
+            int e = m.end();
             Put(cx, r, "lastIndex", e, true);
+            return m;
         }
-        return m;
     }
 
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (2)
      */
     private static ScriptObject toMatchResult(ExecutionContext cx, RegExpObject r, CharSequence s,
-            MatchResult m) {
+            Matcher m) {
         assert r.isInitialised();
         int matchIndex = m.start();
         int e = m.end();

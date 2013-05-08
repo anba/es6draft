@@ -375,9 +375,6 @@ js1_8_5/regress/regress-636394.js
 # Error.prototype.columnNumber
 ecma/extensions/errorcolumnblame.js
 
-# RegExp sticky-flag
-js1_7/regexp/yflag.js
-
 
 #######################################
 # Unsupported shell functions         #
