@@ -18,7 +18,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * generator-comprehensions, therefore the translation from
  * http://wiki.ecmascript.org/doku.php?id=harmony:generator_expressions is used
  */
-final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
+class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     private static class Methods {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodType.Static,
