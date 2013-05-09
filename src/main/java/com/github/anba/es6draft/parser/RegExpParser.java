@@ -27,9 +27,9 @@ public class RegExpParser {
             'A', 'B', 'C', 'D', 'E', 'F' };
 
     // CharacterClass \s
-    private static final String characterClass_s = "[ \\t\\n\\v\\f\\r\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
+    private static final String characterClass_s = "[ \\t\\n\\u000B\\f\\r\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
     // CharacterClass \S
-    private static final String characterClass_S = "[^ \\t\\n\\v\\f\\r\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
+    private static final String characterClass_S = "[^ \\t\\n\\u000B\\f\\r\\u2028\\u2029\\u00A0\\uFEFF\\p{gc=Zs}]";
     // [] => matches nothing
     private static final String emptyCharacterClass = "(?:\\Z )";
     // [^] => matches everything
@@ -308,9 +308,13 @@ public class RegExpParser {
                 case 'n':
                 case 'r':
                 case 't':
-                case 'v':
                     // CharacterEscape :: ControlEscape
                     out.append('\\').append((char) get());
+                    break classatom;
+                case 'v':
+                    // CharacterEscape :: ControlEscape
+                    mustMatch('v');
+                    out.append((char) 0x0B);
                     break classatom;
                 case 'c': {
                     // CharacterEscape :: c ControlLetter
@@ -490,9 +494,13 @@ public class RegExpParser {
                 case 'n':
                 case 'r':
                 case 't':
-                case 'v':
                     // CharacterEscape :: ControlEscape
                     out.append('\\').append((char) get());
+                    break atom;
+                case 'v':
+                    // CharacterEscape :: ControlEscape
+                    mustMatch('v');
+                    out.append((char) 0x0B);
                     break atom;
                 case 'c': {
                     // CharacterEscape :: c ControlLetter
