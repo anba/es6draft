@@ -601,7 +601,7 @@ public abstract class OrdinaryObject implements ScriptObject {
                 assert protoKeys == null;
                 while (keys.hasNext()) {
                     String key = keys.next();
-                    if (obj.isEnumerableOwnProperty(key) && visitedKeys.add(key)) {
+                    if (visitedKeys.add(key) && obj.isEnumerableOwnProperty(key)) {
                         return key;
                     }
                 }
