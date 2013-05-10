@@ -234,14 +234,6 @@ regress/regress-1119.js
 
 
 #######################################
-# Test for syntax extensions          #
-#######################################
-
-# html-comments not supported
-html-comments.js
-
-
-#######################################
 # Compilation or runtime issues       #
 #######################################
 

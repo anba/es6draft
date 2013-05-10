@@ -459,9 +459,6 @@ tests/basic/functionnames.js
 # Spidermonkey 'const' feature
 tests/basic/bug821470.js
 
-# html-comments not supported
-tests/auto-regress/bug650574.js
-
 # Old Generator, GeneratorComprehension syntax
 tests/arguments/bug843985.js
 tests/arguments/defaults-bug759904.js
@@ -808,6 +805,7 @@ tests/basic/testBug621202.js
 # StackOverflow
 tests/auto-regress/bug488203.js
 tests/auto-regress/bug571168.js
+tests/auto-regress/bug650574.js
 tests/auto-regress/bug653789.js
 tests/auto-regress/bug654392.js
 tests/auto-regress/bug666305.js

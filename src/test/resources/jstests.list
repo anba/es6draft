@@ -417,11 +417,6 @@ js1_8_1/regress/regress-452498-117.js
 js1_8_1/extensions/regress-437288-01.js
 js1_8_5/regress/regress-383902.js
 
-# html-comments not supported
-js1_5/Regress/regress-310993.js
-js1_5/Regress/regress-311071.js
-js1_5/Regress/regress-31255.js
-
 # Old Generator, GeneratorComprehension syntax
 js1_5/Regress/regress-352009.js
 js1_5/Regress/regress-351515.js

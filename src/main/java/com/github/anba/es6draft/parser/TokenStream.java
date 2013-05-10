@@ -96,7 +96,7 @@ public class TokenStream {
     }
 
     public void init() {
-        this.hasLineTerminator = false;
+        this.hasLineTerminator = true;
         this.hasCurrentLineTerminator = true;
         this.position = input.position();
         this.current = scanTokenNoComment();
@@ -541,6 +541,13 @@ public class TokenStream {
                 }
             } else if (match('=')) {
                 return Token.LE;
+            } else if (peek() == '!' && peek2() == '-' && peek3() == '-') {
+                // html end-comment
+                mustMatch('!');
+                mustMatch('-');
+                mustMatch('-');
+                readSingleComment();
+                return Token.COMMENT;
             } else {
                 return Token.LT;
             }
@@ -594,6 +601,12 @@ public class TokenStream {
             }
         case '-':
             if (match('-')) {
+                if (peek() == '>' && hasLineTerminator) {
+                    // html start-comment at line start
+                    mustMatch('>');
+                    readSingleComment();
+                    return Token.COMMENT;
+                }
                 return Token.DEC;
             } else if (match('=')) {
                 return Token.ASSIGN_SUB;
@@ -1303,5 +1316,15 @@ public class TokenStream {
         input.unget(d);
         input.unget(c);
         return d;
+    }
+
+    private int peek3() {
+        int c = input.get();
+        int d = input.get();
+        int e = input.get();
+        input.unget(e);
+        input.unget(d);
+        input.unget(c);
+        return e;
     }
 }

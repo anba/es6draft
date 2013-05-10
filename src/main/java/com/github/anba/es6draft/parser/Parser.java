@@ -680,9 +680,9 @@ public class Parser {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
                 if (ts.position() != formals.length()) {
-                    // more input after last token (whitespace, comments), add newline to handle
+                    // more input after last token (whitespace, comments), add newlines to handle
                     // last token is single-line comment case
-                    formals = formals + "\n";
+                    formals = "\n" + formals + "\n";
                 }
 
                 ts = new TokenStream(this, new StringTokenStreamInput(bodyText), sourceLine);
@@ -742,9 +742,9 @@ public class Parser {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
                 if (ts.position() != formals.length()) {
-                    // more input after last token (whitespace, comments), add newline to handle
+                    // more input after last token (whitespace, comments), add newlines to handle
                     // last token is single-line comment case
-                    formals = formals + "\n";
+                    formals = "\n" + formals + "\n";
                 }
 
                 ts = new TokenStream(this, new StringTokenStreamInput(bodyText), sourceLine);
