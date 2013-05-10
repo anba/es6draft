@@ -57,7 +57,7 @@ public class Realm {
     /**
      * [[globalThis]]
      */
-    private ScriptObject globalThis;
+    private GlobalObject globalThis;
 
     /**
      * [[globalEnv]]
@@ -98,7 +98,7 @@ public class Realm {
     /**
      * [[globalThis]]
      */
-    public ScriptObject getGlobalThis() {
+    public GlobalObject getGlobalThis() {
         return globalThis;
     }
 

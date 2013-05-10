@@ -249,7 +249,7 @@ public final class MozShellGlobalObject extends GlobalObject {
         int sourceLine = 1;
         boolean noScriptRval = false;
         boolean catchTermination = false;
-        ScriptObject global = realm.getGlobalThis();
+        GlobalObject global = realm.getGlobalThis();
         if (Type.isObject(options)) {
             ExecutionContext cx = realm.defaultContext();
             ScriptObject opts = Type.objectValue(options);
@@ -264,10 +264,11 @@ public final class MozShellGlobalObject extends GlobalObject {
             }
             Object g = opts.get(cx, "global", opts);
             if (!Type.isUndefined(g)) {
-                global = ToObject(cx, g);
-                if (!(global instanceof GlobalObject)) {
+                ScriptObject obj = ToObject(cx, g);
+                if (!(obj instanceof GlobalObject)) {
                     throwError(realm, "invalid global argument");
                 }
+                obj = (GlobalObject) obj;
             }
             noScriptRval = ToBoolean(opts.get(cx, "noScriptRval", opts));
             catchTermination = ToBoolean(opts.get(cx, "catchTermination", opts));
