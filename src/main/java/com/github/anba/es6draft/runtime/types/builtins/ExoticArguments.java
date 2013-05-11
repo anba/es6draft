@@ -198,6 +198,24 @@ public class ExoticArguments extends OrdinaryObject {
         obj.defineOwnProperty(cx, "callee", new PropertyDescriptor(func, true, false, true));
     }
 
+    public static ExoticArguments CreateLegacyArguments(ExecutionContext cx,
+            ExoticArguments arguments, FunctionObject func) {
+        int length = ToInt32(cx, Get(cx, arguments, "length"));
+        ExoticLegacyArguments obj = new ExoticLegacyArguments(cx.getRealm());
+        obj.ordinarySetPrototype(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
+        obj.ordinaryDefineOwnProperty("length", new PropertyDescriptor(length, true, false, true));
+        obj.ordinaryDefineOwnProperty("callee", new PropertyDescriptor(func, true, false, true));
+        for (int index = 0; index < length; ++index) {
+            String pk = ToString(index);
+            Object value = arguments.getOwnProperty(cx, pk).getValue();
+            obj.ordinaryDefineOwnProperty(pk, new PropertyDescriptor(value, true, true, true));
+        }
+        if (arguments.parameterMap != null) {
+            ((ExoticArguments) obj).parameterMap = new ParameterMap(arguments.parameterMap);
+        }
+        return obj;
+    }
+
     private static class ExoticLegacyArguments extends ExoticArguments {
         public ExoticLegacyArguments(Realm realm) {
             super(realm);
@@ -238,24 +256,6 @@ public class ExoticArguments extends OrdinaryObject {
             // this object is effectively unmodifiable
             return true;
         }
-    }
-
-    public static ExoticArguments CreateLegacyArguments(ExecutionContext cx,
-            ExoticArguments arguments, FunctionObject func) {
-        int length = ToInt32(cx, Get(cx, arguments, "length"));
-        ExoticLegacyArguments obj = new ExoticLegacyArguments(cx.getRealm());
-        obj.ordinarySetPrototype(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
-        obj.ordinaryDefineOwnProperty("length", new PropertyDescriptor(length, true, false, true));
-        obj.ordinaryDefineOwnProperty("callee", new PropertyDescriptor(func, true, false, true));
-        for (int index = 0; index < length; ++index) {
-            String pk = ToString(index);
-            Object value = arguments.getOwnProperty(cx, pk).getValue();
-            obj.ordinaryDefineOwnProperty(pk, new PropertyDescriptor(value, true, true, true));
-        }
-        if (arguments.parameterMap != null) {
-            ((ExoticArguments) obj).parameterMap = new ParameterMap(arguments.parameterMap);
-        }
-        return obj;
     }
 
     /**
