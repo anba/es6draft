@@ -89,10 +89,6 @@ ecma_5/RegExp/instance-property-storage-introspection.js
 # BOM is also whitespace in RegExp
 ecma_5/RegExp/regexp-space-character-class.js
 
-# unknown 2-byte function name problem
-ecma_3/Function/regress-58274.js
-ecma_3/Unicode/uc-005.js
-
 # BlockScope and WithStatement issue
 js1_5/Scope/regress-184107.js
 js1_5/Scope/regress-185485.js
