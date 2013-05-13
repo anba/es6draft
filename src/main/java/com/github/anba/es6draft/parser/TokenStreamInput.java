@@ -13,7 +13,7 @@ public interface TokenStreamInput {
     /**
      * The end-of-file marker
      */
-    static final int EOF = -1;
+    int EOF = -1;
 
     /**
      * Returns the current character or {@link TokenStreamInput#EOF} when the end of the input has

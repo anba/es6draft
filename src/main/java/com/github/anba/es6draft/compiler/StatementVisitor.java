@@ -119,7 +119,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
 
     protected StatementVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
             boolean strict, boolean globalCode, boolean completionValue) {
-        super(mv, methodName, methodDescriptor, strict, globalCode, completionValue);
+        super(mv, methodName, methodDescriptor, strict, globalCode);
         this.completionValue = completionValue;
         // no return in script code
         this.labels.returnLabel = !completionValue ? new Label() : null;

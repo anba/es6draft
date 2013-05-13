@@ -320,7 +320,7 @@ class CodeGenerator {
             new FunctionDeclarationInstantiationGenerator(this).generate(node);
 
             // runtime method
-            if (node instanceof ArrowFunction && (((ArrowFunction) node).getExpression() != null)) {
+            if (node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null) {
                 conciseFunctionBody((ArrowFunction) node);
             } else {
                 functionBody(node);
@@ -426,7 +426,7 @@ class CodeGenerator {
         protected ExpressionVisitorImpl(CodeGenerator codegen, String methodName,
                 Type methodDescriptor, boolean strict, boolean globalCode) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, globalCode, false);
+                    methodName, methodDescriptor, strict, globalCode);
         }
     }
 

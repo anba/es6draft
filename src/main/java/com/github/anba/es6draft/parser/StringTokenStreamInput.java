@@ -11,8 +11,8 @@ package com.github.anba.es6draft.parser;
  */
 public class StringTokenStreamInput implements TokenStreamInput {
     private final String source;
-    private int cursor = 0;
     private final int length;
+    private int cursor = 0;
 
     public StringTokenStreamInput(CharSequence source) {
         this.source = source.toString();

@@ -143,7 +143,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                 }
             }
             if (index >= len) {
-                index = -1; // actually +Infinity!
+                itr.nextIndex = -1; // actually +Infinity!
                 return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
             }
             String elementKey = ToString(index);

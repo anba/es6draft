@@ -66,7 +66,6 @@ final class DeclarationBindingInstantiation {
         for (String vn : declaredVarNames) {
             envRec.createGlobalVarBinding(vn, deletableBindings);
         }
-        return;
     }
 
     /**

@@ -10,18 +10,42 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *
+ * Scope class for {@link FunctionNode} and {@link Script} objects
  */
 public interface FunctionScope extends Scope {
+    /**
+     * Always returns <code>null</code> for function scopes.
+     */
+    @Override
+    Scope getParent();
+
+    /**
+     * Returns the scope which encloses this scope.
+     */
     Scope getEnclosingScope();
 
+    /**
+     * Returns the set of parameter names.
+     */
     Set<String> parameterNames();
 
+    /**
+     * Returns the set of lexically declared names.
+     */
     Set<String> lexicallyDeclaredNames();
 
+    /**
+     * Returns the list of lexically scoped declarations.
+     */
     List<Declaration> lexicallyScopedDeclarations();
 
+    /**
+     * Returns the set of variable declared names.
+     */
     Set<String> varDeclaredNames();
 
+    /**
+     * Returns the list of variable scoped declarations.
+     */
     List<StatementListItem> varScopedDeclarations();
 }

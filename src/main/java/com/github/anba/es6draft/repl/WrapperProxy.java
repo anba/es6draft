@@ -428,7 +428,7 @@ class WrapperProxy implements ScriptObject {
         }
 
         @Override
-        public final boolean hasNext() {
+        public boolean hasNext() {
             if (nextKey == null) {
                 nextKey = tryNext();
             }
@@ -436,7 +436,7 @@ class WrapperProxy implements ScriptObject {
         }
 
         @Override
-        public final Object next() {
+        public Object next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
@@ -446,7 +446,7 @@ class WrapperProxy implements ScriptObject {
         }
 
         @Override
-        public final void remove() {
+        public void remove() {
             throw new UnsupportedOperationException();
         }
     }

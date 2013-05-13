@@ -2830,7 +2830,7 @@ public class Parser {
     }
 
     /**
-     * @see #forStatement()
+     * @see #forStatement(Set)
      */
     private Node validateFor(Node head) {
         if (head instanceof VariableStatement) {
@@ -2854,7 +2854,7 @@ public class Parser {
     }
 
     /**
-     * @see #forStatement()
+     * @see #forStatement(Set)
      */
     private Node validateForInOf(Node head) {
         if (head instanceof VariableStatement) {
@@ -4501,6 +4501,7 @@ public class Parser {
         switch (token()) {
         case SEMI:
             consume(Token.SEMI);
+            // fall-through
         case RC:
         case EOF:
             break;

@@ -122,8 +122,9 @@ public final class MozShellGlobalObject extends GlobalObject {
      */
     public static Script compileLegacy(ScriptCache scriptCache) throws ParserException, IOException {
         String sourceName = "/scripts/mozlegacy.js";
-        InputStream stream = MozShellGlobalObject.class.getResourceAsStream(sourceName);
-        return scriptCache.script(sourceName, 1, stream);
+        try (InputStream stream = MozShellGlobalObject.class.getResourceAsStream(sourceName)) {
+            return scriptCache.script(sourceName, 1, stream);
+        }
     }
 
     private static ScriptException throwError(Realm realm, String message) {
@@ -268,7 +269,7 @@ public final class MozShellGlobalObject extends GlobalObject {
                 if (!(obj instanceof GlobalObject)) {
                     throwError(realm, "invalid global argument");
                 }
-                obj = (GlobalObject) obj;
+                global = (GlobalObject) obj;
             }
             noScriptRval = ToBoolean(opts.get(cx, "noScriptRval", opts));
             catchTermination = ToBoolean(opts.get(cx, "catchTermination", opts));

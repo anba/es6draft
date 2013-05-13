@@ -22,42 +22,42 @@ public enum BuiltinSymbol {
     NONE, //
 
     /**
-     * @@create
+     * &#64;&#64;create
      */
     create,
 
     /**
-     * @@hasInstance
+     * &#64;&#64;hasInstance
      */
     hasInstance,
 
     /**
-     * @@isRegExp
+     * &#64;&#64;isRegExp
      */
     isRegExp,
 
     /**
-     * @@iterator
+     * &#64;&#64;iterator
      */
     iterator,
 
     /**
-     * @@ToPrimitive
+     * &#64;&#64;ToPrimitive
      */
     ToPrimitive,
 
     /**
-     * @@toStringTag
+     * &#64;&#64;toStringTag
      */
     toStringTag,
 
     /**
-     * @@elementGet
+     * &#64;&#64;elementGet
      */
     elementGet,
 
     /**
-     * @@elementSet
+     * &#64;&#64;elementSet
      */
     elementSet,
 

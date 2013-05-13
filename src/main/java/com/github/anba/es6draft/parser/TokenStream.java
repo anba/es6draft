@@ -29,8 +29,8 @@ public class TokenStream {
     private int position;
     private int nextposition;
     // token data
-    public Token current;
-    public Token next;
+    private Token current;
+    private Token next;
     private boolean hasLineTerminator;
     private boolean hasCurrentLineTerminator;
     // literal data

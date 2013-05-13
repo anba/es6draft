@@ -251,14 +251,14 @@ public final class IntlAbstractOperations {
     /**
      * 9.1 Internal Properties of Service Constructors
      */
-    public static interface LocaleData {
+    public interface LocaleData {
         LocaleDataInfo info(ULocale locale);
     }
 
     /**
      * 9.1 Internal Properties of Service Constructors
      */
-    public static interface LocaleDataInfo {
+    public interface LocaleDataInfo {
         List<String> entries(ExtensionKey extensionKey);
     }
 
@@ -470,19 +470,19 @@ public final class IntlAbstractOperations {
         String bestMatchLocale = null;
         Entry<ULocale, ULocale> bestMatchEntry = null;
         double bestMatch = Double.NEGATIVE_INFINITY;
-        for (String available : availableLocales.keySet()) {
-            Entry<ULocale, ULocale> entry = availableLocales.get(available);
+        for (Entry<String, Entry<ULocale, ULocale>> available : availableLocales.entrySet()) {
+            Entry<ULocale, ULocale> entry = available.getValue();
             double match = matcher
                     .match(canonicalized, maximized, entry.getKey(), entry.getValue());
             // if (match > 0.90) {
             // System.out.printf("[%s; %s, %s] -> [%s; %s, %s]  => %f\n", requestedLocale,
-            // canonicalized, maximized, available, entry.getKey(), entry.getValue(),
+            // canonicalized, maximized, available.getKey(), entry.getKey(), entry.getValue(),
             // match);
             // }
             if (match > bestMatch
                     || (match == bestMatch && isBetterMatch(canonicalized, maximized,
                             bestMatchEntry, entry))) {
-                bestMatchLocale = available;
+                bestMatchLocale = available.getKey();
                 bestMatchEntry = entry;
                 bestMatch = match;
             }

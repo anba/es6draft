@@ -12,12 +12,10 @@ import java.util.List;
  * <h1>11 Expressions</h1><br>
  * <h2>11.13 Assignment Operators</h2>
  * <ul>
- * <li>
  * <li>11.13.1 Destructuring Assignment
  * </ul>
  */
 public class ArrayAssignmentPattern extends AssignmentPattern {
-    // List<Elision | AssignmentElement | AssignmentRestElement>
     private List<AssignmentElementItem> elements;
 
     public ArrayAssignmentPattern(List<AssignmentElementItem> elements) {

@@ -28,7 +28,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private Set<CallExpression> tail = null;
 
     protected ExpressionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
-            boolean strict, boolean globalCode, boolean completionValue) {
+            boolean strict, boolean globalCode) {
         super(mv, methodName, methodDescriptor);
         this.strict = strict;
         this.globalCode = globalCode;

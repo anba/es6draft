@@ -151,7 +151,7 @@ public final class RuntimeInfo {
     /**
      * Compiled script body information
      */
-    public static interface ScriptBody {
+    public interface ScriptBody {
         boolean isStrict();
 
         void globalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment globalEnv,
@@ -163,7 +163,7 @@ public final class RuntimeInfo {
         Object evaluate(ExecutionContext cx);
     }
 
-    public static enum FunctionFlags {
+    public enum FunctionFlags {
         Strict(0b0001), Super(0b0010), ScopedName(0b0100), Generator(0b1000);
 
         private final int value;
@@ -184,7 +184,7 @@ public final class RuntimeInfo {
     /**
      * Compiled function information
      */
-    public static interface Function extends Code {
+    public interface Function extends Code {
         String functionName();
 
         boolean isStrict();
@@ -206,7 +206,7 @@ public final class RuntimeInfo {
     /**
      * Compiled function code information
      */
-    public static interface Code {
+    public interface Code {
         MethodHandle handle();
 
         Object evaluate(ExecutionContext cx);

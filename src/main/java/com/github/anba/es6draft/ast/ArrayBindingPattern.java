@@ -16,7 +16,6 @@ import java.util.List;
  * </ul>
  */
 public class ArrayBindingPattern extends BindingPattern {
-    // List<Elision | BindingElement | BindingRestElement>
     private List<BindingElementItem> elements;
 
     public ArrayBindingPattern(List<BindingElementItem> elements) {

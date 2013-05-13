@@ -133,8 +133,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             items[0] = o;
             for (Object item : items) {
                 if (item instanceof ExoticArray) {
-                    assert item instanceof ScriptObject;
-                    ScriptObject e = (ScriptObject) item;
+                    ExoticArray e = (ExoticArray) item;
                     long len = ToUint32(cx, Get(cx, e, "length"));
                     for (long k = 0; k < len; ++k, ++n) {
                         String p = ToString(k);

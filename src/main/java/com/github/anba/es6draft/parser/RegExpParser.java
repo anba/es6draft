@@ -314,7 +314,7 @@ public class RegExpParser {
                 case 'v':
                     // CharacterEscape :: ControlEscape
                     mustMatch('v');
-                    out.append((char) 0x0B);
+                    out.append('\u000B');
                     break classatom;
                 case 'c': {
                     // CharacterEscape :: c ControlLetter
@@ -500,7 +500,7 @@ public class RegExpParser {
                 case 'v':
                     // CharacterEscape :: ControlEscape
                     mustMatch('v');
-                    out.append((char) 0x0B);
+                    out.append('\u000B');
                     break atom;
                 case 'c': {
                     // CharacterEscape :: c ControlLetter
@@ -661,6 +661,7 @@ public class RegExpParser {
                     switch (d) {
                     case '!':
                         negativeLA = true;
+                        // fall-through
                     case '=':
                     case ':':
                         out.append("(?").append((char) d);

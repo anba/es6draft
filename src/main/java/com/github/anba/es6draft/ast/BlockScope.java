@@ -10,10 +10,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *
+ * Scope class for nodes with block scope semantics
  */
 public interface BlockScope extends Scope {
+    /**
+     * Returns the set of lexically declared names.
+     */
     Set<String> lexicallyDeclaredNames();
 
+    /**
+     * Returns the list of lexically scoped declarations.
+     */
     List<Declaration> lexicallyScopedDeclarations();
 }

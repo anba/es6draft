@@ -172,7 +172,7 @@ public class Realm {
         return collator;
     }
 
-    public static interface GlobalObjectCreator<GLOBAL extends GlobalObject> {
+    public interface GlobalObjectCreator<GLOBAL extends GlobalObject> {
         GLOBAL createGlobal(Realm realm);
     }
 

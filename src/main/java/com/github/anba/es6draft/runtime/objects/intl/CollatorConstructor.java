@@ -17,7 +17,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 import static java.util.Arrays.asList;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -203,7 +202,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
 
     @SafeVarargs
     private static <T> Set<T> set(T... elements) {
-        return new HashSet<>(Arrays.asList(elements));
+        return new HashSet<>(asList(elements));
     }
 
     /**

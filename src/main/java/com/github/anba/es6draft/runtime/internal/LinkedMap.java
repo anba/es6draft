@@ -26,7 +26,7 @@ public class LinkedMap<KEY, VALUE> {
         }
     }
 
-    public static interface MapBuilder {
+    public interface MapBuilder {
         <K, V> Map<K, V> create();
     }
 

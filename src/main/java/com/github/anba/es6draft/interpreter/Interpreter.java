@@ -79,7 +79,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
      * 11.4.2 The void Operator
      */
     private static Undefined _void(Object value, ExecutionContext cx) {
-        return Undefined.UNDEFINED;
+        return UNDEFINED;
     }
 
     /**
@@ -565,7 +565,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
         Callable f = CheckCallable(func, cx);
         if (directEval(node) && IsBuiltinEval(ref, f, cx)) {
-            Object x = args.length > 0 ? args[0] : Undefined.UNDEFINED;
+            Object x = args.length > 0 ? args[0] : UNDEFINED;
             return Eval.directEval(x, cx, strict, globalCode);
         }
         Object thisValue = GetCallThisValue(ref, cx);

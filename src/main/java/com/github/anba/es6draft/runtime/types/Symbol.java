@@ -17,5 +17,5 @@ public interface Symbol {
     boolean isPrivate();
 
     @Override
-    public String toString();
+    String toString();
 }

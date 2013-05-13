@@ -72,7 +72,6 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         mv.lineInfo(evalScript.getLine());
         mv.begin();
         generate(evalScript, mv);
-        mv.areturn();
         mv.end();
     }
 
@@ -163,5 +162,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
             }
         }
         // end-modification
+
+        mv.areturn();
     }
 }

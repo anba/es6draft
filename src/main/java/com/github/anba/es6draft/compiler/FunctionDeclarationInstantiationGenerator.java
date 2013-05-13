@@ -76,7 +76,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         private FunctionDeclInitMethodGenerator(CodeGenerator codegen, String methodName,
                 boolean strict) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, false, false);
+                    methodName, methodDescriptor, strict, false);
         }
     }
 
@@ -98,7 +98,6 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.enterScope(func);
         generate(func, mv);
         mv.exitScope();
-        mv.areturn();
         mv.end();
     }
 
@@ -230,7 +229,6 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         /* [10.5.3] step 23 */
         // stack: [ao] -> []
         mv.areturn();
-        return;
     }
 
     private void InstantiateArgumentsObject(ExpressionVisitor mv) {

@@ -18,7 +18,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static java.util.Arrays.asList;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -119,7 +118,7 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
 
     @SafeVarargs
     private static <T> Set<T> set(T... elements) {
-        return new HashSet<>(Arrays.asList(elements));
+        return new HashSet<>(asList(elements));
     }
 
     /**

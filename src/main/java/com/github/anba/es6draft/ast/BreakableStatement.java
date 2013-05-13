@@ -16,6 +16,9 @@ public abstract class BreakableStatement extends Statement {
     protected BreakableStatement() {
     }
 
+    /**
+     * Returns the set of labels for this statement
+     */
     public abstract Set<String> getLabelSet();
 
     public abstract EnumSet<Abrupt> getAbrupt();

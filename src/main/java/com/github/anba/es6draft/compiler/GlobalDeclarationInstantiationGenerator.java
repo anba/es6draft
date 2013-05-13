@@ -86,7 +86,6 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.lineInfo(script.getLine());
         mv.begin();
         generate(script, mv);
-        mv.areturn();
         mv.end();
     }
 
@@ -178,7 +177,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
             }
         }
         /* [10.5.1] step 17 */
-        return;
+        mv.areturn();
     }
 
     private void canDeclareLexicalScopedOrThrow(int context, int envRec, String name,

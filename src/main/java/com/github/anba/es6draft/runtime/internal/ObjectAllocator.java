@@ -6,14 +6,15 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * @see OrdinaryObject#ObjectCreate(Realm, Intrinsics, ObjectAllocator)
- * @see OrdinaryObject#ObjectCreate(Realm, ScriptObject, ObjectAllocator)
+ * @see OrdinaryObject#ObjectCreate(ExecutionContext, Intrinsics, ObjectAllocator)
+ * @see OrdinaryObject#ObjectCreate(ExecutionContext, ScriptObject, ObjectAllocator)
  */
 public interface ObjectAllocator<OBJECT extends ScriptObject> {
     OBJECT newInstance(Realm realm);
