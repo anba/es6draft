@@ -19,7 +19,7 @@
   <name>es6draft</name>
 
   <url>https://github.com/anba/es6draft</url>
-  <description>Experimental ES6 compiler and runtime</description>
+  <description>Experimental ECMAScript 6 compiler and runtime</description>
   <inceptionYear>2012</inceptionYear>
 
   <licenses>
@@ -111,11 +111,16 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
             <version>2.5.2</version>
+            <configuration>
+              <omitVisitors>Naming</omitVisitors>
+              <fork>true</fork>
+              <jvmArgs>-Dfindbugs.sf.comment=true</jvmArgs>
+            </configuration>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
-            <version>2.7.1</version>
+            <version>3.0.1</version>
             <configuration>
               <minimumTokens>100</minimumTokens>
               <targetJdk>1.7</targetJdk>
