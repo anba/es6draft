@@ -95,6 +95,7 @@ public class ScriptLoader {
             com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options)
             throws ParserException {
         try {
+            // prepend '#' to mark generated classes, cf. ErrorPrototype
             String clazzName = "#" + className;
             Compiler compiler = new Compiler(options);
             byte[] bytes = compiler.compile(parsedScript, clazzName);

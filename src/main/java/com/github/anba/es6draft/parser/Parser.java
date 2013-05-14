@@ -3084,11 +3084,12 @@ public class Parser {
         semicolon();
 
         LabelContext target = findContinueTarget(label);
-        if (target == null && label == null) {
-            reportSyntaxError(Messages.Key.InvalidContinueTarget);
-        }
-        if (target == null && label != null) {
-            reportSyntaxError(Messages.Key.LabelTargetNotFound, label);
+        if (target == null) {
+            if (label == null) {
+                throw reportSyntaxError(Messages.Key.InvalidContinueTarget);
+            } else {
+                throw reportSyntaxError(Messages.Key.LabelTargetNotFound, label);
+            }
         }
         if (target.type != StatementType.Iteration) {
             reportSyntaxError(Messages.Key.InvalidContinueTarget);
@@ -3118,11 +3119,12 @@ public class Parser {
         semicolon();
 
         LabelContext target = findBreakTarget(label);
-        if (target == null && label == null) {
-            reportSyntaxError(Messages.Key.InvalidBreakTarget);
-        }
-        if (target == null && label != null) {
-            reportSyntaxError(Messages.Key.LabelTargetNotFound, label);
+        if (target == null) {
+            if (label == null) {
+                throw reportSyntaxError(Messages.Key.InvalidBreakTarget);
+            } else {
+                throw reportSyntaxError(Messages.Key.LabelTargetNotFound, label);
+            }
         }
         target.mark(Abrupt.Break);
 

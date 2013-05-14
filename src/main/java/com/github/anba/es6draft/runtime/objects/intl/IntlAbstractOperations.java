@@ -275,7 +275,7 @@ public final class IntlAbstractOperations {
             String tag = ToFlatString(cx, locales);
             LanguageTag langTag = IsStructurallyValidLanguageTag(tag);
             if (langTag == null) {
-                throwRangeError(cx, Messages.Key.IntlStructurallyInvalidLanguageTag, tag);
+                throw throwRangeError(cx, Messages.Key.IntlStructurallyInvalidLanguageTag, tag);
             }
             tag = CanonicalizeLanguageTag(langTag);
             return singleton(tag);
@@ -294,7 +294,7 @@ public final class IntlAbstractOperations {
                 String tag = ToFlatString(cx, kValue);
                 LanguageTag langTag = IsStructurallyValidLanguageTag(tag);
                 if (langTag == null) {
-                    throwRangeError(cx, Messages.Key.IntlStructurallyInvalidLanguageTag, tag);
+                    throw throwRangeError(cx, Messages.Key.IntlStructurallyInvalidLanguageTag, tag);
                 }
                 tag = CanonicalizeLanguageTag(langTag);
                 if (!seen.contains(tag)) {

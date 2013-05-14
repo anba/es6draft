@@ -112,7 +112,13 @@
             <artifactId>findbugs-maven-plugin</artifactId>
             <version>2.5.2</version>
             <configuration>
-              <omitVisitors>Naming</omitVisitors>
+              <!--
+              FindUncalledPrivateMethods: already handled by @SuppressWarnings("unused")
+              FormatStringChecker: intentionally using '\n' for line breaks
+              Naming: abstract operations use UpperCamelCase
+              SwitchFallthrough: 'findbugs.sf.comment' comment marker does not work properly
+              -->
+              <omitVisitors>FindUncalledPrivateMethods,FormatStringChecker,Naming,SwitchFallthrough</omitVisitors>
               <fork>true</fork>
               <jvmArgs>-Dfindbugs.sf.comment=true</jvmArgs>
             </configuration>

@@ -98,7 +98,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             double newLen = _final - first;
             Callable ctor = GetMethod(cx, obj, "constructor");
             if (ctor == null || !IsConstructor(ctor)) {
-                throwTypeError(cx, Messages.Key.NotConstructor);
+                throw throwTypeError(cx, Messages.Key.NotConstructor);
             }
             ArrayBufferObject _new = ArrayBufferObject(cx,
                     ToObject(cx, ((Constructor) ctor).construct(cx, newLen)));

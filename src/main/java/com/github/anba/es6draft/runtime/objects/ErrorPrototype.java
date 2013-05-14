@@ -226,7 +226,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
     }
 
     private static boolean isInternalStackFrame(StackTraceElement element) {
-        // filter internal stacktrace elements based on the encoding in CodeGenerator
+        // filter internal stacktrace elements based on the encoding in CodeGenerator/ScriptLoader
         return (element.getClassName().charAt(0) == '#' && JVMNames.fromBytecodeName(
                 element.getMethodName()).charAt(0) == '!');
     }
