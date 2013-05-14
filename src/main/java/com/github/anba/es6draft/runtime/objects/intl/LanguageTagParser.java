@@ -51,7 +51,7 @@ final class LanguageTagParser {
 
     private LanguageTag tag;
 
-    public static class LanguageTag {
+    public static final class LanguageTag {
         private final String input;
         private boolean grandfathered;
 

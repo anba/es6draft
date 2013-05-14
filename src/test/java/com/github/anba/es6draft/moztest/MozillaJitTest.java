@@ -129,7 +129,7 @@ public class MozillaJitTest extends BaseMozillaTest {
             }
         } catch (ScriptException e) {
             // count towards the overall failure count
-            String message = e.getMessage();
+            String message = e.getMessage(cx);
             if (moztest.error == null || !(message.contains(moztest.error))) {
                 console.getFailures().add(new AssertionError(message, e));
             }

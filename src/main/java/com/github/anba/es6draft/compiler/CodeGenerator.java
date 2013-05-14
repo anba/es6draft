@@ -434,7 +434,7 @@ class CodeGenerator {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
-        private ScriptStatementVisitor(CodeGenerator codegen, Script node) {
+        ScriptStatementVisitor(CodeGenerator codegen, Script node) {
             super(codegen, codegen.methodName(node), methodDescriptor, node.isStrict(), node
                     .isGlobalCode(), true, true);
         }
@@ -444,7 +444,7 @@ class CodeGenerator {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext, Types.Object);
 
-        private ScriptChunkStatementVisitor(CodeGenerator codegen, Script node, int index) {
+        ScriptChunkStatementVisitor(CodeGenerator codegen, Script node, int index) {
             super(codegen, codegen.methodName(node, index), methodDescriptor, IsStrict(node), node
                     .isGlobalCode(), true, false);
         }
@@ -454,7 +454,7 @@ class CodeGenerator {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
-        private FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
+        FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
             super(codegen, codegen.methodName(node), methodDescriptor, IsStrict(node), false,
                     false, true);
         }
@@ -464,7 +464,7 @@ class CodeGenerator {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
-        private ArrowFunctionVisitor(CodeGenerator codegen, ArrowFunction node) {
+        ArrowFunctionVisitor(CodeGenerator codegen, ArrowFunction node) {
             super(codegen, codegen.methodName(node), methodDescriptor, IsStrict(node), false);
         }
     }
@@ -473,7 +473,7 @@ class CodeGenerator {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
-        private GeneratorComprehensionVisitor(CodeGenerator codegen, GeneratorComprehension node,
+        GeneratorComprehensionVisitor(CodeGenerator codegen, GeneratorComprehension node,
                 ExpressionVisitor parent) {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .isGlobalCode());

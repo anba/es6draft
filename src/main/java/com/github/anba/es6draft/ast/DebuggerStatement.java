@@ -13,9 +13,6 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public class DebuggerStatement extends Statement {
-    public DebuggerStatement() {
-    }
-
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);

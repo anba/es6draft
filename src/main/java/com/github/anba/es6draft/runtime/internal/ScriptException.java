@@ -31,7 +31,7 @@ public class ScriptException extends RuntimeException {
     public String getMessage() {
         try {
             return AbstractOperations.ToFlatString(null, value);
-        } catch (Throwable t) {
+        } catch (ScriptException | NullPointerException t) {
             return Objects.toString(value);
         }
     }
@@ -39,7 +39,7 @@ public class ScriptException extends RuntimeException {
     public String getMessage(ExecutionContext cx) {
         try {
             return AbstractOperations.ToFlatString(cx, value);
-        } catch (Throwable t) {
+        } catch (ScriptException t) {
             return Objects.toString(value);
         }
     }

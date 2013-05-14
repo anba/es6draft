@@ -73,8 +73,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         static final Type methodDescriptor = Type.getMethodType(Types.ExoticArguments,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
 
-        private FunctionDeclInitMethodGenerator(CodeGenerator codegen, String methodName,
-                boolean strict) {
+        FunctionDeclInitMethodGenerator(CodeGenerator codegen, String methodName, boolean strict) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
                     methodName, methodDescriptor, strict, false);
         }

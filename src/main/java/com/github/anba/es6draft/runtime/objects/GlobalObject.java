@@ -881,7 +881,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         @SuppressWarnings("unused")
-        private static final long high(char c) {
+        private static long high(char c) {
             assert c >= 64 && c < 128;
             return (1L << (c - 64));
         }

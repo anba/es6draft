@@ -24,7 +24,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * <li>10.5 Declaration Binding Instantiation
  * </ul>
  */
-abstract class DeclarationBindingInstantiationGenerator {
+class DeclarationBindingInstantiationGenerator {
     private static class Methods {
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_hasBinding = MethodDesc.create(
@@ -62,7 +62,7 @@ abstract class DeclarationBindingInstantiationGenerator {
 
     protected final CodeGenerator codegen;
 
-    DeclarationBindingInstantiationGenerator(CodeGenerator codegen) {
+    protected DeclarationBindingInstantiationGenerator(CodeGenerator codegen) {
         this.codegen = codegen;
     }
 

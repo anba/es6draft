@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2012-2013 André Bargull
+    Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+
+    <https://github.com/anba/es6draft>
+
+-->
+<ruleset name="pmd-customization" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_2_0_0.xsd">
+  <description />
+  <rule ref="rulesets/java/basic.xml">
+    <exclude name="AvoidBranchingStatementAsLastInLoop" />
+    <exclude name="AvoidUsingOctalValues" />
+    <exclude name="CollapsibleIfStatements" />
+  </rule>
+  <rule ref="rulesets/java/clone.xml" />
+  <rule ref="rulesets/java/comments.xml">
+    <exclude name="CommentSize" />
+  </rule>
+  <rule ref="rulesets/java/controversial.xml">
+    <exclude name="AssignmentInOperand" />
+    <exclude name="AvoidFinalLocalVariable" />
+    <exclude name="AvoidLiteralsInIfCondition" />
+    <exclude name="AvoidUsingShortType" />
+    <exclude name="BooleanInversion" />
+    <exclude name="CallSuperInConstructor" />
+    <exclude name="DataflowAnomalyAnalysis" />
+    <exclude name="DefaultPackage" />
+    <exclude name="NullAssignment" />
+    <exclude name="OneDeclarationPerLine" />
+    <exclude name="OnlyOneReturn" />
+    <exclude name="UseConcurrentHashMap" />
+  </rule>
+  <rule ref="rulesets/java/design.xml">
+    <exclude name="AvoidDeeplyNestedIfStmts" />
+    <exclude name="AvoidReassigningParameters" />
+    <exclude name="CloseResource" />
+    <exclude name="CompareObjectsWithEquals" />
+    <exclude name="ConfusingTernary" />
+    <exclude name="EmptyMethodInAbstractClassShouldBeAbstract" />
+    <exclude name="FieldDeclarationsShouldBeAtStartOfClass" />
+    <exclude name="GodClass" />
+    <exclude name="ImmutableField" />
+    <exclude name="MissingBreakInSwitch" />
+    <exclude name="PreserveStackTrace" />
+    <exclude name="SwitchDensity" />
+    <exclude name="SwitchStmtsShouldHaveDefault" />
+    <exclude name="TooFewBranchesForASwitchStatement" />
+    <exclude name="UncommentedEmptyConstructor" />
+    <exclude name="UnnecessaryLocalBeforeReturn" />
+  </rule>
+  <rule ref="rulesets/java/empty.xml">
+    <exclude name="EmptyCatchBlock" />
+    <exclude name="EmptyIfStmt" />
+  </rule>
+  <rule ref="rulesets/java/finalizers.xml" />
+  <rule ref="rulesets/java/junit.xml" />
+  <rule ref="rulesets/java/naming.xml">
+    <exclude name="AbstractNaming" />
+    <exclude name="AvoidDollarSigns" />
+    <exclude name="AvoidFieldNameMatchingMethodName" />
+    <exclude name="AvoidFieldNameMatchingTypeName" />
+    <exclude name="BooleanGetMethodName" />
+    <exclude name="GenericsNaming" />
+    <exclude name="LongVariable" />
+    <exclude name="MethodNamingConventions" />
+    <exclude name="ShortClassName" />
+    <exclude name="ShortMethodName" />
+    <exclude name="ShortVariable" />
+    <exclude name="SuspiciousEqualsMethodName" />
+    <exclude name="VariableNamingConventions" />
+  </rule>
+  <rule ref="rulesets/java/optimizations.xml">
+    <exclude name="AvoidInstantiatingObjectsInLoops" />
+    <exclude name="LocalVariableCouldBeFinal" />
+    <exclude name="MethodArgumentCouldBeFinal" />
+    <exclude name="PrematureDeclaration" />
+    <exclude name="RedundantFieldInitializer" />
+    <exclude name="UseStringBufferForStringAppends" />
+  </rule>
+  <rule ref="rulesets/java/strictexception.xml">
+    <exclude name="AvoidCatchingGenericException" />
+    <exclude name="AvoidCatchingThrowable" />
+    <exclude name="AvoidRethrowingException" />
+    <exclude name="AvoidThrowingRawExceptionTypes" />
+    <exclude name="SignatureDeclareThrowsException" />
+  </rule>
+  <rule ref="rulesets/java/sunsecure.xml" />
+  <rule ref="rulesets/java/unnecessary.xml">
+    <exclude name="UnnecessaryFinalModifier" />
+    <exclude name="UselessParentheses" />
+  </rule>
+</ruleset>

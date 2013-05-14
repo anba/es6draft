@@ -253,7 +253,7 @@ public abstract class OrdinaryObject implements ScriptObject {
         String reason;
         reject: {
             /* step 1 */
-            assert !(object != null) || propertyKey != null;
+            assert (object == null || propertyKey != null);
             /* step 2 */
             if (current == null && !extensible) {
                 reason = "not extensible";

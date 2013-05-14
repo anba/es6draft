@@ -229,7 +229,7 @@ public final class Properties {
         final MethodHandle ToNumberMH;
         final MethodHandle ToObjectMH;
 
-        private Converter(ExecutionContext cx) {
+        Converter(ExecutionContext cx) {
             ToBooleanMH = _ToBooleanMH;
             ToStringMH = MethodHandles.insertArguments(_ToStringMH, 0, cx);
             ToFlatStringMH = MethodHandles.insertArguments(_ToFlatStringMH, 0, cx);
@@ -344,7 +344,7 @@ public final class Properties {
                 } else {
                     Prototype prototype = field.getAnnotation(Prototype.class);
                     if (prototype != null) {
-                        assert hasProto == false;
+                        assert !hasProto;
                         hasProto = true;
                         layout.proto = prototype;
                         layout.protoValue = getRawValue(field);
@@ -634,9 +634,8 @@ public final class Properties {
                 accessors2.put(sym, desc = propertyDescriptor(null, null, attrs));
             }
         }
-        assert attrs.writable() == false;
-        assert attrs.enumerable() == desc.isEnumerable();
-        assert attrs.configurable() == desc.isConfigurable();
+        assert !attrs.writable() && attrs.enumerable() == desc.isEnumerable()
+                && attrs.configurable() == desc.isConfigurable();
         if (type == Accessor.Type.Getter) {
             assert desc.getGetter() == null;
             desc.setGetter(fun);

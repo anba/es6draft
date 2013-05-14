@@ -21,7 +21,7 @@ public class LinkedMap<KEY, VALUE> {
         private Entry<KEY, VALUE> prev, next;
         private boolean removed = false;
 
-        private Entry(KEY key, VALUE value) {
+        Entry(KEY key, VALUE value) {
             super(key, value);
         }
     }

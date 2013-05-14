@@ -73,7 +73,7 @@ class DestructuringAssignmentGenerator {
     private static void PutValue(Expression node, ValType type, ExpressionVisitor mv) {
         assert !node.accept(IsReference.INSTANCE, null)
                 || (type == ValType.Any || type == ValType.Reference) : type;
-        assert !(type == ValType.Reference) || node.accept(IsReference.INSTANCE, null) : type;
+        assert (type != ValType.Reference) || node.accept(IsReference.INSTANCE, null) : type;
 
         if (node.accept(IsReference.INSTANCE, null)) {
             if (type == ValType.Reference) {

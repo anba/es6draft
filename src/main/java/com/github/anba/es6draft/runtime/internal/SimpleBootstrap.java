@@ -22,7 +22,10 @@ import com.github.anba.es6draft.runtime.types.Type;
 /**
  *
  */
-public class SimpleBootstrap {
+public final class SimpleBootstrap {
+    private SimpleBootstrap() {
+    }
+
     private static class Types {
         static final org.objectweb.asm.Type Object = org.objectweb.asm.Type.getType(Object.class);
         static final org.objectweb.asm.Type ExecutionContext = org.objectweb.asm.Type

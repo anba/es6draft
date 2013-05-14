@@ -119,7 +119,7 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
-    protected void reserveFixedSlot(int var, Type type) {
+    protected final void reserveFixedSlot(int var, Type type) {
         variables.reserveFixedSlot(var, type);
     }
 

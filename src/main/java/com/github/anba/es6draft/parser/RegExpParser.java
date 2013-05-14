@@ -21,7 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * <li>15.10.2 Pattern Semantics
  * </ul>
  */
-public class RegExpParser {
+public final class RegExpParser {
     private static final int BACKREF_LIMIT = 0xffff;
     private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F' };

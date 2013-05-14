@@ -103,11 +103,7 @@ public class ScriptLoader {
             Class<?> c = cl.loadClass(clazzName);
             CompiledScript instance = (CompiledScript) c.newInstance();
             return instance;
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }

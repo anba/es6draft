@@ -130,6 +130,9 @@
             <configuration>
               <minimumTokens>100</minimumTokens>
               <targetJdk>1.7</targetJdk>
+              <rulesets>
+                <ruleset>${basedir}/src/etc/pmd-ruleset.xml</ruleset>
+              </rulesets>
             </configuration>
           </plugin>
           <plugin>

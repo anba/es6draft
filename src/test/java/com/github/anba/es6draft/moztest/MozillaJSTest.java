@@ -107,9 +107,12 @@ public class MozillaJSTest extends BaseMozillaTest {
         Path js = testDir().resolve(moztest.script);
         try {
             global.eval(moztest.script, js);
-        } catch (ParserException | ScriptException e) {
+        } catch (ParserException e) {
             // count towards the overall failure count
             console.getFailures().add(new AssertionError(e.getMessage(), e));
+        } catch (ScriptException e) {
+            // count towards the overall failure count
+            console.getFailures().add(new AssertionError(e.getMessage(cx), e));
         } catch (StopExecutionException e) {
             // ignore
         } catch (IOException e) {

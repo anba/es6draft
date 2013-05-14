@@ -58,7 +58,7 @@ public class ErrorObject extends OrdinaryObject {
             if (toString instanceof Callable) {
                 return ToFlatString(cx, ((Callable) toString).call(cx, this));
             }
-        } catch (RuntimeException e) {
+        } catch (ScriptException e) {
         }
         return "???";
     }

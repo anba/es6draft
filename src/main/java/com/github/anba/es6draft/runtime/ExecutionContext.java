@@ -33,9 +33,6 @@ public final class ExecutionContext {
     private FunctionObject function = null;
     private GeneratorObject generator = null;
 
-    public ExecutionContext() {
-    }
-
     public Realm getRealm() {
         return realm;
     }

@@ -136,7 +136,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
         private final String usage;
         private final ULocale locale;
 
-        private CollatorLocaleDataInfo(String usage, ULocale locale) {
+        public CollatorLocaleDataInfo(String usage, ULocale locale) {
             this.usage = usage;
             this.locale = locale;
         }

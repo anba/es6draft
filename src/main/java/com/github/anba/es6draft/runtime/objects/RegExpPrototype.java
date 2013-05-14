@@ -605,14 +605,14 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         return new GroupIterator(m, r.getNegativeLookaheadGroups());
     }
 
-    private static class GroupIterator implements Iterator<String> {
+    private static final class GroupIterator implements Iterator<String> {
         private final MatchResult result;
         private final BitSet negativeLAGroups;
         private int group = 1;
         // start index of last valid group in matched string
         private int last;
 
-        private GroupIterator(MatchResult result, BitSet negativeLAGroups) {
+        GroupIterator(MatchResult result, BitSet negativeLAGroups) {
             this.result = result;
             this.negativeLAGroups = negativeLAGroups;
             this.last = result.start();

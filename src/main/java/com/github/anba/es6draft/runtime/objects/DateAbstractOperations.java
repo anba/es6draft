@@ -575,7 +575,7 @@ final class DateAbstractOperations {
         return Double.NaN;
     }
 
-    private static final int indexOf(String[] array, String value, int startIndex, int endIndex) {
+    private static int indexOf(String[] array, String value, int startIndex, int endIndex) {
         assert startIndex >= 0 && endIndex < array.length && startIndex <= endIndex;
         for (int i = startIndex; i <= endIndex; ++i) {
             if (array[i].equals(value)) {

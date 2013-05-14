@@ -911,7 +911,10 @@ public final class AbstractOperations {
         return nameList;
     }
 
-    private static class NumberParser {
+    private static final class NumberParser {
+        private NumberParser() {
+        }
+
         static double parse(CharSequence s) {
             s = Strings.trim(s);
             int len = s.length();

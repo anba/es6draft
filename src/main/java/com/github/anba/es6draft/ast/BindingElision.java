@@ -14,9 +14,6 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public class BindingElision extends AstNode implements BindingElementItem {
-    public BindingElision() {
-    }
-
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);

@@ -139,7 +139,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
     private static final class DateTimeFormatLocaleDataInfo implements LocaleDataInfo {
         private final ULocale locale;
 
-        private DateTimeFormatLocaleDataInfo(ULocale locale) {
+        public DateTimeFormatLocaleDataInfo(ULocale locale) {
             this.locale = locale;
         }
 

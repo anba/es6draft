@@ -35,8 +35,10 @@ import com.ibm.icu.util.TimeZone.SystemTimeZoneType;
  * Simple tools to generate the various language data for the intl package
  */
 class IntlDataTools {
+    private IntlDataTools() {
+    }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         // Path cldrMainDir = Paths.get("/tmp/cldr-2.0.0-core--main");
         // oldStyleLanguageTags(cldrMainDir);
         //
@@ -53,7 +55,7 @@ class IntlDataTools {
     /**
      * {@link LanguageSubtagRegistryData}
      */
-    static void languageSubtagRegistry(Path langSubtagReg) throws Exception {
+    static void languageSubtagRegistry(Path langSubtagReg) throws IOException {
         List<String> lines = Files.readAllLines(langSubtagReg, StandardCharsets.UTF_8);
         ArrayDeque<String> stack = new ArrayDeque<>(lines);
 
@@ -222,7 +224,7 @@ class IntlDataTools {
             }
             String line = stack.pop();
             assert !line.isEmpty();
-            if (line.equals("%%")) {
+            if ("%%".equals(line)) {
                 return rec;
             }
             if (line.charAt(0) == ' ') {
@@ -259,7 +261,7 @@ class IntlDataTools {
     /**
      * {@link IntlAbstractOperations#JDK_TIMEZONE_NAMES}
      */
-    static void jdkTimezoneNames(Path tzdataDir) throws Exception {
+    static void jdkTimezoneNames(Path tzdataDir) throws IOException {
         Pattern pZone = Pattern.compile("Zone\\s+([a-zA-Z0-9_+\\-/]+)\\s+.*");
         Pattern pLink = Pattern
                 .compile("Link\\s+([a-zA-Z0-9_+\\-/]+)\\s+([a-zA-Z0-9_+\\-/]+)(?:\\s+#.*)?");
@@ -330,7 +332,7 @@ class IntlDataTools {
     /**
      * {@link NumberFormatConstructor#CurrencyDigits(String)}
      */
-    static void currencyDigits(Path currencyFile) throws Exception {
+    static void currencyDigits(Path currencyFile) throws IOException {
         try (Reader reader = Files.newBufferedReader(currencyFile, StandardCharsets.UTF_8)) {
             LinkedHashMap<String, Integer> map = new LinkedHashMap<>();
             Document xml = xml(reader);
@@ -374,7 +376,7 @@ class IntlDataTools {
     /**
      * {@link IntlAbstractOperations#oldStyleLanguageTags}
      */
-    static void oldStyleLanguageTags(Path cldrMainDir) throws Exception {
+    static void oldStyleLanguageTags(Path cldrMainDir) throws IOException {
         try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(cldrMainDir)) {
             Map<String, String> names = new LinkedHashMap<>();
             Map<String, String> aliased = new LinkedHashMap<>();

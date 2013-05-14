@@ -82,7 +82,7 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
     private static final class NumberFormatLocaleDataInfo implements LocaleDataInfo {
         private final ULocale locale;
 
-        private NumberFormatLocaleDataInfo(ULocale locale) {
+        public NumberFormatLocaleDataInfo(ULocale locale) {
             this.locale = locale;
         }
 
