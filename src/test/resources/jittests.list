@@ -670,6 +670,7 @@ tests/basic/newArrayTest.js
 tests/basic/shapelessCalleeTest.js
 tests/basic/string-contains.js
 tests/basic/string-endswith.js
+tests/basic/string-repeat.js
 tests/basic/string-startswith.js
 tests/basic/testBrandedVsGeneric.js
 tests/basic/testBug783441.js

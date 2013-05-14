@@ -32,6 +32,9 @@ harmony/generators-parsing.js
 # V8 generators: (function*(){}).prototype instanceof Object.getPrototypeOf(function*(){}) is true
 harmony/generators-runtime.js
 
+# V8 uses new generators API
+regress/regress-2681.js
+
 # modules not yet enabled
 harmony/module-linking.js
 harmony/module-parsing.js
