@@ -222,6 +222,10 @@ public class TokenStream {
         for (;;) {
             int c = input.get();
             if (!isIdentifierPart(c)) {
+                if (c == '\\' && match('u')) {
+                    readUnicode();
+                    throw error(Messages.Key.UnicodeEscapeInRegExpFlags);
+                }
                 input.unget(c);
                 break;
             }

@@ -54,6 +54,7 @@ public class Messages {
         InvalidToken("parser.invalid_token"),
         UnexpectedToken("parser.unexpected_token"),
         UnexpectedName("parser.unexpected_name"),
+        UnicodeEscapeInRegExpFlags("parser.unicode_escape_in_regexp_flags"),
 
         // Parser
         InvalidFormalParameterList("parser.invalid_formal_parameter_list"),
