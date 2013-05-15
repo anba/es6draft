@@ -9,8 +9,11 @@ package com.github.anba.es6draft.repl;
 import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
@@ -25,6 +28,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.StopExecutionException.Reason;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
@@ -38,23 +42,51 @@ public class Repl {
     }
 
     private enum Option {
-        CompileOnly, Debug;
+        CompileOnly, Debug, Simple;
 
         static EnumSet<Option> fromArgs(String[] args) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
             for (String arg : args) {
                 switch (arg) {
-                case "compile-only":
+                case "--compile-only":
                     options.add(CompileOnly);
                     break;
-                case "debug":
+                case "--debug":
+                    options.add(CompileOnly);
                     options.add(Debug);
+                    break;
+                case "--simple":
+                    options.add(Simple);
+                    break;
+                case "--help":
+                    System.out.print(getHelp());
+                    System.exit(0);
                     break;
                 default:
                     System.err.printf("invalid option '%s'\n", arg);
                 }
             }
             return options;
+        }
+    }
+
+    private static String getHelp() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("es6draft (%s)\n\n", getBuildDate()));
+        sb.append("Options: \n");
+        sb.append("  --compile-only    Disable interpreter\n");
+        sb.append("  --debug           Print generated Java bytecode\n");
+        sb.append("  --simple          Do not load extended shell\n");
+        sb.append("  --help            Print this help\n");
+        return sb.toString();
+    }
+
+    private static String getBuildDate() {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                Repl.class.getResourceAsStream("/build-date"), StandardCharsets.UTF_8))) {
+            return reader.readLine();
+        } catch (IOException e) {
+            return "<unknown build>";
         }
     }
 
@@ -167,6 +199,24 @@ public class Repl {
     }
 
     private GlobalObject newGlobal() {
+        if (options.contains(Option.Simple)) {
+            return newSimpleGlobal();
+        } else {
+            return newExtendedGlobal();
+        }
+    }
+
+    private GlobalObject newSimpleGlobal() {
+        Realm realm = Realm.newRealm(new GlobalObjectCreator<GlobalObject>() {
+            @Override
+            public GlobalObject createGlobal(Realm realm) {
+                return new GlobalObject(realm);
+            }
+        });
+        return realm.getGlobalThis();
+    }
+
+    private GlobalObject newExtendedGlobal() {
         Path baseDir = Paths.get("").toAbsolutePath();
         Path script = Paths.get("./.");
         Path libDir = Paths.get("");
