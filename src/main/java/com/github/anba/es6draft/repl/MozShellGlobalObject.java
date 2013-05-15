@@ -44,9 +44,9 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
 
 /**
  * Global object class with support for multiple moz-shell functions
@@ -196,7 +196,7 @@ public final class MozShellGlobalObject extends GlobalObject {
      */
     @Function(name = "newSym", arity = 2)
     public Object newSym(String name, boolean _private) {
-        return new ExoticSymbolObject(name, _private);
+        return new Symbol(name, _private);
     }
 
     /**

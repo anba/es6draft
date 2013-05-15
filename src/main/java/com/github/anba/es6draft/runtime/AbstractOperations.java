@@ -69,10 +69,13 @@ public final class AbstractOperations {
      * ToPrimitive for the Object type
      */
     private static Object ToPrimitive(ExecutionContext cx, ScriptObject argument, Type preferredType) {
+        /* steps 4-5 */
         Object exoticToPrim = Get(cx, argument, BuiltinSymbol.ToPrimitive.get());
+        /* step 6 */
         if (!Type.isUndefined(exoticToPrim)) {
             if (!IsCallable(exoticToPrim))
                 throw throwTypeError(cx, Messages.Key.NotCallable);
+            /* steps 1-3 */
             String hint;
             if (preferredType == null) {
                 hint = "default";
@@ -88,6 +91,7 @@ public final class AbstractOperations {
             }
             throw throwTypeError(cx, Messages.Key.NotPrimitiveType);
         }
+        /* steps 7-8 */
         if (preferredType == null) {
             preferredType = Type.Number;
         }
@@ -100,7 +104,9 @@ public final class AbstractOperations {
      * OrdinaryToPrimitive
      */
     public static Object OrdinaryToPrimitive(ExecutionContext cx, ScriptObject object, Type hint) {
+        /* steps 1-2 */
         assert hint == Type.String || hint == Type.Number;
+        /* steps 3-4 */
         String tryFirst, trySecond;
         if (hint == Type.String) {
             tryFirst = "toString";
@@ -109,22 +115,23 @@ public final class AbstractOperations {
             tryFirst = "valueOf";
             trySecond = "toString";
         }
+        /* steps 5-7 */
         Object first = Get(cx, object, tryFirst);
         if (IsCallable(first)) {
             Object result = ((Callable) first).call(cx, object);
             if (!Type.isObject(result)) {
                 return result;
             }
-            // FIXME: spec bug! (Bug 1415)
         }
+        /* steps 8-10 */
         Object second = Get(cx, object, trySecond);
         if (IsCallable(second)) {
             Object result = ((Callable) second).call(cx, object);
             if (!Type.isObject(result)) {
                 return result;
             }
-            // FIXME: spec bug! (Bug 1415)
         }
+        /* step 10 */
         throw throwTypeError(cx, Messages.Key.NoPrimitiveRepresentation);
     }
 
@@ -144,6 +151,8 @@ public final class AbstractOperations {
             return !(d == 0 || Double.isNaN(d));
         case String:
             return Type.stringValue(val).length() != 0;
+        case Symbol:
+            return true;
         case Object:
         default:
             return true;
@@ -172,6 +181,8 @@ public final class AbstractOperations {
             return Type.numberValue(val);
         case String:
             return ToNumber(Type.stringValue(val));
+        case Symbol:
+            return Double.NaN;
         case Object:
         default:
             Object primValue = ToPrimitive(cx, val, Type.Number);
@@ -269,6 +280,8 @@ public final class AbstractOperations {
             return ToString(Type.numberValue(val));
         case String:
             return Type.stringValue(val);
+        case Symbol:
+            return "[object Symbol]";
         case Object:
         default:
             Object primValue = ToPrimitive(cx, val, Type.String);
@@ -323,6 +336,8 @@ public final class AbstractOperations {
             return NumberCreate(cx, Type.numberValue(val));
         case String:
             return StringCreate(cx, Type.stringValue(val));
+        case Symbol:
+            throw throwTypeError(cx, Messages.Key.SymbolObject);
         case Object:
         default:
             return Type.objectValue(val);
@@ -333,10 +348,8 @@ public final class AbstractOperations {
      * 9.1.10 ToPropertyKey
      */
     public static Object ToPropertyKey(ExecutionContext cx, Object val) {
-        if (Type.isObject(val)) {
-            if (val instanceof Symbol) {
-                return ((Symbol) val);
-            }
+        if (Type.isSymbol(val)) {
+            return val;
         }
         return ToFlatString(cx, val);
     }
@@ -361,6 +374,9 @@ public final class AbstractOperations {
     public static Object CheckObjectCoercible(ExecutionContext cx, Object val) {
         if (Type.isUndefinedOrNull(val)) {
             throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
+        }
+        if (Type.isSymbol(val)) {
+            throw throwTypeError(cx, Messages.Key.SymbolObject);
         }
         return val;
     }
@@ -403,6 +419,7 @@ public final class AbstractOperations {
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
         }
+        assert tx == Type.Object || tx == Type.Symbol;
         return (x == y);
     }
 
@@ -440,6 +457,7 @@ public final class AbstractOperations {
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
         }
+        assert tx == Type.Object || tx == Type.Symbol;
         return (x == y);
     }
 
@@ -454,10 +472,7 @@ public final class AbstractOperations {
      * 9.2.6 IsPropertyKey
      */
     public static boolean IsPropertyKey(Object val) {
-        if (Type.isString(val)) {
-            return true;
-        }
-        if (Type.isObject(val) && val instanceof Symbol) {
+        if (Type.isString(val) || Type.isSymbol(val)) {
             return true;
         }
         return false;

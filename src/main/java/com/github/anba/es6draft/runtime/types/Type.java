@@ -20,11 +20,12 @@ import org.mozilla.javascript.ConsString;
  * <li>8.1.3 The Boolean Type
  * <li>8.1.4 The String Type
  * <li>8.1.5 The Number Type
- * <li>8.1.6 The Object Type
+ * <li>8.1.6 The Symbol Type
+ * <li>8.1.7 The Object Type
  * </ul>
  */
 public enum Type {
-    Undefined, Null, Boolean, Number, String, Object;
+    Undefined, Null, Boolean, String, Number, Symbol, Object;
 
     public static Type of(Object val) {
         if (val == UNDEFINED) {
@@ -41,6 +42,9 @@ public enum Type {
         }
         if (val instanceof Double || val instanceof Integer || val instanceof Long) {
             return Number;
+        }
+        if (val instanceof Symbol) {
+            return Symbol;
         }
         assert val instanceof ScriptObject : (val != null ? val.getClass() : "<null>");
         return Object;
@@ -70,6 +74,10 @@ public enum Type {
         return (val instanceof Double || val instanceof Integer || val instanceof Long);
     }
 
+    public static boolean isSymbol(Object val) {
+        return (val instanceof Symbol);
+    }
+
     public static boolean isObject(Object val) {
         return (val instanceof ScriptObject);
     }
@@ -78,12 +86,16 @@ public enum Type {
         return ((Boolean) val).booleanValue();
     }
 
+    public static CharSequence stringValue(Object val) {
+        return (CharSequence) val;
+    }
+
     public static double numberValue(Object val) {
         return ((Number) val).doubleValue();
     }
 
-    public static CharSequence stringValue(Object val) {
-        return (CharSequence) val;
+    public static Symbol symbolValue(Object val) {
+        return (Symbol) val;
     }
 
     public static ScriptObject objectValue(Object val) {

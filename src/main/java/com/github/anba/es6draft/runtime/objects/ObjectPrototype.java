@@ -82,10 +82,10 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             if (Type.isNull(thisValue)) {
                 return "[object Null]";
             }
-            ScriptObject o = ToObject(cx, thisValue);
-            if (o instanceof Symbol) {
+            if (Type.isSymbol(thisValue)) {
                 return "[object Symbol]";
             }
+            ScriptObject o = ToObject(cx, thisValue);
             String builtinTag;
             if (o instanceof ExoticArray) {
                 builtinTag = "Array";

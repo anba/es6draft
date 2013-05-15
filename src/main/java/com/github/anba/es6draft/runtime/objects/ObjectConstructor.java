@@ -84,6 +84,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             case String:
             case Boolean:
             case Number:
+            case Symbol:
                 return ToObject(calleeContext, value);
             case Null:
             case Undefined:

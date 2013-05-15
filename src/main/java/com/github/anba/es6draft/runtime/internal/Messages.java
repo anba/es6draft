@@ -133,6 +133,7 @@ public class Messages {
         NotUndefined("type.not_undefined"),
         NotExtensible("type.not_extensible"),
         IncompatibleObject("type.incompatible_object"),
+        SymbolObject("type.symbol_object"),
 
         // 8.2.5 Property Descriptor
         InvalidGetter("propertydescriptor.invalid_getter"),

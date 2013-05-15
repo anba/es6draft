@@ -692,6 +692,8 @@ public final class ScriptRuntime {
             return "number";
         case String:
             return "string";
+        case Symbol:
+            return "symbol";
         case Object:
         default:
             if (IsCallable(val)) {
@@ -890,6 +892,7 @@ public final class ScriptRuntime {
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
         }
+        assert tx == Type.Object || tx == Type.Symbol;
         return (x == y);
     }
 

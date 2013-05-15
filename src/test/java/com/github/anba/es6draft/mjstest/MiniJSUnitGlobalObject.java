@@ -23,7 +23,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbolObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  *
@@ -116,7 +116,7 @@ public class MiniJSUnitGlobalObject extends GlobalObject {
      */
     @Function(name = "newSym", arity = 2)
     public Object newSym(String name, boolean _private) {
-        return new ExoticSymbolObject(name, _private);
+        return new Symbol(name, _private);
     }
 
     /** shell-function: {@code print(message)} */

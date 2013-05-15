@@ -196,6 +196,7 @@ public abstract class Reference {
             this.base = base;
             this.type = Type.of(base);
             this.strictReference = strictReference;
+            assert !(type == Type.Undefined || type == Type.Null || type == Type.Symbol);
         }
 
         @Override

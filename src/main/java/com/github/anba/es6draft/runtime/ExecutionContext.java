@@ -145,6 +145,7 @@ public final class ExecutionContext {
                 case Boolean:
                 case Number:
                 case String:
+                case Symbol:
                     thisValue = ToObject(calleeContext, thisArgument);
                     break;
                 case Object:
