@@ -3401,9 +3401,9 @@ public class Parser {
      *     ClassExpression
      *     GeneratorExpression
      *     GeneratorComprehension
-     *     [Lexical goal <i>InputElementRegExp</i>] RegularExpressionLiteral
+     *     RegularExpressionLiteral
      *     TemplateLiteral
-     *     CoverParenthesizedExpressionAndArrowParameterList
+     *     CoverParenthesisedExpressionAndArrowParameterList
      * Literal :
      *     NullLiteral
      *     ValueLiteral
@@ -3453,7 +3453,7 @@ public class Parser {
             if (LOOKAHEAD(Token.FOR)) {
                 return generatorComprehension();
             } else {
-                return coverParenthesizedExpressionAndArrowParameterList();
+                return coverParenthesisedExpressionAndArrowParameterList();
             }
         case TEMPLATE:
             return templateLiteral(false);
@@ -3469,14 +3469,14 @@ public class Parser {
      * <strong>[11.1] Primary Expressions</strong>
      * 
      * <pre>
-     * CoverParenthesizedExpressionAndArrowParameterList :
+     * CoverParenthesisedExpressionAndArrowParameterList :
      *     ( Expression )
      *     ( )
      *     ( ... Identifier )
      *     ( Expression , ... Identifier)
      * </pre>
      */
-    private Expression coverParenthesizedExpressionAndArrowParameterList() {
+    private Expression coverParenthesisedExpressionAndArrowParameterList() {
         consume(Token.LP);
         Expression expr;
         if (token() == Token.RP) {
@@ -3605,12 +3605,10 @@ public class Parser {
      * 
      * <pre>
      * Comprehension :
-     *     ComprehensionQualification AssignmentExpression
-     * ComprehensionQualification :
-     *     ComprehensionFor ComprehensionQualifierList<sub>opt</sub>
-     * ComprehensionQualifierList :
-     *     ComprehensionQualifier
-     *     ComprehensionQualifierList ComprehensionQualifier
+     *     ComprehensionFor ComprehensionQualifierTail
+     * ComprehensionQualifierTail :
+     *     AssignmentExpression
+     *     ComprehensionQualifier ComprehensionQualifierTail
      * ComprehensionQualifier :
      *     ComprehensionFor
      *     ComprehensionIf
@@ -3846,6 +3844,8 @@ public class Parser {
      * <strong>[11.1.8] Regular Expression Literals</strong>
      * 
      * <pre>
+     * RegularExpressionLiteral ::
+     *     / RegularExpressionBody / RegularExpressionFlags
      * </pre>
      */
     private Expression regularExpressionLiteral(Token tok) {
