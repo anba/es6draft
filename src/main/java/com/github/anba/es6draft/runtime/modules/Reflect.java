@@ -35,7 +35,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <p>
  * 15.17.1 Exported Function Properties Reflecting the Essentional Internal Methods<br>
  * 
- * 
  * TODO: remove representation as ordinary object
  */
 public class Reflect extends OrdinaryObject implements Initialisable, Module {
@@ -139,15 +138,14 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
                 Object target, Object propertyKey) {
             ScriptObject obj = ToObject(cx, target);
             Object key = ToPropertyKey(cx, propertyKey);
-            // FIXME: spec bug [[GetOwnProperty]] return value returned as-is! (Bug 1438)
+            Property desc;
             if (key instanceof String) {
-                Property desc = obj.getOwnProperty(cx, (String) key);
-                return FromPropertyDescriptor(cx, desc);
+                desc = obj.getOwnProperty(cx, (String) key);
             } else {
                 assert key instanceof Symbol;
-                Property desc = obj.getOwnProperty(cx, (Symbol) key);
-                return FromPropertyDescriptor(cx, desc);
+                desc = obj.getOwnProperty(cx, (Symbol) key);
             }
+            return FromPropertyDescriptor(cx, desc);
         }
 
         /**
