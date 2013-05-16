@@ -17,6 +17,7 @@ import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteStrictArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.InstantiateArgumentsObject;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
@@ -41,7 +42,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
@@ -49,7 +49,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
- * All kinds of different runtime support methods (TODO: clean-up)
+ * All kinds of different runtime support methods
  */
 public final class ScriptRuntime {
     public static final Object[] EMPTY_ARRAY = new Object[0];
@@ -112,11 +112,61 @@ public final class ScriptRuntime {
         }
     }
 
+    /* ***************************************************************************************** */
+
+    /**
+     * 11.1.4.1 Array Literal
+     * <p>
+     * Runtime Semantics: Array Accumulation
+     */
+    public static void defineProperty(ScriptObject array, int nextIndex, Object value,
+            ExecutionContext cx) {
+        // String propertyName = ToString(ToUint32(nextIndex));
+        String propertyName = ToString(nextIndex);
+        array.defineOwnProperty(cx, propertyName, new PropertyDescriptor(value, true, true, true));
+    }
+
+    /**
+     * 11.1.4.1 Array Literal
+     * <p>
+     * Runtime Semantics: Array Accumulation<br>
+     * Runtime Semantics: Evaluation
+     */
+    public static int ArrayAccumulationSpreadElement(ScriptObject array, int nextIndex,
+            Object spreadValue, ExecutionContext cx) {
+        /* step 1-2 (cf. generated code) */
+        /* step 3-4 */
+        ScriptObject spreadObj = ToObject(cx, spreadValue);
+        /* step 5 */
+        Object lenVal = Get(cx, spreadObj, "length");
+        /* step 6-7 */
+        long spreadLen = ToUint32(cx, lenVal);
+        /* step 8-9 */
+        for (long n = 0; n < spreadLen; ++n, ++nextIndex) {
+            boolean exists = HasProperty(cx, spreadObj, ToString(n));
+            if (exists) {
+                Object v = spreadObj.get(cx, ToString(n), spreadObj);
+                defineProperty(array, nextIndex, v, cx);
+            }
+        }
+        return nextIndex;
+    }
+
+    /**
+     * 11.1.5 Object Initialiser
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     */
+    public static void defineProperty(ScriptObject object, String propertyName, Object value,
+            ExecutionContext cx) {
+        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
+                true));
+    }
+
     /**
      * 11.1.7 Generator Comprehensions
      * <p>
-     * Runtime Semantics: Evaluation<br>
-     * TODO: not yet defined in draft [rev. 13]
+     * Runtime Semantics: Evaluation
      */
     public static ScriptObject EvaluateGeneratorComprehension(MethodHandle handle,
             ExecutionContext cx) {
@@ -129,350 +179,14 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 13.1 Function Definitions
+     * 11.1.8 Regular Expression Literals
      * <p>
      * Runtime Semantics: Evaluation
-     * <ul>
-     * <li>FunctionExpression : function ( FormalParameterList ) { FunctionBody }
-     * <li>FunctionExpression : function BindingIdentifier ( FormalParameterList ) { FunctionBody }
-     * </ul>
      */
-    public static OrdinaryFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        if (fd.hasScopedName()) {
-            scope = LexicalEnvironment.newDeclarativeEnvironment(scope);
-            EnvironmentRecord envRec = scope.getEnvRec();
-            envRec.createImmutableBinding(fd.functionName());
-        }
-        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        MakeConstructor(cx, closure);
-        if (fd.hasScopedName()) {
-            scope.getEnvRec().initializeBinding(fd.functionName(), closure);
-        }
-        return closure;
-    }
-
-    /**
-     * 13.2 Arrow Function Definitions
-     * <p>
-     * Runtime Semantics: Evaluation
-     * <ul>
-     * <li>ArrowFunction : ArrowParameters => ConciseBody
-     * </ul>
-     */
-    public static OrdinaryFunction EvaluateArrowFunction(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Arrow, fd, scope);
-        return closure;
-    }
-
-    /**
-     * 13.5 Class Definitions
-     * <p>
-     * Runtime Semantics: ClassDefinitionEvaluation
-     */
-    public static ScriptObject[] getDefaultClassProto(ExecutionContext cx) {
-        // step 1
-        ScriptObject protoParent = cx.getIntrinsic(Intrinsics.ObjectPrototype);
-        ScriptObject constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        // step 3
-        ScriptObject proto = ObjectCreate(cx, protoParent);
-        return new ScriptObject[] { proto, constructorParent };
-    }
-
-    /**
-     * 13.5 Class Definitions
-     * <p>
-     * Runtime Semantics: ClassDefinitionEvaluation
-     */
-    public static ScriptObject[] getClassProto(Object superClass, ExecutionContext cx) {
-        ScriptObject protoParent;
-        ScriptObject constructorParent;
-        // step 2
-        if (Type.isNull(superClass)) {
-            protoParent = null;
-            constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        } else if (!Type.isObject(superClass)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
-        } else if (!IsConstructor(superClass)) {
-            throw throwTypeError(cx, Messages.Key.NotConstructor);
-        } else {
-            Object p = Get(cx, Type.objectValue(superClass), "prototype");
-            if (!(Type.isObject(p) || Type.isNull(p))) {
-                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
-            }
-            protoParent = (Type.isNull(p) ? null : Type.objectValue(p));
-            constructorParent = Type.objectValue(superClass);
-        }
-        // step 3
-        ScriptObject proto = ObjectCreate(cx, protoParent);
-        return new ScriptObject[] { proto, constructorParent };
-    }
-
-    /**
-     * 13.5 Class Definitions
-     * <p>
-     * Runtime Semantics: ClassDefinitionEvaluation
-     */
-    public static RuntimeInfo.Function CreateDefaultConstructor() {
-        String functionName = "constructor";
-        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
-                | RuntimeInfo.FunctionFlags.Super.getValue();
-        int expectedArguments = 0;
-        RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
-                expectedArguments, DefaultConstructorInitMH, DefaultConstructorMH,
-                DefaultConstructorSource);
-
-        return function;
-    }
-
-    private static final MethodHandle DefaultConstructorInitMH;
-    private static final MethodHandle DefaultConstructorMH;
-    private static final String DefaultConstructorSource;
-    static {
-        Lookup lookup = MethodHandles.publicLookup();
-        try {
-            DefaultConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
-                    "DefaultConstructorInit", MethodType.methodType(ExoticArguments.class,
-                            ExecutionContext.class, FunctionObject.class, Object[].class));
-            DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
-                    MethodType.methodType(Object.class, ExecutionContext.class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new IllegalStateException(e);
-        }
-        try {
-            String source = "constructor(...args) { super(...args); }";
-            DefaultConstructorSource = SourceCompressor.compress(source).call();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    public static ExoticArguments DefaultConstructorInit(ExecutionContext cx, FunctionObject f,
-            Object[] args) {
-        LexicalEnvironment env = cx.getVariableEnvironment();
-        EnvironmentRecord envRec = env.getEnvRec();
-
-        envRec.createMutableBinding("args", false);
-        envRec.initializeBinding("args", UNDEFINED);
-
-        envRec.createImmutableBinding("arguments");
-        ExoticArguments ao = InstantiateArgumentsObject(cx, args);
-
-        cx.identifierResolution("args", true).PutValue(createRestArray(ao, 0, cx), cx);
-
-        CompleteStrictArgumentsObject(cx, ao);
-        envRec.initializeBinding("arguments", ao);
-
-        return ao;
-    }
-
-    public static Object DefaultConstructor(ExecutionContext cx) {
-        Object completionValue = UNDEFINED;
-
-        // super()
-        Reference ref = MakeSuperReference(cx, null, true);
-        // EvaluateCall: super(...args)
-        Object func = ref.GetValue(cx);
-        Object[] argList = SpreadArray(cx.identifierValue("args", true), cx);
-        Callable f = CheckCallable(func, cx);
-        Object thisValue = GetCallThisValue(ref, cx);
-        Object result = f.call(cx, thisValue, argList);
-        GetValue(result, cx);
-
-        return completionValue;
-    }
-
-    /**
-     * 13.3 Method Definitions, 13.5 Class Definitions
-     * <p>
-     * Runtime Semantics: Property Definition Evaluation<br>
-     * Runtime Semantics: ClassDefinitionEvaluation
-     */
-    public static OrdinaryFunction EvaluateConstructorMethod(ScriptObject constructorParent,
-            ScriptObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
-        String propName = "constructor";
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction constructor;
-        if (fd.hasSuperReference()) {
-            // FIXME: spec bug (constructorParent not used) (Bug 1416)
-            constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
-                    constructorParent, proto, propName);
-        } else {
-            // FIXME: spec bug (constructorParent not used) (Bug 1416)
-            constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
-                    constructorParent);
-        }
-        DefinePropertyOrThrow(cx, proto, propName, new PropertyDescriptor(constructor, true, true,
-                true));
-
-        MakeConstructor(cx, constructor, false, proto);
-        proto.defineOwnProperty(cx, propName,
-                new PropertyDescriptor(constructor, true, false, true));
-
-        return constructor;
-    }
-
-    /**
-     * 13.3 Method Definitions
-     * <p>
-     * Runtime Semantics: Property Definition Evaluation
-     * <ul>
-     * <li>PropertyName ( FormalParameterList ) { FunctionBody }
-     * </ul>
-     */
-    public static void EvaluatePropertyDefinition(ScriptObject object, String propName,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure;
-        if (fd.hasSuperReference()) {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
-        } else {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
-        }
-        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
-        DefinePropertyOrThrow(cx, object, propName, desc);
-    }
-
-    /**
-     * 13.3 Method Definitions
-     * <p>
-     * Runtime Semantics: Property Definition Evaluation
-     * <ul>
-     * <li>* PropertyName ( FormalParameterList ) { FunctionBody }
-     * </ul>
-     */
-    public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, String propName,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryGenerator closure;
-        if (fd.hasSuperReference()) {
-            closure = GeneratorCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
-        } else {
-            closure = GeneratorCreate(cx, FunctionKind.Method, fd, scope);
-        }
-        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
-        DefinePropertyOrThrow(cx, object, propName, desc);
-    }
-
-    /**
-     * 13.3 Method Definitions
-     * <p>
-     * Runtime Semantics: Property Definition Evaluation
-     * <ul>
-     * <li>get PropertyName ( ) { FunctionBody }
-     * </ul>
-     */
-    public static void EvaluatePropertyDefinitionGetter(ScriptObject object, String propName,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure;
-        if (fd.hasSuperReference()) {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
-        } else {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
-        }
-        PropertyDescriptor desc = new PropertyDescriptor();
-        desc.setGetter(closure);
-        desc.setEnumerable(true);
-        desc.setConfigurable(true);
-        // FIXME: spec bug (not updated to use DefinePropertyOrThrow) (Bug 1417)
-        DefinePropertyOrThrow(cx, object, propName, desc);
-    }
-
-    /**
-     * 13.3 Method Definitions
-     * <p>
-     * Runtime Semantics: Property Definition Evaluation
-     * <ul>
-     * <li>set PropertyName ( PropertySetParameterList ) { FunctionBody }
-     * </ul>
-     */
-    public static void EvaluatePropertyDefinitionSetter(ScriptObject object, String propName,
-            RuntimeInfo.Function fd, ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure;
-        if (fd.hasSuperReference()) {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
-        } else {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
-        }
-        PropertyDescriptor desc = new PropertyDescriptor();
-        desc.setSetter(closure);
-        desc.setEnumerable(true);
-        desc.setConfigurable(true);
-        DefinePropertyOrThrow(cx, object, propName, desc);
-    }
-
-    /**
-     * 13.4 Generator Definitions
-     * <p>
-     * Runtime Semantics: Evaluation
-     * <ul>
-     * <li>GeneratorExpression: function* ( FormalParameterList ) { FunctionBody }
-     * <li>GeneratorExpression: function* BindingIdentifier ( FormalParameterList ) { FunctionBody }
-     * </ul>
-     */
-    public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd,
-            ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        if (fd.hasScopedName()) {
-            scope = LexicalEnvironment.newDeclarativeEnvironment(scope);
-            EnvironmentRecord envRec = scope.getEnvRec();
-            envRec.createImmutableBinding(fd.functionName());
-        }
-        OrdinaryGenerator closure = GeneratorCreate(cx, FunctionKind.Normal, fd, scope);
-        MakeConstructor(cx, closure);
-        if (fd.hasScopedName()) {
-            scope.getEnvRec().initializeBinding(fd.functionName(), closure);
-        }
-        return closure;
-    }
-
-    /**
-     * Runtime Semantics: ArgumentListEvaluation
-     */
-    public static Object[] SpreadArray(Object spreadValue, ExecutionContext cx) {
-        /* step 1-3 (cf. generated code) */
-        /* step 4-5 */
-        ScriptObject spreadObj = ToObject(cx, spreadValue);
-        /* step 6 */
-        Object lenVal = Get(cx, spreadObj, "length");
-        /* step 7-8 */
-        long spreadLen = ToUint32(cx, lenVal);
-        assert spreadLen <= Integer.MAX_VALUE;
-        Object[] list = new Object[(int) spreadLen];
-        /* step 9-10 */
-        for (int n = 0; n < spreadLen; ++n) {
-            Object nextArg = Get(cx, spreadObj, ToString(n));
-            list[n] = nextArg;
-        }
-        return list;
-    }
-
-    /**
-     * Runtime Semantics: ArgumentListEvaluation
-     */
-    public static Object[] toFlatArray(Object[] array) {
-        int newlen = array.length;
-        for (int i = 0, len = array.length; i < len; ++i) {
-            if (array[i] instanceof Object[]) {
-                newlen += ((Object[]) array[i]).length - 1;
-            }
-        }
-        Object[] result = new Object[newlen];
-        for (int i = 0, j = 0, len = array.length; i < len; ++i) {
-            if (array[i] instanceof Object[]) {
-                Object[] a = (Object[]) array[i];
-                System.arraycopy(a, 0, result, j, a.length);
-                j += a.length;
-            } else {
-                result[j++] = array[i];
-            }
-        }
-        return result;
+    public static Object RegExp(ExecutionContext cx, String re, String flags) {
+        // FIXME: spec bug (call abstract operation RegExpCreate?!) (bug 749)
+        Constructor ctor = (Constructor) cx.getIntrinsic(Intrinsics.RegExp);
+        return ctor.construct(cx, re, flags);
     }
 
     /**
@@ -494,8 +208,8 @@ public final class ScriptRuntime {
         /* step 4 */
         int count = strings.length >>> 1;
         /* step 5-6 */
-        ScriptObject siteObj = ExoticArray.ArrayCreate(cx, count);
-        ScriptObject rawObj = ExoticArray.ArrayCreate(cx, count);
+        ScriptObject siteObj = ArrayCreate(cx, count);
+        ScriptObject rawObj = ArrayCreate(cx, count);
         /* step 7-8 */
         for (int i = 0, n = strings.length; i < n; i += 2) {
             int index = i >>> 1;
@@ -527,6 +241,41 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 11.2.1 Property Accessors
+     * <p>
+     * Runtime Semantics: Evaluation<br>
+     * MemberExpression : MemberExpression . IdentifierName
+     */
+    public static Reference getProperty(Object baseValue, String propertyNameString,
+            ExecutionContext cx, boolean strict) {
+        /* step 1-6 (generated code) */
+        /* step 7 */
+        CheckObjectCoercible(cx, baseValue);
+        /* step 8-10 */
+        return new Reference.PropertyNameReference(baseValue, propertyNameString, strict);
+    }
+
+    /**
+     * 11.2.1 Property Accessors
+     * <p>
+     * Runtime Semantics: Evaluation<br>
+     * MemberExpression : MemberExpression [ Expression ]
+     */
+    public static Reference getElement(Object baseValue, Object propertyNameValue,
+            ExecutionContext cx, boolean strict) {
+        /* step 1-6 (generated code) */
+        /* step 7 */
+        CheckObjectCoercible(cx, baseValue);
+        /* step 8 */
+        Object propertyKey = ToPropertyKey(cx, propertyNameValue);
+        /* step 9-10 */
+        if (propertyKey instanceof String) {
+            return new Reference.PropertyNameReference(baseValue, (String) propertyKey, strict);
+        }
+        return new Reference.PropertySymbolReference(baseValue, (Symbol) propertyKey, strict);
+    }
+
+    /**
      * 11.2.2 The new Operator
      * <p>
      * Runtime Semantics: Evaluation<br>
@@ -552,7 +301,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 11.2.3 Function Calls: EvaluateCall
+     * 11.2.3 Function Calls
+     * <p>
+     * Runtime Semantics: EvaluateCall Abstract Operation
      */
     public static Callable CheckCallable(Object func, ExecutionContext cx) {
         /* step 5 */
@@ -567,7 +318,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 11.2.3 Function Calls: EvaluateCall
+     * 11.2.3 Function Calls
+     * <p>
+     * Runtime Semantics: EvaluateCall Abstract Operation
      */
     public static Object GetCallThisValue(Object ref, ExecutionContext cx) {
         Object thisValue;
@@ -591,7 +344,9 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 11.2.3 Function Calls: EvaluateCall
+     * 11.2.3 Function Calls
+     * <p>
+     * Runtime Semantics: EvaluateCall Abstract Operation
      */
     public static boolean IsBuiltinEval(Object ref, Callable f, ExecutionContext cx) {
         if (ref instanceof Reference) {
@@ -605,6 +360,8 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 11.2.4 The super Keyword
+     * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      */
     public static Reference MakeSuperReference(ExecutionContext cx, String propertyKey,
@@ -624,6 +381,54 @@ public final class ScriptRuntime {
             propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
         }
         return new Reference.SuperNameReference(baseValue, propertyKey, strict, actualThis);
+    }
+
+    /**
+     * 11.2.5 Argument Lists
+     * <p>
+     * Runtime Semantics: ArgumentListEvaluation
+     */
+    public static Object[] SpreadArray(Object spreadValue, ExecutionContext cx) {
+        /* step 1-3 (cf. generated code) */
+        /* step 4-5 */
+        ScriptObject spreadObj = ToObject(cx, spreadValue);
+        /* step 6 */
+        Object lenVal = Get(cx, spreadObj, "length");
+        /* step 7-8 */
+        long spreadLen = ToUint32(cx, lenVal);
+        assert spreadLen <= Integer.MAX_VALUE;
+        Object[] list = new Object[(int) spreadLen];
+        /* step 9-10 */
+        for (int n = 0; n < spreadLen; ++n) {
+            Object nextArg = Get(cx, spreadObj, ToString(n));
+            list[n] = nextArg;
+        }
+        return list;
+    }
+
+    /**
+     * 11.2.5 Argument Lists
+     * <p>
+     * Runtime Semantics: ArgumentListEvaluation
+     */
+    public static Object[] toFlatArray(Object[] array) {
+        int newlen = array.length;
+        for (int i = 0, len = array.length; i < len; ++i) {
+            if (array[i] instanceof Object[]) {
+                newlen += ((Object[]) array[i]).length - 1;
+            }
+        }
+        Object[] result = new Object[newlen];
+        for (int i = 0, j = 0, len = array.length; i < len; ++i) {
+            if (array[i] instanceof Object[]) {
+                Object[] a = (Object[]) array[i];
+                System.arraycopy(a, 0, result, j, a.length);
+                j += a.length;
+            } else {
+                result[j++] = array[i];
+            }
+        }
+        return result;
     }
 
     /**
@@ -660,7 +465,6 @@ public final class ScriptRuntime {
                 throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
                         .toString());
             }
-            // FIXME: spec bug (return value)
             return deleteStatus;
         }
         /* step 6 */
@@ -809,7 +613,6 @@ public final class ScriptRuntime {
                 BuiltinSymbol.hasInstance.get());
         if (instOfHandler != null) {
             Object result = instOfHandler.call(cx, constructor, obj);
-            // FIXME: spec bug (missing ToBoolean) (Bug 1418)
             return ToBoolean(result);
         }
         if (!IsCallable(constructor)) {
@@ -896,6 +699,61 @@ public final class ScriptRuntime {
         return (x == y);
     }
 
+    /* ***************************************************************************************** */
+
+    /**
+     * 12.2.4 Destructuring Binding Patterns
+     * <p>
+     * Runtime Semantics: Indexed Binding Initialisation<br>
+     * BindingRestElement : ... BindingIdentifier
+     */
+    public static ScriptObject createRestArray(ScriptObject array, int index, ExecutionContext cx) {
+        Object lenVal = Get(cx, array, "length");
+        long arrayLength = ToUint32(cx, lenVal);
+        ScriptObject result = ArrayCreate(cx, 0);
+        long n = 0;
+        while (index < arrayLength) {
+            String p = ToString(index);
+            boolean exists = HasProperty(cx, array, p);
+            if (exists) {
+                Object v = Get(cx, array, p);
+                PropertyDescriptor desc = new PropertyDescriptor(v, true, true, true);
+                result.defineOwnProperty(cx, ToString(n), desc);
+            }
+            n = n + 1;
+            index = index + 1;
+        }
+        return result;
+    }
+
+    /**
+     * 12.6.4 The for-in and for-of Statements
+     * <p>
+     * Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
+     */
+    public static Iterator<?> enumerate(Object o, ExecutionContext cx) {
+        /* step 5 */
+        ScriptObject obj = ToObject(cx, o);
+        /* step 6, step 8 */
+        ScriptObject keys = obj.enumerate(cx);
+        /* step 9 */
+        return FromListIterator(cx, keys);
+    }
+
+    /**
+     * 12.6.4 The for-in and for-of Statements
+     * <p>
+     * Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
+     */
+    public static Iterator<?> iterate(Object o, ExecutionContext cx) {
+        /* step 5 */
+        ScriptObject obj = ToObject(cx, o);
+        /* step 7, step 8 */
+        ScriptObject keys = ToObject(cx, Invoke(cx, obj, BuiltinSymbol.iterator.get()));
+        /* step 9 */
+        return FromListIterator(cx, keys);
+    }
+
     /**
      * 12.13 The throw Statement
      */
@@ -904,6 +762,194 @@ public final class ScriptRuntime {
             throw ((ErrorObject) val).getException();
         }
         throw new ScriptException(val);
+    }
+
+    /* ***************************************************************************************** */
+
+    /**
+     * 13.1 Function Definitions
+     * <p>
+     * Runtime Semantics: Evaluation
+     * <ul>
+     * <li>FunctionExpression : function ( FormalParameters ) { FunctionBody }
+     * <li>FunctionExpression : function BindingIdentifier ( FormalParameters ) { FunctionBody }
+     * </ul>
+     */
+    public static OrdinaryFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        if (fd.hasScopedName()) {
+            scope = LexicalEnvironment.newDeclarativeEnvironment(scope);
+            EnvironmentRecord envRec = scope.getEnvRec();
+            envRec.createImmutableBinding(fd.functionName());
+        }
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        MakeConstructor(cx, closure);
+        if (fd.hasScopedName()) {
+            scope.getEnvRec().initializeBinding(fd.functionName(), closure);
+        }
+        return closure;
+    }
+
+    /**
+     * 13.2 Arrow Function Definitions
+     * <p>
+     * Runtime Semantics: Evaluation
+     * <ul>
+     * <li>ArrowFunction : ArrowParameters => ConciseBody
+     * </ul>
+     */
+    public static OrdinaryFunction EvaluateArrowFunction(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Arrow, fd, scope);
+        return closure;
+    }
+
+    /**
+     * 13.3 Method Definitions, 13.5 Class Definitions
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation<br>
+     * Runtime Semantics: ClassDefinitionEvaluation
+     */
+    public static OrdinaryFunction EvaluateConstructorMethod(ScriptObject constructorParent,
+            ScriptObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
+        String propName = "constructor";
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        OrdinaryFunction constructor;
+        if (fd.hasSuperReference()) {
+            // FIXME: spec bug (constructorParent not used) (Bug 1416)
+            constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
+                    constructorParent, proto, propName);
+        } else {
+            // FIXME: spec bug (constructorParent not used) (Bug 1416)
+            constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
+                    constructorParent);
+        }
+        DefinePropertyOrThrow(cx, proto, propName, new PropertyDescriptor(constructor, true, true,
+                true));
+
+        MakeConstructor(cx, constructor, false, proto);
+        proto.defineOwnProperty(cx, propName,
+                new PropertyDescriptor(constructor, true, false, true));
+
+        return constructor;
+    }
+
+    /**
+     * 13.3 Method Definitions
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     * <ul>
+     * <li>PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * </ul>
+     */
+    public static void EvaluatePropertyDefinition(ScriptObject object, String propName,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        OrdinaryFunction closure;
+        if (fd.hasSuperReference()) {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
+        } else {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        }
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        DefinePropertyOrThrow(cx, object, propName, desc);
+    }
+
+    /**
+     * 13.3 Method Definitions
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     * <ul>
+     * <li>get PropertyName ( ) { FunctionBody }
+     * </ul>
+     */
+    public static void EvaluatePropertyDefinitionGetter(ScriptObject object, String propName,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        OrdinaryFunction closure;
+        if (fd.hasSuperReference()) {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
+        } else {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        }
+        PropertyDescriptor desc = new PropertyDescriptor();
+        desc.setGetter(closure);
+        desc.setEnumerable(true);
+        desc.setConfigurable(true);
+        // FIXME: spec bug (not updated to use DefinePropertyOrThrow) (Bug 1417)
+        DefinePropertyOrThrow(cx, object, propName, desc);
+    }
+
+    /**
+     * 13.3 Method Definitions
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     * <ul>
+     * <li>set PropertyName ( PropertySetParameterList ) { FunctionBody }
+     * </ul>
+     */
+    public static void EvaluatePropertyDefinitionSetter(ScriptObject object, String propName,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        OrdinaryFunction closure;
+        if (fd.hasSuperReference()) {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
+        } else {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        }
+        PropertyDescriptor desc = new PropertyDescriptor();
+        desc.setSetter(closure);
+        desc.setEnumerable(true);
+        desc.setConfigurable(true);
+        DefinePropertyOrThrow(cx, object, propName, desc);
+    }
+
+    /**
+     * 13.4 Generator Function Definitions
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     * <ul>
+     * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * </ul>
+     */
+    public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, String propName,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        OrdinaryGenerator closure;
+        if (fd.hasSuperReference()) {
+            closure = GeneratorCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
+        } else {
+            closure = GeneratorCreate(cx, FunctionKind.Method, fd, scope);
+        }
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        DefinePropertyOrThrow(cx, object, propName, desc);
+    }
+
+    /**
+     * 13.4 Generator Definitions
+     * <p>
+     * Runtime Semantics: Evaluation
+     * <ul>
+     * <li>GeneratorExpression: function* ( FormalParameters ) { FunctionBody }
+     * <li>GeneratorExpression: function* BindingIdentifier ( FormalParameters ) { FunctionBody }
+     * </ul>
+     */
+    public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd,
+            ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        if (fd.hasScopedName()) {
+            scope = LexicalEnvironment.newDeclarativeEnvironment(scope);
+            EnvironmentRecord envRec = scope.getEnvRec();
+            envRec.createImmutableBinding(fd.functionName());
+        }
+        OrdinaryGenerator closure = GeneratorCreate(cx, FunctionKind.Normal, fd, scope);
+        MakeConstructor(cx, closure);
+        if (fd.hasScopedName()) {
+            scope.getEnvRec().initializeBinding(fd.functionName(), closure);
+        }
+        return closure;
     }
 
     /**
@@ -954,100 +1000,124 @@ public final class ScriptRuntime {
         return result;
     }
 
-    public static Object RegExp(ExecutionContext cx, String re, String flags) {
-        // FIXME: spec bug (call abstract operation RegExpCreate?!) (bug 749)
-        Constructor ctor = (Constructor) cx.getIntrinsic(Intrinsics.RegExp);
-        return ctor.construct(cx, re, flags);
-    }
-
     /**
-     * Helper function
-     */
-    public static Iterator<?> enumerate(Object o, ExecutionContext cx) {
-        ScriptObject obj = ToObject(cx, o);
-        return FromListIterator(cx, obj.enumerate(cx));
-    }
-
-    /**
-     * Helper function
-     */
-    public static Iterator<?> iterate(Object o, ExecutionContext cx) {
-        ScriptObject obj = ToObject(cx, o);
-        Object keys = Invoke(cx, obj, BuiltinSymbol.iterator.get());
-        return FromListIterator(cx, keys);
-    }
-
-    /**
-     * 12.2.4 Destructuring Binding Patterns
+     * 13.5 Class Definitions
      * <p>
-     * Runtime Semantics: Indexed Binding Initialisation<br>
-     * BindingRestElement : ... BindingIdentifier
+     * Runtime Semantics: ClassDefinitionEvaluation
      */
-    public static ScriptObject createRestArray(ScriptObject array, int index, ExecutionContext cx) {
-        Object lenVal = Get(cx, array, "length");
-        long arrayLength = ToUint32(cx, lenVal);
-        ScriptObject result = ExoticArray.ArrayCreate(cx, 0);
-        long n = 0;
-        while (index < arrayLength) {
-            String p = ToString(index);
-            boolean exists = HasProperty(cx, array, p);
-            // TODO: assert exists iff FunctionRestParameter
-            if (exists) {
-                Object v = Get(cx, array, p);
-                PropertyDescriptor desc = new PropertyDescriptor(v, true, true, true);
-                result.defineOwnProperty(cx, ToString(n), desc);
+    public static ScriptObject[] getDefaultClassProto(ExecutionContext cx) {
+        // step 1
+        ScriptObject protoParent = cx.getIntrinsic(Intrinsics.ObjectPrototype);
+        ScriptObject constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        // step 3
+        ScriptObject proto = ObjectCreate(cx, protoParent);
+        return new ScriptObject[] { proto, constructorParent };
+    }
+
+    /**
+     * 13.5 Class Definitions
+     * <p>
+     * Runtime Semantics: ClassDefinitionEvaluation
+     */
+    public static ScriptObject[] getClassProto(Object superClass, ExecutionContext cx) {
+        ScriptObject protoParent;
+        ScriptObject constructorParent;
+        // step 2
+        if (Type.isNull(superClass)) {
+            protoParent = null;
+            constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        } else if (!Type.isObject(superClass)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        } else if (!IsConstructor(superClass)) {
+            throw throwTypeError(cx, Messages.Key.NotConstructor);
+        } else {
+            Object p = Get(cx, Type.objectValue(superClass), "prototype");
+            if (!(Type.isObject(p) || Type.isNull(p))) {
+                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            n = n + 1;
-            index = index + 1;
+            protoParent = (Type.isNull(p) ? null : Type.objectValue(p));
+            constructorParent = Type.objectValue(superClass);
         }
-        return result;
+        // step 3
+        ScriptObject proto = ObjectCreate(cx, protoParent);
+        return new ScriptObject[] { proto, constructorParent };
     }
 
     /**
-     * 11.2.1 Property Accessors
+     * 13.5 Class Definitions
      * <p>
-     * Runtime Semantics: Evaluation<br>
-     * MemberExpression : MemberExpression . IdentifierName
+     * Runtime Semantics: ClassDefinitionEvaluation
      */
-    public static Reference getProperty(Object baseValue, String propertyNameString,
-            ExecutionContext cx, boolean strict) {
-        /* step 1-6 (generated code) */
-        /* step 7 */
-        CheckObjectCoercible(cx, baseValue);
-        /* step 8-10 */
-        return new Reference.PropertyNameReference(baseValue, propertyNameString, strict);
+    public static RuntimeInfo.Function CreateDefaultConstructor() {
+        String functionName = "constructor";
+        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
+                | RuntimeInfo.FunctionFlags.Super.getValue();
+        int expectedArguments = 0;
+        RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
+                expectedArguments, DefaultConstructorInitMH, DefaultConstructorMH,
+                DefaultConstructorSource);
+
+        return function;
     }
 
-    /**
-     * 11.2.1 Property Accessors
-     * <p>
-     * Runtime Semantics: Evaluation<br>
-     * MemberExpression : MemberExpression [ Expression ]
-     */
-    public static Reference getElement(Object baseValue, Object propertyNameValue,
-            ExecutionContext cx, boolean strict) {
-        /* step 1-6 (generated code) */
-        /* step 7 */
-        CheckObjectCoercible(cx, baseValue);
-        /* step 8 */
-        Object propertyKey = ToPropertyKey(cx, propertyNameValue);
-        /* step 9-10 */
-        if (propertyKey instanceof String) {
-            return new Reference.PropertyNameReference(baseValue, (String) propertyKey, strict);
+    private static final MethodHandle DefaultConstructorInitMH;
+    private static final MethodHandle DefaultConstructorMH;
+    private static final String DefaultConstructorSource;
+    static {
+        Lookup lookup = MethodHandles.publicLookup();
+        try {
+            DefaultConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
+                    "DefaultConstructorInit", MethodType.methodType(ExoticArguments.class,
+                            ExecutionContext.class, FunctionObject.class, Object[].class));
+            DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
+                    MethodType.methodType(Object.class, ExecutionContext.class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
         }
-        return new Reference.PropertySymbolReference(baseValue, (Symbol) propertyKey, strict);
+        try {
+            String source = "constructor(...args) { super(...args); }";
+            DefaultConstructorSource = SourceCompressor.compress(source).call();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
-    /**
-     * 11.1.5 Object Initialiser
-     * <p>
-     * Runtime Semantics: Property Definition Evaluation
-     */
-    public static void defineProperty(ScriptObject object, String propertyName, Object value,
-            ExecutionContext cx) {
-        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
-                true));
+    public static ExoticArguments DefaultConstructorInit(ExecutionContext cx, FunctionObject f,
+            Object[] args) {
+        LexicalEnvironment env = cx.getVariableEnvironment();
+        EnvironmentRecord envRec = env.getEnvRec();
+
+        envRec.createMutableBinding("args", false);
+        envRec.initializeBinding("args", UNDEFINED);
+
+        envRec.createImmutableBinding("arguments");
+        ExoticArguments ao = InstantiateArgumentsObject(cx, args);
+
+        cx.identifierResolution("args", true).PutValue(createRestArray(ao, 0, cx), cx);
+
+        CompleteStrictArgumentsObject(cx, ao);
+        envRec.initializeBinding("arguments", ao);
+
+        return ao;
     }
+
+    public static Object DefaultConstructor(ExecutionContext cx) {
+        Object completionValue = UNDEFINED;
+
+        // super()
+        Reference ref = MakeSuperReference(cx, null, true);
+        // EvaluateCall: super(...args)
+        Object func = ref.GetValue(cx);
+        Object[] argList = SpreadArray(cx.identifierValue("args", true), cx);
+        Callable f = CheckCallable(func, cx);
+        Object thisValue = GetCallThisValue(ref, cx);
+        Object result = f.call(cx, thisValue, argList);
+        GetValue(result, cx);
+
+        return completionValue;
+    }
+
+    /* ***************************************************************************************** */
 
     /**
      * B.3.1.3 __proto___ Object Initialisers
@@ -1055,43 +1125,5 @@ public final class ScriptRuntime {
     public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
         // use Put() to comply with current SpiderMonkey/JSC behaviour
         Put(cx, object, "__proto__", value, true);
-    }
-
-    /**
-     * 11.1.4.1 Array Literal
-     * <p>
-     * Runtime Semantics: Array Accumulation
-     */
-    public static void defineProperty(ScriptObject array, int nextIndex, Object value,
-            ExecutionContext cx) {
-        // String propertyName = ToString(ToUint32(nextIndex));
-        String propertyName = ToString(nextIndex);
-        array.defineOwnProperty(cx, propertyName, new PropertyDescriptor(value, true, true, true));
-    }
-
-    /**
-     * 11.1.4.1 Array Literal
-     * <p>
-     * Runtime Semantics: Array Accumulation<br>
-     * Runtime Semantics: Evaluation
-     */
-    public static int ArrayAccumulationSpreadElement(ScriptObject array, int nextIndex,
-            Object spreadValue, ExecutionContext cx) {
-        /* step 1-2 (cf. generated code) */
-        /* step 3-4 */
-        ScriptObject spreadObj = ToObject(cx, spreadValue);
-        /* step 5 */
-        Object lenVal = Get(cx, spreadObj, "length");
-        /* step 6-7 */
-        long spreadLen = ToUint32(cx, lenVal);
-        /* step 8-9 */
-        for (long n = 0; n < spreadLen; ++n, ++nextIndex) {
-            boolean exists = HasProperty(cx, spreadObj, ToString(n));
-            if (exists) {
-                Object v = spreadObj.get(cx, ToString(n), spreadObj);
-                defineProperty(array, nextIndex, v, cx);
-            }
-        }
-        return nextIndex;
     }
 }

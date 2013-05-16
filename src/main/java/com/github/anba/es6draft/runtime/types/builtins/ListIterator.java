@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.objects.StopIterationObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  *
@@ -57,7 +58,7 @@ public class ListIterator<T> extends OrdinaryObject {
         return itr;
     }
 
-    public static Iterator<?> FromListIterator(ExecutionContext cx, Object obj) {
+    public static Iterator<?> FromListIterator(ExecutionContext cx, ScriptObject obj) {
         if (obj instanceof ListIterator) {
             return ((ListIterator<?>) obj).iterator;
         }
@@ -94,10 +95,10 @@ public class ListIterator<T> extends OrdinaryObject {
 
     private static class IteratorWrapper implements Iterator<Object> {
         private ExecutionContext cx;
-        private Object object;
+        private ScriptObject object;
         private Object next = null;
 
-        IteratorWrapper(ExecutionContext cx, Object object) {
+        IteratorWrapper(ExecutionContext cx, ScriptObject object) {
             this.cx = cx;
             this.object = object;
         }
