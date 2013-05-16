@@ -317,6 +317,9 @@ tests/auto-regress/bug735936.js
 # let variable must no be redeclared
 tests/basic/bug778268.js
 
+# ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
+tests/auto-regress/bug765055.js
+
 # Declaration directly nested in Statement
 tests/auto-regress/bug771027.js
 tests/basic/bug639797.js

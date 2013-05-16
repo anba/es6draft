@@ -675,7 +675,7 @@ public class Parser {
             try {
                 ts = new TokenStream(this, new StringTokenStreamInput(formals), sourceLine);
                 ts.init();
-                FormalParameterList parameters = formalParameterList(Token.EOF);
+                FormalParameterList parameters = formalParameters(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
@@ -695,13 +695,13 @@ public class Parser {
                 String header = String.format("function anonymous (%s) ", formals);
                 String body = String.format("\n%s\n", bodyText);
 
-                formalParameterList_StaticSemantics(parameters);
-
                 FunctionContext scope = context.funContext;
                 function = new FunctionExpression(scope, "anonymous", parameters, statements,
                         header, body);
                 function.setLine(sourceLine);
                 scope.node = function;
+
+                function_StaticSemantics(function);
 
                 function = inheritStrictness(function);
             } finally {
@@ -737,7 +737,7 @@ public class Parser {
             try {
                 ts = new TokenStream(this, new StringTokenStreamInput(formals), sourceLine);
                 ts.init();
-                FormalParameterList parameters = formalParameterList(Token.EOF);
+                FormalParameterList parameters = formalParameters(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
                 }
@@ -757,13 +757,13 @@ public class Parser {
                 String header = String.format("function* anonymous (%s) ", formals);
                 String body = String.format("\n%s\n", bodyText);
 
-                formalParameterList_StaticSemantics(parameters);
-
                 FunctionContext scope = context.funContext;
                 generator = new GeneratorExpression(scope, "anonymous", parameters, statements,
                         header, body);
                 generator.setLine(sourceLine);
                 scope.node = generator;
+
+                generator_StaticSemantics(generator);
 
                 generator = inheritStrictness(generator);
             } finally {
@@ -1235,6 +1235,8 @@ public class Parser {
         }
     }
 
+    /* ***************************************************************************************** */
+
     private static FunctionNode.StrictMode toFunctionStrictness(boolean strict, boolean explicit) {
         if (strict) {
             if (explicit) {
@@ -1272,14 +1274,12 @@ public class Parser {
         return function;
     }
 
-    /* ***************************************************************************************** */
-
     /**
      * <strong>[13.1] Function Definitions</strong>
      * 
      * <pre>
      * FunctionDeclaration :
-     *     function BindingIdentifier ( FormalParameterList ) { FunctionBody }
+     *     function BindingIdentifier ( FormalParameters ) { FunctionBody }
      * </pre>
      */
     private FunctionDeclaration functionDeclaration() {
@@ -1290,7 +1290,7 @@ public class Parser {
             int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = bindingIdentifier();
             consume(Token.LP);
-            FormalParameterList parameters = formalParameterList(Token.RP);
+            FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
             int startBody = ts.position();
@@ -1301,13 +1301,13 @@ public class Parser {
             String header = ts.range(startFunction, startBody - 1);
             String body = ts.range(startBody, endFunction);
 
-            formalParameterList_StaticSemantics(parameters);
-
             FunctionContext scope = context.funContext;
             FunctionDeclaration function = new FunctionDeclaration(scope, identifier, parameters,
                     statements, header, body);
             function.setLine(line);
             scope.node = function;
+
+            function_StaticSemantics(function);
 
             addFunctionDecl(function);
 
@@ -1322,7 +1322,7 @@ public class Parser {
      * 
      * <pre>
      * FunctionExpression :
-     *     function BindingIdentifier<sub>opt</sub> ( FormalParameterList ) { FunctionBody }
+     *     function BindingIdentifier<sub>opt</sub> ( FormalParameters ) { FunctionBody }
      * </pre>
      */
     private FunctionExpression functionExpression() {
@@ -1336,7 +1336,7 @@ public class Parser {
                 identifier = bindingIdentifier();
             }
             consume(Token.LP);
-            FormalParameterList parameters = formalParameterList(Token.RP);
+            FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
             int startBody = ts.position();
@@ -1347,13 +1347,13 @@ public class Parser {
             String header = ts.range(startFunction, startBody - 1);
             String body = ts.range(startBody, endFunction);
 
-            formalParameterList_StaticSemantics(parameters);
-
             FunctionContext scope = context.funContext;
             FunctionExpression function = new FunctionExpression(scope, identifier, parameters,
                     statements, header, body);
             function.setLine(line);
             scope.node = function;
+
+            function_StaticSemantics(function);
 
             return inheritStrictness(function);
         } finally {
@@ -1365,8 +1365,35 @@ public class Parser {
      * <strong>[13.1] Function Definitions</strong>
      * 
      * <pre>
-     * FormalParameterList :
+     * StrictFormalParameters :
+     *     FormalParameters
+     * </pre>
+     */
+    private FormalParameterList strictFormalParameters(Token end) {
+        return formalParameters(end);
+    }
+
+    /**
+     * <strong>[13.1] Function Definitions</strong>
+     * 
+     * <pre>
+     * FormalParameters :
      *     [empty]
+     *     FormalParameterList
+     * </pre>
+     */
+    private FormalParameterList formalParameters(Token end) {
+        if (token() == end) {
+            return new FormalParameterList(Collections.<FormalParameter> emptyList());
+        }
+        return formalParameterList();
+    }
+
+    /**
+     * <strong>[13.1] Function Definitions</strong>
+     * 
+     * <pre>
+     * FormalParameterList :
      *     FunctionRestParameter
      *     FormalsList
      *     FormalsList, FunctionRestParameter
@@ -1379,21 +1406,19 @@ public class Parser {
      *     BindingElement
      * </pre>
      */
-    private FormalParameterList formalParameterList(Token end) {
+    private FormalParameterList formalParameterList() {
         List<FormalParameter> formals = newSmallList();
-        if (token() != end) {
-            for (;;) {
-                if (token() == Token.TRIPLE_DOT) {
-                    consume(Token.TRIPLE_DOT);
-                    formals.add(new BindingRestElement(bindingIdentifierStrict()));
-                    break;
+        for (;;) {
+            if (token() == Token.TRIPLE_DOT) {
+                consume(Token.TRIPLE_DOT);
+                formals.add(new BindingRestElement(bindingIdentifierStrict()));
+                break;
+            } else {
+                formals.add(bindingElement());
+                if (token() == Token.COMMA) {
+                    consume(Token.COMMA);
                 } else {
-                    formals.add(bindingElement());
-                    if (token() == Token.COMMA) {
-                        consume(Token.COMMA);
-                    } else {
-                        break;
-                    }
+                    break;
                 }
             }
         }
@@ -1409,41 +1434,51 @@ public class Parser {
         return null;
     }
 
-    private void formalParameterList_StaticSemantics(FormalParameterList parameters) {
-        // TODO: Early Error if intersection of BoundNames(FormalParameterList) and
-        // VarDeclaredNames(FunctionBody) is not the empty set
-        // => only for non-simple parameter list?
-        // => doesn't quite follow the current Function Declaration Instantiation algorithm
+    private void checkFormalParameterRedeclaration(List<String> boundNames,
+            HashSet<String> declaredNames) {
+        if (!(declaredNames == null || declaredNames.isEmpty())) {
+            String redeclared = containsAny(declaredNames, boundNames);
+            if (redeclared != null) {
+                reportSyntaxError(Messages.Key.FormalParameterRedeclaration, redeclared);
+            }
+        }
+    }
+
+    private void function_StaticSemantics(FunctionDefinition function) {
         assert context.scopeContext == context.funContext;
 
         FunctionContext scope = context.funContext;
-        HashSet<String> lexDeclaredNames = scope.lexDeclaredNames;
+        FormalParameterList parameters = function.getParameters();
         List<String> boundNames = BoundNames(parameters);
-        HashSet<String> names = new HashSet<>(boundNames);
-        scope.parameterNames = names;
+        scope.parameterNames = new HashSet<>(boundNames);
 
-        boolean hasLexDeclaredNames = !(lexDeclaredNames == null || lexDeclaredNames.isEmpty());
-        boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
+        if (!simple) {
+            checkFormalParameterRedeclaration(boundNames, scope.varDeclaredNames);
+        }
+        checkFormalParameterRedeclaration(boundNames, scope.lexDeclaredNames);
+        formalParameters_StaticSemantics(boundNames, scope.parameterNames, simple);
+    }
+
+    private void strictFormalParameters_StaticSemantics(List<String> boundNames, Set<String> names) {
+        boolean hasDuplicates = (boundNames.size() != names.size());
+        boolean hasEvalOrArguments = (names.contains("eval") || names.contains("arguments"));
+        if (hasDuplicates) {
+            reportSyntaxError(Messages.Key.StrictModeDuplicateFormalParameter);
+        }
+        if (hasEvalOrArguments) {
+            reportSyntaxError(Messages.Key.StrictModeRestrictedIdentifier);
+        }
+    }
+
+    private void formalParameters_StaticSemantics(List<String> boundNames, Set<String> names,
+            boolean simple) {
+        boolean strict = (context.strictMode != StrictMode.NonStrict);
         if (!strict && simple) {
-            if (hasLexDeclaredNames) {
-                String redeclared = containsAny(lexDeclaredNames, boundNames);
-                if (redeclared != null) {
-                    reportSyntaxError(Messages.Key.FormalParameterRedeclaration, redeclared);
-                }
-            }
             return;
         }
         boolean hasDuplicates = (boundNames.size() != names.size());
         boolean hasEvalOrArguments = (names.contains("eval") || names.contains("arguments"));
-        if (strict) {
-            if (hasDuplicates) {
-                reportStrictModeSyntaxError(Messages.Key.StrictModeDuplicateFormalParameter);
-            }
-            if (hasEvalOrArguments) {
-                reportStrictModeSyntaxError(Messages.Key.StrictModeRestrictedIdentifier);
-            }
-        }
         if (!simple) {
             if (hasDuplicates) {
                 reportSyntaxError(Messages.Key.StrictModeDuplicateFormalParameter);
@@ -1452,10 +1487,12 @@ public class Parser {
                 reportSyntaxError(Messages.Key.StrictModeRestrictedIdentifier);
             }
         }
-        if (hasLexDeclaredNames) {
-            String redeclared = containsAny(lexDeclaredNames, boundNames);
-            if (redeclared != null) {
-                reportSyntaxError(Messages.Key.FormalParameterRedeclaration, redeclared);
+        if (strict) {
+            if (hasDuplicates) {
+                reportStrictModeSyntaxError(Messages.Key.StrictModeDuplicateFormalParameter);
+            }
+            if (hasEvalOrArguments) {
+                reportStrictModeSyntaxError(Messages.Key.StrictModeRestrictedIdentifier);
             }
         }
     }
@@ -1465,6 +1502,8 @@ public class Parser {
      * 
      * <pre>
      * FunctionBody :
+     *     FunctionStatementList
+     * FunctionStatementList :
      *     StatementList<sub>opt</sub>
      * </pre>
      */
@@ -1484,17 +1523,17 @@ public class Parser {
      *     ArrowParameters => ConciseBody
      * ArrowParameters :
      *     BindingIdentifier
-     *     ( ArrowFormalParameterList )
-     * ArrowFormalParameterList :
-     *     [empty]
-     *     FunctionRestParameter
-     *     CoverFormalsList
-     *     CoverFormalsList , FunctionRestParameter
+     *     CoverParenthesisedExpressionAndArrowParameterList
      * ConciseBody :
      *     [LA &#x2209; { <b>{</b> }] AssignmentExpression
      *     { FunctionBody }
-     * CoverFormalsList :
-     *     Expression
+     * </pre>
+     * 
+     * <h2>Supplemental Syntax</h2>
+     * 
+     * <pre>
+     * ArrowFormalParameters :
+     *     ( StrictFormalParameters )
      * </pre>
      */
     private ArrowFunction arrowFunction() {
@@ -1508,12 +1547,12 @@ public class Parser {
             if (token() == Token.LP) {
                 consume(Token.LP);
                 int start = ts.position() - 1;
-                parameters = formalParameterList(Token.RP);
+                parameters = strictFormalParameters(Token.RP);
                 consume(Token.RP);
 
                 source.append(ts.range(start, ts.position()));
             } else {
-                BindingIdentifier identifier = bindingIdentifier();
+                BindingIdentifier identifier = bindingIdentifierStrict();
                 FormalParameter parameter = new BindingElement(identifier, null);
                 parameters = new FormalParameterList(singletonList(parameter));
 
@@ -1530,13 +1569,13 @@ public class Parser {
                 String header = source.toString();
                 String body = ts.range(startBody, endFunction);
 
-                formalParameterList_StaticSemantics(parameters);
-
                 FunctionContext scope = context.funContext;
                 ArrowFunction function = new ArrowFunction(scope, parameters, statements, header,
                         body);
                 function.setLine(line);
                 scope.node = function;
+
+                arrowFunction_StaticSemantics(function);
 
                 return inheritStrictness(function);
             } else {
@@ -1550,13 +1589,13 @@ public class Parser {
                 String header = source.toString();
                 String body = "return " + ts.range(startBody, endFunction);
 
-                formalParameterList_StaticSemantics(parameters);
-
                 FunctionContext scope = context.funContext;
                 ArrowFunction function = new ArrowFunction(scope, parameters, expression, header,
                         body);
                 function.setLine(line);
                 scope.node = function;
+
+                arrowFunction_StaticSemantics(function);
 
                 return inheritStrictness(function);
             }
@@ -1565,23 +1604,37 @@ public class Parser {
         }
     }
 
+    private void arrowFunction_StaticSemantics(ArrowFunction function) {
+        assert context.scopeContext == context.funContext;
+
+        FunctionContext scope = context.funContext;
+        FormalParameterList parameters = function.getParameters();
+        List<String> boundNames = BoundNames(parameters);
+        scope.parameterNames = new HashSet<>(boundNames);
+
+        checkFormalParameterRedeclaration(boundNames, scope.varDeclaredNames);
+        checkFormalParameterRedeclaration(boundNames, scope.lexDeclaredNames);
+        strictFormalParameters_StaticSemantics(boundNames, scope.parameterNames);
+    }
+
     /**
      * <strong>[13.3] Method Definitions</strong>
      * 
      * <pre>
      * MethodDefinition :
-     *     PropertyName ( FormalParameterList ) { FunctionBody }
-     *     * PropertyName ( FormalParameterList ) { FunctionBody }
+     *     PropertyName ( StrictFormalParameters ) { FunctionBody }
+     *     GeneratorMethod
      *     get PropertyName ( ) { FunctionBody }
      *     set PropertyName ( PropertySetParameterList ) { FunctionBody }
-     * PropertySetParameterList :
-     *     BindingIdentifier
-     *     BindingPattern
      * </pre>
      */
     private MethodDefinition methodDefinition(boolean alwaysStrict) {
+        if (token() == Token.MUL) {
+            return generatorMethod(alwaysStrict);
+        }
+
         MethodType type = methodType();
-        newContext(type != MethodType.Generator ? ContextKind.Function : ContextKind.Generator);
+        newContext(ContextKind.Function);
         if (alwaysStrict) {
             context.strictMode = StrictMode.Strict;
         }
@@ -1611,8 +1664,7 @@ public class Parser {
                 propertyName = propertyName();
                 consume(Token.LP);
                 startFunction = ts.position() - 1;
-                FormalParameter setParameter = new BindingElement(binding(), null);
-                parameters = new FormalParameterList(singletonList(setParameter));
+                parameters = propertySetParameterList();
                 consume(Token.RP);
                 consume(Token.LC);
                 startBody = ts.position();
@@ -1620,14 +1672,12 @@ public class Parser {
                 consume(Token.RC);
                 endFunction = ts.position() - 1;
                 break;
-            case Generator:
-                consume(Token.MUL);
             case Function:
             default:
                 propertyName = propertyName();
                 consume(Token.LP);
                 startFunction = ts.position() - 1;
-                parameters = formalParameterList(Token.RP);
+                parameters = strictFormalParameters(Token.RP);
                 consume(Token.RP);
                 consume(Token.LC);
                 startBody = ts.position();
@@ -1637,15 +1687,8 @@ public class Parser {
                 break;
             }
 
-            String header = ts.range(startFunction, startBody - 1);
-            if (type != MethodType.Generator) {
-                header = "function " + header;
-            } else {
-                header = "function* " + header;
-            }
+            String header = "function " + ts.range(startFunction, startBody - 1);
             String body = ts.range(startBody, endFunction);
-
-            formalParameterList_StaticSemantics(parameters);
 
             FunctionContext scope = context.funContext;
             MethodDefinition method = new MethodDefinition(scope, type, propertyName, parameters,
@@ -1653,19 +1696,31 @@ public class Parser {
             method.setLine(line);
             scope.node = method;
 
+            methodDefinition_StaticSemantics(method);
+
             return inheritStrictness(method);
         } finally {
             restoreContext();
         }
     }
 
+    /**
+     * <strong>[13.3] Method Definitions</strong>
+     * 
+     * <pre>
+     * PropertySetParameterList :
+     *     BindingIdentifier
+     *     BindingPattern
+     * </pre>
+     */
+    private FormalParameterList propertySetParameterList() {
+        FormalParameter setParameter = new BindingElement(binding(), null);
+        return new FormalParameterList(singletonList(setParameter));
+    }
+
     private MethodType methodType() {
-        Token tok = token();
-        if (tok == Token.MUL) {
-            return MethodType.Generator;
-        }
-        if (tok == Token.NAME) {
-            String name = getName(tok);
+        if (token() == Token.NAME) {
+            String name = getName(Token.NAME);
             if (("get".equals(name) || "set".equals(name)) && isPropertyName(peek())) {
                 return "get".equals(name) ? MethodType.Getter : MethodType.Setter;
             }
@@ -1677,12 +1732,113 @@ public class Parser {
         return token == Token.STRING || token == Token.NUMBER || isIdentifierName(token);
     }
 
+    private void methodDefinition_StaticSemantics(MethodDefinition method) {
+        assert context.scopeContext == context.funContext;
+
+        FunctionContext scope = context.funContext;
+        FormalParameterList parameters = method.getParameters();
+        List<String> boundNames = BoundNames(parameters);
+        scope.parameterNames = new HashSet<>(boundNames);
+
+        switch (method.getType()) {
+        case Function:
+        case Generator: {
+            checkFormalParameterRedeclaration(boundNames, scope.varDeclaredNames);
+            checkFormalParameterRedeclaration(boundNames, scope.lexDeclaredNames);
+            strictFormalParameters_StaticSemantics(boundNames, scope.parameterNames);
+            return;
+        }
+        case Setter: {
+            boolean simple = IsSimpleParameterList(parameters);
+            if (!simple) {
+                checkFormalParameterRedeclaration(boundNames, scope.varDeclaredNames);
+            }
+            checkFormalParameterRedeclaration(boundNames, scope.lexDeclaredNames);
+            propertySetParameterList_StaticSemantics(boundNames, scope.parameterNames, simple);
+            return;
+        }
+        case Getter:
+        default:
+            return;
+        }
+    }
+
+    private void propertySetParameterList_StaticSemantics(List<String> boundNames,
+            Set<String> names, boolean simple) {
+        boolean strict = (context.strictMode != StrictMode.NonStrict);
+        boolean hasDuplicates = (boundNames.size() != names.size());
+        boolean hasEvalOrArguments = (names.contains("eval") || names.contains("arguments"));
+        if (!simple) {
+            if (hasDuplicates) {
+                reportSyntaxError(Messages.Key.StrictModeDuplicateFormalParameter);
+            }
+            if (hasEvalOrArguments) {
+                reportSyntaxError(Messages.Key.StrictModeRestrictedIdentifier);
+            }
+        }
+        // FIXME: spec bug - duplicate check done twice
+        if (hasDuplicates) {
+            reportSyntaxError(Messages.Key.StrictModeDuplicateFormalParameter);
+        }
+        // FIXME: spec bug - not handled in draft
+        if (strict) {
+            if (hasEvalOrArguments) {
+                reportStrictModeSyntaxError(Messages.Key.StrictModeRestrictedIdentifier);
+            }
+        }
+    }
+
     /**
-     * <strong>[13.4] Generator Definitions</strong>
+     * <strong>[13.4] Generator Function Definitions</strong>
+     * 
+     * <pre>
+     * GeneratorMethod :
+     *     * PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * </pre>
+     */
+    private MethodDefinition generatorMethod(boolean alwaysStrict) {
+        newContext(ContextKind.Generator);
+        if (alwaysStrict) {
+            context.strictMode = StrictMode.Strict;
+        }
+        try {
+            int line = ts.getLine();
+            consume(Token.MUL);
+            PropertyName propertyName = propertyName();
+            consume(Token.LP);
+            int startFunction = ts.position() - 1;
+            FormalParameterList parameters = strictFormalParameters(Token.RP);
+            consume(Token.RP);
+            consume(Token.LC);
+            int startBody = ts.position();
+            List<StatementListItem> statements = functionBody(Token.RC);
+            consume(Token.RC);
+            int endFunction = ts.position() - 1;
+
+            String header = "function* " + ts.range(startFunction, startBody - 1);
+            String body = ts.range(startBody, endFunction);
+
+            FunctionContext scope = context.funContext;
+            MethodType type = MethodType.Generator;
+            MethodDefinition method = new MethodDefinition(scope, type, propertyName, parameters,
+                    statements, context.hasSuperReference(), header, body);
+            method.setLine(line);
+            scope.node = method;
+
+            methodDefinition_StaticSemantics(method);
+
+            return inheritStrictness(method);
+        } finally {
+            restoreContext();
+        }
+    }
+
+    /**
+     * <strong>[13.4] Generator Function Definitions</strong>
      * 
      * <pre>
      * GeneratorDeclaration :
-     *     function * BindingIdentifier ( FormalParameterList ) { FunctionBody }
+     *     function * BindingIdentifier ( FormalParameters ) { FunctionBody }
      * </pre>
      */
     private GeneratorDeclaration generatorDeclaration() {
@@ -1694,7 +1850,7 @@ public class Parser {
             consume(Token.MUL);
             BindingIdentifier identifier = bindingIdentifier();
             consume(Token.LP);
-            FormalParameterList parameters = formalParameterList(Token.RP);
+            FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
             int startBody = ts.position();
@@ -1705,13 +1861,13 @@ public class Parser {
             String header = ts.range(startFunction, startBody - 1);
             String body = ts.range(startBody, endFunction);
 
-            formalParameterList_StaticSemantics(parameters);
-
             FunctionContext scope = context.funContext;
             GeneratorDeclaration generator = new GeneratorDeclaration(scope, identifier,
                     parameters, statements, header, body);
             generator.setLine(line);
             scope.node = generator;
+
+            generator_StaticSemantics(generator);
 
             addGeneratorDecl(generator);
 
@@ -1722,11 +1878,11 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.4] Generator Definitions</strong>
+     * <strong>[13.4] Generator Function Definitions</strong>
      * 
      * <pre>
      * GeneratorExpression :
-     *     function * BindingIdentifier<sub>opt</sub> ( FormalParameterList ) { FunctionBody }
+     *     function * BindingIdentifier<sub>opt</sub> ( FormalParameters ) { FunctionBody }
      * </pre>
      */
     private GeneratorExpression generatorExpression() {
@@ -1741,7 +1897,7 @@ public class Parser {
                 identifier = bindingIdentifier();
             }
             consume(Token.LP);
-            FormalParameterList parameters = formalParameterList(Token.RP);
+            FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
             consume(Token.LC);
             int startBody = ts.position();
@@ -1752,13 +1908,13 @@ public class Parser {
             String header = ts.range(startFunction, startBody - 1);
             String body = ts.range(startBody, endFunction);
 
-            formalParameterList_StaticSemantics(parameters);
-
             FunctionContext scope = context.funContext;
             GeneratorExpression generator = new GeneratorExpression(scope, identifier, parameters,
                     statements, header, body);
             generator.setLine(line);
             scope.node = generator;
+
+            generator_StaticSemantics(generator);
 
             return inheritStrictness(generator);
         } finally {
@@ -1766,12 +1922,28 @@ public class Parser {
         }
     }
 
+    private void generator_StaticSemantics(GeneratorDefinition generator) {
+        assert context.scopeContext == context.funContext;
+
+        FunctionContext scope = context.funContext;
+        FormalParameterList parameters = generator.getParameters();
+        List<String> boundNames = BoundNames(parameters);
+        scope.parameterNames = new HashSet<>(boundNames);
+
+        boolean simple = IsSimpleParameterList(parameters);
+        if (!simple) {
+            checkFormalParameterRedeclaration(boundNames, scope.varDeclaredNames);
+        }
+        checkFormalParameterRedeclaration(boundNames, scope.lexDeclaredNames);
+        formalParameters_StaticSemantics(boundNames, scope.parameterNames, simple);
+    }
+
     /**
-     * <strong>[13.4] Generator Definitions</strong>
+     * <strong>[13.4] Generator Function Definitions</strong>
      * 
      * <pre>
      * YieldExpression :
-     *     yield YieldDelegator<sub>opt</sub> AssignmentExpression
+     *     yield YieldDelegator<sub>opt</sub> <font size="-1">[Lexical goal <i>InputElementRegExp</i>]</font> AssignmentExpression
      * YieldDelegator :
      *     *
      * </pre>

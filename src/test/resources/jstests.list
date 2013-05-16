@@ -283,6 +283,9 @@ ecma_3/Function/scope-001.js
 js1_8_5/regress/regress-554955-5.js
 js1_8_5/regress/regress-602621.js
 
+# ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
+js1_7/extensions/regress-591450.js
+
 # ES6: duplicate formal-parameter + lexical declaration
 js1_8_1/extensions/regress-353214-02.js
 
