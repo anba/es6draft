@@ -47,7 +47,7 @@ public class OrdinaryFunction extends FunctionObject {
         }
 
         /**
-         * 8.3.15.2 [[Construct]] Internal Method
+         * 8.3.15.2 [[Construct]] (argumentsList)
          */
         @Override
         public Object construct(ExecutionContext callerContext, Object... args) {
@@ -303,6 +303,17 @@ public class OrdinaryFunction extends FunctionObject {
         }
     }
 
+    private void updateLegacyProperties(ExecutionContext cx, FunctionObject caller,
+            ExoticArguments arguments) {
+        if (!(caller == null || caller.isStrict())) {
+            this.caller.apply(new PropertyDescriptor(caller));
+        } else {
+            this.caller.apply(new PropertyDescriptor(NULL));
+        }
+        ExoticArguments args = CreateLegacyArguments(cx, arguments, this);
+        this.arguments.apply(new PropertyDescriptor(args));
+    }
+
     /**
      * 8.3.15.2.1 OrdinaryConstruct (F, argumentsList)
      */
@@ -318,21 +329,13 @@ public class OrdinaryFunction extends FunctionObject {
         } else {
             obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
         }
+        if (!Type.isObject(obj)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
         Object result = f.call(cx, obj, args);
         if (Type.isObject(result)) {
             return result;
         }
         return obj;
-    }
-
-    private void updateLegacyProperties(ExecutionContext cx, FunctionObject caller,
-            ExoticArguments arguments) {
-        if (!(caller == null || caller.isStrict())) {
-            this.caller.apply(new PropertyDescriptor(caller));
-        } else {
-            this.caller.apply(new PropertyDescriptor(NULL));
-        }
-        ExoticArguments args = CreateLegacyArguments(cx, arguments, this);
-        this.arguments.apply(new PropertyDescriptor(args));
     }
 }
