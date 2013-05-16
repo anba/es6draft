@@ -4,11 +4,12 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.objects;
+package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
@@ -18,14 +19,22 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
- * 
+ * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
+ * <h2>15.19 The "std:iteration" Module</h2><br>
+ * <h3>15.19.3 GeneratorFunction Objects</h3>
+ * <ul>
+ * <li>15.19.3.1 The GeneratorFunction Constructor
+ * <li>15.19.3.2 Properties of the GeneratorFunction Constructor
+ * </ul>
  */
 public class GeneratorFunctionConstructor extends BuiltinFunction implements Constructor,
         Initialisable {
@@ -40,19 +49,10 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
     }
 
     /**
-     * GeneratorFunction (p1, p2, ... , pn, body)
+     * 15.19.3.1.1 GeneratorFunction (p1, p2, ... , pn, body)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        return construct(callerContext, args);
-    }
-
-    /**
-     * new GeneratorFunction (p1, p2, ... , pn, body)
-     */
-    @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
-        // FIXME: spec issue? (swap [[Call]] and [[Construct]] code, execution-context/realm!)
         ExecutionContext calleeContext = realm().defaultContext();
         int argCount = args.length;
         StringBuilder p = new StringBuilder();
@@ -73,10 +73,20 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
             bodyText = ToString(calleeContext, args[k - 1]);
         }
 
+        // TODO: implement steps 13-21
+
         Script script = script(calleeContext, p, bodyText);
         ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(calleeContext
                 .getRealm());
         return script.evaluate(scriptCxt);
+    }
+
+    /**
+     * 15.19.3.1.2 new GeneratorFunction (...argumentsList)
+     */
+    @Override
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     private static Script script(ExecutionContext cx, CharSequence p, CharSequence bodyText) {
@@ -91,7 +101,7 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
     }
 
     /**
-     * Properties of the GeneratorFunction Constructor
+     * 15.19.3.2 Properties of the GeneratorFunction Constructor
      */
     public enum Properties {
         ;
@@ -100,14 +110,14 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
         public static final Intrinsics __proto__ = Intrinsics.Function;
 
         /**
-         * GeneratorFunction.prototype
+         * 15.19.3.2.1 GeneratorFunction.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Generator;
 
         /**
-         * GeneratorFunction.length
+         * 15.19.3.2.2 GeneratorFunction.length
          */
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -116,5 +126,15 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final String name = "GeneratorFunction";
+
+        /**
+         * 15.19.3.2.3 GeneratorFunction[ @@create ] ( )
+         */
+        @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            // TODO: implement
+            return null;
+        }
     }
 }

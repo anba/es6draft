@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalErro
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.objects.StopIterationObject.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.StopIterationObject.IteratorComplete;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;

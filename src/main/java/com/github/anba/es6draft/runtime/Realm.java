@@ -36,6 +36,10 @@ import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatPrototype;
 import com.github.anba.es6draft.runtime.objects.intl.IntlObject;
 import com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
+import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
+import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
+import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
+import com.github.anba.es6draft.runtime.objects.iteration.StopIterationObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -235,7 +239,7 @@ public class Realm {
         GeneratorFunctionConstructor generatorFunctionConstructor = new GeneratorFunctionConstructor(
                 realm);
         GeneratorPrototype generatorPrototype = new GeneratorPrototype(realm);
-        Generator generator = new Generator(realm);
+        GeneratorFunctionPrototype generator = new GeneratorFunctionPrototype(realm);
 
         // Proxy
         ProxyConstructor proxyConstructor = new ProxyConstructor(realm);
