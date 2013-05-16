@@ -47,15 +47,14 @@ class DeclarationBindingInstantiationGenerator {
                 MethodType.Interface, Types.EnvironmentRecord, "setMutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
 
-        // class: OrdinaryFunction
-        static final MethodDesc OrdinaryFunction_InstantiateFunctionObject = MethodDesc.create(
-                MethodType.Static, Types.OrdinaryFunction, "InstantiateFunctionObject", Type
+        // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_InstantiateFunctionObject = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "InstantiateFunctionObject", Type
                         .getMethodType(Types.OrdinaryFunction, Types.ExecutionContext,
                                 Types.LexicalEnvironment, Types.RuntimeInfo$Function));
 
-        // class: OrdinaryGenerator
-        static final MethodDesc OrdinaryGenerator_InstantiateGeneratorObject = MethodDesc.create(
-                MethodType.Static, Types.OrdinaryGenerator, "InstantiateGeneratorObject", Type
+        static final MethodDesc ScriptRuntime_InstantiateGeneratorObject = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "InstantiateGeneratorObject", Type
                         .getMethodType(Types.OrdinaryGenerator, Types.ExecutionContext,
                                 Types.LexicalEnvironment, Types.RuntimeInfo$Function));
     }
@@ -122,7 +121,7 @@ class DeclarationBindingInstantiationGenerator {
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
-        mv.invoke(Methods.OrdinaryFunction_InstantiateFunctionObject);
+        mv.invoke(Methods.ScriptRuntime_InstantiateFunctionObject);
     }
 
     protected void InstantiateGeneratorObject(int context, int env, GeneratorDeclaration f,
@@ -134,7 +133,7 @@ class DeclarationBindingInstantiationGenerator {
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
-        mv.invoke(Methods.OrdinaryGenerator_InstantiateGeneratorObject);
+        mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);
     }
 
     protected static String BoundName(Declaration d) {

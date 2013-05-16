@@ -56,184 +56,6 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * [13.6 Creating Function Objects and Constructors] FunctionCreate
-     */
-    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope) {
-        return FunctionCreate(cx, kind, function, scope, null, null, null);
-    }
-
-    /**
-     * [13.6 Creating Function Objects and Constructors] FunctionCreate
-     */
-    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype) {
-        return FunctionCreate(cx, kind, function, scope, prototype, null, null);
-    }
-
-    /**
-     * [13.6 Creating Function Objects and Constructors] FunctionCreate
-     */
-    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
-            ScriptObject homeObject, String methodName) {
-        assert !function.isGenerator();
-
-        Realm realm = cx.getRealm();
-        boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
-        /* step 1 */
-        OrdinaryFunction f;
-        if (kind == FunctionKind.Normal || kind == FunctionKind.ConstructorMethod) {
-            f = new OrdinaryConstructorFunction(realm);
-        } else {
-            f = new OrdinaryFunction(realm);
-        }
-        /* step 2-4 (implicit) */
-        /* step 5 */
-        if (prototype == null) {
-            prototype = realm.getIntrinsic(Intrinsics.FunctionPrototype);
-        }
-        /* step 6 */
-        f.setPrototype(cx, prototype);
-        /* step 7 */
-        f.scope = scope;
-        /* step 8-9 */
-        f.function = function;
-        /* step 10 */
-        // f.[[Extensible]] = true (implicit)
-        /* step 11 */
-        f.realm = realm;
-        /* step 12 */
-        f.home = homeObject;
-        /* step 13 */
-        f.methodName = methodName;
-        /* step 14 */
-        f.strict = strict;
-        /* step 15-17 */
-        f.kind = kind;
-        if (kind == FunctionKind.Arrow) {
-            f.thisMode = ThisMode.Lexical;
-        } else if (strict) {
-            f.thisMode = ThisMode.Strict;
-        } else {
-            f.thisMode = ThisMode.Global;
-        }
-        /*  step 18 */
-        int len = function.expectedArgumentCount();
-        /* step 19 */
-        f.defineOwnProperty(cx, "length", new PropertyDescriptor(len, false, false, false));
-        String name = function.functionName() != null ? function.functionName() : "";
-        f.defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
-        /* step 20 */
-        if (strict) {
-            AddRestrictedFunctionProperties(cx, f);
-        }
-        /* step 21 */
-        return f;
-    }
-
-    /**
-     * [13.6 Creating Function Objects and Constructors] MakeConstructor
-     */
-    public static void MakeConstructor(ExecutionContext cx, OrdinaryFunction f) {
-        /*  step 2 */
-        boolean installNeeded = true;
-        ScriptObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /*  step 3 */
-        boolean writablePrototype = true;
-        MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
-    }
-
-    /**
-     * [13.6 Creating Function Objects and Constructors] MakeConstructor
-     */
-    public static void MakeConstructor(ExecutionContext cx, OrdinaryFunction f,
-            boolean writablePrototype, ScriptObject prototype) {
-        /* step 1 */
-        boolean installNeeded = false;
-        MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
-    }
-
-    /**
-     * [13.6 Creating Function Objects and Constructors] MakeConstructor
-     */
-    private static void MakeConstructor(ExecutionContext cx, OrdinaryFunction f,
-            boolean writablePrototype, ScriptObject prototype, boolean installNeeded) {
-        assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
-        /* step 4 (implicit) */
-        /* step 5 */
-        if (installNeeded) {
-            prototype.defineOwnProperty(cx, "constructor", new PropertyDescriptor(f,
-                    writablePrototype, false, writablePrototype));
-        }
-        /* step 7 */
-        f.defineOwnProperty(cx, "prototype", new PropertyDescriptor(prototype, writablePrototype,
-                false, false));
-    }
-
-    /**
-     * 13.6.3 The [[ThrowTypeError]] Function Object
-     */
-    private static class TypeErrorThrower extends BuiltinFunction {
-        TypeErrorThrower(Realm realm) {
-            super(realm);
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = realm().defaultContext();
-            /* step 8 */
-            throw throwTypeError(calleeContext, Messages.Key.StrictModePoisonPill);
-        }
-    }
-
-    /**
-     * [13.6.3] The [[ThrowTypeError]] Function Object
-     */
-    public static Callable createThrowTypeError(ExecutionContext cx) {
-        // FIXME: spec bug (section 8.12 does not exist) (bug 1057)
-        /* step 1-3 (implicit) */
-        TypeErrorThrower f = new TypeErrorThrower(cx.getRealm());
-        /* step 4 */
-        f.setPrototype(cx, cx.getIntrinsic(Intrinsics.FunctionPrototype));
-        /* step 5-8 (implicit) */
-        /* step 9 */
-        f.defineOwnProperty(cx, "length", new PropertyDescriptor(0, false, false, false));
-        f.defineOwnProperty(cx, "name", new PropertyDescriptor("ThrowTypeError", false, false,
-                false));
-        /* step 10 */
-        f.setIntegrity(cx, IntegrityLevel.NonExtensible);
-
-        return f;
-    }
-
-    /**
-     * [13.6 Creating Function Objects and Constructors] AddRestrictedFunctionProperties
-     */
-    public static void AddRestrictedFunctionProperties(ExecutionContext cx, ScriptObject obj) {
-        /*  step 1  */
-        Callable thrower = cx.getRealm().getThrowTypeError();
-        /*  step 2  */
-        obj.defineOwnProperty(cx, "caller", new PropertyDescriptor(thrower, thrower, false, false));
-        /*  step 3  */
-        obj.defineOwnProperty(cx, "arguments", new PropertyDescriptor(thrower, thrower, false,
-                false));
-    }
-
-    /**
-     * [Runtime Semantics: InstantiateFunctionObject]
-     */
-    public static OrdinaryFunction InstantiateFunctionObject(ExecutionContext cx,
-            LexicalEnvironment scope, RuntimeInfo.Function fd) {
-        /* step 1-2 */
-        OrdinaryFunction f = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        /* step 3 */
-        MakeConstructor(cx, f);
-        /* step 4 */
-        return f;
-    }
-
-    /**
      * 8.3.15.1 [[Call]] Internal Method
      */
     @Override
@@ -252,7 +74,7 @@ public class OrdinaryFunction extends FunctionObject {
                 updateLegacyProperties(calleeContext, caller, arguments);
             }
             /* step 14-15 */
-            Object result = evaluateCode(calleeContext, getCode());
+            Object result = EvaluateBody(calleeContext, getCode());
             /* step 16 */
             return result;
         } finally {
@@ -263,7 +85,7 @@ public class OrdinaryFunction extends FunctionObject {
         }
     }
 
-    public static Object evaluateCode(ExecutionContext calleeContext, Code code) {
+    public static Object EvaluateBody(ExecutionContext calleeContext, Code code) {
         try {
             Object result = code.handle().invokeExact(calleeContext);
             // tail-call with trampoline
@@ -314,6 +136,8 @@ public class OrdinaryFunction extends FunctionObject {
         this.arguments.apply(new PropertyDescriptor(args));
     }
 
+    /* ***************************************************************************************** */
+
     /**
      * 8.3.15.2.1 OrdinaryConstruct (F, argumentsList)
      */
@@ -337,5 +161,190 @@ public class OrdinaryFunction extends FunctionObject {
             return result;
         }
         return obj;
+    }
+
+    /**
+     * 8.3.15.5 FunctionAllocate Abstract Operation
+     */
+    public static OrdinaryFunction FunctionAllocate(ExecutionContext cx, ScriptObject prototype,
+            FunctionKind kind) {
+        Realm realm = cx.getRealm();
+        /* steps 1-3 (implicit) */
+        /* steps 4-6 */
+        OrdinaryFunction f;
+        if (kind == FunctionKind.Normal || kind == FunctionKind.ConstructorMethod) {
+            f = new OrdinaryConstructorFunction(realm);
+        } else {
+            f = new OrdinaryFunction(realm);
+        }
+        /* step 7 */
+        f.functionKind = kind;
+        /* step 8 */
+        f.setPrototype(cx, prototype);
+        /* step 10 */
+        // f.[[Extensible]] = true (implicit)
+        /* step 10 */
+        f.realm = realm;
+        /* step 11 */
+        return f;
+    }
+
+    /**
+     * 8.3.15.6 FunctionInitialize Abstract Operation
+     */
+    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(
+            ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
+            LexicalEnvironment scope, ScriptObject homeObject, String methodName) {
+        boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
+
+        /* step 2 */
+        f.scope = scope;
+        /* steps 3-4 */
+        f.function = function;
+        /* step 4 */
+        f.homeObject = homeObject;
+        /* step 5 */
+        f.methodName = methodName;
+        /* step 7 */
+        f.strict = strict;
+        /* step 8 */
+        if (kind == FunctionKind.Arrow) {
+            f.thisMode = ThisMode.Lexical;
+        } else if (strict) {
+            f.thisMode = ThisMode.Strict;
+        } else {
+            f.thisMode = ThisMode.Global;
+        }
+        /*  step 11 */
+        int len = function.expectedArgumentCount();
+        /* step 12 */
+        f.defineOwnProperty(cx, "length", new PropertyDescriptor(len, false, false, false));
+        String name = function.functionName() != null ? function.functionName() : "";
+        f.defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
+        /* step 13 */
+        if (strict) {
+            AddRestrictedFunctionProperties(cx, f);
+        }
+        /* step 14 */
+        return f;
+    }
+
+    /**
+     * 8.3.15.7 FunctionCreate Abstract Operation
+     */
+    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment scope) {
+        return FunctionCreate(cx, kind, function, scope, null, null, null);
+    }
+
+    /**
+     * 8.3.15.7 FunctionCreate Abstract Operation
+     */
+    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype) {
+        return FunctionCreate(cx, kind, function, scope, prototype, null, null);
+    }
+
+    /**
+     * 8.3.15.7 FunctionCreate Abstract Operation
+     */
+    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
+            ScriptObject homeObject, String methodName) {
+        assert !function.isGenerator();
+        /* step 1 */
+        if (prototype == null) {
+            prototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        }
+        /* step 2 */
+        OrdinaryFunction f = FunctionAllocate(cx, prototype, kind);
+        /* step 3 */
+        return FunctionInitialize(cx, f, kind, function, scope, homeObject, methodName);
+    }
+
+    /**
+     * 8.3.15.8 AddRestrictedFunctionProperties Abstract Operation
+     */
+    public static void AddRestrictedFunctionProperties(ExecutionContext cx, ScriptObject obj) {
+        /*  step 1  */
+        Callable thrower = cx.getRealm().getThrowTypeError();
+        /*  step 2  */
+        obj.defineOwnProperty(cx, "caller", new PropertyDescriptor(thrower, thrower, false, false));
+        /*  step 3  */
+        obj.defineOwnProperty(cx, "arguments", new PropertyDescriptor(thrower, thrower, false,
+                false));
+    }
+
+    /**
+     * 8.3.15.8 The %ThrowTypeError% Function Object
+     */
+    private static class TypeErrorThrower extends BuiltinFunction {
+        TypeErrorThrower(Realm realm) {
+            super(realm);
+        }
+
+        @Override
+        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ExecutionContext calleeContext = realm().defaultContext();
+            /* step 8 */
+            throw throwTypeError(calleeContext, Messages.Key.StrictModePoisonPill);
+        }
+    }
+
+    /**
+     * 8.3.15.8 The %ThrowTypeError% Function Object
+     */
+    public static Callable createThrowTypeError(ExecutionContext cx) {
+        /* step 1-4 (implicit) */
+        TypeErrorThrower f = new TypeErrorThrower(cx.getRealm());
+        f.setPrototype(cx, cx.getIntrinsic(Intrinsics.FunctionPrototype));
+        f.defineOwnProperty(cx, "length", new PropertyDescriptor(0, false, false, false));
+        f.defineOwnProperty(cx, "name", new PropertyDescriptor("ThrowTypeError", false, false,
+                false));
+        f.defineOwnProperty(cx, "caller", new PropertyDescriptor(f, f, false, false));
+        f.defineOwnProperty(cx, "arguments", new PropertyDescriptor(f, f, false, false));
+        /* step 5 */
+        f.setIntegrity(cx, IntegrityLevel.NonExtensible);
+        /* step 6 */
+        return f;
+    }
+
+    /**
+     * 8.3.15.9 MakeConstructor Abstract Operation
+     */
+    public static void MakeConstructor(ExecutionContext cx, FunctionObject f) {
+        /*  step 2 */
+        boolean installNeeded = true;
+        ScriptObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        /*  step 3 */
+        boolean writablePrototype = true;
+        MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
+    }
+
+    /**
+     * 8.3.15.9 MakeConstructor Abstract Operation
+     */
+    public static void MakeConstructor(ExecutionContext cx, FunctionObject f,
+            boolean writablePrototype, ScriptObject prototype) {
+        /* step 1 */
+        boolean installNeeded = false;
+        MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
+    }
+
+    /**
+     * 8.3.15.9 MakeConstructor Abstract Operation
+     */
+    private static void MakeConstructor(ExecutionContext cx, FunctionObject f,
+            boolean writablePrototype, ScriptObject prototype, boolean installNeeded) {
+        assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
+        /* step 4 (implicit) */
+        /* step 5 */
+        if (installNeeded) {
+            prototype.defineOwnProperty(cx, "constructor", new PropertyDescriptor(f,
+                    writablePrototype, false, writablePrototype));
+        }
+        /* step 7 */
+        f.defineOwnProperty(cx, "prototype", new PropertyDescriptor(prototype, writablePrototype,
+                false, false));
     }
 }

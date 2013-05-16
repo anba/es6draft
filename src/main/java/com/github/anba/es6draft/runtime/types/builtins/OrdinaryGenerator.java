@@ -6,18 +6,21 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorStart;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  *
@@ -34,115 +37,12 @@ public class OrdinaryGenerator extends FunctionObject {
         }
 
         /**
-         * 8.3.15.2 [[Construct]] Internal Method
+         * 8.3.15.2 [[Construct]] (argumentsList)
          */
         @Override
         public Object construct(ExecutionContext callerContext, Object... args) {
             return OrdinaryConstruct(callerContext, this, args);
         }
-    }
-
-    /**
-     * 
-     */
-    public static OrdinaryGenerator GeneratorCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope) {
-        return GeneratorCreate(cx, kind, function, scope, null, null, null);
-    }
-
-    /**
-     * 
-     */
-    public static OrdinaryGenerator GeneratorCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
-            ScriptObject homeObject, String methodName) {
-        assert function.isGenerator();
-        assert kind != FunctionKind.Arrow && kind != FunctionKind.ConstructorMethod;
-
-        Realm realm = cx.getRealm();
-        boolean strict = function.isStrict();
-        /* step 1 */
-        OrdinaryGenerator f;
-        if (kind == FunctionKind.Normal) {
-            f = new OrdinaryConstructorGenerator(realm);
-        } else {
-            f = new OrdinaryGenerator(realm);
-        }
-        /* step 2-4 (implicit) */
-        /* step 5 */
-        if (prototype == null) {
-            prototype = realm.getIntrinsic(Intrinsics.Generator);
-        }
-        /* step 6 */
-        f.setPrototype(cx, prototype);
-        /* step 7 */
-        f.scope = scope;
-        /* step 8-9 */
-        f.function = function;
-        /* step 10 */
-        // f.[[Extensible]] = true (implicit)
-        /* step 11 */
-        f.realm = realm;
-        /* step 12 */
-        f.home = homeObject;
-        /* step 13 */
-        f.methodName = methodName;
-        /* step 14 */
-        f.strict = strict;
-        /* step 15-17 */
-        f.kind = kind;
-        if (strict) {
-            f.thisMode = ThisMode.Strict;
-        } else {
-            f.thisMode = ThisMode.Global;
-        }
-        /*  step 18 */
-        int len = function.expectedArgumentCount();
-        /* step 19 */
-        f.defineOwnProperty(cx, "length", new PropertyDescriptor(len, false, false, false));
-        String name = function.functionName() != null ? function.functionName() : "";
-        f.defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
-        /* step 20 */
-        if (strict) {
-            AddRestrictedFunctionProperties(cx, f);
-        }
-        /* step 21 */
-        return f;
-    }
-
-    /**
-     * [13.6 Creating Function Objects and Constructors] MakeConstructor
-     */
-    public static void MakeConstructor(ExecutionContext cx, OrdinaryGenerator f) {
-        /*  step 2 */
-        ScriptObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
-        /*  step 3 */
-        boolean writablePrototype = true;
-        MakeConstructor(cx, f, writablePrototype, prototype);
-    }
-
-    /**
-     * [13.6 Creating Function Objects and Constructors] MakeConstructor
-     */
-    public static void MakeConstructor(ExecutionContext cx, OrdinaryGenerator f,
-            boolean writablePrototype, ScriptObject prototype) {
-        assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
-        // no "constructor" property on `prototype`
-        f.defineOwnProperty(cx, "prototype", new PropertyDescriptor(prototype, writablePrototype,
-                false, false));
-    }
-
-    /**
-     * 
-     */
-    public static OrdinaryGenerator InstantiateGeneratorObject(ExecutionContext cx,
-            LexicalEnvironment scope, RuntimeInfo.Function fd) {
-        /* step 1-2 */
-        OrdinaryGenerator f = GeneratorCreate(cx, FunctionKind.Normal, fd, scope);
-        /* step 3 */
-        MakeConstructor(cx, f);
-        /* step 4 */
-        return f;
     }
 
     /**
@@ -156,11 +56,99 @@ public class OrdinaryGenerator extends FunctionObject {
         /* step 12-13 */
         getFunction().functionDeclarationInstantiation(calleeContext, this, args);
         /* step 14-15 */
-        GeneratorObject result = new GeneratorObject(getRealm(), getCode(), calleeContext);
-        ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
-                Intrinsics.GeneratorPrototype);
-        result.setPrototype(calleeContext, proto);
+        Object result = EvaluateBody(calleeContext, this);
         /* step 16 */
         return result;
+    }
+
+    /**
+     * 13.4 Generator Function Definitions
+     * <p>
+     * Runtime Semantics EvaluateBody
+     * 
+     * <pre>
+     * GeneratorBody : FunctionBody
+     * </pre>
+     */
+    public static Object EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
+        /* step 1 */
+        Object g = cx.thisResolution();
+        /* step 2 */
+        if (!Type.isObject(g) || !(g instanceof GeneratorObject)) {
+            g = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.GeneratorPrototype,
+                    GeneratorObjectAllocator.INSTANCE);
+        }
+        /* step 3 */
+        return GeneratorStart(cx, (GeneratorObject) g, functionObject.getCode());
+    }
+
+    private static class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
+        static final ObjectAllocator<GeneratorObject> INSTANCE = new GeneratorObjectAllocator();
+
+        @Override
+        public GeneratorObject newInstance(Realm realm) {
+            return new GeneratorObject(realm);
+        }
+    }
+
+    /* ***************************************************************************************** */
+
+    /**
+     * 8.3.15.5 FunctionAllocate Abstract Operation
+     */
+    public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx, ScriptObject prototype,
+            FunctionKind kind) {
+        Realm realm = cx.getRealm();
+        /* steps 1-3 (implicit) */
+        /* steps 4-6 */
+        OrdinaryGenerator f;
+        if (kind == FunctionKind.Normal) {
+            f = new OrdinaryConstructorGenerator(realm);
+        } else {
+            f = new OrdinaryGenerator(realm);
+        }
+        /* step 7 */
+        f.functionKind = kind;
+        /* step 8 */
+        f.setPrototype(cx, prototype);
+        /* step 10 */
+        // f.[[Extensible]] = true (implicit)
+        /* step 10 */
+        f.realm = realm;
+        /* step 11 */
+        return f;
+    }
+
+    /**
+     * 8.3.15.7 GeneratorFunctionCreate Abstract Operation
+     */
+    public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment scope) {
+        return GeneratorFunctionCreate(cx, kind, function, scope, null, null, null);
+    }
+
+    /**
+     * 8.3.15.7 GeneratorFunctionCreate Abstract Operation
+     */
+    public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype) {
+        return GeneratorFunctionCreate(cx, kind, function, scope, prototype, null, null);
+    }
+
+    /**
+     * 8.3.15.7 GeneratorFunctionCreate Abstract Operation
+     */
+    public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
+            ScriptObject homeObject, String methodName) {
+        assert function.isGenerator() && kind != FunctionKind.ConstructorMethod;
+        /* step 1 */
+        if (prototype == null) {
+            prototype = cx.getIntrinsic(Intrinsics.Generator);
+        }
+        /* step 2 */
+        OrdinaryGenerator f = FunctionAllocate(cx, prototype, kind);
+        /* step 3 */
+        return FunctionInitialize(cx, f, kind, function, scope, homeObject, methodName);
     }
 }

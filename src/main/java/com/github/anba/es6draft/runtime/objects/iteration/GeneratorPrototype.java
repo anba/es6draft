@@ -20,7 +20,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**

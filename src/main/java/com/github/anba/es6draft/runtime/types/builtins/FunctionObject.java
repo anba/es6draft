@@ -28,14 +28,23 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public abstract class FunctionObject extends OrdinaryObject implements Callable {
-    protected FunctionKind kind;
-    protected RuntimeInfo.Function function;
+    /** [[Scope]] */
     protected LexicalEnvironment scope;
-    protected boolean strict;
-    protected ScriptObject home;
-    protected String methodName;
+    /** [[FunctionKind]] */
+    protected FunctionKind functionKind;
+    /** [[FormalParameters]] / [[Code]] */
+    protected RuntimeInfo.Function function;
+    /** [[Realm]] */
     protected Realm realm;
+    /** [[ThisMode]] */
     protected ThisMode thisMode;
+    /** [[Strict]] */
+    protected boolean strict;
+    /** [[HomeObject]] */
+    protected ScriptObject homeObject;
+    /** [[MethodName]] */
+    protected String methodName;
+
     protected String source = null;
 
     protected Property caller = new PropertyDescriptor(NULL, false, false, false).toProperty();
@@ -115,13 +124,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return super.get(cx, propertyKey, receiver);
     }
 
-    // FIXME: spec bug (caption not updated from 8.3.19.4 to 8.3.15.4)
     /**
      * 8.3.15.4 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
-        Property desc = ordinaryGetOwnProperty(propertyKey);
+        Property desc = super.getOwnProperty(cx, propertyKey);
         if (desc != null) {
             return desc;
         }
@@ -138,7 +146,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     public FunctionKind getFunctionKind() {
-        return kind;
+        return functionKind;
     }
 
     public RuntimeInfo.Function getFunction() {
@@ -182,10 +190,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * [[Home]]
+     * [[HomeObject]]
      */
-    public ScriptObject getHome() {
-        return home;
+    public ScriptObject getHomeObject() {
+        return homeObject;
     }
 
     /**

@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.types.builtins;
+package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -23,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * 
@@ -30,19 +31,19 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
  */
 public class GeneratorObject extends OrdinaryObject {
     /**
-     * [[State]]
+     * [[GeneratorState]]
      */
     private enum GeneratorState {
         Newborn, Executing, Suspended, Closed
     }
 
-    /** [[State]] */
+    /** [[GeneratorState]] */
     private GeneratorState state = GeneratorState.Newborn;
 
     /** [[Code]] */
     private RuntimeInfo.Code code;
 
-    /** [[ExecutionContext]] */
+    /** [[GeneratorContext]] */
     private ExecutionContext context;
 
     // internal
@@ -50,6 +51,12 @@ public class GeneratorObject extends OrdinaryObject {
     private Future<Object> future;
     private SynchronousQueue<Object> out;
     private SynchronousQueue<Object> in;
+
+    public GeneratorObject(Realm realm) {
+        super(realm);
+        this.in = new SynchronousQueue<>();
+        this.out = new SynchronousQueue<>();
+    }
 
     public GeneratorObject(Realm realm, RuntimeInfo.Code code, ExecutionContext context) {
         super(realm);

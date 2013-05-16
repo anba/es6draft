@@ -64,23 +64,21 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
 
-        // class: OrdinaryFunction
-        static final MethodDesc OrdinaryFunction_InstantiateFunctionObject = MethodDesc.create(
-                MethodType.Static, Types.OrdinaryFunction, "InstantiateFunctionObject", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.ExecutionContext,
-                                Types.LexicalEnvironment, Types.RuntimeInfo$Function));
-
-        // class: OrdinaryGenerator
-        static final MethodDesc OrdinaryGenerator_InstantiateGeneratorObject = MethodDesc.create(
-                MethodType.Static, Types.OrdinaryGenerator, "InstantiateGeneratorObject", Type
-                        .getMethodType(Types.OrdinaryGenerator, Types.ExecutionContext,
-                                Types.LexicalEnvironment, Types.RuntimeInfo$Function));
-
         // class: ScriptException
         static final MethodDesc ScriptException_getValue = MethodDesc.create(MethodType.Virtual,
                 Types.ScriptException, "getValue", Type.getMethodType(Types.Object));
 
         // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_InstantiateFunctionObject = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "InstantiateFunctionObject", Type
+                        .getMethodType(Types.OrdinaryFunction, Types.ExecutionContext,
+                                Types.LexicalEnvironment, Types.RuntimeInfo$Function));
+
+        static final MethodDesc ScriptRuntime_InstantiateGeneratorObject = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "InstantiateGeneratorObject", Type
+                        .getMethodType(Types.OrdinaryGenerator, Types.ExecutionContext,
+                                Types.LexicalEnvironment, Types.RuntimeInfo$Function));
+
         static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "enumerate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
@@ -166,7 +164,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                         Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
                 // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]
-                mv.invoke(Methods.OrdinaryFunction_InstantiateFunctionObject);
+                mv.invoke(Methods.ScriptRuntime_InstantiateFunctionObject);
 
                 // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
                 mv.aconst(fn);
@@ -186,7 +184,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                         Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
                 // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]
-                mv.invoke(Methods.OrdinaryGenerator_InstantiateGeneratorObject);
+                mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);
 
                 // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
                 mv.aconst(fn);

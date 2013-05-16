@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.evaluateCode;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.EvaluateBody;
 
 import java.lang.invoke.MethodHandle;
 
@@ -32,7 +32,7 @@ public final class RuntimeInfo {
 
             @Override
             public Object evaluate(ExecutionContext cx) {
-                return evaluateCode(cx, this);
+                return EvaluateBody(cx, this);
             }
         };
     }
@@ -90,7 +90,7 @@ public final class RuntimeInfo {
 
             @Override
             public Object evaluate(ExecutionContext cx) {
-                return evaluateCode(cx, this);
+                return EvaluateBody(cx, this);
             }
 
             @Override

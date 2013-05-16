@@ -105,7 +105,7 @@ public final class LexicalEnvironment {
      */
     public static LexicalEnvironment newFunctionEnvironment(ExecutionContext cx, FunctionObject f,
             Object t) {
-        EnvironmentRecord envRec = new FunctionEnvironmentRecord(cx, t, f.getHome(),
+        EnvironmentRecord envRec = new FunctionEnvironmentRecord(cx, t, f.getHomeObject(),
                 f.getMethodName());
         LexicalEnvironment env = new LexicalEnvironment(f.getScope(), envRec);
         return env;

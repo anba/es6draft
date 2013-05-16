@@ -21,8 +21,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayC
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.MakeConstructor;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import java.lang.invoke.MethodHandle;
@@ -40,11 +39,12 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
+import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
-import com.github.anba.es6draft.runtime.types.builtins.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
@@ -769,6 +769,21 @@ public final class ScriptRuntime {
     /**
      * 13.1 Function Definitions
      * <p>
+     * Runtime Semantics: InstantiateFunctionObject
+     */
+    public static OrdinaryFunction InstantiateFunctionObject(ExecutionContext cx,
+            LexicalEnvironment scope, RuntimeInfo.Function fd) {
+        /* step 1-2 */
+        OrdinaryFunction f = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        /* step 3 */
+        MakeConstructor(cx, f);
+        /* step 4 */
+        return f;
+    }
+
+    /**
+     * 13.1 Function Definitions
+     * <p>
      * Runtime Semantics: Evaluation
      * <ul>
      * <li>FunctionExpression : function ( FormalParameters ) { FunctionBody }
@@ -909,6 +924,23 @@ public final class ScriptRuntime {
     /**
      * 13.4 Generator Function Definitions
      * <p>
+     * Runtime Semantics: InstantiateFunctionObject
+     */
+    public static OrdinaryGenerator InstantiateGeneratorObject(ExecutionContext cx,
+            LexicalEnvironment scope, RuntimeInfo.Function fd) {
+        /* steps 1-3 */
+        OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        /* step 4 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 5 */
+        MakeConstructor(cx, f, true, prototype);
+        /* step 6 */
+        return f;
+    }
+
+    /**
+     * 13.4 Generator Function Definitions
+     * <p>
      * Runtime Semantics: Property Definition Evaluation
      * <ul>
      * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
@@ -919,9 +951,10 @@ public final class ScriptRuntime {
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryGenerator closure;
         if (fd.hasSuperReference()) {
-            closure = GeneratorCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
+            closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope, null, object,
+                    propName);
         } else {
-            closure = GeneratorCreate(cx, FunctionKind.Method, fd, scope);
+            closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         DefinePropertyOrThrow(cx, object, propName, desc);
@@ -944,8 +977,9 @@ public final class ScriptRuntime {
             EnvironmentRecord envRec = scope.getEnvRec();
             envRec.createImmutableBinding(fd.functionName());
         }
-        OrdinaryGenerator closure = GeneratorCreate(cx, FunctionKind.Normal, fd, scope);
-        MakeConstructor(cx, closure);
+        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        MakeConstructor(cx, closure, true, prototype);
         if (fd.hasScopedName()) {
             scope.getEnvRec().initializeBinding(fd.functionName(), closure);
         }

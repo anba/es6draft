@@ -16,7 +16,7 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorCreate;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -523,11 +523,11 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      */
     private static boolean isSuperBoundTo(Object value, ScriptObject source) {
         if (value instanceof OrdinaryFunction) {
-            ScriptObject homeObject = ((OrdinaryFunction) value).getHome();
+            ScriptObject homeObject = ((OrdinaryFunction) value).getHomeObject();
             return (homeObject == source);
         }
         if (value instanceof OrdinaryGenerator) {
-            ScriptObject homeObject = ((OrdinaryGenerator) value).getHome();
+            ScriptObject homeObject = ((OrdinaryGenerator) value).getHomeObject();
             return (homeObject == source);
         }
         return false;
@@ -539,7 +539,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
     private static Callable superBindTo(ExecutionContext cx, Object value, ScriptObject target) {
         if (value instanceof OrdinaryGenerator) {
             OrdinaryGenerator gen = (OrdinaryGenerator) value;
-            return GeneratorCreate(cx, gen.getFunctionKind(), gen.getFunction(), gen.getScope(),
+            return GeneratorFunctionCreate(cx, gen.getFunctionKind(), gen.getFunction(), gen.getScope(),
                     gen.getPrototype(cx), target, gen.getMethodName());
         } else {
             assert value instanceof OrdinaryFunction;
