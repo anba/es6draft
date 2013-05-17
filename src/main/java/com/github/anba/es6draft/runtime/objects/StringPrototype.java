@@ -344,12 +344,13 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "split", arity = 2)
         public static Object split(ExecutionContext cx, Object thisValue, Object separator,
                 Object limit) {
+            // FIXME: spec inconsisten w.r.t. ToString(this value)
             Object obj = CheckObjectCoercible(cx, thisValue);
-            String s = ToFlatString(cx, obj);
             if (Type.isObject(separator)
                     && HasProperty(cx, Type.objectValue(separator), BuiltinSymbol.isRegExp.get())) {
-                return Invoke(cx, separator, "split", s, limit);
+                return Invoke(cx, separator, "split", obj, limit);
             }
+            String s = ToFlatString(cx, obj);
             ScriptObject a = ArrayCreate(cx, 0);
             int lengthA = 0;
             long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(cx, limit);
@@ -510,10 +511,11 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             Object obj = CheckObjectCoercible(cx, thisValue);
             String s = ToFlatString(cx, obj);
             double n = ToInteger(cx, count);
+            if (n < 0 || n == Double.POSITIVE_INFINITY) {
+                throw throwRangeError(cx, Messages.Key.InvalidStringRepeat);
+            }
             if (n == 0) {
                 return "";
-            } else if (n < 0 || n == Double.POSITIVE_INFINITY) {
-                throw throwRangeError(cx, Messages.Key.InvalidStringRepeat);
             }
             int capacity = Math.max(s.length() * (int) n, 0);
             StringBuilder t = new StringBuilder(capacity);
@@ -649,7 +651,6 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                 p.append(" ").append(attribute).append("=").append('"').append(escapedV)
                         .append('"');
             }
-            // FIXME: spec bug (string 'S' not added to final string) (Bug 1411)
             return p.append(">").append(s).append("</").append(tag).append(">").toString();
         }
 
