@@ -6,26 +6,39 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -54,6 +67,8 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = realm().defaultContext();
+
+        /* steps 1-7 */
         int argCount = args.length;
         StringBuilder p = new StringBuilder();
         CharSequence bodyText;
@@ -73,12 +88,41 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
             bodyText = ToString(calleeContext, args[k - 1]);
         }
 
-        // TODO: implement steps 13-21
-
+        /* steps 8-12 */
         Script script = script(calleeContext, p, bodyText);
+
+        /* step 13 */
+        LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
+        /* step 14 */
+        Object f = thisValue;
+        /* step 15 */
+        if (!Type.isObject(f) || !(f instanceof FunctionObject)
+                || ((FunctionObject) f).getCode() != null) {
+            ScriptObject proto = calleeContext.getIntrinsic(Intrinsics.Generator);
+            f = FunctionAllocate(calleeContext, proto, FunctionKind.Normal);
+        }
+        /* step 16 */
+        if (!(f instanceof OrdinaryGenerator)) {
+            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        }
+        OrdinaryGenerator fn = (OrdinaryGenerator) f;
+
+        /* step 17 */
         ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(calleeContext
                 .getRealm());
-        return script.evaluate(scriptCxt);
+        Object result = script.evaluate(scriptCxt);
+        assert result instanceof OrdinaryGenerator;
+        RuntimeInfo.Function function = ((OrdinaryGenerator) result).getFunction();
+        assert function != null : "uninitialised function object";
+
+        /* step 18 */
+        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
+        /* step 19 */
+        ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
+        /* step 20 */
+        MakeConstructor(calleeContext, fn, true, prototype);
+        /* step 21 */
+        return fn;
     }
 
     /**
@@ -133,8 +177,9 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
         @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
-            // TODO: implement
-            return null;
+            ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue, Intrinsics.Generator);
+            OrdinaryGenerator obj = FunctionAllocate(cx, proto, FunctionKind.Normal);
+            return obj;
         }
     }
 }

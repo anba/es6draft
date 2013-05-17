@@ -60,6 +60,9 @@ public class OrdinaryFunction extends FunctionObject {
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        if (!isInitialised()) {
+            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+        }
         Object oldCaller = caller.getValue();
         Object oldArguments = arguments.getValue();
         try {
@@ -95,6 +98,10 @@ public class OrdinaryFunction extends FunctionObject {
                 OrdinaryFunction f = (OrdinaryFunction) h[0];
                 Object thisValue = h[1];
                 Object[] args = (Object[]) h[2];
+
+                if (!f.isInitialised()) {
+                    throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+                }
 
                 Object oldCaller = f.caller.getValue();
                 Object oldArguments = f.arguments.getValue();
@@ -187,6 +194,15 @@ public class OrdinaryFunction extends FunctionObject {
         f.realm = realm;
         /* step 11 */
         return f;
+    }
+
+    /**
+     * 8.3.15.6 FunctionInitialize Abstract Operation
+     */
+    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(
+            ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
+            LexicalEnvironment scope) {
+        return FunctionInitialize(cx, f, kind, function, scope, null, null);
     }
 
     /**

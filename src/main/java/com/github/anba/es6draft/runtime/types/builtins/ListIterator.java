@@ -9,7 +9,9 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Invoke;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -20,12 +22,12 @@ import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.objects.iteration.StopIterationObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.Undefined;
 
 /**
  *
@@ -82,9 +84,9 @@ public class ListIterator<T> extends OrdinaryObject {
         public static Object send(ExecutionContext cx, Object thisValue) {
             ListIterator<?> itr = listIterator(cx, thisValue);
             if (!itr.iterator.hasNext()) {
-                return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
+                return CreateItrResultObject(cx, Undefined.UNDEFINED, true);
             }
-            return itr.iterator.next();
+            return CreateItrResultObject(cx, itr.iterator.next(), false);
         }
 
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
@@ -104,14 +106,16 @@ public class ListIterator<T> extends OrdinaryObject {
         }
 
         private Object tryNext() {
-            try {
-                return Invoke(cx, object, "next");
-            } catch (ScriptException e) {
-                if (StopIterationObject.IteratorComplete(cx.getRealm(), e)) {
-                    return null;
-                }
-                throw e;
+            Object nextResult = Invoke(cx, object, "next");
+            if (!Type.isObject(nextResult)) {
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            ScriptObject next = Type.objectValue(nextResult);
+            boolean done = IteratorComplete(cx, next);
+            if (done) {
+                return null;
+            }
+            return IteratorValue(cx, next);
         }
 
         @Override

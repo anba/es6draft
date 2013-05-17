@@ -11,7 +11,10 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalErro
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.objects.iteration.StopIterationObject.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorStart;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorYield;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -43,10 +46,10 @@ import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * All kinds of different runtime support methods
@@ -168,14 +171,74 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Evaluation
      */
-    public static ScriptObject EvaluateGeneratorComprehension(MethodHandle handle,
+    public static ScriptObject __EvaluateGeneratorComprehension(MethodHandle handle,
             ExecutionContext cx) {
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         ExecutionContext calleeContext = ExecutionContext.newGeneratorComprehensionContext(cx);
         RuntimeInfo.Code newCode = RuntimeInfo.newCode(handle);
-        GeneratorObject result = new GeneratorObject(cx.getRealm(), newCode, calleeContext);
-        ScriptObject proto = cx.getIntrinsic(Intrinsics.GeneratorPrototype);
-        result.setPrototype(cx, proto);
+        GeneratorObject result = new GeneratorObject(cx.getRealm());
+        result.setPrototype(cx, prototype);
+        GeneratorStart(calleeContext, result, newCode);
         return result;
+    }
+
+    /**
+     * 11.1.7 Generator Comprehensions
+     * <p>
+     * Runtime Semantics: Evaluation
+     */
+    public static ScriptObject EvaluateGeneratorComprehension(MethodHandle handle,
+            ExecutionContext cx) {
+        /* step 2 */
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        /* steps 3-4 */
+        String functionName = "";
+        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
+                | RuntimeInfo.FunctionFlags.Generator.getValue();
+        int expectedArgumentCount = 0;
+        RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
+                expectedArgumentCount, GeneratorComprehensionInitMH, handle,
+                GeneratorComprehensionInitSource);
+        /* step 5 */
+        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Arrow, function, scope);
+        /* step 6 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 7 */
+        MakeConstructor(cx, closure, true, prototype);
+        /* step 8 */
+        GeneratorObject iterator = closure.call(cx, UNDEFINED);
+        /* step 9 */
+        return iterator;
+    }
+
+    private static final MethodHandle GeneratorComprehensionInitMH;
+    private static final String GeneratorComprehensionInitSource;
+    static {
+        Lookup lookup = MethodHandles.publicLookup();
+        try {
+            GeneratorComprehensionInitMH = lookup.findStatic(ScriptRuntime.class,
+                    "GeneratorComprehensionInit", MethodType.methodType(ExoticArguments.class,
+                            ExecutionContext.class, FunctionObject.class, Object[].class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+        try {
+            String source = "";
+            GeneratorComprehensionInitSource = SourceCompressor.compress(source).call();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static ExoticArguments GeneratorComprehensionInit(ExecutionContext cx, FunctionObject f,
+            Object[] args) {
+        LexicalEnvironment env = cx.getVariableEnvironment();
+        EnvironmentRecord envRec = env.getEnvRec();
+        envRec.createImmutableBinding("arguments");
+        ExoticArguments ao = InstantiateArgumentsObject(cx, args);
+        CompleteStrictArgumentsObject(cx, ao);
+        envRec.initializeBinding("arguments", ao);
+        return ao;
     }
 
     /**
@@ -961,7 +1024,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 13.4 Generator Definitions
+     * 13.4 Generator Function Definitions
      * <p>
      * Runtime Semantics: Evaluation
      * <ul>
@@ -987,51 +1050,54 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 13.4 Generator Definitions
+     * 13.4 Generator Function Definitions
+     * <p>
+     * Runtime Semantics: Evaluation
+     * <ul>
+     * <li>YieldExpression : yield AssignmentExpression
+     * </ul>
      */
     public static Object yield(Object value, ExecutionContext cx) {
-        return cx.getCurrentGenerator().yield(value);
+        return GeneratorYield(cx, CreateItrResultObject(cx, value, false));
     }
 
     /**
-     * 13.4 Generator Definitions
+     * 13.4 Generator Function Definitions
+     * <p>
+     * Runtime Semantics: Evaluation
+     * <ul>
+     * <li>YieldExpression : yield YieldDelegator AssignmentExpression
+     * </ul>
      */
-    public static Object delegatedYield(Object expr, ExecutionContext cx) {
-        Realm realm = cx.getRealm();
-        boolean send = true;
+    public static Object delegatedYield(Object value, ExecutionContext cx) {
+        if (!Type.isObject(value)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        Object iterator = Invoke(cx, value, BuiltinSymbol.iterator.get());
+        if (!Type.isObject(iterator)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
         Object received = UNDEFINED;
-        Object result = UNDEFINED;
-        ScriptObject g = ToObject(cx, expr);
-        try {
-            while (true) {
-                Object next;
-                if (send) {
-                    next = Invoke(cx, g, "send", received);
-                } else {
-                    next = Invoke(cx, g, "throw", received);
-                }
-                try {
-                    received = yield(next, cx);
-                    send = true;
-                } catch (ScriptException e) {
-                    received = e.getValue();
-                    send = false;
-                }
+        for (;;) {
+            Object inner = Invoke(cx, iterator, "next", received);
+            if (!Type.isObject(inner)) {
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-        } catch (ScriptException e) {
-            if (!IteratorComplete(realm, e)) {
+            ScriptObject innerResult = Type.objectValue(inner);
+            boolean done = IteratorComplete(cx, innerResult);
+            if (done) {
+                Object innerValue = Get(cx, innerResult, "value");
+                return innerValue;
+            }
+            try {
+                received = GeneratorYield(cx, innerResult);
+            } catch (ScriptException e) {
+                if (HasProperty(cx, Type.objectValue(iterator), "throw")) {
+                    return Invoke(cx, iterator, "throw", e.getValue());
+                }
                 throw e;
             }
-            // TODO: StopIteration with value
-            // result = ((StopIteration) e.getValue()).getValue();
-            result = UNDEFINED;
-        } finally {
-            try {
-                Invoke(cx, g, "close");
-            } catch (ScriptException ignore) {
-            }
         }
-        return result;
     }
 
     /**

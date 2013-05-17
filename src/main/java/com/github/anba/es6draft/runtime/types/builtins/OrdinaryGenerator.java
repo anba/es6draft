@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorStart;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -14,13 +15,13 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  *
@@ -49,14 +50,18 @@ public class OrdinaryGenerator extends FunctionObject {
      * 8.3.19.1 [[Call]] Internal Method
      */
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public GeneratorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        if (!isInitialised()) {
+            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+        }
+
         /* step 1-11 */
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
                 thisValue);
         /* step 12-13 */
         getFunction().functionDeclarationInstantiation(calleeContext, this, args);
         /* step 14-15 */
-        Object result = EvaluateBody(calleeContext, this);
+        GeneratorObject result = EvaluateBody(calleeContext, this);
         /* step 16 */
         return result;
     }
@@ -70,16 +75,19 @@ public class OrdinaryGenerator extends FunctionObject {
      * GeneratorBody : FunctionBody
      * </pre>
      */
-    public static Object EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
+    public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
         /* step 1 */
-        Object g = cx.thisResolution();
+        Object thisValue = cx.thisResolution();
         /* step 2 */
-        if (!Type.isObject(g) || !(g instanceof GeneratorObject)) {
+        GeneratorObject g;
+        if (!(thisValue instanceof GeneratorObject)) {
             g = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.GeneratorPrototype,
                     GeneratorObjectAllocator.INSTANCE);
+        } else {
+            g = (GeneratorObject) thisValue;
         }
         /* step 3 */
-        return GeneratorStart(cx, (GeneratorObject) g, functionObject.getCode());
+        return GeneratorStart(cx, g, functionObject.getCode());
     }
 
     private static class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
@@ -102,7 +110,8 @@ public class OrdinaryGenerator extends FunctionObject {
         /* steps 1-3 (implicit) */
         /* steps 4-6 */
         OrdinaryGenerator f;
-        if (kind == FunctionKind.Normal) {
+        if (kind == FunctionKind.Normal || kind == FunctionKind.Arrow) {
+            // arrow generator => generator comprehension
             f = new OrdinaryConstructorGenerator(realm);
         } else {
             f = new OrdinaryGenerator(realm);

@@ -37,8 +37,7 @@ public final class IterationAbstractOperations {
      */
     public static GeneratorObject GeneratorStart(ExecutionContext cx, GeneratorObject generator,
             RuntimeInfo.Code generatorBody) {
-        // TODO: implement
-
+        generator.start(cx, generatorBody);
         return generator;
     }
 
@@ -52,23 +51,16 @@ public final class IterationAbstractOperations {
         if (!(generator instanceof GeneratorObject)) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        GeneratorObject gen = (GeneratorObject) generator;
-
-        // TODO: implement
-
-        return null;
+        return ((GeneratorObject) generator).resume(cx, value);
     }
 
     /**
      * 15.19.4.3.3 GeneratorYield (itrNextObj)
      */
-    public static Object GeneratorYield(ExecutionContext genContext, Object itrNextObj) {
+    public static Object GeneratorYield(ExecutionContext genContext, ScriptObject itrNextObj) {
         GeneratorObject generator = genContext.getCurrentGenerator();
         assert generator != null;
-
-        // TODO: implement
-
-        return null;
+        return generator.yield(itrNextObj);
     }
 
     /**

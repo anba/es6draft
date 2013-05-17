@@ -539,11 +539,13 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
     private static Callable superBindTo(ExecutionContext cx, Object value, ScriptObject target) {
         if (value instanceof OrdinaryGenerator) {
             OrdinaryGenerator gen = (OrdinaryGenerator) value;
-            return GeneratorFunctionCreate(cx, gen.getFunctionKind(), gen.getFunction(), gen.getScope(),
-                    gen.getPrototype(cx), target, gen.getMethodName());
+            assert gen.isInitialised() : "uninitialised function object";
+            return GeneratorFunctionCreate(cx, gen.getFunctionKind(), gen.getFunction(),
+                    gen.getScope(), gen.getPrototype(cx), target, gen.getMethodName());
         } else {
             assert value instanceof OrdinaryFunction;
             OrdinaryFunction fn = (OrdinaryFunction) value;
+            assert fn.isInitialised() : "uninitialised function object";
             return FunctionCreate(cx, fn.getFunctionKind(), fn.getFunction(), fn.getScope(),
                     fn.getPrototype(cx), target, fn.getMethodName());
         }

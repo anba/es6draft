@@ -79,14 +79,12 @@ public class GeneratorFunctionPrototype extends OrdinaryObject implements Initia
         }
     }
 
-    private static class GeneratorObjectAllocator implements ObjectAllocator<OrdinaryObject> {
-        static final ObjectAllocator<OrdinaryObject> INSTANCE = new GeneratorObjectAllocator();
+    private static class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
+        static final ObjectAllocator<GeneratorObject> INSTANCE = new GeneratorObjectAllocator();
 
         @Override
-        public OrdinaryObject newInstance(Realm realm) {
-            // TODO: implement
-            return new OrdinaryObject(realm) {
-            };
+        public GeneratorObject newInstance(Realm realm) {
+            return new GeneratorObject(realm);
         }
     }
 }

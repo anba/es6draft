@@ -15,7 +15,9 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -192,43 +194,31 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
     }
 
     private static StackTraceElement getTopStackTraceElement(ScriptException e) {
-        for (StackTraceElement element : e.getStackTrace()) {
-            if (isInternalStackFrame(element)) {
-                return element;
-            }
+        for (StackTraceElement element : new StackTraceElementIterable(e)) {
+            return element;
         }
         return new StackTraceElement("", "", "", -1);
     }
 
     private static String getStack(ScriptException e) {
         StringBuilder sb = new StringBuilder();
-        for (StackTraceElement element : e.getStackTrace()) {
-            if (isInternalStackFrame(element)) {
-                sb.append(getMethodName(element)).append('@').append(element.getFileName())
-                        .append(':').append(element.getLineNumber()).append('\n');
-            }
+        for (StackTraceElement element : new StackTraceElementIterable(e)) {
+            sb.append(getMethodName(element)).append('@').append(element.getFileName()).append(':')
+                    .append(element.getLineNumber()).append('\n');
         }
         return sb.toString();
     }
 
     private static ScriptObject getStackTrace(ExecutionContext cx, ScriptException e) {
-        List<ScriptObject> elements = new ArrayList<>();
-        for (StackTraceElement element : e.getStackTrace()) {
-            if (isInternalStackFrame(element)) {
-                OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-                CreateOwnDataProperty(cx, elem, "methodName", getMethodName(element));
-                CreateOwnDataProperty(cx, elem, "fileName", element.getFileName());
-                CreateOwnDataProperty(cx, elem, "lineNumber", element.getLineNumber());
-                elements.add(elem);
-            }
+        List<ScriptObject> list = new ArrayList<>();
+        for (StackTraceElement element : new StackTraceElementIterable(e)) {
+            OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            CreateOwnDataProperty(cx, elem, "methodName", getMethodName(element));
+            CreateOwnDataProperty(cx, elem, "fileName", element.getFileName());
+            CreateOwnDataProperty(cx, elem, "lineNumber", element.getLineNumber());
+            list.add(elem);
         }
-        return CreateArrayFromList(cx, elements);
-    }
-
-    private static boolean isInternalStackFrame(StackTraceElement element) {
-        // filter internal stacktrace elements based on the encoding in CodeGenerator/ScriptLoader
-        return (element.getClassName().charAt(0) == '#' && JVMNames.fromBytecodeName(
-                element.getMethodName()).charAt(0) == '!');
+        return CreateArrayFromList(cx, list);
     }
 
     private static String getMethodName(StackTraceElement element) {
@@ -236,5 +226,89 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
         assert methodName.charAt(0) == '!';
         int i = methodName.lastIndexOf('~');
         return methodName.substring(1, (i != -1 ? i : methodName.length()));
+    }
+
+    private static final class StackTraceElementIterable implements Iterable<StackTraceElement> {
+        private Throwable throwable;
+
+        StackTraceElementIterable(Throwable throwable) {
+            this.throwable = throwable;
+        }
+
+        @Override
+        public Iterator<StackTraceElement> iterator() {
+            return new StackTraceElementIterator(throwable);
+        }
+    }
+
+    private static final class StackTraceElementIterator implements Iterator<StackTraceElement> {
+        private ThreadGroup threadGroup;
+        private StackTraceElement[] elements;
+        private int cursor = 0;
+        private StackTraceElement next;
+
+        StackTraceElementIterator(Throwable throwable) {
+            this.threadGroup = Thread.currentThread().getThreadGroup();
+            this.elements = throwable.getStackTrace();
+        }
+
+        private static boolean isInternalStackFrame(StackTraceElement element) {
+            // filter stacktrace elements based on the encoding in CodeGenerator/ScriptLoader
+            return (element.getClassName().charAt(0) == '#' && JVMNames.fromBytecodeName(
+                    element.getMethodName()).charAt(0) == '!');
+        }
+
+        private static boolean isGeneratorThreadGroup(ThreadGroup threadGroup) {
+            // filter thread-groups based on name per GeneratorObject
+            return "generator-group".equals(threadGroup.getName());
+        }
+
+        private StackTraceElement tryNext() {
+            while (elements != null) {
+                while (cursor < elements.length) {
+                    StackTraceElement element = elements[cursor++];
+                    if (isInternalStackFrame(element)) {
+                        return element;
+                    }
+                }
+                if (isGeneratorThreadGroup(threadGroup)) {
+                    ThreadGroup parent = threadGroup.getParent();
+                    Thread[] threads = new Thread[1];
+                    if (parent.enumerate(threads) == 1) {
+                        threadGroup = parent;
+                        cursor = 0;
+                        elements = threads[0].getStackTrace();
+                    } else {
+                        elements = null;
+                    }
+                } else {
+                    elements = null;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (next == null) {
+                next = tryNext();
+            }
+            return next != null;
+        }
+
+        @Override
+        public StackTraceElement next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            StackTraceElement next = this.next;
+            this.next = null;
+            return next;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 }

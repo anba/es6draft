@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorResume;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -46,13 +46,6 @@ public class GeneratorPrototype extends OrdinaryObject implements Initialisable 
     public enum Properties {
         ;
 
-        private static GeneratorObject generatorObject(ExecutionContext cx, Object object) {
-            if (object instanceof GeneratorObject) {
-                return (GeneratorObject) object;
-            }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
@@ -68,7 +61,7 @@ public class GeneratorPrototype extends OrdinaryObject implements Initialisable 
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue, Object value) {
-            return generatorObject(cx, thisValue).send(cx, UNDEFINED);
+            return GeneratorResume(cx, thisValue, value);
         }
 
         /**
@@ -76,13 +69,17 @@ public class GeneratorPrototype extends OrdinaryObject implements Initialisable 
          */
         @Function(name = "throw", arity = 1)
         public static Object _throw(ExecutionContext cx, Object thisValue, Object exception) {
-            return generatorObject(cx, thisValue)._throw(cx, exception);
+            if (!(thisValue instanceof GeneratorObject)) {
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return ((GeneratorObject) thisValue)._throw(cx, exception);
         }
 
         /**
          * 15.19.4.2.5 Generator.prototype [ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Generator";
     }
 }

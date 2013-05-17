@@ -28,6 +28,8 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public abstract class FunctionObject extends OrdinaryObject implements Callable {
+    private static final String SOURCE_NOT_AVAILABLE = "function F() { /* source not available */ }";
+
     /** [[Scope]] */
     protected LexicalEnvironment scope;
     /** [[FunctionKind]] */
@@ -68,6 +70,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     @Override
     public String toSource() {
+        if (!isInitialised()) {
+            return SOURCE_NOT_AVAILABLE;
+        }
         String source = this.source;
         if (source == null) {
             String src = function.source();
@@ -78,7 +83,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
                     throw new RuntimeException(e);
                 }
             } else {
-                source = "function F() { /* source not available */ }";
+                source = SOURCE_NOT_AVAILABLE;
             }
             this.source = source;
         }
@@ -145,25 +150,29 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return null;
     }
 
-    public FunctionKind getFunctionKind() {
+    public final FunctionKind getFunctionKind() {
         return functionKind;
     }
 
-    public RuntimeInfo.Function getFunction() {
+    public final RuntimeInfo.Function getFunction() {
         return function;
+    }
+
+    public final boolean isInitialised() {
+        return function != null;
     }
 
     /**
      * [[Scope]]
      */
-    public LexicalEnvironment getScope() {
+    public final LexicalEnvironment getScope() {
         return scope;
     }
 
     /**
      * [[Code]]
      */
-    public RuntimeInfo.Code getCode() {
+    public final RuntimeInfo.Code getCode() {
         return function;
     }
 
@@ -171,35 +180,35 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * [[Realm]]
      */
     @Override
-    public Realm getRealm() {
+    public final Realm getRealm() {
         return realm;
     }
 
     /**
      * [[ThisMode]]
      */
-    public ThisMode getThisMode() {
+    public final ThisMode getThisMode() {
         return thisMode;
     }
 
     /**
      * [[Strict]]
      */
-    public boolean isStrict() {
+    public final boolean isStrict() {
         return strict;
     }
 
     /**
      * [[HomeObject]]
      */
-    public ScriptObject getHomeObject() {
+    public final ScriptObject getHomeObject() {
         return homeObject;
     }
 
     /**
      * [[MethodName]]
      */
-    public String getMethodName() {
+    public final String getMethodName() {
         return methodName;
     }
 }
