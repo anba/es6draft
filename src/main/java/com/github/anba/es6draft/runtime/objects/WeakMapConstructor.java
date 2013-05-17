@@ -148,11 +148,8 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
         /**
          * 15.15.3.2 WeakMap[ @@create ] ( )
          */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.WeakMapPrototype,
                     WeakMapObjectAllocator.INSTANCE);
