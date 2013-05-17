@@ -135,6 +135,30 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
+         * 15.2.3.2 Object.setPrototypeOf ( O, proto )
+         */
+        @Function(name = "setPrototypeOf", arity = 2)
+        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
+                Object proto) {
+            if (!Type.isObject(o)) {
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
+            }
+            if (!(Type.isNull(proto) || Type.isObject(proto))) {
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            boolean status;
+            if (Type.isNull(proto)) {
+                status = Type.objectValue(o).setPrototype(cx, null);
+            } else {
+                status = Type.objectValue(o).setPrototype(cx, Type.objectValue(proto));
+            }
+            if (!status) {
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return o;
+        }
+
+        /**
          * 15.2.3.3 Object.getOwnPropertyDescriptor ( O, P )
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
@@ -293,7 +317,6 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "keys", arity = 1)
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
-            // FIXME: spec bug - steps start at 8
             if (!Type.isObject(o)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }

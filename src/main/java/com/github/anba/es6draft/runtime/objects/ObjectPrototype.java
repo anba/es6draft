@@ -37,8 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -93,8 +92,8 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                 builtinTag = "String";
             } else if (o instanceof ExoticArguments) {
                 builtinTag = "Arguments";
-            } else if (o instanceof OrdinaryFunction || o instanceof OrdinaryGenerator
-                    || o instanceof BuiltinFunction || o instanceof ExoticBoundFunction) {
+            } else if (o instanceof FunctionObject || o instanceof BuiltinFunction
+                    || o instanceof ExoticBoundFunction) {
                 builtinTag = "Function";
             } else if (o instanceof ErrorObject) {
                 builtinTag = "Error";
@@ -225,16 +224,12 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(ExecutionContext cx, Object thisValue, Object p) {
             ScriptObject o = ToObject(cx, thisValue);
-            if (o.getRealm() != cx.getRealm()) {
-                throwTypeError(cx, Messages.Key.ObjectSetProtoCrossRealm);
-            }
             if (!IsExtensible(cx, o)) {
                 throwTypeError(cx, Messages.Key.NotExtensible);
             }
             if (Type.isNull(p)) {
                 o.setPrototype(cx, null);
             } else if (Type.isObject(p)) {
-                // TODO: check for cycles in proto-chain
                 o.setPrototype(cx, Type.objectValue(p));
             }
             return UNDEFINED;
