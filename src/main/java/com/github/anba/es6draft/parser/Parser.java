@@ -4004,11 +4004,17 @@ public class Parser {
      * </pre>
      */
     private GeneratorComprehension generatorComprehension() {
-        consume(Token.LP);
-        Comprehension comprehension = comprehension();
-        consume(Token.RP);
+        boolean yieldAllowed = context.yieldAllowed;
+        try {
+            context.yieldAllowed = false;
+            consume(Token.LP);
+            Comprehension comprehension = comprehension();
+            consume(Token.RP);
 
-        return new GeneratorComprehension(comprehension);
+            return new GeneratorComprehension(comprehension);
+        } finally {
+            context.yieldAllowed = yieldAllowed;
+        }
     }
 
     /**
