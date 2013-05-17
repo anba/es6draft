@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -127,7 +128,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
 
             // index == +Infinity => index == -1
             if (index < 0) {
-                return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
+                return CreateItrResultObject(cx, Undefined.UNDEFINED, true);
             }
 
             if (itemKind == ArrayIterationKind.SparseKey
@@ -144,7 +145,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             }
             if (index >= len) {
                 itr.nextIndex = -1; // actually +Infinity!
-                return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
+                return CreateItrResultObject(cx, Undefined.UNDEFINED, true);
             }
             String elementKey = ToString(index);
             itr.nextIndex = index + 1;
@@ -162,17 +163,15 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                         true));
                 result.defineOwnProperty(cx, "1", new PropertyDescriptor(elementValue, true, true,
                         true));
-                return result;
+                return CreateItrResultObject(cx, result, false);
             } else if (itemKind == ArrayIterationKind.Key
                     || itemKind == ArrayIterationKind.SparseKey) {
-                return elementKey;
+                return CreateItrResultObject(cx, elementKey, false);
             } else {
-                // FIXME: spec bug (wrong assertion, itemKind is not "value" -> it's either "value"
-                // or "sparse-value") (bug 1401)
                 assert itemKind == ArrayIterationKind.Value
                         || itemKind == ArrayIterationKind.SparseValue;
                 assert elementValue != null;
-                return elementValue;
+                return CreateItrResultObject(cx, elementValue, false);
             }
         }
 
