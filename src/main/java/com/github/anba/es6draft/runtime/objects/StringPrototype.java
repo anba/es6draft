@@ -222,8 +222,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                     && HasProperty(cx, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
                 rx = Type.objectValue(regexp);
             } else {
-                String p = Type.isUndefined(regexp) ? "" : ToFlatString(cx, regexp);
-                rx = RegExpCreate(cx, p, "");
+                rx = RegExpCreate(cx, regexp, UNDEFINED);
             }
             return Invoke(cx, rx, "match", s);
         }
@@ -316,8 +315,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                     && HasProperty(cx, Type.objectValue(regexp), BuiltinSymbol.isRegExp.get())) {
                 rx = Type.objectValue(regexp);
             } else {
-                String p = Type.isUndefined(regexp) ? "" : ToFlatString(cx, regexp);
-                rx = RegExpCreate(cx, p, "");
+                rx = RegExpCreate(cx, regexp, UNDEFINED);
             }
             return Invoke(cx, rx, "search", string);
         }

@@ -181,11 +181,11 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             if (ToBoolean(Get(cx, r, "multiline"))) {
                 sb.append('m');
             }
-            if (ToBoolean(Get(cx, r, "sticky"))) {
-                sb.append('y');
-            }
             if (ToBoolean(Get(cx, r, "unicode"))) {
                 sb.append('u');
+            }
+            if (ToBoolean(Get(cx, r, "sticky"))) {
+                sb.append('y');
             }
             return sb.toString();
         }
@@ -483,7 +483,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.4.14 RegExp.prototype.@@isRegExp
+         * 15.10.4.15 RegExp.prototype.@@isRegExp
          */
         @Value(name = "@@isRegExp", symbol = BuiltinSymbol.isRegExp)
         public static final boolean isRegExp = true;
@@ -494,9 +494,26 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "compile", arity = 2)
         public static Object compile(ExecutionContext cx, Object thisValue, Object pattern,
                 Object flags) {
-            RegExpObject r = thisRegExpValue(cx, thisValue);
-            String p = Type.isUndefined(pattern) ? "" : ToFlatString(cx, pattern);
-            String f = Type.isUndefined(flags) ? "" : ToFlatString(cx, flags);
+            if (!(thisValue instanceof RegExpObject)) {
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            RegExpObject r = (RegExpObject) thisValue;
+            boolean extensible = IsExtensible(cx, r);
+            if (!extensible) {
+                throw throwTypeError(cx, Messages.Key.NotExtensible);
+            }
+            Object p, f;
+            if (pattern instanceof RegExpObject) {
+                RegExpObject rx = thisRegExpValue(cx, pattern);
+                if (!Type.isUndefined(flags)) {
+                    throw throwTypeError(cx, Messages.Key.NotUndefined);
+                }
+                p = rx.getOriginalSource();
+                f = rx.getOriginalFlags();
+            } else {
+                p = pattern;
+                f = flags;
+            }
             return RegExpInitialize(cx, r, p, f);
         }
     }

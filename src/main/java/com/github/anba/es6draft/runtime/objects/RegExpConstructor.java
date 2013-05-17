@@ -80,7 +80,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
             obj = (RegExpObject) thisValue;
         }
 
-        String p, f;
+        Object p, f;
         if (Type.isObject(pattern) && pattern instanceof RegExpObject) {
             RegExpObject regexp = (RegExpObject) pattern;
             if (!regexp.isInitialised()) {
@@ -92,8 +92,8 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
             p = regexp.getOriginalSource();
             f = regexp.getOriginalFlags();
         } else {
-            p = (Type.isUndefined(pattern) ? "" : ToFlatString(calleeContext, pattern));
-            f = (Type.isUndefined(flags) ? "" : ToFlatString(calleeContext, flags));
+            p = pattern;
+            f = flags;
         }
 
         return RegExpInitialize(calleeContext, obj, p, f);
@@ -130,8 +130,11 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     /**
      * Runtime Semantics: RegExpInitialize Abstract Operation
      */
-    public static RegExpObject RegExpInitialize(ExecutionContext cx, RegExpObject obj, String p,
-            String f) {
+    public static RegExpObject RegExpInitialize(ExecutionContext cx, RegExpObject obj,
+            Object pattern, Object flags) {
+        String p = (Type.isUndefined(pattern) ? "" : ToFlatString(cx, pattern));
+        String f = (Type.isUndefined(flags) ? "" : ToFlatString(cx, flags));
+
         if (getRegExp(cx).isDefaultMultiline() && f.indexOf('m') == -1) {
             f = f + 'm';
         }
@@ -149,9 +152,6 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
 
         obj.initialise(p, f, match, negativeLAGroups);
 
-        // FIXME: spec bug (result from function not used) (Bug 1409)
-        EscapeRegExpPattern(p, f);
-
         Put(cx, obj, "lastIndex", 0, true);
 
         return obj;
@@ -160,7 +160,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     /**
      * Runtime Semantics: RegExpCreate Abstract Operation
      */
-    public static RegExpObject RegExpCreate(ExecutionContext cx, String pattern, String flags) {
+    public static RegExpObject RegExpCreate(ExecutionContext cx, Object pattern, Object flags) {
         RegExpObject obj = RegExpAllocate(cx, cx.getIntrinsic(Intrinsics.RegExp));
         return RegExpInitialize(cx, obj, pattern, flags);
     }
@@ -251,11 +251,8 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
         /**
          * 15.9.4.5 RegExp[ @@create ] ( )
          */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return RegExpAllocate(cx, thisValue);
         }
