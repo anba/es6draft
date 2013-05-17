@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.4 Array Objects</h2>
  * <ul>
- * <li>15.4.6 Array Iterator Object Structure
+ * <li>15.4.5 Array Iterator Object Structure
  * </ul>
  */
 public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisable {
@@ -49,14 +49,14 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
     }
 
     /**
-     * 15.4.6.3 Properties of Array Iterator Instances
+     * 15.4.5.3 Properties of Array Iterator Instances
      */
     public enum ArrayIterationKind {
         Key, Value, KeyValue, SparseKey, SparseValue, SparseKeyValue
     }
 
     /**
-     * 15.4.6.3 Properties of Array Iterator Instances
+     * 15.4.5.3 Properties of Array Iterator Instances
      */
     private static class ArrayIterator extends OrdinaryObject {
         /**
@@ -80,7 +80,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
     }
 
     /**
-     * 15.4.6.1 CreateArrayIterator Abstract Operation
+     * 15.4.5.1 CreateArrayIterator Abstract Operation
      */
     public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array,
             ArrayIterationKind kind) {
@@ -94,7 +94,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
     }
 
     /**
-     * 15.4.6.2 The Array Iterator Prototype
+     * 15.4.5.2 The Array Iterator Prototype
      */
     public enum Properties {
         ;
@@ -103,13 +103,13 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.4.6.2.1 ArrayIterator.prototype.constructor FIXME: spec bug (no description)
+         * 15.4.5.2.1 ArrayIterator.prototype.constructor FIXME: spec bug (no description)
          */
         @Value(name = "constructor")
         public static final Object constructor = UNDEFINED;
 
         /**
-         * 15.4.6.2.2 ArrayIterator.prototype.next( )
+         * 15.4.5.2.2 ArrayIterator.prototype.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -176,7 +176,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
         }
 
         /**
-         * 15.4.6.2.3 ArrayIterator.prototype.@@iterator ()
+         * 15.4.5.2.3 ArrayIterator.prototype.@@iterator ()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
@@ -184,7 +184,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
         }
 
         /**
-         * 15.4.6.2.4 ArrayIterator.prototype.@@toStringTag
+         * 15.4.5.2.4 ArrayIterator.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Array Iterator";

@@ -36,9 +36,8 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.4 Array Objects</h2>
  * <ul>
- * <li>15.4.1 The Array Constructor Called as a Function
- * <li>15.4.2 The Array Constructor
- * <li>15.4.3 Properties of the Array Constructor
+ * <li>15.4.1 The Array Constructor
+ * <li>15.4.2 Properties of the Array Constructor
  * </ul>
  */
 public class ArrayConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -94,8 +93,8 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
     private ExoticArray maybeCreateArray(ExecutionContext cx, Object thisValue, long length) {
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
-            if (!array.getArrayInitializationState()) {
-                array.setArrayInitializationState(true);
+            if (!array.getArrayInitialisationState()) {
+                array.setArrayInitialisationState(true);
                 return array;
             }
         }
@@ -104,7 +103,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
     }
 
     /**
-     * 15.4.2 The Array Constructor
+     * 15.4.1.3 new Array ( ... argumentsList)
      */
     @Override
     public Object construct(ExecutionContext callerContext, Object... args) {
@@ -112,7 +111,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
     }
 
     /**
-     * 15.4.3 Properties of the Array Constructor
+     * 15.4.2 Properties of the Array Constructor
      */
     public enum Properties {
         ;
@@ -129,14 +128,14 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         public static final String name = "Array";
 
         /**
-         * 15.4.3.1 Array.prototype
+         * 15.4.2.1 Array.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ArrayPrototype;
 
         /**
-         * 15.4.3.2 Array.isArray ( arg )
+         * 15.4.2.2 Array.isArray ( arg )
          */
         @Function(name = "isArray", arity = 1)
         public static Object isArray(ExecutionContext cx, Object thisValue, Object arg) {
@@ -153,7 +152,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         }
 
         /**
-         * 15.4.3.3 Array.of ( ...items )
+         * 15.4.2.3 Array.of ( ...items )
          */
         @Function(name = "of", arity = 0)
         public static Object of(ExecutionContext cx, Object thisValue, Object... items) {
@@ -183,7 +182,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         }
 
         /**
-         * 15.4.3.4 Array.from ( arrayLike, mapfn=undefined, thisArg=undefined )
+         * 15.4.2.4 Array.from ( arrayLike, mapfn=undefined, thisArg=undefined )
          */
         @Function(name = "from", arity = 1)
         public static Object from(ExecutionContext cx, Object thisValue, Object arrayLike,
@@ -234,13 +233,10 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         }
 
         /**
-         * 15.4.3.5 Array[ @@create ] ( )
+         * 15.4.2.5 Array[ @@create ] ( )
          */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
                     Intrinsics.ArrayPrototype);

@@ -42,8 +42,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.4 Array Objects</h2>
  * <ul>
- * <li>15.4.4 Properties of the Array Prototype Object
- * <li>15.4.5 Properties of Array Instances
+ * <li>15.4.3 Properties of the Array Prototype Object
+ * <li>15.4.4 Properties of Array Instances
  * </ul>
  */
 public class ArrayPrototype extends OrdinaryObject implements Initialisable {
@@ -55,13 +55,13 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
 
-        // 15.4.4.26 Array.prototype.@@iterator ( )
+        // 15.4.3.28 Array.prototype.@@iterator ( )
         defineOwnProperty(cx, BuiltinSymbol.iterator.get(),
                 new PropertyDescriptor(Get(cx, this, "values"), true, false, true));
     }
 
     /**
-     * 15.4.4 Properties of the Array Prototype Object
+     * 15.4.3 Properties of the Array Prototype Object
      */
     public enum Properties {
         ;
@@ -70,13 +70,13 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.4.4.1 Array.prototype.constructor
+         * 15.4.3.1 Array.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Array;
 
         /**
-         * 15.4.4.2 Array.prototype.toString ( )
+         * 15.4.3.2 Array.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -89,7 +89,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.3 Array.prototype.toLocaleString ( )
+         * 15.4.3.3 Array.prototype.toLocaleString ( )
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
@@ -120,7 +120,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.4 Array.prototype.concat ( [ item1 [ , item2 [ , ... ] ] ] )
+         * 15.4.3.4 Array.prototype.concat ( [ item1 [ , item2 [ , ... ] ] ] )
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... items) {
@@ -154,7 +154,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.5 Array.prototype.join (separator)
+         * 15.4.3.5 Array.prototype.join (separator)
          */
         @Function(name = "join", arity = 1)
         public static Object join(ExecutionContext cx, Object thisValue, Object separator) {
@@ -187,7 +187,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.6 Array.prototype.pop ( )
+         * 15.4.3.6 Array.prototype.pop ( )
          */
         @Function(name = "pop", arity = 0)
         public static Object pop(ExecutionContext cx, Object thisValue) {
@@ -209,7 +209,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.7 Array.prototype.push ( [ item1 [ , item2 [ , ... ] ] ] )
+         * 15.4.3.7 Array.prototype.push ( [ item1 [ , item2 [ , ... ] ] ] )
          */
         @Function(name = "push", arity = 1)
         public static Object push(ExecutionContext cx, Object thisValue, Object... items) {
@@ -225,7 +225,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.8 Array.prototype.reverse ( )
+         * 15.4.3.8 Array.prototype.reverse ( )
          */
         @Function(name = "reverse", arity = 0)
         public static Object reverse(ExecutionContext cx, Object thisValue) {
@@ -258,7 +258,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.9 Array.prototype.shift ( )
+         * 15.4.3.9 Array.prototype.shift ( )
          */
         @Function(name = "shift", arity = 0)
         public static Object shift(ExecutionContext cx, Object thisValue) {
@@ -287,7 +287,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.10 Array.prototype.slice (start, end)
+         * 15.4.3.10 Array.prototype.slice (start, end)
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
@@ -323,12 +323,10 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     String p = ToString(n);
                     boolean status = CreateOwnDataProperty(cx, a, p, kvalue);
                     if (!status) {
-                        // FIXME: spec bug? (Assert instead of throw TypeError?) (Bug 1402)
                         throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, p);
                     }
                 }
             }
-            // FIXME: spec bug (call to Put does make sense with the supplied args) (Bug 1402)
             Put(cx, a, "length", n, true);
             return a;
         }
@@ -365,7 +363,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.11 Array.prototype.sort (comparefn)
+         * 15.4.3.11 Array.prototype.sort (comparefn)
          */
         @Function(name = "sort", arity = 1)
         public static Object sort(ExecutionContext cx, Object thisValue, Object comparefn) {
@@ -419,7 +417,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.12 Array.prototype.splice (start, deleteCount [ , item1 [ , item2 [ , ... ] ] ] )
+         * 15.4.3.12 Array.prototype.splice (start, deleteCount [ , item1 [ , item2 [ , ... ] ] ] )
          */
         @Function(name = "splice", arity = 2)
         public static Object splice(ExecutionContext cx, Object thisValue,
@@ -494,7 +492,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.13 Array.prototype.unshift ( [ item1 [ , item2 [ , ... ] ] ] )
+         * 15.4.3.13 Array.prototype.unshift ( [ item1 [ , item2 [ , ... ] ] ] )
          */
         @Function(name = "unshift", arity = 1)
         public static Object unshift(ExecutionContext cx, Object thisValue, Object... items) {
@@ -522,7 +520,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.14 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
+         * 15.4.3.14 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
          */
         @Function(name = "indexOf", arity = 1)
         public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchElement,
@@ -566,7 +564,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.15 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
+         * 15.4.3.15 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
          */
         @Function(name = "lastIndexOf", arity = 1)
         public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
@@ -604,7 +602,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.16 Array.prototype.every ( callbackfn [ , thisArg ] )
+         * 15.4.3.16 Array.prototype.every ( callbackfn [ , thisArg ] )
          */
         @Function(name = "every", arity = 1)
         public static Object every(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -631,7 +629,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.17 Array.prototype.some ( callbackfn [ , thisArg ] )
+         * 15.4.3.17 Array.prototype.some ( callbackfn [ , thisArg ] )
          */
         @Function(name = "some", arity = 1)
         public static Object some(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -658,7 +656,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.18 Array.prototype.forEach ( callbackfn [ , thisArg ] )
+         * 15.4.3.18 Array.prototype.forEach ( callbackfn [ , thisArg ] )
          */
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -682,7 +680,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.19 Array.prototype.map ( callbackfn [ , thisArg ] )
+         * 15.4.3.19 Array.prototype.map ( callbackfn [ , thisArg ] )
          */
         @Function(name = "map", arity = 1)
         public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -709,7 +707,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.20 Array.prototype.filter ( callbackfn [ , thisArg ] )
+         * 15.4.3.20 Array.prototype.filter ( callbackfn [ , thisArg ] )
          */
         @Function(name = "filter", arity = 1)
         public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -739,7 +737,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.21 Array.prototype.reduce ( callbackfn [ , initialValue ] )
+         * 15.4.3.21 Array.prototype.reduce ( callbackfn [ , initialValue ] )
          */
         @Function(name = "reduce", arity = 1)
         public static Object reduce(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -783,7 +781,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.22 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )
+         * 15.4.3.22 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )
          */
         @Function(name = "reduceRight", arity = 1)
         public static Object reduceRight(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -827,34 +825,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.23 Array.prototype.items ( )
-         */
-        @Function(name = "items", arity = 0)
-        public static Object items(ExecutionContext cx, Object thisValue) {
-            ScriptObject o = ToObject(cx, thisValue);
-            return CreateArrayIterator(cx, o, ArrayIterationKind.KeyValue);
-        }
-
-        /**
-         * 15.4.4.24 Array.prototype.keys ( )
-         */
-        @Function(name = "keys", arity = 0)
-        public static Object keys(ExecutionContext cx, Object thisValue) {
-            ScriptObject o = ToObject(cx, thisValue);
-            return CreateArrayIterator(cx, o, ArrayIterationKind.Key);
-        }
-
-        /**
-         * 15.4.4.25 Array.prototype.values ( )
-         */
-        @Function(name = "values", arity = 0)
-        public static Object values(ExecutionContext cx, Object thisValue) {
-            ScriptObject o = ToObject(cx, thisValue);
-            return CreateArrayIterator(cx, o, ArrayIterationKind.Value);
-        }
-
-        /**
-         * 15.4.4.x Array.prototype.find ( predicate [ , thisArg ] )
+         * 15.4.3.23 Array.prototype.find ( predicate [ , thisArg ] )
          */
         @Function(name = "find", arity = 1)
         public static Object find(ExecutionContext cx, Object thisValue, Object predicate,
@@ -862,21 +833,17 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             Object lenVal = Get(cx, o, "length");
             long len = ToUint32(cx, lenVal);
-            // FIXME: spec bug (IsCallable() check should occur before return) (bug 1342)
             if (!IsCallable(predicate)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
             }
             Callable pred = (Callable) predicate;
-            if (len == 0) {
-                return UNDEFINED;
-            }
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
-                    Object result = pred.call(cx, thisArg, kvalue, k, o);
-                    if (ToBoolean(result)) {
+                    Object testResult = pred.call(cx, thisArg, kvalue, k, o);
+                    if (ToBoolean(testResult)) {
                         return kvalue;
                     }
                 }
@@ -885,7 +852,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.4.x Array.prototype.findIndex ( predicate [ , thisArg ] )
+         * 15.4.3.24 Array.prototype.findIndex ( predicate [ , thisArg ] )
          */
         @Function(name = "findIndex", arity = 1)
         public static Object findIndex(ExecutionContext cx, Object thisValue, Object predicate,
@@ -893,26 +860,50 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             Object lenVal = Get(cx, o, "length");
             long len = ToUint32(cx, lenVal);
-            // FIXME: spec bug (IsCallable() check should occur before return) (bug 1342)
             if (!IsCallable(predicate)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
             }
             Callable pred = (Callable) predicate;
-            if (len == 0) {
-                return -1;
-            }
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
-                    Object result = pred.call(cx, thisArg, kvalue, k, o);
-                    if (ToBoolean(result)) {
+                    Object testResult = pred.call(cx, thisArg, kvalue, k, o);
+                    if (ToBoolean(testResult)) {
                         return k;
                     }
                 }
             }
             return -1;
         }
+
+        /**
+         * 15.4.3.25 Array.prototype.entries ( )
+         */
+        @Function(name = "entries", arity = 0)
+        public static Object entries(ExecutionContext cx, Object thisValue) {
+            ScriptObject o = ToObject(cx, thisValue);
+            return CreateArrayIterator(cx, o, ArrayIterationKind.KeyValue);
+        }
+
+        /**
+         * 15.4.3.26 Array.prototype.keys ( )
+         */
+        @Function(name = "keys", arity = 0)
+        public static Object keys(ExecutionContext cx, Object thisValue) {
+            ScriptObject o = ToObject(cx, thisValue);
+            return CreateArrayIterator(cx, o, ArrayIterationKind.Key);
+        }
+
+        /**
+         * 15.4.3.27 Array.prototype.values ( )
+         */
+        @Function(name = "values", arity = 0)
+        public static Object values(ExecutionContext cx, Object thisValue) {
+            ScriptObject o = ToObject(cx, thisValue);
+            return CreateArrayIterator(cx, o, ArrayIterationKind.Value);
+        }
+
     }
 }

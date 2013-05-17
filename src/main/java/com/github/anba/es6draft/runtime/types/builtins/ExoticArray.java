@@ -30,23 +30,23 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public class ExoticArray extends OrdinaryObject {
-    /** [[ArrayInitializationState]] */
-    private boolean arrayInitializationState = false;
+    /** [[ArrayInitialisationState]] */
+    private boolean arrayInitialisationState = false;
 
     public ExoticArray(Realm realm) {
         super(realm);
     }
 
-    /** [[ArrayInitializationState]] */
-    public boolean getArrayInitializationState() {
-        return arrayInitializationState;
+    /** [[ArrayInitialisationState]] */
+    public boolean getArrayInitialisationState() {
+        return arrayInitialisationState;
     }
 
-    /** [[ArrayInitializationState]] */
-    public void setArrayInitializationState(boolean arrayInitializationState) {
-        assert arrayInitializationState : "cannot de-initialise an array";
-        assert !this.arrayInitializationState : "array already initialised";
-        this.arrayInitializationState = arrayInitializationState;
+    /** [[ArrayInitialisationState]] */
+    public void setArrayInitialisationState(boolean arrayInitialisationState) {
+        assert arrayInitialisationState : "cannot de-initialise an array";
+        assert !this.arrayInitialisationState : "array already initialised";
+        this.arrayInitialisationState = arrayInitialisationState;
     }
 
     // FIXME: spec bug (per introductory paragraph [[Set]] is overridden!)
@@ -100,10 +100,10 @@ public class ExoticArray extends OrdinaryObject {
         /* step 5 */
         array.setPrototype(cx, proto);
         if (length >= 0) {
-            array.arrayInitializationState = true;
+            array.arrayInitialisationState = true;
         } else {
             // negative values represent 'undefined'
-            array.arrayInitializationState = false;
+            array.arrayInitialisationState = false;
             length = 0;
         }
         /* step 8 */
