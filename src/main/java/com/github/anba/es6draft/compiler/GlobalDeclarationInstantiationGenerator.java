@@ -118,13 +118,13 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         /* [10.5.1] step 6 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
         /* [10.5.1] step 7 */
-        List<Declaration> functionsToInitialize = new ArrayList<>();
+        List<FunctionDeclaration> functionsToInitialize = new ArrayList<>();
         /* [10.5.1] step 8 */
         Set<String> declaredFunctionNames = new HashSet<>();
         /* [10.5.1] step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
-            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration) {
-                Declaration d = (Declaration) item;
+            if (item instanceof FunctionDeclaration) {
+                FunctionDeclaration d = (FunctionDeclaration) item;
                 String fn = BoundName(d);
                 if (!declaredFunctionNames.contains(fn)) {
                     canDeclareGlobalFunctionOrThrow(context, envRec, fn, mv);
@@ -149,15 +149,10 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
             }
         }
         /* [10.5.1] step 12-13 */
-        for (Declaration f : functionsToInitialize) {
+        for (FunctionDeclaration f : functionsToInitialize) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
-            if (f instanceof GeneratorDeclaration) {
-                InstantiateGeneratorObject(context, env, (GeneratorDeclaration) f, mv);
-            } else {
-                InstantiateFunctionObject(context, env, (FunctionDeclaration) f, mv);
-            }
-
+            InstantiateFunctionObject(context, env, f, mv);
             createGlobalFunctionBinding(envRec, fn, deletableBindings, mv);
         }
         /* [10.5.1] step 14 */
@@ -174,6 +169,12 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
                 } else {
                     createMutableBinding(envRec, dn, false, mv);
                 }
+            }
+            if (d instanceof GeneratorDeclaration) {
+                String fn = BoundName(d);
+                // stack: [] -> [fo]
+                InstantiateGeneratorObject(context, env, (GeneratorDeclaration) d, mv);
+                setMutableBinding(envRec, fn, false, mv);
             }
         }
         /* [10.5.1] step 17 */

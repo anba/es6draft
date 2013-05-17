@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
@@ -53,6 +54,7 @@ final class DeclarationBindingInstantiation {
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
         Set<String> declaredVarNames = new HashSet<>();
         for (StatementListItem d : varDeclarations) {
+            assert d instanceof VariableStatement;
             for (String vn : BoundNames(d)) {
                 boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
                 if (!vnDefinable) {
@@ -79,6 +81,7 @@ final class DeclarationBindingInstantiation {
         EnvironmentRecord envRec = env.getEnvRec();
         // boolean strict = script.isStrict();
         for (StatementListItem d : VarScopedDeclarations(script)) {
+            assert d instanceof VariableStatement;
             for (String dn : BoundNames(d)) {
                 boolean varAlreadyDeclared = envRec.hasBinding(dn);
                 if (!varAlreadyDeclared) {

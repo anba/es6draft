@@ -134,8 +134,8 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         boolean argumentsObjectNotNeeded = false;
         /* [10.5.3] step 8 */
         for (StatementListItem item : reverse(varDeclarations)) {
-            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration) {
-                Declaration d = (Declaration) item;
+            if (item instanceof FunctionDeclaration) {
+                FunctionDeclaration d = (FunctionDeclaration) item;
                 String fn = BoundName(d);
                 if ("arguments".equals(fn)) {
                     argumentsObjectNotNeeded = true;
@@ -194,6 +194,9 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 } else {
                     createMutableBinding(envRec, dn, false, mv);
                 }
+            }
+            if (d instanceof GeneratorDeclaration) {
+                functionsToInitialize.add(d);
             }
         }
         /* [10.5.3] step 16 */

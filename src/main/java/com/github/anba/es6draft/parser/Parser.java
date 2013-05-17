@@ -354,17 +354,8 @@ public class Parser {
         return context.scopeContext = parent;
     }
 
-    private void addFunctionDecl(FunctionDeclaration funDecl) {
-        addFunctionDecl(funDecl, funDecl.getIdentifier());
-    }
-
-    private void addGeneratorDecl(GeneratorDeclaration genDecl) {
-        // TODO: for now same rules as function declaration
-        addFunctionDecl(genDecl, genDecl.getIdentifier());
-    }
-
-    private void addFunctionDecl(Declaration decl, BindingIdentifier bindingIdentifier) {
-        String name = BoundName(bindingIdentifier);
+    private void addFunctionDecl(FunctionDeclaration decl) {
+        String name = BoundName(decl.getIdentifier());
         ScopeContext parentScope = context.parent.scopeContext;
         if (parentScope.isTopLevel()) {
             // top-level function declaration
@@ -378,6 +369,15 @@ public class Parser {
             if (!parentScope.addLexDeclaredName(name)) {
                 reportSyntaxError(Messages.Key.VariableRedeclaration, name);
             }
+        }
+    }
+
+    private void addGeneratorDecl(GeneratorDeclaration decl) {
+        String name = BoundName(decl.getIdentifier());
+        ScopeContext parentScope = context.parent.scopeContext;
+        parentScope.addLexScopedDeclaration(decl);
+        if (!parentScope.addLexDeclaredName(name)) {
+            reportSyntaxError(Messages.Key.VariableRedeclaration, name);
         }
     }
 

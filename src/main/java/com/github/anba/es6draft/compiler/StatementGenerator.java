@@ -171,7 +171,6 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 mv.swap();
                 mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
             } else if (d instanceof GeneratorDeclaration) {
-                // TODO: for now same rules as FunctionDeclaration
                 GeneratorDeclaration f = (GeneratorDeclaration) d;
                 codegen.compile(f);
                 String fn = BoundName(f);
