@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
@@ -136,11 +136,11 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
                     ExoticArray result = ArrayCreate(cx, 2);
                     CreateOwnDataProperty(cx, result, "0", e.getKey());
                     CreateOwnDataProperty(cx, result, "1", e.getKey());
-                    return result;
+                    return CreateItrResultObject(cx, result, false);
                 }
-                return e.getKey();
+                return CreateItrResultObject(cx, e.getKey(), false);
             }
-            return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
+            return CreateItrResultObject(cx, UNDEFINED, true);
         }
 
         /**

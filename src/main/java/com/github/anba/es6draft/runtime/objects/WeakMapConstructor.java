@@ -9,7 +9,8 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.iteration.StopIterationObject.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -23,7 +24,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -59,7 +59,6 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = realm().defaultContext();
-        Realm realm = calleeContext.getRealm();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
 
         /* steps 1-4 */
@@ -97,16 +96,17 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
             return map;
         }
         for (;;) {
-            Object next;
-            try {
-                next = Invoke(calleeContext, itr, "next");
-            } catch (ScriptException e) {
-                if (IteratorComplete(realm, e)) {
-                    return map;
-                }
-                throw e;
+            Object next = Invoke(calleeContext, itr, "next");
+            if (!Type.isObject(next)) {
+                throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
             }
-            ScriptObject entry = ToObject(calleeContext, next);
+            ScriptObject nextObject = Type.objectValue(next);
+            boolean done = IteratorComplete(calleeContext, nextObject);
+            if (done) {
+                return map;
+            }
+            Object nextValue = IteratorValue(calleeContext, nextObject);
+            ScriptObject entry = ToObject(calleeContext, nextValue);
             Object k = Get(calleeContext, entry, "0");
             Object v = Get(calleeContext, entry, "1");
             ((Callable) adder).call(calleeContext, map, k, v);

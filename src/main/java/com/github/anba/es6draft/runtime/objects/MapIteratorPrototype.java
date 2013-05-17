@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
@@ -151,9 +151,9 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
                     CreateOwnDataProperty(cx, array, "1", e.getValue());
                     result = array;
                 }
-                return result;
+                return CreateItrResultObject(cx, result, false);
             }
-            return _throw(cx.getIntrinsic(Intrinsics.StopIteration));
+            return CreateItrResultObject(cx, UNDEFINED, true);
         }
 
         /**
