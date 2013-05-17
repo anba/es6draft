@@ -636,7 +636,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getDefaultClassProto);
         } else {
-            // FIXME: spec bug (ClassHeritage runtime evaluation not defined) (Bug 1416)
             ValType type = codegen.expression(def.getHeritage(), mv);
             mv.toBoxed(type);
             invokeGetValue(def.getHeritage(), mv);

@@ -359,7 +359,6 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             savedEnv = saveEnvironment(mv);
         }
 
-        // FIXME: spec bug (For In/Of Expression Evaluation called with 'statement') (Bug 1421)
         // Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
         expr.accept(this, mv);
         invokeGetValue(expr, mv);
@@ -416,6 +415,9 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.enterScope(node);
             newDeclarativeEnvironment(mv);
             {
+                // Runtime Semantics: Binding Instantiation
+                // ForDeclaration : LetOrConst ForBinding
+
                 // stack: [nextValue, iterEnv] -> [iterEnv, nextValue, envRec]
                 mv.dupX1();
                 mv.invoke(Methods.LexicalEnvironment_getEnvRec);

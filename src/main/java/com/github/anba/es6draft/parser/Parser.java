@@ -3153,7 +3153,6 @@ public class Parser {
                 // AssignmentRestElement : ... DestructuringAssignmentTarget
                 // DestructuringAssignmentTarget : LeftHandSideExpression
                 Expression expression = ((SpreadElement) e).getExpression();
-                // FIXME: spec bug (need to assert only simple-assignment-target) (Bug 1439)
                 LeftHandSideExpression target = destructuringSimpleAssignmentTarget(expression);
                 element = new AssignmentRestElement(target);
             } else {
