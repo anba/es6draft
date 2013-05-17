@@ -109,13 +109,7 @@ public class OrdinaryGenerator extends FunctionObject {
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
         /* steps 4-6 */
-        OrdinaryGenerator f;
-        if (kind == FunctionKind.Normal || kind == FunctionKind.Arrow) {
-            // arrow generator => generator comprehension
-            f = new OrdinaryConstructorGenerator(realm);
-        } else {
-            f = new OrdinaryGenerator(realm);
-        }
+        OrdinaryGenerator f = new OrdinaryConstructorGenerator(realm);
         /* step 7 */
         f.functionKind = kind;
         /* step 8 */

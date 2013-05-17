@@ -1011,7 +1011,11 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (implicit) */
+        /* step 3 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
+        /* step 4 (implicit) */
+        /* steps 5-6 */
         OrdinaryGenerator closure;
         if (fd.hasSuperReference()) {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope, null, object,
@@ -1019,8 +1023,14 @@ public final class ScriptRuntime {
         } else {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
+        /* step 7 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 8 */
+        MakeConstructor(cx, closure, true, prototype);
+        /* step 9-11 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         DefinePropertyOrThrow(cx, object, propName, desc);
+        /* step 12 (implicit) */
     }
 
     /**
