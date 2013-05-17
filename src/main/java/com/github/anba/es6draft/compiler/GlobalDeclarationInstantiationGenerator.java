@@ -174,7 +174,8 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
                 String fn = BoundName(d);
                 // stack: [] -> [fo]
                 InstantiateGeneratorObject(context, env, (GeneratorDeclaration) d, mv);
-                setMutableBinding(envRec, fn, false, mv);
+                // setMutableBinding(envRec, fn, false, mv);
+                initialiseBinding(envRec, fn, mv);
             }
         }
         /* [10.5.1] step 17 */
