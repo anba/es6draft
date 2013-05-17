@@ -892,24 +892,29 @@ public final class ScriptRuntime {
      */
     public static OrdinaryFunction EvaluateConstructorMethod(ScriptObject constructorParent,
             ScriptObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
+        // ClassDefinitionEvaluation - step 9
+        // ... Property Definition Evaluation
         String propName = "constructor";
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction constructor;
         if (fd.hasSuperReference()) {
-            // FIXME: spec bug (constructorParent not used) (Bug 1416)
             constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
                     constructorParent, proto, propName);
         } else {
-            // FIXME: spec bug (constructorParent not used) (Bug 1416)
             constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
                     constructorParent);
         }
         DefinePropertyOrThrow(cx, proto, propName, new PropertyDescriptor(constructor, true, true,
                 true));
 
+        // ClassDefinitionEvaluation - step 10
         MakeConstructor(cx, constructor, false, proto);
-        proto.defineOwnProperty(cx, propName,
-                new PropertyDescriptor(constructor, true, false, true));
+
+        // ClassDefinitionEvaluation - step 12
+        PropertyDescriptor desc = new PropertyDescriptor(constructor, true, false, true);
+
+        // ClassDefinitionEvaluation - step 13
+        proto.defineOwnProperty(cx, propName, desc);
 
         return constructor;
     }
@@ -1170,6 +1175,22 @@ public final class ScriptRuntime {
         return function;
     }
 
+    /**
+     * 13.5 Class Definitions
+     * <p>
+     * Runtime Semantics: ClassDefinitionEvaluation
+     */
+    public static RuntimeInfo.Function CreateDefaultEmptyConstructor() {
+        String functionName = "constructor";
+        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue();
+        int expectedArguments = 0;
+        RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
+                expectedArguments, DefaultEmptyConstructorInitMH, DefaultEmptyConstructorMH,
+                DefaultEmptyConstructorSource);
+
+        return function;
+    }
+
     private static final MethodHandle DefaultConstructorInitMH;
     private static final MethodHandle DefaultConstructorMH;
     private static final String DefaultConstructorSource;
@@ -1194,8 +1215,7 @@ public final class ScriptRuntime {
 
     public static ExoticArguments DefaultConstructorInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
-        LexicalEnvironment env = cx.getVariableEnvironment();
-        EnvironmentRecord envRec = env.getEnvRec();
+        EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
         envRec.createMutableBinding("args", false);
         envRec.initialiseBinding("args", UNDEFINED);
@@ -1224,6 +1244,46 @@ public final class ScriptRuntime {
         Object result = f.call(cx, thisValue, argList);
         GetValue(result, cx);
 
+        return completionValue;
+    }
+
+    private static final MethodHandle DefaultEmptyConstructorInitMH;
+    private static final MethodHandle DefaultEmptyConstructorMH;
+    private static final String DefaultEmptyConstructorSource;
+    static {
+        Lookup lookup = MethodHandles.publicLookup();
+        try {
+            DefaultEmptyConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
+                    "DefaultEmptyConstructorInit", MethodType.methodType(ExoticArguments.class,
+                            ExecutionContext.class, FunctionObject.class, Object[].class));
+            DefaultEmptyConstructorMH = lookup.findStatic(ScriptRuntime.class,
+                    "DefaultEmptyConstructor",
+                    MethodType.methodType(Object.class, ExecutionContext.class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+        try {
+            String source = "constructor() { }";
+            DefaultEmptyConstructorSource = SourceCompressor.compress(source).call();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static ExoticArguments DefaultEmptyConstructorInit(ExecutionContext cx,
+            FunctionObject f, Object[] args) {
+        EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
+
+        envRec.createImmutableBinding("arguments");
+        ExoticArguments ao = InstantiateArgumentsObject(cx, args);
+        CompleteStrictArgumentsObject(cx, ao);
+        envRec.initialiseBinding("arguments", ao);
+
+        return ao;
+    }
+
+    public static Object DefaultEmptyConstructor(ExecutionContext cx) {
+        Object completionValue = UNDEFINED;
         return completionValue;
     }
 

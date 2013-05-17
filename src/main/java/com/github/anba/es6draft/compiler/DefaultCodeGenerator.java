@@ -152,6 +152,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Static, Types.ScriptRuntime, "CreateDefaultConstructor",
                 Type.getMethodType(Types.RuntimeInfo$Function));
 
+        static final MethodDesc ScriptRuntime_CreateDefaultEmptyConstructor = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "CreateDefaultEmptyConstructor",
+                Type.getMethodType(Types.RuntimeInfo$Function));
+
         static final MethodDesc ScriptRuntime_EvaluateConstructorMethod = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorMethod", Type
                         .getMethodType(Types.OrdinaryFunction, Types.ScriptObject,
@@ -658,57 +662,64 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             // implicit: mv.enterScope(def)
             newDeclarativeEnvironment(mv);
 
-            // stack: [ctor, proto, scope] -> [ctor, proto, scope, proto, scope]
-            mv.dup2();
-
-            // stack: [ctor, proto, scope, proto, scope] -> [ctor, proto, scope, proto, envRec]
-            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-
-            // stack: [ctor, proto, scope, proto, envRec] -> [ctor, proto, scope, proto, envRec]
+            // stack: [ctor, proto, scope] -> [ctor, proto, scope]
             mv.dup();
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
             mv.aconst(className);
             mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
-
-            // FIXME: spec bug - InitialiseBinding not called! (Bug 1416)
-            // stack: [ctor, proto, scope, proto, envRec] -> [ctor, proto, scope]
-            mv.swap();
-            mv.aconst(className);
-            mv.swap();
-            mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
 
             // stack: [ctor, proto, scope] -> [ctor, proto]
             pushLexicalEnvironment(mv);
         }
 
-        // steps 6-12
+        // stack: [ctor, proto] -> [proto, ctor, proto]
+        mv.dupX1();
+
+        // steps 6
         MethodDefinition constructor = ConstructorMethod(def);
         if (constructor != null) {
             codegen.compile(constructor);
-
             // Runtime Semantics: Evaluation -> MethodDefinition
-            // stack: [ctor, proto] -> [proto, F]
-            mv.dupX1();
             mv.invokestatic(codegen.getClassName(), codegen.methodName(constructor) + "_rti",
                     Type.getMethodDescriptor(Types.RuntimeInfo$Function));
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
         } else {
-            // default constructor
-            // stack: [ctor, proto] -> [proto, F]
-            mv.dupX1();
-            mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
+            // step 7
+            if (def.getHeritage() != null) {
+                // FIXME: spec bug - `new (class extends null {})` throws TypeError
+                mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
+            } else {
+                mv.invoke(Methods.ScriptRuntime_CreateDefaultEmptyConstructor);
+            }
         }
+
+        // step 9-10, step 12-13
+        // stack: [proto, ctor, proto, <rti>] -> [proto, F]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
 
         // stack: [proto, F] -> [F, proto]
         mv.swap();
 
-        // steps 13-14
+        // step 11
+        if (className != null) {
+            // stack: [F, proto] -> [F, proto, proto, envRec]
+            mv.dup();
+            getLexicalEnvironment(mv);
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+
+            // stack: [F, proto, proto, envRec] -> [F, proto, envRec, name, proto]
+            mv.swap();
+            mv.aconst(className);
+            mv.swap();
+
+            // stack: [F, proto, envRec, name, proto] -> [F, proto]
+            mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
+        }
+
+        // steps 14-15
         List<MethodDefinition> protoMethods = PrototypeMethodDefinitions(def);
         for (MethodDefinition method : protoMethods) {
             if (method == constructor) {
-                // FIXME: spec bug? (not handled in draft) (Bug 1416)
                 continue;
             }
             mv.dup();
@@ -718,14 +729,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // stack: [F, proto] -> [F]
         mv.pop();
 
-        // steps 15-16
+        // steps 16-17
         List<MethodDefinition> staticMethods = StaticMethodDefinitions(def);
         for (MethodDefinition method : staticMethods) {
             mv.dup();
             codegen.propertyDefinition(method, mv);
         }
 
-        // step 17
+        // step 18
         if (className != null) {
             // restore previous lexical environment
             popLexicalEnvironment(mv);
