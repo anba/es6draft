@@ -53,7 +53,6 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = realm().defaultContext();
-        // FIXME: spec bug (`Number(undefined)` no longer returns NaN) (Bug 1407)
         double n = (args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0);
         if (thisValue instanceof NumberObject) {
             NumberObject obj = (NumberObject) thisValue;
@@ -208,11 +207,8 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
         /**
          * 15.7.3.15 Number[ @@create ] ( )
          */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.NumberPrototype,
                     NumberObjectAllocator.INSTANCE);
