@@ -14,9 +14,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
- * TODO: current draft [rev. 13] does not specify the runtime semantics for array-comprehensions,
- * therefore the translation from
- * http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions is used
+ * 11.1.4.2 Array Comprehension
  */
 class ArrayComprehensionGenerator extends ComprehensionGenerator {
     private static class Methods {
@@ -39,6 +37,11 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
         super(codegen);
     }
 
+    /**
+     * 11.1.4.2 Array Comprehension
+     * <p>
+     * Runtime Semantics: Evaluation
+     */
     @Override
     public Void visit(ArrayComprehension node, ExpressionVisitor mv) {
         this.result = mv.newVariable(Types.ArrayList);
@@ -57,6 +60,13 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
         return null;
     }
 
+    /**
+     * 11.1.4.2 Array Comprehension
+     * <p>
+     * Runtime Semantics: ComprehensionEvaluation
+     * <p>
+     * ComprehensionQualifierTail: AssignmentExpression
+     */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
         ValType type = expression(node, mv);

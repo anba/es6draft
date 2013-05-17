@@ -14,9 +14,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
- * TODO: current draft [rev. 13] does not specify the runtime semantics for
- * generator-comprehensions, therefore the translation from
- * http://wiki.ecmascript.org/doku.php?id=harmony:generator_expressions is used
+ * 11.1.7 Generator Comprehensions
  */
 class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     private static class Methods {
@@ -30,6 +28,11 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
         super(codegen);
     }
 
+    /**
+     * 11.1.7 Generator Comprehensions
+     * <p>
+     * Runtime Semantics: Evaluation
+     */
     @Override
     public Void visit(GeneratorComprehension node, ExpressionVisitor mv) {
         node.getComprehension().accept(this, mv);
@@ -37,6 +40,13 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
         return null;
     }
 
+    /**
+     * 11.1.4.2 Array Comprehension
+     * <p>
+     * Runtime Semantics: ComprehensionEvaluation
+     * <p>
+     * ComprehensionQualifierTail: AssignmentExpression
+     */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
         ValType type = expression(node, mv);

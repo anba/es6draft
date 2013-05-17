@@ -24,7 +24,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
- *
+ * 11.1.4.2 Array Comprehension
  */
 abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     private static class Methods {
@@ -66,9 +66,23 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
+    /**
+     * 11.1.4.2 Array Comprehension
+     * <p>
+     * Runtime Semantics: ComprehensionEvaluation
+     * <p>
+     * ComprehensionQualifierTail: AssignmentExpression
+     */
     @Override
     protected abstract Void visit(Expression node, ExpressionVisitor mv);
 
+    /**
+     * 11.1.4.2 Array Comprehension
+     * <p>
+     * Runtime Semantics: ComprehensionEvaluation
+     * <p>
+     * Comprehension : ComprehensionFor ComprehensionQualifierTail
+     */
     @Override
     public Void visit(Comprehension node, ExpressionVisitor mv) {
         List<Node> list = new ArrayList<>(node.getList().size() + 1);
@@ -81,45 +95,43 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         return null;
     }
 
+    /**
+     * 11.1.4.2 Array Comprehension
+     * <p>
+     * Runtime Semantics: QualifierEvaluation
+     * <p>
+     * ComprehensionFor : if ( AssignmentExpression )
+     */
     @Override
     public Void visit(ComprehensionIf node, ExpressionVisitor mv) {
-        Label l0 = null;
-        if (node.getTest() != null) {
-            l0 = new Label();
-            ValType type = expression(node.getTest(), mv);
-            invokeGetValue(node.getTest(), mv);
-            ToBoolean(type, mv);
-            mv.ifeq(l0);
-        }
+        Label lblTest = new Label();
+        ValType type = expression(node.getTest(), mv);
+        invokeGetValue(node.getTest(), mv);
+        ToBoolean(type, mv);
+        mv.ifeq(lblTest);
 
         elements.next().accept(this, mv);
 
-        if (node.getTest() != null) {
-            mv.mark(l0);
-        }
+        mv.mark(lblTest);
 
         return null;
     }
 
+    /**
+     * 11.1.4.2 Array Comprehension
+     * <p>
+     * Runtime Semantics: QualifierEvaluation
+     * <p>
+     * ComprehensionFor : for (ForBinding of AssignmentExpression )
+     */
     @Override
     public Void visit(ComprehensionFor node, ExpressionVisitor mv) {
         Label lblContinue = new Label(), lblBreak = new Label();
-        Label loopstart = new Label();
 
         ValType type = expression(node.getExpression(), mv);
         mv.toBoxed(type);
         invokeGetValue(node.getExpression(), mv);
 
-        // FIXME: translation into for-of per
-        // http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions means adding
-        // additional isUndefinedOrNull() check, but Spidermonkey reports an error in this case!
-
-        mv.dup();
-        isUndefinedOrNull(mv);
-        mv.ifeq(loopstart);
-        mv.pop();
-        mv.goTo(lblBreak);
-        mv.mark(loopstart);
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_iterate);
 
@@ -133,21 +145,16 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         mv.load(var, Types.Iterator);
         mv.invoke(Methods.Iterator_next);
 
-        // FIXME: translation into for-of per
-        // http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions means using a fresh
-        // lexical/declarative environment for each inner loop, but Spidermonkey creates a single
-        // environment for the whole array comprehension
-
         // create new declarative lexical environment
-        // stack: [nextValue] -> [nextValue, iterEnv]
+        // stack: [nextValue] -> [nextValue, forEnv]
         mv.enterScope(node);
         newDeclarativeEnvironment(mv);
         {
-            // stack: [nextValue, iterEnv] -> [iterEnv, nextValue, envRec]
+            // stack: [nextValue, forEnv] -> [forEnv, nextValue, envRec]
             mv.dupX1();
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
-            // stack: [iterEnv, nextValue, envRec] -> [iterEnv, envRec, nextValue]
+            // stack: [forEnv, nextValue, envRec] -> [forEnv, envRec, nextValue]
             for (String name : BoundNames(node.getBinding())) {
                 mv.dup();
                 mv.aconst(name);
@@ -158,10 +165,10 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
             // FIXME: spec bug (missing ToObject() call?)
 
-            // stack: [iterEnv, envRec, nextValue] -> [iterEnv]
+            // stack: [forEnv, envRec, nextValue] -> [forEnv]
             BindingInitialisationWithEnvironment(node.getBinding(), mv);
         }
-        // stack: [iterEnv] -> []
+        // stack: [forEnv] -> []
         pushLexicalEnvironment(mv);
 
         elements.next().accept(this, mv);
