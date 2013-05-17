@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.DateAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -15,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -82,14 +84,18 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
             // [15.9.2.2]
             if (isUninitialisedDateObject(thisValue)) {
                 DateObject obj = (DateObject) thisValue;
-                Object v = ToPrimitive(calleeContext, args[0]);
-                double d;
-                if (Type.isString(v)) {
-                    d = (double) Properties.parse(calleeContext, null, v);
+                double tv;
+                if (args[0] instanceof DateObject) {
+                    tv = thisTimeValue(calleeContext, args[0]);
                 } else {
-                    d = ToNumber(calleeContext, v);
+                    Object v = ToPrimitive(calleeContext, args[0]);
+                    if (Type.isString(v)) {
+                        tv = (double) Properties.parse(calleeContext, null, v);
+                    } else {
+                        tv = ToNumber(calleeContext, v);
+                    }
                 }
-                obj.setDateValue(TimeClip(d));
+                obj.setDateValue(TimeClip(tv));
                 return obj;
             }
         } else {
@@ -105,6 +111,19 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
         obj.setPrototype(calleeContext, realm.getIntrinsic(Intrinsics.DatePrototype));
         obj.setDateValue(now);
         return DatePrototype.Properties.toString(calleeContext, obj);
+    }
+
+    /**
+     * Abstract operation thisTimeValue(value)
+     */
+    private static double thisTimeValue(ExecutionContext cx, Object object) {
+        if (object instanceof DateObject) {
+            DateObject obj = (DateObject) object;
+            if (obj.isInitialised()) {
+                return obj.getDateValue();
+            }
+        }
+        throw throwTypeError(cx, Messages.Key.IncompatibleObject);
     }
 
     private static boolean isUninitialisedDateObject(Object thisValue) {
@@ -194,11 +213,8 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
         /**
          * 15.9.4.5 Date[ @@create ] ( )
          */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.DatePrototype,
                     DateObjectAllocator.INSTANCE);

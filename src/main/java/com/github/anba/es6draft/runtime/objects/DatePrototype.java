@@ -783,7 +783,6 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         public static Object ToPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             // just to trigger type and initialisation test
             thisTimeValue(cx, thisValue);
-            // FIXME: spec bug (missing argument type check) (bug 1403)
             Type tryFirst;
             if (!Type.isString(hint)) {
                 throw throwTypeError(cx, Messages.Key.InvalidToPrimitiveHint, "?");
