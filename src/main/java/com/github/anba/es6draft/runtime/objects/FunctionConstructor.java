@@ -6,31 +6,42 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.3 Function Objects</h2>
  * <ul>
- * <li>15.3.1 The Function Constructor Called as a Function
- * <li>15.3.2 The Function Constructor
- * <li>15.3.3 Properties of the Function Constructor
+ * <li>15.3.1 The Function Constructor
+ * <li>15.3.2 Properties of the Function Constructor
  * </ul>
  */
 public class FunctionConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -49,16 +60,9 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        return construct(callerContext, args);
-    }
-
-    /**
-     * 15.3.2.1 new Function (p1, p2, ... , pn, body)
-     */
-    @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
-        // FIXME: spec issue? (swap [[Call]] and [[Construct]] code, execution-context/realm!)
         ExecutionContext calleeContext = realm().defaultContext();
+
+        /* steps 1-7 */
         int argCount = args.length;
         StringBuilder p = new StringBuilder();
         CharSequence bodyText;
@@ -78,10 +82,47 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
             bodyText = ToString(calleeContext, args[k - 1]);
         }
 
+        /* steps 8-13 */
         Script script = script(calleeContext, p, bodyText);
+
+        /* step 14 */
+        LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
+        /* step 15 */
+        Object f = thisValue;
+        /* step 16 */
+        if (!Type.isObject(f) || !(f instanceof FunctionObject)
+                || ((FunctionObject) f).getCode() != null) {
+            ScriptObject proto = calleeContext.getIntrinsic(Intrinsics.FunctionPrototype);
+            f = FunctionAllocate(calleeContext, proto, FunctionKind.Normal);
+        }
+        /* step 17 */
+        if (!(f instanceof OrdinaryFunction)) {
+            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        }
+        OrdinaryFunction fn = (OrdinaryFunction) f;
+
+        /* step 8-9 */
         ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(calleeContext
                 .getRealm());
-        return script.evaluate(scriptCxt);
+        Object result = script.evaluate(scriptCxt);
+        assert result instanceof OrdinaryFunction;
+        RuntimeInfo.Function function = ((OrdinaryFunction) result).getFunction();
+        assert function != null : "uninitialised function object";
+
+        /* step 18 */
+        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
+        /* step 19 */
+        MakeConstructor(calleeContext, fn);
+        /* step 20 */
+        return fn;
+    }
+
+    /**
+     * 15.3.1.2 new Function ( ... argumentsList)
+     */
+    @Override
+    public Object construct(ExecutionContext callerContext, Object... args) {
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     private static Script script(ExecutionContext cx, CharSequence p, CharSequence bodyText) {
@@ -96,7 +137,7 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
     }
 
     /**
-     * 15.3.3 Properties of the Function Constructor
+     * 15.3.2 Properties of the Function Constructor
      */
     public enum Properties {
         ;
@@ -105,14 +146,14 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
         /**
-         * 15.3.3.1 Function.prototype
+         * 15.3.2.1 Function.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.FunctionPrototype;
 
         /**
-         * 15.3.3.2 Function.length
+         * 15.3.2.2 Function.length
          */
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -121,5 +162,17 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final String name = "Function";
+
+        /**
+         * 15.3.2.3 Function[ @@create ] ( )
+         */
+        @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
+                    Intrinsics.FunctionPrototype);
+            OrdinaryFunction obj = FunctionAllocate(cx, proto, FunctionKind.Normal);
+            return obj;
+        }
     }
 }
