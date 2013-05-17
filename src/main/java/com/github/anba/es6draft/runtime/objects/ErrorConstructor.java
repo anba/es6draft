@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -26,6 +23,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
@@ -72,8 +70,8 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
 
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(calleeContext, message);
-            // FIXME: spec bug - no longer non-enumerable (Bug 1404)
-            CreateOwnDataProperty(calleeContext, obj, "message", msg);
+            PropertyDescriptor msgDesc = new PropertyDescriptor(msg, true, false, true);
+            DefinePropertyOrThrow(calleeContext, obj, "message", msgDesc);
         }
         if (args.length > 1) {
             CharSequence fileName = ToString(calleeContext, args[1]);
@@ -122,11 +120,8 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
         /**
          * 15.11.3.2 Error[ @@create ] ( )
          */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ErrorPrototype,
                     ErrorObjectAllocator.INSTANCE);
