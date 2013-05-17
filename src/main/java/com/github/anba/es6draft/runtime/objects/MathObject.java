@@ -440,12 +440,13 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.x Math.imul(x, y)<br>
-         * https://bugs.ecmascript.org/show_bug.cgi?id=1452
+         * 15.8.2.44 Math.imul(x, y)
          */
         @Function(name = "imul", arity = 2)
         public static Object imul(ExecutionContext cx, Object thisValue, Object x, Object y) {
-            return (int) (ToUint32(cx, x) * ToUint32(cx, y));
+            long a = ToUint32(cx, x);
+            long b = ToUint32(cx, y);
+            return (int) (a * b);
         }
     }
 }
