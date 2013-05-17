@@ -237,7 +237,7 @@ public final class ScriptRuntime {
         envRec.createImmutableBinding("arguments");
         ExoticArguments ao = InstantiateArgumentsObject(cx, args);
         CompleteStrictArgumentsObject(cx, ao);
-        envRec.initializeBinding("arguments", ao);
+        envRec.initialiseBinding("arguments", ao);
         return ao;
     }
 
@@ -864,7 +864,7 @@ public final class ScriptRuntime {
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
         MakeConstructor(cx, closure);
         if (fd.hasScopedName()) {
-            scope.getEnvRec().initializeBinding(fd.functionName(), closure);
+            scope.getEnvRec().initialiseBinding(fd.functionName(), closure);
         }
         return closure;
     }
@@ -1054,7 +1054,7 @@ public final class ScriptRuntime {
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         MakeConstructor(cx, closure, true, prototype);
         if (fd.hasScopedName()) {
-            scope.getEnvRec().initializeBinding(fd.functionName(), closure);
+            scope.getEnvRec().initialiseBinding(fd.functionName(), closure);
         }
         return closure;
     }
@@ -1198,7 +1198,7 @@ public final class ScriptRuntime {
         EnvironmentRecord envRec = env.getEnvRec();
 
         envRec.createMutableBinding("args", false);
-        envRec.initializeBinding("args", UNDEFINED);
+        envRec.initialiseBinding("args", UNDEFINED);
 
         envRec.createImmutableBinding("arguments");
         ExoticArguments ao = InstantiateArgumentsObject(cx, args);
@@ -1206,7 +1206,7 @@ public final class ScriptRuntime {
         cx.identifierResolution("args", true).PutValue(createRestArray(ao, 0, cx), cx);
 
         CompleteStrictArgumentsObject(cx, ao);
-        envRec.initializeBinding("arguments", ao);
+        envRec.initialiseBinding("arguments", ao);
 
         return ao;
     }

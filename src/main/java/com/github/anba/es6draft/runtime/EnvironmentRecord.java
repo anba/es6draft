@@ -32,9 +32,9 @@ public interface EnvironmentRecord {
     void createImmutableBinding(String name);
 
     /**
-     * InitializeBinding(N,V)
+     * InitialiseBinding(N,V)
      */
-    void initializeBinding(String name, Object value);
+    void initialiseBinding(String name, Object value);
 
     /**
      * SetMutableBinding(N,V,S)

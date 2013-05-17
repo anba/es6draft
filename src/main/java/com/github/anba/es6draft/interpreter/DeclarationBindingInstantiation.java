@@ -84,7 +84,7 @@ final class DeclarationBindingInstantiation {
                 if (!varAlreadyDeclared) {
                     envRec.createMutableBinding(dn, deletableBindings);
                     // envRec.setMutableBinding(dn, UNDEFINED, strict);
-                    envRec.initializeBinding(dn, UNDEFINED);
+                    envRec.initialiseBinding(dn, UNDEFINED);
                 }
             }
         }

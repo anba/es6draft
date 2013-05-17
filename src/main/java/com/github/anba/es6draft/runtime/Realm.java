@@ -123,7 +123,7 @@ public class Realm {
      * [[ThrowTypeError]]
      */
     public Callable getThrowTypeError() {
-        assert throwTypeError != null : "throwTypeError not yet initialized";
+        assert throwTypeError != null : "throwTypeError not yet initialised";
         return throwTypeError;
     }
 

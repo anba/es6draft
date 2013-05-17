@@ -126,7 +126,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
                 Label funcAlreadyDeclared = new Label(), after = new Label();
                 mv.ifne(funcAlreadyDeclared);
                 createMutableBinding(envRec, fn, deletableBindings, mv);
-                initializeBinding(envRec, fn, mv);
+                initialiseBinding(envRec, fn, mv);
                 mv.goTo(after);
                 mv.mark(funcAlreadyDeclared);
                 setMutableBinding(envRec, fn, strict, mv);
@@ -145,7 +145,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
                     createMutableBinding(envRec, dn, deletableBindings, mv);
                     mv.get(Fields.Undefined_UNDEFINED);
                     // setMutableBinding(envRec, dn, strict, mv);
-                    initializeBinding(envRec, dn, mv);
+                    initialiseBinding(envRec, dn, mv);
                     mv.mark(varAlreadyDeclared);
                 }
             }

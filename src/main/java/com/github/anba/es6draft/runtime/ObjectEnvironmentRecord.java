@@ -66,10 +66,10 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.2.4 InitializeBinding (N,V)
+     * 10.2.1.2.4 InitialiseBinding (N,V)
      */
     @Override
-    public void initializeBinding(String name, Object value) {
+    public void initialiseBinding(String name, Object value) {
         assert value != null;
         // TODO: uninitialised binding in an object environment record?!
         // TODO: record the binding has been initialised

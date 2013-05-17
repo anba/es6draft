@@ -39,8 +39,8 @@ class DeclarationBindingInstantiationGenerator {
                 MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String));
 
-        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+        static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         static final MethodDesc EnvironmentRecord_setMutableBinding = MethodDesc.create(
@@ -93,13 +93,13 @@ class DeclarationBindingInstantiationGenerator {
         mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
     }
 
-    protected void initializeBinding(int envRec, String name, InstructionVisitor mv) {
+    protected void initialiseBinding(int envRec, String name, InstructionVisitor mv) {
         // stack: [obj] -> []
         mv.load(envRec, Types.EnvironmentRecord);
         mv.swap();
         mv.aconst(name);
         mv.swap();
-        mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+        mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
     }
 
     protected void setMutableBinding(int envRec, String name, boolean strict, InstructionVisitor mv) {

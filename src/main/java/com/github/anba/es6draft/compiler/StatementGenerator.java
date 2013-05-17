@@ -43,8 +43,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String));
 
-        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+        static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: ExecutionContext
@@ -169,7 +169,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
                 mv.aconst(fn);
                 mv.swap();
-                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
             } else if (d instanceof GeneratorDeclaration) {
                 // TODO: for now same rules as FunctionDeclaration
                 GeneratorDeclaration f = (GeneratorDeclaration) d;
@@ -189,7 +189,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
                 mv.aconst(fn);
                 mv.swap();
-                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
             }
         }
 

@@ -65,17 +65,17 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.4 InitializeBinding (N,V)
+     * 10.2.1.4.4 InitialiseBinding (N,V)
      */
     @Override
-    public void initializeBinding(String name, Object value) {
+    public void initialiseBinding(String name, Object value) {
         if (declEnv.hasBinding(name)) {
-            declEnv.initializeBinding(name, value);
+            declEnv.initialiseBinding(name, value);
             return;
         }
         // TODO: if-check necessary?
         if (objectEnv.hasBinding(name)) {
-            objectEnv.initializeBinding(name, value);
+            objectEnv.initialiseBinding(name, value);
         }
     }
 

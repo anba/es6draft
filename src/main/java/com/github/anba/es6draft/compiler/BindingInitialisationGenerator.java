@@ -37,8 +37,8 @@ class BindingInitialisationGenerator {
                 Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         // class: EnvironmentRecord
-        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+        static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: LexicalEnvironment
@@ -247,14 +247,14 @@ class BindingInitialisationGenerator {
                 mv.pop2();
 
                 // stack: [envRec, id, value] -> []
-                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
             } else if (environment == EnvironmentType.EnvironmentFromStack) {
                 // stack: [envRec, value] -> [envRec, id, value]
                 mv.aconst(node.getName());
                 mv.swap();
 
                 // stack: [envRec, id, value] -> []
-                mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
             } else {
                 assert environment == EnvironmentType.NoEnvironment;
                 // stack: [value] -> [ref, value]

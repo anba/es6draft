@@ -159,7 +159,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 createMutableBinding(envRec, paramName, false, mv);
                 // stack: [undefined] -> []
                 mv.load(undef, Types.Undefined);
-                initializeBinding(envRec, paramName, mv);
+                initialiseBinding(envRec, paramName, mv);
             }
         }
         /* [10.5.3] step 10-11 */
@@ -181,7 +181,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 createMutableBinding(envRec, varName, false, mv);
                 // FIXME: spec bug (partially report in Bug 1420)
                 mv.load(undef, Types.Undefined);
-                initializeBinding(envRec, varName, mv);
+                initialiseBinding(envRec, varName, mv);
             }
         }
         /* [10.5.3] step 14 */
@@ -207,7 +207,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             }
             // stack: [fo] -> []
             // setMutableBinding(envRec, fn, false, mv);
-            initializeBinding(envRec, fn, mv);
+            initialiseBinding(envRec, fn, mv);
         }
         /* [10.5.3] step 17-19 */
         // stack: [] -> [ao]
@@ -223,7 +223,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             }
             // stack: [ao] -> [ao]
             mv.dup();
-            initializeBinding(envRec, "arguments", mv);
+            initialiseBinding(envRec, "arguments", mv);
         }
         /* [10.5.3] step 23 */
         // stack: [ao] -> []

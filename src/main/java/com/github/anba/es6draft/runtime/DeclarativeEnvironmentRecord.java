@@ -74,10 +74,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.4 InitializeBinding (N,V)
+     * 10.2.1.1.4 InitialiseBinding (N,V)
      */
     @Override
-    public void initializeBinding(String name, Object value) {
+    public void initialiseBinding(String name, Object value) {
         assert value != null;
         Binding b = bindings.get(name);
         if (b == null || b.value != null) {
@@ -97,15 +97,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             throw new IllegalStateException();
         }
 
-        // FIXME: spec bug (Bug 1420)
         if (b.value == null) {
             throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
-        }
-
-        if (b.mutable) {
+        } else if (b.mutable) {
             b.value = value;
-        } else if (b.value == null) {
-            throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         } else if (strict) {
             throw throwTypeError(cx, Messages.Key.ImmutableBinding, name);
         }

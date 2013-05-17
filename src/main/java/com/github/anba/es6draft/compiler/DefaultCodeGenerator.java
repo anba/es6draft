@@ -107,8 +107,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String));
 
-        static final MethodDesc EnvironmentRecord_initializeBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initializeBinding",
+        static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
         // class: ExecutionContext
@@ -670,12 +670,12 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.aconst(className);
             mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
 
-            // FIXME: spec bug - InitializeBinding not called! (Bug 1416)
+            // FIXME: spec bug - InitialiseBinding not called! (Bug 1416)
             // stack: [ctor, proto, scope, proto, envRec] -> [ctor, proto, scope]
             mv.swap();
             mv.aconst(className);
             mv.swap();
-            mv.invoke(Methods.EnvironmentRecord_initializeBinding);
+            mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
 
             // stack: [ctor, proto, scope] -> [ctor, proto]
             pushLexicalEnvironment(mv);
