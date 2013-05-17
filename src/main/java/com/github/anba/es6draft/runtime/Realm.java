@@ -36,10 +36,9 @@ import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatPrototype;
 import com.github.anba.es6draft.runtime.objects.intl.IntlObject;
 import com.github.anba.es6draft.runtime.objects.intl.NumberFormatConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
-import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
+import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
-import com.github.anba.es6draft.runtime.objects.iteration.StopIterationObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -233,7 +232,6 @@ public class Realm {
         SetConstructor setConstructor = new SetConstructor(realm);
         SetPrototype setPrototype = new SetPrototype(realm);
         SetIteratorPrototype setIteratorPrototype = new SetIteratorPrototype(realm);
-        StopIterationObject stopIterationObject = new StopIterationObject(realm);
 
         // Generators
         GeneratorFunctionConstructor generatorFunctionConstructor = new GeneratorFunctionConstructor(
@@ -355,7 +353,6 @@ public class Realm {
         intrinsics.put(Intrinsics.Set, setConstructor);
         intrinsics.put(Intrinsics.SetPrototype, setPrototype);
         intrinsics.put(Intrinsics.SetIteratorPrototype, setIteratorPrototype);
-        intrinsics.put(Intrinsics.StopIteration, stopIterationObject);
 
         intrinsics.put(Intrinsics.GeneratorFunction, generatorFunctionConstructor);
         intrinsics.put(Intrinsics.GeneratorPrototype, generatorPrototype);
@@ -448,7 +445,6 @@ public class Realm {
         setConstructor.initialise(defaultContext);
         setPrototype.initialise(defaultContext);
         setIteratorPrototype.initialise(defaultContext);
-        stopIterationObject.initialise(defaultContext);
 
         generatorFunctionConstructor.initialise(defaultContext);
         generatorPrototype.initialise(defaultContext);

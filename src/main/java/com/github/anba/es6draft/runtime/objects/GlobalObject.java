@@ -498,11 +498,6 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         @Value(name = "JSON")
         public static final Intrinsics JSON = Intrinsics.JSON;
 
-        // TODO: StopIteration object
-
-        @Value(name = "StopIteration")
-        public static final Intrinsics StopIteration = Intrinsics.StopIteration;
-
         // Internationalization API
 
         @Value(name = "Intl")
