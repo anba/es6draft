@@ -96,11 +96,8 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
         /**
          * 15.6.3.2 Boolean[ @@create ] ( )
          */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.BooleanPrototype,
                     BooleanObjectAllocator.INSTANCE);
