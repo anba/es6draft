@@ -527,10 +527,7 @@ public final class AbstractOperations {
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
-        boolean notExtensible = object.hasIntegrity(cx, IntegrityLevel.NonExtensible);
-        if (notExtensible) {
-            return false;
-        }
+        assert !object.hasOwnProperty(cx, propertyKey);
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
         return object.defineOwnProperty(cx, propertyKey, newDesc);
     }
@@ -540,10 +537,7 @@ public final class AbstractOperations {
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey, Object value) {
-        boolean notExtensible = object.hasIntegrity(cx, IntegrityLevel.NonExtensible);
-        if (notExtensible) {
-            return false;
-        }
+        assert !object.hasOwnProperty(cx, propertyKey);
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
         return object.defineOwnProperty(cx, propertyKey, newDesc);
     }
@@ -827,8 +821,8 @@ public final class AbstractOperations {
         }
         /* step 2 */
         if (c instanceof ExoticBoundFunction) {
-            Callable boundC = ((ExoticBoundFunction) c).getBoundTargetFunction();
-            return instanceOfOperator(o, boundC, cx);
+            Callable bc = ((ExoticBoundFunction) c).getBoundTargetFunction();
+            return instanceOfOperator(o, bc, cx);
         }
         /* step 3 */
         if (!Type.isObject(o)) {
@@ -859,12 +853,13 @@ public final class AbstractOperations {
         if (!IsConstructor(constructor)) {
             throw throwTypeError(cx, Messages.Key.NotConstructor);
         }
-        Realm realm = cx.getRealm();
         Object proto = Get(cx, Type.objectValue(constructor), "prototype");
         if (!Type.isObject(proto)) {
-            // FIXME: spec bug (step 5a. -> F is not defined) (bug 1369)
+            Realm realm;
             if (constructor instanceof FunctionObject) {
                 realm = ((FunctionObject) constructor).getRealm();
+            } else {
+                realm = cx.getRealm();
             }
             proto = realm.getIntrinsic(intrinsicDefaultProto);
         }
