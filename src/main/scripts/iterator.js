@@ -20,11 +20,28 @@ const Object_keys = Object.keys,
       Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
       Array_isArray = Array.isArray;
 
+const StopIteration = {};
+Object.defineProperty(StopIteration, getSym("@@toStringTag"), {
+  value: "StopIteration",
+  writable: false, enumerable: false, configurable: true
+});
+Object.defineProperty(StopIteration, getSym("@@hasInstance"), {
+  value: o => (o === StopIteration),
+  writable: false, enumerable: false, configurable: true
+});
+Object.freeze(StopIteration);
+
+Object.defineProperty(global, "StopIteration", {
+  value: StopIteration,
+  writable: true, enumerable: false, configurable: true
+});
+
 const iteratorSym = getSym("@@iterator");
 const nextSym = newSym("next");
 
 Object.defineProperty(Object.prototype, iteratorSym, {
-  get() { return this.iterator }
+  get() { return () => new IteratorAdapter(this.iterator()) },
+  enumerable: false, configurable: true
 });
 
 function ToIterator(instance, obj, keys) {
@@ -33,7 +50,7 @@ function ToIterator(instance, obj, keys) {
     Array_isArray(obj) ? obj.map((v, k) => [k, v]) :
     keys ? Object_keys(Object(obj)) :
     Object_keys(Object(obj)).map(k => [k, obj[k]])
-  ).values();
+  ).values()[iteratorSym]();
   var next = iter.next.bind(iter);
   Object_defineProperty(instance, nextSym, {value: next, configurable: false});
   return new Proxy(instance, {enumerate: () => iter});
@@ -60,10 +77,11 @@ Object.defineProperty(Iterator, getSym("@@create"), {
     var o = Object.create(Iterator.prototype);
     Object_defineProperty(o, nextSym, {value: null, configurable: true});
     return o;
-  }
+  }, writable: false, enumerable: false, configurable: true
 });
 
 Iterator.prototype = ToIterator(Object.create(Object.prototype), []);
+Iterator.prototype.constructor = Iterator;
 
 Object.defineProperties(Object.assign(Iterator.prototype, {
   iterator() {
@@ -73,44 +91,154 @@ Object.defineProperties(Object.assign(Iterator.prototype, {
     if (!IsIterator(this)) {
       throw TypeError();
     }
-    return this[nextSym]();
+    var next = this[nextSym]();
+    if (Object(next) === next) {
+      if (next.done) {
+        throw StopIteration;
+      }
+      return next.value;
+    }
   }
 }), {
   iterator: {enumerable: false},
   next: {enumerable: false},
 });
 
-// adjust prototype chain for built-in iterators
-[[], new Map, new Set].forEach(v => v.values().__proto__.__proto__ = Iterator.prototype);
+const IteratorAdapter = MakeIteratorAdapter();
+function MakeIteratorAdapter() {
+  const iterSym = newSym("iter");
+
+  class IteratorAdapter {
+    constructor(iter) {
+      Object.defineProperty(this, iterSym, {value: iter});
+    }
+
+    next() {
+      try {
+        var value = this[iterSym].next();
+        return {value, done: false};
+      } catch (e) {
+        if (e === StopIteration) {
+          return {value, done: true};
+        }
+        throw e;
+      }
+    }
+
+    iterator() {
+      return this[iterSym];
+    }
+  }
+
+  Object.defineProperties(IteratorAdapter.prototype, {
+    next: {enumerable: false},
+    iterator: {enumerable: false},
+  });
+
+  Object.defineProperty(IteratorAdapter.prototype, getSym("@@iterator"), {
+    value() { return this },
+    writable: false, enumerable: false, configurable: true
+  });
+
+  return IteratorAdapter;
+}
+
+function MakeBuiltinIterator(ctor) {
+  const iterSym = newSym("iter");
+
+  class BuiltinIterator extends Iterator {
+    constructor(obj, iterF) {
+      Object.defineProperty(this, iterSym, {value: iterF.call(obj)});
+    }
+
+    next() {
+      var next = this[iterSym].next();
+      if (Object(next) === next) {
+        if (next.done) {
+          throw StopIteration;
+        }
+        return next.value;
+      }
+    }
+
+    iterator() {
+      return this;
+    }
+  }
+
+  delete BuiltinIterator.prototype.constructor;
+
+  Object.defineProperties(BuiltinIterator.prototype, {
+    next: {enumerable: false},
+    iterator: {enumerable: false},
+  });
+
+  Object.defineProperty(BuiltinIterator, getSym("@@create"), {
+    value: Function.prototype[getSym("@@create")],
+    writable: false, enumerable: false, configurable: true
+  });
+
+  Object.defineProperty(BuiltinIterator.prototype, getSym("@@toStringTag"), {
+    value: ctor.name + " Iterator",
+    writable: false, enumerable: false, configurable: true
+  });
+
+  Object.defineProperty(BuiltinIterator.prototype, getSym("@@iterator"), {
+    value() { return this[iterSym] },
+    writable: false, enumerable: false, configurable: true
+  });
+
+  return BuiltinIterator;
+}
 
 // make prototype.iterator() an own data property and remove @@iterator hook
 [Map, Set].forEach(
   ctor => {
-    Object.defineProperty(ctor.prototype, "iterator", {
-      value: ctor.prototype[iteratorSym],
-      writable: true, enumerable: false, configurable: true
-    });
+    const BuiltinIterator = MakeBuiltinIterator(ctor);
+    const iterF = {
+      iterator: ctor.prototype[iteratorSym],
+      keys: ctor.prototype['keys'],
+      values: ctor.prototype['values'],
+      entries: ctor.prototype['entries'],
+    };
+    ["iterator", "keys", "values", "entries"].forEach(
+      method => {
+        Object.defineProperty(ctor.prototype, method, {
+          value() { return new BuiltinIterator(this, iterF[method]) },
+          writable: true, enumerable: false, configurable: true
+        });
+      }
+    );
     delete ctor.prototype[iteratorSym];
   }
 );
 
-const ArrayPrototype_iterator = (function() {
-  const arrayIterator = Array.prototype[iteratorSym];
-  const throwsOnGet = new Proxy({}, {get: () => { throw TypeError() }});
-  return {
-    iterator() {
-      return arrayIterator.call(this != null ? this : throwsOnGet);
-    }
-  }.iterator;
-})();
-
-// remove @@iterator on Array.prototype
-delete Array.prototype[iteratorSym];
-
-const TypedArrays = [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array];
+[Array].forEach(
+  ctor => {
+    const BuiltinIterator = MakeBuiltinIterator(ctor);
+    const iterF = {
+      iterator: ctor.prototype[iteratorSym],
+      keys: ctor.prototype['keys'],
+      values: ctor.prototype['values'],
+      entries: ctor.prototype['entries'],
+    };
+    const throwsOnGet = new Proxy({}, {get: () => { throw TypeError() }});
+    ["iterator", "keys", "values", "entries"].forEach(
+      method => {
+        Object.defineProperty(ctor.prototype, method, {
+          value() { return new BuiltinIterator(this != null ? this : throwsOnGet, iterF[method]) },
+          writable: true, enumerable: false, configurable: true
+        });
+      }
+    );
+    delete ctor.prototype[iteratorSym];
+  }
+);
 
 // make Strings and TypedArrays iterable
-[Array, String, ...TypedArrays].forEach(
+const ArrayPrototype_iterator = Array.prototype.iterator;
+const TypedArrays = [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array];
+[String, ...TypedArrays].forEach(
   ctor => {
     Object.defineProperty(ctor.prototype, "iterator", {
       value() { return ArrayPrototype_iterator.call(this) },

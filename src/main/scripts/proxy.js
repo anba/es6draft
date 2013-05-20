@@ -39,7 +39,7 @@ function toProxyHandler(handler) {
     proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getPropertyDescriptor'](pk);
   }
   if ('getOwnPropertyNames' in handler) {
-    proxyHandler['ownKeys'] = () => Array_from(handler['getOwnPropertyNames']()).values();
+    proxyHandler['ownKeys'] = () => Array_from(handler['getOwnPropertyNames']()).values()[iteratorSym]();
   }
   if ('defineProperty' in handler) {
     proxyHandler['defineProperty'] = (_, pk, desc) => (handler['defineProperty'](pk, desc), true);
@@ -63,9 +63,13 @@ function toProxyHandler(handler) {
     proxyHandler['get'] = (_, pk, receiver) => handler['get'](receiver, pk);
   } else {
     proxyHandler['get'] = (_, pk, receiver) => {
-      // XXX: special case for 'tests/for-of/proxy-3.js'
+      // XXX: special case for iteration tests
       if (pk === iteratorSym) {
-        pk = "iterator";
+        var desc = handler['getPropertyDescriptor']("iterator");
+        if (desc !== undefined && 'value' in desc) {
+          // call @@iterator() so we don't end up with a StopIteration based Iterator
+          return function() { return desc.value.call(this)[iteratorSym]() };
+        }
       }
       var desc = handler['getPropertyDescriptor'](pk);
       if (desc !== undefined && 'value' in desc) {
@@ -101,16 +105,16 @@ function toProxyHandler(handler) {
     };
   }
   if ('enumerate' in handler) {
-    proxyHandler['enumerate'] = () => Array_from(handler['enumerate']()).values();
+    proxyHandler['enumerate'] = () => Array_from(handler['enumerate']()).values()[iteratorSym]();
   } else if ('iterate' in handler) {
-    proxyHandler['enumerate'] = () => handler['iterate']();
+    proxyHandler['enumerate'] = () => handler['iterate']()[iteratorSym]();
   } else {
     proxyHandler['enumerate'] = () => handler['getPropertyNames'].filter(
       pk => handler['getPropertyDescriptor'](pk).enumerable
-    ).values();
+    ).values()[iteratorSym]();
   }
   if ('keys' in handler) {
-    proxyHandler['ownKeys'] = () => Array_from(handler['keys']()).values();
+    proxyHandler['ownKeys'] = () => Array_from(handler['keys']()).values()[iteratorSym]();
   }
   return proxyHandler;
 }
