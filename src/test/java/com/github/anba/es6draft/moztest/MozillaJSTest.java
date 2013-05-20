@@ -92,7 +92,10 @@ public class MozillaJSTest extends BaseMozillaTest {
 
         MozTestConsole console = new MozTestConsole();
         MozShellGlobalObject global = newGlobal(console, testDir(), moztest.script,
-                Paths.get("test402/lib"), scriptCache, legacyMozilla);
+                Paths.get("test402/lib"), scriptCache);
+
+        // load legacy.js file
+        global.eval(legacyMozilla);
 
         // load and execute shell.js files
         for (Path shell : shellJS(moztest)) {

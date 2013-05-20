@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.mjstest;
 
-import static com.github.anba.es6draft.mjstest.MiniJSUnitGlobalObject.newGlobal;
+import static com.github.anba.es6draft.repl.V8ShellGlobalObject.newGlobal;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.fail;
@@ -48,6 +48,7 @@ import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.repl.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.util.Parallelized;
@@ -88,7 +89,7 @@ public class MiniJSUnitTest {
     public static ExternalResource resource = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            legacyJS = MiniJSUnitGlobalObject.compileLegacy(scriptCache);
+            legacyJS = V8ShellGlobalObject.compileLegacy(scriptCache);
         }
     };
 
@@ -104,7 +105,11 @@ public class MiniJSUnitTest {
 
         // TODO: collect multiple failures
         List<Throwable> failures = new ArrayList<Throwable>();
-        MiniJSUnitGlobalObject global = newGlobal(testDir(), test.script, scriptCache, legacyJS);
+        MiniJSUnitConsole console = new MiniJSUnitConsole();
+        V8ShellGlobalObject global = newGlobal(console, testDir(), test.script, scriptCache);
+
+        // load legacy.js file
+        global.eval(legacyJS);
 
         // load and execute mjsunit.js file
         global.include(Paths.get("mjsunit.js"));

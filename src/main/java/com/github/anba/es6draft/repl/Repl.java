@@ -41,7 +41,7 @@ public class Repl {
     }
 
     private enum Option {
-        CompileOnly, Debug, Simple;
+        CompileOnly, Debug, SimpleShell, MozillaShell, V8Shell;
 
         static EnumSet<Option> fromArgs(String[] args) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -54,8 +54,14 @@ public class Repl {
                     options.add(CompileOnly);
                     options.add(Debug);
                     break;
-                case "--simple":
-                    options.add(Simple);
+                case "--shell=simple":
+                    options.add(SimpleShell);
+                    break;
+                case "--shell=mozilla":
+                    options.add(MozillaShell);
+                    break;
+                case "--shell=v8":
+                    options.add(V8Shell);
                     break;
                 case "--help":
                     System.out.print(getHelp());
@@ -75,7 +81,7 @@ public class Repl {
         sb.append("Options: \n");
         sb.append("  --compile-only    Disable interpreter\n");
         sb.append("  --debug           Print generated Java bytecode\n");
-        sb.append("  --simple          Do not load extended shell\n");
+        sb.append("  --shell=[mode]    Set default shell emulation [simple, mozilla, v8] (default = simple)\n");
         sb.append("  --help            Print this help\n");
         return sb.toString();
     }
@@ -198,33 +204,30 @@ public class Repl {
     }
 
     private GlobalObject newGlobal() {
-        if (options.contains(Option.Simple)) {
-            return newSimpleGlobal();
-        } else {
-            return newExtendedGlobal();
-        }
-    }
-
-    private GlobalObject newSimpleGlobal() {
         ReplConsole console = new ReplConsole(this.console);
-        SimpleShellGlobalObject global = SimpleShellGlobalObject.newGlobal(console);
-        return global;
-    }
-
-    private GlobalObject newExtendedGlobal() {
         Path baseDir = Paths.get("").toAbsolutePath();
         Path script = Paths.get("./.");
-        Path libDir = Paths.get("");
-        ReplConsole console = new ReplConsole(this.console);
         ScriptCache scriptCache = new ScriptCache();
-        Script initScript = null;
-        try {
-            initScript = MozShellGlobalObject.compileLegacy(scriptCache);
-        } catch (ParserException | IOException e) {
-            System.err.println(e);
+
+        ShellGlobalObject global;
+        if (options.contains(Option.MozillaShell)) {
+            Path libDir = Paths.get("");
+            global = MozShellGlobalObject.newGlobal(console, baseDir, script, libDir, scriptCache);
+            try {
+                global.eval(MozShellGlobalObject.compileLegacy(scriptCache));
+            } catch (ParserException | IOException e) {
+                System.err.println(e);
+            }
+        } else if (options.contains(Option.V8Shell)) {
+            global = V8ShellGlobalObject.newGlobal(console, baseDir, script, scriptCache);
+            try {
+                global.eval(V8ShellGlobalObject.compileLegacy(scriptCache));
+            } catch (ParserException | IOException e) {
+                System.err.println(e);
+            }
+        } else {
+            global = SimpleShellGlobalObject.newGlobal(console, baseDir, script, scriptCache);
         }
-        MozShellGlobalObject global = MozShellGlobalObject.newGlobal(console, baseDir, script,
-                libDir, scriptCache, initScript);
 
         return global;
     }

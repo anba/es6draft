@@ -103,7 +103,10 @@ public class MozillaJitTest extends BaseMozillaTest {
 
         MozTestConsole console = new MozTestConsole();
         MozShellGlobalObject global = newGlobal(console, testDir(), moztest.script, Paths.get(""),
-                scriptCache, legacyMozilla);
+                scriptCache);
+
+        // load legacy.js file
+        global.eval(legacyMozilla);
 
         // load and execute prolog.js files
         global.include(Paths.get("lib/prolog.js"));

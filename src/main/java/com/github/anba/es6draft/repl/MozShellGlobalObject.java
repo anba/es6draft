@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.repl.WrapperProxy.CreateWrapProxy;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.BufferedReader;
@@ -19,10 +18,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
@@ -36,85 +33,46 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.objects.ErrorConstructor;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 
 /**
- * Global object class with support for multiple moz-shell functions
+ * Global object class with support for some moz-shell functions
  */
-public final class MozShellGlobalObject extends GlobalObject {
+public final class MozShellGlobalObject extends ShellGlobalObject {
     private final long startMilli = System.currentTimeMillis();
     private final long startNano = System.nanoTime();
-    private final Realm realm;
-    private final Path basedir;
-    private final Path script;
     private final Path libdir;
-    private final ScriptCache scriptCache;
-    private final Script initScript;
-    private final ShellConsole console;
 
-    private MozShellGlobalObject(Realm realm, ShellConsole console, Path basedir, Path script,
-            Path libdir, ScriptCache scriptCache, Script initScript) {
-        super(realm);
-        this.realm = realm;
-        this.console = console;
-        this.basedir = basedir;
-        this.script = script;
+    private MozShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
+            ScriptCache scriptCache, Path libdir) {
+        super(realm, console, baseDir, script, scriptCache);
         this.libdir = libdir;
-        this.scriptCache = scriptCache;
-        this.initScript = initScript;
+    }
+
+    @Override
+    public void initialise(ExecutionContext cx) {
+        super.initialise(cx);
+        createProperties(this, cx, MozShellGlobalObject.class);
     }
 
     /**
      * Returns a new instance of this class
      */
     public static MozShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
-            final Path script, final Path libdir, final ScriptCache scriptCache,
-            final Script initScript) {
+            final Path script, final Path libdir, final ScriptCache scriptCache) {
         Realm realm = Realm.newRealm(new GlobalObjectCreator<MozShellGlobalObject>() {
             @Override
             public MozShellGlobalObject createGlobal(Realm realm) {
-                return new MozShellGlobalObject(realm, console, baseDir, script, libdir,
-                        scriptCache, initScript);
+                return new MozShellGlobalObject(realm, console, baseDir, script, scriptCache,
+                        libdir);
             }
         });
-
-        // start initialization
-        ExecutionContext cx = realm.defaultContext();
-        MozShellGlobalObject global = (MozShellGlobalObject) realm.getGlobalThis();
-        createProperties(global, cx, MozShellGlobalObject.class);
-
-        // load init-script
-        if (global.initScript != null) {
-            ScriptLoader.ScriptEvaluation(global.initScript, realm, false);
-        }
-
-        return global;
-    }
-
-    /**
-     * Parses, compiles and executes the javascript file
-     */
-    public void eval(Path fileName, Path file) throws IOException, ParserException {
-        Script script = scriptCache.script(fileName.toString(), 1, file);
-        ScriptLoader.ScriptEvaluation(script, realm, false);
-    }
-
-    /**
-     * Parses, compiles and executes the javascript file (uses {@link #scriptCache})
-     */
-    public void include(Path file) throws IOException, ParserException {
-        Script script = scriptCache.get(absolutePath(file));
-        ScriptLoader.ScriptEvaluation(script, realm, false);
+        return (MozShellGlobalObject) realm.getGlobalThis();
     }
 
     /**
@@ -127,46 +85,6 @@ public final class MozShellGlobalObject extends GlobalObject {
         }
     }
 
-    private static ScriptException throwError(Realm realm, String message) {
-        ErrorConstructor ctor = (ErrorConstructor) realm.getIntrinsic(Intrinsics.Error);
-        Object error = ctor.construct(realm.defaultContext(), Objects.toString(message, ""));
-        return _throw(error);
-    }
-
-    private Path absolutePath(Path file) {
-        return basedir.resolve(file);
-    }
-
-    private Path relativePath(Path file) {
-        return basedir.resolve(script.getParent().resolve(file));
-    }
-
-    private String read(Path path) {
-        if (!Files.exists(path)) {
-            _throw(String.format("can't open '%s'", path.toString()));
-        }
-        try {
-            byte[] bytes = Files.readAllBytes(path);
-            return new String(bytes, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw throwError(realm, e.getMessage());
-        }
-    }
-
-    private Object load(Path fileName, Path path) {
-        if (!Files.exists(path)) {
-            _throw(String.format("can't open '%s'", path.toString()));
-        }
-        try {
-            eval(fileName, path);
-            return UNDEFINED;
-        } catch (IOException e) {
-            throw throwError(realm, e.getMessage());
-        } catch (ParserException e) {
-            throw e.toScriptException(realm.defaultContext());
-        }
-    }
-
     private Object evaluate(Realm realm, String source, String sourceName, int sourceLine)
             throws IOException {
         try {
@@ -175,28 +93,6 @@ public final class MozShellGlobalObject extends GlobalObject {
         } catch (ParserException e) {
             throw e.toScriptException(realm.defaultContext());
         }
-    }
-
-    /**
-     * Returns the well-known symbol {@code name} or undefined if there is no such symbol
-     */
-    @Function(name = "getSym", arity = 1)
-    public Object getSym(String name) {
-        try {
-            if (name.startsWith("@@")) {
-                return BuiltinSymbol.valueOf(name.substring(2)).get();
-            }
-        } catch (IllegalArgumentException e) {
-        }
-        return UNDEFINED;
-    }
-
-    /**
-     * Creates a new Symbol object
-     */
-    @Function(name = "newSym", arity = 2)
-    public Object newSym(String name, boolean _private) {
-        return new Symbol(name, _private);
     }
 
     /**
@@ -464,7 +360,13 @@ public final class MozShellGlobalObject extends GlobalObject {
     /** shell-function: {@code newGlobal()} */
     @Function(name = "newGlobal", arity = 0)
     public ScriptObject newGlobal() {
-        return newGlobal(console, basedir, script, libdir, scriptCache, initScript);
+        MozShellGlobalObject global = newGlobal(console, baseDir, script, libdir, scriptCache);
+        try {
+            global.eval(compileLegacy(scriptCache));
+        } catch (ParserException | IOException e) {
+            throwError(realm, e.getMessage());
+        }
+        return global;
     }
 
     /** shell-function: {@code getMaxArgs()} */
