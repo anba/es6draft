@@ -60,9 +60,9 @@ public final class MozShellGlobalObject extends GlobalObject {
     private final Path libdir;
     private final ScriptCache scriptCache;
     private final Script initScript;
-    private final MozShellConsole console;
+    private final ShellConsole console;
 
-    private MozShellGlobalObject(Realm realm, MozShellConsole console, Path basedir, Path script,
+    private MozShellGlobalObject(Realm realm, ShellConsole console, Path basedir, Path script,
             Path libdir, ScriptCache scriptCache, Script initScript) {
         super(realm);
         this.realm = realm;
@@ -77,7 +77,7 @@ public final class MozShellGlobalObject extends GlobalObject {
     /**
      * Returns a new instance of this class
      */
-    public static MozShellGlobalObject newGlobal(final MozShellConsole console, final Path baseDir,
+    public static MozShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
             final Path script, final Path libdir, final ScriptCache scriptCache,
             final Script initScript) {
         Realm realm = Realm.newRealm(new GlobalObjectCreator<MozShellGlobalObject>() {

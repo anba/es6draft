@@ -9,7 +9,7 @@ package com.github.anba.es6draft.repl;
 /**
  * Console abstraction for {@link MozShellGlobalObject}
  */
-public interface MozShellConsole {
+public interface ShellConsole {
     String readLine();
 
     void putstr(String s);

@@ -9,12 +9,12 @@ package com.github.anba.es6draft.moztest;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.anba.es6draft.repl.MozShellConsole;
+import com.github.anba.es6draft.repl.ShellConsole;
 
 /**
  *
  */
-class MozTestConsole implements MozShellConsole {
+class MozTestConsole implements ShellConsole {
     private List<Throwable> failures = new ArrayList<Throwable>();
 
     public List<Throwable> getFailures() {

@@ -28,7 +28,6 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.StopExecutionException.Reason;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
@@ -207,13 +206,9 @@ public class Repl {
     }
 
     private GlobalObject newSimpleGlobal() {
-        Realm realm = Realm.newRealm(new GlobalObjectCreator<GlobalObject>() {
-            @Override
-            public GlobalObject createGlobal(Realm realm) {
-                return new GlobalObject(realm);
-            }
-        });
-        return realm.getGlobalThis();
+        ReplConsole console = new ReplConsole(this.console);
+        SimpleShellGlobalObject global = SimpleShellGlobalObject.newGlobal(console);
+        return global;
     }
 
     private GlobalObject newExtendedGlobal() {
@@ -234,7 +229,7 @@ public class Repl {
         return global;
     }
 
-    private static class ReplConsole implements MozShellConsole {
+    private static class ReplConsole implements ShellConsole {
         private Console console;
 
         ReplConsole(Console console) {
