@@ -128,6 +128,9 @@ tests/basic/bug732087.js
 tests/basic/testCustomIterator.js
 tests/basic/bug684922.js
 
+# emulated ArrayIterator.prototype.next does not work cross-global
+tests/for-of/next-3.js
+
 
 ############################################
 # Implementation specific differences      #
