@@ -23,17 +23,11 @@ harmony/block-const-assign.js
 harmony/block-early-errors.js
 harmony/block-let-declaration.js
 
-# V8 generators return values from return statement in next()
-harmony/generators-iteration.js
-
 # yield statement/expression syntax not yet settled
 harmony/generators-parsing.js
 
 # V8 generators: (function*(){}).prototype instanceof Object.getPrototypeOf(function*(){}) is true
 harmony/generators-runtime.js
-
-# V8 uses new generators API
-regress/regress-2681.js
 
 # modules not yet enabled
 harmony/module-linking.js
@@ -43,9 +37,6 @@ harmony/module-resolution.js
 
 # RegExp: invalid test, match/replace call Put("lastIndex", 0) if global
 regress/regress-2438.js
-
-# Static Semantics: Early Error for invalid RegExp flags (unicode escaped)
-regress/regress-136048.js
 
 # invalid test, Array.prototype.sort throws if array is frozen
 regress/regress-2419.js
@@ -228,6 +219,9 @@ delay-syntax-error.js
 
 # Static Semantics: Early errors invalid LHS
 invalid-lhs.js
+
+# Static Semantics: Early Error for invalid RegExp flags (unicode escaped)
+regress/regress-136048.js
 
 # for-in with initialiser
 for-in.js
