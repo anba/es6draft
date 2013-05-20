@@ -395,9 +395,6 @@ js1_8_5/regress/regress-736792.js
 # trap() not supported
 js1_8_5/regress/regress-476088.js
 
-# shapeOf() not supported
-js1_8_5/regress/regress-595365-2.js
-
 # parseLegacyJSON() not supported
 ecma_5/extensions/legacy-JSON.js
 
