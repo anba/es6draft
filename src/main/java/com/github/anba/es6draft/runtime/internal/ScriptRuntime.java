@@ -1092,25 +1092,31 @@ public final class ScriptRuntime {
         if (!Type.isObject(iterator)) {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
+        boolean next = true;
         Object received = UNDEFINED;
         for (;;) {
-            Object inner = Invoke(cx, iterator, "next", received);
+            Object inner = Invoke(cx, iterator, next ? "next" : "throw", received);
             if (!Type.isObject(inner)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             ScriptObject innerResult = Type.objectValue(inner);
             boolean done = IteratorComplete(cx, innerResult);
             if (done) {
+                // FIXME: spec bug - use IteratorValue() abstract operation
                 Object innerValue = Get(cx, innerResult, "value");
                 return innerValue;
             }
             try {
                 received = GeneratorYield(cx, innerResult);
+                next = true;
             } catch (ScriptException e) {
                 if (HasProperty(cx, Type.objectValue(iterator), "throw")) {
-                    return Invoke(cx, iterator, "throw", e.getValue());
+                    // FIXME: spec bug - 'throw' handler somewhat incomplete
+                    received = e.getValue();
+                    next = false;
+                } else {
+                    throw e;
                 }
-                throw e;
             }
         }
     }
