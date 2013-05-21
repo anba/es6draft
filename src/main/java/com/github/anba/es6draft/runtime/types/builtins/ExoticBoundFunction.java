@@ -97,7 +97,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable, Con
      * 8.4.1.2 [[Construct]]
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... extraArgs) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... extraArgs) {
         /* step 1 */
         Callable target = boundTargetFunction;
         /* step 2 */

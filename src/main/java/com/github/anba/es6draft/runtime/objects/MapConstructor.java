@@ -132,7 +132,7 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
      * 15.14.2.1 new Map ( ... args )
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

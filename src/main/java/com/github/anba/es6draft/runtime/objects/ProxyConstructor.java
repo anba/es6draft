@@ -21,6 +21,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -38,7 +39,7 @@ public class ProxyConstructor extends BuiltinFunction implements Constructor, In
     }
 
     @Override
-    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+    public ExoticProxy call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = realm().defaultContext();
         Object target = args.length > 0 ? args[0] : UNDEFINED;
         Object handler = args.length > 1 ? args[1] : UNDEFINED;
@@ -46,7 +47,7 @@ public class ProxyConstructor extends BuiltinFunction implements Constructor, In
     }
 
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ExoticProxy construct(ExecutionContext callerContext, Object... args) {
         return call(callerContext, null, args);
     }
 

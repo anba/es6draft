@@ -129,7 +129,7 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
      * 15.19.3.1.2 new GeneratorFunction (...argumentsList)
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

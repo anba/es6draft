@@ -50,7 +50,7 @@ public class OrdinaryFunction extends FunctionObject {
          * 8.3.15.2 [[Construct]] (argumentsList)
          */
         @Override
-        public Object construct(ExecutionContext callerContext, Object... args) {
+        public ScriptObject construct(ExecutionContext callerContext, Object... args) {
             return OrdinaryConstruct(callerContext, this, args);
         }
     }
@@ -148,7 +148,7 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * 8.3.15.2.1 OrdinaryConstruct (F, argumentsList)
      */
-    public static <FUNCTION extends ScriptObject & Callable & Constructor> Object OrdinaryConstruct(
+    public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject OrdinaryConstruct(
             ExecutionContext cx, FUNCTION f, Object[] args) {
         Object creator = Get(cx, f, BuiltinSymbol.create.get());
         Object obj;
@@ -165,9 +165,9 @@ public class OrdinaryFunction extends FunctionObject {
         }
         Object result = f.call(cx, obj, args);
         if (Type.isObject(result)) {
-            return result;
+            return Type.objectValue(result);
         }
-        return obj;
+        return Type.objectValue(obj);
     }
 
     /**

@@ -123,7 +123,7 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
      * 15.16.2.1 new Set ( ... args)
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

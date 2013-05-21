@@ -309,7 +309,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
      * 10.1.3.1 new Intl.Collator ([locales [, options]])
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public CollatorObject construct(ExecutionContext callerContext, Object... args) {
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         CollatorObject obj = new CollatorObject(callerContext.getRealm());

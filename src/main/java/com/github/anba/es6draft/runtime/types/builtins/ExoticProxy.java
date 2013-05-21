@@ -84,7 +84,7 @@ public class ExoticProxy implements ScriptObject {
          * 8.5.15 [[Construct]] Internal Method
          */
         @Override
-        public Object construct(ExecutionContext callerContext, Object... args) {
+        public ScriptObject construct(ExecutionContext callerContext, Object... args) {
             ScriptObject handler = proxyHandler;
             ScriptObject target = proxyTarget;
             Callable trap = GetMethod(callerContext, handler, "construct");
@@ -96,7 +96,7 @@ public class ExoticProxy implements ScriptObject {
             if (!Type.isObject(newObj)) {
                 throw throwTypeError(callerContext, Messages.Key.NotObjectType);
             }
-            return newObj;
+            return Type.objectValue(newObj);
         }
     }
 

@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
@@ -137,7 +138,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
      * 15.9.3.1 new Date ( ...args )
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

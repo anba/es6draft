@@ -598,7 +598,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
      * 12.1.3.1 new Intl.DateTimeFormat ([locales [, options]])
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public DateTimeFormatObject construct(ExecutionContext callerContext, Object... args) {
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         DateTimeFormatObject obj = new DateTimeFormatObject(callerContext.getRealm());

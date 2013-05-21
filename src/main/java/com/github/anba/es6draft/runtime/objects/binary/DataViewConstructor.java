@@ -62,7 +62,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
      * 15.13.7.2.1 new DataView(buffer [, byteOffset [, byteLength]])
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         Object buffer = args.length > 0 ? args[0] : UNDEFINED;
         ScriptObject obj = ToObject(callerContext, buffer);
         if (!(obj instanceof ArrayBufferObject)) {

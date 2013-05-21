@@ -73,14 +73,14 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      * 15.2.2.1 new Object ( [ value ] )
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         // FIXME: spec issue? (should possibly call %Object%[[Call]], execution-context/realm!)
         ExecutionContext calleeContext = realm().defaultContext();
         if (args.length > 0) {
             Object value = args[0];
             switch (Type.of(value)) {
             case Object:
-                return value;
+                return Type.objectValue(value);
             case String:
             case Boolean:
             case Number:

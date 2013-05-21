@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
@@ -156,7 +157,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
      * 15.11.7.2.1 new NativeError (... args)
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

@@ -297,7 +297,7 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
      * 15.13.6.2.1 new TypedArray (...args)
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

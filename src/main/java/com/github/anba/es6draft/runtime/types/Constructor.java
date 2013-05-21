@@ -22,5 +22,5 @@ public interface Constructor extends ScriptObject {
     /**
      * [[Construct]]
      */
-    Object construct(ExecutionContext callerContext, Object... args);
+    ScriptObject construct(ExecutionContext callerContext, Object... args);
 }

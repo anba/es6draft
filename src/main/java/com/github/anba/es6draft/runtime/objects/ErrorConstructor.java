@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
@@ -89,7 +90,7 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
      * 15.11.2.1 new Error (message)
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

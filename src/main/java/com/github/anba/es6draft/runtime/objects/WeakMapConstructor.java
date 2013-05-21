@@ -117,7 +117,7 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
      * 15.15.2.1 new WeakMap ( ... args )
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

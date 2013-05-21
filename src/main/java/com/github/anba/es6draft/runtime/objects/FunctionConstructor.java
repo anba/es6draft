@@ -121,7 +121,7 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
      * 15.3.1.2 new Function ( ... argumentsList)
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

@@ -106,7 +106,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
      * 15.4.1.3 new Array ( ... argumentsList)
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

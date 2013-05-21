@@ -290,7 +290,7 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
      * 11.1.3.1 new Intl.NumberFormat ([locales [, options]])
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public NumberFormatObject construct(ExecutionContext callerContext, Object... args) {
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         NumberFormatObject obj = new NumberFormatObject(callerContext.getRealm());

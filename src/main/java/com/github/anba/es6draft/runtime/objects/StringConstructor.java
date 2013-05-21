@@ -74,7 +74,7 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
      * 15.5.2.1 new String ( [ value ] )
      */
     @Override
-    public Object construct(ExecutionContext callerContext, Object... args) {
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
     }
 

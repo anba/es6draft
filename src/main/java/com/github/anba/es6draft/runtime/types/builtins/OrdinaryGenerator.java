@@ -41,7 +41,7 @@ public class OrdinaryGenerator extends FunctionObject {
          * 8.3.15.2 [[Construct]] (argumentsList)
          */
         @Override
-        public Object construct(ExecutionContext callerContext, Object... args) {
+        public ScriptObject construct(ExecutionContext callerContext, Object... args) {
             return OrdinaryConstruct(callerContext, this, args);
         }
     }
