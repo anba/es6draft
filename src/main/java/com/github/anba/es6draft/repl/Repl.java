@@ -8,6 +8,8 @@ package com.github.anba.es6draft.repl;
 
 import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 
 import java.io.BufferedReader;
 import java.io.Console;
@@ -17,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
@@ -209,24 +212,26 @@ public class Repl {
         Path script = Paths.get("./.");
         ScriptCache scriptCache = new ScriptCache();
 
+        List<String> initScripts;
         ShellGlobalObject global;
         if (options.contains(Option.MozillaShell)) {
             Path libDir = Paths.get("");
+            initScripts = asList("mozlegacy.js");
             global = MozShellGlobalObject.newGlobal(console, baseDir, script, libDir, scriptCache);
-            try {
-                global.eval(MozShellGlobalObject.compileLegacy(scriptCache));
-            } catch (ParserException | IOException e) {
-                System.err.println(e);
-            }
         } else if (options.contains(Option.V8Shell)) {
+            initScripts = asList("v8legacy.js");
             global = V8ShellGlobalObject.newGlobal(console, baseDir, script, scriptCache);
+        } else {
+            initScripts = emptyList();
+            global = SimpleShellGlobalObject.newGlobal(console, baseDir, script, scriptCache);
+        }
+
+        for (String name : initScripts) {
             try {
-                global.eval(V8ShellGlobalObject.compileLegacy(scriptCache));
+                global.eval(ShellGlobalObject.compileScript(scriptCache, name));
             } catch (ParserException | IOException e) {
                 System.err.println(e);
             }
-        } else {
-            global = SimpleShellGlobalObject.newGlobal(console, baseDir, script, scriptCache);
         }
 
         return global;

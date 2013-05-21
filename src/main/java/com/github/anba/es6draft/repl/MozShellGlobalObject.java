@@ -74,13 +74,6 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         return (MozShellGlobalObject) realm.getGlobalThis();
     }
 
-    /**
-     * Compiles the "mozlegacy.js" script-file
-     */
-    public static Script compileLegacy(ScriptCache scriptCache) throws ParserException, IOException {
-        return compileScript(scriptCache, "mozlegacy.js");
-    }
-
     private Object evaluate(Realm realm, String source, String sourceName, int sourceLine)
             throws IOException {
         try {
@@ -358,7 +351,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     public ScriptObject newGlobal() {
         MozShellGlobalObject global = newGlobal(console, baseDir, script, libdir, scriptCache);
         try {
-            global.eval(compileLegacy(scriptCache));
+            global.eval(compileScript(scriptCache, "mozlegacy.js"));
         } catch (ParserException | IOException e) {
             throwError(realm, e.getMessage());
         }

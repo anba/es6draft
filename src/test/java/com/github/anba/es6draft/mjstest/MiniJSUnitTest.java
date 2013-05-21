@@ -48,6 +48,7 @@ import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.repl.ShellGlobalObject;
 import com.github.anba.es6draft.repl.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -89,7 +90,7 @@ public class MiniJSUnitTest {
     public static ExternalResource resource = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            legacyJS = V8ShellGlobalObject.compileLegacy(scriptCache);
+            legacyJS = ShellGlobalObject.compileScript(scriptCache, "v8legacy.js");
         }
     };
 

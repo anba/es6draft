@@ -8,12 +8,9 @@ package com.github.anba.es6draft.repl;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
@@ -47,13 +44,6 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
             }
         });
         return (V8ShellGlobalObject) realm.getGlobalThis();
-    }
-
-    /**
-     * Compiles the "v8legacy.js" script-file
-     */
-    public static Script compileLegacy(ScriptCache scriptCache) throws ParserException, IOException {
-        return compileScript(scriptCache, "v8legacy.js");
     }
 
     /** shell-function: {@code load(filename)} */

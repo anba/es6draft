@@ -36,6 +36,7 @@ import org.junit.runners.model.MultipleFailureException;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.MozShellGlobalObject;
+import com.github.anba.es6draft.repl.ShellGlobalObject;
 import com.github.anba.es6draft.repl.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -78,7 +79,7 @@ public class MozillaJSTest extends BaseMozillaTest {
     public static ExternalResource resource = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            legacyMozilla = MozShellGlobalObject.compileLegacy(scriptCache);
+            legacyMozilla = ShellGlobalObject.compileScript(scriptCache, "mozlegacy.js");
         }
     };
 
