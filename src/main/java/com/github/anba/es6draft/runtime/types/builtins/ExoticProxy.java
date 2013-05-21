@@ -92,7 +92,11 @@ public class ExoticProxy implements ScriptObject {
                 return ((Constructor) target).construct(callerContext, args);
             }
             ScriptObject argArray = CreateArrayFromList(callerContext, Arrays.asList(args));
-            return trap.call(callerContext, handler, target, argArray);
+            Object newObj = trap.call(callerContext, handler, target, argArray);
+            if (!Type.isObject(newObj)) {
+                throw throwTypeError(callerContext, Messages.Key.NotObjectType);
+            }
+            return newObj;
         }
     }
 
@@ -241,6 +245,10 @@ public class ExoticProxy implements ScriptObject {
             return target.setPrototype(cx, prototype);
         }
         boolean trapResult = ToBoolean(trap.call(cx, handler, target, maskNull(prototype)));
+        boolean extensibleTarget = IsExtensible(cx, target);
+        if (extensibleTarget) {
+            return trapResult;
+        }
         ScriptObject targetProto = target.getPrototype(cx);
         if (trapResult && !SameValue(maskNull(prototype), maskNull(targetProto))) {
             throw throwTypeError(cx, Messages.Key.ProxySameValue);
