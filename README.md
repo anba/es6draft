@@ -19,6 +19,7 @@ The following environment variables need to be set to run the test cases:
 * `MOZ_JSTESTS`: js-tests directory (typically `$MOZ/js/src/tests`)
 * `MOZ_JITTESTS`: jit-test directory (typically `$MOZ/js/src/jit-test`)
 * `V8_MJSUNIT`: mjs-unit directory (typically `$V8/test/mjsunit`)
+* `TRACEUR_TEST`: traceur-test directory (typically `$TRACEUR/test`)
     
 Alternatively skip the tests with `mvn -DskipTests=true package`. 
 
