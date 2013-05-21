@@ -7,8 +7,10 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalError;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -32,6 +34,7 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -67,8 +70,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     /**
      * FIXME: spec bug (function CreateByteArrayBlock not defined)
      */
-    public static ByteBuffer CreateByteArrayBlock(ExecutionContext cx, long bytes) {
-        // assert (bytes >= 0 && bytes <= Integer.MAX_VALUE);
+    public static ByteBuffer CreateByteArrayBlock(ExecutionContext cx, double bytes) {
         if (bytes > Integer.MAX_VALUE) {
             throwInternalError(cx, Messages.Key.OutOfMemory);
         }
@@ -121,7 +123,6 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         ArrayBufferObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.ArrayBufferPrototype, ArrayBufferObjectAllocator.INSTANCE);
         /* step 3 */
-        obj.setData(null);
         obj.setByteLength(0);
         /* step 4 */
         return obj;
@@ -131,16 +132,16 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
      * 15.13.5.1.2 (arrayBuffer, bytes)
      */
     public static ArrayBufferObject SetArrayBufferData(ExecutionContext cx,
-            ArrayBufferObject arrayBuffer, long bytes) {
+            ArrayBufferObject arrayBuffer, double bytes) {
         /* step 1 (implicit) */
-        /* step 2 (TODO: Uint32 range) */
-        assert !(bytes < 0 || bytes > 0xFFFFFFFFL);
+        /* step 2 */
+        assert bytes >= 0;
         /* step 3-4 */
         ByteBuffer block = CreateByteArrayBlock(cx, bytes);
         /* step 5 */
         arrayBuffer.setData(block);
         /* step 6 */
-        arrayBuffer.setByteLength(bytes);
+        arrayBuffer.setByteLength((long) bytes);
         /* step 7 */
         return arrayBuffer;
     }
@@ -158,10 +159,14 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
 
         int index = (int) byteIndex;
         switch (type) {
-        case Float32:
-            return (double) block.getFloat(index);
-        case Float64:
-            return (double) block.getDouble(index);
+        case Float32: {
+            double rawValue = block.getFloat(index);
+            return Double.isNaN(rawValue) ? Double.NaN : rawValue;
+        }
+        case Float64: {
+            double rawValue = block.getDouble(index);
+            return Double.isNaN(rawValue) ? Double.NaN : rawValue;
+        }
 
         case Uint8:
         case Uint8C:
@@ -196,20 +201,12 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
 
         int index = (int) byteIndex;
         switch (type) {
-        case Float32: {
-            if (Double.isNaN(value)) {
-                value = Double.NaN;
-            }
+        case Float32:
             block.putFloat(index, (float) value);
             return;
-        }
-        case Float64: {
-            if (Double.isNaN(value)) {
-                value = Double.NaN;
-            }
+        case Float64:
             block.putDouble(index, value);
             return;
-        }
 
         case Int8:
             block.put(index, ElementKind.ToInt8(value));
@@ -257,9 +254,16 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         if (buf.getData() != null) {
             throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
-        // FIXME: spec bug (check for negative, cf. SpiderMonkey/V8)
-        long byteLength = ToUint32(calleeContext, length);
-        return SetArrayBufferData(calleeContext, buf, byteLength);
+        // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
+        if (Type.isUndefined(length)) {
+            length = 0;
+        }
+        double numberLength = ToNumber(calleeContext, length);
+        double byteLength = ToInteger(numberLength);
+        if (numberLength != byteLength || byteLength < 0) {
+            throwRangeError(calleeContext, Messages.Key.InvalidBufferSize);
+        }
+        return SetArrayBufferData(calleeContext, buf, (long) byteLength);
     }
 
     /**
@@ -288,20 +292,34 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         public static final String name = "ArrayBuffer";
 
         /**
-         * 15.13.5.3.1 ArrayBuffer.prototype
+         * 15.13.5.4.1 ArrayBuffer.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ArrayBufferPrototype;
 
         /**
-         * 15.13.5.3.2 @@create ( )
+         * 15.13.5.4.2 ArrayBuffer.isView ( arg )
          */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Function(name = "isView", arity = 1)
+        public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {
+            if (!Type.isObject(arg)) {
+                return false;
+            }
+            if (arg instanceof ExoticArray) {
+                return true;
+            }
+            if (arg instanceof TypedArrayObject) {
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * 15.13.5.4.3 @@create ( )
+         */
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return AllocateArrayBuffer(cx, thisValue);
         }

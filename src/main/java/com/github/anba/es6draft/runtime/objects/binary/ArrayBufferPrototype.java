@@ -14,6 +14,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyBlockElements;
 
+import java.nio.ByteBuffer;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -85,16 +87,14 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
-            ScriptObject obj = ToObject(cx, thisValue);
-            ArrayBufferObject buf = ArrayBufferObject(cx, obj);
-            long len = buf.getByteLength();
+            ArrayBufferObject obj = ArrayBufferObject(cx, ToObject(cx, thisValue));
+            long len = obj.getByteLength();
             double relativeStart = ToInteger(cx, start);
             double first = relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(
                     relativeStart, len);
             double relativeEnd = (Type.isUndefined(end) ? len : ToInteger(cx, end));
             double _final = relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(
                     relativeEnd, len);
-            // FIXME: spec bug (check for negative, cf. SpiderMonkey/V8)
             double newLen = _final - first;
             Callable ctor = GetMethod(cx, obj, "constructor");
             if (ctor == null || !IsConstructor(ctor)) {
@@ -102,7 +102,9 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             }
             ArrayBufferObject _new = ArrayBufferObject(cx,
                     ToObject(cx, ((Constructor) ctor).construct(cx, newLen)));
-            CopyBlockElements(buf.getData(), first, _new.getData(), 0, newLen);
+            ByteBuffer fromBuf = obj.getData();
+            ByteBuffer toBuf = _new.getData();
+            CopyBlockElements(fromBuf, first, toBuf, 0, newLen);
             return _new;
         }
 
