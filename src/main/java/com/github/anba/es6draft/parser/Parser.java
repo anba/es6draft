@@ -2067,7 +2067,7 @@ public class Parser {
         while (token() != Token.RC) {
             if (token() == Token.SEMI) {
                 consume(Token.SEMI);
-            } else if (token() == Token.STATIC) {
+            } else if (token() == Token.STATIC && !LOOKAHEAD(Token.LP)) {
                 consume(Token.STATIC);
                 staticMethods.add(methodDefinition(true));
             } else {
