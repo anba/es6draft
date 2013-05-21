@@ -417,6 +417,12 @@ class BindingInitialisationGenerator {
                 }
                 mv.mark(undef);
             }
+            // FIXME: spec bug missing ToObject call
+            if (binding instanceof BindingPattern) {
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.invoke(Methods.AbstractOperations_ToObject);
+            }
 
             // step 5:
             // stack: [(env), v'] -> []

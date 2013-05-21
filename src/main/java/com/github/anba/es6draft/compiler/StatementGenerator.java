@@ -403,6 +403,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         } else if (lhs instanceof VariableStatement) {
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             Binding binding = varDecl.getBinding();
+            // FIXME: spec bug (missing ToObject() call?)
+            if (binding instanceof BindingPattern) {
+                ToObject(ValType.Any, mv);
+            }
             BindingInitialisation(binding, mv);
         } else {
             assert lhs instanceof LexicalDeclaration;
@@ -441,6 +445,9 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 mv.swap();
 
                 // FIXME: spec bug (missing ToObject() call?)
+                if (lexicalBinding.getBinding() instanceof BindingPattern) {
+                    ToObject(ValType.Any, mv);
+                }
 
                 // stack: [iterEnv, envRec, nextValue] -> [iterEnv]
                 BindingInitialisationWithEnvironment(lexicalBinding.getBinding(), mv);
