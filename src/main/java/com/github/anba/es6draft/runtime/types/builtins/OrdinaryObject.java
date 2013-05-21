@@ -102,10 +102,30 @@ public abstract class OrdinaryObject implements ScriptObject {
     /** 8.3.2 [[SetPrototype]] (V) */
     @Override
     public boolean setPrototype(ExecutionContext cx, ScriptObject prototype) {
+        /* steps 1-3 */
+        boolean extensible = this.extensible;
+        ScriptObject current = this.prototype;
+        /* step 4 */
+        if (prototype == current) { // SameValue(prototype, current)
+            return true;
+        }
+        /* step 5 */
         if (!extensible) {
             return false;
         }
+        /* step 6 */
+        if (prototype != null) {
+            ScriptObject p = prototype;
+            while (p != null) {
+                if (p == this) { // SameValue(p, O)
+                    return false;
+                }
+                p = p.getPrototype(cx);
+            }
+        }
+        /* step 7 */
         this.prototype = prototype;
+        /* step 8 */
         return true;
     }
 
@@ -113,7 +133,6 @@ public abstract class OrdinaryObject implements ScriptObject {
     @Override
     public boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level) {
         if (level == IntegrityLevel.NonExtensible) {
-            // FIXME: spec bug (need to invert [[Extensible]] value)
             return !extensible;
         }
         return TestIntegrityLevel(cx, this, level);
@@ -568,9 +587,9 @@ public abstract class OrdinaryObject implements ScriptObject {
     protected Collection<String> enumerateKeys() {
         List<String> propList = new ArrayList<>();
         for (Object key : __keys__()) {
-            if (key instanceof Symbol)
-                continue;
-            propList.add((String) key);
+            if (key instanceof String) {
+                propList.add((String) key);
+            }
         }
         return propList;
     }
@@ -677,9 +696,9 @@ public abstract class OrdinaryObject implements ScriptObject {
     protected Collection<Object> enumerateOwnKeys() {
         List<Object> keys = new ArrayList<>();
         for (Object key : __keys__()) {
-            if (key instanceof Symbol && ((Symbol) key).isPrivate())
-                continue;
-            keys.add(key);
+            if (!(key instanceof Symbol && ((Symbol) key).isPrivate())) {
+                keys.add(key);
+            }
         }
         return keys;
     }
