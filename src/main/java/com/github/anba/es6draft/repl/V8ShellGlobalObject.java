@@ -9,7 +9,6 @@ package com.github.anba.es6draft.repl;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -54,10 +53,7 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
      * Compiles the "v8legacy.js" script-file
      */
     public static Script compileLegacy(ScriptCache scriptCache) throws ParserException, IOException {
-        String sourceName = "/scripts/v8legacy.js";
-        try (InputStream stream = V8ShellGlobalObject.class.getResourceAsStream(sourceName)) {
-            return scriptCache.script(sourceName, 1, stream);
-        }
+        return compileScript(scriptCache, "v8legacy.js");
     }
 
     /** shell-function: {@code load(filename)} */

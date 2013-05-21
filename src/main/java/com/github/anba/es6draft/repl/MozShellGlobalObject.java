@@ -14,7 +14,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -79,10 +78,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
      * Compiles the "mozlegacy.js" script-file
      */
     public static Script compileLegacy(ScriptCache scriptCache) throws ParserException, IOException {
-        String sourceName = "/scripts/mozlegacy.js";
-        try (InputStream stream = MozShellGlobalObject.class.getResourceAsStream(sourceName)) {
-            return scriptCache.script(sourceName, 1, stream);
-        }
+        return compileScript(scriptCache, "mozlegacy.js");
     }
 
     private Object evaluate(Realm realm, String source, String sourceName, int sourceLine)

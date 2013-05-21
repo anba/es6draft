@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,6 +55,17 @@ public abstract class ShellGlobalObject extends GlobalObject {
     public void initialise(ExecutionContext cx) {
         super.initialise(cx);
         createProperties(this, cx, ShellGlobalObject.class);
+    }
+
+    /**
+     * Compiles the script {@code name} from the 'scripts' directory
+     */
+    public static Script compileScript(ScriptCache scriptCache, String name)
+            throws ParserException, IOException {
+        String sourceName = "/scripts/" + name;
+        try (InputStream stream = ShellGlobalObject.class.getResourceAsStream(sourceName)) {
+            return scriptCache.script(sourceName, 1, stream);
+        }
     }
 
     protected Path absolutePath(Path file) {
