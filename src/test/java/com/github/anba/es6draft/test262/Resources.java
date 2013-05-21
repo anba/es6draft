@@ -49,7 +49,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.github.anba.es6draft.util.Functional.Mapper;
+import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Functional.Predicate;
 
 /**
@@ -255,14 +255,14 @@ final class Resources {
 
     private static final Predicate<Object> notEmptyString = new Predicate<Object>() {
         @Override
-        public boolean eval(Object value) {
+        public boolean test(Object value) {
             return (value != null && !value.toString().isEmpty());
         }
     };
 
-    private static final Mapper<Object, String> toString = new Mapper<Object, String>() {
+    private static final Function<Object, String> toString = new Function<Object, String>() {
         @Override
-        public String map(Object t) {
+        public String apply(Object t) {
             return t.toString();
         }
     };

@@ -9,7 +9,6 @@ package com.github.anba.es6draft.util;
 import java.util.Arrays;
 import java.util.Collection;
 
-
 /**
  * Java8 compatibility shim
  * 
@@ -20,7 +19,7 @@ public final class Functional {
 
     private static final Predicate<Object> TRUE = new Predicate<Object>() {
         @Override
-        public boolean eval(Object t) {
+        public boolean test(Object t) {
             return true;
         }
     };
@@ -37,14 +36,21 @@ public final class Functional {
      * Predicate interface
      */
     public static interface Predicate<T> {
-        boolean eval(T t);
+        boolean test(T t);
     }
 
     /**
-     * Mapper interface
+     * Single-arity function interface
      */
-    public static interface Mapper<T, U> {
-        U map(T t);
+    public static interface Function<T, R> {
+        R apply(T t);
+    }
+
+    /**
+     * Two-arity function interface
+     */
+    public static interface BiFunction<T, U, R> {
+        R apply(T t, U u);
     }
 
     /**
@@ -58,7 +64,7 @@ public final class Functional {
     /**
      * Applies the mapper on the input (lazy operation)
      */
-    public static <T, U> Iterable<U> map(Iterable<T> base, Mapper<? super T, ? extends U> mapper) {
+    public static <T, U> Iterable<U> map(Iterable<T> base, Function<? super T, ? extends U> mapper) {
         return new $FilterMap<>(base, Functional.<T> alwaysTrue(), mapper);
     }
 
@@ -66,7 +72,7 @@ public final class Functional {
      * Filters and maps the input (lazy operation)
      */
     public static <T, U> Iterable<U> filterMap(Iterable<T> base, Predicate<? super T> predicate,
-            Mapper<? super T, ? extends U> mapper) {
+            Function<? super T, ? extends U> mapper) {
         return new $FilterMap<>(base, predicate, mapper);
     }
 
@@ -86,10 +92,10 @@ public final class Functional {
      */
     private static final class $FilterMap<T, U> extends FilterMap<T, U> {
         private final Predicate<? super T> predicate;
-        private final Mapper<? super T, ? extends U> mapper;
+        private final Function<? super T, ? extends U> mapper;
 
         public $FilterMap(Iterable<T> base, Predicate<? super T> predicate,
-                Mapper<? super T, ? extends U> mapper) {
+                Function<? super T, ? extends U> mapper) {
             super(base);
             this.predicate = predicate;
             this.mapper = mapper;
@@ -97,12 +103,12 @@ public final class Functional {
 
         @Override
         protected boolean filter(T value) {
-            return predicate.eval(value);
+            return predicate.test(value);
         }
 
         @Override
         protected U map(T value) {
-            return mapper.map(value);
+            return mapper.apply(value);
         }
     }
 }

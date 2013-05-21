@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.util.ExceptionHandler;
-import com.github.anba.es6draft.util.Functional.Mapper;
+import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.LazyInit;
 import com.github.anba.es6draft.util.Parallelized;
 
@@ -124,9 +124,9 @@ public final class Test262 {
      * anyOf(asList(types).map(x -> instanceOf(x)))
      */
     private static final Matcher<Object> anyInstanceOf(final Class<?>... types) {
-        return anyOf(map(iterable(types), new Mapper<Class<?>, Matcher<? super Object>>() {
+        return anyOf(map(iterable(types), new Function<Class<?>, Matcher<? super Object>>() {
             @Override
-            public Matcher<? super Object> map(Class<?> type) {
+            public Matcher<? super Object> apply(Class<?> type) {
                 return instanceOf(type);
             }
         }));
