@@ -91,7 +91,6 @@ tests/basic/testTypedArrayOutOfBounds.js
 tests/basic/typed-array-getprop-out-of-range.js
 
 # potential ES6 spec bug? for-of over undefined
-tests/basic/bug770952.js
 tests/for-of/non-iterable.js
 
 # potential ES6 spec bug? Number.isInteger(Infinity)
@@ -105,7 +104,7 @@ tests/basic/testDestructuringFormalError.js
 tests/basic/bug829821.js
 
 # maybe ES6 spec bug in TypedArrays
-tests/basic/testArrayBufferSlice.js 
+tests/basic/testArrayBufferSlice.js
 
 
 ###################
@@ -296,6 +295,9 @@ tests/collections/Set-surfaces-3.js
 # ES6-change or? Map|Set.length is 0
 tests/collections/Map-surfaces-1.js
 tests/collections/Set-surfaces-1.js
+
+# ES6 [[Construct]] restricted to return Objects
+tests/proxy/testDirectProxyConstruct2.js
 
 
 #######################################
