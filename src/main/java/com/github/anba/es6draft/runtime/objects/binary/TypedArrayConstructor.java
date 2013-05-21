@@ -266,10 +266,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
             if (bufferByteLength % elementSize != 0) {
                 throwRangeError(cx, Messages.Key.InvalidBufferSize);
             }
-            if (offset + elementSize > bufferByteLength) {
-                throwRangeError(cx, Messages.Key.InvalidByteOffset);
-            }
             newByteLength = (long) (bufferByteLength - offset);
+            if (newByteLength < 0) {
+                throwRangeError(cx, Messages.Key.InvalidBufferSize);
+            }
         } else {
             double numberLength = ToNumber(cx, length);
             double newLength = ToInteger(numberLength);
