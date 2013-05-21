@@ -12,6 +12,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -105,6 +106,7 @@ public final class LexicalEnvironment {
      */
     public static LexicalEnvironment newFunctionEnvironment(ExecutionContext cx, FunctionObject f,
             Object t) {
+        assert f.getThisMode() != ThisMode.Lexical;
         EnvironmentRecord envRec = new FunctionEnvironmentRecord(cx, t, f.getHomeObject(),
                 f.getMethodName());
         LexicalEnvironment env = new LexicalEnvironment(f.getScope(), envRec);

@@ -33,7 +33,6 @@ public class ExoticString extends OrdinaryObject {
     }
 
     private CharSequence getStringDataOrEmpty() {
-        // FIXME: spec bug (undefined [[StringData]] not handled in spec) (Bug 1414)
         return (stringData != null ? stringData : "");
     }
 
@@ -158,7 +157,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 8.4.6.6 StringCreate Abstract Operation
+     * 8.4.3.6 StringCreate Abstract Operation
      */
     public static ExoticString StringCreate(ExecutionContext cx, ScriptObject prototype) {
         // step 1, 2-6, 9 (implicit)

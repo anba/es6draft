@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * <h1>8 Types</h1><br>
  * <h2>8.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>8.4.5 Exotic Arguments Objects
+ * <li>8.4.4 Exotic Arguments Objects
  * </ul>
  * 
  * <h1>10 Executable Code and Execution Contexts</h1>

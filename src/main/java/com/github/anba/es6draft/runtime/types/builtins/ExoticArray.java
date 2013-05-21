@@ -81,17 +81,15 @@ public class ExoticArray extends OrdinaryObject {
         return ordinaryDefineOwnProperty(propertyKey, desc);
     }
 
-    // FIXME: spec bug (inconsistent section numbers, from 8.4.2.1 to 8.4.2.3)
-
     /**
-     * 8.4.2.3 ArrayCreate Abstract Operation
+     * 8.4.2.2 ArrayCreate Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length) {
         return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
     }
 
     /**
-     * 8.4.2.3 ArrayCreate Abstract Operation
+     * 8.4.2.2 ArrayCreate Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
         assert length <= 4294967295L && proto != null;
@@ -114,7 +112,7 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 8.4.2.4 ArraySetLength Abstract Operation
+     * 8.4.2.3 ArraySetLength Abstract Operation
      */
     public static boolean ArraySetLength(ExecutionContext cx, ExoticArray array,
             PropertyDescriptor desc) {

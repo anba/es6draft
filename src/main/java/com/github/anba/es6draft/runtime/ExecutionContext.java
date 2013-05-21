@@ -107,8 +107,7 @@ public final class ExecutionContext {
     /**
      * 11.1.7 Generator Comprehensions
      * <p>
-     * Runtime Semantics: Evaluation<br>
-     * TODO: not yet defined in draft [rev. 13]
+     * Runtime Semantics: Evaluation
      */
     public static ExecutionContext newGeneratorComprehensionContext(ExecutionContext callerContext) {
         ExecutionContext progCxt = new ExecutionContext();

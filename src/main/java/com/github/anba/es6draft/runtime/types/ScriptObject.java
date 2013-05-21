@@ -51,8 +51,6 @@ public interface ScriptObject {
     /** [[HasProperty]](P) */
     boolean hasProperty(ExecutionContext cx, Symbol propertyKey);
 
-    // FIXME: spec bug ([[Get]] missing in 8.1.6.2)
-
     /** [[Get]] (P, Receiver) */
     Object get(ExecutionContext cx, String propertyKey, Object receiver);
 
