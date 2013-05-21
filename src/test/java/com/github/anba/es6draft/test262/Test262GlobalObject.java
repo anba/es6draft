@@ -82,7 +82,7 @@ public class Test262GlobalObject extends GlobalObject {
     @Function(name = "$PRINT", arity = 1, attributes = @Attributes(writable = false,
             enumerable = true, configurable = false))
     public void print(String message) {
-        System.out.println(message);
+        // System.out.println(message);
     }
 
     /**
