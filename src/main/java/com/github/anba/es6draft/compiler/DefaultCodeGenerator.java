@@ -697,24 +697,24 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
 
-        // stack: [proto, F] -> [F, proto]
-        mv.swap();
-
         // step 11
         if (className != null) {
-            // stack: [F, proto] -> [F, proto, proto, envRec]
+            // stack: [proto, F] -> [proto, F, F, envRec]
             mv.dup();
             getLexicalEnvironment(mv);
             mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
-            // stack: [F, proto, proto, envRec] -> [F, proto, envRec, name, proto]
+            // stack: [proto, F, F, envRec] -> [proto, F, envRec, name, F]
             mv.swap();
             mv.aconst(className);
             mv.swap();
 
-            // stack: [F, proto, envRec, name, proto] -> [F, proto]
+            // stack: [proto, F, envRec, name, F] -> [proto, F]
             mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
         }
+
+        // stack: [proto, F] -> [F, proto]
+        mv.swap();
 
         // steps 14-15
         List<MethodDefinition> protoMethods = PrototypeMethodDefinitions(def);
