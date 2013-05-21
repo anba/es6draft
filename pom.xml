@@ -245,6 +245,11 @@
           <version>1.7</version>
         </plugin>
         <plugin>
+          <groupId>com.googlecode.maven-download-plugin</groupId>
+          <artifactId>maven-download-plugin</artifactId>
+          <version>1.1.0</version>
+        </plugin>
+        <plugin>
           <groupId>com.mycila.maven-license-plugin</groupId>
           <artifactId>maven-license-plugin</artifactId>
           <version>1.10.b1</version>
@@ -289,6 +294,19 @@
                     <versionRange>[1.7,)</versionRange>
                     <goals>
                       <goal>run</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <execute />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>com.googlecode.maven-download-plugin</groupId>
+                    <artifactId>maven-download-plugin</artifactId>
+                    <versionRange>[1.1.0,)</versionRange>
+                    <goals>
+                      <goal>wget</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
@@ -444,6 +462,25 @@
                   <map from="${project.basedir}" to="." />
                 </pathconvert>
               </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.googlecode.maven-download-plugin</groupId>
+        <artifactId>maven-download-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>download-chai.js</id>
+            <goals>
+              <goal>wget</goal>
+            </goals>
+            <configuration>
+              <url>https://raw.github.com/chaijs/chai/1.6.0/chai.js</url>
+              <outputDirectory>${project.build.outputDirectory}/scripts/</outputDirectory>
+              <sha1>b6325b2c35dda7f7a793cbba09ef18a9e025a1ca</sha1>
+              <md5>ba5d0cf12d9dccb6be4187202e8208a1</md5>
             </configuration>
           </execution>
         </executions>

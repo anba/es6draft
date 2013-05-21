@@ -1,0 +1,97 @@
+#
+# Copyright (c) 2012-2013 André Bargull
+# Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+#
+# <https://github.com/anba/es6draft>
+#
+
+# ES6 spec bug? 'extends null' and default constructor
+feature/Classes/DefaultConstructor.js
+feature/Classes/ExtendStrange.js
+
+# super works in nested functions
+feature/Classes/NestedFunctionSuper.js
+
+# block-binding in for(;;) loop
+feature/Scope/BlockBinding4.js
+feature/Scope/BlockBinding5.js
+feature/Scope/BlockBinding11.js
+
+# 'yield' as identifier-name
+feature/Syntax/StrictKeywords.js
+feature/Syntax/StrictKeywordsInPattern.js
+
+
+############################################
+# Implementation specific differences      #
+############################################
+
+# tests traceur limitation
+feature/Yield/Error_UnsupportedYieldExpression1.js
+feature/Yield/Error_UnsupportedYieldExpression2.js
+
+# different error message
+feature/Yield/GeneratorReturn.js
+feature/Yield/GeneratorSend.js
+feature/Yield/GeneratorThrow.js
+feature/Yield/TryCatchGenerator.js
+
+# stack enhanced with class-name
+feature/Classes/ClassNameInStack.js
+
+# traceur specific tests
+feature/FreeVariableChecker/Error_With.js
+feature/FreeVariableChecker/WithVarDecl.js
+
+# actually runtime exception
+feature/Scope/Error_BlockBinding1.js
+
+
+############################################
+# Unsupported built-in object functions    #
+############################################
+
+# String.prototype.toArray()
+feature/StringExtras/ToArray.js
+
+
+#######################################
+# Unsupported features                #
+#######################################
+
+# unsupported option 'disabled'
+feature/ArrayComprehension/Error_Disabled.js
+feature/Classes/Error_Disabled.js
+feature/Destructuring/Error_Disabled.js
+feature/GeneratorComprehension/Error_Disabled.js
+feature/GeneratorComprehension/Error_Disabled.js
+feature/ObjectInitialiserShorthand/Error_Disabled.js
+feature/Scope/Error_Disabled.js
+feature/Spread/Error_Disabled.js
+feature/TemplateLiterals/Error_Disabled.js
+feature/Yield/Error_Disabled.js
+
+# lint test not supported
+feature/Syntax/Error_StrictSemiColonsNoLint.js
+
+
+#######################################
+# ES6 related syntax changes          #
+#######################################
+
+# initialiser no longer allowed in for-in loop
+feature/Scope/ForInWithInitializerVar.js
+feature/Scope/LetForInInitializers1.js
+
+
+#######################################
+# Test for syntax extensions          #
+#######################################
+
+# module syntax
+feature/TemplateLiterals/InModule.js
+feature/Yield/Tree.js
+
+# generators without *
+feature/Yield/UnstarredGenerators.js
+
