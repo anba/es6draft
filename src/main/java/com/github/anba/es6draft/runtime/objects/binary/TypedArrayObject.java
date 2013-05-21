@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.builtins.IndexedDelegationExoticObject;
+import com.github.anba.es6draft.runtime.types.builtins.IntegerIndexedExoticObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -17,7 +17,7 @@ import com.github.anba.es6draft.runtime.types.builtins.IndexedDelegationExoticOb
  * <li>15.13.6.5 Properties of TypedArray instances
  * </ul>
  */
-public class TypedArrayObject extends IndexedDelegationExoticObject {
+public class TypedArrayObject extends IntegerIndexedExoticObject {
 
     /** [[TypedArrayData]] */
     private ArrayBufferObject data;
