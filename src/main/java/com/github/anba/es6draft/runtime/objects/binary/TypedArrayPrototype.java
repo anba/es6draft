@@ -88,55 +88,74 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         throw throwTypeError(cx, Messages.Key.IncompatibleObject);
     }
 
+    /**
+     * 15.13.6.4.3 get TypedArray.prototype.buffer
+     */
     private static Object __buffer(ExecutionContext cx, Object thisValue) {
         ScriptObject obj = ToObject(cx, thisValue);
         TypedArrayObject array = TypedArrayObject(cx, obj);
-        ArrayBufferObject buffer = array.getData();
+        ArrayBufferObject buffer = array.getBuffer();
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         return buffer;
     }
 
+    /**
+     * 15.13.6.4.4 get TypedArray.prototype.byteLength
+     */
     private static Object __byteLength(ExecutionContext cx, Object thisValue) {
         ScriptObject obj = ToObject(cx, thisValue);
         TypedArrayObject array = TypedArrayObject(cx, obj);
-        ArrayBufferObject buffer = array.getData();
+        ArrayBufferObject buffer = array.getBuffer();
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         return array.getByteLength();
     }
 
+    /**
+     * 15.13.6.4.5 get TypedArray.prototype.byteOffset
+     */
     private static Object __byteOffset(ExecutionContext cx, Object thisValue) {
         ScriptObject obj = ToObject(cx, thisValue);
         TypedArrayObject array = TypedArrayObject(cx, obj);
-        ArrayBufferObject buffer = array.getData();
+        ArrayBufferObject buffer = array.getBuffer();
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         return array.getByteOffset();
     }
 
+    /**
+     * 15.13.6.4.6 get TypedArray.prototype.length
+     */
     private static Object __length(ExecutionContext cx, Object thisValue) {
         ScriptObject obj = ToObject(cx, thisValue);
         TypedArrayObject array = TypedArrayObject(cx, obj);
-        ArrayBufferObject buffer = array.getData();
+        ArrayBufferObject buffer = array.getBuffer();
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         return array.getArrayLength();
     }
 
+    /**
+     * 15.13.6.4.7 TypedArray.prototype.set(array, offset = 0 )<br>
+     * 15.13.6.4.8 TypedArray.prototype.set(typedArray, offset = 0 )
+     */
     private static Object __set(ExecutionContext cx, Object thisValue, Object array, Object offset) {
         ScriptObject obj = ToObject(cx, thisValue);
         TypedArrayObject target = TypedArrayObject(cx, obj);
-        ArrayBufferObject targetBuffer = target.getData();
+        ArrayBufferObject targetBuffer = target.getBuffer();
         if (targetBuffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         long targetLength = target.getArrayLength();
-        long targetOffset = ToUint32(cx, offset);
+        double targetOffset = ToInteger(cx, offset);
+        if (targetOffset < 0) {
+            throwRangeError(cx, Messages.Key.InvalidByteOffset);
+        }
         ElementKind targetType = target.getElementKind();
         int targetElementSize = targetType.size();
         long targetByteOffset = target.getByteOffset();
@@ -145,25 +164,28 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
             // 15.13.6.6.7
             ScriptObject src = ToObject(cx, array);
             Object srcLen = Get(cx, src, "length");
-            long srcLength = ToUint32(cx, srcLen);
+            double numberLength = ToNumber(cx, srcLen);
+            double srcLength = ToInteger(numberLength);
+            if (numberLength != srcLength || srcLength < 0) {
+                throwRangeError(cx, Messages.Key.InvalidByteOffset);
+            }
             if (srcLength + targetOffset > targetLength) {
                 throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
             }
-            long targetByteIndex = targetOffset * targetElementSize + targetByteOffset;
-            long limit = targetByteIndex + targetElementSize
-                    * Math.min(srcLength, targetLength - targetOffset);
+            long targetByteIndex = (long) (targetOffset * targetElementSize + targetByteOffset);
+            long limit = (long) (targetByteIndex + targetElementSize
+                    * Math.min(srcLength, targetLength - targetOffset));
             for (long k = 0; targetByteIndex < limit; ++k, targetByteIndex += targetElementSize) {
                 String pk = ToString(k);
                 Object kValue = Get(cx, src, pk);
                 double kNumber = ToNumber(cx, kValue);
-                // FIXME: spec bug (variables data, elementSize and elementType not defined)
                 SetValueInBuffer(targetBuffer, k * targetElementSize, targetType, kNumber, false);
             }
             return UNDEFINED;
         } else {
             // 15.13.6.6.8
             TypedArrayObject src = (TypedArrayObject) array;
-            ArrayBufferObject srcBuffer = src.getData();
+            ArrayBufferObject srcBuffer = src.getBuffer();
             if (srcBuffer == null) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
@@ -175,13 +197,12 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
                 throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
             }
             if (SameValue(srcBuffer, targetBuffer)) {
-                // FIXME: spec bug (variable srcData not defined)
                 srcBuffer = CloneArrayBuffer(cx, srcBuffer, srcType, srcType, srcLength);
             }
-            long targetByteIndex = targetOffset * targetElementSize + targetByteOffset;
+            long targetByteIndex = (long) (targetOffset * targetElementSize + targetByteOffset);
             long srcByteIndex = srcByteOffset;
-            long limit = targetByteIndex + targetElementSize
-                    * Math.min(srcLength, targetLength - targetOffset);
+            long limit = (long) (targetByteIndex + targetElementSize
+                    * Math.min(srcLength, targetLength - targetOffset));
             for (; targetByteIndex < limit; srcByteIndex += srcElementSize, targetByteIndex += targetElementSize) {
                 double value = GetValueFromBuffer(srcBuffer, srcByteIndex, srcType, false);
                 SetValueInBuffer(targetBuffer, targetByteIndex, targetType, value, false);
@@ -190,32 +211,35 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         }
     }
 
+    /**
+     * 15.13.6.4.9 TypedArray.prototype.subarray(begin = 0, end = this.length )
+     */
     private static Object __subarray(ExecutionContext cx, Object thisValue, Object begin, Object end) {
         ScriptObject obj = ToObject(cx, thisValue);
         TypedArrayObject array = TypedArrayObject(cx, obj);
-        ArrayBufferObject buffer = array.getData();
+        ArrayBufferObject buffer = array.getBuffer();
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         long srcLength = array.getArrayLength();
-        long beginInt = ToInt32(cx, begin);
+        double beginInt = ToInteger(cx, begin);
         if (beginInt < 0) {
             beginInt = srcLength + beginInt;
         }
-        long beginIndex = Math.min(srcLength, Math.max(0, beginInt));
-        long endInt = (end == UNDEFINED ? srcLength : ToInt32(cx, end));
+        double beginIndex = Math.min(srcLength, Math.max(0, beginInt));
+        double endInt = (end == UNDEFINED ? srcLength : ToInteger(cx, end));
         if (endInt < 0) {
             endInt = srcLength + endInt;
         }
-        long endIndex = Math.max(0, Math.min(srcLength, endInt));
+        double endIndex = Math.max(0, Math.min(srcLength, endInt));
         if (endIndex < beginIndex) {
             endIndex = beginIndex;
         }
-        long newLength = endIndex - beginIndex;
+        double newLength = endIndex - beginIndex;
         ElementKind elementType = array.getElementKind();
         int elementSize = elementType.size();
-        long srcByteOffset = array.getByteOffset();
-        long beginByteOffset = srcByteOffset + beginIndex * elementSize;
+        double srcByteOffset = array.getByteOffset();
+        double beginByteOffset = srcByteOffset + beginIndex * elementSize;
         Object constructor = Get(cx, array, "constructor");
         if (!IsConstructor(constructor)) {
             throwTypeError(cx, Messages.Key.NotConstructor);
@@ -223,46 +247,50 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         return ((Constructor) constructor).construct(cx, buffer, beginByteOffset, newLength);
     }
 
+    /**
+     * 15.13.6.4.10 TypedArray.prototype.@@elementGet ( index )
+     */
     private static Object __elementGet(ExecutionContext cx, Object thisValue, Object index,
             int elementSize) {
         ScriptObject obj = ToObject(cx, thisValue);
         TypedArrayObject array = TypedArrayObject(cx, obj);
-        ArrayBufferObject buffer = array.getData();
+        ArrayBufferObject buffer = array.getBuffer();
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         long length = array.getArrayLength();
-        long intIndex = ToUint32(cx, index);
-        if (intIndex >= length) {
+        double intIndex = ToInteger(cx, index);
+        if (intIndex < 0 || intIndex >= length) {
             return UNDEFINED;
         }
         long offset = array.getByteOffset();
-        long indexedPosition = (intIndex * elementSize) + offset;
+        long indexedPosition = (long) ((intIndex * elementSize) + offset);
         ElementKind elementType = array.getElementKind();
-        // FIXME: spec bug (GetValueFromBuffer instead of GetArrayBuffer)
         return GetValueFromBuffer(buffer, indexedPosition, elementType, false);
     }
 
+    /**
+     * 15.13.6.4.11 TypedArray.prototype.@@elementSet ( index, value )
+     */
     private static Object __elementSet(ExecutionContext cx, Object thisValue, Object index,
             Object value, int elementSize) {
         ScriptObject obj = ToObject(cx, thisValue);
         TypedArrayObject array = TypedArrayObject(cx, obj);
-        ArrayBufferObject buffer = array.getData();
+        ArrayBufferObject buffer = array.getBuffer();
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         long length = array.getArrayLength();
-        long intIndex = ToUint32(cx, index);
+        double intIndex = ToInteger(cx, index);
         double numValue = ToNumber(cx, value);
-        if (intIndex >= length) {
+        if (intIndex < 0 || intIndex >= length) {
             // FIXME: spec bug (@@elementSet) should return true/false
             // return numValue;
             return false;
         }
         long offset = array.getByteOffset();
-        long indexedPosition = (intIndex * elementSize) + offset;
+        long indexedPosition = (long) ((intIndex * elementSize) + offset);
         ElementKind elementType = array.getElementKind();
-        // FIXME: spec bug (SetValueInBuffer instead of SetArrayBuffer)
         SetValueInBuffer(buffer, indexedPosition, elementType, numValue, false);
         // FIXME: spec bug (@@elementSet) should return true/false
         // return numValue;

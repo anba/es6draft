@@ -19,8 +19,8 @@ import com.github.anba.es6draft.runtime.types.builtins.IntegerIndexedExoticObjec
  */
 public class TypedArrayObject extends IntegerIndexedExoticObject {
 
-    /** [[TypedArrayData]] */
-    private ArrayBufferObject data;
+    /** [[ViewedArrayBuffer]] */
+    private ArrayBufferObject buffer;
 
     /** [[TypedArrayElementKind]] */
     private ElementKind elementKind;
@@ -39,17 +39,17 @@ public class TypedArrayObject extends IntegerIndexedExoticObject {
     }
 
     /**
-     * [[TypedArrayData]]
+     * [[ViewedArrayBuffer]]
      */
-    public ArrayBufferObject getData() {
-        return data;
+    public ArrayBufferObject getBuffer() {
+        return buffer;
     }
 
     /**
-     * [[TypedArrayData]]
+     * [[ViewedArrayBuffer]]
      */
-    public void setData(ArrayBufferObject data) {
-        this.data = data;
+    public void setBuffer(ArrayBufferObject data) {
+        this.buffer = data;
     }
 
     /**
