@@ -357,11 +357,8 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
         /**
          * Extension: Make subclassable for ES6 classes
          */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.Intl_CollatorPrototype,
                     CollatorObjectAllocator.INSTANCE);
