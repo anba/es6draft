@@ -355,20 +355,6 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.11 ToPositiveInteger
-     */
-    public static double ToPositiveInteger(ExecutionContext cx, Object val) {
-        double number = ToNumber(cx, val);
-        if (Double.isNaN(number))
-            return +0.0;
-        if (Double.isInfinite(number))
-            return number;
-        if (number <= 0)
-            return +0.0;
-        return Math.floor(number);
-    }
-
-    /**
      * 9.2.1 CheckObjectCoercible
      */
     public static Object CheckObjectCoercible(ExecutionContext cx, Object val) {
