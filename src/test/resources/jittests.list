@@ -150,6 +150,10 @@ tests/basic/function-tosource-constructor.js
 tests/basic/function-tosource-func-proto.js
 tests/basic/function-tosource-lambda.js
 
+# Date parser
+tests/sunspider/check-date-format-tofte.js
+tests/sunspider/check-date-format-xparb.js
+
 # different error message
 tests/basic/bug827104.js
 tests/basic/bug839420.js
@@ -436,6 +440,7 @@ tests/basic/testScriptCloning.js
 
 # Unsupported 'Testing' functions
 # gcparam
+tests/bug793385.js
 tests/basic/bug720675.js
 tests/basic/bug858097.js
 tests/basic/testBug756919.js
@@ -468,6 +473,7 @@ tests/basic/functionnames.js
 tests/basic/bug821470.js
 
 # Old Generator, GeneratorComprehension syntax
+tests/bug825379.js
 tests/arguments/bug843985.js
 tests/arguments/defaults-bug759904.js
 tests/arguments/defaults-bug790424.js

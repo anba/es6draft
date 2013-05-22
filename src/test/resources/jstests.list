@@ -812,10 +812,6 @@ js1_5/Regress/regress-398085-02.js
 js1_5/Regress/regress-89443.js
 js1_5/Regress/regress-96526-003.js
 
-# ClassFormatError in ASM
-js1_5/Regress/regress-274888.js
-js1_5/Regress/regress-311629.js
-
 # StackOverflow errors
 ecma_5/extensions/array-toString-recursion.js
 ecma_5/extensions/String-methods-infinite-recursion.js
@@ -829,6 +825,7 @@ js1_5/Regress/regress-152646.js
 js1_5/Regress/regress-234389.js
 js1_5/Regress/regress-256501.js
 js1_5/Regress/regress-280769-3.js
+js1_5/Regress/regress-311629.js
 js1_5/Regress/regress-96128-n.js
 js1_5/Regress/regress-98901.js
 js1_5/Regress/regress-192414.js
