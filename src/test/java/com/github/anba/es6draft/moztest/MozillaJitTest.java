@@ -45,6 +45,7 @@ import com.github.anba.es6draft.repl.MozShellGlobalObject;
 import com.github.anba.es6draft.repl.ShellGlobalObject;
 import com.github.anba.es6draft.repl.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -86,6 +87,7 @@ public class MozillaJitTest {
         }
     }
 
+    private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
     private static ScriptCache scriptCache = new ScriptCache();
     private static Script legacyMozilla;
 
@@ -110,7 +112,7 @@ public class MozillaJitTest {
 
         MozTestConsole console = new MozTestConsole();
         MozShellGlobalObject global = newGlobal(console, testDir(), moztest.script, Paths.get(""),
-                scriptCache);
+                scriptCache, options);
 
         // load legacy.js file
         global.eval(legacyMozilla);

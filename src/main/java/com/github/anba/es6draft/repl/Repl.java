@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
@@ -31,6 +32,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.StopExecutionException.Reason;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
@@ -44,7 +46,7 @@ public class Repl {
     }
 
     private enum Option {
-        CompileOnly, Debug, SimpleShell, MozillaShell, V8Shell;
+        CompileOnly, Debug, Strict, SimpleShell, MozillaShell, V8Shell;
 
         static EnumSet<Option> fromArgs(String[] args) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -56,6 +58,9 @@ public class Repl {
                 case "--debug":
                     options.add(CompileOnly);
                     options.add(Debug);
+                    break;
+                case "--strict":
+                    options.add(Strict);
                     break;
                 case "--shell=simple":
                     options.add(SimpleShell);
@@ -84,6 +89,7 @@ public class Repl {
         sb.append("Options: \n");
         sb.append("  --compile-only    Disable interpreter\n");
         sb.append("  --debug           Print generated Java bytecode\n");
+        sb.append("  --strict          Strict semantics without web compatibility\n");
         sb.append("  --shell=[mode]    Set default shell emulation [simple, mozilla, v8] (default = simple)\n");
         sb.append("  --help            Print this help\n");
         return sb.toString();
@@ -212,18 +218,28 @@ public class Repl {
         Path script = Paths.get("./.");
         ScriptCache scriptCache = new ScriptCache();
 
+        Set<CompatibilityOption> compatOpts;
+        if (options.contains(Option.Strict)) {
+            compatOpts = CompatibilityOption.StrictCompatibility();
+        } else {
+            compatOpts = CompatibilityOption.WebCompatibility();
+        }
+
         List<String> initScripts;
         ShellGlobalObject global;
         if (options.contains(Option.MozillaShell)) {
             Path libDir = Paths.get("");
             initScripts = asList("mozlegacy.js");
-            global = MozShellGlobalObject.newGlobal(console, baseDir, script, libDir, scriptCache);
+            global = MozShellGlobalObject.newGlobal(console, baseDir, script, libDir, scriptCache,
+                    compatOpts);
         } else if (options.contains(Option.V8Shell)) {
             initScripts = asList("v8legacy.js");
-            global = V8ShellGlobalObject.newGlobal(console, baseDir, script, scriptCache);
+            global = V8ShellGlobalObject.newGlobal(console, baseDir, script, scriptCache,
+                    compatOpts);
         } else {
             initScripts = emptyList();
-            global = SimpleShellGlobalObject.newGlobal(console, baseDir, script, scriptCache);
+            global = SimpleShellGlobalObject.newGlobal(console, baseDir, script, scriptCache,
+                    compatOpts);
         }
 
         for (String name : initScripts) {

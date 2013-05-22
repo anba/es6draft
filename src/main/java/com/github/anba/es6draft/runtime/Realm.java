@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecuti
 
 import java.text.Collator;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -83,11 +84,11 @@ public class Realm {
 
     private ExecutionContext defaultContext;
 
+    private Set<CompatibilityOption> options;
+
     private Locale locale = Locale.getDefault();
     private TimeZone timezone = TimeZone.getDefault();
     private Messages messages = Messages.create(locale);
-
-    private Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility;
 
     // TODO: move into function source object
     private Map<String, ScriptObject> templateCallSites = new HashMap<>();
@@ -199,10 +200,11 @@ public class Realm {
     };
 
     public static Realm newRealm() {
-        return newRealm(DEFAULT_GLOBAL_OBJECT);
+        return newRealm(DEFAULT_GLOBAL_OBJECT, CompatibilityOption.WebCompatibility());
     }
 
-    public static Realm newRealm(GlobalObjectCreator<? extends GlobalObject> creator) {
+    public static Realm newRealm(GlobalObjectCreator<? extends GlobalObject> creator,
+            Set<CompatibilityOption> options) {
         Realm realm = new Realm();
         GlobalObject globalThis = creator.createGlobal(realm);
         ExecutionContext defaultContext = newScriptExecutionContext(realm);
@@ -213,6 +215,7 @@ public class Realm {
         realm.globalThis = globalThis;
         realm.globalEnv = globalEnv;
         realm.defaultContext = defaultContext;
+        realm.options = EnumSet.copyOf(options);
 
         // intrinsics (1)
         ObjectConstructor objectConstructor = new ObjectConstructor(realm);

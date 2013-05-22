@@ -43,6 +43,7 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.ShellGlobalObject;
 import com.github.anba.es6draft.repl.V8ShellGlobalObject;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.util.Functional.BiFunction;
@@ -74,6 +75,7 @@ public class TraceurTest {
         return toObjectArray(tests);
     }
 
+    private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
     private static ScriptCache scriptCache = new ScriptCache();
     private static Script legacyJS, chaiJS;
 
@@ -100,7 +102,8 @@ public class TraceurTest {
         // TODO: collect multiple failures
         List<Throwable> failures = new ArrayList<Throwable>();
         TraceurConsole console = new TraceurConsole();
-        V8ShellGlobalObject global = newGlobal(console, testDir(), test.script, scriptCache);
+        V8ShellGlobalObject global = newGlobal(console, testDir(), test.script, scriptCache,
+                options);
 
         // load legacy.js file
         global.eval(legacyJS);

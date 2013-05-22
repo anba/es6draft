@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
@@ -34,6 +35,7 @@ import org.junit.runners.Parameterized.Parameters;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
@@ -50,7 +52,7 @@ import com.github.anba.es6draft.util.Parallelized;
 public final class Test262 {
     private static final String TEST_SUITE = "test.suite.test262";
 
-    // test script cache (380ms -> 210ms duration)
+    private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
     private static final ScriptCache cache = new ScriptCache();
 
     private static final LazyInit<Configuration> configuration = new LazyInit<Configuration>() {
@@ -88,7 +90,7 @@ public final class Test262 {
             public Test262GlobalObject createGlobal(Realm realm) {
                 return new Test262GlobalObject(realm, libpath, cache, info, sourceName);
             }
-        });
+        }, options);
 
         // start initialization
         ExecutionContext cx = realm.defaultContext();

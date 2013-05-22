@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.internal;
 import static java.util.EnumSet.allOf;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * <h1>Annex B - Additional ECMAScript Features for Web Browsers</h1>
@@ -79,5 +80,17 @@ public enum CompatibilityOption {
      */
     BlockFunctionDeclaration;
 
-    public static final EnumSet<CompatibilityOption> WebCompatibility = allOf(CompatibilityOption.class);
+    /**
+     * Returns a set of all options for strict-compatibility
+     */
+    public static final Set<CompatibilityOption> StrictCompatibility() {
+        return EnumSet.noneOf(CompatibilityOption.class);
+    }
+
+    /**
+     * Returns a set of all options for web-compatibility
+     */
+    public static final Set<CompatibilityOption> WebCompatibility() {
+        return allOf(CompatibilityOption.class);
+    }
 }

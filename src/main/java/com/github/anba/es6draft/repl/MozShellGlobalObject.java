@@ -19,6 +19,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
@@ -30,6 +31,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
@@ -63,14 +65,15 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
      * Returns a new instance of this class
      */
     public static MozShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
-            final Path script, final Path libdir, final ScriptCache scriptCache) {
+            final Path script, final Path libdir, final ScriptCache scriptCache,
+            final Set<CompatibilityOption> options) {
         Realm realm = Realm.newRealm(new GlobalObjectCreator<MozShellGlobalObject>() {
             @Override
             public MozShellGlobalObject createGlobal(Realm realm) {
                 return new MozShellGlobalObject(realm, console, baseDir, script, scriptCache,
                         libdir);
             }
-        });
+        }, options);
         return (MozShellGlobalObject) realm.getGlobalThis();
     }
 
@@ -349,7 +352,8 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code newGlobal()} */
     @Function(name = "newGlobal", arity = 0)
     public GlobalObject newGlobal() {
-        MozShellGlobalObject global = newGlobal(console, baseDir, script, libdir, scriptCache);
+        MozShellGlobalObject global = newGlobal(console, baseDir, script, libdir, scriptCache,
+                getRealm().getOptions());
         try {
             global.eval(compileScript(scriptCache, "mozlegacy.js"));
         } catch (ParserException | IOException e) {

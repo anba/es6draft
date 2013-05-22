@@ -10,11 +10,13 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 
 /**
@@ -36,13 +38,13 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
      * Returns a new instance of this class
      */
     public static V8ShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
-            final Path script, final ScriptCache scriptCache) {
+            final Path script, final ScriptCache scriptCache, final Set<CompatibilityOption> options) {
         Realm realm = Realm.newRealm(new GlobalObjectCreator<V8ShellGlobalObject>() {
             @Override
             public V8ShellGlobalObject createGlobal(Realm realm) {
                 return new V8ShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
-        });
+        }, options);
         return (V8ShellGlobalObject) realm.getGlobalThis();
     }
 

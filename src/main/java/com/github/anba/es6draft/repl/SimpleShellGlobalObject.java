@@ -9,10 +9,12 @@ package com.github.anba.es6draft.repl;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 
@@ -31,14 +33,14 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         createProperties(this, cx, SimpleShellGlobalObject.class);
     }
 
-    static SimpleShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
-            final Path script, final ScriptCache scriptCache) {
+    public static SimpleShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
+            final Path script, final ScriptCache scriptCache, final Set<CompatibilityOption> options) {
         Realm realm = Realm.newRealm(new GlobalObjectCreator<SimpleShellGlobalObject>() {
             @Override
             public SimpleShellGlobalObject createGlobal(Realm realm) {
                 return new SimpleShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
-        });
+        }, options);
         return (SimpleShellGlobalObject) realm.getGlobalThis();
     }
 
