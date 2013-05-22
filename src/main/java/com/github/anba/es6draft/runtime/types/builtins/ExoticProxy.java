@@ -206,12 +206,6 @@ public class ExoticProxy implements ScriptObject {
         return (jsval != NULL ? jsval : null);
     }
 
-    @Override
-    public Realm getRealm() {
-        // FIXME: unclear whether to return the Proxy's [[Realm]] or the [[ProxyTarget]]'s [[Realm]]
-        return realm;
-    }
-
     /**
      * 8.5.1 [[GetInheritance]] ( )
      */

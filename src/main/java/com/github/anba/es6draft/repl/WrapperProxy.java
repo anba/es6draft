@@ -35,7 +35,6 @@ import com.github.anba.es6draft.runtime.types.Type;
  * @see MozShellGlobalObject#wrapWithProto(Object, Object)
  */
 class WrapperProxy implements ScriptObject {
-    protected final Realm realm;
     /** [[ProxyTarget]] */
     protected final ScriptObject proxyTarget;
     /** [[Prototype]] */
@@ -43,7 +42,6 @@ class WrapperProxy implements ScriptObject {
     protected final boolean withProto;
 
     public WrapperProxy(Realm realm, ScriptObject target, ScriptObject prototype, boolean withProto) {
-        this.realm = realm;
         this.proxyTarget = target;
         this.prototype = prototype;
         this.withProto = withProto;
@@ -106,11 +104,6 @@ class WrapperProxy implements ScriptObject {
             proxy = new WrapperProxy(cx.getRealm(), proxyTarget, prototype, true);
         }
         return proxy;
-    }
-
-    @Override
-    public Realm getRealm() {
-        return realm;
     }
 
     protected final ScriptObject getProto(ExecutionContext cx) {

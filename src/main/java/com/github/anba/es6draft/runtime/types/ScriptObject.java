@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.types;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 
 /**
  * <h1>8 Types</h1><br>
@@ -18,9 +17,6 @@ import com.github.anba.es6draft.runtime.Realm;
  * </ul>
  */
 public interface ScriptObject {
-    /** [[GetRealm]] ( ) */
-    Realm getRealm();
-
     /** [[GetPrototype]] ( ) */
     ScriptObject getPrototype(ExecutionContext cx);
 

@@ -41,8 +41,11 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class GlobalObject extends OrdinaryObject implements Initialisable {
+    private final Realm realm;
+
     public GlobalObject(Realm realm) {
         super(realm);
+        this.realm = realm;
     }
 
     @Override
@@ -55,6 +58,13 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         createProperties(this, cx, URIFunctionProperties.class);
         createProperties(this, cx, ConstructorProperties.class);
         createProperties(this, cx, OtherProperties.class);
+    }
+
+    /**
+     * Returns the {@link Realm} of this global object
+     */
+    public Realm getRealm() {
+        return realm;
     }
 
     /**

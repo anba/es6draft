@@ -268,7 +268,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             throwError(realm, "invalid global argument");
         }
         try {
-            return evaluate(global.getRealm(), s, "evalcx", 1);
+            return evaluate(((GlobalObject) global).getRealm(), s, "evalcx", 1);
         } catch (IOException e) {
             throw throwError(realm, e.getMessage());
         }
@@ -348,7 +348,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code newGlobal()} */
     @Function(name = "newGlobal", arity = 0)
-    public ScriptObject newGlobal() {
+    public GlobalObject newGlobal() {
         MozShellGlobalObject global = newGlobal(console, baseDir, script, libdir, scriptCache);
         try {
             global.eval(compileScript(scriptCache, "mozlegacy.js"));

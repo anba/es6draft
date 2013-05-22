@@ -46,6 +46,7 @@ public abstract class OrdinaryObject implements ScriptObject {
     private LinkedHashMap<Object, Property> properties = new LinkedHashMap<>();
 
     /** [[Realm]] */
+    @SuppressWarnings("unused")
     private final Realm realm;
 
     /** [[Prototype]] */
@@ -85,12 +86,6 @@ public abstract class OrdinaryObject implements ScriptObject {
 
     private Set<Object> __keys__() {
         return properties.keySet();
-    }
-
-    /** [[GetRealm]] ( ) */
-    @Override
-    public Realm getRealm() {
-        return realm;
     }
 
     /** 8.3.1 [[GetPrototype]] ( ) */

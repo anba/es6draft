@@ -421,7 +421,8 @@ public final class Properties {
 
         Class<?> returnType = type.returnType();
         if (returnType == Double.TYPE || returnType == Boolean.TYPE || returnType == String.class
-                || returnType == CharSequence.class || returnType == ScriptObject.class) {
+                || returnType == CharSequence.class
+                || ScriptObject.class.isAssignableFrom(returnType)) {
             handle = MethodHandles.explicitCastArguments(handle,
                     handle.type().changeReturnType(Object.class));
         } else if (returnType == Void.TYPE) {
