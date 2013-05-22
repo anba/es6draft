@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>8.3 Ordinary Object Internal Methods and Internal Data Properties
  * </ul>
  */
-public abstract class OrdinaryObject implements ScriptObject {
+public class OrdinaryObject implements ScriptObject {
     // Map<String|Symbol, Property> properties
     private LinkedHashMap<Object, Property> properties = new LinkedHashMap<>();
 
@@ -701,15 +701,9 @@ public abstract class OrdinaryObject implements ScriptObject {
     private static class DefaultAllocator implements ObjectAllocator<OrdinaryObject> {
         static final ObjectAllocator<OrdinaryObject> INSTANCE = new DefaultAllocator();
 
-        static class DefaultObject extends OrdinaryObject {
-            public DefaultObject(Realm realm) {
-                super(realm);
-            }
-        }
-
         @Override
         public OrdinaryObject newInstance(Realm realm) {
-            return new DefaultObject(realm);
+            return new OrdinaryObject(realm);
         }
     }
 
