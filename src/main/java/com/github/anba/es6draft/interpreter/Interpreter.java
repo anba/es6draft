@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Reference.PutValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
@@ -563,12 +564,13 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
             PropertyName propertyName = propValDef.getPropertyName();
             Expression propertyValue = propValDef.getPropertyValue();
 
+            Object value = propertyValue.accept(this, cx);
+            value = GetValue(value, cx);
+
             String propName = PropName(propertyName);
             if ("__proto__".equals(propName)) {
-                Object value = propertyValue.accept(this, cx);
                 ScriptRuntime.defineProtoProperty(obj, value, cx);
             } else {
-                Object value = propertyValue.accept(this, cx);
                 ScriptRuntime.defineProperty(obj, propName, value, cx);
             }
         }
@@ -577,13 +579,14 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
     @Override
     public Object visit(ArrayLiteral node, ExecutionContext cx) {
-        ExoticArray array = ExoticArray.ArrayCreate(cx, 0);
+        ExoticArray array = ArrayCreate(cx, 0);
         int nextIndex = 0;
         for (Expression element : node.getElements()) {
             if (element instanceof Elision) {
                 // Elision
             } else {
                 Object value = element.accept(this, cx);
+                value = GetValue(value, cx);
                 ScriptRuntime.defineProperty(array, nextIndex, value, cx);
             }
             nextIndex += 1;
