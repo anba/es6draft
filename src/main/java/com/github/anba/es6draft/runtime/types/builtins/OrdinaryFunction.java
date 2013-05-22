@@ -73,7 +73,7 @@ public class OrdinaryFunction extends FunctionObject {
             /* step 12-13 */
             ExoticArguments arguments = getFunction().functionDeclarationInstantiation(
                     calleeContext, this, args);
-            if (!isStrict()) {
+            if (isLegacy()) {
                 updateLegacyProperties(calleeContext, caller, arguments);
             }
             /* step 14-15 */
@@ -81,7 +81,7 @@ public class OrdinaryFunction extends FunctionObject {
             /* step 16 */
             return result;
         } finally {
-            if (!isStrict()) {
+            if (isLegacy()) {
                 caller.apply(new PropertyDescriptor(oldCaller));
                 arguments.apply(new PropertyDescriptor(oldArguments));
             }
@@ -112,13 +112,13 @@ public class OrdinaryFunction extends FunctionObject {
                     /* step 12-13 */
                     ExoticArguments arguments = f.getFunction().functionDeclarationInstantiation(
                             calleeContext, f, args);
-                    if (!f.isStrict()) {
+                    if (f.isLegacy()) {
                         f.updateLegacyProperties(calleeContext, caller, arguments);
                     }
                     /* step 14-15 */
                     result = f.getCode().handle().invokeExact(calleeContext);
                 } finally {
-                    if (!f.isStrict()) {
+                    if (f.isLegacy()) {
                         f.caller.apply(new PropertyDescriptor(oldCaller));
                         f.arguments.apply(new PropertyDescriptor(oldArguments));
                     }
@@ -134,10 +134,10 @@ public class OrdinaryFunction extends FunctionObject {
 
     private void updateLegacyProperties(ExecutionContext cx, FunctionObject caller,
             ExoticArguments arguments) {
-        if (!(caller == null || caller.isStrict())) {
-            this.caller.apply(new PropertyDescriptor(caller));
-        } else {
+        if (caller == null || caller.isStrict()) {
             this.caller.apply(new PropertyDescriptor(NULL));
+        } else {
+            this.caller.apply(new PropertyDescriptor(caller));
         }
         ExoticArguments args = CreateLegacyArguments(cx, arguments, this);
         this.arguments.apply(new PropertyDescriptor(args));
@@ -223,6 +223,7 @@ public class OrdinaryFunction extends FunctionObject {
         f.methodName = methodName;
         /* step 7 */
         f.strict = strict;
+        f.legacy = !strict;
         /* step 8 */
         if (kind == FunctionKind.Arrow) {
             f.thisMode = ThisMode.Lexical;

@@ -47,6 +47,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /** [[MethodName]] */
     protected String methodName;
 
+    protected boolean legacy = true;
     protected String source = null;
 
     protected Property caller = new PropertyDescriptor(NULL, false, false, false).toProperty();
@@ -104,7 +105,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         if (has) {
             return true;
         }
-        if (!isStrict() && ("caller".equals(propertyKey) || "arguments".equals(propertyKey))) {
+        if (isLegacy() && ("caller".equals(propertyKey) || "arguments".equals(propertyKey))) {
             return true;
         }
         return false;
@@ -113,7 +114,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     @Override
     protected Collection<Object> enumerateOwnKeys() {
         Collection<Object> ownKeys = super.enumerateOwnKeys();
-        if (!isStrict()) {
+        if (isLegacy()) {
             ownKeys.add("caller");
             ownKeys.add("arguments");
         }
@@ -138,7 +139,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         if (desc != null) {
             return desc;
         }
-        if (!isStrict()) {
+        if (isLegacy()) {
             if ("caller".equals(propertyKey)) {
                 assert !isStrictFunction(caller.getValue());
                 return caller;
@@ -160,6 +161,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     public final boolean isInitialised() {
         return function != null;
+    }
+
+    public final boolean isLegacy() {
+        return legacy;
     }
 
     /**
