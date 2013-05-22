@@ -197,6 +197,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         static final MethodDesc StringBuilder_init = MethodDesc.create(MethodType.Special,
                 Types.StringBuilder, "<init>", Type.getMethodType(Type.VOID_TYPE));
 
+        static final MethodDesc StringBuilder_init_int = MethodDesc.create(MethodType.Special,
+                Types.StringBuilder, "<init>", Type.getMethodType(Type.VOID_TYPE, Type.INT_TYPE));
+
         static final MethodDesc StringBuilder_toString = MethodDesc.create(MethodType.Virtual,
                 Types.StringBuilder, "toString", Type.getMethodType(Types.String));
     }
@@ -1418,9 +1421,28 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         return ValType.Any; // actually Object[]
     }
 
+    private static final int MAX_STRING_SIZE = 32768;
+
     @Override
     public ValType visit(StringLiteral node, ExpressionVisitor mv) {
-        mv.aconst(node.getValue());
+        String s = node.getValue();
+        if (s.length() <= MAX_STRING_SIZE) {
+            mv.aconst(s);
+        } else {
+            // string literal too large, split to avoid bytecode error
+            mv.anew(Types.StringBuilder);
+            mv.dup();
+            mv.iconst(s.length());
+            mv.invoke(Methods.StringBuilder_init_int);
+
+            for (int i = 0, len = s.length(); i < len; i += MAX_STRING_SIZE) {
+                String chunk = s.substring(i, Math.min(i + MAX_STRING_SIZE, len));
+                mv.aconst(chunk);
+                mv.invoke(Methods.StringBuilder_append_String);
+            }
+
+            mv.invoke(Methods.StringBuilder_toString);
+        }
 
         return ValType.String;
     }
