@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.interpreter;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckCallable;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.GetCallThisValue;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.IsBuiltinEval;
@@ -17,6 +14,8 @@ import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Reference.PutValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
+import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import java.util.List;
 
@@ -28,7 +27,10 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * Simple interpreter to speed-up `eval` evaluation
@@ -553,6 +555,44 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     @Override
+    public Object visit(ObjectLiteral node, ExecutionContext cx) {
+        ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        for (PropertyDefinition propertyDefinition : node.getProperties()) {
+            assert propertyDefinition instanceof PropertyValueDefinition;
+            PropertyValueDefinition propValDef = (PropertyValueDefinition) propertyDefinition;
+            PropertyName propertyName = propValDef.getPropertyName();
+            Expression propertyValue = propValDef.getPropertyValue();
+
+            String propName = PropName(propertyName);
+            if ("__proto__".equals(propName)) {
+                Object value = propertyValue.accept(this, cx);
+                ScriptRuntime.defineProtoProperty(obj, value, cx);
+            } else {
+                Object value = propertyValue.accept(this, cx);
+                ScriptRuntime.defineProperty(obj, propName, value, cx);
+            }
+        }
+        return obj;
+    }
+
+    @Override
+    public Object visit(ArrayLiteral node, ExecutionContext cx) {
+        ExoticArray array = ExoticArray.ArrayCreate(cx, 0);
+        int nextIndex = 0;
+        for (Expression element : node.getElements()) {
+            if (element instanceof Elision) {
+                // Elision
+            } else {
+                Object value = element.accept(this, cx);
+                ScriptRuntime.defineProperty(array, nextIndex, value, cx);
+            }
+            nextIndex += 1;
+        }
+        Put(cx, array, "length", nextIndex, false);
+        return array;
+    }
+
+    @Override
     public Object visit(CallExpression node, ExecutionContext cx) {
         Object ref = node.getBase().accept(this, cx);
         Object func = GetValue(ref, cx);
@@ -760,6 +800,36 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
         @Override
         public Boolean visit(RegularExpressionLiteral node, Void value) {
+            return true;
+        }
+
+        @Override
+        public Boolean visit(ObjectLiteral node, Void value) {
+            for (PropertyDefinition propertyDefinition : node.getProperties()) {
+                if (!propertyDefinition.accept(this, value)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        protected Boolean visit(PropertyDefinition node, Void value) {
+            return false;
+        }
+
+        @Override
+        public Boolean visit(PropertyValueDefinition node, Void value) {
+            return node.getPropertyValue().accept(this, value);
+        }
+
+        @Override
+        public Boolean visit(ArrayLiteral node, Void value) {
+            for (Expression expression : node.getElements()) {
+                if (!expression.accept(this, value)) {
+                    return false;
+                }
+            }
             return true;
         }
 
