@@ -14,9 +14,11 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.modules.Reflect;
@@ -84,6 +86,8 @@ public class Realm {
     private Locale locale = Locale.getDefault();
     private TimeZone timezone = TimeZone.getDefault();
     private Messages messages = Messages.create(locale);
+
+    private Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility;
 
     // TODO: move into function source object
     private Map<String, ScriptObject> templateCallSites = new HashMap<>();
@@ -156,6 +160,14 @@ public class Realm {
 
     public Callable getBuiltinEval() {
         return builtinEval;
+    }
+
+    public Set<CompatibilityOption> getOptions() {
+        return options;
+    }
+
+    public boolean isEnabled(CompatibilityOption option) {
+        return options.contains(option);
     }
 
     public ScriptObject getTemplateCallSite(String key) {

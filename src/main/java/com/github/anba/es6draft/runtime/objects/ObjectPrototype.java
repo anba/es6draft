@@ -19,9 +19,11 @@ import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -56,6 +58,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
+        createProperties(this, cx, AdditionalProperties.class);
     }
 
     public enum Properties {
@@ -207,9 +210,18 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             }
             return desc.isEnumerable();
         }
+    }
+
+    /**
+     * B.2.2 Additional Properties of the Object.prototype Object
+     */
+    @CompatibilityExtension(CompatibilityOption.ObjectPrototype)
+    public enum AdditionalProperties {
+        ;
 
         /**
-         * B.3.1.1 Object.prototype.__proto__
+         * B.2.2.1 Object.prototype.__proto__<br>
+         * get Object.prototype.__proto__
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Getter)
         public static Object getPrototype(ExecutionContext cx, Object thisValue) {
@@ -219,7 +231,8 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.3.1.1 Object.prototype.__proto__
+         * B.2.2.1 Object.prototype.__proto__<br>
+         * set Object.prototype.__proto__
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(ExecutionContext cx, Object thisValue, Object p) {

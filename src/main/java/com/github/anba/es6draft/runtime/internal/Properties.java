@@ -46,6 +46,16 @@ public final class Properties {
     }
 
     /**
+     * Compatiblity extension marker
+     */
+    @Documented
+    @Target({ ElementType.TYPE })
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface CompatibilityExtension {
+        CompatibilityOption value();
+    }
+
+    /**
      * Built-in prototype
      */
     @Documented
@@ -201,6 +211,7 @@ public final class Properties {
     };
 
     private static class ObjectLayout {
+        CompatibilityExtension extension;
         Prototype proto = null;
         Object protoValue = null;
         Map<Value, Object> values = null;
@@ -282,6 +293,10 @@ public final class Properties {
 
     private static void createInternalProperties(ScriptObject owner, Realm realm, Class<?> holder) {
         ObjectLayout layout = internalLayouts.get(holder);
+        if (layout.extension != null && !realm.isEnabled(layout.extension.value())) {
+            // return if extension is not enabled
+            return;
+        }
         if (layout.proto != null) {
             createPrototype(owner, realm, layout.proto, layout.protoValue);
         }
@@ -331,6 +346,7 @@ public final class Properties {
         try {
             ObjectLayout layout = new ObjectLayout();
             Lookup lookup = MethodHandles.publicLookup();
+            layout.extension = holder.getAnnotation(CompatibilityExtension.class);
             boolean hasProto = false;
             for (Field field : holder.getDeclaredFields()) {
                 if (!Modifier.isStatic(field.getModifiers()))

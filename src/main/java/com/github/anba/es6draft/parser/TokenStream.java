@@ -361,8 +361,9 @@ public class TokenStream {
             case '5':
             case '6':
             case '7':
-                parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
-                // fall-through
+            case '8':
+            case '9':
+                throw error(Messages.Key.StrictModeOctalEscapeSequence);
             case '"':
             case '\'':
             case '\\':
@@ -1066,6 +1067,9 @@ public class TokenStream {
                 break;
             case '0':
                 if (isDecimalDigit(peek())) {
+                    if (parser.isEnabled(Parser.Option.NoOctalEscapeSequence)) {
+                        throw error(Messages.Key.InvalidNULLEscape);
+                    }
                     c = readOctalEscape(c);
                 } else {
                     c = '\0';
@@ -1078,11 +1082,18 @@ public class TokenStream {
             case '5':
             case '6':
             case '7':
+                if (parser.isEnabled(Parser.Option.NoOctalEscapeSequence)) {
+                    throw error(Messages.Key.StrictModeOctalEscapeSequence);
+                }
                 c = readOctalEscape(c);
                 break;
             case '8':
             case '9':
                 // FIXME: spec bug - undefined behaviour for \8 and \9
+                if (parser.isEnabled(Parser.Option.NoOctalEscapeSequence)) {
+                    throw error(Messages.Key.StrictModeOctalEscapeSequence);
+                }
+                // fall-through
             case '"':
             case '\'':
             case '\\':
@@ -1126,7 +1137,8 @@ public class TokenStream {
                 number = readBinaryIntegerLiteral();
             } else if (d == 'o' || d == 'O') {
                 number = readOctalIntegerLiteral();
-            } else if (isDecimalDigit(d)) {
+            } else if (isDecimalDigit(d)
+                    && !parser.isEnabled(Parser.Option.NoLegacyOctalIntegerLiteral)) {
                 input.unget(d);
                 number = readLegacyOctalIntegerLiteral();
             } else {

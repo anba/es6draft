@@ -19,9 +19,11 @@ import org.mozilla.javascript.StringToNumber;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.Strings;
@@ -58,6 +60,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         createProperties(this, cx, URIFunctionProperties.class);
         createProperties(this, cx, ConstructorProperties.class);
         createProperties(this, cx, OtherProperties.class);
+        createProperties(this, cx, AdditionalProperties.class);
     }
 
     /**
@@ -187,6 +190,14 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
             }
             return true;
         }
+    }
+
+    /**
+     * B.2.1 Additional Properties of the Global Object
+     */
+    @CompatibilityExtension(CompatibilityOption.GlobalObject)
+    public enum AdditionalProperties {
+        ;
 
         private static int fromHexDigit(char c) {
             if (c >= '0' && c <= '9')

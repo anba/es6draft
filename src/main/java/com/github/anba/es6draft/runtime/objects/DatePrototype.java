@@ -22,8 +22,10 @@ import java.util.TimeZone;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -53,10 +55,13 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
+        createProperties(this, cx, AdditionalProperties.class);
 
-        // B.2.3.3 Date.prototype.toGMTString ( )
-        defineOwnProperty(cx, "toGMTString", new PropertyDescriptor(Get(cx, this, "toUTCString"),
-                true, false, true));
+        // B.2.4.3 Date.prototype.toGMTString ( )
+        if (cx.getRealm().isEnabled(CompatibilityOption.DatePrototype)) {
+            defineOwnProperty(cx, "toGMTString", new PropertyDescriptor(
+                    Get(cx, this, "toUTCString"), true, false, true));
+        }
     }
 
     private static final String ISO_FORMAT = "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ";
@@ -798,8 +803,30 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             return OrdinaryToPrimitive(cx, Type.objectValue(thisValue), tryFirst);
         }
 
+    }
+
+    /**
+     * B.2.4 Additional Properties of the Date.prototype Object
+     */
+    @CompatibilityExtension(CompatibilityOption.DatePrototype)
+    public enum AdditionalProperties {
+        ;
+
         /**
-         * B.2.3.1 Date.prototype.getYear ( )
+         * Abstract operation thisTimeValue(value)
+         */
+        private static double thisTimeValue(ExecutionContext cx, Object object) {
+            if (object instanceof DateObject) {
+                DateObject obj = (DateObject) object;
+                if (obj.isInitialised()) {
+                    return obj.getDateValue();
+                }
+            }
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+
+        /**
+         * B.2.4.1 Date.prototype.getYear ( )
          */
         @Function(name = "getYear", arity = 0)
         public static Object getYear(ExecutionContext cx, Object thisValue) {
@@ -812,7 +839,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.3.2 Date.prototype.setYear (year)
+         * B.2.4.2 Date.prototype.setYear (year)
          */
         @Function(name = "setYear", arity = 1)
         public static Object setYear(ExecutionContext cx, Object thisValue, Object year) {

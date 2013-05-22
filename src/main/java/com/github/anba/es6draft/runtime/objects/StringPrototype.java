@@ -28,8 +28,10 @@ import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -63,6 +65,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
+        createProperties(this, cx, AdditionalProperties.class);
     }
 
     /**
@@ -611,9 +614,17 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             }
             return Normalizer.normalize(s, Normalizer.Form.valueOf(f));
         }
+    }
+
+    /**
+     * B.2.3 Additional Properties of the String.prototype Object
+     */
+    @CompatibilityExtension(CompatibilityOption.StringPrototype)
+    public enum AdditionalProperties {
+        ;
 
         /**
-         * B.2.2.1 String.prototype.substr (start, length)
+         * B.2.3.1 String.prototype.substr (start, length)
          */
         @Function(name = "substr", arity = 2)
         public static Object substr(ExecutionContext cx, Object thisValue, Object start,
@@ -653,7 +664,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.2 String.prototype.anchor ( name )
+         * B.2.3.2 String.prototype.anchor ( name )
          */
         @Function(name = "anchor", arity = 1)
         public static Object anchor(ExecutionContext cx, Object thisValue, Object name) {
@@ -662,7 +673,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.3 String.prototype.big ()
+         * B.2.3.3 String.prototype.big ()
          */
         @Function(name = "big", arity = 0)
         public static Object big(ExecutionContext cx, Object thisValue) {
@@ -671,7 +682,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.4 String.prototype.blink ()
+         * B.2.3.4 String.prototype.blink ()
          */
         @Function(name = "blink", arity = 0)
         public static Object blink(ExecutionContext cx, Object thisValue) {
@@ -680,7 +691,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.5 String.prototype.bold ()
+         * B.2.3.5 String.prototype.bold ()
          */
         @Function(name = "bold", arity = 0)
         public static Object bold(ExecutionContext cx, Object thisValue) {
@@ -689,7 +700,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.6 String.prototype.fixed ()
+         * B.2.3.6 String.prototype.fixed ()
          */
         @Function(name = "fixed", arity = 0)
         public static Object fixed(ExecutionContext cx, Object thisValue) {
@@ -698,7 +709,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.7 String.prototype.fontcolor ( color )
+         * B.2.3.7 String.prototype.fontcolor ( color )
          */
         @Function(name = "fontcolor", arity = 1)
         public static Object fontcolor(ExecutionContext cx, Object thisValue, Object color) {
@@ -707,7 +718,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.8 String.prototype.fontsize ( size )
+         * B.2.3.8 String.prototype.fontsize ( size )
          */
         @Function(name = "fontsize", arity = 1)
         public static Object fontsize(ExecutionContext cx, Object thisValue, Object size) {
@@ -716,7 +727,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.9 String.prototype.italics ()
+         * B.2.3.9 String.prototype.italics ()
          */
         @Function(name = "italics", arity = 0)
         public static Object italics(ExecutionContext cx, Object thisValue) {
@@ -725,7 +736,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.10 String.prototype.link ( url )
+         * B.2.3.10 String.prototype.link ( url )
          */
         @Function(name = "link", arity = 1)
         public static Object link(ExecutionContext cx, Object thisValue, Object url) {
@@ -734,7 +745,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.11 String.prototype.small ()
+         * B.2.3.11 String.prototype.small ()
          */
         @Function(name = "small", arity = 0)
         public static Object small(ExecutionContext cx, Object thisValue) {
@@ -743,7 +754,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.12 String.prototype.strike ()
+         * B.2.3.12 String.prototype.strike ()
          */
         @Function(name = "strike", arity = 0)
         public static Object strike(ExecutionContext cx, Object thisValue) {
@@ -752,7 +763,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.13 String.prototype.sub ()
+         * B.2.3.13 String.prototype.sub ()
          */
         @Function(name = "sub", arity = 0)
         public static Object sub(ExecutionContext cx, Object thisValue) {
@@ -761,7 +772,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * B.2.2.14 String.prototype.sup ()
+         * B.2.3.14 String.prototype.sup ()
          */
         @Function(name = "sup", arity = 0)
         public static Object sup(ExecutionContext cx, Object thisValue) {

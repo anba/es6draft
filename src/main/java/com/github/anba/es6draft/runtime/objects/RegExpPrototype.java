@@ -25,9 +25,11 @@ import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -55,6 +57,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
+        createProperties(this, cx, AdditionalProperties.class);
     }
 
     /**
@@ -488,8 +491,17 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         @Value(name = "@@isRegExp", symbol = BuiltinSymbol.isRegExp)
         public static final boolean isRegExp = true;
 
+    }
+
+    /**
+     * B.2.5 Additional Properties of the RegExp.prototype Object
+     */
+    @CompatibilityExtension(CompatibilityOption.RegExpPrototype)
+    public enum AdditionalProperties {
+        ;
+
         /**
-         * RegExp.prototype.compile(pattern, flags)
+         * B.2.5.1 RegExp.prototype.compile (pattern, flags )
          */
         @Function(name = "compile", arity = 2)
         public static Object compile(ExecutionContext cx, Object thisValue, Object pattern,
@@ -504,7 +516,10 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             }
             Object p, f;
             if (pattern instanceof RegExpObject) {
-                RegExpObject rx = thisRegExpValue(cx, pattern);
+                RegExpObject rx = (RegExpObject) pattern;
+                if (!rx.isInitialised()) {
+                    throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                }
                 if (!Type.isUndefined(flags)) {
                     throw throwTypeError(cx, Messages.Key.NotUndefined);
                 }

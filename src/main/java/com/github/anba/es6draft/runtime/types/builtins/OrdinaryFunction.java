@@ -16,6 +16,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.Cr
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.Code;
@@ -223,7 +224,7 @@ public class OrdinaryFunction extends FunctionObject {
         f.methodName = methodName;
         /* step 7 */
         f.strict = strict;
-        f.legacy = !strict;
+        f.legacy = !strict && f.realm.isEnabled(CompatibilityOption.FunctionPrototype);
         /* step 8 */
         if (kind == FunctionKind.Arrow) {
             f.thisMode = ThisMode.Lexical;

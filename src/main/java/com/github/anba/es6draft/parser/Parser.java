@@ -288,7 +288,13 @@ public class Parser {
     }
 
     public enum Option {
-        Strict, FunctionCode, LocalScope, DirectEval, EvalScript
+        Strict, FunctionCode, LocalScope, DirectEval, EvalScript,
+
+        /** B.1.1 Numeric Literals */
+        NoLegacyOctalIntegerLiteral,
+
+        /** B.1.2 String Literals */
+        NoOctalEscapeSequence,
     }
 
     public Parser(String sourceFile, int sourceLine) {
@@ -302,6 +308,10 @@ public class Parser {
         context = new ParseContext();
         context.strictMode = options.contains(Option.Strict) ? StrictMode.Strict
                 : StrictMode.NonStrict;
+    }
+
+    boolean isEnabled(Option option) {
+        return options.contains(option);
     }
 
     private ParseContext newContext(ContextKind kind) {
