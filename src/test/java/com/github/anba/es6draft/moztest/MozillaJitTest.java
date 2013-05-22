@@ -7,21 +7,27 @@
 package com.github.anba.es6draft.moztest;
 
 import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobal;
+import static com.github.anba.es6draft.util.TestInfo.filterTests;
+import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -43,13 +49,16 @@ import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.UncheckedIOException;
 
 /**
  *
  */
 @RunWith(Parallelized.class)
-public class MozillaJitTest extends BaseMozillaTest {
+public class MozillaJitTest {
 
     /**
      * Returns a {@link Path} which points to the test directory 'mozilla.js.tests'
@@ -60,19 +69,21 @@ public class MozillaJitTest extends BaseMozillaTest {
     }
 
     @Parameters(name = "{0}")
-    public static Iterable<Object[]> mozillaSuiteValues() throws IOException {
+    public static Iterable<TestInfo[]> mozillaSuiteValues() throws IOException {
         Path testdir = testDir();
         assumeThat("missing system property 'MOZ_JITTESTS'", testdir, notNullValue());
         assumeTrue("directy 'MOZ_JITTESTS' does not exist", Files.exists(testdir));
-        List<MozTest> tests = new ArrayList<>();
-        List<String> dirs = asList("arguments", "arrow-functions", "auto-regress", "basic",
-                "closures", "collections", "for-of", "pic", "proxy", "self-hosting");
-        for (String dir : dirs) {
-            Path p = testdir.resolve(Paths.get("tests", dir));
-            tests.addAll(loadTests(p, testdir));
-        }
-        tests = filterTests(tests, "/jittests.list");
+        Path searchdir = testdir.resolve("tests");
+        List<MozTest> tests = filterTests(loadTests(searchdir, testdir), "/jittests.list");
         return toObjectArray(tests);
+    }
+
+    private static class MozTest extends TestInfo {
+        String error = null;
+
+        public MozTest(Path script) {
+            super(script);
+        }
     }
 
     private static ScriptCache scriptCache = new ScriptCache();
@@ -94,13 +105,8 @@ public class MozillaJitTest extends BaseMozillaTest {
 
     @Test
     public void runMozillaTest() throws Throwable {
-        MozTest moztest = this.moztest;
         // filter disabled tests
         assumeTrue(moztest.enable);
-        // don't run slow tests
-        assumeFalse(moztest.slow);
-        // don't run debug-mode tests
-        assumeFalse(moztest.debug);
 
         MozTestConsole console = new MozTestConsole();
         MozShellGlobalObject global = newGlobal(console, testDir(), moztest.script, Paths.get(""),
@@ -146,13 +152,93 @@ public class MozillaJitTest extends BaseMozillaTest {
         // fail if any test returns with errors
         List<Throwable> failures = new ArrayList<Throwable>();
         failures.addAll(console.getFailures());
-        if (moztest.random) {
-            // results from random tests are ignored...
-        } else if (moztest.expect) {
+        if (moztest.expect) {
             MultipleFailureException.assertEmpty(failures);
         } else {
             assertFalse("Expected test to throw error", failures.isEmpty());
         }
     }
 
+    // Any file who's basename matches something in this set is ignored
+    private static final Set<String> excludeFiles = new HashSet<>();
+    private static final Set<String> excludeDirs = new HashSet<>(asList("asm.js", "baseline",
+            "debug", "gc", "ion", "jaeger", "modules", "parallelarray", "truthiness", "v8-v5"));
+
+    private static List<MozTest> loadTests(Path searchdir, final Path basedir) throws IOException {
+        BiFunction<Path, BufferedReader, MozTest> create = new BiFunction<Path, BufferedReader, MozTest>() {
+            @Override
+            public MozTest apply(Path script, BufferedReader reader) {
+                try {
+                    return createTestInfo(script, reader);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        };
+
+        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, create);
+    }
+
+    private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
+
+    private static MozTest createTestInfo(Path script, BufferedReader reader) throws IOException {
+        MozTest test = new MozTest(script);
+        String line = reader.readLine();
+        Matcher m = testInfoPattern.matcher(line);
+        if (!m.matches()) {
+            // ignore if pattern invalid or not present
+            return test;
+        }
+        if (!"jit-test".equals(m.group(1))) {
+            System.err.printf("invalid tag '%s' in line: %s\n", m.group(1), line);
+            return test;
+        }
+        String content = m.group(2);
+        for (String p : content.split(";")) {
+            int sep = p.indexOf(':');
+            if (sep != -1) {
+                String name = p.substring(0, sep).trim();
+                String value = p.substring(sep + 1).trim();
+                switch (name) {
+                case "error":
+                    test.error = value;
+                    break;
+                case "exitstatus":
+                    // ignore for now...
+                    break;
+                default:
+                    System.err.printf("unknown option '%s' in line: %s\n", name, content);
+                }
+            } else {
+                String name = p.trim();
+                switch (name) {
+                case "slow":
+                    // don't run slow tests
+                    test.enable = false;
+                    break;
+                case "debug":
+                    // don't run debug-mode tests
+                    test.enable = false;
+                    break;
+                case "allow-oom":
+                case "valgrind":
+                case "tz-pacific":
+                case "mjitalways":
+                case "mjit":
+                case "no-jm":
+                case "no-ion":
+                case "ion-eager":
+                case "dump-bytecode":
+                    // ignore for now...
+                    break;
+                case "":
+                    // ignore empty string
+                    break;
+                default:
+                    System.err.printf("unknown option '%s' in line: %s\n", name, content);
+                }
+            }
+        }
+        return test;
+    }
 }
