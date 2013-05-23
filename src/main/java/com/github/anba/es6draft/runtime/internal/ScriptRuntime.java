@@ -1296,10 +1296,14 @@ public final class ScriptRuntime {
     /* ***************************************************************************************** */
 
     /**
-     * B.3.1.3 __proto___ Object Initialisers
+     * B.3.1 __proto___ Property Names in Object Initialisers
      */
     public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
-        // use Put() to comply with current SpiderMonkey/JSC behaviour
-        Put(cx, object, "__proto__", value, true);
+        if (cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
+            // use Put() to comply with current SpiderMonkey/JSC behaviour
+            Put(cx, object, "__proto__", value, true);
+        } else {
+            defineProperty(object, "__proto__", value, cx);
+        }
     }
 }

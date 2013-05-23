@@ -111,6 +111,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
 
         String propName = propertyName.getName();
         if ("__proto__".equals(propName)) {
+            // FIXME: spec bug? not defined in spec
             propertyName.accept(this, mv);
             invokeGetValue(propertyName, mv);
             mv.loadExecutionContext();
