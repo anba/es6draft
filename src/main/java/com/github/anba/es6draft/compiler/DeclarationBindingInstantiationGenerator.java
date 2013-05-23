@@ -15,6 +15,7 @@ import org.objectweb.asm.Type;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
+import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -118,7 +119,7 @@ class DeclarationBindingInstantiationGenerator {
 
         mv.load(context, Types.ExecutionContext);
         mv.load(env, Types.LexicalEnvironment);
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
         mv.invoke(Methods.ScriptRuntime_InstantiateFunctionObject);
@@ -130,7 +131,7 @@ class DeclarationBindingInstantiationGenerator {
 
         mv.load(context, Types.ExecutionContext);
         mv.load(env, Types.LexicalEnvironment);
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
         mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);

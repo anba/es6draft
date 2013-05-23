@@ -16,7 +16,10 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
+import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
+import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.parser.ParserException;
@@ -26,6 +29,11 @@ import com.github.anba.es6draft.parser.ParserException;
  */
 public class Compiler {
     private static class Methods {
+        // class: CompiledFunction
+        static final MethodDesc CompiledFunction_Constructor = MethodDesc.create(
+                MethodType.Special, Types.CompiledFunction, "<init>",
+                Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$Function));
+
         // class: CompiledScript
         static final MethodDesc CompiledScript_Constructor = MethodDesc.create(MethodType.Special,
                 Types.CompiledScript, "<init>",
@@ -53,13 +61,43 @@ public class Compiler {
                 superClassName, interfaces);
         cw.visitSource(script.getSourceFile(), null);
 
-        // add default constructor
-        defaultConstructor(cw, className);
-
-        // generate actual code
+        // generate code
         CodeGenerator codegen = new CodeGenerator(cw, className);
         codegen.compile(script);
         codegen.close();
+
+        // add default constructor
+        defaultScriptConstructor(cw, className, codegen.methodName(script, ScriptName.RTI));
+
+        // finalize
+        cw.visitEnd();
+
+        byte[] bytes = cw.toByteArray();
+        if (debug) {
+            debug(bytes);
+        }
+
+        return bytes;
+    }
+
+    public byte[] compile(FunctionNode function, String className) throws ParserException {
+        final int flags = ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS;
+        String superClassName = Types.CompiledFunction.getInternalName();
+        String[] interfaces = null;
+
+        // set-up
+        ClassWriter cw = new ClassWriter(flags);
+        cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, className, null,
+                superClassName, interfaces);
+        cw.visitSource("<Function>", null);
+
+        // generate code
+        CodeGenerator codegen = new CodeGenerator(cw, className);
+        codegen.compile(function);
+        codegen.close();
+
+        // add default constructor
+        defaultFunctionConstructor(cw, className, codegen.methodName(function, FunctionName.RTI));
 
         // finalize
         cw.visitEnd();
@@ -78,7 +116,8 @@ public class Compiler {
                 ClassReader.SKIP_DEBUG);
     }
 
-    private static void defaultConstructor(ClassWriter cw, String className) {
+    private static void defaultScriptConstructor(ClassWriter cw, String className,
+            String methodNameRTI) {
         String methodName = "<init>";
         Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE);
 
@@ -86,9 +125,25 @@ public class Compiler {
                 methodName, "()V", null, null), methodName, methodDescriptor);
         mv.begin();
         mv.loadThis();
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, "script_rti",
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI,
                 Type.getMethodType(Types.RuntimeInfo$ScriptBody).getDescriptor());
         mv.invoke(Methods.CompiledScript_Constructor);
+        mv.areturn();
+        mv.end();
+    }
+
+    private static void defaultFunctionConstructor(ClassWriter cw, String className,
+            String methodNameRTI) {
+        String methodName = "<init>";
+        Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE);
+
+        InstructionVisitor mv = new InstructionVisitor(cw.visitMethod(Opcodes.ACC_PUBLIC,
+                methodName, "()V", null, null), methodName, methodDescriptor);
+        mv.begin();
+        mv.loadThis();
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI,
+                Type.getMethodType(Types.RuntimeInfo$Function).getDescriptor());
+        mv.invoke(Methods.CompiledFunction_Constructor);
         mv.areturn();
         mv.end();
     }

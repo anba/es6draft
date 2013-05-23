@@ -20,6 +20,8 @@ import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.ast.GeneratorExpression;
 import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
+import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.FunctionFlags;
@@ -117,17 +119,18 @@ class RuntimeInfoGenerator {
 
     void runtimeInfo(FunctionNode node, Future<String> source) {
         String className = codegen.getClassName();
-        String methodName = codegen.methodName(node);
-        InstructionVisitor mv = codegen
-                .publicStaticMethod(methodName + "_rti", Methods.functionRTI);
+        InstructionVisitor mv = codegen.publicStaticMethod(
+                codegen.methodName(node, FunctionName.RTI), Methods.functionRTI);
 
         mv.begin();
 
         mv.aconst(node.getFunctionName());
         mv.iconst(functionFlags(node));
         mv.iconst(ExpectedArgumentCount(node.getParameters()));
-        mv.invokeStaticMH(className, methodName + "_init", Methods.functionInit);
-        mv.invokeStaticMH(className, methodName, Methods.functionCode);
+        mv.invokeStaticMH(className, codegen.methodName(node, FunctionName.Init),
+                Methods.functionInit);
+        mv.invokeStaticMH(className, codegen.methodName(node, FunctionName.Code),
+                Methods.functionCode);
         mv.aconst(get(source));
         mv.invoke(Methods.RTI_newFunction);
         mv.areturn();
@@ -137,15 +140,16 @@ class RuntimeInfoGenerator {
 
     void runtimeInfo(Script node) {
         String className = codegen.getClassName();
-        String methodName = codegen.methodName(node);
-        InstructionVisitor mv = codegen.publicStaticMethod("script_rti", Methods.scriptRTI);
+        InstructionVisitor mv = codegen.publicStaticMethod(
+                codegen.methodName(node, ScriptName.RTI), Methods.scriptRTI);
 
         mv.begin();
 
         mv.iconst(IsStrict(node));
-        mv.invokeStaticMH(className, "script_init", Methods.globalInit);
-        mv.invokeStaticMH(className, "script_evalinit", Methods.evalInit);
-        mv.invokeStaticMH(className, methodName, Methods.scriptCode);
+        mv.invokeStaticMH(className, codegen.methodName(node, ScriptName.Init), Methods.globalInit);
+        mv.invokeStaticMH(className, codegen.methodName(node, ScriptName.EvalInit),
+                Methods.evalInit);
+        mv.invokeStaticMH(className, codegen.methodName(node, ScriptName.Code), Methods.scriptCode);
         mv.invoke(Methods.RTI_newScriptBody);
         mv.areturn();
 

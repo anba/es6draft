@@ -24,6 +24,7 @@ import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -88,7 +89,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     }
 
     void generate(FunctionNode func) {
-        String methodName = codegen.methodName(func) + "_init";
+        String methodName = codegen.methodName(func, FunctionName.Init);
         ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(codegen, methodName,
                 IsStrict(func));
 

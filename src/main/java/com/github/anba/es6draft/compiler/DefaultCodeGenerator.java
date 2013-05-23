@@ -24,6 +24,7 @@ import com.github.anba.es6draft.ast.ConditionalExpression;
 import com.github.anba.es6draft.ast.DefaultNodeVisitor;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.MethodDefinition;
+import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -680,7 +681,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         if (constructor != null) {
             codegen.compile(constructor);
             // Runtime Semantics: Evaluation -> MethodDefinition
-            mv.invokestatic(codegen.getClassName(), codegen.methodName(constructor) + "_rti",
+            mv.invokestatic(codegen.getClassName(),
+                    codegen.methodName(constructor, FunctionName.RTI),
                     Type.getMethodDescriptor(Types.RuntimeInfo$Function));
         } else {
             // step 7

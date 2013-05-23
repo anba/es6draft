@@ -16,6 +16,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
@@ -527,7 +528,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> ArrowFunction
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node) + "_rti",
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateArrowFunction);
@@ -1288,7 +1289,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> FunctionExpression
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node) + "_rti",
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateFunctionExpression);
@@ -1313,7 +1314,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> FunctionExpression
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node) + "_rti",
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorExpression);

@@ -21,6 +21,7 @@ import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
+import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -73,7 +74,6 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     private static final int GLOBALENV = 1;
     private static final int DELETABLE_BINDINGS = 2;
 
-    private static final String methodName = "script_init";
     private static final Type methodType = Type.getMethodType(Type.VOID_TYPE,
             Types.ExecutionContext, Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
 
@@ -82,6 +82,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     }
 
     void generate(Script script) {
+        String methodName = codegen.methodName(script, ScriptName.Init);
         InstructionVisitor mv = codegen.publicStaticMethod(methodName, methodType);
         mv.lineInfo(script.getLine());
         mv.begin();

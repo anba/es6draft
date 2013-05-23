@@ -68,6 +68,7 @@ final class Types {
     static final Type Map = Type.getType(Map.class);
 
     // es6draft.compiler
+    static final Type CompiledFunction = Type.getType(CompiledFunction.class);
     static final Type CompiledScript = Type.getType(CompiledScript.class);
 
     // es6draft.runtime

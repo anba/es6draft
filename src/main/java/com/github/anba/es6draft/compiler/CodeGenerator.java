@@ -134,11 +134,26 @@ class CodeGenerator {
         return methodNames.containsKey(node);
     }
 
-    final String methodName(Script node) {
-        return "!script";
+    enum ScriptName {
+        Code, Init, EvalInit, RTI
     }
 
-    final String methodName(Script node, int index) {
+    final String methodName(Script node, ScriptName name) {
+        switch (name) {
+        case Code:
+            return "!script";
+        case Init:
+            return "script_init";
+        case EvalInit:
+            return "script_evalinit";
+        case RTI:
+            return "script_rti";
+        default:
+            throw new IllegalStateException();
+        }
+    }
+
+    private final String methodName(Script node, int index) {
         return "!script_" + index;
     }
 
@@ -158,14 +173,32 @@ class CodeGenerator {
         return n;
     }
 
-    final String methodName(FunctionNode node) {
+    enum FunctionName {
+        Code, Init, RTI
+    }
+
+    final String methodName(FunctionNode node, FunctionName name) {
+        String fname = methodName(node);
+        switch (name) {
+        case Code:
+            return '!' + fname;
+        case Init:
+            return fname + "_init";
+        case RTI:
+            return fname + "_rti";
+        default:
+            throw new IllegalStateException();
+        }
+    }
+
+    private final String methodName(FunctionNode node) {
         String n = methodNames.get(node);
         if (n == null) {
             String fname = node.getFunctionName();
             if (fname.isEmpty()) {
                 fname = "anonymous";
             }
-            n = addMethodName(node, '!' + fname);
+            n = addMethodName(node, fname);
         }
         return n;
     }
@@ -435,8 +468,8 @@ class CodeGenerator {
                 Types.ExecutionContext);
 
         ScriptStatementVisitor(CodeGenerator codegen, Script node) {
-            super(codegen, codegen.methodName(node), methodDescriptor, node.isStrict(), node
-                    .isGlobalCode(), true, true);
+            super(codegen, codegen.methodName(node, ScriptName.Code), methodDescriptor, node
+                    .isStrict(), node.isGlobalCode(), true, true);
         }
     }
 
@@ -455,8 +488,8 @@ class CodeGenerator {
                 Types.ExecutionContext);
 
         FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
-            super(codegen, codegen.methodName(node), methodDescriptor, IsStrict(node), false,
-                    false, true);
+            super(codegen, codegen.methodName(node, FunctionName.Code), methodDescriptor,
+                    IsStrict(node), false, false, true);
         }
     }
 
@@ -465,7 +498,8 @@ class CodeGenerator {
                 Types.ExecutionContext);
 
         ArrowFunctionVisitor(CodeGenerator codegen, ArrowFunction node) {
-            super(codegen, codegen.methodName(node), methodDescriptor, IsStrict(node), false);
+            super(codegen, codegen.methodName(node, FunctionName.Code), methodDescriptor,
+                    IsStrict(node), false);
         }
     }
 

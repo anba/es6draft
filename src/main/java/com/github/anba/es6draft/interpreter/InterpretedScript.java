@@ -9,13 +9,12 @@ package com.github.anba.es6draft.interpreter;
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo.ScriptBody;
 
 /**
  * 
  */
 public final class InterpretedScript implements Script {
-    private final ScriptBody scriptBody;
+    private final RuntimeInfo.ScriptBody scriptBody;
 
     InterpretedScript(RuntimeInfo.ScriptBody scriptBody) {
         this.scriptBody = scriptBody;

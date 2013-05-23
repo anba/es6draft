@@ -19,6 +19,7 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
+import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -160,7 +161,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 mv.dup2();
                 mv.loadExecutionContext();
                 mv.swap();
-                mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
+                mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
                         Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
                 // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]
@@ -179,7 +180,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 mv.dup2();
                 mv.loadExecutionContext();
                 mv.swap();
-                mv.invokestatic(codegen.getClassName(), codegen.methodName(f) + "_rti",
+                mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
                         Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
                 // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]

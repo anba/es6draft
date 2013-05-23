@@ -17,6 +17,7 @@ import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.PropertyName;
 import com.github.anba.es6draft.ast.PropertyNameDefinition;
 import com.github.anba.es6draft.ast.PropertyValueDefinition;
+import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -79,7 +80,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         // Runtime Semantics: Evaluation -> MethodDefinition
         // stack: [<object>]
         mv.aconst(PropName(node));
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node) + "_rti",
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
         mv.loadExecutionContext();
 

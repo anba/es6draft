@@ -22,6 +22,7 @@ import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
+import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -62,12 +63,12 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
     private static final int VAR_ENV = 2;
     private static final int DELETABLE_BINDINGS = 3;
 
-    private static final String methodName = "script_evalinit";
     private static final Type methodType = Type.getMethodType(Type.VOID_TYPE,
             Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
             Type.BOOLEAN_TYPE);
 
     void generate(Script evalScript) {
+        String methodName = codegen.methodName(evalScript, ScriptName.EvalInit);
         InstructionVisitor mv = codegen.publicStaticMethod(methodName, methodType);
         mv.lineInfo(evalScript.getLine());
         mv.begin();
