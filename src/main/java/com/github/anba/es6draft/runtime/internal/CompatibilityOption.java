@@ -77,6 +77,8 @@ public enum CompatibilityOption {
 
     /**
      * B.3.2 Web Legacy Compatibility for Block-Level Function Declarations
+     * <p>
+     * <strong>Not Implemented</strong>
      */
     BlockFunctionDeclaration;
 

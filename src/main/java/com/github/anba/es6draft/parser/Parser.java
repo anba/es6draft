@@ -319,10 +319,10 @@ public class Parser {
         }
     }
 
-    public Parser(String sourceFile, int sourceLine, EnumSet<Option> options) {
+    public Parser(String sourceFile, int sourceLine, Set<Option> options) {
         this.sourceFile = sourceFile;
         this.sourceLine = sourceLine;
-        this.options = options;
+        this.options = EnumSet.copyOf(options);
         context = new ParseContext();
         context.strictMode = options.contains(Option.Strict) ? StrictMode.Strict
                 : StrictMode.NonStrict;
