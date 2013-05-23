@@ -36,14 +36,14 @@ import com.github.anba.es6draft.util.LazyInit;
 import com.github.anba.es6draft.util.Parallelized;
 
 /**
- * The standard test262 test suite
+ * The standard test262 test suite (strict)
  * 
  */
 @RunWith(Parallelized.class)
-public final class Test262 extends BaseTest262 {
-    private static final String TEST_SUITE = "test.suite.test262";
+public final class Test262Strict extends BaseTest262 {
+    private static final String TEST_SUITE = "test.suite.test262-strict";
 
-    private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
+    private static Set<CompatibilityOption> options = CompatibilityOption.StrictCompatibility();
     private static final ScriptCache cache = new ScriptCache(Parser.Option.from(options));
 
     private static final LazyInit<Configuration> configuration = new LazyInit<Configuration>() {

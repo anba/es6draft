@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2012-2013 André Bargull
+    Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+
+    <https://github.com/anba/es6draft>
+
+-->
+<excludeList>
+  <!-- escape, unescape -->
+  <test id="S11.2.1_A4_T1" />
+  <test id="15.2.3.3-4-12" />
+  <test id="15.2.3.3-4-13" />
+  
+  <!-- Date.prototype.getYear, Date.prototype.setYear -->
+  <test id="S11.2.1_A4_T9" />
+  <test id="S15.2.2.1_A2_T5" />
+  <test id="15.2.3.3-4-119" />
+  <test id="15.2.3.3-4-137" />
+  
+  <!-- Date.prototype.toGMTString -->
+  <test id="15.2.3.3-4-155" />
+  
+  <!-- RegExp.prototype.compile -->
+  <test id="15.2.3.3-4-164" />
+  
+  <!-- String.prototype.substr -->
+  <test id="15.2.3.3-4-74" />
+  <test id="15.12.3-11-26" />
+  
+  <!-- octal integer literal -->
+  <test id="15.2.3.6-2-17-1" />
+
+  <!-- octal escape sequence -->
+  <test id="S15.5.4.11_A5_T1" />
+
+  <!-- ES6: poisoned 'caller' inherited from Function.prototype -->
+  <test id="10.6-13-a-2" />
+  <test id="10.6-13-a-3" />
+  <test id="15.3.5.4_2-12gs" />
+  <test id="15.3.5.4_2-14gs" />
+  <test id="15.3.5.4_2-75gs" />
+  <test id="15.3.5.4_2-76gs" />
+  <test id="15.3.5.4_2-77gs" />
+  <test id="15.3.5.4_2-78gs" />
+  <test id="15.3.5.4_2-79gs" />
+  <test id="15.3.5.4_2-80gs" />
+  <test id="15.3.5.4_2-81gs" />
+  <test id="15.3.5.4_2-82gs" />
+  <test id="15.3.5.4_2-83gs" />
+  <test id="15.3.5.4_2-84gs" />
+  <test id="15.3.5.4_2-85gs" />
+  <test id="15.3.5.4_2-86gs" />
+  <test id="15.3.5.4_2-87gs" />
+  <test id="15.3.5.4_2-88gs" />
+  <!-- TODO: report broken test case -->
+  <test id="15.3.5.4_2-89gs" />
+  <test id="15.3.5.4_2-90gs" />
+  <test id="15.3.5.4_2-91gs" />
+  <test id="15.3.5.4_2-92gs" />
+  <test id="15.3.5.4_2-93gs" />
+</excludeList>
