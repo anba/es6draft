@@ -672,7 +672,8 @@ public class Parser {
         return script();
     }
 
-    public Script parseFunction(CharSequence formals, CharSequence bodyText) throws ParserException {
+    public FunctionDefinition parseFunction(CharSequence formals, CharSequence bodyText)
+            throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
 
@@ -718,22 +719,13 @@ public class Parser {
                 restoreContext();
             }
 
-            boolean strict = (context.strictMode == StrictMode.Strict);
-            List<StatementListItem> body = newSmallList();
-            body.add(new ExpressionStatement(function));
-
-            FunctionContext scope = context.funContext;
-            Script script = new Script(sourceFile, scope, body, options, strict);
-            script.setLine(sourceLine);
-            scope.node = script;
-
-            return script;
+            return function;
         } finally {
             restoreContext();
         }
     }
 
-    public Script parseGenerator(CharSequence formals, CharSequence bodyText)
+    public GeneratorDefinition parseGenerator(CharSequence formals, CharSequence bodyText)
             throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
@@ -780,16 +772,7 @@ public class Parser {
                 restoreContext();
             }
 
-            boolean strict = (context.strictMode == StrictMode.Strict);
-            List<StatementListItem> body = newSmallList();
-            body.add(new ExpressionStatement(generator));
-
-            FunctionContext scope = context.funContext;
-            Script script = new Script(sourceFile, scope, body, options, strict);
-            script.setLine(sourceLine);
-            scope.node = script;
-
-            return script;
+            return generator;
         } finally {
             restoreContext();
         }

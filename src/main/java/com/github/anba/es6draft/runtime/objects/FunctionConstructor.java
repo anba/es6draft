@@ -12,8 +12,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 
-import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -83,7 +83,15 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
         }
 
         /* steps 8-13 */
-        Script script = script(calleeContext, p, bodyText);
+        RuntimeInfo.Function function;
+        try {
+            Parser parser = new Parser("<Function>", 1);
+            FunctionDefinition functionDef = parser.parseFunction(p, bodyText);
+            String className = calleeContext.getRealm().nextFunctionName();
+            function = ScriptLoader.compile(className, functionDef);
+        } catch (ParserException e) {
+            throw e.toScriptException(calleeContext);
+        }
 
         /* step 14 */
         LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
@@ -101,14 +109,6 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
         }
         OrdinaryFunction fn = (OrdinaryFunction) f;
 
-        /* step 8-9 */
-        ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(calleeContext
-                .getRealm());
-        Object result = script.evaluate(scriptCxt);
-        assert result instanceof OrdinaryFunction;
-        RuntimeInfo.Function function = ((OrdinaryFunction) result).getFunction();
-        assert function != null : "uninitialised function object";
-
         /* step 18 */
         FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 19 */
@@ -123,17 +123,6 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
-    }
-
-    private static Script script(ExecutionContext cx, CharSequence p, CharSequence bodyText) {
-        try {
-            Parser parser = new Parser("<Function>", 1);
-            com.github.anba.es6draft.ast.Script parsedScript = parser.parseFunction(p, bodyText);
-            String className = cx.getRealm().nextFunctionName();
-            return ScriptLoader.load(className, parsedScript);
-        } catch (ParserException e) {
-            throw e.toScriptException(cx);
-        }
     }
 
     /**

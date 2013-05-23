@@ -10,6 +10,8 @@ import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecuti
 
 import java.util.EnumSet;
 
+import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.compiler.CompiledFunction;
 import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.interpreter.Interpreter;
@@ -103,6 +105,22 @@ public class ScriptLoader {
             Class<?> c = cl.loadClass(clazzName);
             CompiledScript instance = (CompiledScript) c.newInstance();
             return instance;
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static RuntimeInfo.Function compile(String className, FunctionNode function)
+            throws ParserException {
+        try {
+            // prepend '#' to mark generated classes, cf. ErrorPrototype
+            String clazzName = "#" + className;
+            Compiler compiler = new Compiler(EnumSet.noneOf(Compiler.Option.class));
+            byte[] bytes = compiler.compile(function, clazzName);
+            ClassLoader cl = new ByteClassLoader(clazzName, bytes);
+            Class<?> c = cl.loadClass(clazzName);
+            CompiledFunction instance = (CompiledFunction) c.newInstance();
+            return instance.getFunction();
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

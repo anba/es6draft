@@ -16,8 +16,8 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.M
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
 
-import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -89,7 +89,15 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
         }
 
         /* steps 8-12 */
-        Script script = script(calleeContext, p, bodyText);
+        RuntimeInfo.Function function;
+        try {
+            Parser parser = new Parser("<GeneratorFunction>", 1);
+            GeneratorDefinition generatorDef = parser.parseGenerator(p, bodyText);
+            String className = calleeContext.getRealm().nextFunctionName();
+            function = ScriptLoader.compile(className, generatorDef);
+        } catch (ParserException e) {
+            throw e.toScriptException(calleeContext);
+        }
 
         /* step 13 */
         LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
@@ -107,15 +115,7 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
 
-        /* step 17 */
-        ExecutionContext scriptCxt = ExecutionContext.newScriptExecutionContext(calleeContext
-                .getRealm());
-        Object result = script.evaluate(scriptCxt);
-        assert result instanceof OrdinaryGenerator;
-        RuntimeInfo.Function function = ((OrdinaryGenerator) result).getFunction();
-        assert function != null : "uninitialised function object";
-
-        /* step 18 */
+        /* step 17-18 */
         FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 19 */
         ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
@@ -131,17 +131,6 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         return OrdinaryConstruct(callerContext, this, args);
-    }
-
-    private static Script script(ExecutionContext cx, CharSequence p, CharSequence bodyText) {
-        try {
-            Parser parser = new Parser("<GeneratorFunction>", 1);
-            com.github.anba.es6draft.ast.Script parsedScript = parser.parseGenerator(p, bodyText);
-            String className = cx.getRealm().nextFunctionName();
-            return ScriptLoader.load(className, parsedScript);
-        } catch (ParserException e) {
-            throw e.toScriptException(cx);
-        }
     }
 
     /**
