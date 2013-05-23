@@ -12,6 +12,8 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 
+import java.util.EnumSet;
+
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.parser.Parser;
@@ -85,7 +87,9 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
         /* steps 8-13 */
         RuntimeInfo.Function function;
         try {
-            Parser parser = new Parser("<Function>", 1);
+            EnumSet<Parser.Option> options = Parser.Option.from(calleeContext.getRealm()
+                    .getOptions());
+            Parser parser = new Parser("<Function>", 1, options);
             FunctionDefinition functionDef = parser.parseFunction(p, bodyText);
             String className = calleeContext.getRealm().nextFunctionName();
             function = ScriptLoader.compile(className, functionDef);

@@ -24,6 +24,7 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
 import com.github.anba.es6draft.ast.MethodDefinition.MethodType;
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.SmallArrayList;
 
@@ -297,11 +298,25 @@ public class Parser {
         NoOctalEscapeSequence,
 
         /** B.1.3 HTML-like Comments */
-        NoHTMLComments,
-    }
+        NoHTMLComments;
 
-    public Parser(String sourceFile, int sourceLine) {
-        this(sourceFile, sourceLine, EnumSet.noneOf(Option.class));
+        public static void addAll(Set<Option> options, Set<CompatibilityOption> compatOptions) {
+            if (!compatOptions.contains(CompatibilityOption.OctalInteger)) {
+                options.add(Option.NoLegacyOctalIntegerLiteral);
+            }
+            if (!compatOptions.contains(CompatibilityOption.OctalInteger)) {
+                options.add(Option.NoOctalEscapeSequence);
+            }
+            if (!compatOptions.contains(CompatibilityOption.HTMLComments)) {
+                options.add(Option.NoHTMLComments);
+            }
+        }
+
+        public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
+            EnumSet<Option> options = EnumSet.noneOf(Option.class);
+            addAll(options, compatOptions);
+            return options;
+        }
     }
 
     public Parser(String sourceFile, int sourceLine, EnumSet<Option> options) {

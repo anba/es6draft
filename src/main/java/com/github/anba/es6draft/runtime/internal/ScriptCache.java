@@ -15,12 +15,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.parser.Parser.Option;
 import com.github.anba.es6draft.parser.ParserException;
 
 /**
@@ -38,10 +41,15 @@ public class ScriptCache {
         }
     });
 
+    private EnumSet<Option> options;
     private AtomicInteger scriptCounter = new AtomicInteger(0);
 
     private String nextScriptName() {
         return "Script_" + scriptCounter.incrementAndGet();
+    }
+
+    public ScriptCache(EnumSet<Parser.Option> options) {
+        this.options = options;
     }
 
     /**
@@ -49,6 +57,17 @@ public class ScriptCache {
      */
     private Reader newReader(InputStream stream) throws IOException {
         return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Parses the javascript source
+     */
+    private com.github.anba.es6draft.ast.Script parse(String sourceFile, int sourceLine,
+            Reader reader) throws ParserException, IOException {
+        String source = readFully(reader);
+        Parser parser = new Parser(sourceFile, sourceLine, options);
+        com.github.anba.es6draft.ast.Script parsedScript = parser.parse(source);
+        return parsedScript;
     }
 
     private static String readFully(Reader reader) throws IOException {
@@ -73,9 +92,8 @@ public class ScriptCache {
      */
     public Script script(String sourceName, int sourceLine, InputStream stream) throws IOException,
             ParserException {
-        String className = nextScriptName();
-        try (Reader reader = newReader(stream)) {
-            return ScriptLoader.load(sourceName, sourceLine, className, readFully(reader));
+        try (Reader r = newReader(stream)) {
+            return ScriptLoader.load(nextScriptName(), parse(sourceName, sourceLine, r));
         }
     }
 
@@ -84,8 +102,9 @@ public class ScriptCache {
      */
     public Script script(String sourceName, int sourceLine, Reader reader) throws IOException,
             ParserException {
-        String className = nextScriptName();
-        return ScriptLoader.load(sourceName, sourceLine, className, readFully(reader));
+        try (Reader r = reader) {
+            return ScriptLoader.load(nextScriptName(), parse(sourceName, sourceLine, r));
+        }
     }
 
     /**

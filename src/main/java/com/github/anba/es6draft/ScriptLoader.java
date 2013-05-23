@@ -15,8 +15,6 @@ import com.github.anba.es6draft.compiler.CompiledFunction;
 import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.interpreter.Interpreter;
-import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
@@ -76,16 +74,7 @@ public class ScriptLoader {
         return result;
     }
 
-    public static Script load(String sourceFile, int sourceLine, String className, String source)
-            throws ParserException {
-        Parser parser = new Parser(sourceFile, sourceLine);
-        com.github.anba.es6draft.ast.Script parsedScript = parser.parse(source);
-        Script script = compile(className, parsedScript, EnumSet.noneOf(Compiler.Option.class));
-        return script;
-    }
-
-    public static Script load(String className, com.github.anba.es6draft.ast.Script parsedScript)
-            throws ParserException {
+    public static Script load(String className, com.github.anba.es6draft.ast.Script parsedScript) {
         Script script = Interpreter.script(parsedScript);
         if (script == null) {
             script = compile(className, parsedScript, EnumSet.noneOf(Compiler.Option.class));
@@ -94,8 +83,7 @@ public class ScriptLoader {
     }
 
     public static CompiledScript compile(String className,
-            com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options)
-            throws ParserException {
+            com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options) {
         try {
             // prepend '#' to mark generated classes, cf. ErrorPrototype
             String clazzName = "#" + className;
@@ -110,8 +98,7 @@ public class ScriptLoader {
         }
     }
 
-    public static RuntimeInfo.Function compile(String className, FunctionNode function)
-            throws ParserException {
+    public static RuntimeInfo.Function compile(String className, FunctionNode function) {
         try {
             // prepend '#' to mark generated classes, cf. ErrorPrototype
             String clazzName = "#" + className;

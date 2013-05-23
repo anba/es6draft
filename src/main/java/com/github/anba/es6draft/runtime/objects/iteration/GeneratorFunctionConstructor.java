@@ -16,6 +16,8 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.M
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
 
+import java.util.EnumSet;
+
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.parser.Parser;
@@ -91,7 +93,9 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
         /* steps 8-12 */
         RuntimeInfo.Function function;
         try {
-            Parser parser = new Parser("<GeneratorFunction>", 1);
+            EnumSet<Parser.Option> options = Parser.Option.from(calleeContext.getRealm()
+                    .getOptions());
+            Parser parser = new Parser("<GeneratorFunction>", 1, options);
             GeneratorDefinition generatorDef = parser.parseGenerator(p, bodyText);
             String className = calleeContext.getRealm().nextFunctionName();
             function = ScriptLoader.compile(className, generatorDef);

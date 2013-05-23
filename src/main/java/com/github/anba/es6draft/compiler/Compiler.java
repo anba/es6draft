@@ -22,7 +22,6 @@ import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.parser.ParserException;
 
 /**
  *
@@ -50,7 +49,7 @@ public class Compiler {
         this.debug = options.contains(Option.Debug);
     }
 
-    public byte[] compile(Script script, String className) throws ParserException {
+    public byte[] compile(Script script, String className) {
         final int flags = ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS;
         String superClassName = Types.CompiledScript.getInternalName();
         String[] interfaces = null;
@@ -80,7 +79,7 @@ public class Compiler {
         return bytes;
     }
 
-    public byte[] compile(FunctionNode function, String className) throws ParserException {
+    public byte[] compile(FunctionNode function, String className) {
         final int flags = ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS;
         String superClassName = Types.CompiledFunction.getInternalName();
         String[] interfaces = null;

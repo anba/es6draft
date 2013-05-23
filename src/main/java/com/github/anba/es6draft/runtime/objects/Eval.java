@@ -115,6 +115,7 @@ public final class Eval {
             boolean globalCode, boolean directEval, boolean globalScope) {
         try {
             EnumSet<Parser.Option> options = EnumSet.of(Parser.Option.EvalScript);
+            Parser.Option.addAll(options, cx.getRealm().getOptions());
             if (strict) {
                 options.add(Parser.Option.Strict);
             }

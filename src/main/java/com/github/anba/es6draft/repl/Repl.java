@@ -30,7 +30,6 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserEOFException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.StopExecutionException.Reason;
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -115,7 +114,7 @@ public class Repl {
     /**
      * REPL: Read
      */
-    private com.github.anba.es6draft.ast.Script read(int line) {
+    private com.github.anba.es6draft.ast.Script read(Realm realm, int line) {
         StringBuilder source = new StringBuilder();
         try {
             for (;;) {
@@ -125,7 +124,8 @@ public class Repl {
                 }
                 source.append(s).append('\n');
                 try {
-                    Parser parser = new Parser("typein", line);
+                    EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
+                    Parser parser = new Parser("typein", line, options);
                     return parser.parse(source);
                 } catch (ParserEOFException e) {
                     continue;
@@ -160,10 +160,10 @@ public class Repl {
     /**
      * REPL: Print
      */
-    private void print(ExecutionContext cx, Object result) {
+    private void print(Realm realm, Object result) {
         try {
             if (result != UNDEFINED) {
-                console.writer().println(ToSource(cx, result));
+                console.writer().println(ToSource(realm.defaultContext(), result));
             }
         } catch (ScriptException e) {
             console.printf("uncaught exception: %s\n", e.getMessage());
@@ -176,11 +176,10 @@ public class Repl {
     private void loop() {
         GlobalObject global = newGlobal();
         Realm realm = global.getRealm();
-        ExecutionContext cx = realm.defaultContext();
         for (int line = 1;; line += 1) {
             try {
                 console.printf("js> ");
-                com.github.anba.es6draft.ast.Script parsedScript = read(line);
+                com.github.anba.es6draft.ast.Script parsedScript = read(realm, line);
                 if (parsedScript == null) {
                     continue;
                 }
@@ -188,7 +187,7 @@ public class Repl {
                 if (result == null) {
                     continue;
                 }
-                print(cx, result);
+                print(realm, result);
             } catch (StopExecutionException e) {
                 if (e.getReason() == Reason.Quit) {
                     System.exit(0);
@@ -216,14 +215,13 @@ public class Repl {
         ReplConsole console = new ReplConsole(this.console);
         Path baseDir = Paths.get("").toAbsolutePath();
         Path script = Paths.get("./.");
-        ScriptCache scriptCache = new ScriptCache();
-
         Set<CompatibilityOption> compatOpts;
         if (options.contains(Option.Strict)) {
             compatOpts = CompatibilityOption.StrictCompatibility();
         } else {
             compatOpts = CompatibilityOption.WebCompatibility();
         }
+        ScriptCache scriptCache = new ScriptCache(Parser.Option.from(compatOpts));
 
         List<String> initScripts;
         ShellGlobalObject global;
