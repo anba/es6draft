@@ -546,8 +546,9 @@ public class TokenStream {
                 }
             } else if (match('=')) {
                 return Token.LE;
-            } else if (peek() == '!' && peek2() == '-' && peek3() == '-') {
-                // html end-comment
+            } else if (peek() == '!' && peek2() == '-' && peek3() == '-'
+                    && !parser.isEnabled(Parser.Option.NoHTMLComments)) {
+                // html start-comment
                 mustMatch('!');
                 mustMatch('-');
                 mustMatch('-');
@@ -606,8 +607,9 @@ public class TokenStream {
             }
         case '-':
             if (match('-')) {
-                if (peek() == '>' && hasLineTerminator) {
-                    // html start-comment at line start
+                if (peek() == '>' && hasLineTerminator
+                        && !parser.isEnabled(Parser.Option.NoHTMLComments)) {
+                    // html end-comment at line start
                     mustMatch('>');
                     readSingleComment();
                     return Token.COMMENT;

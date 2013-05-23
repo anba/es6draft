@@ -295,6 +295,9 @@ public class Parser {
 
         /** B.1.2 String Literals */
         NoOctalEscapeSequence,
+
+        /** B.1.3 HTML-like Comments */
+        NoHTMLComments,
     }
 
     public Parser(String sourceFile, int sourceLine) {
