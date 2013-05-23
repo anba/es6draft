@@ -6,8 +6,6 @@
 #
 
 # ES6 spec bugs
-ecma_5/Exceptions/error-property-enumerability.js
-js1_7/expressions/destructuring-scope.js
 js1_7/regress/regress-410649.js
 js1_8/regress/regress-469625-03.js
 ecma/ExecutionContexts/10.1.3-2.js
@@ -94,8 +92,8 @@ js1_5/Scope/regress-184107.js
 js1_5/Scope/regress-185485.js
 
 # destructuring difference
+js1_7/expressions/destructuring-scope.js
 js1_7/extensions/regress-368224.js
-js1_7/extensions/regress-355410.js
 
 # Special IE Function.prototype.{apply,call} behaviour not supported
 js1_5/Function/regress-222029-001.js
@@ -406,8 +404,9 @@ ecma_5/extensions/legacy-JSON.js
 # SpiderMonkey also treats U+FFFE as BOM
 ecma_3/extensions/regress-368516.js
 
-# 'this' allowed as Identifier in Spidermonkey
+# keywords and reserved words allowed as Identifier in Spidermonkey
 js1_8_1/regress/regress-452498-117.js
+js1_5/LexicalConventions/regress-343675.js
 
 # Spidermonkey 'const' feature
 js1_8_1/extensions/regress-437288-01.js
@@ -797,6 +796,7 @@ ecma_5/String/string-upper-lower-mapping.js
 js1_5/Regress/regress-308085.js
 js1_5/Regress/regress-398085-01.js
 js1_5/Regress/regress-396684.js
+js1_5/Regress/regress-416628.js
 js1_8_5/regress/regress-563221.js
 
 # Class file too large
@@ -818,19 +818,20 @@ ecma_5/extensions/String-methods-infinite-recursion.js
 ecma_5/extensions/toLocaleString-infinite-recursion.js
 js1_2/regexp/regress-9141.js
 js1_5/Exceptions/regress-121658.js
+js1_5/Expressions/regress-394673.js
+js1_5/extensions/regress-192465.js
 js1_5/extensions/regress-355497.js
 js1_5/extensions/regress-420869-01.js
 js1_5/extensions/regress-424683-01.js
+js1_5/GC/regress-348532.js
 js1_5/Regress/regress-152646.js
+js1_5/Regress/regress-192414.js
 js1_5/Regress/regress-234389.js
 js1_5/Regress/regress-256501.js
 js1_5/Regress/regress-280769-3.js
 js1_5/Regress/regress-311629.js
 js1_5/Regress/regress-96128-n.js
-js1_5/Regress/regress-98901.js
-js1_5/Regress/regress-192414.js
-js1_5/extensions/regress-192465.js
-js1_5/extensions/regress-369696-03.js
+js1_5/Regress/regress-96526-002.js
 
 # OutOfMemory: Java heap space
 js1_5/Regress/regress-422348.js
@@ -838,37 +839,30 @@ ecma_5/String/string-object-length.js
 ecma_5/String/replace-math.js
 ecma_5/RegExp/regress-617935.js
 
-# Timeout
+# Timeout (slow)
 ecma/Date/15.9.5.10-2.js
 ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.12-2.js
+js1_5/GC/regress-203278-2.js
+js1_5/Regress/regress-203278-1.js
+js1_5/Regress/regress-280769-1.js
+js1_5/Regress/regress-280769-2.js
+js1_5/Regress/regress-280769-4.js
+js1_5/Regress/regress-280769-5.js
+js1_5/Regress/regress-312588.js
+
+# Timeout
 ecma_5/Array/unshift-01.js
 ecma_5/extensions/JSON-string-replacer-overflow.js
 ecma_5/JSON/parse-mega-huge-array.js
 js1_5/Array/regress-330812.js
 js1_5/Array/regress-157652.js
-js1_5/Expressions/regress-394673.js
 js1_5/Function/regress-364023.js
-js1_5/GC/regress-203278-2.js
-js1_5/GC/regress-278725.js
-js1_5/GC/regress-348532.js
-js1_5/LexicalConventions/regress-343675.js
-js1_5/Regress/regress-111557.js
-js1_5/Regress/regress-118849.js
-js1_5/Regress/regress-159334.js
-js1_5/Regress/regress-203278-1.js
 js1_5/Regress/regress-244470.js
-js1_5/Regress/regress-280769-1.js
-js1_5/Regress/regress-280769-2.js
-js1_5/Regress/regress-280769-4.js
 js1_5/Regress/regress-303213.js
-js1_5/Regress/regress-312588.js
 js1_5/Regress/regress-321971.js
 js1_5/Regress/regress-360969-05.js
 js1_5/Regress/regress-360969-06.js
-js1_5/Regress/regress-416628.js
-js1_5/Regress/regress-96526-002.js
-js1_5/Regress/regress-280769-5.js
 ecma_5/Object/15.2.3.6-dictionary-redefinition-1-of-8.js
 ecma_5/Object/15.2.3.6-dictionary-redefinition-2-of-8.js
 ecma_5/Object/15.2.3.6-dictionary-redefinition-3-of-8.js

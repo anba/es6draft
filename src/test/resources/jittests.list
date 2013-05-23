@@ -804,16 +804,15 @@ tests/auto-regress/bug562028.js
 tests/auto-regress/bug601393.js
 tests/basic/bug586917.js
 tests/basic/bug641235.js
+tests/basic/testBug686274.js
 
 # Timeout
 tests/auto-regress/bug583680.js
 tests/auto-regress/bug620637.js
 tests/auto-regress/bug678362.js
-tests/auto-regress/bug739402.js
 tests/basic/bug539379.js
 tests/basic/bug849777.js
 tests/basic/math-jit-tests.js
-tests/basic/regexp-sticky-undef-capture.js
 tests/basic/testBug614653.js
 tests/basic/testBug621202.js
 
