@@ -824,6 +824,7 @@ js1_5/extensions/regress-355497.js
 js1_5/extensions/regress-420869-01.js
 js1_5/extensions/regress-424683-01.js
 js1_5/GC/regress-348532.js
+js1_5/Regress/regress-98901.js
 js1_5/Regress/regress-152646.js
 js1_5/Regress/regress-192414.js
 js1_5/Regress/regress-234389.js
