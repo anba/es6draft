@@ -9,8 +9,12 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.GeneratorThreadGroup;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -30,11 +34,28 @@ public class ErrorObject extends OrdinaryObject {
     private final Realm realm;
     private boolean initialised = false;
     private ScriptException exception = null;
+    private List<StackTraceElement[]> stackTraces;
 
     public ErrorObject(Realm realm) {
         super(realm);
         this.realm = realm;
         this.exception = new ScriptException(this);
+        this.stackTraces = collectStackTraces();
+    }
+
+    private List<StackTraceElement[]> collectStackTraces() {
+        List<StackTraceElement[]> stackTraces = new ArrayList<>();
+        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
+        while (threadGroup instanceof GeneratorThreadGroup) {
+            threadGroup = threadGroup.getParent();
+            Thread[] threads = new Thread[1];
+            if (threadGroup.enumerate(threads, false) == 1) {
+                stackTraces.add(threads[0].getStackTrace());
+            } else {
+                break;
+            }
+        }
+        return stackTraces;
     }
 
     public boolean isInitialised() {
@@ -48,6 +69,10 @@ public class ErrorObject extends OrdinaryObject {
 
     public ScriptException getException() {
         return exception;
+    }
+
+    public List<StackTraceElement[]> getStackTraces() {
+        return stackTraces;
     }
 
     @Override

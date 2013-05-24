@@ -29,7 +29,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -110,8 +109,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            ScriptException e = ((ErrorObject) thisValue).getException();
-            return getTopStackTraceElement(e).getFileName();
+            return getTopStackTraceElement((ErrorObject) thisValue).getFileName();
         }
 
         /**
@@ -136,8 +134,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            ScriptException e = ((ErrorObject) thisValue).getException();
-            return getTopStackTraceElement(e).getLineNumber();
+            return getTopStackTraceElement((ErrorObject) thisValue).getLineNumber();
         }
 
         /**
@@ -162,8 +159,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            ScriptException e = ((ErrorObject) thisValue).getException();
-            return getStack(e);
+            return getStack((ErrorObject) thisValue);
         }
 
         /**
@@ -188,19 +184,18 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            ScriptException e = ((ErrorObject) thisValue).getException();
-            return getStackTrace(cx, e);
+            return getStackTrace(cx, (ErrorObject) thisValue);
         }
     }
 
-    private static StackTraceElement getTopStackTraceElement(ScriptException e) {
+    private static StackTraceElement getTopStackTraceElement(ErrorObject e) {
         for (StackTraceElement element : new StackTraceElementIterable(e)) {
             return element;
         }
         return new StackTraceElement("", "", "", -1);
     }
 
-    private static String getStack(ScriptException e) {
+    private static String getStack(ErrorObject e) {
         StringBuilder sb = new StringBuilder();
         for (StackTraceElement element : new StackTraceElementIterable(e)) {
             sb.append(getMethodName(element)).append('@').append(element.getFileName()).append(':')
@@ -209,7 +204,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
         return sb.toString();
     }
 
-    private static ScriptObject getStackTrace(ExecutionContext cx, ScriptException e) {
+    private static ScriptObject getStackTrace(ExecutionContext cx, ErrorObject e) {
         List<ScriptObject> list = new ArrayList<>();
         for (StackTraceElement element : new StackTraceElementIterable(e)) {
             OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
@@ -229,38 +224,33 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
     }
 
     private static final class StackTraceElementIterable implements Iterable<StackTraceElement> {
-        private Throwable throwable;
+        private ErrorObject error;
 
-        StackTraceElementIterable(Throwable throwable) {
-            this.throwable = throwable;
+        StackTraceElementIterable(ErrorObject error) {
+            this.error = error;
         }
 
         @Override
         public Iterator<StackTraceElement> iterator() {
-            return new StackTraceElementIterator(throwable);
+            return new StackTraceElementIterator(error);
         }
     }
 
     private static final class StackTraceElementIterator implements Iterator<StackTraceElement> {
-        private ThreadGroup threadGroup;
+        private StackTraceElement next;
         private StackTraceElement[] elements;
         private int cursor = 0;
-        private StackTraceElement next;
+        private Iterator<StackTraceElement[]> stackTraces;
 
-        StackTraceElementIterator(Throwable throwable) {
-            this.threadGroup = Thread.currentThread().getThreadGroup();
-            this.elements = throwable.getStackTrace();
+        StackTraceElementIterator(ErrorObject error) {
+            this.elements = error.getException().getStackTrace();
+            this.stackTraces = error.getStackTraces().iterator();
         }
 
         private static boolean isInternalStackFrame(StackTraceElement element) {
             // filter stacktrace elements based on the encoding in CodeGenerator/ScriptLoader
             return (element.getClassName().charAt(0) == '#' && JVMNames.fromBytecodeName(
                     element.getMethodName()).charAt(0) == '!');
-        }
-
-        private static boolean isGeneratorThreadGroup(ThreadGroup threadGroup) {
-            // filter thread-groups based on name per GeneratorObject
-            return "generator-group".equals(threadGroup.getName());
         }
 
         private StackTraceElement tryNext() {
@@ -271,16 +261,9 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
                         return element;
                     }
                 }
-                if (isGeneratorThreadGroup(threadGroup)) {
-                    ThreadGroup parent = threadGroup.getParent();
-                    Thread[] threads = new Thread[1];
-                    if (parent.enumerate(threads) == 1) {
-                        threadGroup = parent;
-                        cursor = 0;
-                        elements = threads[0].getStackTrace();
-                    } else {
-                        elements = null;
-                    }
+                if (stackTraces.hasNext()) {
+                    cursor = 0;
+                    elements = stackTraces.next();
                 } else {
                     elements = null;
                 }

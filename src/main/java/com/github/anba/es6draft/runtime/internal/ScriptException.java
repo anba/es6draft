@@ -19,7 +19,6 @@ public class ScriptException extends RuntimeException {
     private final Object value;
 
     public ScriptException(Object value) {
-        // super(null, null, false, false);
         this.value = value;
     }
 

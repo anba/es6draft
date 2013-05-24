@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.GeneratorThreadGroup.newGeneratorThreadFactory;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -17,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -166,31 +166,9 @@ public class GeneratorObject extends OrdinaryObject {
         }
     }
 
-    private static final class ThreadGroupFactory implements ThreadFactory {
-        private final ThreadGroup group;
-
-        ThreadGroupFactory() {
-            this.group = Thread.currentThread().getThreadGroup();
-        }
-
-        @Override
-        public Thread newThread(Runnable r) {
-            // place each thread into a new group to be able to preserve stacktraces
-            ThreadGroup newGroup = new ThreadGroup(group, "generator-group");
-            Thread newThread = new Thread(newGroup, r, "generator-thread");
-            if (newThread.isDaemon()) {
-                newThread.setDaemon(false);
-            }
-            if (newThread.getPriority() != Thread.NORM_PRIORITY) {
-                newThread.setPriority(Thread.NORM_PRIORITY);
-            }
-            return newThread;
-        }
-    }
-
     private void start0() {
         this.state = GeneratorState.Executing;
-        ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadGroupFactory());
+        ExecutorService executor = Executors.newSingleThreadExecutor(newGeneratorThreadFactory());
         future = executor.submit(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
