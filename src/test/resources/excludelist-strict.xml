@@ -8,27 +8,27 @@
 
 -->
 <excludeList>
-  <!-- escape, unescape -->
+  <!-- escape, unescape (https://bugs.ecmascript.org/show_bug.cgi?id=1125) -->
   <test id="S11.2.1_A4_T1" />
   <test id="15.2.3.3-4-12" />
   <test id="15.2.3.3-4-13" />
-  
-  <!-- Date.prototype.getYear, Date.prototype.setYear -->
+
+  <!-- Date.prototype.getYear, Date.prototype.setYear (https://bugs.ecmascript.org/show_bug.cgi?id=1128) -->
   <test id="S11.2.1_A4_T9" />
   <test id="S15.2.2.1_A2_T5" />
   <test id="15.2.3.3-4-119" />
   <test id="15.2.3.3-4-137" />
-  
-  <!-- Date.prototype.toGMTString -->
+
+  <!-- Date.prototype.toGMTString (https://bugs.ecmascript.org/show_bug.cgi?id=1129) -->
   <test id="15.2.3.3-4-155" />
-  
-  <!-- RegExp.prototype.compile -->
+
+  <!-- RegExp.prototype.compile (https://bugs.ecmascript.org/show_bug.cgi?id=1129) -->
   <test id="15.2.3.3-4-164" />
-  
-  <!-- String.prototype.substr -->
+
+  <!-- String.prototype.substr (https://bugs.ecmascript.org/show_bug.cgi?id=1131) -->
   <test id="15.2.3.3-4-74" />
   <test id="15.12.3-11-26" />
-  
+
   <!-- octal integer literal -->
   <test id="15.2.3.6-2-17-1" />
 
