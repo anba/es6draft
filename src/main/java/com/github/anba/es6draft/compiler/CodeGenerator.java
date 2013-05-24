@@ -141,7 +141,7 @@ class CodeGenerator {
     final String methodName(Script node, ScriptName name) {
         switch (name) {
         case Code:
-            return "!script";
+            return "!~script";
         case Init:
             return "script_init";
         case EvalInit:
@@ -154,7 +154,7 @@ class CodeGenerator {
     }
 
     private final String methodName(Script node, int index) {
-        return "!script_" + index;
+        return "!~script_" + index;
     }
 
     private final String methodName(TemplateLiteral node) {
@@ -183,7 +183,7 @@ class CodeGenerator {
         case Code:
             return '!' + fname;
         case Init:
-            return fname + "_init";
+            return '!' + fname + "_init";
         case RTI:
             return fname + "_rti";
         default:
