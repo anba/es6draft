@@ -20,12 +20,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -649,35 +649,6 @@ public class OrdinaryObject implements ScriptObject {
                 this.protoKeys = null;
             }
             return null;
-        }
-    }
-
-    private static abstract class SimpleIterator<KEY> implements Iterator<KEY> {
-        private KEY nextKey = null;
-
-        protected abstract KEY tryNext();
-
-        @Override
-        public final boolean hasNext() {
-            if (nextKey == null) {
-                nextKey = tryNext();
-            }
-            return (nextKey != null);
-        }
-
-        @Override
-        public final KEY next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-            KEY key = nextKey;
-            nextKey = null;
-            return key;
-        }
-
-        @Override
-        public final void remove() {
-            throw new UnsupportedOperationException();
         }
     }
 

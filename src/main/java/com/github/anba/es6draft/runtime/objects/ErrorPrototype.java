@@ -17,7 +17,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -29,6 +28,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -236,8 +236,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
         }
     }
 
-    private static final class StackTraceElementIterator implements Iterator<StackTraceElement> {
-        private StackTraceElement next;
+    private static final class StackTraceElementIterator extends SimpleIterator<StackTraceElement> {
         private StackTraceElement[] elements;
         private int cursor = 0;
         private Iterator<StackTraceElement[]> stackTraces;
@@ -253,7 +252,8 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
                     element.getMethodName()).charAt(0) == '!');
         }
 
-        private StackTraceElement tryNext() {
+        @Override
+        protected StackTraceElement tryNext() {
             while (elements != null) {
                 while (cursor < elements.length) {
                     StackTraceElement element = elements[cursor++];
@@ -269,29 +269,6 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
                 }
             }
             return null;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (next == null) {
-                next = tryNext();
-            }
-            return next != null;
-        }
-
-        @Override
-        public StackTraceElement next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-            StackTraceElement next = this.next;
-            this.next = null;
-            return next;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
         }
     }
 }

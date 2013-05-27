@@ -15,11 +15,11 @@ import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.MakeL
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -385,13 +385,12 @@ class WrapperProxy implements ScriptObject {
         return MakeListIterator(cx, new AppendIterator(cx, this));
     }
 
-    private static final class AppendIterator implements Iterator<Object> {
+    private static final class AppendIterator extends SimpleIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject proxyTarget;
         private final Iterator<?> targetKeys;
         private final Iterator<?> protoKeys;
         private HashSet<Object> visitedKeys = new HashSet<>();
-        private Object nextKey = null;
 
         AppendIterator(ExecutionContext cx, WrapperProxy proxy) {
             this.cx = cx;
@@ -400,6 +399,7 @@ class WrapperProxy implements ScriptObject {
             this.protoKeys = FromListIterator(cx, proxy.getProto(cx).enumerate(cx));
         }
 
+        @Override
         protected Object tryNext() {
             while (targetKeys.hasNext()) {
                 Object k = targetKeys.next();
@@ -418,29 +418,6 @@ class WrapperProxy implements ScriptObject {
                 }
             }
             return null;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (nextKey == null) {
-                nextKey = tryNext();
-            }
-            return (nextKey != null);
-        }
-
-        @Override
-        public Object next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-            Object key = nextKey;
-            nextKey = null;
-            return key;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
         }
     }
 

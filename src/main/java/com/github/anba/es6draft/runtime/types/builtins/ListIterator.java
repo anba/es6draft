@@ -14,7 +14,6 @@ import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstra
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -22,6 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -94,17 +94,17 @@ public class ListIterator<T> extends OrdinaryObject {
         }
     }
 
-    private static class IteratorWrapper implements Iterator<Object> {
+    private static class IteratorWrapper extends SimpleIterator<Object> {
         private ExecutionContext cx;
         private ScriptObject object;
-        private Object next = null;
 
         IteratorWrapper(ExecutionContext cx, ScriptObject object) {
             this.cx = cx;
             this.object = object;
         }
 
-        private Object tryNext() {
+        @Override
+        protected Object tryNext() {
             Object nextResult = Invoke(cx, object, "next");
             if (!Type.isObject(nextResult)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
@@ -115,30 +115,6 @@ public class ListIterator<T> extends OrdinaryObject {
                 return null;
             }
             return IteratorValue(cx, next);
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (next == null) {
-                next = tryNext();
-            }
-            return (next != null);
-        }
-
-        @Override
-        public Object next() {
-            if (!hasNext()) {
-                assert false : "hasNext() call";
-                throw new NoSuchElementException();
-            }
-            Object next = this.next;
-            this.next = null;
-            return next;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
         }
     }
 }
