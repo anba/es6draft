@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwURIError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.Eval.indirectEval;
@@ -118,8 +117,8 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         @Function(name = "parseInt", arity = 2)
         public static Object parseInt(ExecutionContext cx, Object thisValue, Object string,
                 Object radix) {
-            CharSequence inputString = ToString(cx, string);
-            CharSequence s = Strings.trimLeft(inputString);
+            String inputString = ToFlatString(cx, string);
+            String s = Strings.trimLeft(inputString);
             int len = s.length();
             int index = 0;
             /* step 5-6 */
@@ -159,8 +158,8 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "parseFloat", arity = 1)
         public static Object parseFloat(ExecutionContext cx, Object thisValue, Object string) {
-            CharSequence inputString = ToString(cx, string);
-            String trimmedString = Strings.trimLeft(inputString).toString();
+            String inputString = ToFlatString(cx, string);
+            String trimmedString = Strings.trimLeft(inputString);
             if (trimmedString.isEmpty()) {
                 return Double.NaN;
             }

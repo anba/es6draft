@@ -44,7 +44,7 @@ public final class Strings {
     /**
      * Remove leading whitespace
      */
-    public static CharSequence trimLeft(CharSequence s) {
+    public static String trimLeft(String s) {
         int length = s.length();
         int start = 0, end = length;
         for (; start < length; ++start) {
@@ -58,13 +58,13 @@ public final class Strings {
             // empty string
             return "";
         }
-        return s.subSequence(start, end);
+        return s.substring(start, end);
     }
 
     /**
      * Remove leading and trailing whitespace
      */
-    public static CharSequence trim(CharSequence s) {
+    public static String trim(String s) {
         int length = s.length();
         int start = 0, end = length;
         for (; start < length; ++start) {
@@ -84,6 +84,44 @@ public final class Strings {
             // empty string
             return "";
         }
-        return s.subSequence(start, end);
+        return s.substring(start, end);
+    }
+
+    /**
+     * If {@code s} is an integer indexed property key less than {@code 0x7FFFFFF}, its integer
+     * value is returned. Otherwise {@code -1} is returned.
+     */
+    public static int toIndex(String s) {
+        return (int) toIndex(s, 0x7FFF_FFFFL);
+    }
+
+    /**
+     * If {@code s} is an integer indexed property key less than {@code 0xFFFFFFF}, its integer
+     * value is returned. Otherwise {@code -1} is returned.
+     */
+    public static long toArrayIndex(String s) {
+        return toIndex(s, 0xFFFF_FFFFL);
+    }
+
+    private static long toIndex(String s, long limit) {
+        int length = s.length();
+        if (length < 1 || length > 10) {
+            // empty string or definitely greater than "2147483647" or "4294967295"
+            // "2147483647".length == 10
+            // "4294967295".length == 10
+            return -1;
+        }
+        if (s.charAt(0) == '0') {
+            return (length == 1 ? 0 : -1);
+        }
+        long index = 0L;
+        for (int i = 0; i < length; ++i) {
+            char c = s.charAt(i);
+            if (!(c >= '0' && c <= '9')) {
+                return -1;
+            }
+            index = index * 10 + (c - '0');
+        }
+        return index < limit ? index : -1;
     }
 }

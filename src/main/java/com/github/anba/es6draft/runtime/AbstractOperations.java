@@ -194,7 +194,7 @@ public final class AbstractOperations {
      * 9.1.3.1 ToNumber Applied to the String Type
      */
     public static double ToNumber(CharSequence s) {
-        return NumberParser.parse(s);
+        return NumberParser.parse(s.toString());
     }
 
     /**
@@ -911,7 +911,7 @@ public final class AbstractOperations {
         private NumberParser() {
         }
 
-        static double parse(CharSequence s) {
+        static double parse(String s) {
             s = Strings.trim(s);
             int len = s.length();
             if (len == 0) {
@@ -920,10 +920,10 @@ public final class AbstractOperations {
             if (s.charAt(0) == '0' && len > 1) {
                 char c = s.charAt(1);
                 if (c == 'x' || c == 'X') {
-                    return readHexIntegerLiteral(s.toString(), 2, len);
+                    return readHexIntegerLiteral(s, 2, len);
                 }
             }
-            return readDecimalLiteral(s.toString(), 0, len);
+            return readDecimalLiteral(s, 0, len);
         }
 
         private static double readHexIntegerLiteral(String s, int start, int end) {

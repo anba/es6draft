@@ -12,6 +12,7 @@ import java.util.Collection;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -32,6 +33,10 @@ public class ExoticString extends OrdinaryObject {
         super(realm);
     }
 
+    /**
+     * Returns the [[StringData]] internal data property, if the property is undefined, the empty
+     * string is returned
+     */
     private CharSequence getStringDataOrEmpty() {
         return (stringData != null ? stringData : "");
     }
@@ -52,25 +57,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     public static int toStringIndex(String p) {
-        final long limit = Integer.MAX_VALUE;
-        int length = p.length();
-        if (length < 1 || length > 10) {
-            // empty string or definitely greater than "2147483647"
-            // "2147483647".length == 10
-            return -1;
-        }
-        if (p.charAt(0) == '0') {
-            return (length == 1 ? 0 : -1);
-        }
-        long acc = 0L;
-        for (int i = 0; i < length; ++i) {
-            char c = p.charAt(i);
-            if (!(c >= '0' && c <= '9')) {
-                return -1;
-            }
-            acc = acc * 10 + (c - '0');
-        }
-        return acc <= limit ? (int) acc : -1;
+        return Strings.toIndex(p);
     }
 
     /**

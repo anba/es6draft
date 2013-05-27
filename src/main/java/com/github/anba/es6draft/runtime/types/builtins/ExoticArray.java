@@ -17,6 +17,7 @@ import java.util.Collection;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -219,28 +220,6 @@ public class ExoticArray extends OrdinaryObject {
      * Introductory paragraph
      */
     public static long toArrayIndex(String p) {
-        final long limit = 4294967295L;
-        // spec definition:
-        // long val = ToUint32(p);
-        // return val != limit && p.equals(ToString(val));
-
-        int length = p.length();
-        if (length < 1 || length > 10) {
-            // empty string or definitely greater than "4294967295"
-            // "4294967295".length == 10
-            return -1;
-        }
-        if (p.charAt(0) == '0') {
-            return (length == 1 ? 0 : -1);
-        }
-        long acc = 0L;
-        for (int i = 0; i < length; ++i) {
-            char c = p.charAt(i);
-            if (!(c >= '0' && c <= '9')) {
-                return -1;
-            }
-            acc = acc * 10 + (c - '0');
-        }
-        return acc < limit ? acc : -1;
+        return Strings.toArrayIndex(p);
     }
 }

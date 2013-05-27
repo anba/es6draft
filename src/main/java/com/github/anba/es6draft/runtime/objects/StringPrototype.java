@@ -500,7 +500,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "trim", arity = 0)
         public static Object trim(ExecutionContext cx, Object thisValue) {
             Object obj = CheckObjectCoercible(cx, thisValue);
-            CharSequence s = ToString(cx, obj);
+            String s = ToFlatString(cx, obj);
             return Strings.trim(s);
         }
 
