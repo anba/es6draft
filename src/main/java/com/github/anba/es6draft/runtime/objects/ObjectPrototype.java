@@ -187,7 +187,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject w = Type.objectValue(v);
             ScriptObject o = ToObject(cx, thisValue);
             for (;;) {
-                w = w.getPrototype(cx);
+                w = w.getInheritance(cx);
                 if (w == null) {
                     return false;
                 }
@@ -226,7 +226,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         @Accessor(name = "__proto__", type = Accessor.Type.Getter)
         public static Object getPrototype(ExecutionContext cx, Object thisValue) {
             ScriptObject o = ToObject(cx, thisValue);
-            ScriptObject p = o.getPrototype(cx);
+            ScriptObject p = o.getInheritance(cx);
             return (p != null ? p : NULL);
         }
 
@@ -241,9 +241,9 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                 throwTypeError(cx, Messages.Key.NotExtensible);
             }
             if (Type.isNull(p)) {
-                o.setPrototype(cx, null);
+                o.setInheritance(cx, null);
             } else if (Type.isObject(p)) {
-                o.setPrototype(cx, Type.objectValue(p));
+                o.setInheritance(cx, Type.objectValue(p));
             }
             return UNDEFINED;
         }

@@ -64,7 +64,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object target) {
             ScriptObject obj = ToObject(cx, target);
-            return obj.getPrototype(cx);
+            return obj.getInheritance(cx);
         }
 
         /**
@@ -78,7 +78,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
                 throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
-            return obj.setPrototype(cx, p);
+            return obj.setInheritance(cx, p);
         }
 
         /**

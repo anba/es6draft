@@ -595,7 +595,7 @@ public final class Properties {
         Object value = resolveValue(realm, rawValue);
         assert value == null || value instanceof ScriptObject;
         ScriptObject prototype = (ScriptObject) value;
-        owner.setPrototype(realm.defaultContext(), prototype);
+        owner.setInheritance(realm.defaultContext(), prototype);
     }
 
     private static void createValue(ScriptObject owner, Realm realm, Value val, Object rawValue) {

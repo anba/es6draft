@@ -109,7 +109,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
         }
         long now = System.currentTimeMillis();
         DateObject obj = new DateObject(realm);
-        obj.setPrototype(calleeContext, realm.getIntrinsic(Intrinsics.DatePrototype));
+        obj.setInheritance(calleeContext, realm.getIntrinsic(Intrinsics.DatePrototype));
         obj.setDateValue(now);
         return DatePrototype.Properties.toString(calleeContext, obj);
     }

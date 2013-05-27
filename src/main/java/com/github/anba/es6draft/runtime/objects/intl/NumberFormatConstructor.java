@@ -294,7 +294,7 @@ public class NumberFormatConstructor extends BuiltinFunction implements Construc
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         NumberFormatObject obj = new NumberFormatObject(callerContext.getRealm());
-        obj.setPrototype(callerContext,
+        obj.setInheritance(callerContext,
                 callerContext.getIntrinsic(Intrinsics.Intl_NumberFormatPrototype));
         InitializeNumberFormat(callerContext, obj, locales, options);
         return obj;

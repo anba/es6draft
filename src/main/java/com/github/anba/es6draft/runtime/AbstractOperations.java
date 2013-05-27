@@ -821,7 +821,7 @@ public final class AbstractOperations {
         }
         /* step 7 */
         for (ScriptObject obj = Type.objectValue(o);;) {
-            obj = obj.getPrototype(cx);
+            obj = obj.getInheritance(cx);
             if (obj == null) {
                 return false;
             }

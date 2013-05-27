@@ -82,7 +82,7 @@ public class GeneratorObject extends OrdinaryObject {
             super(realm);
             this.generator = generator;
             ExecutionContext cx = realm.defaultContext();
-            setPrototype(cx, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+            setInheritance(cx, realm.getIntrinsic(Intrinsics.FunctionPrototype));
             defineOwnProperty(cx, "name", new PropertyDescriptor("@@iterator", false, false, false));
             defineOwnProperty(cx, "length", new PropertyDescriptor(0, false, false, false));
             AddRestrictedFunctionProperties(cx, this);

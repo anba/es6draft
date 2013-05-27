@@ -187,7 +187,7 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 7 */
         f.functionKind = kind;
         /* step 8 */
-        f.setPrototype(cx, prototype);
+        f.setInheritance(cx, prototype);
         /* step 10 */
         // f.[[Extensible]] = true (implicit)
         /* step 10 */
@@ -314,7 +314,7 @@ public class OrdinaryFunction extends FunctionObject {
     public static Callable createThrowTypeError(ExecutionContext cx) {
         /* step 1-4 (implicit) */
         TypeErrorThrower f = new TypeErrorThrower(cx.getRealm());
-        f.setPrototype(cx, cx.getIntrinsic(Intrinsics.FunctionPrototype));
+        f.setInheritance(cx, cx.getIntrinsic(Intrinsics.FunctionPrototype));
         f.defineOwnProperty(cx, "length", new PropertyDescriptor(0, false, false, false));
         f.defineOwnProperty(cx, "name", new PropertyDescriptor("ThrowTypeError", false, false,
                 false));

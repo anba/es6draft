@@ -127,7 +127,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            ScriptObject proto = Type.objectValue(o).getPrototype(cx);
+            ScriptObject proto = Type.objectValue(o).getInheritance(cx);
             if (proto != null) {
                 return proto;
             }
@@ -148,9 +148,9 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             }
             boolean status;
             if (Type.isNull(proto)) {
-                status = Type.objectValue(o).setPrototype(cx, null);
+                status = Type.objectValue(o).setInheritance(cx, null);
             } else {
-                status = Type.objectValue(o).setPrototype(cx, Type.objectValue(proto));
+                status = Type.objectValue(o).setInheritance(cx, Type.objectValue(proto));
             }
             if (!status) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
@@ -564,13 +564,13 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             OrdinaryGenerator gen = (OrdinaryGenerator) value;
             assert gen.isInitialised() : "uninitialised function object";
             return GeneratorFunctionCreate(cx, gen.getFunctionKind(), gen.getFunction(),
-                    gen.getScope(), gen.getPrototype(cx), target, gen.getMethodName());
+                    gen.getScope(), gen.getInheritance(cx), target, gen.getMethodName());
         } else {
             assert value instanceof OrdinaryFunction;
             OrdinaryFunction fn = (OrdinaryFunction) value;
             assert fn.isInitialised() : "uninitialised function object";
             return FunctionCreate(cx, fn.getFunctionKind(), fn.getFunction(), fn.getScope(),
-                    fn.getPrototype(cx), target, fn.getMethodName());
+                    fn.getInheritance(cx), target, fn.getMethodName());
         }
     }
 }

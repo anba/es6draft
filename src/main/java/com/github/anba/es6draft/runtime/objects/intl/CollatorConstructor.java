@@ -313,7 +313,7 @@ public class CollatorConstructor extends BuiltinFunction implements Constructor,
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         CollatorObject obj = new CollatorObject(callerContext.getRealm());
-        obj.setPrototype(callerContext,
+        obj.setInheritance(callerContext,
                 callerContext.getIntrinsic(Intrinsics.Intl_CollatorPrototype));
         InitializeCollator(callerContext, obj, locales, options);
         return obj;

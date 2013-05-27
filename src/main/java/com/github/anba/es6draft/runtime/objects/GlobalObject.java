@@ -52,7 +52,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         // implementation defined behaviour
-        setPrototype(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
+        setInheritance(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
 
         createProperties(this, cx, ValueProperties.class);
         createProperties(this, cx, FunctionProperties.class);

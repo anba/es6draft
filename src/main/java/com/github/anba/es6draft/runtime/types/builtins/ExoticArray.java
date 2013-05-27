@@ -97,7 +97,7 @@ public class ExoticArray extends OrdinaryObject {
         /* step 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(cx.getRealm());
         /* step 5 */
-        array.setPrototype(cx, proto);
+        array.setInheritance(cx, proto);
         if (length >= 0) {
             array.arrayInitialisationState = true;
         } else {

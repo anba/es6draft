@@ -75,7 +75,7 @@ class WrapperProxy implements ScriptObject {
             throwTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject proxyTarget = Type.objectValue(target);
-        ScriptObject prototype = proxyTarget.getPrototype(cx);
+        ScriptObject prototype = proxyTarget.getInheritance(cx);
         WrapperProxy proxy;
         if (IsCallable(proxyTarget)) {
             proxy = new CallabeWrapperProxy(cx.getRealm(), proxyTarget, prototype, false);
@@ -107,14 +107,14 @@ class WrapperProxy implements ScriptObject {
     }
 
     protected final ScriptObject getProto(ExecutionContext cx) {
-        return (withProto ? prototype : proxyTarget.getPrototype(cx));
+        return (withProto ? prototype : proxyTarget.getInheritance(cx));
     }
 
     /**
      * [[GetInheritance]] ( )
      */
     @Override
-    public ScriptObject getPrototype(ExecutionContext cx) {
+    public ScriptObject getInheritance(ExecutionContext cx) {
         // don't pay attention to the 'withProto' flag, always return the original prototype
         return prototype;
     }
@@ -123,8 +123,8 @@ class WrapperProxy implements ScriptObject {
      * [[SetInheritance]] (V)
      */
     @Override
-    public boolean setPrototype(ExecutionContext cx, ScriptObject prototype) {
-        return proxyTarget.setPrototype(cx, prototype);
+    public boolean setInheritance(ExecutionContext cx, ScriptObject prototype) {
+        return proxyTarget.setInheritance(cx, prototype);
     }
 
     /**

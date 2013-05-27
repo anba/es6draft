@@ -71,7 +71,7 @@ public class IntegerIndexedExoticObject extends OrdinaryObject {
         /* step 1-4 (implicit) */
         ScriptObject obj = new IntegerIndexedExoticObject(cx.getRealm());
         /* step 5 */
-        obj.setPrototype(cx, prototype);
+        obj.setInheritance(cx, prototype);
         /* step 6 (implicit) */
         // obj.[[Extensible]] = true;
         return obj;

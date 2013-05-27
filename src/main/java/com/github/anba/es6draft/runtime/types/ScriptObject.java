@@ -17,11 +17,11 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
  * </ul>
  */
 public interface ScriptObject {
-    /** [[GetPrototype]] ( ) */
-    ScriptObject getPrototype(ExecutionContext cx);
+    /** [[GetInheritance]] ( ) */
+    ScriptObject getInheritance(ExecutionContext cx);
 
-    /** [[SetPrototype]] (V) */
-    boolean setPrototype(ExecutionContext cx, ScriptObject prototype);
+    /** [[SetInheritance]] (V) */
+    boolean setInheritance(ExecutionContext cx, ScriptObject prototype);
 
     /** [[HasIntegrity]] (Level) */
     boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level);

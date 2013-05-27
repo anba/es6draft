@@ -210,15 +210,15 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.1 [[GetInheritance]] ( )
      */
     @Override
-    public ScriptObject getPrototype(ExecutionContext cx) {
+    public ScriptObject getInheritance(ExecutionContext cx) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(cx, handler, "getPrototypeOf");
         if (trap == null) {
-            return target.getPrototype(cx);
+            return target.getInheritance(cx);
         }
         Object handlerProto = trap.call(cx, handler, target);
-        ScriptObject targetProto = target.getPrototype(cx);
+        ScriptObject targetProto = target.getInheritance(cx);
         if (!SameValue(handlerProto, maskNull(targetProto))) {
             throw throwTypeError(cx, Messages.Key.ProxySameValue);
         }
@@ -230,20 +230,20 @@ public class ExoticProxy implements ScriptObject {
      * 8.5.2 [[SetInheritance]] (V)
      */
     @Override
-    public boolean setPrototype(ExecutionContext cx, ScriptObject prototype) {
+    public boolean setInheritance(ExecutionContext cx, ScriptObject prototype) {
         assert prototype == null || Type.isObject(prototype);
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(cx, handler, "setPrototypeOf");
         if (trap == null) {
-            return target.setPrototype(cx, prototype);
+            return target.setInheritance(cx, prototype);
         }
         boolean trapResult = ToBoolean(trap.call(cx, handler, target, maskNull(prototype)));
         boolean extensibleTarget = IsExtensible(cx, target);
         if (extensibleTarget) {
             return trapResult;
         }
-        ScriptObject targetProto = target.getPrototype(cx);
+        ScriptObject targetProto = target.getInheritance(cx);
         if (trapResult && !SameValue(maskNull(prototype), maskNull(targetProto))) {
             throw throwTypeError(cx, Messages.Key.ProxySameValue);
         }
