@@ -11,12 +11,13 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 /**
  * <h1>8 Types</h1><br>
- * <h2>8.1 ECMAScript Language Types</h2>
+ * <h2>8.1 ECMAScript Language Types</h2><br>
+ * <h3>8.1.7 The Object Type</h3>
  * <ul>
- * <li>8.1.6.1 Property Attributes
+ * <li>8.1.7.1 Property Attributes
  * </ul>
  */
-public final class Property {
+public final class Property implements Cloneable {
     private enum Type {
         DataProperty, AccessorProperty
     }
@@ -28,6 +29,16 @@ public final class Property {
     private boolean writable;
     private boolean enumerable;
     private boolean configurable;
+
+    private Property(Property original) {
+        type = original.type;
+        value = original.value;
+        getter = original.getter;
+        setter = original.setter;
+        writable = original.writable;
+        enumerable = original.enumerable;
+        configurable = original.configurable;
+    }
 
     // package-private for PropertyDescriptor
     Property(PropertyDescriptor original) {
@@ -82,8 +93,35 @@ public final class Property {
         }
     }
 
+    /**
+     * Converts this property into a {@link PropertyDescriptor} object
+     */
     public PropertyDescriptor toPropertyDescriptor() {
         return new PropertyDescriptor(this);
+    }
+
+    @Override
+    public Property clone() {
+        return new Property(this);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        if (isDataDescriptor()) {
+            sb.append("[[Writable]]: ").append(isWritable()).append(", ");
+        }
+        sb.append("[[Enumerable]]: ").append(isEnumerable()).append(", ");
+        sb.append("[[Configurable]]: ").append(isConfigurable()).append(", ");
+        if (isDataDescriptor()) {
+            sb.append("[[Value]]: ").append(getValue());
+        } else {
+            sb.append("[[Get]]: ").append(getGetter()).append(", ");
+            sb.append("[[Set]]: ").append(getSetter());
+        }
+        sb.append("}");
+        return sb.toString();
     }
 
     /**

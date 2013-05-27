@@ -21,7 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * <li>8.2.5 The Property Descriptor Specification Type
  * </ul>
  */
-public final class PropertyDescriptor {
+public final class PropertyDescriptor implements Cloneable {
     private static final int VALUE = 0x01;
     private static final int GET = 0x02;
     private static final int SET = 0x04;
@@ -33,11 +33,6 @@ public final class PropertyDescriptor {
     private static final int POPULATED_DATA_DESC = VALUE | WRITABLE | ENUMERABLE | CONFIGURABLE;
 
     private int present = 0;
-
-    // package-private for PropertyDescriptorView
-    final int getPresent() {
-        return present;
-    }
 
     // default attribute values per 8.1.6.1, table 7
     private Object value = UNDEFINED;
@@ -56,7 +51,7 @@ public final class PropertyDescriptor {
     /**
      * Creates a shallow copy of the supplied property descriptor
      */
-    public PropertyDescriptor(PropertyDescriptor original) {
+    private PropertyDescriptor(PropertyDescriptor original) {
         present = original.present;
         value = original.value;
         getter = original.getter;
@@ -77,10 +72,6 @@ public final class PropertyDescriptor {
         enumerable = original.isEnumerable();
         configurable = original.isConfigurable();
         origin = null;
-    }
-
-    public Property toProperty() {
-        return new Property(this);
     }
 
     /**
@@ -129,6 +120,18 @@ public final class PropertyDescriptor {
         this.enumerable = enumerable;
         this.configurable = configurable;
         this.present = GET | SET | ENUMERABLE | CONFIGURABLE;
+    }
+
+    /**
+     * Converts this property descriptor into a {@link Property} object
+     */
+    public Property toProperty() {
+        return new Property(this);
+    }
+
+    @Override
+    public PropertyDescriptor clone() {
+        return new PropertyDescriptor(this);
     }
 
     /**
@@ -206,7 +209,6 @@ public final class PropertyDescriptor {
         /* step 3-4 */
         ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 5-10 */
-        // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {
             obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
             obj.defineOwnProperty(cx, "writable", _p(desc.isWritable()));
@@ -247,7 +249,6 @@ public final class PropertyDescriptor {
         /* step 3-4 */
         ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 5-10 */
-        // TODO: OrdinaryDefineOwnProperty() instead of [[DefineOwnProperty]]
         if (desc.isDataDescriptor()) {
             obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
             obj.defineOwnProperty(cx, "writable", _p(desc.isWritable()));
@@ -367,6 +368,35 @@ public final class PropertyDescriptor {
         }
         /* step 9 */
         return desc;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        if (hasWritable()) {
+            sb.append("[[Writable]]: ").append(isWritable()).append(", ");
+        }
+        if (hasEnumerable()) {
+            sb.append("[[Enumerable]]: ").append(isEnumerable()).append(", ");
+        }
+        if (hasConfigurable()) {
+            sb.append("[[Configurable]]: ").append(isConfigurable()).append(", ");
+        }
+        if (hasValue()) {
+            sb.append("[[Value]]: ").append(getValue()).append(", ");
+        }
+        if (hasGetter()) {
+            sb.append("[[Get]]: ").append(getGetter()).append(", ");
+        }
+        if (hasSetter()) {
+            sb.append("[[Set]]: ").append(getSetter()).append(", ");
+        }
+        if (sb.length() > 1) {
+            sb.setLength(sb.length() - 2);
+        }
+        sb.append("}");
+        return sb.toString();
     }
 
     /**

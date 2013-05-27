@@ -120,7 +120,7 @@ public class ExoticArray extends OrdinaryObject {
         if (!desc.hasValue()) {
             return array.ordinaryDefineOwnProperty("length", desc);
         }
-        PropertyDescriptor newLenDesc = new PropertyDescriptor(desc);
+        PropertyDescriptor newLenDesc = desc.clone();
         long newLen = ToUint32(cx, desc.getValue());
         if (newLen != ToNumber(cx, desc.getValue())) {
             throw throwRangeError(cx, Messages.Key.InvalidArrayLength);

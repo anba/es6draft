@@ -11,9 +11,9 @@ import java.util.EnumMap;
 /**
  * <h1>8 Types</h1><br>
  * <h2>8.1 ECMAScript Language Types</h2><br>
- * <h3>8.1.6 The Object Type</h3>
+ * <h3>8.1.7 The Object Type</h3>
  * <ul>
- * <li>8.1.6.3 Well-Known Symbols and Intrinsics
+ * <li>8.1.7.4 Well-Known Symbols and Intrinsics
  * </ul>
  */
 public enum BuiltinSymbol {
