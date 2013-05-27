@@ -854,7 +854,6 @@ js1_5/Regress/regress-312588.js
 
 # Timeout
 ecma_5/Array/unshift-01.js
-ecma_5/extensions/JSON-string-replacer-overflow.js
 ecma_5/JSON/parse-mega-huge-array.js
 js1_5/Array/regress-330812.js
 js1_5/Array/regress-157652.js

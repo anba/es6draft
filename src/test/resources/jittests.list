@@ -437,6 +437,8 @@ tests/basic/testBug616454.js
 # clone
 tests/basic/bug751139.js
 tests/basic/testScriptCloning.js
+# evaluate() with saveFrameChain option
+tests/basic/save-frame-chain.js
 
 # Unsupported 'Testing' functions
 # gcparam
@@ -809,7 +811,6 @@ tests/basic/testBug686274.js
 # Timeout
 tests/auto-regress/bug583680.js
 tests/auto-regress/bug620637.js
-tests/auto-regress/bug678362.js
 tests/basic/bug539379.js
 tests/basic/bug849777.js
 tests/basic/math-jit-tests.js
