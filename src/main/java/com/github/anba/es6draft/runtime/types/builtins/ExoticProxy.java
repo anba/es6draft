@@ -271,6 +271,10 @@ public class ExoticProxy implements ScriptObject {
         }
         Object trapResult = trap.call(cx, handler, target);
         boolean booleanTrapResult = ToBoolean(trapResult);
+        // FIXME: spec bug - isExtensible() /= NonExtensible
+        if (level == IntegrityLevel.NonExtensible) {
+            booleanTrapResult = !booleanTrapResult;
+        }
         boolean targetResult = target.hasIntegrity(cx, level);
         if (booleanTrapResult != targetResult) {
             throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
@@ -388,7 +392,6 @@ public class ExoticProxy implements ScriptObject {
         if (!(Type.isObject(trapResultObj) || Type.isUndefined(trapResultObj))) {
             throw throwTypeError(cx, Messages.Key.ProxyNotObjectOrUndefined);
         }
-        // TODO: need copy b/c of side-effects?
         Property targetDesc = __getOwnProperty(cx, target, propertyKey);
         if (Type.isUndefined(trapResultObj)) {
             if (targetDesc == null) {
@@ -403,7 +406,10 @@ public class ExoticProxy implements ScriptObject {
             }
             return null;
         }
-        // TODO: side-effect in isExtensible()?
+        if (targetDesc != null) {
+            // need copy because of possible side-effects in IsExtensible()
+            targetDesc = targetDesc.clone();
+        }
         boolean extensibleTarget = IsExtensible(cx, target);
         PropertyDescriptor resultDesc = ToPropertyDescriptor(cx, trapResultObj);
         CompletePropertyDescriptor(resultDesc, targetDesc);
@@ -454,9 +460,11 @@ public class ExoticProxy implements ScriptObject {
         if (!ToBoolean(trapResult)) {
             return false;
         }
-        // TODO: need copy b/c of side-effects?
         Property targetDesc = __getOwnProperty(cx, target, propertyKey);
-        // TODO: side-effect in isExtensible()?
+        if (targetDesc != null) {
+            // need copy because of possible side-effects in IsExtensible()
+            targetDesc = targetDesc.clone();
+        }
         boolean extensibleTarget = IsExtensible(cx, target);
         if (targetDesc == null) {
             if (!extensibleTarget) {
@@ -469,7 +477,8 @@ public class ExoticProxy implements ScriptObject {
             if (!IsCompatiblePropertyDescriptor(extensibleTarget, desc, targetDesc)) {
                 throw throwTypeError(cx, Messages.Key.ProxyIncompatibleDescriptor);
             }
-            if (!desc.isConfigurable() && targetDesc.isConfigurable()) {
+            // FIXME: spec bug - need to test whether desc contains [[Configurable]]
+            if (desc.hasConfigurable() && !desc.isConfigurable() && targetDesc.isConfigurable()) {
                 throw throwTypeError(cx, Messages.Key.ProxyNotConfigurable);
             }
         }
