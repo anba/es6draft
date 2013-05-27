@@ -28,6 +28,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -77,7 +78,7 @@ public class GeneratorObject extends OrdinaryObject {
     private static class IteratorFunction extends BuiltinFunction {
         private final GeneratorObject generator;
 
-        public IteratorFunction(Realm realm, GeneratorObject generator) {
+        IteratorFunction(Realm realm, GeneratorObject generator) {
             super(realm);
             this.generator = generator;
             ExecutionContext cx = realm.defaultContext();
@@ -96,7 +97,11 @@ public class GeneratorObject extends OrdinaryObject {
         }
     }
 
-    public void start(ExecutionContext cx, RuntimeInfo.Code code) {
+    /**
+     * @see IterationAbstractOperations#GeneratorStart(ExecutionContext, GeneratorObject,
+     *      RuntimeInfo.Code)
+     */
+    void start(ExecutionContext cx, RuntimeInfo.Code code) {
         // FIXME: spec bug - state must be <undefined>
         if (state != null) {
             // generator object already initialised
@@ -108,7 +113,10 @@ public class GeneratorObject extends OrdinaryObject {
         this.context.setCurrentGenerator(this);
     }
 
-    public Object resume(ExecutionContext cx, Object value) {
+    /**
+     * @see IterationAbstractOperations#GeneratorResume(ExecutionContext, Object, Object)
+     */
+    Object resume(ExecutionContext cx, Object value) {
         GeneratorState state = this.state;
         if (state == null) {
             // uninitialised generator object
@@ -132,7 +140,10 @@ public class GeneratorObject extends OrdinaryObject {
         }
     }
 
-    public Object _throw(ExecutionContext cx, Object value) {
+    /**
+     * @see GeneratorPrototype.Properties#_throw(ExecutionContext, Object, Object)
+     */
+    Object _throw(ExecutionContext cx, Object value) {
         GeneratorState state = this.state;
         if (state == null) {
             // uninitialised generator object
@@ -153,7 +164,11 @@ public class GeneratorObject extends OrdinaryObject {
         }
     }
 
-    public Object yield(Object value) {
+    /**
+     * @see IterationAbstractOperations#GeneratorYield(ExecutionContext, ScriptObject)
+     */
+    Object yield(Object value) {
+        assert state == GeneratorState.Executing : "yield from generator in state: " + state;
         try {
             this.out.put(value);
             Object resumptionValue = this.in.take();

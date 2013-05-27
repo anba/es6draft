@@ -904,6 +904,5 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             return CreateArrayIterator(cx, o, ArrayIterationKind.Value);
         }
-
     }
 }

@@ -54,7 +54,6 @@ public class ListIterator<T> extends OrdinaryObject {
 
     public static <T> ListIterator<T> MakeListIterator(ExecutionContext cx, Iterator<T> iterator) {
         ListIterator<T> itr = new ListIterator<>(cx.getRealm(), iterator);
-        // createProperties(itr, realm, Properties.class);
         itr.setPrototype(cx, cx.getIntrinsic(Intrinsics.ListIteratorPrototype));
         itr.setIntegrity(cx, IntegrityLevel.NonExtensible);
         return itr;

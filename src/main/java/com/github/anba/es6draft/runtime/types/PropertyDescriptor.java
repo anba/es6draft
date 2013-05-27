@@ -135,7 +135,6 @@ public final class PropertyDescriptor {
      * 8.2.5.1 IsAccessorDescriptor ( Desc )
      */
     public static boolean IsAccessorDescriptor(PropertyDescriptor desc) {
-        // FIXME: spec bug (step 1 missing)
         /* step 1 */
         if (desc == null) {
             return false;

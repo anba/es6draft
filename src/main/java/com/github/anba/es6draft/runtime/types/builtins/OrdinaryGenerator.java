@@ -24,7 +24,11 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- *
+ * <h1>8 Types</h1><br>
+ * <h2>8.3 Ordinary Object Internal Methods and Internal Data Properties</h2>
+ * <ul>
+ * <li>8.3.15 Ordinary Function Objects
+ * </ul>
  */
 public class OrdinaryGenerator extends FunctionObject {
     public OrdinaryGenerator(Realm realm) {
@@ -47,7 +51,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 8.3.19.1 [[Call]] Internal Method
+     * 8.3.15.1 [[Call]] Internal Method
      */
     @Override
     public GeneratorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {

@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import static java.util.EnumSet.allOf;
-
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -93,6 +91,6 @@ public enum CompatibilityOption {
      * Returns a set of all options for web-compatibility
      */
     public static final Set<CompatibilityOption> WebCompatibility() {
-        return allOf(CompatibilityOption.class);
+        return EnumSet.allOf(CompatibilityOption.class);
     }
 }

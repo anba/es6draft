@@ -10,7 +10,6 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  * 
- * 
  */
 public final class GeneratorThreadGroup extends ThreadGroup {
     private GeneratorThreadGroup(ThreadGroup parent, String name) {

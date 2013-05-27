@@ -33,7 +33,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <h1>8 Types</h1><br>
  * <h2>8.3 Ordinary Object Internal Methods and Internal Data Properties</h2>
  * <ul>
- * <li>8.3.19 Ordinary Function Objects
+ * <li>8.3.15 Ordinary Function Objects
  * </ul>
  */
 public class OrdinaryFunction extends FunctionObject {
@@ -103,7 +103,6 @@ public class OrdinaryFunction extends FunctionObject {
                 if (!f.isInitialised()) {
                     throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
                 }
-
                 Object oldCaller = f.caller.getValue();
                 Object oldArguments = f.arguments.getValue();
                 try {

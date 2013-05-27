@@ -107,5 +107,4 @@ final class Types {
     static final Type RuntimeInfo$Function = Type.getType(RuntimeInfo.Function.class);
     static final Type RuntimeInfo$ScriptBody = Type.getType(RuntimeInfo.ScriptBody.class);
     static final Type ScriptException = Type.getType(ScriptException.class);
-
 }
