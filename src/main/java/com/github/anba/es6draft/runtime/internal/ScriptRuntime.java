@@ -177,7 +177,7 @@ public final class ScriptRuntime {
         ExecutionContext calleeContext = ExecutionContext.newGeneratorComprehensionContext(cx);
         RuntimeInfo.Code newCode = RuntimeInfo.newCode(handle);
         GeneratorObject result = new GeneratorObject(cx.getRealm());
-        result.setInheritance(cx, prototype);
+        result.setPrototype(prototype);
         GeneratorStart(calleeContext, result, newCode);
         return result;
     }

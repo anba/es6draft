@@ -77,7 +77,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
         }
 
         DataViewObject view = new DataViewObject(callerContext.getRealm());
-        view.setInheritance(callerContext, callerContext.getIntrinsic(Intrinsics.DataViewPrototype));
+        view.setPrototype(callerContext.getIntrinsic(Intrinsics.DataViewPrototype));
         view.defineOwnProperty(callerContext, "byteLength", new PropertyDescriptor(byteLength,
                 false, false, false));
         view.defineOwnProperty(callerContext, "buffer", new PropertyDescriptor(obj, false, false,

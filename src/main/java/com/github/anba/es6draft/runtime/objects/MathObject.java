@@ -35,7 +35,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
 
     @Override
     public void initialise(ExecutionContext cx) {
-        setInheritance(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
+        setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
 
         createProperties(this, cx, ValueProperties.class);
         createProperties(this, cx, FunctionProperties.class);

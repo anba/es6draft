@@ -30,7 +30,7 @@ public class NativeFunction extends BuiltinFunction {
         super(realm);
         this.mh = mh;
         ExecutionContext cx = realm.defaultContext();
-        setInheritance(cx, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+        setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
         defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
         defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, false));
         AddRestrictedFunctionProperties(cx, this);

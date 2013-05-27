@@ -53,7 +53,7 @@ public class NumberObject extends OrdinaryObject {
      */
     public static NumberObject NumberCreate(ExecutionContext cx, double numberData) {
         NumberObject obj = new NumberObject(cx.getRealm());
-        obj.setInheritance(cx, cx.getIntrinsic(Intrinsics.NumberPrototype));
+        obj.setPrototype(cx.getIntrinsic(Intrinsics.NumberPrototype));
         obj.setNumberData(numberData);
         return obj;
     }

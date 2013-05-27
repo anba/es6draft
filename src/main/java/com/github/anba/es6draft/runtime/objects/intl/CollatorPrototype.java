@@ -116,7 +116,7 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
         public CompareFunction(Realm realm) {
             super(realm);
             ExecutionContext cx = realm.defaultContext();
-            setInheritance(cx, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+            setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
             defineOwnProperty(cx, "name", new PropertyDescriptor("compare", false, false, false));
             defineOwnProperty(cx, "length", new PropertyDescriptor(2, false, false, false));
             AddRestrictedFunctionProperties(cx, this);

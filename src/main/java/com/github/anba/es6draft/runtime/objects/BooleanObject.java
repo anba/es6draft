@@ -53,7 +53,7 @@ public class BooleanObject extends OrdinaryObject {
      */
     public static BooleanObject BooleanCreate(ExecutionContext cx, boolean booleanData) {
         BooleanObject obj = new BooleanObject(cx.getRealm());
-        obj.setInheritance(cx, cx.getIntrinsic(Intrinsics.BooleanPrototype));
+        obj.setPrototype(cx.getIntrinsic(Intrinsics.BooleanPrototype));
         obj.setBooleanData(booleanData);
         return obj;
     }

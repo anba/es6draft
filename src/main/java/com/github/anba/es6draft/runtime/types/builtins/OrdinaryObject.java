@@ -59,6 +59,11 @@ public class OrdinaryObject implements ScriptObject {
         this.realm = realm;
     }
 
+    /** [[Prototype]] */
+    public final void setPrototype(ScriptObject prototype) {
+        this.prototype = prototype;
+    }
+
     /** [[Extensible]] */
     protected final boolean isExtensible() {
         return extensible;
@@ -689,18 +694,18 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /** 8.3.14 ObjectCreate Abstract Operation */
-    public static <OBJECT extends ScriptObject> OBJECT ObjectCreate(ExecutionContext cx,
+    public static <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
-        obj.setInheritance(cx, proto);
+        obj.setPrototype(proto);
         return obj;
     }
 
     /** 8.3.14 ObjectCreate Abstract Operation */
-    public static <OBJECT extends ScriptObject> OBJECT ObjectCreate(ExecutionContext cx,
+    public static <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             Intrinsics proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
-        obj.setInheritance(cx, cx.getIntrinsic(proto));
+        obj.setPrototype(cx.getIntrinsic(proto));
         return obj;
     }
 }

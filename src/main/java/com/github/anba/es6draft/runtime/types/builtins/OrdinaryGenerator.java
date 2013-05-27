@@ -117,7 +117,7 @@ public class OrdinaryGenerator extends FunctionObject {
         /* step 7 */
         f.functionKind = kind;
         /* step 8 */
-        f.setInheritance(cx, prototype);
+        f.setPrototype(prototype);
         /* step 10 */
         // f.[[Extensible]] = true (implicit)
         /* step 10 */

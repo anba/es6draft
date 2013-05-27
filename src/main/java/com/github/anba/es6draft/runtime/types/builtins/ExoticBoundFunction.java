@@ -124,7 +124,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable, Con
         /* step 2-5 (implicit) */
         ExoticBoundFunction obj = new ExoticBoundFunction(cx.getRealm());
         /* step 6 */
-        obj.setInheritance(cx, proto);
+        obj.setPrototype(proto);
         /* step 7 (implicit) */
         /* step 8 */
         obj.boundTargetFunction = targetFunction;

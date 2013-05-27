@@ -144,7 +144,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
         public FormatFunction(Realm realm) {
             super(realm);
             ExecutionContext cx = realm.defaultContext();
-            setInheritance(cx, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+            setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
             defineOwnProperty(cx, "name", new PropertyDescriptor("format", false, false, false));
             defineOwnProperty(cx, "length", new PropertyDescriptor(0, false, false, false));
             AddRestrictedFunctionProperties(cx, this);

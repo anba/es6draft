@@ -602,8 +602,7 @@ public class DateTimeFormatConstructor extends BuiltinFunction implements Constr
         Object locales = args.length > 0 ? args[0] : UNDEFINED;
         Object options = args.length > 1 ? args[1] : UNDEFINED;
         DateTimeFormatObject obj = new DateTimeFormatObject(callerContext.getRealm());
-        obj.setInheritance(callerContext,
-                callerContext.getIntrinsic(Intrinsics.Intl_DateTimeFormatPrototype));
+        obj.setPrototype(callerContext.getIntrinsic(Intrinsics.Intl_DateTimeFormatPrototype));
         InitializeDateTimeFormat(callerContext, obj, locales, options);
         return obj;
     }

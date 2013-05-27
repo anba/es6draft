@@ -110,7 +110,7 @@ public class ExoticArguments extends OrdinaryObject {
         int len = args.length;
         /* [10.6] step 2-3 */
         ExoticArguments obj = new ExoticArguments(cx.getRealm());
-        obj.setInheritance(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
+        obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         /* [10.6] step 4 */
         obj.defineOwnProperty(cx, "length", new PropertyDescriptor(len, true, false, true));
         /* [10.6] step 5-6 */
@@ -172,7 +172,7 @@ public class ExoticArguments extends OrdinaryObject {
             ExoticArguments arguments, FunctionObject func) {
         int length = ToInt32(cx, Get(cx, arguments, "length"));
         ExoticLegacyArguments obj = new ExoticLegacyArguments(cx.getRealm());
-        obj.ordinarySetInheritance(cx, cx.getIntrinsic(Intrinsics.ObjectPrototype));
+        obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
         obj.ordinaryDefineOwnProperty("length", new PropertyDescriptor(length, true, false, true));
         obj.ordinaryDefineOwnProperty("callee", new PropertyDescriptor(func, true, false, true));
         for (int index = 0; index < length; ++index) {
@@ -189,10 +189,6 @@ public class ExoticArguments extends OrdinaryObject {
     private static class ExoticLegacyArguments extends ExoticArguments {
         public ExoticLegacyArguments(Realm realm) {
             super(realm);
-        }
-
-        boolean ordinarySetInheritance(ExecutionContext cx, ScriptObject prototype) {
-            return super.setInheritance(cx, prototype);
         }
 
         @Override

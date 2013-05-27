@@ -864,7 +864,7 @@ public final class AbstractOperations {
     /**
      * 9.3.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
      */
-    public static <OBJECT extends ScriptObject> OBJECT OrdinaryCreateFromConstructor(
+    public static <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
             ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,
             ObjectAllocator<OBJECT> allocator) {
         ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);

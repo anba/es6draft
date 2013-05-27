@@ -86,7 +86,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             ArrayIterationKind kind) {
         // ObjectCreate()
         ArrayIterator itr = new ArrayIterator(cx.getRealm());
-        itr.setInheritance(cx, cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
+        itr.setPrototype(cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
         itr.iteratedObject = array;
         itr.nextIndex = 0;
         itr.kind = kind;

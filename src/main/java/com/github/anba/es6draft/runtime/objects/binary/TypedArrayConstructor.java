@@ -309,7 +309,7 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         Object f = thisValue;
         ScriptObject proto = GetPrototypeFromConstructor(cx, f, prototype);
         TypedArrayObject obj = new TypedArrayObject(cx.getRealm());
-        obj.setInheritance(cx, proto);
+        obj.setPrototype(proto);
         return obj;
     }
 

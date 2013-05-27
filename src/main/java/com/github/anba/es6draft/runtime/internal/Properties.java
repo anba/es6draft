@@ -37,6 +37,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Utility class to set-up initial properties for objects
@@ -225,7 +226,8 @@ public final class Properties {
      */
     public static void createProperties(ScriptObject owner, ExecutionContext cx, Class<?> holder) {
         if (holder.getName().startsWith(INTERNAL_PACKAGE)) {
-            createInternalProperties(owner, cx.getRealm(), holder);
+            assert owner instanceof OrdinaryObject;
+            createInternalProperties((OrdinaryObject) owner, cx.getRealm(), holder);
         } else {
             createExternalProperties(owner, cx.getRealm(), holder);
         }
@@ -291,7 +293,7 @@ public final class Properties {
         }
     }
 
-    private static void createInternalProperties(ScriptObject owner, Realm realm, Class<?> holder) {
+    private static void createInternalProperties(OrdinaryObject owner, Realm realm, Class<?> holder) {
         ObjectLayout layout = internalLayouts.get(holder);
         if (layout.extension != null && !realm.isEnabled(layout.extension.value())) {
             // return if extension is not enabled
@@ -590,15 +592,15 @@ public final class Properties {
         }
     }
 
-    private static void createPrototype(ScriptObject owner, Realm realm, Prototype proto,
+    private static void createPrototype(OrdinaryObject owner, Realm realm, Prototype proto,
             Object rawValue) {
         Object value = resolveValue(realm, rawValue);
         assert value == null || value instanceof ScriptObject;
         ScriptObject prototype = (ScriptObject) value;
-        owner.setInheritance(realm.defaultContext(), prototype);
+        owner.setPrototype(prototype);
     }
 
-    private static void createValue(ScriptObject owner, Realm realm, Value val, Object rawValue) {
+    private static void createValue(OrdinaryObject owner, Realm realm, Value val, Object rawValue) {
         String name = val.name();
         BuiltinSymbol sym = val.symbol();
         Attributes attrs = val.attributes();
@@ -611,7 +613,7 @@ public final class Properties {
         }
     }
 
-    private static void createFunction(ScriptObject owner, Realm realm, Function function,
+    private static void createFunction(OrdinaryObject owner, Realm realm, Function function,
             MethodHandle mh) {
         String name = function.name();
         BuiltinSymbol sym = function.symbol();
@@ -629,7 +631,7 @@ public final class Properties {
         }
     }
 
-    private static void createAccessor(ScriptObject owner, Realm realm, Accessor accessor,
+    private static void createAccessor(OrdinaryObject owner, Realm realm, Accessor accessor,
             MethodHandle mh, Map<String, PropertyDescriptor> accessors1,
             Map<BuiltinSymbol, PropertyDescriptor> accessors2) {
         String name = accessor.name();
@@ -662,7 +664,7 @@ public final class Properties {
         }
     }
 
-    private static void completeAccessors(ScriptObject owner, Realm realm,
+    private static void completeAccessors(OrdinaryObject owner, Realm realm,
             Map<String, PropertyDescriptor> accessors1,
             Map<BuiltinSymbol, PropertyDescriptor> accessors2) {
         if (accessors1 != null) {

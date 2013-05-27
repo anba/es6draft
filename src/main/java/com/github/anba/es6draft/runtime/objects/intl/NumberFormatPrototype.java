@@ -139,7 +139,7 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
         public FormatFunction(Realm realm) {
             super(realm);
             ExecutionContext cx = realm.defaultContext();
-            setInheritance(cx, realm.getIntrinsic(Intrinsics.FunctionPrototype));
+            setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
             defineOwnProperty(cx, "name", new PropertyDescriptor("format", false, false, false));
             defineOwnProperty(cx, "length", new PropertyDescriptor(1, false, false, false));
             AddRestrictedFunctionProperties(cx, this);

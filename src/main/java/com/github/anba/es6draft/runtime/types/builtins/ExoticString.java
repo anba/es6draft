@@ -150,7 +150,7 @@ public class ExoticString extends OrdinaryObject {
         // step 1, 2-6, 9 (implicit)
         ExoticString obj = new ExoticString(cx.getRealm());
         // step 8
-        obj.setInheritance(cx, prototype);
+        obj.setPrototype(prototype);
         return obj;
     }
 
