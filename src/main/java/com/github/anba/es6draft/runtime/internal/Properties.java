@@ -224,14 +224,14 @@ public final class Properties {
      * {@link Accessor} fields
      */
     public static void createProperties(ScriptObject owner, ExecutionContext cx, Class<?> holder) {
-        if (holder.getPackage().getName().startsWith(INTERNAL_PACKAGE)) {
+        if (holder.getName().startsWith(INTERNAL_PACKAGE)) {
             createInternalProperties(owner, cx.getRealm(), holder);
         } else {
             createExternalProperties(owner, cx.getRealm(), holder);
         }
     }
 
-    private static final String INTERNAL_PACKAGE = "com.github.anba.es6draft.runtime.";
+    private static final String INTERNAL_PACKAGE = "com.github.anba.es6draft.runtime.objects.";
 
     private static class Converter {
         final MethodHandle ToBooleanMH;
