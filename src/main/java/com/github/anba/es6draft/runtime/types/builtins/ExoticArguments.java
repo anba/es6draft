@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
 import java.util.Arrays;
@@ -69,31 +68,6 @@ public class ExoticArguments extends OrdinaryObject {
             parameters[propertyKey] = name;
         }
 
-        Object get(String propertyKey) {
-            int index = toArgumentIndex(propertyKey);
-            if (index >= 0 && index < length) {
-                String name = parameters[index];
-                if (name != null) {
-                    Object value = env.getEnvRec().getBindingValue(name, true);
-                    return value;
-                }
-            }
-            // TODO: assert false?
-            return UNDEFINED;
-        }
-
-        void put(String propertyKey, Object value) {
-            int index = toArgumentIndex(propertyKey);
-            if (index >= 0 && index < length) {
-                String name = parameters[index];
-                if (name != null) {
-                    env.getEnvRec().setMutableBinding(name, value, true);
-                    return;
-                }
-            }
-            // TODO: assert false?
-        }
-
         boolean hasOwnProperty(String propertyKey) {
             int index = toArgumentIndex(propertyKey);
             if (index >= 0 && index < length) {
@@ -102,11 +76,24 @@ public class ExoticArguments extends OrdinaryObject {
             return false;
         }
 
+        Object get(String propertyKey) {
+            int index = toArgumentIndex(propertyKey);
+            assert (index >= 0 && index < length && parameters[index] != null);
+            String name = parameters[index];
+            return env.getEnvRec().getBindingValue(name, true);
+        }
+
+        void put(String propertyKey, Object value) {
+            int index = toArgumentIndex(propertyKey);
+            assert (index >= 0 && index < length && parameters[index] != null);
+            String name = parameters[index];
+            env.getEnvRec().setMutableBinding(name, value, true);
+        }
+
         boolean delete(String propertyKey) {
             int index = toArgumentIndex(propertyKey);
-            if (index >= 0 && index < length) {
-                parameters[index] = null;
-            }
+            assert (index >= 0 && index < length && parameters[index] != null);
+            parameters[index] = null;
             return true;
         }
     }
