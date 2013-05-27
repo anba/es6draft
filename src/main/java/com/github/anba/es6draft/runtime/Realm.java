@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.objects.binary.DataViewPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.ElementKind;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototype;
+import com.github.anba.es6draft.runtime.objects.internal.ListIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype;
 import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor;
@@ -45,7 +46,6 @@ import com.github.anba.es6draft.runtime.objects.reflect.Reflect;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.builtins.ListIterator.ListIteratorPrototype;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
 /**

@@ -10,9 +10,9 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataP
 import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.AbstractOperations.SetIntegrityLevel;
 import static com.github.anba.es6draft.runtime.AbstractOperations.TestIntegrityLevel;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.MakeListIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
-import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.MakeListIterator;
 
 import java.util.ArrayList;
 import java.util.Collection;

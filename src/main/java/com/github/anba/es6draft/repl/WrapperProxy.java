@@ -9,9 +9,9 @@ package com.github.anba.es6draft.repl;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.MakeListIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.FromListIterator;
-import static com.github.anba.es6draft.runtime.types.builtins.ListIterator.MakeListIterator;
 
 import java.util.HashSet;
 import java.util.Iterator;
