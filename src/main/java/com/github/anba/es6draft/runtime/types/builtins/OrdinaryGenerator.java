@@ -15,6 +15,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -122,6 +123,8 @@ public class OrdinaryGenerator extends FunctionObject {
         // f.[[Extensible]] = true (implicit)
         /* step 10 */
         f.realm = realm;
+        // support for legacy 'caller' and 'arguments' properties
+        f.legacy = realm.isEnabled(CompatibilityOption.FunctionPrototype);
         /* step 11 */
         return f;
     }

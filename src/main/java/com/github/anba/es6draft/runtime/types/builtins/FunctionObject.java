@@ -47,7 +47,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /** [[MethodName]] */
     protected String methodName;
 
-    protected boolean legacy = true;
+    protected boolean legacy;
     protected String source = null;
 
     protected Property caller = new PropertyDescriptor(NULL, false, false, false).toProperty();

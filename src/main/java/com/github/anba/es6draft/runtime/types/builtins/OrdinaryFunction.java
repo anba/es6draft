@@ -192,6 +192,8 @@ public class OrdinaryFunction extends FunctionObject {
         // f.[[Extensible]] = true (implicit)
         /* step 10 */
         f.realm = realm;
+        // support for legacy 'caller' and 'arguments' properties
+        f.legacy = realm.isEnabled(CompatibilityOption.FunctionPrototype);
         /* step 11 */
         return f;
     }
@@ -223,7 +225,7 @@ public class OrdinaryFunction extends FunctionObject {
         f.methodName = methodName;
         /* step 7 */
         f.strict = strict;
-        f.legacy = !strict && f.realm.isEnabled(CompatibilityOption.FunctionPrototype);
+        f.legacy = f.legacy && !strict;
         /* step 8 */
         if (kind == FunctionKind.Arrow) {
             f.thisMode = ThisMode.Lexical;
