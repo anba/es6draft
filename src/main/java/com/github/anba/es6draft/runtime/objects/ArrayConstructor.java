@@ -61,7 +61,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         int numberOfArgs = args.length;
         if (numberOfArgs != 1) {
             // [15.4.1.1]
-            ExoticArray array = maybeCreateArray(calleeContext, thisValue, numberOfArgs);
+            ExoticArray array = initOrCreateArray(calleeContext, thisValue, numberOfArgs);
             for (int k = 0; k < numberOfArgs; ++k) {
                 String pk = ToString(k);
                 Object itemK = args[k];
@@ -72,7 +72,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
             return array;
         } else {
             // [15.4.1.2]
-            ExoticArray array = maybeCreateArray(calleeContext, thisValue, 0);
+            ExoticArray array = initOrCreateArray(calleeContext, thisValue, 0);
             Object len = args[0];
             long intLen;
             if (!Type.isNumber(len)) {
@@ -90,7 +90,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         }
     }
 
-    private ExoticArray maybeCreateArray(ExecutionContext cx, Object thisValue, long length) {
+    private ExoticArray initOrCreateArray(ExecutionContext cx, Object thisValue, long length) {
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
             if (!array.getArrayInitialisationState()) {

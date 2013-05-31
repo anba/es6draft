@@ -17,6 +17,5 @@ public abstract class PropertyDefinition extends AstNode {
     protected PropertyDefinition() {
     }
 
-    // one of: Identifier(Name), StringLiteral, NumericLiteral
     public abstract PropertyName getPropertyName();
 }

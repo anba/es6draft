@@ -14,6 +14,7 @@ import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.compiler.CompiledFunction;
 import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.compiler.Compiler;
+import com.github.anba.es6draft.interpreter.InterpretedScript;
 import com.github.anba.es6draft.interpreter.Interpreter;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -74,6 +75,11 @@ public class ScriptLoader {
         return result;
     }
 
+    /**
+     * Returns an executable {@link Script} object for given
+     * {@link com.github.anba.es6draft.ast.Script} AST-node. This may either be an
+     * {@link InterpretedScript} or {@link CompiledScript} instance.
+     */
     public static Script load(String className, com.github.anba.es6draft.ast.Script parsedScript) {
         Script script = Interpreter.script(parsedScript);
         if (script == null) {
@@ -82,6 +88,10 @@ public class ScriptLoader {
         return script;
     }
 
+    /**
+     * Compiles the given {@link com.github.anba.es6draft.ast.Script} to an executable
+     * {@link Script} object
+     */
     public static CompiledScript compile(String className,
             com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options) {
         try {
@@ -98,6 +108,9 @@ public class ScriptLoader {
         }
     }
 
+    /**
+     * Compiles the given {@link FunctionNode} to a {@link RuntimeInfo.Function} object
+     */
     public static RuntimeInfo.Function compile(String className, FunctionNode function) {
         try {
             // prepend '#' to mark generated classes, cf. ErrorPrototype

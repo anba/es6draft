@@ -16,7 +16,13 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
  * </ul>
  */
 public interface Script {
+    /**
+     * Returns this script's {@link RuntimeInfo.ScriptBody} object
+     */
     RuntimeInfo.ScriptBody getScriptBody();
 
+    /**
+     * Evaluates this script in the given {@link ExecutionContext}
+     */
     Object evaluate(ExecutionContext cx);
 }
