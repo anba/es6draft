@@ -13,22 +13,22 @@ import java.io.Reader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 /**
- *
+ * {@link ResourceBundle.Control} subclass to create {@link PropertyResourceBundle} objects which
+ * use a configurable encoding instead of the default ISO-8859-1 encoding.
  */
 public class PropertiesReaderControl extends ResourceBundle.Control {
-    static final PropertiesReaderControl INSTANCE = new PropertiesReaderControl(
-            StandardCharsets.UTF_8);
-
     private final Charset charset;
 
-    PropertiesReaderControl(Charset charset) {
+    /**
+     * Creates a new {@link PropertiesReaderControl} instance with the supplied character encoding
+     */
+    public PropertiesReaderControl(Charset charset) {
         this.charset = charset;
     }
 

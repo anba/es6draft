@@ -493,7 +493,7 @@ public final class Properties {
         return handle;
     }
 
-    private static final MethodHandle filters[] = new MethodHandle[10];
+    private static final MethodHandle filters[] = new MethodHandle[5];
 
     private static MethodHandle filter(int n) {
         assert n >= 0;

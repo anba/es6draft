@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -14,15 +15,17 @@ import java.util.ResourceBundle;
  *
  */
 public class Messages {
+    private static final PropertiesReaderControl UTF8_RESOURCE_CONTROL = new PropertiesReaderControl(
+            StandardCharsets.UTF_8);
     private static final String BUNDLE_NAME = "com.github.anba.es6draft.runtime.internal.messages";
     private final ResourceBundle resourceBundle;
 
-    public Messages(ResourceBundle resourceBundle) {
+    private Messages(ResourceBundle resourceBundle) {
         this.resourceBundle = resourceBundle;
     }
 
     public static Messages create(Locale locale) {
-        ResourceBundle.Control control = PropertiesReaderControl.INSTANCE;
+        ResourceBundle.Control control = UTF8_RESOURCE_CONTROL;
         ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE_NAME, locale, control);
         return new Messages(resourceBundle);
     }
