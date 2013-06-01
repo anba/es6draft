@@ -631,7 +631,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                     assert !ltype.isPrimitive() : "invalid lhs for assignment";
                     mv.dup();
                     GetValue(left, ltype, mv);
-                    ToPrimitive(ltype, null, mv);
+                    ToPrimitive(ltype, mv);
                     ToString(ltype, mv);
                     if (!((StringLiteral) right).getValue().isEmpty()) {
                         right.accept(this, mv);
@@ -864,12 +864,12 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 if (((StringLiteral) left).getValue().isEmpty()) {
                     // "" + x
                     ValType rtype = evalAndGetValue(right, mv);
-                    rtype = ToPrimitive(rtype, null, mv);
+                    rtype = ToPrimitive(rtype, mv);
                     ToString(rtype, mv);
                 } else {
                     left.accept(this, mv);
                     ValType rtype = evalAndGetValue(right, mv);
-                    rtype = ToPrimitive(rtype, null, mv);
+                    rtype = ToPrimitive(rtype, mv);
                     ToString(rtype, mv);
                     mv.loadExecutionContext();
                     mv.invoke(Methods.ScriptRuntime_add_str);
@@ -879,11 +879,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 if (((StringLiteral) right).getValue().isEmpty()) {
                     // x + ""
                     ValType ltype = evalAndGetValue(left, mv);
-                    ltype = ToPrimitive(ltype, null, mv);
+                    ltype = ToPrimitive(ltype, mv);
                     ToString(ltype, mv);
                 } else {
                     ValType ltype = evalAndGetValue(left, mv);
-                    ltype = ToPrimitive(ltype, null, mv);
+                    ltype = ToPrimitive(ltype, mv);
                     ToString(ltype, mv);
                     right.accept(this, mv);
                     mv.loadExecutionContext();

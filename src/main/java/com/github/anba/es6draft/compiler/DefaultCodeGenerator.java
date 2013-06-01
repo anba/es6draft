@@ -342,8 +342,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [Object] -> [boolean]
      */
-    protected final ValType ToPrimitive(ValType from,
-            com.github.anba.es6draft.runtime.types.Type preferredType, ExpressionVisitor mv) {
+    protected final ValType ToPrimitive(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
         case Number_int:
@@ -358,7 +357,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         default:
             mv.loadExecutionContext();
             mv.swap();
-            assert preferredType == null : "NYI"; // TODO: load enum value?
             mv.aconst(null);
             mv.invoke(Methods.AbstractOperations_ToPrimitive);
             return ValType.Any;
