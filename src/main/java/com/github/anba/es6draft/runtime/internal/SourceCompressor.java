@@ -67,8 +67,7 @@ public final class SourceCompressor {
 
             ByteOutputStream bout = new ByteOutputStream(BUFFER_SIZE);
             byte[] buf = new byte[BUFFER_SIZE];
-            int n;
-            while ((n = in.read(buf)) != -1) {
+            for (int n; (n = in.read(buf)) != -1;) {
                 bout.write(buf, 0, n);
             }
             bout.close();

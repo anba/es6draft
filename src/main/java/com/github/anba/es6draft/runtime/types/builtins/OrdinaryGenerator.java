@@ -124,6 +124,7 @@ public class OrdinaryGenerator extends FunctionObject {
         /* step 10 */
         f.realm = realm;
         // support for legacy 'caller' and 'arguments' properties
+        // TODO: 'caller' and 'arguments' properties are never updated for generator functions
         f.legacy = realm.isEnabled(CompatibilityOption.FunctionPrototype);
         /* step 11 */
         return f;

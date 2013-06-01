@@ -13,6 +13,8 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
+ * Object allocator for ordinary objects and its sub-classes.
+ * 
  * @see OrdinaryObject#ObjectCreate(ExecutionContext, Intrinsics, ObjectAllocator)
  * @see OrdinaryObject#ObjectCreate(ExecutionContext, ScriptObject, ObjectAllocator)
  */

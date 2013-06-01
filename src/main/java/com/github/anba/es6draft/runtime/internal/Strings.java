@@ -10,7 +10,6 @@ import com.github.anba.es6draft.parser.TokenStream;
 
 /**
  * Operations on strings
- * 
  */
 public final class Strings {
     private Strings() {

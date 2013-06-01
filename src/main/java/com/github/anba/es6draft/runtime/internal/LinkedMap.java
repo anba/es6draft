@@ -12,8 +12,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Simple double-linked map implementation without fail-fast iterators
- * 
+ * Simple double-linked map implementation without fail-fast iterator
  */
 public class LinkedMap<KEY, VALUE> {
     @SuppressWarnings("serial")
@@ -41,7 +40,7 @@ public class LinkedMap<KEY, VALUE> {
     private final Entry<KEY, VALUE> head;
 
     public LinkedMap(MapBuilder builder) {
-        this.map = builder.create();
+        map = builder.create();
         head = new Entry<KEY, VALUE>(null, null);
         head.prev = head;
         head.next = head;

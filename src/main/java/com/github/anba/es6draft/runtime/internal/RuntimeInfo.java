@@ -164,7 +164,25 @@ public final class RuntimeInfo {
     }
 
     public enum FunctionFlags {
-        Strict(0b0001), Super(0b0010), ScopedName(0b0100), Generator(0b1000);
+        /**
+         * Flag for strict-mode functions
+         */
+        Strict(0b0001),
+
+        /**
+         * Flag for functions with super-binding
+         */
+        Super(0b0010),
+
+        /**
+         * Flag for functions which have their name in scope
+         */
+        ScopedName(0b0100),
+
+        /**
+         * Flag for generator functions
+         */
+        Generator(0b1000);
 
         private final int value;
 

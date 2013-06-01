@@ -27,6 +27,9 @@ import org.mozilla.javascript.ConsString;
 public enum Type {
     Undefined, Null, Boolean, String, Number, Symbol, Object;
 
+    /**
+     * Returns the {@link Type} of the input parameter
+     */
     public static Type of(Object val) {
         if (val == UNDEFINED) {
             return Undefined;
@@ -50,54 +53,106 @@ public enum Type {
         return Object;
     }
 
+    /**
+     * Short cut for:<br>
+     * <code>Type.of(val) == Type.Undefined</code>
+     */
     public static boolean isUndefined(Object val) {
         return (val == UNDEFINED);
     }
 
+    /**
+     * Short cut for:<br>
+     * <code>Type.of(val) == Type.Null</code>
+     */
     public static boolean isNull(Object val) {
         return (val == NULL);
     }
 
+    /**
+     * Short cut for:<br>
+     * <code>Type.of(val) == Type.Undefined || Type.of(val) == Type.Null</code>
+     */
     public static boolean isUndefinedOrNull(Object val) {
         return (val == UNDEFINED || val == NULL);
     }
 
+    /**
+     * Short cut for:<br>
+     * <code>Type.of(val) == Type.Boolean</code>
+     */
     public static boolean isBoolean(Object val) {
         return (val instanceof Boolean);
     }
 
+    /**
+     * Short cut for:<br>
+     * <code>Type.of(val) == Type.String</code>
+     */
     public static boolean isString(Object val) {
         return (val instanceof String || val instanceof ConsString);
     }
 
+    /**
+     * Short cut for:<br>
+     * <code>Type.of(val) == Type.Number</code>
+     */
     public static boolean isNumber(Object val) {
         return (val instanceof Double || val instanceof Integer || val instanceof Long);
     }
 
+    /**
+     * Short cut for:<br>
+     * <code>Type.of(val) == Type.Symbol</code>
+     */
     public static boolean isSymbol(Object val) {
         return (val instanceof Symbol);
     }
 
+    /**
+     * Short cut for:<br>
+     * <code>Type.of(val) == Type.Object</code>
+     */
     public static boolean isObject(Object val) {
         return (val instanceof ScriptObject);
     }
 
+    /**
+     * If {@code val} is a Boolean type, its value is returned. Otherwise a
+     * {@link ClassCastException} is thrown.
+     */
     public static boolean booleanValue(Object val) {
         return ((Boolean) val).booleanValue();
     }
 
+    /**
+     * If {@code val} is a String type, its value is returned. Otherwise a
+     * {@link ClassCastException} is thrown.
+     */
     public static CharSequence stringValue(Object val) {
         return (CharSequence) val;
     }
 
+    /**
+     * If {@code val} is a Number type, its value is returned. Otherwise a
+     * {@link ClassCastException} is thrown.
+     */
     public static double numberValue(Object val) {
         return ((Number) val).doubleValue();
     }
 
+    /**
+     * If {@code val} is a Symbol type, its value is returned. Otherwise a
+     * {@link ClassCastException} is thrown.
+     */
     public static Symbol symbolValue(Object val) {
         return (Symbol) val;
     }
 
+    /**
+     * If {@code val} is an Object type, its value is returned. Otherwise a
+     * {@link ClassCastException} is thrown.
+     */
     public static ScriptObject objectValue(Object val) {
         return (ScriptObject) val;
     }

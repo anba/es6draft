@@ -461,7 +461,7 @@ public final class Properties {
 
     private static MethodHandle getStaticMethodHandle(Lookup lookup, Method method)
             throws IllegalAccessException {
-        // check: (Realm, Object, Object[]) -> Object
+        // check: (ExecutionContext, Object, Object[]) -> Object
         MethodHandle handle = lookup.unreflect(method);
         MethodType type = handle.type();
         StaticMethodKind kind = staticMethodKind(type);

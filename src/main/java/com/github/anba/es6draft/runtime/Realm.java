@@ -132,6 +132,9 @@ public class Realm {
         return throwTypeError;
     }
 
+    /**
+     * Returns the default execution context for this realm
+     */
     public ExecutionContext defaultContext() {
         return defaultContext;
     }
@@ -139,30 +142,56 @@ public class Realm {
     private AtomicInteger evalCounter = new AtomicInteger(0);
     private AtomicInteger functionCounter = new AtomicInteger(0);
 
+    /**
+     * Next class name for eval scripts
+     * 
+     * @see Eval
+     */
     public String nextEvalName() {
         return "Eval_" + evalCounter.incrementAndGet();
     }
 
+    /**
+     * Next class name for functions
+     * 
+     * @see FunctionConstructor
+     * @see GeneratorFunctionConstructor
+     */
     public String nextFunctionName() {
         return "Function_" + functionCounter.incrementAndGet();
     }
 
+    /**
+     * Returns this realm's locale
+     */
     public Locale getLocale() {
         return locale;
     }
 
+    /**
+     * Returns this realm's timezone
+     */
     public TimeZone getTimezone() {
         return timezone;
     }
 
+    /**
+     * Returns the localised message for {@code key}
+     */
     public String message(Messages.Key key) {
         return messages.getString(key);
     }
 
+    /**
+     * Returns a reference to the built-in <code>eval</code> function
+     */
     public Callable getBuiltinEval() {
         return builtinEval;
     }
 
+    /**
+     * Returns the compatibility options for this realm instance
+     */
     public Set<CompatibilityOption> getOptions() {
         return options;
     }
@@ -171,14 +200,26 @@ public class Realm {
         return options.contains(option);
     }
 
+    /**
+     * Returns the template call-site object for {@code key}
+     */
     public ScriptObject getTemplateCallSite(String key) {
         return templateCallSites.get(key);
     }
 
+    /**
+     * Stores the template call-site object
+     */
     public void addTemplateCallSite(String key, ScriptObject callSite) {
         templateCallSites.put(key, callSite);
     }
 
+    /**
+     * Returns a {@link Collator} for this realm's locale
+     * 
+     * @deprecated No longer used
+     */
+    @Deprecated
     public Collator getCollator() {
         Collator collator = Collator.getInstance(locale);
         // Use Normalised Form D for comparison (cf. 15.5.4.9, Note 2)
