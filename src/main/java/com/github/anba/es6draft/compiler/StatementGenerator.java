@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -114,12 +115,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.invoke(Methods.ExecutionContext_restoreLexicalEnvironment);
     }
 
-    private static String BoundName(FunctionDeclaration f) {
-        return f.getIdentifier().getName();
-    }
-
-    private static String BoundName(GeneratorDeclaration f) {
-        return f.getIdentifier().getName();
+    private static String BoundName(FunctionNode f) {
+        return f.getFunctionName();
     }
 
     /**
@@ -127,10 +124,14 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
      */
     private void BlockDeclarationInstantiation(Collection<Declaration> declarations,
             StatementVisitor mv) {
+        /* steps 1-2 */
+        List<FunctionNode> functionsToInitialize = new ArrayList<>();
+
         // stack: [env] -> [env, envRec]
         mv.dup();
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
 
+        /* step 3 */
         for (Declaration d : declarations) {
             for (String dn : BoundNames(d)) {
                 if (IsConstantDeclaration(d)) {
@@ -146,51 +147,38 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                     mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
                 }
             }
+            if (d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration) {
+                functionsToInitialize.add((FunctionNode) d);
+            }
         }
 
         // stack: [env, envRec] -> [envRec, env]
         mv.swap();
 
-        for (Declaration d : declarations) {
-            if (d instanceof FunctionDeclaration) {
-                FunctionDeclaration f = (FunctionDeclaration) d;
-                codegen.compile(f);
-                String fn = BoundName(f);
+        /* step 4 */
+        for (FunctionNode f : functionsToInitialize) {
+            codegen.compile(f);
+            String fn = BoundName(f);
 
-                // stack: [envRec, env] -> [envRec, env, envRec, realm, env, fd]
-                mv.dup2();
-                mv.loadExecutionContext();
-                mv.swap();
-                mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
-                        Type.getMethodDescriptor(Types.RuntimeInfo$Function));
+            // stack: [envRec, env] -> [envRec, env, envRec, realm, env, fd]
+            mv.dup2();
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
+                    Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
-                // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]
+            // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]
+            if (f instanceof FunctionDeclaration) {
                 mv.invoke(Methods.ScriptRuntime_InstantiateFunctionObject);
-
-                // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
-                mv.aconst(fn);
-                mv.swap();
-                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
-            } else if (d instanceof GeneratorDeclaration) {
-                GeneratorDeclaration f = (GeneratorDeclaration) d;
-                codegen.compile(f);
-                String fn = BoundName(f);
-
-                // stack: [envRec, env] -> [envRec, env, envRec, realm, env, fd]
-                mv.dup2();
-                mv.loadExecutionContext();
-                mv.swap();
-                mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
-                        Type.getMethodDescriptor(Types.RuntimeInfo$Function));
-
-                // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]
+            } else {
+                assert f instanceof GeneratorDeclaration;
                 mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);
-
-                // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
-                mv.aconst(fn);
-                mv.swap();
-                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
             }
+
+            // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
+            mv.aconst(fn);
+            mv.swap();
+            mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
         }
 
         // stack: [envRec, env] -> [env]
