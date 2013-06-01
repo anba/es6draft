@@ -14,7 +14,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.GeneratorThreadGroup;
+import com.github.anba.es6draft.runtime.internal.GeneratorThread;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -45,15 +45,10 @@ public class ErrorObject extends OrdinaryObject {
 
     private List<StackTraceElement[]> collectStackTraces() {
         List<StackTraceElement[]> stackTraces = new ArrayList<>();
-        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
-        while (threadGroup instanceof GeneratorThreadGroup) {
-            threadGroup = threadGroup.getParent();
-            Thread[] threads = new Thread[1];
-            if (threadGroup.enumerate(threads, false) == 1) {
-                stackTraces.add(threads[0].getStackTrace());
-            } else {
-                break;
-            }
+        Thread thread = Thread.currentThread();
+        while (thread instanceof GeneratorThread) {
+            thread = ((GeneratorThread) thread).getParent();
+            stackTraces.add(thread.getStackTrace());
         }
         return stackTraces;
     }

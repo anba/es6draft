@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.internal.GeneratorThreadGroup.newGeneratorThreadFactory;
+import static com.github.anba.es6draft.runtime.internal.GeneratorThread.newGeneratorThreadFactory;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
