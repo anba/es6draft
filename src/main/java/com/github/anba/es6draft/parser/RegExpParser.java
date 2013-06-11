@@ -406,9 +406,15 @@ public final class RegExpParser {
                 // need to escape these characters for Java
                 out.append('\\').append((char) c);
                 break classatom;
-            default:
-                out.append((char) c);
+            default: {
+                char cc = (char) c;
+                if (cc < Character.MIN_SURROGATE || cc > Character.MAX_SURROGATE) {
+                    out.append(cc);
+                } else {
+                    out.append("\\x{").append(Integer.toHexString(c)).append("}");
+                }
                 break classatom;
+            }
             }
 
             if (inrange) {
@@ -757,10 +763,16 @@ public final class RegExpParser {
 
             case '.':
                 // fall-through
-            default:
+            default: {
                 // PatternCharacter
-                out.append((char) c);
+                char cc = (char) c;
+                if (cc < Character.MIN_SURROGATE || cc > Character.MAX_SURROGATE) {
+                    out.append(cc);
+                } else {
+                    out.append("\\x{").append(Integer.toHexString(c)).append("}");
+                }
                 break atom;
+            }
             }
 
             /* Quantifier (optional) */
