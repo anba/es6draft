@@ -23,29 +23,50 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
  */
 class InstructionVisitor extends InstructionAdapter {
     private static class Variables {
+        private static final Type INVALID = Type.getType("Invalid");
         private static final int INITIAL_SIZE = 8;
         private final BitSet variables = new BitSet();
         private Type[] types = new Type[INITIAL_SIZE];
 
         void reserveFixedSlot(int var, Type type) {
-            assert var < INITIAL_SIZE;
-            assert types[var] == null || types[var].equals(type);
-            types[var] = type;
-            variables.set(var);
+            if (type.getSize() == 1) {
+                assert var < INITIAL_SIZE;
+                assert types[var] == null || types[var].equals(type);
+                types[var] = type;
+                variables.set(var);
+            } else {
+                assert var + 1 < INITIAL_SIZE;
+                assert types[var] == null || types[var].equals(type);
+                assert types[var + 1] == null || types[var + 1] == INVALID;
+                types[var] = type;
+                types[var + 1] = INVALID;
+                variables.set(var, var + 2);
+            }
         }
 
         int newVariable(Type type) {
+            int size = type.getSize();
             for (int var = 0;;) {
                 var = variables.nextClearBit(var);
-                if (var >= types.length) {
+                if (var + size > types.length) {
                     int newLength = types.length + (types.length >>> 1);
                     types = Arrays.copyOf(types, newLength, Type[].class);
                 }
                 Type old = types[var];
                 if (old == null || old.equals(type)) {
-                    variables.set(var);
-                    types[var] = type;
-                    return var;
+                    if (type.getSize() != 2) {
+                        types[var] = type;
+                        variables.set(var);
+                        return var;
+                    } else {
+                        Type next = types[var + 1];
+                        if (next == null || next == INVALID) {
+                            types[var] = type;
+                            types[var + 1] = INVALID;
+                            variables.set(var, var + 2);
+                            return var;
+                        }
+                    }
                 }
                 // try next index
                 var += 1;
@@ -53,6 +74,8 @@ class InstructionVisitor extends InstructionAdapter {
         }
 
         void freeVariable(int var) {
+            Type type = types[var];
+            assert type != null && type != INVALID;
             variables.clear(var);
         }
     }
@@ -180,6 +203,14 @@ class InstructionVisitor extends InstructionAdapter {
         iconst(index);
         aconst(element);
         astore(type);
+    }
+
+    /**
+     * array → value
+     */
+    public void aload(int index, Type type) {
+        iconst(index);
+        aload(type);
     }
 
     /**
