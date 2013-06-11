@@ -553,7 +553,7 @@ public class Parser {
 
     private LabelContext findBreakTarget(String label) {
         for (LabelContext cx = context.labels; cx != null; cx = cx.parent) {
-            if (label == null || cx.labelSet.contains(label)) {
+            if (label == null ? cx.type != StatementType.Statement : cx.labelSet.contains(label)) {
                 return cx;
             }
         }
