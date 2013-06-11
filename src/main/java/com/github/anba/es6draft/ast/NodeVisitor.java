@@ -53,6 +53,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(CallExpression node, V value);
 
+    R visit(CallSpreadElement node, V value);
+
     R visit(CatchNode node, V value);
 
     R visit(ClassDeclaration node, V value);

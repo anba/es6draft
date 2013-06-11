@@ -295,7 +295,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 mv.iconst(i);
                 /* [11.2.5 Argument Lists] ArgumentListEvaluation */
                 Expression argument = arguments.get(i);
-                hasSpread |= (argument instanceof SpreadElement);
+                hasSpread |= (argument instanceof CallSpreadElement);
                 ValType argtype = evalAndGetValue(argument, mv);
                 mv.toBoxed(argtype);
                 mv.astore(Types.Object);
@@ -485,45 +485,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         } else {
             // stack: [array, nextIndex]
             mv.iconst(0); // nextIndex
-            int elisionWidth = 0;
-            for (Expression element : node.getElements()) {
-                if (element instanceof Elision) {
-                    // Elision
-                    elisionWidth += 1;
-                    continue;
-                }
-                if (elisionWidth != 0) {
-                    mv.iconst(elisionWidth);
-                    mv.add(Type.INT_TYPE);
-                    elisionWidth = 0;
-                }
-                if (element instanceof SpreadElement) {
-                    // stack: [array, nextIndex] -> [array, nextIndex, array, nextIndex]
-                    mv.dup2();
-                    Expression spread = ((SpreadElement) element).getExpression();
-                    ValType type = evalAndGetValue(spread, mv);
-                    mv.toBoxed(type);
-                    mv.loadExecutionContext();
-                    mv.invoke(Methods.ScriptRuntime_ArrayAccumulationSpreadElement);
-                    // stack: ... -> [array, nextIndex]
-                    mv.swap();
-                    mv.pop();
-                } else {
-                    // stack: [array, nextIndex] -> [array, nextIndex, array, nextIndex]
-                    mv.dup2();
-                    ValType type = evalAndGetValue(element, mv);
-                    mv.toBoxed(type);
-                    mv.loadExecutionContext();
-                    // stack: [array, nextIndex, array, nextIndex, obj] -> [array, nextIndex]
-                    mv.invoke(Methods.ScriptRuntime_defineProperty__int);
-                    elisionWidth += 1;
-                }
-            }
-            if (elisionWidth != 0) {
-                mv.iconst(elisionWidth);
-                mv.add(Type.INT_TYPE);
-                elisionWidth = 0;
-            }
+
+            arrayLiteralWithSpread(node, mv);
 
             // stack: [array, nextIndex] -> [array, 'length', (nextIndex), false, cx]
             mv.toBoxed(Type.INT_TYPE);
@@ -533,7 +496,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.dup2X2();
             mv.pop2();
             mv.swap();
-            // stack: [array, realm, array, (nextIndex)]
+            // stack: [array, cx, array, (nextIndex)]
             mv.aconst("length");
             mv.swap();
             mv.iconst(0);
@@ -541,6 +504,60 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
 
         return ValType.Object;
+    }
+
+    private void arrayLiteralWithSpread(ArrayLiteral node, ExpressionVisitor mv) {
+        // stack: [array, nextIndex]
+        int elisionWidth = 0;
+        for (Expression element : node.getElements()) {
+            if (element instanceof Elision) {
+                // Elision
+                elisionWidth += 1;
+                continue;
+            }
+            if (elisionWidth != 0) {
+                mv.iconst(elisionWidth);
+                mv.add(Type.INT_TYPE);
+                elisionWidth = 0;
+            }
+            if (element instanceof SpreadElement) {
+                element.accept(this, mv);
+            } else {
+                // stack: [array, nextIndex] -> [array, nextIndex, array, nextIndex]
+                mv.dup2();
+                ValType type = evalAndGetValue(element, mv);
+                mv.toBoxed(type);
+                mv.loadExecutionContext();
+                // stack: [array, nextIndex, array, nextIndex, obj] -> [array, nextIndex]
+                mv.invoke(Methods.ScriptRuntime_defineProperty__int);
+                elisionWidth += 1;
+            }
+        }
+        if (elisionWidth != 0) {
+            mv.iconst(elisionWidth);
+            mv.add(Type.INT_TYPE);
+            elisionWidth = 0;
+        }
+    }
+
+    @Override
+    public ValType visit(SpreadElement node, ExpressionVisitor mv) {
+        // stack: [array, nextIndex] -> [array, array, nextIndex]
+        mv.swap();
+        mv.dupX1();
+        mv.swap();
+
+        // stack: [array, array, nextIndex] -> [array, array, nextIndex, obj]
+        Expression spread = node.getExpression();
+        ValType type = evalAndGetValue(spread, mv);
+        mv.toBoxed(type);
+
+        mv.loadExecutionContext();
+
+        // stack: [array, array, nextIndex, obj, cx] -> [array, nextIndex']
+        mv.invoke(Methods.ScriptRuntime_ArrayAccumulationSpreadElement);
+
+        return ValType.Any;
     }
 
     @Override
@@ -1252,6 +1269,16 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     @Override
+    public ValType visit(CallSpreadElement node, ExpressionVisitor mv) {
+        ValType type = evalAndGetValue(node.getExpression(), mv);
+        mv.toBoxed(type);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_SpreadArray);
+
+        return ValType.Any; // actually Object[]
+    }
+
+    @Override
     public ValType visit(ClassExpression node, ExpressionVisitor mv) {
         String className = (node.getName() != null ? node.getName().getName() : null);
         ClassDefinitionEvaluation(node, className, mv);
@@ -1380,7 +1407,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 mv.iconst(i);
                 /* [11.2.5 Argument Lists] ArgumentListEvaluation */
                 Expression argument = arguments.get(i);
-                hasSpread |= (argument instanceof SpreadElement);
+                hasSpread |= (argument instanceof CallSpreadElement);
                 ValType argtype = evalAndGetValue(argument, mv);
                 mv.toBoxed(argtype);
                 mv.astore(Types.Object);
@@ -1460,16 +1487,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         mv.invoke(Methods.ScriptRuntime_RegExp);
 
         return ValType.Object;
-    }
-
-    @Override
-    public ValType visit(SpreadElement node, ExpressionVisitor mv) {
-        ValType type = evalAndGetValue(node.getExpression(), mv);
-        mv.toBoxed(type);
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_SpreadArray);
-
-        return ValType.Any; // actually Object[]
     }
 
     private static final int MAX_STRING_SIZE = 32768;

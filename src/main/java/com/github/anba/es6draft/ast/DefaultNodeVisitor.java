@@ -170,6 +170,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(CallSpreadElement node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(CatchNode node, V value) {
         return visit((Node) node, value);
     }

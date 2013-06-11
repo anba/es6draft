@@ -4224,7 +4224,7 @@ public class Parser {
                 Expression expr;
                 if (token() == Token.TRIPLE_DOT) {
                     consume(Token.TRIPLE_DOT);
-                    expr = new SpreadElement(assignmentExpression(true));
+                    expr = new CallSpreadElement(assignmentExpression(true));
                 } else {
                     expr = assignmentExpression(true);
                 }
