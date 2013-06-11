@@ -7,8 +7,13 @@
 package com.github.anba.es6draft.ast;
 
 import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
+import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 
 /**
@@ -250,6 +255,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(ExpressionMethod node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
     public R visit(ExpressionStatement node, V value) {
         return visit((Statement) node, value);
     }
@@ -312,6 +322,21 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(IfStatement node, V value) {
         return visit((Statement) node, value);
+    }
+
+    @Override
+    public R visit(SpreadArrayLiteral node, V value) {
+        return visit((ArrayLiteral) node, value);
+    }
+
+    @Override
+    public R visit(SpreadElementMethod node, V value) {
+        return visit((SpreadElement) node, value);
+    }
+
+    @Override
+    public R visit(PropertyDefinitionsMethod node, V value) {
+        return visit((PropertyDefinition) node, value);
     }
 
     @Override
@@ -402,6 +427,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(SpreadElement node, V value) {
         return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(StatementListMethod node, V value) {
+        return visit((Statement) node, value);
     }
 
     @Override
