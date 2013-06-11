@@ -737,6 +737,14 @@ public class Parser {
                 restoreContext();
             }
 
+            List<StatementListItem> statements = Collections
+                    .<StatementListItem> singletonList(new ExpressionStatement(function));
+            boolean strict = (context.strictMode == StrictMode.Strict);
+            FunctionContext scope = context.funContext;
+            Script script = new Script(sourceFile, scope, statements, options, strict);
+            script.setLine(sourceLine);
+            scope.node = script;
+
             return function;
         } finally {
             restoreContext();
@@ -789,6 +797,14 @@ public class Parser {
             } finally {
                 restoreContext();
             }
+
+            List<StatementListItem> statements = Collections
+                    .<StatementListItem> singletonList(new ExpressionStatement(generator));
+            boolean strict = (context.strictMode == StrictMode.Strict);
+            FunctionContext scope = context.funContext;
+            Script script = new Script(sourceFile, scope, statements, options, strict);
+            script.setLine(sourceLine);
+            scope.node = script;
 
             return generator;
         } finally {
