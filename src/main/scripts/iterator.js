@@ -192,48 +192,97 @@ function MakeBuiltinIterator(ctor) {
 }
 
 // make prototype.iterator() an own data property and remove @@iterator hook
-[Map, Set].forEach(
-  ctor => {
-    const BuiltinIterator = MakeBuiltinIterator(ctor);
-    const iterF = {
-      iterator: ctor.prototype[iteratorSym],
-      keys: ctor.prototype['keys'],
-      values: ctor.prototype['values'],
-      entries: ctor.prototype['entries'],
-    };
-    ["iterator", "keys", "values", "entries"].forEach(
-      method => {
-        Object.defineProperty(ctor.prototype, method, {
-          value() { return new BuiltinIterator(this, iterF[method]) },
-          writable: true, enumerable: false, configurable: true
-        });
-      }
-    );
-    delete ctor.prototype[iteratorSym];
-  }
-);
 
-[Array].forEach(
-  ctor => {
-    const BuiltinIterator = MakeBuiltinIterator(ctor);
-    const iterF = {
-      iterator: ctor.prototype[iteratorSym],
-      keys: ctor.prototype['keys'],
-      values: ctor.prototype['values'],
-      entries: ctor.prototype['entries'],
-    };
-    const throwsOnGet = new Proxy({}, {get: () => { throw TypeError() }});
-    ["iterator", "keys", "values", "entries"].forEach(
-      method => {
-        Object.defineProperty(ctor.prototype, method, {
-          value() { return new BuiltinIterator(this != null ? this : throwsOnGet, iterF[method]) },
-          writable: true, enumerable: false, configurable: true
-        });
-      }
-    );
-    delete ctor.prototype[iteratorSym];
-  }
-);
+{ /* Map.prototype */
+  const BuiltinIterator = MakeBuiltinIterator(Map);
+  const iterF = {
+    keys: Map.prototype['keys'],
+    values: Map.prototype['values'],
+    entries: Map.prototype['entries'],
+  };
+
+  Object.defineProperties(Object.assign(Map.prototype, {
+    keys() { return new BuiltinIterator(this, iterF.keys) },
+    values() { return new BuiltinIterator(this, iterF.values) },
+    entries() { return new BuiltinIterator(this, iterF.entries) },
+  }), {
+    keys: {enumerable: false},
+    values: {enumerable: false},
+    entries: {enumerable: false},
+  });
+
+  // Map.prototype.iterator === Map.prototype.entries
+  Object.defineProperty(Map.prototype, "iterator", {
+    value: Map.prototype.entries,
+    writable: true, enumerable: false, configurable: true
+  });
+
+  delete Map.prototype[iteratorSym];
+}
+
+{ /* Set.prototype */
+  const BuiltinIterator = MakeBuiltinIterator(Set);
+  const iterF = {
+    values: Set.prototype['values'],
+    entries: Set.prototype['entries'],
+  };
+
+  Object.defineProperties(Object.assign(Set.prototype, {
+    values() { return new BuiltinIterator(this, iterF.values) },
+    entries() { return new BuiltinIterator(this, iterF.entries) },
+  }), {
+    values: {enumerable: false},
+    entries: {enumerable: false},
+  });
+
+  // Set.prototype.keys === Set.prototype.values
+  Object.defineProperty(Set.prototype, "keys", {
+    value: Set.prototype.values,
+    writable: true, enumerable: false, configurable: true
+  });
+
+  // Set.prototype.iterator === Set.prototype.values
+  Object.defineProperty(Set.prototype, "iterator", {
+    value: Set.prototype.values,
+    writable: true, enumerable: false, configurable: true
+  });
+
+  delete Set.prototype[iteratorSym];
+}
+
+{ /* Array.prototype */
+  const BuiltinIterator = MakeBuiltinIterator(Array);
+  const iterF = {
+    keys: Array.prototype['keys'],
+    values: Array.prototype['values'],
+    entries: Array.prototype['entries'],
+  };
+  const throwsOnGet = new Proxy({}, {get: () => { throw TypeError() }});
+
+  Object.defineProperties(Object.assign(Array.prototype, {
+    keys() {
+      return new BuiltinIterator(this != null ? this : throwsOnGet, iterF.keys)
+    },
+    values() {
+      return new BuiltinIterator(this != null ? this : throwsOnGet, iterF.values)
+    },
+    entries() {
+      return new BuiltinIterator(this != null ? this : throwsOnGet, iterF.entries)
+    },
+  }), {
+    keys: {enumerable: false},
+    values: {enumerable: false},
+    entries: {enumerable: false},
+  });
+
+  // Array.prototype.iterator === Array.prototype.values
+  Object.defineProperty(Array.prototype, "iterator", {
+    value: Array.prototype.values,
+    writable: true, enumerable: false, configurable: true
+  });
+
+  delete Array.prototype[iteratorSym];
+}
 
 // make Strings and TypedArrays iterable
 const ArrayPrototype_iterator = Array.prototype.iterator;
