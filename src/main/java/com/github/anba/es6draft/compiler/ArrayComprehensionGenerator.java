@@ -31,7 +31,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
                 Types.ArrayList, "add", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
-    private int result;
+    private int result = -1;
 
     ArrayComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
@@ -44,6 +44,8 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     public Void visit(ArrayComprehension node, ExpressionVisitor mv) {
+        assert result == -1 : "array-comprehension generator re-used";
+
         this.result = mv.newVariable(Types.ArrayList);
         mv.anew(Types.ArrayList);
         mv.dup();
@@ -69,6 +71,8 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
+        assert result != -1 : "array-comprehension generator not initialised";
+
         ValType type = expression(node, mv);
         mv.toBoxed(type);
         invokeGetValue(node, mv);
