@@ -69,10 +69,6 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 Types.ScriptRuntime, "iterate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_strictEqualityComparison = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "strictEqualityComparison",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object));
-
         static final MethodDesc ScriptRuntime_throw = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "_throw",
                 Type.getMethodType(Types.ScriptException, Types.Object));
@@ -614,88 +610,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
     }
 
     @Override
-    public Void visit(SwitchClause node, StatementVisitor mv) {
-        // see SwitchStatement
-        throw new IllegalStateException();
-    }
-
-    @Override
     public Void visit(SwitchStatement node, StatementVisitor mv) {
-        Label defaultClause = null;
-        Label lblBreak = new Label();
-        List<SwitchClause> clauses = node.getClauses();
-
-        int savedEnv = -1;
-        EnumSet<Abrupt> abrupt = node.getAbrupt();
-        if (abrupt.contains(Abrupt.Break)) {
-            savedEnv = saveEnvironment(mv);
-        }
-
-        // stack -> switchValue
-        node.getExpression().accept(this, mv);
-        invokeGetValue(node.getExpression(), mv);
-
-        mv.enterScope(node);
-        Collection<Declaration> declarations = LexicalDeclarations(node);
-        if (!declarations.isEmpty()) {
-            newDeclarativeEnvironment(mv);
-            new BlockDeclarationInstantiationGenerator(codegen).generate(declarations, mv);
-            pushLexicalEnvironment(mv);
-        }
-
-        int index = 0;
-        Label[] labels = new Label[clauses.size()];
-        for (SwitchClause switchClause : clauses) {
-            Label stmtLabel = labels[index++] = new Label();
-            Expression expr = switchClause.getExpression();
-            if (expr == null) {
-                assert defaultClause == null;
-                defaultClause = stmtLabel;
-            } else {
-                Label next = new Label();
-                mv.dup();
-                expr.accept(this, mv);
-                invokeGetValue(expr, mv);
-                mv.invoke(Methods.ScriptRuntime_strictEqualityComparison);
-                mv.ifeq(next);
-                mv.pop(); // remove dup'ed entry
-                mv.goTo(stmtLabel);
-                mv.mark(next);
-            }
-        }
-
-        // pop switchValue
-        mv.pop();
-
-        if (defaultClause != null) {
-            mv.goTo(defaultClause);
-        } else {
-            mv.goTo(lblBreak);
-        }
-
-        mv.enterBreakable(node, lblBreak);
-        index = 0;
-        for (SwitchClause switchClause : clauses) {
-            Label stmtLabel = labels[index++];
-            mv.mark(stmtLabel);
-            for (StatementListItem stmt : switchClause.getStatements()) {
-                stmt.accept(this, mv);
-            }
-        }
-        mv.exitBreakable(node);
-        mv.mark(lblBreak);
-
-        if (!declarations.isEmpty()) {
-            popLexicalEnvironment(mv);
-        }
-        mv.exitScope();
-
-        if (abrupt.contains(Abrupt.Break)) {
-            restoreEnvironment(mv, savedEnv);
-        }
-        if (savedEnv != -1) {
-            mv.freeVariable(savedEnv);
-        }
+        node.accept(new SwitchStatementGenerator(codegen), mv);
 
         return null;
     }
