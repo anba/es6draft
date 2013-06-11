@@ -7,6 +7,10 @@
 package com.github.anba.es6draft.compiler;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 
 /**
  * 
@@ -32,6 +36,12 @@ class IsReference extends DefaultNodeVisitor<Boolean, Void> {
     }
 
     @Override
+    public Boolean visit(IdentifierValue node, Void value) {
+        // Identifier as value
+        return false;
+    }
+
+    @Override
     public Boolean visit(CallExpression node, Void value) {
         // call expression no longer valid left-hand-side
         return false;
@@ -43,12 +53,30 @@ class IsReference extends DefaultNodeVisitor<Boolean, Void> {
     }
 
     @Override
+    public Boolean visit(ElementAccessorValue node, Void value) {
+        // ElementAccessor as value
+        return false;
+    }
+
+    @Override
     public Boolean visit(PropertyAccessor node, Void value) {
         return true;
     }
 
     @Override
+    public Boolean visit(PropertyAccessorValue node, Void value) {
+        // PropertyAccessor as value
+        return false;
+    }
+
+    @Override
     public Boolean visit(SuperExpression node, Void value) {
         return true;
+    }
+
+    @Override
+    public Boolean visit(SuperExpressionValue node, Void value) {
+        // SuperExpression as value
+        return false;
     }
 }

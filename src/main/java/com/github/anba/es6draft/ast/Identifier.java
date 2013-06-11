@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+
 /**
  * <h1>11 Expressions</h1><br>
  * <h2>11.1 Primary Expressions</h2>
@@ -23,6 +25,11 @@ public class Identifier extends LeftHandSideExpression implements PropertyName {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public IdentifierValue asValue() {
+        return new IdentifierValue(name);
     }
 
     @Override

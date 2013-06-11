@@ -32,6 +32,6 @@ public class TemplateCharacters extends Expression {
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
-        throw new IllegalStateException();
+        return visitor.visit(this, value);
     }
 }

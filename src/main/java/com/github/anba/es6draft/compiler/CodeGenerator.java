@@ -410,6 +410,13 @@ class CodeGenerator {
         return node.accept(exprgen, mv);
     }
 
+    ValType expressionValue(Expression node, ExpressionVisitor mv) {
+        Expression nodeValue = node.asValue();
+        ValType type = nodeValue.accept(exprgen, mv);
+        invokeGetValue(nodeValue, mv);
+        return type;
+    }
+
     void propertyDefinition(PropertyDefinition node, ExpressionVisitor mv) {
         node.accept(propgen, mv);
     }

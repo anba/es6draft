@@ -6,6 +6,11 @@
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
+
 /**
  * Default implementation for {@link NodeVisitor}
  */
@@ -225,6 +230,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(ElementAccessorValue node, V value) {
+        return visit((ElementAccessor) node, value);
+    }
+
+    @Override
     public R visit(Elision node, V value) {
         return visit((Expression) node, value);
     }
@@ -290,6 +300,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(IdentifierValue node, V value) {
+        return visit((Identifier) node, value);
+    }
+
+    @Override
     public R visit(IfStatement node, V value) {
         return visit((Statement) node, value);
     }
@@ -345,13 +360,13 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(Script node, V value) {
-        return visit((Node) node, value);
+    public R visit(PropertyAccessor node, V value) {
+        return visit((Expression) node, value);
     }
 
     @Override
-    public R visit(PropertyAccessor node, V value) {
-        return visit((Expression) node, value);
+    public R visit(PropertyAccessorValue node, V value) {
+        return visit((PropertyAccessor) node, value);
     }
 
     @Override
@@ -375,6 +390,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(Script node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
     public R visit(SpreadElement node, V value) {
         return visit((Expression) node, value);
     }
@@ -390,6 +410,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(SuperExpressionValue node, V value) {
+        return visit((SuperExpression) node, value);
+    }
+
+    @Override
     public R visit(SwitchClause node, V value) {
         return visit((Node) node, value);
     }
@@ -401,6 +426,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(TemplateCallExpression node, V value) {
+        return visit((Expression) node, value);
+    }
+
+    @Override
+    public R visit(TemplateCharacters node, V value) {
         return visit((Expression) node, value);
     }
 

@@ -8,6 +8,8 @@ package com.github.anba.es6draft.ast;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
+
 /**
  * <h1>11 Expressions</h1><br>
  * <h2>11.2 Left-Hand-Side Expressions</h2>
@@ -49,6 +51,20 @@ public class SuperExpression extends LeftHandSideExpression {
 
     public List<Expression> getArguments() {
         return arguments;
+    }
+
+    @Override
+    public Expression asValue() {
+        if (name != null) {
+            return new SuperExpressionValue(name);
+        }
+        if (expression != null) {
+            return new SuperExpressionValue(expression);
+        }
+        if (arguments != null) {
+            return new SuperExpressionValue(arguments);
+        }
+        return new SuperExpressionValue();
     }
 
     @Override

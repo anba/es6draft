@@ -26,4 +26,8 @@ public abstract class Expression extends AstNode {
     public int getParentheses() {
         return parentheses;
     }
+
+    public Expression asValue() {
+        return this;
+    }
 }

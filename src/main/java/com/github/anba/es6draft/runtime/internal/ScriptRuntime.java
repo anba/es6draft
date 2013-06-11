@@ -322,6 +322,22 @@ public final class ScriptRuntime {
      * 11.2.1 Property Accessors
      * <p>
      * Runtime Semantics: Evaluation<br>
+     * MemberExpression : MemberExpression . IdentifierName
+     */
+    public static Object getPropertyValue(Object baseValue, String propertyNameString,
+            ExecutionContext cx, boolean strict) {
+        /* step 1-6 (generated code) */
+        /* step 7 */
+        CheckObjectCoercible(cx, baseValue);
+        /* step 8-10 */
+        Reference ref = new Reference.PropertyNameReference(baseValue, propertyNameString, strict);
+        return ref.GetValue(cx);
+    }
+
+    /**
+     * 11.2.1 Property Accessors
+     * <p>
+     * Runtime Semantics: Evaluation<br>
      * MemberExpression : MemberExpression [ Expression ]
      */
     public static Reference getElement(Object baseValue, Object propertyNameValue,
@@ -336,6 +352,30 @@ public final class ScriptRuntime {
             return new Reference.PropertyNameReference(baseValue, (String) propertyKey, strict);
         }
         return new Reference.PropertySymbolReference(baseValue, (Symbol) propertyKey, strict);
+    }
+
+    /**
+     * 11.2.1 Property Accessors
+     * <p>
+     * Runtime Semantics: Evaluation<br>
+     * MemberExpression : MemberExpression [ Expression ]
+     */
+    public static Object getElementValue(Object baseValue, Object propertyNameValue,
+            ExecutionContext cx, boolean strict) {
+        /* step 1-6 (generated code) */
+        /* step 7 */
+        CheckObjectCoercible(cx, baseValue);
+        /* step 8 */
+        Object propertyKey = ToPropertyKey(cx, propertyNameValue);
+        /* step 9-10 */
+        if (propertyKey instanceof String) {
+            Reference ref = new Reference.PropertyNameReference(baseValue, (String) propertyKey,
+                    strict);
+            return ref.GetValue(cx);
+        }
+        Reference ref = new Reference.PropertySymbolReference(baseValue, (Symbol) propertyKey,
+                strict);
+        return ref.GetValue(cx);
     }
 
     /**

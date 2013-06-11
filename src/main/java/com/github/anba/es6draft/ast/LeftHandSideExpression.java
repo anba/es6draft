@@ -15,4 +15,7 @@ package com.github.anba.es6draft.ast;
 public abstract class LeftHandSideExpression extends Expression {
     protected LeftHandSideExpression() {
     }
+
+    @Override
+    public abstract Expression asValue();
 }

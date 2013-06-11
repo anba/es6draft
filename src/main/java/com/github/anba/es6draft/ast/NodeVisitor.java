@@ -6,6 +6,11 @@
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
+
 /**
  * Visitor interface for {@link Node} subclasses
  */
@@ -72,6 +77,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(ElementAccessor node, V value);
 
+    R visit(ElementAccessorValue node, V value);
+
     R visit(Elision node, V value);
 
     R visit(EmptyStatement node, V value);
@@ -98,6 +105,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(Identifier node, V value);
 
+    R visit(IdentifierValue node, V value);
+
     R visit(IfStatement node, V value);
 
     R visit(LabelledStatement node, V value);
@@ -122,6 +131,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(PropertyAccessor node, V value);
 
+    R visit(PropertyAccessorValue node, V value);
+
     R visit(PropertyNameDefinition node, V value);
 
     R visit(PropertyValueDefinition node, V value);
@@ -138,11 +149,15 @@ public interface NodeVisitor<R, V> {
 
     R visit(SuperExpression node, V value);
 
+    R visit(SuperExpressionValue node, V value);
+
     R visit(SwitchClause node, V value);
 
     R visit(SwitchStatement node, V value);
 
     R visit(TemplateCallExpression node, V value);
+
+    R visit(TemplateCharacters node, V value);
 
     R visit(TemplateLiteral node, V value);
 

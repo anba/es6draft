@@ -16,6 +16,10 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
@@ -162,9 +166,19 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Types.ScriptRuntime, "getElement", Type.getMethodType(Types.Reference,
                         Types.Object, Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
 
+        static final MethodDesc ScriptRuntime_getElementValue = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getElementValue", Type.getMethodType(
+                        Types.Object, Types.Object, Types.Object, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
+
         static final MethodDesc ScriptRuntime_getProperty = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "getProperty", Type.getMethodType(Types.Reference,
                         Types.Object, Types.String, Types.ExecutionContext, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_getPropertyValue = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
+                        Types.Object, Types.Object, Types.String, Types.ExecutionContext,
+                        Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "IsBuiltinEval", Type.getMethodType(Type.BOOLEAN_TYPE,
@@ -225,13 +239,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      * GetValue(ref)<br>
      */
     private ValType evalAndGetValue(Expression node, ExpressionVisitor mv) {
-        if (node instanceof Identifier) {
-            return identifierResolution.resolveValue((Identifier) node, mv);
-        } else {
-            ValType type = node.accept(this, mv);
-            GetValue(node, type, mv);
-            return type;
-        }
+        Expression valueNode = node.asValue();
+        ValType type = valueNode.accept(this, mv);
+        GetValue(valueNode, type, mv);
+        return type;
     }
 
     private void GetValue(Expression node, ValType type, ExpressionVisitor mv) {
@@ -1285,6 +1296,19 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     @Override
+    public ValType visit(ElementAccessorValue node, ExpressionVisitor mv) {
+        ValType baseType = evalAndGetValue(node.getBase(), mv);
+        mv.toBoxed(baseType);
+        ValType elementType = evalAndGetValue(node.getElement(), mv);
+        mv.toBoxed(elementType);
+        mv.loadExecutionContext();
+        mv.iconst(mv.isStrict());
+        mv.invoke(Methods.ScriptRuntime_getElementValue);
+
+        return ValType.Any;
+    }
+
+    @Override
     public ValType visit(FunctionExpression node, ExpressionVisitor mv) {
         codegen.compile(node);
 
@@ -1325,6 +1349,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     @Override
     public ValType visit(Identifier node, ExpressionVisitor mv) {
         return identifierResolution.resolve(node, mv);
+    }
+
+    @Override
+    public ValType visit(IdentifierValue node, ExpressionVisitor mv) {
+        return identifierResolution.resolveValue(node, mv);
     }
 
     @Override
@@ -1403,6 +1432,18 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     @Override
+    public ValType visit(PropertyAccessorValue node, ExpressionVisitor mv) {
+        ValType type = evalAndGetValue(node.getBase(), mv);
+        mv.toBoxed(type);
+        mv.aconst(node.getName());
+        mv.loadExecutionContext();
+        mv.iconst(mv.isStrict());
+        mv.invoke(Methods.ScriptRuntime_getPropertyValue);
+
+        return ValType.Any;
+    }
+
+    @Override
     public ValType visit(RegularExpressionLiteral node, ExpressionVisitor mv) {
         mv.loadExecutionContext();
         mv.aconst(node.getRegexp());
@@ -1455,6 +1496,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.aconst(node.getName());
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+
             return ValType.Reference;
         } else if (node.getExpression() != null) {
             mv.loadExecutionContext();
@@ -1463,6 +1505,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             ToFlatString(type, mv);
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+
             return ValType.Reference;
         } else if (node.getArguments() != null) {
             mv.loadExecutionContext();
@@ -1481,6 +1524,17 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
             return ValType.Reference;
         }
+    }
+
+    @Override
+    public ValType visit(SuperExpressionValue node, ExpressionVisitor mv) {
+        ValType type = visit((SuperExpression) node, mv);
+        if (type == ValType.Reference) {
+            mv.loadExecutionContext();
+            mv.invoke(Methods.Reference_GetValue_);
+        }
+
+        return ValType.Any;
     }
 
     @Override

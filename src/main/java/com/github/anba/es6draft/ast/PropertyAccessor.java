@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
+
 /**
  * <h1>11 Expressions</h1><br>
  * <h2>11.2 Left-Hand-Side Expressions</h2>
@@ -28,6 +30,11 @@ public class PropertyAccessor extends LeftHandSideExpression {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public PropertyAccessorValue asValue() {
+        return new PropertyAccessorValue(base, name);
     }
 
     @Override
