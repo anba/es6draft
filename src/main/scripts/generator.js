@@ -22,6 +22,8 @@ Object.defineProperty(GeneratorPrototype, "next", {
   value() {
     if (!Object_hasOwnProperty(this, genState)) {
       Object_defineProperty(this, genState, {value: true});
+      // drop arguments on first call to next()
+      return GeneratorPrototype_next.call(this);
     }
     return GeneratorPrototype_next.apply(this, arguments);
   },
@@ -39,6 +41,13 @@ Object.defineProperty(GeneratorPrototype, "send", {
     return GeneratorPrototype_next.apply(this, arguments);
   },
   writable: true, enumerable: false, configurable: true
+});
+
+const iteratorSym = getSym("@@iterator");
+
+Object.defineProperty(Object.prototype, iteratorSym, {
+  get() { return () => ({next: () => Object(this.next()) }) },
+  enumerable: false, configurable: true
 });
 
 })(this);
