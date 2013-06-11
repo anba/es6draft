@@ -304,14 +304,13 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 mv.invoke(Methods.ScriptRuntime_toFlatArray);
             }
         }
-        // stack: ref func args
+        // stack: [ref, func, args]
         mv.lineInfo(call);
 
-        // stack: [ref, func, args] -> [args, ref, func]
-        mv.dupX2();
-        mv.pop();
+        // stack: [ref, func, args] -> [ref, args, func]
+        mv.swap();
 
-        // stack: [args, ref, func] -> [args, ref, func(Callable)]
+        // stack: [ref, args, func] -> [ref, args, func(Callable)]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_CheckCallable);
 
@@ -320,6 +319,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             // test for possible direct-eval call
             notEval = new Label();
             afterCall = new Label();
+
+            // stack: [ref, args, func(Callable)] -> [args, ref, func(Callable)]
+            mv.swap();
+            mv.dupX2();
+            mv.pop();
 
             // stack: [args, ref, func(Callable)] -> [args, ref, func(Callable), isDirectEval]
             mv.dup2();
@@ -359,6 +363,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
             mv.goTo(afterCall);
             mv.mark(notEval);
+
+            // stack: [args, ref, func(Callable)] -> [ref, args, func(Callable)]
+            mv.swap();
+            mv.dupX2();
+            mv.pop();
         }
 
         // TODO: tail-call for SuperExpression(call) or TemplateCallExpression?
@@ -368,8 +377,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.instanceOf(Types.OrdinaryFunction);
             mv.ifeq(noTailCall);
 
-            // stack: [args, ref, func(Callable)] -> [args, thisValue, func(Callable)]
-            mv.swap();
+            // stack: [ref, args, func(Callable)] -> [args, thisValue, func(Callable)]
+            mv.dup2X1();
+            mv.pop2();
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_GetCallThisValue);
             mv.swap();
@@ -403,19 +413,18 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.mark(noTailCall);
         }
 
-        // stack: [args, ref, func(Callable)] -> [args, func(Callable), thisValue]
+        // stack: [ref, args, func(Callable)] -> [func(Callable), cx, ref, args]
+        mv.loadExecutionContext();
+        mv.dup2X2();
+        mv.pop2();
+
+        // stack: [func(Callable), cx, ref, args] -> [func(Callable), cx, args, thisValue]
         mv.swap();
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_GetCallThisValue);
 
-        // stack: [args, func(Callable), thisValue] -> [func(Callable), thisValue, args]
+        // stack: [func(Callable), cx, args, thisValue] -> [result]
         mv.swap();
-        mv.loadExecutionContext();
-        mv.dup2X2();
-        mv.pop2();
-        mv.swap();
-
-        // stack: [func(Callable), thisValue, args] -> [result]
         mv.invoke(Methods.Callable_call);
 
         if (afterCall != null) {
