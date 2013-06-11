@@ -59,6 +59,11 @@ public class FunctionDeclaration extends Declaration implements FunctionDefiniti
     }
 
     @Override
+    public void setStatements(List<StatementListItem> statements) {
+        this.statements = statements;
+    }
+
+    @Override
     public StrictMode getStrictMode() {
         return strictMode;
     }

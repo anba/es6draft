@@ -31,8 +31,16 @@ public class IfStatement extends Statement {
         return then;
     }
 
+    public void setThen(Statement then) {
+        this.then = then;
+    }
+
     public Statement getOtherwise() {
         return otherwise;
+    }
+
+    public void setOtherwise(Statement otherwise) {
+        this.otherwise = otherwise;
     }
 
     @Override

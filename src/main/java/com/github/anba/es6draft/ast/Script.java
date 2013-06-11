@@ -46,6 +46,10 @@ public class Script extends AstNode implements ScopedNode {
         return statements;
     }
 
+    public void setStatements(List<StatementListItem> statements) {
+        this.statements = statements;
+    }
+
     public boolean isStrict() {
         return strict;
     }

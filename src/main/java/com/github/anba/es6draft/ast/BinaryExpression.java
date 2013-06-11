@@ -67,8 +67,16 @@ public class BinaryExpression extends Expression {
         return left;
     }
 
+    public void setLeft(Expression left) {
+        this.left = left;
+    }
+
     public Expression getRight() {
         return right;
+    }
+
+    public void setRight(Expression right) {
+        this.right = right;
     }
 
     @Override

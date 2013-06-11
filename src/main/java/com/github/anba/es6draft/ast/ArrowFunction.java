@@ -67,6 +67,12 @@ public class ArrowFunction extends Expression implements FunctionNode {
     }
 
     @Override
+    public void setStatements(List<StatementListItem> statements) {
+        assert expression != null;
+        this.statements = statements;
+    }
+
+    @Override
     public StrictMode getStrictMode() {
         return strictMode;
     }

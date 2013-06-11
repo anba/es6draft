@@ -18,6 +18,8 @@ public interface FunctionNode extends ScopedNode {
 
     List<StatementListItem> getStatements();
 
+    void setStatements(List<StatementListItem> statements);
+
     enum StrictMode {
         NonStrict, ImplicitStrict, ExplicitStrict
     }

@@ -26,6 +26,10 @@ public class ObjectLiteral extends Expression {
         return properties;
     }
 
+    public void setProperties(List<PropertyDefinition> properties) {
+        this.properties = properties;
+    }
+
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);

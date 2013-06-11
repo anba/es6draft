@@ -59,6 +59,11 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     }
 
     @Override
+    public void setStatements(List<StatementListItem> statements) {
+        this.statements = statements;
+    }
+
+    @Override
     public StrictMode getStrictMode() {
         return strictMode;
     }

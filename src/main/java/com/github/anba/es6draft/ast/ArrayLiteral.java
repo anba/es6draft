@@ -27,6 +27,10 @@ public class ArrayLiteral extends ArrayInitialiser {
         return elements;
     }
 
+    public void setElements(List<Expression> elements) {
+        this.elements = elements;
+    }
+
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);

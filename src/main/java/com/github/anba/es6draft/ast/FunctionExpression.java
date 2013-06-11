@@ -73,6 +73,11 @@ public class FunctionExpression extends Expression implements FunctionDefinition
     }
 
     @Override
+    public void setStatements(List<StatementListItem> statements) {
+        this.statements = statements;
+    }
+
+    @Override
     public StrictMode getStrictMode() {
         return strictMode;
     }

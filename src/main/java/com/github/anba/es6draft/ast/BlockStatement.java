@@ -33,6 +33,11 @@ public class BlockStatement extends Statement implements ScopedNode {
         return statements;
     }
 
+    public void setStatements(List<StatementListItem> statements) {
+        assert statements != null;
+        this.statements = statements;
+    }
+
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
