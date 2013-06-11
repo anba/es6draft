@@ -255,6 +255,28 @@ public final class SmallArrayList<E> extends AbstractList<E> implements List<E>,
     }
 
     @Override
+    public Object[] toArray() {
+        int size = this.size;
+        E[] ext = this.extended;
+        if (ext != null) {
+            return Arrays.copyOf(ext, size);
+        }
+        Object[] array = new Object[size];
+        switch (size) {
+        default:
+            throw new IllegalStateException();
+        case 3:
+            array[2] = thd;
+        case 2:
+            array[1] = snd;
+        case 1:
+            array[0] = fst;
+        case 0:
+            return array;
+        }
+    }
+
+    @Override
     public Iterator<E> iterator() {
         return new IteratorImpl();
     }
