@@ -486,6 +486,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             return;
         case Number_int:
             mv.cast(Type.INT_TYPE, Type.LONG_TYPE);
+            mv.lconst(0xffff_ffffL);
+            mv.and(Type.LONG_TYPE);
             return;
         case Number_uint:
             return;
