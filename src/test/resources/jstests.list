@@ -21,29 +21,12 @@ ecma_3/Number/15.7.4.7-1.js
 ecma_5/RegExp/exec.js
 
 
-############################################
-# Intl v2 not supported in SpiderMonkey    #
-############################################
-
-# "timeZone" property is no longer undefined, instead it refers to the host environment timezone
-test402/ch12/12.3/12.3.3.js
-
-
 ####################################
 # Intl only partially supported    #
 ####################################
 
 Intl/NumberFormat/StringBuffer.js
-test402/ch10/10.1/10.1.1_1.js
-test402/ch10/10.1/10.1.2.1_4.js
-test402/ch10/10.1/10.1.2_a.js
-test402/ch11/11.1/11.1.1_1.js
-test402/ch11/11.1/11.1.2.1_4.js
-test402/ch11/11.1/11.1.2.js
-test402/ch11/11.3/11.3.2_TRP.js
-test402/ch12/12.1/12.1.1_1.js
-test402/ch12/12.1/12.1.2.1_4.js
-test402/ch12/12.1/12.1.2.js
+
 
 ###############################################################
 # ES6 (rev14) <Object>.prototype no longer instance of <Type> #

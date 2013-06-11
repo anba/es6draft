@@ -176,7 +176,7 @@ public class MozillaJSTest {
     private static final Set<String> excludeFiles = new HashSet<>(asList("browser.js", "shell.js",
             "jsref.js", "template.js", "user.js", "js-test-driver-begin.js",
             "js-test-driver-end.js"));
-    private static final Set<String> excludeDirs = new HashSet<>();
+    private static final Set<String> excludeDirs = new HashSet<>(asList("supporting", "test262"));
 
     private static List<MozTest> loadTests(Path searchdir, final Path basedir) throws IOException {
         BiFunction<Path, BufferedReader, MozTest> create = new BiFunction<Path, BufferedReader, MozTest>() {
