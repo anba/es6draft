@@ -83,6 +83,8 @@ tests/collections/Set-iterator-remove-5.js
 tests/collections/Set-size.js
 tests/collections/Set-iterator-remove-6.js
 tests/collections/Set-iterator-3.js
+tests/collections/Set-values-1.js
+tests/collections/Set-values-2.js
 tests/collections/WeakMap-clear.js
 tests/basic/bug808483.js
 
@@ -465,6 +467,8 @@ tests/auto-regress/bug743876.js
 tests/basic/testBug755916.js
 # displayName
 tests/basic/functionnames.js
+# getObjectMetadata/setObjectMetadata/setObjectMetadataCallback
+tests/basic/metadata-hook.js
 
 
 #######################################
