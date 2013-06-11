@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -20,7 +19,6 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
-import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -45,15 +43,6 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 MethodType.Interface, Types.EnvironmentRecord, "createImmutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String));
 
-        static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
-                MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
-                Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
-
-        // class: ExecutionContext
-        static final MethodDesc ExecutionContext_restoreLexicalEnvironment = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "restoreLexicalEnvironment",
-                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
-
         // class: Iterator
         static final MethodDesc Iterator_hasNext = MethodDesc.create(MethodType.Interface,
                 Types.Iterator, "hasNext", Type.getMethodType(Type.BOOLEAN_TYPE));
@@ -71,16 +60,6 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 Types.ScriptException, "getValue", Type.getMethodType(Types.Object));
 
         // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_InstantiateFunctionObject = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "InstantiateFunctionObject", Type
-                        .getMethodType(Types.OrdinaryFunction, Types.ExecutionContext,
-                                Types.LexicalEnvironment, Types.RuntimeInfo$Function));
-
-        static final MethodDesc ScriptRuntime_InstantiateGeneratorObject = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "InstantiateGeneratorObject", Type
-                        .getMethodType(Types.OrdinaryGenerator, Types.ExecutionContext,
-                                Types.LexicalEnvironment, Types.RuntimeInfo$Function));
-
         static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "enumerate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
@@ -100,90 +79,6 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     public StatementGenerator(CodeGenerator codegen) {
         super(codegen);
-    }
-
-    private int saveEnvironment(StatementVisitor mv) {
-        int savedEnv = mv.newVariable(Types.LexicalEnvironment);
-        getLexicalEnvironment(mv);
-        mv.store(savedEnv, Types.LexicalEnvironment);
-        return savedEnv;
-    }
-
-    private void restoreEnvironment(StatementVisitor mv, int savedEnv) {
-        mv.loadExecutionContext();
-        mv.load(savedEnv, Types.LexicalEnvironment);
-        mv.invoke(Methods.ExecutionContext_restoreLexicalEnvironment);
-    }
-
-    private static String BoundName(FunctionNode f) {
-        return f.getFunctionName();
-    }
-
-    /**
-     * 10.5.4 Block Declaration Instantiation
-     */
-    private void BlockDeclarationInstantiation(Collection<Declaration> declarations,
-            StatementVisitor mv) {
-        /* steps 1-2 */
-        List<FunctionNode> functionsToInitialize = new ArrayList<>();
-
-        // stack: [env] -> [env, envRec]
-        mv.dup();
-        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-
-        /* step 3 */
-        for (Declaration d : declarations) {
-            for (String dn : BoundNames(d)) {
-                if (IsConstantDeclaration(d)) {
-                    mv.dup();
-                    mv.aconst(dn);
-                    // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
-                    mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
-                } else {
-                    mv.dup();
-                    mv.aconst(dn);
-                    mv.iconst(false);
-                    // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
-                    mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
-                }
-            }
-            if (d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration) {
-                functionsToInitialize.add((FunctionNode) d);
-            }
-        }
-
-        // stack: [env, envRec] -> [envRec, env]
-        mv.swap();
-
-        /* step 4 */
-        for (FunctionNode f : functionsToInitialize) {
-            codegen.compile(f);
-            String fn = BoundName(f);
-
-            // stack: [envRec, env] -> [envRec, env, envRec, realm, env, fd]
-            mv.dup2();
-            mv.loadExecutionContext();
-            mv.swap();
-            mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
-                    Type.getMethodDescriptor(Types.RuntimeInfo$Function));
-
-            // stack: [envRec, env, envRec, realm, env, fd] -> [envRec, env, envRec, fo]
-            if (f instanceof FunctionDeclaration) {
-                mv.invoke(Methods.ScriptRuntime_InstantiateFunctionObject);
-            } else {
-                assert f instanceof GeneratorDeclaration;
-                mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);
-            }
-
-            // stack: [envRec, env, envRec, fn, fo] -> [envRec, env]
-            mv.aconst(fn);
-            mv.swap();
-            mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
-        }
-
-        // stack: [envRec, env] -> [env]
-        mv.swap();
-        mv.pop();
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -212,7 +107,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Collection<Declaration> declarations = LexicalDeclarations(node);
         if (!declarations.isEmpty()) {
             newDeclarativeEnvironment(mv);
-            BlockDeclarationInstantiation(declarations, mv);
+            new BlockDeclarationInstantiationGenerator(codegen).generate(declarations, mv);
             pushLexicalEnvironment(mv);
         }
 
@@ -701,7 +596,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Collection<Declaration> declarations = LexicalDeclarations(node);
         if (!declarations.isEmpty()) {
             newDeclarativeEnvironment(mv);
-            BlockDeclarationInstantiation(declarations, mv);
+            new BlockDeclarationInstantiationGenerator(codegen).generate(declarations, mv);
             pushLexicalEnvironment(mv);
         }
 

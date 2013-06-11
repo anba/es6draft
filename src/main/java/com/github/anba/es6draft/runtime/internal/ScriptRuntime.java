@@ -834,8 +834,8 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: InstantiateFunctionObject
      */
-    public static OrdinaryFunction InstantiateFunctionObject(ExecutionContext cx,
-            LexicalEnvironment scope, RuntimeInfo.Function fd) {
+    public static OrdinaryFunction InstantiateFunctionObject(LexicalEnvironment scope,
+            ExecutionContext cx, RuntimeInfo.Function fd) {
         /* step 1-2 */
         OrdinaryFunction f = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 3 */
@@ -994,8 +994,8 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: InstantiateFunctionObject
      */
-    public static OrdinaryGenerator InstantiateGeneratorObject(ExecutionContext cx,
-            LexicalEnvironment scope, RuntimeInfo.Function fd) {
+    public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment scope,
+            ExecutionContext cx, RuntimeInfo.Function fd) {
         /* steps 1-3 */
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 4 */
