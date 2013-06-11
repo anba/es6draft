@@ -58,6 +58,8 @@ regress/regress-187.js
 string-match.js
 string-slices-regexp.js
 third_party/regexp-pcre.js
+unicodelctest.js
+unicodelctest-no-optimization.js
 
 
 ############################################
@@ -235,19 +237,10 @@ regress/regress-1119.js
 #######################################
 
 # Method code too large
-array-constructor.js
+# too many variables
 limit-locals.js
-numops-fuzz-part1.js
-numops-fuzz-part2.js
-numops-fuzz-part3.js
-numops-fuzz-part4.js
+# too many arguments
 regress/regress-1122.js
-unicode-test.js
-unicodelctest.js
-unicodelctest-no-optimization.js
-
-# Class file too large
-copy-on-write-assert.js
 
 # StackOverflow
 big-array-literal.js

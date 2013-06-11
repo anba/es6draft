@@ -782,35 +782,30 @@ js1_8_5/extensions/clone-v1-typed-array.js
 # Compilation or runtime issues       #
 #######################################
 
+# causes EXCEPTION_ACCESS_VIOLATION...
+ecma_5/String/string-upper-lower-mapping.js
+
 # Method code too large
+# too many arguments
 ecma/FunctionObjects/15.3.1.1-3.js
 ecma/FunctionObjects/15.3.2.1-3.js
 ecma/FunctionObjects/15.3.5-1.js
-ecma_3/Statements/regress-302439.js
+# too many arguments in call expression
+js1_5/Regress/regress-396684.js
+# too many variables
+js1_5/Regress/regress-416628.js
+# overlarge switch statement
 ecma_3/Statements/regress-324650.js
-ecma_3/Statements/regress-444979.js
 ecma_3/Statements/regress-74474-002.js
 ecma_3/Statements/regress-74474-003.js
-ecma_3/Array/regress-322135-02.js
-ecma_5/String/string-upper-lower-mapping.js
-js1_5/Regress/regress-308085.js
-js1_5/Regress/regress-398085-01.js
-js1_5/Regress/regress-396684.js
-js1_5/Regress/regress-416628.js
-js1_8_5/regress/regress-563221.js
 
 # Class file too large
 js1_5/Regress/regress-155081.js
 js1_5/Regress/regress-155081-2.js
+js1_5/Regress/regress-290575.js
 js1_5/Regress/regress-366601.js
 js1_5/Regress/regress-367561-01.js
 js1_5/Regress/regress-367561-03.js
-js1_5/Regress/regress-290575.js
-
-# NullPointerException in ASM
-js1_5/Regress/regress-398085-02.js
-js1_5/Regress/regress-89443.js
-js1_5/Regress/regress-96526-003.js
 
 # StackOverflow errors
 ecma_5/extensions/array-toString-recursion.js
@@ -844,6 +839,7 @@ ecma_5/RegExp/regress-617935.js
 ecma/Date/15.9.5.10-2.js
 ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.12-2.js
+ecma_3/Array/regress-322135-02.js
 js1_5/GC/regress-203278-2.js
 js1_5/Regress/regress-203278-1.js
 js1_5/Regress/regress-280769-1.js

@@ -798,16 +798,6 @@ tests/basic/bug787848.js
 # Compilation or runtime issues       #
 #######################################
 
-# ASM NullPointerException
-tests/basic/testBug673066.js
-
-# Method code too large
-tests/auto-regress/bug562028.js
-tests/auto-regress/bug601393.js
-tests/basic/bug586917.js
-tests/basic/bug641235.js
-tests/basic/testBug686274.js
-
 # Timeout
 tests/auto-regress/bug583680.js
 tests/auto-regress/bug620637.js
