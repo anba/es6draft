@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.Parser.Option;
 import com.github.anba.es6draft.parser.ParserException;
@@ -83,7 +84,7 @@ public class ScriptCache {
      * Parses and compiles the javascript file
      */
     public Script script(String sourceName, int sourceLine, Path file) throws IOException,
-            ParserException {
+            ParserException, CompilationException {
         return script(sourceName, sourceLine, Files.newInputStream(file));
     }
 
@@ -91,7 +92,7 @@ public class ScriptCache {
      * Parses and compiles the javascript file
      */
     public Script script(String sourceName, int sourceLine, InputStream stream) throws IOException,
-            ParserException {
+            ParserException, CompilationException {
         try (Reader r = newReader(stream)) {
             return ScriptLoader.load(nextScriptName(), parse(sourceName, sourceLine, r));
         }
@@ -101,7 +102,7 @@ public class ScriptCache {
      * Parses and compiles the javascript file
      */
     public Script script(String sourceName, int sourceLine, Reader reader) throws IOException,
-            ParserException {
+            ParserException, CompilationException {
         try (Reader r = reader) {
             return ScriptLoader.load(nextScriptName(), parse(sourceName, sourceLine, r));
         }
@@ -110,7 +111,7 @@ public class ScriptCache {
     /**
      * Compiles {@code file} to a {@link Script} and caches the result
      */
-    public Script get(Path file) throws IOException, ParserException {
+    public Script get(Path file) throws IOException, ParserException, CompilationException {
         if (cache.containsKey(file)) {
             return cache.get(file);
         }

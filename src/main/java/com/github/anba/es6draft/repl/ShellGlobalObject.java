@@ -19,6 +19,7 @@ import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -60,8 +61,8 @@ public abstract class ShellGlobalObject extends GlobalObject {
     /**
      * Compiles the script {@code name} from the 'scripts' directory
      */
-    public static Script compileScript(ScriptCache scriptCache, String name)
-            throws ParserException, IOException {
+    public static Script compileScript(ScriptCache scriptCache, String name) throws IOException,
+            ParserException, CompilationException {
         String sourceName = "/scripts/" + name;
         try (InputStream stream = ShellGlobalObject.class.getResourceAsStream(sourceName)) {
             return scriptCache.script(sourceName, 1, stream);
@@ -79,7 +80,8 @@ public abstract class ShellGlobalObject extends GlobalObject {
     /**
      * Parses, compiles and executes the javascript file
      */
-    public void eval(Path fileName, Path file) throws IOException, ParserException {
+    public void eval(Path fileName, Path file) throws IOException, ParserException,
+            CompilationException {
         Script script = scriptCache.script(fileName.toString(), 1, file);
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
@@ -94,7 +96,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
     /**
      * Parses, compiles and executes the javascript file (uses {@link #scriptCache})
      */
-    public void include(Path file) throws IOException, ParserException {
+    public void include(Path file) throws IOException, ParserException, CompilationException {
         Script script = scriptCache.get(absolutePath(file));
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
@@ -126,7 +128,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
             return UNDEFINED;
         } catch (IOException e) {
             throw throwError(realm, e.getMessage());
-        } catch (ParserException e) {
+        } catch (ParserException | CompilationException e) {
             throw e.toScriptException(realm.defaultContext());
         }
     }

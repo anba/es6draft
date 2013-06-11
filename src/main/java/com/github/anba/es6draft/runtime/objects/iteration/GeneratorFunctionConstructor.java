@@ -20,6 +20,7 @@ import java.util.EnumSet;
 
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -99,7 +100,7 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
             GeneratorDefinition generatorDef = parser.parseGenerator(p, bodyText);
             String className = calleeContext.getRealm().nextFunctionName();
             function = ScriptLoader.compile(className, generatorDef);
-        } catch (ParserException e) {
+        } catch (ParserException | CompilationException e) {
             throw e.toScriptException(calleeContext);
         }
 

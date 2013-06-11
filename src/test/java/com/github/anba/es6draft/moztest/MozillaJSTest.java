@@ -41,6 +41,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.MozShellGlobalObject;
@@ -129,7 +130,7 @@ public class MozillaJSTest {
         Path js = testDir().resolve(moztest.script);
         try {
             global.eval(moztest.script, js);
-        } catch (ParserException e) {
+        } catch (ParserException | CompilationException e) {
             // count towards the overall failure count
             console.getFailures().add(new AssertionError(e.getMessage(), e));
         } catch (ScriptException e) {

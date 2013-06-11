@@ -39,6 +39,9 @@ public class Messages {
     }
 
     public enum Key {/* @formatter:off */
+        // internal
+        InternalError("internal.error"),
+
         // TokenStream
         InvalidNumberLiteral("parser.invalid_number_literal"),
         InvalidBinaryIntegerLiteral("parser.invalid_binary_integer_literal"),

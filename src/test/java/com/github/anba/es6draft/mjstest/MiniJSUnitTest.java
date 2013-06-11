@@ -39,6 +39,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.ShellGlobalObject;
@@ -113,9 +114,9 @@ public class MiniJSUnitTest {
         Path js = testDir().resolve(test.script);
         try {
             global.eval(test.script, js);
-        } catch (ParserException e) {
+        } catch (ParserException | CompilationException e) {
             // count towards the overall failure count
-            String message = String.format("%s: %s", e.getExceptionType(), e.getMessage());
+            String message = e.getMessage();
             failures.add(new AssertionError(message, e));
         } catch (ScriptException e) {
             // count towards the overall failure count

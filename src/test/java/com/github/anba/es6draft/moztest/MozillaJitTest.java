@@ -40,6 +40,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.MozShellGlobalObject;
@@ -134,9 +135,9 @@ public class MozillaJitTest {
             if (moztest.error != null) {
                 fail("Expected exception: " + moztest.error);
             }
-        } catch (ParserException e) {
+        } catch (ParserException | CompilationException e) {
             // count towards the overall failure count
-            String message = String.format("%s: %s", e.getExceptionType(), e.getMessage());
+            String message = e.getMessage();
             if (moztest.error == null || !(message.contains(moztest.error))) {
                 console.getFailures().add(new AssertionError(message, e));
             }

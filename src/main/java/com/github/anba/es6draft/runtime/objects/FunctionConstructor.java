@@ -16,6 +16,7 @@ import java.util.EnumSet;
 
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.ast.FunctionDefinition;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -93,7 +94,7 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
             FunctionDefinition functionDef = parser.parseFunction(p, bodyText);
             String className = calleeContext.getRealm().nextFunctionName();
             function = ScriptLoader.compile(className, functionDef);
-        } catch (ParserException e) {
+        } catch (ParserException | CompilationException e) {
             throw e.toScriptException(calleeContext);
         }
 

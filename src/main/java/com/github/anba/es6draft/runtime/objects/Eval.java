@@ -13,6 +13,7 @@ import java.util.EnumSet;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -135,7 +136,7 @@ public final class Eval {
             }
             String className = cx.getRealm().nextEvalName();
             return ScriptLoader.load(className, parsedScript);
-        } catch (ParserException e) {
+        } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }
     }

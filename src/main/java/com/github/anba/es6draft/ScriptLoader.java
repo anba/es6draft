@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecuti
 import java.util.EnumSet;
 
 import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.CompiledFunction;
 import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.compiler.Compiler;
@@ -80,7 +81,8 @@ public class ScriptLoader {
      * {@link com.github.anba.es6draft.ast.Script} AST-node. This may either be an
      * {@link InterpretedScript} or {@link CompiledScript} instance.
      */
-    public static Script load(String className, com.github.anba.es6draft.ast.Script parsedScript) {
+    public static Script load(String className, com.github.anba.es6draft.ast.Script parsedScript)
+            throws CompilationException {
         Script script = Interpreter.script(parsedScript);
         if (script == null) {
             script = compile(className, parsedScript, EnumSet.noneOf(Compiler.Option.class));
@@ -93,7 +95,8 @@ public class ScriptLoader {
      * {@link Script} object
      */
     public static CompiledScript compile(String className,
-            com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options) {
+            com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options)
+            throws CompilationException {
         try {
             // prepend '#' to mark generated classes, cf. ErrorPrototype
             String clazzName = "#" + className;
@@ -111,7 +114,8 @@ public class ScriptLoader {
     /**
      * Compiles the given {@link FunctionNode} to a {@link RuntimeInfo.Function} object
      */
-    public static RuntimeInfo.Function compile(String className, FunctionNode function) {
+    public static RuntimeInfo.Function compile(String className, FunctionNode function)
+            throws CompilationException {
         try {
             // prepend '#' to mark generated classes, cf. ErrorPrototype
             String clazzName = "#" + className;

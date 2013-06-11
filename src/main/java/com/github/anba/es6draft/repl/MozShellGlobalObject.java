@@ -27,6 +27,7 @@ import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.ast.ExpressionStatement;
 import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -83,7 +84,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         try {
             Script script = scriptCache.script(sourceName, sourceLine, new StringReader(source));
             return ScriptLoader.ScriptEvaluation(script, realm, false);
-        } catch (ParserException e) {
+        } catch (ParserException | CompilationException e) {
             throw e.toScriptException(realm.defaultContext());
         }
     }
@@ -98,7 +99,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             include(libdir.resolve(file));
         } catch (IOException e) {
             throw throwError(realm, e.getMessage());
-        } catch (ParserException e) {
+        } catch (ParserException | CompilationException e) {
             throw e.toScriptException(realm.defaultContext());
         }
     }
@@ -357,7 +358,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
                 getRealm().getOptions());
         try {
             global.eval(compileScript(scriptCache, "mozlegacy.js"));
-        } catch (ParserException | IOException e) {
+        } catch (ParserException | CompilationException | IOException e) {
             throwError(realm, e.getMessage());
         }
         return global;

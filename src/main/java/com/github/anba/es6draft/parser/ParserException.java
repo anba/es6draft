@@ -13,6 +13,7 @@ import java.text.MessageFormat;
 import java.util.Locale;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.internal.InternalException;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
@@ -20,7 +21,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
  * {@link RuntimeException} subclass for parser exceptions
  */
 @SuppressWarnings("serial")
-public class ParserException extends RuntimeException {
+public class ParserException extends InternalException {
     public enum ExceptionType {
         SyntaxError, ReferenceError
     }
@@ -40,7 +41,7 @@ public class ParserException extends RuntimeException {
 
     @Override
     public String getMessage() {
-        String message = getFormattedMessage();
+        String message = type.toString() + ": " + getFormattedMessage();
         if (line != -1) {
             message += " (line " + line + ")";
         }
@@ -57,18 +58,11 @@ public class ParserException extends RuntimeException {
         return format.format(messageArguments);
     }
 
+    @Override
     public ScriptException toScriptException(ExecutionContext cx) {
-        if (getExceptionType() == ExceptionType.ReferenceError) {
+        if (type == ExceptionType.ReferenceError) {
             return throwReferenceError(cx, messageKey, messageArguments);
         }
         return throwSyntaxError(cx, messageKey, messageArguments);
-    }
-
-    public ExceptionType getExceptionType() {
-        return type;
-    }
-
-    public int getLine() {
-        return line;
     }
 }
