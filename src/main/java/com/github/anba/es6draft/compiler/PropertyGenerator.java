@@ -17,6 +17,7 @@ import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.PropertyName;
 import com.github.anba.es6draft.ast.PropertyNameDefinition;
 import com.github.anba.es6draft.ast.PropertyValueDefinition;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -70,6 +71,22 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     protected Void visit(Expression node, ExpressionVisitor mv) {
         ValType type = codegen.expression(node, mv);
         mv.toBoxed(type);
+        return null;
+    }
+
+    @Override
+    public Void visit(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
+        codegen.compile(node, mv);
+
+        // stack: [<object>] -> [cx, <object>]
+        mv.loadExecutionContext();
+        mv.swap();
+
+        // stack: [<object>] -> []
+        String desc = Type.getMethodDescriptor(Type.VOID_TYPE, Types.ExecutionContext,
+                Types.ScriptObject);
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
+
         return null;
     }
 

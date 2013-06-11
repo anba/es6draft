@@ -46,10 +46,12 @@ final class Types {
     }
 
     // java.lang
+    static final Type boolean_ = Type.getType(boolean[].class);
     static final Type Boolean = Type.getType(Boolean.class);
     static final Type CharSequence = Type.getType(CharSequence.class);
     static final Type Double = Type.getType(Double.class);
     static final Type Integer = Type.getType(Integer.class);
+    static final Type Number = Type.getType(Number.class);
     static final Type Object = Type.getType(Object.class);
     static final Type Object_ = Type.getType(Object[].class);
     static final Type String = Type.getType(String.class);

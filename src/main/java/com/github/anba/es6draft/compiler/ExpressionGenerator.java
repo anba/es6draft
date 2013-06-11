@@ -18,6 +18,9 @@ import org.objectweb.asm.Type;
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
+import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
@@ -506,6 +509,21 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         return ValType.Object;
     }
 
+    @Override
+    public ValType visit(SpreadArrayLiteral node, ExpressionVisitor mv) {
+        // stack: [] -> [array, nextIndex]
+        mv.load(1, Types.ExoticArray);
+        mv.load(2, Type.INT_TYPE);
+
+        arrayLiteralWithSpread(node, mv);
+
+        // stack: [array, nextIndex] -> [nextIndex]
+        mv.swap();
+        mv.pop();
+
+        return ValType.Any;
+    }
+
     private void arrayLiteralWithSpread(ArrayLiteral node, ExpressionVisitor mv) {
         // stack: [array, nextIndex]
         int elisionWidth = 0;
@@ -556,6 +574,28 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         // stack: [array, array, nextIndex, obj, cx] -> [array, nextIndex']
         mv.invoke(Methods.ScriptRuntime_ArrayAccumulationSpreadElement);
+
+        return ValType.Any;
+    }
+
+    @Override
+    public ValType visit(SpreadElementMethod node, ExpressionVisitor mv) {
+        codegen.compile(node, mv);
+
+        // stack: [array, nextIndex] -> [array, array, nextIndex]
+        mv.swap();
+        mv.dupX1();
+        mv.swap();
+
+        // stack: [array, array, nextIndex] -> [array, cx, array, nextIndex]
+        mv.loadExecutionContext();
+        mv.dupX2();
+        mv.pop();
+
+        // stack: [array, cx, array, nextIndex] -> [array, nextIndex']
+        String desc = Type.getMethodDescriptor(Type.INT_TYPE, Types.ExecutionContext,
+                Types.ExoticArray, Type.INT_TYPE);
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
 
         return ValType.Any;
     }
@@ -1390,6 +1430,17 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     @Override
     public ValType visit(IdentifierValue node, ExpressionVisitor mv) {
         return identifierResolution.resolveValue(node, mv);
+    }
+
+    @Override
+    public ValType visit(ExpressionMethod node, ExpressionVisitor mv) {
+        codegen.compile(node, mv);
+
+        String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
+        mv.loadExecutionContext();
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
+
+        return ValType.Any;
     }
 
     @Override

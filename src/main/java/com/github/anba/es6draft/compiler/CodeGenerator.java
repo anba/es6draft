@@ -23,9 +23,14 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.CodeSizeEvaluator;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.FunctionNode.StrictMode;
+import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
@@ -38,7 +43,7 @@ import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 /**
  * 
  */
-class CodeGenerator {
+class CodeGenerator implements AutoCloseable {
     private static class Fields {
         static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
                 Types.Undefined, "UNDEFINED", Types.Undefined);
@@ -57,6 +62,7 @@ class CodeGenerator {
                         Types.ExecutionContext));
     }
 
+    private static final boolean EVALUATE_SIZE = false;
     private static final boolean INCLUDE_SOURCE = true;
     private static final Future<String> NO_SOURCE = new ImmediateFuture<>(null);
 
@@ -80,7 +86,8 @@ class CodeGenerator {
         return className;
     }
 
-    void close() {
+    @Override
+    public void close() {
         if (INCLUDE_SOURCE) {
             sourceCompressor.shutdown();
         }
@@ -95,11 +102,31 @@ class CodeGenerator {
         }
     }
 
+    private static class $CodeSizeEvaluator extends CodeSizeEvaluator {
+        private final String methodName;
+
+        $CodeSizeEvaluator(String methodName, MethodVisitor mv) {
+            super(Opcodes.ASM4, mv);
+            this.methodName = methodName;
+        }
+
+        @Override
+        public void visitEnd() {
+            System.out.printf("%s: [%d, %d]\n", methodName, getMinSize(), getMaxSize());
+            super.visitEnd();
+        }
+    }
+
     MethodVisitor publicStaticMethod(String methodName, String methodDescriptor) {
         int access = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
         String signature = null;
         String[] exceptions = null;
-        return cw.visitMethod(access, methodName, methodDescriptor, signature, exceptions);
+        MethodVisitor mv = cw.visitMethod(access, methodName, methodDescriptor, signature,
+                exceptions);
+        if (EVALUATE_SIZE) {
+            mv = new $CodeSizeEvaluator(methodName, mv);
+        }
+        return mv;
     }
 
     InstructionVisitor publicStaticMethod(String methodName, Type methodDescriptor) {
@@ -122,15 +149,7 @@ class CodeGenerator {
     private Map<Node, String> methodNames = new HashMap<>(32);
     private AtomicInteger methodCounter = new AtomicInteger(0);
 
-    private final boolean isCompiled(TemplateLiteral node) {
-        return methodNames.containsKey(node);
-    }
-
-    private final boolean isCompiled(GeneratorComprehension node) {
-        return methodNames.containsKey(node);
-    }
-
-    private final boolean isCompiled(FunctionNode node) {
+    private final boolean isCompiled(Node node) {
         return methodNames.containsKey(node);
     }
 
@@ -153,8 +172,12 @@ class CodeGenerator {
         }
     }
 
-    private final String methodName(Script node, int index) {
-        return "!~script_" + index;
+    final String methodName(StatementListMethod node) {
+        String n = methodNames.get(node);
+        if (n == null) {
+            n = addMethodName(node, "stmtmethod");
+        }
+        return n;
     }
 
     private final String methodName(TemplateLiteral node) {
@@ -169,6 +192,30 @@ class CodeGenerator {
         String n = methodNames.get(node);
         if (n == null) {
             n = addMethodName(node, "gencompr");
+        }
+        return n;
+    }
+
+    final String methodName(SpreadElementMethod node) {
+        String n = methodNames.get(node);
+        if (n == null) {
+            n = addMethodName(node, "inlarrayspread");
+        }
+        return n;
+    }
+
+    final String methodName(PropertyDefinitionsMethod node) {
+        String n = methodNames.get(node);
+        if (n == null) {
+            n = addMethodName(node, "inlpropdef");
+        }
+        return n;
+    }
+
+    final String methodName(ExpressionMethod node) {
+        String n = methodNames.get(node);
+        if (n == null) {
+            n = addMethodName(node, "methexpr");
         }
         return n;
     }
@@ -254,19 +301,6 @@ class CodeGenerator {
         new EvalDeclarationInstantiationGenerator(this).generate(node);
 
         // runtime method
-        if (node.getStatements().size() < STATEMENTS_THRESHOLD) {
-            singleScript(node);
-        } else {
-            multiScript(node);
-        }
-
-        // runtime-info method
-        new RuntimeInfoGenerator(this).runtimeInfo(node);
-    }
-
-    private static final int STATEMENTS_THRESHOLD = 300;
-
-    private void singleScript(Script node) {
         StatementVisitor mv = new ScriptStatementVisitor(this, node);
         mv.lineInfo(node);
         mv.begin();
@@ -280,46 +314,9 @@ class CodeGenerator {
         mv.loadCompletionValue();
         mv.areturn();
         mv.end();
-    }
 
-    private void multiScript(Script node) {
-        // split script into several parts to pass all test262 test cases
-        String desc = ScriptChunkStatementVisitor.methodDescriptor.getInternalName();
-
-        List<StatementListItem> statements = node.getStatements();
-        int num = statements.size();
-        int index = 0;
-        for (int end = 0, start = 0; end < num; start += STATEMENTS_THRESHOLD, ++index) {
-            end = Math.min(start + STATEMENTS_THRESHOLD, num);
-            StatementVisitor mv = new ScriptChunkStatementVisitor(this, node, index);
-            mv.lineInfo(statements.get(start));
-            mv.begin();
-
-            mv.enterScope(node);
-            for (StatementListItem stmt : statements.subList(start, end)) {
-                statement(stmt, mv);
-            }
-            mv.exitScope();
-
-            mv.loadCompletionValue();
-            mv.areturn();
-            mv.end();
-        }
-
-        StatementVisitor mv = new ScriptStatementVisitor(this, node);
-        mv.lineInfo(node);
-        mv.begin();
-
-        for (int i = 0; i < index; ++i) {
-            mv.loadExecutionContext();
-            mv.loadCompletionValue();
-            mv.invokestatic(getClassName(), methodName(node, i), desc);
-            mv.storeCompletionValue();
-        }
-
-        mv.loadCompletionValue();
-        mv.areturn();
-        mv.end();
+        // runtime-info method
+        new RuntimeInfoGenerator(this).runtimeInfo(node);
     }
 
     void compile(GeneratorComprehension node, ExpressionVisitor mv) {
@@ -399,6 +396,83 @@ class CodeGenerator {
         body.end();
     }
 
+    void compile(StatementListMethod node, StatementVisitor mv) {
+        if (!isCompiled(node)) {
+            StatementVisitor body = new StatementListMethodStatementVisitor(this, node, mv);
+            body.lineInfo(node);
+            body.begin();
+
+            body.setScope(mv.getScope());
+            for (StatementListItem stmt : node.getStatements()) {
+                statement(stmt, body);
+            }
+
+            body.loadCompletionValue();
+            body.areturn();
+
+            // emit return-label if nested in function
+            if (body.getCodeType() == StatementVisitor.CodeType.Function) {
+                body.mark(body.returnLabel());
+                body.load(2, Types.boolean_);
+                body.iconst(0);
+                body.iconst(true);
+                body.astore(Type.BOOLEAN_TYPE);
+
+                body.loadCompletionValue();
+                body.areturn();
+            }
+
+            body.end();
+        }
+    }
+
+    void compile(SpreadElementMethod node, ExpressionVisitor mv) {
+        if (!isCompiled(node)) {
+            ExpressionVisitor body = new InlineArraySpreadVisitor(this, node, mv);
+            body.lineInfo(node);
+            body.begin();
+
+            body.setScope(mv.getScope());
+            expression(node.getExpression(), body);
+
+            body.areturn();
+            body.end();
+        }
+    }
+
+    void compile(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
+        if (!isCompiled(node)) {
+            ExpressionVisitor body = new InlinePropertyDefinitionVisitor(this, node, mv);
+            body.lineInfo(node);
+            body.begin();
+
+            body.setScope(mv.getScope());
+            List<PropertyDefinition> properties = node.getProperties();
+            for (PropertyDefinition property : properties) {
+                body.load(1, Types.ScriptObject);
+                propertyDefinition(property, body);
+            }
+
+            body.areturn();
+            body.end();
+        }
+    }
+
+    void compile(ExpressionMethod node, ExpressionVisitor mv) {
+        if (!isCompiled(node)) {
+            ExpressionVisitor body = new ExpressionMethodVisitor(this, node, mv);
+            body.lineInfo(node);
+            body.begin();
+
+            body.setScope(mv.getScope());
+            ValType type = expressionValue(node.getExpression(), body);
+            body.toBoxed(type);
+
+            body.areturn();
+            body.end();
+        }
+    }
+
     private void invokeGetValue(Expression node, ExpressionVisitor mv) {
         if (node.accept(IsReference.INSTANCE, null)) {
             mv.loadExecutionContext();
@@ -434,10 +508,10 @@ class CodeGenerator {
         private final boolean initCompletionValue;
 
         protected StatementVisitorImpl(CodeGenerator codegen, String methodName,
-                Type methodDescriptor, boolean strict, boolean globalCode, boolean completionValue,
+                Type methodDescriptor, boolean strict, CodeType codeType, boolean completionValue,
                 boolean initCompletionValue) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, globalCode, completionValue);
+                    methodName, methodDescriptor, strict, codeType, completionValue);
             this.initCompletionValue = initCompletionValue;
             reserveFixedSlot(COMPLETION_SLOT, COMPLETION_TYPE);
         }
@@ -476,17 +550,8 @@ class CodeGenerator {
 
         ScriptStatementVisitor(CodeGenerator codegen, Script node) {
             super(codegen, codegen.methodName(node, ScriptName.Code), methodDescriptor, node
-                    .isStrict(), node.isGlobalCode(), true, true);
-        }
-    }
-
-    private static class ScriptChunkStatementVisitor extends StatementVisitorImpl {
-        static final Type methodDescriptor = Type.getMethodType(Types.Object,
-                Types.ExecutionContext, Types.Object);
-
-        ScriptChunkStatementVisitor(CodeGenerator codegen, Script node, int index) {
-            super(codegen, codegen.methodName(node, index), methodDescriptor, IsStrict(node), node
-                    .isGlobalCode(), true, false);
+                    .isStrict(), node.isGlobalCode() ? CodeType.GlobalScript
+                    : CodeType.NonGlobalScript, true, true);
         }
     }
 
@@ -496,7 +561,18 @@ class CodeGenerator {
 
         FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
             super(codegen, codegen.methodName(node, FunctionName.Code), methodDescriptor,
-                    IsStrict(node), false, false, true);
+                    IsStrict(node), CodeType.Function, false, true);
+        }
+    }
+
+    private static class StatementListMethodStatementVisitor extends StatementVisitorImpl {
+        static final Type methodDescriptor = Type.getMethodType(Types.Object,
+                Types.ExecutionContext, Types.Object, Types.boolean_);
+
+        StatementListMethodStatementVisitor(CodeGenerator codegen, StatementListMethod node,
+                StatementVisitor parent) {
+            super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
+                    .getCodeType(), parent.isCompletionValue(), false);
         }
     }
 
@@ -515,6 +591,39 @@ class CodeGenerator {
                 Types.ExecutionContext);
 
         GeneratorComprehensionVisitor(CodeGenerator codegen, GeneratorComprehension node,
+                ExpressionVisitor parent) {
+            super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
+                    .isGlobalCode());
+        }
+    }
+
+    private static class ExpressionMethodVisitor extends ExpressionVisitorImpl {
+        static final Type methodDescriptor = Type.getMethodType(Types.Object,
+                Types.ExecutionContext);
+
+        ExpressionMethodVisitor(CodeGenerator codegen, ExpressionMethod node,
+                ExpressionVisitor parent) {
+            super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
+                    .isGlobalCode());
+        }
+    }
+
+    private static class InlineArraySpreadVisitor extends ExpressionVisitorImpl {
+        static final Type methodDescriptor = Type.getMethodType(Type.INT_TYPE,
+                Types.ExecutionContext, Types.ExoticArray, Type.INT_TYPE);
+
+        InlineArraySpreadVisitor(CodeGenerator codegen, SpreadElementMethod node,
+                ExpressionVisitor parent) {
+            super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
+                    .isGlobalCode());
+        }
+    }
+
+    private static class InlinePropertyDefinitionVisitor extends ExpressionVisitorImpl {
+        static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.ScriptObject);
+
+        InlinePropertyDefinitionVisitor(CodeGenerator codegen, PropertyDefinitionsMethod node,
                 ExpressionVisitor parent) {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .isGlobalCode());

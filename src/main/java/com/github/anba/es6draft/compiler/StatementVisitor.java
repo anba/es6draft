@@ -110,6 +110,11 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
+    enum CodeType {
+        GlobalScript, NonGlobalScript, Function,
+    }
+
+    private final CodeType codeType;
     private final boolean completionValue;
     private Labels labels = new Labels(null);
     private int finallyDepth = 0;
@@ -118,16 +123,21 @@ abstract class StatementVisitor extends ExpressionVisitor {
     private int wrapped = 0;
 
     protected StatementVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
-            boolean strict, boolean globalCode, boolean completionValue) {
-        super(mv, methodName, methodDescriptor, strict, globalCode);
+            boolean strict, CodeType codeType, boolean completionValue) {
+        super(mv, methodName, methodDescriptor, strict, codeType == CodeType.GlobalScript);
+        this.codeType = codeType;
         this.completionValue = completionValue;
         // no return in script code
-        this.labels.returnLabel = !completionValue ? new Label() : null;
+        this.labels.returnLabel = codeType == CodeType.Function ? new Label() : null;
     }
 
     abstract void storeCompletionValue();
 
     abstract void loadCompletionValue();
+
+    CodeType getCodeType() {
+        return codeType;
+    }
 
     boolean isCompletionValue() {
         return completionValue && finallyDepth == 0;

@@ -19,6 +19,7 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
+import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -567,6 +568,48 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         }
         mv.storeCompletionValue();
         mv.goTo(mv.returnLabel());
+        return null;
+    }
+
+    @Override
+    public Void visit(StatementListMethod node, StatementVisitor mv) {
+        codegen.compile(node, mv);
+
+        mv.loadExecutionContext();
+        mv.loadCompletionValue();
+
+        int r = -1;
+        if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
+            r = mv.newVariable(Types.boolean_);
+            mv.newarray(1, Type.BOOLEAN_TYPE);
+            mv.dup();
+            mv.store(r, Types.boolean_);
+        } else {
+            mv.aconst(null);
+        }
+
+        String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext, Types.Object,
+                Types.boolean_);
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
+
+        if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
+            mv.load(r, Types.boolean_);
+            mv.freeVariable(r);
+            mv.aload(0, Type.BOOLEAN_TYPE);
+
+            Label noReturn = new Label();
+            mv.ifeq(noReturn);
+            mv.storeCompletionValue();
+            mv.goTo(mv.returnLabel());
+            mv.mark(noReturn);
+        }
+
+        if (mv.isCompletionValue()) {
+            mv.storeCompletionValue();
+        } else {
+            mv.pop();
+        }
+
         return null;
     }
 
