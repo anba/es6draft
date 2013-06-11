@@ -125,6 +125,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Virtual, Types.ExecutionContext, "popLexicalEnvironment",
                 Type.getMethodType(Type.VOID_TYPE));
 
+        static final MethodDesc ExecutionContext_restoreLexicalEnvironment = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "restoreLexicalEnvironment",
+                Type.getMethodType(Type.VOID_TYPE, Types.LexicalEnvironment));
+
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
@@ -194,6 +198,25 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         } else if (expr instanceof CallExpression) {
             mv.setTailCall((CallExpression) expr);
         }
+    }
+
+    /**
+     * stack: [] -> []
+     */
+    protected final int saveEnvironment(StatementVisitor mv) {
+        int savedEnv = mv.newVariable(Types.LexicalEnvironment);
+        getLexicalEnvironment(mv);
+        mv.store(savedEnv, Types.LexicalEnvironment);
+        return savedEnv;
+    }
+
+    /**
+     * stack: [] -> []
+     */
+    protected final void restoreEnvironment(StatementVisitor mv, int savedEnv) {
+        mv.loadExecutionContext();
+        mv.load(savedEnv, Types.LexicalEnvironment);
+        mv.invoke(Methods.ExecutionContext_restoreLexicalEnvironment);
     }
 
     /**
