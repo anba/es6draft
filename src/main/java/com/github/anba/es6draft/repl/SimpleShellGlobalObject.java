@@ -8,9 +8,13 @@ package com.github.anba.es6draft.repl;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Set;
 
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
@@ -42,6 +46,17 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
             }
         }, options);
         return (SimpleShellGlobalObject) realm.getGlobalThis();
+    }
+
+    /** shell-function: {@code compile(filename)} */
+    @Function(name = "compile", arity = 1)
+    public String compile(String filename) {
+        try {
+            scriptCache.script(filename, 1, absolutePath(Paths.get(filename)));
+        } catch (ParserException | CompilationException | IOException e) {
+            return "error: " + e.getMessage();
+        }
+        return "success";
     }
 
     /** shell-function: {@code print(message)} */
