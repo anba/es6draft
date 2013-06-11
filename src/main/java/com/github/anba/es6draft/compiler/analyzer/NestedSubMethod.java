@@ -1,0 +1,507 @@
+/**
+ * Copyright (c) 2012-2013 André Bargull
+ * Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+ *
+ * <https://github.com/anba/es6draft>
+ */
+package com.github.anba.es6draft.compiler.analyzer;
+
+import static java.util.Collections.singletonList;
+
+import java.util.AbstractMap.SimpleEntry;
+import java.util.*;
+import java.util.Map.Entry;
+
+import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
+
+/**
+ * Handles statements which are not at top-level.
+ */
+abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
+    static class StatementSubMethod extends NestedSubMethod<Statement> {
+        @Override
+        int processNode(Statement node, int oldSize) {
+            return super.visitNested(node, oldSize);
+        }
+    }
+
+    static class SwitchClauseSubMethod extends NestedSubMethod<SwitchClause> {
+        @Override
+        int processNode(SwitchClause node, int oldSize) {
+            return super.visitNested(node, oldSize);
+        }
+    }
+
+    private enum ExportState {
+        NotExported, Exported, MaybeExported, Empty;
+    }
+
+    private static class StatementElement extends NodeElement<StatementListItem> {
+        static final StatementElement EMPTY = new StatementElement(null, -1, 0, ExportState.Empty);
+        ExportState state;
+
+        StatementElement(StatementListItem node, int index, int size, ExportState state) {
+            super(node, index, size);
+            this.state = state;
+        }
+
+        void maybeExport(List<StatementListItem> statements, int size) {
+            assert state == ExportState.NotExported;
+            assert size < MAX_STATEMENT_SIZE;
+            this.state = ExportState.MaybeExported;
+            this.size = size;
+            this.node = new StatementListMethod(statements);
+        }
+
+        int export() {
+            assert state == ExportState.NotExported || state == ExportState.MaybeExported;
+            if (state == ExportState.NotExported) {
+                this.node = new StatementListMethod(singletonList(node));
+            }
+            int savedSize = -size + STMT_METHOD_SIZE;
+            this.size = STMT_METHOD_SIZE;
+            this.state = ExportState.Exported;
+            return savedSize;
+        }
+
+        static List<StatementElement> from(List<StatementListItem> statements,
+                Map<StatementListItem, Integer> codeSizes) {
+            List<StatementElement> list = new ArrayList<>(statements.size());
+            for (int i = 0, len = statements.size(); i < len; i++) {
+                StatementListItem stmt = statements.get(i);
+                int size = codeSizes.get(stmt);
+                list.add(new StatementElement(stmt, i, size, ExportState.NotExported));
+            }
+            return list;
+        }
+    }
+
+    private int visitNested(NODE node, int oldSize) {
+        // need to handle break/continue statements, i.e.
+        /* 
+         * while (test()) {
+         *   <statements_1>
+         *   break; // <-- can't move this to submethod, would lose label context
+         *   <statements_2>
+         * }
+         */
+
+        // re-compute all sizes
+        MemorizingHandler memorizinghandler = new MemorizingHandler();
+        new CodeSizeVisitor().startAnalyze(node, memorizinghandler);
+        Map<StatementListItem, Integer> codeSizes = memorizinghandler.codeSizes;
+
+        // find exportable statements
+        FindExportableStatement findExport = new FindExportableStatement(codeSizes);
+        node.accept(findExport, new ArrayDeque<Node>());
+        List<StatementListItem> exportable = findExport.exportable;
+        List<Node> parents = findExport.parents;
+
+        List<StatementElement> list = StatementElement.from(exportable, codeSizes);
+        int accSize = oldSize;
+
+        // replace single big elements with method-statements
+        PriorityQueue<StatementElement> pq = new PriorityQueue<>(list);
+        while (!pq.isEmpty() && pq.peek().size > MAX_STATEMENT_SIZE) {
+            StatementElement element = pq.remove();
+            accSize += element.export();
+        }
+
+        if (accSize > MAX_STATEMENT_SIZE) {
+            // if statement size still too large, try to export more statements, possibly with
+            // compacting sibling elements
+            for (int i = 0, len = list.size(); i < len; i++) {
+                StatementElement element = list.get(i);
+                if (element.state != ExportState.NotExported) {
+                    continue;
+                }
+                assert element.node == exportable.get(i);
+                Node parent = parents.get(i);
+                if (i + 1 < len && parents.get(i + 1) == parent && !(parent instanceof IfStatement)) {
+                    // siblings, try to compact
+                    tryCompactSibling(list, parent, i);
+                }
+            }
+
+            pq = new PriorityQueue<>(list);
+            while (!pq.isEmpty() && accSize > MAX_STATEMENT_SIZE) {
+                StatementElement element = pq.remove();
+                if (element.state == ExportState.Exported || element.state == ExportState.Empty) {
+                    // or rather break..?
+                    continue;
+                }
+                accSize += element.export();
+            }
+        }
+
+        // update all entries which were marked as exported
+        StatementUpdater updater = new StatementUpdater();
+        for (int i = 0, len = list.size(); i < len; i++) {
+            StatementElement element = list.get(i);
+            if (element.state != ExportState.Exported) {
+                continue;
+            }
+            Node parent = parents.get(i);
+            StatementListItem sourceElement = exportable.get(i);
+            StatementListMethod targetElement = (StatementListMethod) element.node;
+            assert sourceElement != targetElement : sourceElement.getClass() + ", "
+                    + targetElement.getClass();
+            Entry<StatementListItem, StatementListMethod> entry = new SimpleEntry<>(sourceElement,
+                    targetElement);
+            parent.accept(updater, entry);
+        }
+
+        return validateSize(node);
+    }
+
+    private boolean tryCompactSibling(List<StatementElement> list, Node parent, int index) {
+        assert parent instanceof BlockStatement || parent instanceof SwitchClause : parent
+                .getClass();
+
+        List<StatementListItem> statements;
+        if (parent instanceof BlockStatement) {
+            statements = ((BlockStatement) parent).getStatements();
+        } else {
+            statements = ((SwitchClause) parent).getStatements();
+        }
+
+        StatementElement element = list.get(index);
+        int startIndex = statements.indexOf(element.node);
+        assert startIndex != -1;
+        int endIndex = startIndex + 1;
+        int accSize = element.size;
+
+        for (int i = index + 1; endIndex < statements.size() && i < list.size(); ++endIndex, ++i) {
+            StatementListItem statement = statements.get(endIndex);
+            StatementElement elem = list.get(i);
+            if (statement == elem.node && accSize + elem.size < MAX_STATEMENT_SIZE) {
+                accSize += elem.size;
+            } else {
+                break;
+            }
+        }
+        if (startIndex + 1 == endIndex) {
+            return false;
+        }
+
+        // compact multiple siblings and mark the next elements in list as empty
+        List<StatementListItem> siblings = statements.subList(startIndex, endIndex);
+        element.maybeExport(new ArrayList<>(siblings), accSize);
+        Collections.fill(list.subList(index + 1, index + siblings.size()), StatementElement.EMPTY);
+
+        return true;
+    }
+
+    private static class StatementUpdater extends
+            DefaultNodeVisitor<Void, Entry<StatementListItem, StatementListMethod>> {
+        private List<StatementListItem> updateStatements(List<StatementListItem> statements,
+                Entry<StatementListItem, StatementListMethod> entry) {
+            List<StatementListItem> newStatements = new ArrayList<>(statements);
+            int index = newStatements.indexOf(entry.getKey());
+            assert index != -1;
+
+            StatementListMethod targetElement = entry.getValue();
+            int range = targetElement.getStatements().size();
+            if (range == 1) {
+                newStatements.set(index, targetElement);
+            } else {
+                newStatements.subList(index, index + range).clear();
+                newStatements.add(index, targetElement);
+            }
+
+            return newStatements;
+        }
+
+        @Override
+        protected Void visit(Node node, Entry<StatementListItem, StatementListMethod> entry) {
+            throw new IllegalStateException("unhandled node: " + node.getClass());
+        }
+
+        @Override
+        protected Void visit(Statement node, Entry<StatementListItem, StatementListMethod> entry) {
+            throw new IllegalStateException("unhandled statement: " + node.getClass());
+        }
+
+        @Override
+        public Void visit(BlockStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+            node.setStatements(updateStatements(node.getStatements(), entry));
+            return null;
+        }
+
+        @Override
+        public Void visit(IfStatement node, Entry<StatementListItem, StatementListMethod> entry) {
+            if (entry.getKey() == node.getThen()) {
+                node.setThen(entry.getValue());
+            } else {
+                assert entry.getKey() == node.getOtherwise();
+                node.setOtherwise(entry.getValue());
+            }
+            return null;
+        }
+
+        @Override
+        public Void visit(SwitchClause node, Entry<StatementListItem, StatementListMethod> entry) {
+            node.setStatements(updateStatements(node.getStatements(), entry));
+            return null;
+        }
+    }
+
+    @SuppressWarnings("serial")
+    private static class MyArrayList<E> extends ArrayList<E> {
+        public void replaceRange(E element, int fromIndex, int toIndex) {
+            if (fromIndex == toIndex) {
+                add(fromIndex, element);
+            } else {
+                set(fromIndex, element);
+                removeRange(fromIndex + 1, toIndex);
+            }
+        }
+    }
+
+    private static class FindExportableStatement extends
+            DefaultNodeVisitor<Boolean, ArrayDeque<Node>> {
+        MyArrayList<StatementListItem> exportable = new MyArrayList<>();
+        MyArrayList<Node> parents = new MyArrayList<>();
+        HashSet<Node> nonExportable = new HashSet<>();
+        Map<StatementListItem, Integer> codeSizes;
+
+        public FindExportableStatement(Map<StatementListItem, Integer> codeSizes) {
+            this.codeSizes = codeSizes;
+        }
+
+        private boolean export(StatementListItem node, ArrayDeque<Node> stack) {
+            // always exportable to sub-method
+            exportable.add(node);
+            parents.add(stack.peek());
+            return true;
+        }
+
+        private boolean neverExport(Node node) {
+            // never exportable to sub-method
+            return nonExportable.add(node);
+        }
+
+        private boolean isExportable(Node node) {
+            return !nonExportable.contains(node);
+        }
+
+        private boolean findTarget(Statement breakOrContinue, String label, ArrayDeque<Node> stack) {
+            neverExport(breakOrContinue);
+            for (Iterator<Node> itr = stack.iterator(); itr.hasNext();) {
+                Node stmt = itr.next();
+                if (stmt instanceof BreakableStatement) {
+                    if (label == null || ((BreakableStatement) stmt).getLabelSet().contains(label)) {
+                        break;
+                    }
+                } else if (stmt instanceof LabelledStatement) {
+                    if (label != null && ((LabelledStatement) stmt).getLabels().contains(label)) {
+                        break;
+                    }
+                }
+                neverExport(stmt);
+            }
+
+            // never exportable to sub-method
+            return false;
+        }
+
+        private int push(Node node, ArrayDeque<Node> stack) {
+            int startOffset = exportable.size();
+            stack.push(node);
+            return startOffset;
+        }
+
+        private boolean pop(Node node, ArrayDeque<Node> stack, int startOffset) {
+            Node value = stack.pop();
+            assert node == value;
+            if (isExportable(node) && codeSizes.get(node) < MAX_SIZE) {
+                // remove range [startOffset, currentOffset]
+                int currentOffset = exportable.size();
+                assert node instanceof StatementListItem : node.getClass();
+                assert startOffset <= currentOffset && currentOffset == parents.size();
+                exportable.replaceRange((StatementListItem) node, startOffset, currentOffset);
+                parents.replaceRange(stack.peek(), startOffset, currentOffset);
+                return true;
+            }
+            return false;
+        }
+
+        /* -------------------------------------------------------------------------------------- */
+
+        private boolean visit(Node node, Node child, ArrayDeque<Node> stack) {
+            int startOffset = push(node, stack);
+            child.accept(this, stack);
+            return pop(node, stack, startOffset);
+        }
+
+        private boolean visit(Node node, Node left, Node right, ArrayDeque<Node> stack) {
+            int startOffset = push(node, stack);
+            left.accept(this, stack);
+            if (right != null) {
+                right.accept(this, stack);
+            }
+            return pop(node, stack, startOffset);
+        }
+
+        private boolean visit(Node node, Node left, Node middle, Node right, ArrayDeque<Node> stack) {
+            int startOffset = push(node, stack);
+            left.accept(this, stack);
+            if (middle != null) {
+                middle.accept(this, stack);
+            }
+            if (right != null) {
+                right.accept(this, stack);
+            }
+            return pop(node, stack, startOffset);
+        }
+
+        private boolean visit(Node node, List<? extends Node> children, ArrayDeque<Node> stack) {
+            int startOffset = push(node, stack);
+            for (int i = 0, len = children.size(); i < len; i++) {
+                Node child = children.get(i);
+                child.accept(this, stack);
+            }
+            return pop(node, stack, startOffset);
+        }
+
+        /* -------------------------------------------------------------------------------------- */
+
+        @Override
+        protected Boolean visit(Node node, ArrayDeque<Node> stack) {
+            throw new IllegalStateException("unhandled node: " + node.getClass());
+        }
+
+        @Override
+        protected Boolean visit(Statement node, ArrayDeque<Node> stack) {
+            throw new IllegalStateException("unhandled statement: " + node.getClass());
+        }
+
+        @Override
+        protected Boolean visit(Declaration node, ArrayDeque<Node> stack) {
+            return export(node, stack);
+        }
+
+        @Override
+        public Boolean visit(BlockStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getStatements(), stack);
+        }
+
+        @Override
+        public Boolean visit(BreakStatement node, ArrayDeque<Node> stack) {
+            return findTarget(node, node.getLabel(), stack);
+        }
+
+        @Override
+        public Boolean visit(CatchNode node, ArrayDeque<Node> stack) {
+            return node.getCatchBlock().accept(this, stack);
+        }
+
+        @Override
+        public Boolean visit(ContinueStatement node, ArrayDeque<Node> stack) {
+            return findTarget(node, node.getLabel(), stack);
+        }
+
+        @Override
+        public Boolean visit(DebuggerStatement node, ArrayDeque<Node> stack) {
+            return export(node, stack);
+        }
+
+        @Override
+        public Boolean visit(DoWhileStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getStatement(), stack);
+        }
+
+        @Override
+        public Boolean visit(EmptyStatement node, ArrayDeque<Node> stack) {
+            return export(node, stack);
+        }
+
+        @Override
+        public Boolean visit(ExpressionStatement node, ArrayDeque<Node> stack) {
+            return export(node, stack);
+        }
+
+        @Override
+        public Boolean visit(ForInStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getStatement(), stack);
+        }
+
+        @Override
+        public Boolean visit(ForOfStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getStatement(), stack);
+        }
+
+        @Override
+        public Boolean visit(ForStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getStatement(), stack);
+        }
+
+        @Override
+        public Boolean visit(IfStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getThen(), node.getOtherwise(), stack);
+        }
+
+        @Override
+        public Boolean visit(LabelledStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getStatement(), stack);
+        }
+
+        @Override
+        public Boolean visit(ReturnStatement node, ArrayDeque<Node> stack) {
+            return export(node, stack);
+        }
+
+        @Override
+        public Boolean visit(StatementListMethod node, ArrayDeque<Node> stack) {
+            // don't re-export already exported statements
+            return neverExport(node);
+        }
+
+        @Override
+        public Boolean visit(SwitchClause node, ArrayDeque<Node> stack) {
+            // don't export individual switch-clauses
+            neverExport(node);
+            return visit(node, node.getStatements(), stack);
+        }
+
+        @Override
+        public Boolean visit(SwitchStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getClauses(), stack);
+        }
+
+        @Override
+        public Boolean visit(ThrowStatement node, ArrayDeque<Node> stack) {
+            return export(node, stack);
+        }
+
+        @Override
+        public Boolean visit(TryStatement node, ArrayDeque<Node> stack) {
+            // don't export try/catch/finally blocks individually
+            neverExport(node.getTryBlock());
+            if (node.getCatchNode() != null) {
+                neverExport(node.getCatchNode().getCatchBlock());
+            }
+            if (node.getFinallyBlock() != null) {
+                neverExport(node.getFinallyBlock());
+            }
+            return visit(node, node.getTryBlock(), node.getCatchNode(), node.getFinallyBlock(),
+                    stack);
+        }
+
+        @Override
+        public Boolean visit(VariableStatement node, ArrayDeque<Node> stack) {
+            return export(node, stack);
+        }
+
+        @Override
+        public Boolean visit(WhileStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getStatement(), stack);
+        }
+
+        @Override
+        public Boolean visit(WithStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getStatement(), stack);
+        }
+    }
+}
