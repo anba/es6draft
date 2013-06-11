@@ -13,7 +13,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
 import com.github.anba.es6draft.ast.FunctionNode;
@@ -22,6 +21,8 @@ import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.analyzer.CodeSizeAnalysis;
+import com.github.anba.es6draft.compiler.analyzer.CodeSizeException;
 
 /**
  *
@@ -60,13 +61,19 @@ public class Compiler {
                 superClassName, interfaces);
         cw.visitSource(script.getSourceFile(), null);
 
-        // generate code
-        CodeGenerator codegen = new CodeGenerator(cw, className);
-        codegen.compile(script);
-        codegen.close();
+        try (CodeSizeAnalysis analysis = new CodeSizeAnalysis()) {
+            analysis.submit(script);
+        } catch (CodeSizeException e) {
+            throw new CompilationException(e.getMessage());
+        }
 
-        // add default constructor
-        defaultScriptConstructor(cw, className, codegen.methodName(script, ScriptName.RTI));
+        try (CodeGenerator codegen = new CodeGenerator(cw, className)) {
+            // generate code
+            codegen.compile(script);
+
+            // add default constructor
+            defaultScriptConstructor(cw, className, codegen.methodName(script, ScriptName.RTI));
+        }
 
         // finalize
         cw.visitEnd();
@@ -90,13 +97,20 @@ public class Compiler {
                 superClassName, interfaces);
         cw.visitSource("<Function>", null);
 
-        // generate code
-        CodeGenerator codegen = new CodeGenerator(cw, className);
-        codegen.compile(function);
-        codegen.close();
+        try (CodeSizeAnalysis analysis = new CodeSizeAnalysis()) {
+            analysis.submit(function);
+        } catch (CodeSizeException e) {
+            throw new CompilationException(e.getMessage());
+        }
 
-        // add default constructor
-        defaultFunctionConstructor(cw, className, codegen.methodName(function, FunctionName.RTI));
+        try (CodeGenerator codegen = new CodeGenerator(cw, className)) {
+            // generate code
+            codegen.compile(function);
+
+            // add default constructor
+            defaultFunctionConstructor(cw, className,
+                    codegen.methodName(function, FunctionName.RTI));
+        }
 
         // finalize
         cw.visitEnd();
@@ -111,8 +125,7 @@ public class Compiler {
 
     private static void debug(byte[] b) {
         ClassReader cr = new ClassReader(b);
-        cr.accept(new TraceClassVisitor(null, new Textifier(), new PrintWriter(System.out)),
-                ClassReader.SKIP_DEBUG);
+        cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), ClassReader.SKIP_DEBUG);
     }
 
     private static void defaultScriptConstructor(ClassWriter cw, String className,
