@@ -513,7 +513,7 @@ public final class AbstractOperations {
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
-        assert !object.hasOwnProperty(cx, propertyKey);
+        // assert !object.hasOwnProperty(cx, propertyKey);
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
         return object.defineOwnProperty(cx, propertyKey, newDesc);
     }
