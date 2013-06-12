@@ -8,7 +8,6 @@ package com.github.anba.es6draft.interpreter;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckCallable;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.GetCallThisValue;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.IsBuiltinEval;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
@@ -22,6 +21,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BinaryExpression.Operator;
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -29,7 +29,9 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
@@ -598,22 +600,71 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     @Override
     public Object visit(CallExpression node, ExecutionContext cx) {
         Object ref = node.getBase().accept(this, cx);
+        return EvaluateCall(ref, node.getArguments(), directEval(node), cx);
+    }
+
+    private Object EvaluateCall(Object ref, List<Expression> arguments, boolean directEval,
+            ExecutionContext cx) {
+        if (ref instanceof Reference) {
+            Reference rref = (Reference) ref;
+            if (rref.isPropertyReference()) {
+                return EvaluateMethodCall(rref, arguments, cx);
+            } else if (!rref.isUnresolvableReference()) {
+                assert (EnvironmentRecord) rref.getBase() instanceof EnvironmentRecord;
+                ScriptObject thisValue = ((EnvironmentRecord) rref.getBase()).withBaseObject();
+                if (thisValue != null) {
+                    Reference newRef;
+                    if (rref.getReferencedName() instanceof String) {
+                        newRef = new Reference.PropertyNameReference(thisValue,
+                                (String) rref.getReferencedName(), rref.isStrictReference());
+                    } else {
+                        newRef = new Reference.PropertySymbolReference(thisValue,
+                                (Symbol) rref.getReferencedName(), rref.isStrictReference());
+                    }
+                    return EvaluateMethodCall(newRef, arguments, cx);
+                }
+            }
+        }
+        Object thisValue = UNDEFINED;
         Object func = GetValue(ref, cx);
-        List<Expression> arguments = node.getArguments();
+        Object[] argList = ArgumentListEvaluation(arguments, cx);
+        Callable f = CheckCallable(func, cx);
+        if (directEval && IsBuiltinEval(ref, f, cx)) {
+            Object x = argList.length > 0 ? argList[0] : UNDEFINED;
+            return Eval.directEval(x, cx, strict, globalCode);
+        }
+        Object result = f.call(cx, thisValue, argList);
+        return result;
+    }
+
+    private Object EvaluateMethodCall(Reference ref, List<Expression> arguments, ExecutionContext cx) {
+        assert ref.isPropertyReference();
+        // step 2 is bogus
+        Object[] argList = ArgumentListEvaluation(arguments, cx);
+        Object base = ref.getBase();
+        if (ref.hasPrimitiveBase()) {
+            base = ToObject(cx, base);
+        }
+        Object thisValue = ref.GetThisValue(cx);
+        Object key = ref.getReferencedName();
+        assert base instanceof ScriptObject;
+        Object result;
+        if (key instanceof String) {
+            result = ((ScriptObject) base).invoke(cx, (String) key, argList, thisValue);
+        } else {
+            result = ((ScriptObject) base).invoke(cx, (Symbol) key, argList, thisValue);
+        }
+        return result;
+    }
+
+    private Object[] ArgumentListEvaluation(List<Expression> arguments, ExecutionContext cx) {
         int size = arguments.size();
         Object[] args = new Object[size];
         for (int i = 0; i < size; ++i) {
             Object arg = arguments.get(i).accept(this, cx);
             args[i] = GetValue(arg, cx);
         }
-        Callable f = CheckCallable(func, cx);
-        if (directEval(node) && IsBuiltinEval(ref, f, cx)) {
-            Object x = args.length > 0 ? args[0] : UNDEFINED;
-            return Eval.directEval(x, cx, strict, globalCode);
-        }
-        Object thisValue = GetCallThisValue(ref, cx);
-        Object result = f.call(cx, thisValue, args);
-        return result;
+        return args;
     }
 
     private static boolean directEval(CallExpression node) {

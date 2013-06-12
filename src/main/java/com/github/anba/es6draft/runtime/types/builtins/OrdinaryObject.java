@@ -6,10 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SetIntegrityLevel;
-import static com.github.anba.es6draft.runtime.AbstractOperations.TestIntegrityLevel;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.MakeListIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -24,6 +22,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -672,6 +671,44 @@ public class OrdinaryObject implements ScriptObject {
             }
         }
         return keys;
+    }
+
+    /** 8.3.14+ [[Invoke]] (P, ArgumentsList, Receiver) */
+    @Override
+    public Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
+            Object receiver) {
+        /* step 1-2 (implicit) */
+        /* step 3-4 */
+        Object method = get(cx, propertyKey, receiver);
+        /* step 5 */
+        if (!Type.isObject(method)) {
+            throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 6 */
+        if (!IsCallable(method)) {
+            throwTypeError(cx, Messages.Key.NotCallable);
+        }
+        /* step 7 */
+        return ((Callable) method).call(cx, receiver, arguments);
+    }
+
+    /** 8.3.14+ [[Invoke]] (P, ArgumentsList, Receiver) */
+    @Override
+    public Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments,
+            Object receiver) {
+        /* step 1-2 (implicit) */
+        /* step 3-4 */
+        Object method = get(cx, propertyKey, receiver);
+        /* step 5 */
+        if (!Type.isObject(method)) {
+            throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 6 */
+        if (!IsCallable(method)) {
+            throwTypeError(cx, Messages.Key.NotCallable);
+        }
+        /* step 7 */
+        return ((Callable) method).call(cx, receiver, arguments);
     }
 
     private static class DefaultAllocator implements ObjectAllocator<OrdinaryObject> {

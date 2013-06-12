@@ -428,4 +428,22 @@ class WrapperProxy implements ScriptObject {
     public ScriptObject ownPropertyKeys(ExecutionContext cx) {
         return proxyTarget.ownPropertyKeys(cx);
     }
+
+    /**
+     * [[Invoke]] (P, ArgumentsList, Receiver)
+     */
+    @Override
+    public Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
+            Object receiver) {
+        return proxyTarget.invoke(cx, propertyKey, arguments, receiver);
+    }
+
+    /**
+     * [[Invoke]] (P, ArgumentsList, Receiver)
+     */
+    @Override
+    public Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments,
+            Object receiver) {
+        return proxyTarget.invoke(cx, propertyKey, arguments, receiver);
+    }
 }

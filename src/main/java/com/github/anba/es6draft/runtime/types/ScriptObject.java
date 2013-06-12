@@ -76,4 +76,10 @@ public interface ScriptObject {
 
     /** [[OwnPropertyKeys]] ( ) */
     ScriptObject ownPropertyKeys(ExecutionContext cx);
+
+    /** [[Invoke]] (P, ArgumentsList, Receiver) */
+    Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments, Object receiver);
+
+    /** [[Invoke]] (P, ArgumentsList, Receiver) */
+    Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments, Object receiver);
 }

@@ -403,6 +403,27 @@ public final class ScriptRuntime {
         return ((Constructor) constructor).construct(cx, args);
     }
 
+    public static Object OrdinaryMethodCallGet(ScriptObject base, Reference ref, Object thisValue,
+            ExecutionContext cx) {
+        // step 3 in 8.3.14+ [[MethodCall]]
+        Object propertyKey = ref.getReferencedName();
+        if (propertyKey instanceof String) {
+            return base.get(cx, (String) propertyKey, thisValue);
+        }
+        return base.get(cx, (Symbol) propertyKey, thisValue);
+    }
+
+    public static Object EvaluateMethodCall(Object[] arguments, Reference ref, ScriptObject base,
+            ExecutionContext cx) {
+        // EvaluateMethodCall - steps 7-8, 10-13 (no tail call here)
+        Object thisValue = ref.GetThisValue(cx);
+        Object key = ref.getReferencedName();
+        if (key instanceof String) {
+            return base.invoke(cx, (String) key, arguments, thisValue);
+        }
+        return base.invoke(cx, (Symbol) key, arguments, thisValue);
+    }
+
     /**
      * 11.2.3 Function Calls
      * <p>

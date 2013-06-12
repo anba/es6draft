@@ -30,6 +30,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
@@ -92,6 +93,7 @@ final class Types {
     static final Type Reference = Type.getType(Reference.class);
     static final Type ScriptObject = Type.getType(ScriptObject.class);
     static final Type ScriptObject_ = Type.getType(ScriptObject[].class);
+    static final Type Symbol = Type.getType(Symbol.class);
     static final Type _Type = Type.getType(com.github.anba.es6draft.runtime.types.Type.class);
     static final Type Undefined = Type.getType(Undefined.class);
 

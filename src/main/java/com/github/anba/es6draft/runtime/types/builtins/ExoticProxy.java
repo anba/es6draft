@@ -552,8 +552,13 @@ public class ExoticProxy implements ScriptObject {
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(cx, handler, "get");
         if (trap == null) {
-            // FIXME: spec bug? (set receiver to target when receiver === proxy)
-            return __get(cx, target, propertyKey, receiver);
+            Object forwardedReceiver;
+            if (this == receiver) {
+                forwardedReceiver = target;
+            } else {
+                forwardedReceiver = receiver;
+            }
+            return __get(cx, target, propertyKey, forwardedReceiver);
         }
         Object trapResult = trap.call(cx, handler, target, propertyKey, receiver);
         Property targetDesc = __getOwnProperty(cx, target, propertyKey);
@@ -598,8 +603,13 @@ public class ExoticProxy implements ScriptObject {
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(cx, handler, "set");
         if (trap == null) {
-            // FIXME: spec bug? (set receiver to target when receiver === proxy)
-            return __set(cx, target, propertyKey, value, receiver);
+            Object forwardedReceiver;
+            if (this == receiver) {
+                forwardedReceiver = target;
+            } else {
+                forwardedReceiver = receiver;
+            }
+            return __set(cx, target, propertyKey, value, forwardedReceiver);
         }
         Object trapResult = trap.call(cx, handler, target, propertyKey, value, receiver);
         if (!ToBoolean(trapResult)) {
@@ -696,5 +706,49 @@ public class ExoticProxy implements ScriptObject {
             throw throwTypeError(cx, Messages.Key.ProxyNotObject);
         }
         return Type.objectValue(trapResult);
+    }
+
+    /**
+     * 8.5.13+ [[Invoke]] (P, ArgumentsList, Receiver)
+     */
+    @Override
+    public Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
+            Object receiver) {
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
+        Callable trap = GetMethod(cx, handler, "invoke");
+        if (trap == null) {
+            Object forwardedReceiver;
+            if (this == receiver) {
+                forwardedReceiver = target;
+            } else {
+                forwardedReceiver = receiver;
+            }
+            return target.invoke(cx, propertyKey, arguments, forwardedReceiver);
+        }
+        ScriptObject argArray = CreateArrayFromList(cx, Arrays.asList(arguments));
+        return trap.call(cx, handler, target, propertyKey, argArray, receiver);
+    }
+
+    /**
+     * 8.5.13+ [[Invoke]] (P, ArgumentsList, Receiver)
+     */
+    @Override
+    public Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments,
+            Object receiver) {
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
+        Callable trap = GetMethod(cx, handler, "invoke");
+        if (trap == null) {
+            Object forwardedReceiver;
+            if (this == receiver) {
+                forwardedReceiver = target;
+            } else {
+                forwardedReceiver = receiver;
+            }
+            return target.invoke(cx, propertyKey, arguments, forwardedReceiver);
+        }
+        ScriptObject argArray = CreateArrayFromList(cx, Arrays.asList(arguments));
+        return trap.call(cx, handler, target, propertyKey, argArray, receiver);
     }
 }

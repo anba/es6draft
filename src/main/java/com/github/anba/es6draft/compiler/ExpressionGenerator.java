@@ -17,11 +17,11 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
@@ -161,10 +161,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         .getMethodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_GetCallThisValue = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetCallThisValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
-
         static final MethodDesc ScriptRuntime_getElement = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "getElement", Type.getMethodType(Types.Reference,
                         Types.Object, Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
@@ -182,10 +178,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
                         Types.Object, Types.Object, Types.String, Types.ExecutionContext,
                         Type.BOOLEAN_TYPE));
-
-        static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "IsBuiltinEval", Type.getMethodType(Type.BOOLEAN_TYPE,
-                        Types.Object, Types.Callable, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_MakeSuperReference = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "MakeSuperReference", Type.getMethodType(
@@ -245,7 +237,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         Expression valueNode = node.asValue();
         ValType type = valueNode.accept(this, mv);
         GetValue(valueNode, type, mv);
-        return type;
+        return (type != ValType.Reference ? type : ValType.Any);
     }
 
     private void GetValue(Expression node, ValType type, ExpressionVisitor mv) {
@@ -278,100 +270,205 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
     }
 
+    private static class Methods2 {
+        static MethodDesc ExecutionContext_getRealm = MethodDesc.create(MethodType.Virtual,
+                Types.ExecutionContext, "getRealm", Type.getMethodType(Types.Realm));
+
+        static MethodDesc Realm_getBuiltinEval = MethodDesc.create(MethodType.Virtual, Types.Realm,
+                "getBuiltinEval", Type.getMethodType(Types.Callable));
+
+        static MethodDesc Reference_GetMethodCallThisValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "GetMethodCallThisValue",
+                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext));
+
+        static MethodDesc Reference_GetThisValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "GetThisValue",
+                Type.getMethodType(Types.Object, Types.ExecutionContext));
+
+        static MethodDesc ScriptRuntime_EvaluateMethodCall = MethodDesc
+                .create(MethodType.Static, Types.ScriptRuntime, "EvaluateMethodCall", Type
+                        .getMethodType(Types.Object, Types.Object_, Types.Reference,
+                                Types.ScriptObject, Types.ExecutionContext));
+
+        static MethodDesc ScriptRuntime_OrdinaryMethodCallGet = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "OrdinaryMethodCallGet", Type
+                        .getMethodType(Types.Object, Types.ScriptObject, Types.Reference,
+                                Types.Object, Types.ExecutionContext));
+    }
+
+    private static boolean isPropertyReference(Expression base, ValType type) {
+        return type == ValType.Reference && !(base instanceof Identifier);
+    }
+
     /**
      * [11.2.3 EvaluateCall Abstract Operation]
      */
     private void EvaluateCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
-        // stack: [ref] -> [ref, ref]
-        mv.dup();
-        /* step 1-2 */
-        GetValue(base, type, mv);
-        /* step 3-4 */
-        boolean hasSpread = false;
-        if (arguments.isEmpty()) {
-            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
-        } else {
-            mv.newarray(arguments.size(), Types.Object);
-            for (int i = 0, size = arguments.size(); i < size; ++i) {
+        assert (type == ValType.Reference) == base.accept(IsReference.INSTANCE, null);
+        int methodCallObject = -1;
+
+        // stack: [ref] -> [ref|func]
+        if (type == ValType.Reference) {
+            methodCallObject = mv.newVariable(Types.ScriptObject);
+            if (isPropertyReference(base, type)) {
                 mv.dup();
-                mv.iconst(i);
-                /* [11.2.5 Argument Lists] ArgumentListEvaluation */
-                Expression argument = arguments.get(i);
-                hasSpread |= (argument instanceof CallSpreadElement);
-                ValType argtype = evalAndGetValue(argument, mv);
-                mv.toBoxed(argtype);
-                mv.astore(Types.Object);
+                mv.loadExecutionContext();
+                mv.invoke(Methods2.Reference_GetMethodCallThisValue);
+                mv.store(methodCallObject, Types.ScriptObject);
+            } else {
+                Label argListEval = new Label();
+
+                // throws if unresolved reference
+                mv.dup();
+                mv.loadExecutionContext();
+                mv.invoke(Methods2.Reference_GetMethodCallThisValue);
+                mv.dup();
+                mv.store(methodCallObject, Types.ScriptObject);
+                mv.ifnonnull(argListEval);
+                {
+                    // stack: [ref] -> [func]
+                    GetValue(base, type, mv);
+                }
+                mv.mark(argListEval);
             }
-            if (hasSpread) {
-                mv.invoke(Methods.ScriptRuntime_toFlatArray);
-            }
+        } else {
+            // stack: [ref] -> [func]
+            GetValue(base, type, mv);
         }
-        // stack: [ref, func, args]
+
+        // stack: [ref|func] -> [args, ref|func]
+        boolean hasSpread = ArgumentListEvaluation(arguments, mv);
+        mv.swap();
         mv.lineInfo(call);
 
-        // stack: [ref, func, args] -> [ref, args, func]
-        mv.swap();
+        Label afterCall = new Label();
+        Label stdCall = new Label(), stdCallCheck = new Label();
+        if (type == ValType.Reference && !isPropertyReference(base, type)) {
+            mv.load(methodCallObject, Types.ScriptObject);
+            mv.ifnull(stdCall);
+        }
 
-        // stack: [ref, args, func] -> [ref, args, func(Callable)]
+        if (type == ValType.Reference) {
+            Label notMethodCall = new Label();
+
+            // stack: [args, ref] -> [args, ref(Reference)]
+            mv.checkcast(Types.Reference);
+
+            mv.load(methodCallObject, Types.ScriptObject);
+            mv.dup();
+            mv.instanceOf(Types.OrdinaryObject);
+            mv.ifne(notMethodCall);
+            {
+                // stack: [args, ref(Reference), base] -> [result]
+                mv.loadExecutionContext();
+                mv.invoke(Methods2.ScriptRuntime_EvaluateMethodCall);
+                mv.goTo(afterCall);
+            }
+            mv.mark(notMethodCall);
+
+            // stack: [args, ref(Ref), base] -> [args, base, ref(Ref)]
+            mv.swap();
+
+            // stack: [args, base, ref(Ref)] -> [args, base, ref(Ref), thisValue]
+            if (isPropertyReference(base, type)) {
+                mv.dup();
+                mv.loadExecutionContext();
+                mv.invoke(Methods2.Reference_GetThisValue);
+            } else {
+                mv.load(methodCallObject, Types.ScriptObject);
+            }
+
+            // stack: [args, base, ref(Ref), thisValue] -> [args, thisValue, func]
+            mv.dupX2();
+            mv.loadExecutionContext();
+            mv.invoke(Methods2.ScriptRuntime_OrdinaryMethodCallGet);
+
+            if (!isPropertyReference(base, type)) {
+                mv.goTo(stdCallCheck);
+            }
+
+            mv.freeVariable(methodCallObject);
+        }
+
+        if (type == ValType.Reference && !isPropertyReference(base, type)) {
+            mv.mark(stdCall);
+        }
+        if (type != ValType.Reference || !isPropertyReference(base, type)) {
+            // stack: [args, func] -> [args, thisValue, func]
+            mv.get(Fields.Undefined_UNDEFINED);
+            mv.swap();
+        }
+        if (type == ValType.Reference && !isPropertyReference(base, type)) {
+            mv.mark(stdCallCheck);
+        }
+
+        // stack: [args, thisValue, func] -> [args, thisValue, func(Callable)]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_CheckCallable);
 
-        Label notEval = null, afterCall = null;
         if (directEval) {
-            // test for possible direct-eval call
-            notEval = new Label();
-            afterCall = new Label();
-
-            // stack: [ref, args, func(Callable)] -> [args, ref, func(Callable)]
-            mv.swap();
-            mv.dupX2();
-            mv.pop();
-
-            // stack: [args, ref, func(Callable)] -> [args, ref, func(Callable), isDirectEval]
-            mv.dup2();
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_IsBuiltinEval);
-            mv.ifeq(notEval);
-
-            // stack: [args, ref, func(Callable)] -> [args]
-            mv.pop2();
-
-            // stack: [args] -> [arg0]
-            if (hasSpread) {
-                Label isEmpty = new Label(), after = new Label();
-                mv.dup();
-                mv.arraylength();
-                mv.ifeq(isEmpty);
-                mv.iconst(0);
-                mv.aload(Types.Object);
-                mv.goTo(after);
-                mv.mark(isEmpty);
-                mv.pop();
-                mv.get(Fields.Undefined_UNDEFINED);
-                mv.mark(after);
-            } else if (arguments.isEmpty()) {
-                mv.pop();
-                mv.get(Fields.Undefined_UNDEFINED);
-            } else {
-                mv.iconst(0);
-                mv.aload(Types.Object);
-            }
-
-            // stack: [args0] -> [result]
-            mv.loadExecutionContext();
-            mv.iconst(mv.isStrict());
-            mv.iconst(mv.isGlobalCode());
-            mv.invoke(Methods.Eval_directEval);
-
-            mv.goTo(afterCall);
-            mv.mark(notEval);
-
-            // stack: [args, ref, func(Callable)] -> [ref, args, func(Callable)]
-            mv.swap();
-            mv.dupX2();
-            mv.pop();
+            directEvalCall(call, base, type, arguments, hasSpread, afterCall, mv);
         }
+
+        stdCall(call, base, type, arguments, mv);
+
+        if (type == ValType.Reference) {
+            mv.mark(afterCall);
+        }
+    }
+
+    private void directEvalCall(Expression call, Expression base, ValType type,
+            List<Expression> arguments, boolean hasSpread, Label afterCall, ExpressionVisitor mv) {
+        assert type == ValType.Reference && base instanceof Identifier;
+
+        // test for possible direct-eval call
+        Label notEval = new Label();
+
+        // stack: [args, thisValue, func(Callable)] -> [args, thisValue, func(Callable)]
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.invoke(Methods2.ExecutionContext_getRealm);
+        mv.invoke(Methods2.Realm_getBuiltinEval);
+        mv.ifacmpne(notEval);
+
+        // stack: [args, thisValue, func(Callable)] -> [args]
+        mv.pop2();
+
+        // stack: [args] -> [arg0]
+        if (hasSpread) {
+            Label isEmpty = new Label(), after = new Label();
+            mv.dup();
+            mv.arraylength();
+            mv.ifeq(isEmpty);
+            mv.iconst(0);
+            mv.aload(Types.Object);
+            mv.goTo(after);
+            mv.mark(isEmpty);
+            mv.pop();
+            mv.get(Fields.Undefined_UNDEFINED);
+            mv.mark(after);
+        } else if (arguments.isEmpty()) {
+            mv.pop();
+            mv.get(Fields.Undefined_UNDEFINED);
+        } else {
+            mv.iconst(0);
+            mv.aload(Types.Object);
+        }
+
+        // stack: [args0] -> [result]
+        mv.loadExecutionContext();
+        mv.iconst(mv.isStrict());
+        mv.iconst(mv.isGlobalCode());
+        mv.invoke(Methods.Eval_directEval);
+
+        mv.goTo(afterCall);
+        mv.mark(notEval);
+    }
+
+    private void stdCall(Expression call, Expression base, ValType type,
+            List<Expression> arguments, ExpressionVisitor mv) {
+        // stack: [args, thisValue, func(Callable)]
 
         // TODO: tail-call for SuperExpression(call) or TemplateCallExpression?
         if (call instanceof CallExpression && mv.isTailCall((CallExpression) call)) {
@@ -380,13 +477,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.instanceOf(Types.OrdinaryFunction);
             mv.ifeq(noTailCall);
 
-            // stack: [ref, args, func(Callable)] -> [args, thisValue, func(Callable)]
-            mv.dup2X1();
-            mv.pop2();
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_GetCallThisValue);
-            mv.swap();
-
+            // stack: [args, thisValue, func(Callable)]
             mv.newarray(3, Types.Object);
 
             // store func(Callable)
@@ -416,23 +507,37 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.mark(noTailCall);
         }
 
-        // stack: [ref, args, func(Callable)] -> [func(Callable), cx, ref, args]
+        // stack: [args, thisValue, func(Callable)] -> [func(Callable), cx, thisValue, args]
         mv.loadExecutionContext();
         mv.dup2X2();
         mv.pop2();
-
-        // stack: [func(Callable), cx, ref, args] -> [func(Callable), cx, args, thisValue]
         mv.swap();
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_GetCallThisValue);
 
-        // stack: [func(Callable), cx, args, thisValue] -> [result]
-        mv.swap();
+        // stack: [func(Callable), cx, thisValue, args] -> [result]
         mv.invoke(Methods.Callable_call);
+    }
 
-        if (afterCall != null) {
-            mv.mark(afterCall);
+    private boolean ArgumentListEvaluation(List<Expression> arguments, ExpressionVisitor mv) {
+        boolean hasSpread = false;
+        if (arguments.isEmpty()) {
+            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
+        } else {
+            mv.newarray(arguments.size(), Types.Object);
+            for (int i = 0, size = arguments.size(); i < size; ++i) {
+                mv.dup();
+                mv.iconst(i);
+                /* [11.2.5 Argument Lists] ArgumentListEvaluation */
+                Expression argument = arguments.get(i);
+                hasSpread |= (argument instanceof CallSpreadElement);
+                ValType argtype = evalAndGetValue(argument, mv);
+                mv.toBoxed(argtype);
+                mv.astore(Types.Object);
+            }
+            if (hasSpread) {
+                mv.invoke(Methods.ScriptRuntime_toFlatArray);
+            }
         }
+        return hasSpread;
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -639,7 +744,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 mv.toBoxed(rtype);
                 PutValue(left, ltype, mv);
 
-                return (rtype != ValType.Reference ? rtype : ValType.Object);
+                return rtype;
             }
         } else {
             switch (node.getOperator()) {
@@ -1337,7 +1442,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             type = evalAndGetValue(e, mv);
         }
         assert type != null;
-        return (type != ValType.Reference ? type : ValType.Any);
+        return type;
     }
 
     @Override

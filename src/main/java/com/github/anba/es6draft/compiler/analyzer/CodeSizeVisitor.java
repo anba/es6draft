@@ -234,7 +234,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(CallExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getArguments(), node.getBase(), 25, 5, value);
+        return analyze(node, node.getArguments(), node.getBase(), 100, 5, value);
     }
 
     @Override
@@ -521,7 +521,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
         } else if (node.getExpression() != null) {
             return analyze(node, node.getExpression(), 15, value);
         } else if (node.getArguments() != null) {
-            return analyze(node, node.getArguments(), 25, 5, value);
+            return analyze(node, node.getArguments(), 100, 5, value);
         } else {
             return 10;
         }
@@ -544,7 +544,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(TemplateCallExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getBase(), node.getTemplate(), 25, value);
+        return analyze(node, node.getBase(), node.getTemplate(), 100, value);
     }
 
     @Override
