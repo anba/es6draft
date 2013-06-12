@@ -441,6 +441,8 @@ tests/basic/bug751139.js
 tests/basic/testScriptCloning.js
 # evaluate() with saveFrameChain option
 tests/basic/save-frame-chain.js
+# evaluate() with newContext option
+tests/basic/cross-context-stack-1.js
 
 # Unsupported 'Testing' functions
 # gcparam
