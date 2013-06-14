@@ -1605,13 +1605,50 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
     @Override
     public ValType visit(SuperExpressionValue node, ExpressionVisitor mv) {
-        ValType type = visit((SuperExpression) node, mv);
-        if (type == ValType.Reference) {
+        if (node.getName() != null) {
+            mv.loadExecutionContext();
+            mv.aconst(node.getName());
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+
             mv.loadExecutionContext();
             mv.invoke(Methods.Reference_GetValue_);
-        }
 
-        return ValType.Any;
+            return ValType.Any;
+        } else if (node.getExpression() != null) {
+            mv.loadExecutionContext();
+            ValType type = evalAndGetValue(node.getExpression(), mv);
+            // ToPropertyKey()
+            ToFlatString(type, mv);
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+
+            mv.loadExecutionContext();
+            mv.invoke(Methods.Reference_GetValue_);
+
+            return ValType.Any;
+        } else if (node.getArguments() != null) {
+            mv.loadExecutionContext();
+            mv.aconst(null);
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+
+            // dummy SuperExpression() to match 'Reference' value-type
+            EvaluateCall(node, new SuperExpression(), ValType.Reference, node.getArguments(),
+                    false, mv);
+
+            return ValType.Any;
+        } else {
+            mv.loadExecutionContext();
+            mv.aconst(null);
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+
+            mv.loadExecutionContext();
+            mv.invoke(Methods.Reference_GetValue_);
+
+            return ValType.Any;
+        }
     }
 
     @Override
