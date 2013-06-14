@@ -55,12 +55,18 @@ public class Repl {
             StartScript startScript = StartScript.fromArgs(args);
             new Repl(options, startScript, System.console()).loop();
         } catch (Throwable e) {
-            StackTraceElement[] stackTrace = e.getStackTrace();
-            Exception ex = new Exception(e.getMessage(), e.getCause());
-            ex.setStackTrace(Arrays.copyOf(stackTrace,
-                    Math.min(stackTrace.length, STACKTRACE_DEPTH)));
-            ex.printStackTrace();
+            printStackTrace(e);
         }
+    }
+
+    private static void printStackTrace(Throwable e) {
+        StackTraceElement[] stackTrace = e.getStackTrace();
+        if (stackTrace.length > STACKTRACE_DEPTH) {
+            stackTrace = Arrays.copyOf(stackTrace, STACKTRACE_DEPTH + 1);
+            stackTrace[STACKTRACE_DEPTH] = new StackTraceElement("..", "", null, 0);
+            e.setStackTrace(stackTrace);
+        }
+        e.printStackTrace();
     }
 
     private enum Option {
@@ -167,14 +173,14 @@ public class Repl {
     private void handleException(InternalException e) {
         console.printf("%s\n", e.getMessage());
         if (options.contains(Option.StackTrace)) {
-            e.printStackTrace();
+            printStackTrace(e);
         }
     }
 
     private void handleException(ScriptException e) {
         console.printf("uncaught exception: %s\n", e.getMessage());
         if (options.contains(Option.StackTrace)) {
-            e.printStackTrace();
+            printStackTrace(e);
         }
     }
 
