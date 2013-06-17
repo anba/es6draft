@@ -787,27 +787,11 @@ js1_5/Regress/regress-366601.js
 js1_5/Regress/regress-367561-01.js
 js1_5/Regress/regress-367561-03.js
 
-# StackOverflow errors
-ecma_5/extensions/array-toString-recursion.js
-ecma_5/extensions/String-methods-infinite-recursion.js
-ecma_5/extensions/toLocaleString-infinite-recursion.js
+# StackOverflow (regular expression engine)
 js1_2/regexp/regress-9141.js
-js1_5/Exceptions/regress-121658.js
+
+# StackOverflow (CodeAnalyzer recursion)
 js1_5/Expressions/regress-394673.js
-js1_5/extensions/regress-192465.js
-js1_5/extensions/regress-355497.js
-js1_5/extensions/regress-420869-01.js
-js1_5/extensions/regress-424683-01.js
-js1_5/GC/regress-348532.js
-js1_5/Regress/regress-98901.js
-js1_5/Regress/regress-152646.js
-js1_5/Regress/regress-192414.js
-js1_5/Regress/regress-234389.js
-js1_5/Regress/regress-256501.js
-js1_5/Regress/regress-280769-3.js
-js1_5/Regress/regress-311629.js
-js1_5/Regress/regress-96128-n.js
-js1_5/Regress/regress-96526-002.js
 
 # OutOfMemory: Java heap space
 js1_5/Regress/regress-422348.js

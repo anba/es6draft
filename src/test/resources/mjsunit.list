@@ -140,7 +140,6 @@ function-names.js
 ############################################
 
 # V8 StackTrace API
-compiler/regress-stacktrace.js
 regress/regress-2564.js
 regress/regress-conditional-position.js
 stack-traces.js
@@ -242,26 +241,13 @@ limit-locals.js
 # too many arguments
 regress/regress-1122.js
 
-# StackOverflow
-big-array-literal.js
-big-object-literal.js
-array-join.js
-array-tostring.js
-cyclic-array-to-string.js
-error-tostring.js
-json-stringify-recursive.js
-json-parser-recursive.js
-stack-traces-overflow.js
+# StackOverflow: recursion in RegExp parser
 regress/regress-1129.js
-regress/regress-1132.js
-regress/regress-1215653.js
-regress/regress-148378.js
-regress/regress-233.js
-regress/regress-crbug-100859.js
 
 # Timeout
 array-concat.js
 array-functions-prototype-misc.js
+array-join.js
 array-unshift.js
 ascii-regexp-subject.js
 mul-exhaustive-part1.js

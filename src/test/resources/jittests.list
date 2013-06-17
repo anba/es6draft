@@ -179,6 +179,9 @@ tests/collections/bug-743101.js
 # RegExp.prototype.replace resets RegExp statics after replacer function call
 tests/basic/testStaticsInRegExp.js
 
+# Different maximal stack depth
+tests/basic/bug522136.js
+
 
 ############################################
 # Misc proxy implementation isssues        #
@@ -203,6 +206,7 @@ tests/basic/bug821850.js
 # Old Proxy API not completely emulated
 tests/auto-regress/bug578015.js
 tests/auto-regress/bug727330.js
+tests/basic/bug763440.js
 
 # SpiderMonkey does not support [[Origin]] for PropertyDescriptors
 tests/proxy/testDirectProxyDefineProperty2.js
@@ -443,6 +447,7 @@ tests/basic/testScriptCloning.js
 tests/basic/save-frame-chain.js
 # evaluate() with newContext option
 tests/basic/cross-context-stack-1.js
+tests/basic/bug863084.js
 
 # Unsupported 'Testing' functions
 # gcparam
@@ -808,46 +813,11 @@ tests/basic/bug787848.js
 tests/auto-regress/bug583680.js
 tests/auto-regress/bug620637.js
 tests/basic/bug539379.js
+tests/basic/bug632964-regexp.js
 tests/basic/bug849777.js
 tests/basic/math-jit-tests.js
 tests/basic/testBug614653.js
 tests/basic/testBug621202.js
-
-# StackOverflow
-tests/auto-regress/bug488203.js
-tests/auto-regress/bug571168.js
-tests/auto-regress/bug650574.js
-tests/auto-regress/bug653789.js
-tests/auto-regress/bug654392.js
-tests/auto-regress/bug666305.js
-tests/auto-regress/bug675251.js
-tests/auto-regress/bug701332.js
-tests/auto-regress/bug729797.js
-tests/auto-regress/bug737737.js
-tests/auto-regress/bug743094.js
-tests/auto-regress/bug746103.js
-tests/auto-regress/bug746377.js
-tests/auto-regress/bug759306.js
-tests/auto-regress/bug782129.js
-tests/basic/bug520498.js
-tests/basic/bug522136.js
-tests/basic/bug617139.js
-tests/basic/bug632964-regexp.js
-tests/basic/bug657227.js
-tests/basic/bug708819.js
-tests/basic/bug753283.js
-tests/basic/bug763440.js
-tests/basic/bug836601.js
-tests/basic/bug863084.js
-tests/basic/testBug666003.js
-tests/basic/testBug692274-2.js
-tests/basic/testOOMInAutoEnterCompartment.js
-tests/basic/testOverOOMInFixupArity.js
-tests/basic/testOverRecursed1.js
-tests/basic/testOverRecursed2.js
-tests/basic/testOverRecursed3.js
-tests/basic/testOverRecursed6.js
-tests/basic/testProxyDefinePropertyWithMissingSetter.js
 
 # OutOfMemory: Java heap space
 tests/auto-regress/bug690933.js
