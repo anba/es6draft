@@ -8,16 +8,10 @@
 
 -->
 <excludeList>
-  <!-- Date.prototype.getYear (https://bugs.ecmascript.org/show_bug.cgi?id=1128) -->
-  <test id="S15.2.2.1_A2_T5" />
-
-  <!-- String.prototype.substr (https://bugs.ecmascript.org/show_bug.cgi?id=1131) -->
-  <test id="15.12.3-11-26" />
-
-  <!-- octal integer literal -->
+  <!-- octal integer literal (https://bugs.ecmascript.org/show_bug.cgi?id=1532) -->
   <test id="15.2.3.6-2-17-1" />
 
-  <!-- octal escape sequence -->
+  <!-- octal escape sequence (https://bugs.ecmascript.org/show_bug.cgi?id=1531) -->
   <test id="S15.5.4.11_A5_T1" />
 
   <!-- ES6: poisoned 'caller' inherited from Function.prototype -->
