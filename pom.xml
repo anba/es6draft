@@ -440,6 +440,7 @@
                     <include name="compat.js" />
                     <include name="cyclic.js" />
                     <include name="generator.js" />
+                    <include name="internal-error.js" />
                     <include name="proxy.js" />
                     <include name="stacktrace.js" />
                   </fileset>
