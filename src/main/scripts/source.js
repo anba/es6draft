@@ -19,13 +19,14 @@ const Object = global.Object,
       RegExp = global.RegExp,
       Error = global.Error,
       TypeError = global.TypeError,
-      JSON = global.JSON;
+      JSON = global.JSON,
+      WeakMap = global.WeakMap;
 
 const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
       Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
       Object_keys = Object.keys,
       Array_isArray = Array.isArray,
-      Array_prototype_toString = Array.prototype.toString;
+      Array_prototype_join = Array.prototype.join;
 
 function Quote(s, qc = '"') {
   var r = '';
@@ -96,19 +97,24 @@ Object.defineProperty(Object.assign(global, {
 const wm = new WeakMap();
 var depth = 0;
 
+// duplicated definition from array-join.js to access shared 'wm' WeakMap
 Object.defineProperty(Object.assign(Array.prototype, {
-  toString() {
-    if (wm.has(this)) {
-      return "";
+  join(separator) {
+    if (typeof this == 'function' || typeof this == 'object' && this !== null) {
+      if (wm.has(this)) {
+        return "";
+      }
+      wm.set(this, null);
     }
-    wm.set(this, null);
     try {
-      return Array_prototype_toString.call(this);
+      return Array_prototype_join.call(this, separator);
     } finally {
-      wm.delete(this);
+      if (typeof this == 'function' || typeof this == 'object' && this !== null) {
+        wm.delete(this);
+      }
     }
   }
-}), "toString", {enumerable: false});
+}), "join", {enumerable: false});
 
 Object.defineProperty(Object.assign(String.prototype, {
   quote() {
