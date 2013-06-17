@@ -438,6 +438,7 @@
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/scripts">
                     <include name="compat.js" />
+                    <include name="cyclic.js" />
                     <include name="generator.js" />
                     <include name="proxy.js" />
                     <include name="stacktrace.js" />
