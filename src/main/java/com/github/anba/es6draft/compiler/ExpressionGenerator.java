@@ -631,7 +631,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Object;
             } else {
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 ValType rtype = evalAndGetValue(right, mv);
 
                 // lref rval
@@ -646,7 +646,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_MUL: {
                 // 11.5 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -665,7 +665,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_DIV: {
                 // 11.5 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -684,7 +684,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_MOD: {
                 // 11.5 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -705,7 +705,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 if (right instanceof StringLiteral) {
                     // x += ""
                     ValType ltype = left.accept(this, mv);
-                    assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                    assert ltype == ValType.Reference : "invalid lhs for assignment";
                     mv.dup();
                     GetValue(left, ltype, mv);
                     ToPrimitive(ltype, mv);
@@ -722,7 +722,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 }
 
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -738,7 +738,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_SUB: {
                 // 1.6.2 The Subtraction Operator ( - )
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -757,7 +757,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_SHL: {
                 // 11.7.1 The Left Shift Operator ( << )
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -778,7 +778,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_SHR: {
                 // 11.7.2 The Signed Right Shift Operator ( >> )
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -799,7 +799,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_USHR: {
                 // 11.7.3 The Unsigned Right Shift Operator ( >>> )
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -820,7 +820,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_BITAND: {
                 // 11.10 Binary Bitwise Operators ( & )
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -839,7 +839,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_BITXOR: {
                 // 11.10 Binary Bitwise Operators ( ^ )
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -858,7 +858,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             case ASSIGN_BITOR: {
                 // 11.10 Binary Bitwise Operators ( | )
                 ValType ltype = left.accept(this, mv);
-                assert !ltype.isPrimitive() : "invalid lhs for assignment";
+                assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
                 GetValue(left, ltype, mv);
                 ValType rtype = evalAndGetValue(right, mv);
@@ -1713,7 +1713,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             // 11.3.1 Postfix Increment Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
-            assert !type.isPrimitive() : "reference lhs for inc/dec";
+            assert type == ValType.Reference : "reference lhs for inc/dec";
             mv.dup();
             GetValue(expr, type, mv);
             ToNumber(type, mv);
@@ -1728,7 +1728,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             // 11.3.2 Postfix Decrement Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
-            assert !type.isPrimitive() : "reference lhs for inc/dec";
+            assert type == ValType.Reference : "reference lhs for inc/dec";
             mv.dup();
             GetValue(expr, type, mv);
             ToNumber(type, mv);
@@ -1769,7 +1769,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             // 11.4.4 Prefix Increment Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
-            assert !type.isPrimitive() : "reference lhs for inc/dec";
+            assert type == ValType.Reference : "reference lhs for inc/dec";
             mv.dup();
             GetValue(expr, type, mv);
             ToNumber(type, mv);
@@ -1784,7 +1784,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             // 11.4.5 Prefix Decrement Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
-            assert !type.isPrimitive() : "reference lhs for inc/dec";
+            assert type == ValType.Reference : "reference lhs for inc/dec";
             mv.dup();
             GetValue(expr, type, mv);
             ToNumber(type, mv);

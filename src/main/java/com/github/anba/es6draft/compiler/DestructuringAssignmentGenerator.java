@@ -205,7 +205,7 @@ class DestructuringAssignmentGenerator {
         public Void visit(AssignmentRestElement node, Integer index) {
             // stack: [obj] -> [lref, obj]
             ValType valType = codegen.expression(node.getTarget(), mv);
-            assert !valType.isPrimitive() : "lhs is primitive";
+            assert valType == ValType.Reference : "lhs is primitive";
             mv.swap();
 
             mv.iconst(index);
@@ -275,7 +275,7 @@ class DestructuringAssignmentGenerator {
             } else {
                 // stack: [v'] -> [lref, 'v]
                 ValType refType = codegen.expression(target, mv);
-                assert !refType.isPrimitive() : "lhs is primitive";
+                assert refType == ValType.Reference : "lhs is primitive";
                 mv.swap();
 
                 // stack: [lref, 'v] -> []
