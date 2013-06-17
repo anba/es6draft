@@ -147,6 +147,12 @@ public class MozillaJitTest {
             if (moztest.error == null || !(message.contains(moztest.error))) {
                 console.getFailures().add(new AssertionError(message, e));
             }
+        } catch (StackOverflowError e) {
+            // count towards the overall failure count
+            String message = "InternalError";
+            if (moztest.error == null || !(message.contains(moztest.error))) {
+                console.getFailures().add(new AssertionError(message, e));
+            }
         } catch (StopExecutionException e) {
             // ignore
         } catch (IOException e) {

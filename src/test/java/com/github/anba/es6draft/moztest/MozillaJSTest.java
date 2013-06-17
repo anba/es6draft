@@ -136,6 +136,9 @@ public class MozillaJSTest {
         } catch (ScriptException e) {
             // count towards the overall failure count
             console.getFailures().add(new AssertionError(e.getMessage(cx), e));
+        } catch (StackOverflowError e) {
+            // count towards the overall failure count
+            console.getFailures().add(new AssertionError(e.getMessage(), e));
         } catch (StopExecutionException e) {
             // ignore
         } catch (IOException e) {

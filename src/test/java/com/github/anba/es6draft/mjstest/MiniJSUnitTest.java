@@ -44,6 +44,7 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.ShellGlobalObject;
 import com.github.anba.es6draft.repl.V8ShellGlobalObject;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -116,12 +117,14 @@ public class MiniJSUnitTest {
             global.eval(test.script, js);
         } catch (ParserException | CompilationException e) {
             // count towards the overall failure count
-            String message = e.getMessage();
-            failures.add(new AssertionError(message, e));
+            failures.add(new AssertionError(e.getMessage(), e));
         } catch (ScriptException e) {
             // count towards the overall failure count
-            String message = e.getMessage(global.getRealm().defaultContext());
-            failures.add(new AssertionError(message, e));
+            ExecutionContext cx = global.getRealm().defaultContext();
+            failures.add(new AssertionError(e.getMessage(cx), e));
+        } catch (StackOverflowError e) {
+            // count towards the overall failure count
+            failures.add(new AssertionError(e.getMessage(), e));
         } catch (IOException e) {
             fail(e.getMessage());
         }
