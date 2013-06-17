@@ -240,10 +240,14 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             if (!IsExtensible(cx, o)) {
                 throwTypeError(cx, Messages.Key.NotExtensible);
             }
+            boolean status = true;
             if (Type.isNull(p)) {
-                o.setInheritance(cx, null);
+                status = o.setInheritance(cx, null);
             } else if (Type.isObject(p)) {
-                o.setInheritance(cx, Type.objectValue(p));
+                status = o.setInheritance(cx, Type.objectValue(p));
+            }
+            if (!status) {
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             return UNDEFINED;
         }
