@@ -167,9 +167,6 @@ tests/basic/testInitSingletons.js
 tests/basic/testSlowNativeBail.js
 tests/self-hosting/invoke-self-hosted-with-primitive-this.js
 
-# Spidermonkey: Array.prototype.toString internal recursion
-tests/auto-regress/bug635389.js
-
 # Different Parser strategy
 tests/basic/bug862228.js
 
@@ -263,6 +260,7 @@ tests/arrow-functions/arguments-4.js
 # arrow functions _do_ have arguments
 tests/arrow-functions/arguments-1.js
 tests/arrow-functions/arguments-2.js
+tests/arrow-functions/arguments-3.js
 
 # different toString() representation for arrow-functions
 tests/arrow-functions/associativity-3.js
@@ -476,6 +474,8 @@ tests/basic/testBug755916.js
 tests/basic/functionnames.js
 # getObjectMetadata/setObjectMetadata/setObjectMetadataCallback
 tests/basic/metadata-hook.js
+# getBuildConfiguration
+tests/basic/testOOMInAutoEnterCompartment.js
 
 
 #######################################
