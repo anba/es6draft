@@ -37,7 +37,6 @@ import com.github.anba.es6draft.repl.StopExecutionException.Reason;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.InternalException;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -170,8 +169,9 @@ public class Repl {
         this.console = console;
     }
 
-    private void handleException(InternalException e) {
-        console.printf("%s\n", e.getMessage());
+    private void handleException(Throwable e) {
+        String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+        console.printf("%s\n", message);
         if (options.contains(Option.StackTrace)) {
             printStackTrace(e);
         }
@@ -204,7 +204,7 @@ public class Repl {
                     continue;
                 }
             }
-        } catch (ParserException e) {
+        } catch (ParserException | StackOverflowError e) {
             handleException(e);
             return null;
         }
@@ -224,7 +224,7 @@ public class Repl {
         } catch (ScriptException e) {
             handleException(e);
             return null;
-        } catch (ParserException | CompilationException e) {
+        } catch (ParserException | CompilationException | StackOverflowError e) {
             handleException(e);
             return null;
         }
@@ -239,6 +239,8 @@ public class Repl {
                 console.writer().println(ToSource(realm.defaultContext(), result));
             }
         } catch (ScriptException e) {
+            handleException(e);
+        } catch (StackOverflowError e) {
             handleException(e);
         }
     }
