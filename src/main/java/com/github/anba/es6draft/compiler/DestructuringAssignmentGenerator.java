@@ -36,15 +36,7 @@ class DestructuringAssignmentGenerator {
                 Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
         // class: Reference
-        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
-                Types.Reference, "GetValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Static,
-                Types.Reference, "PutValue", Type.getMethodType(Type.VOID_TYPE, Types.Object,
-                        Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc Reference_PutValue_ = MethodDesc.create(MethodType.Virtual,
+        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "PutValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
@@ -71,19 +63,10 @@ class DestructuringAssignmentGenerator {
     }
 
     private static void PutValue(Expression node, ValType type, ExpressionVisitor mv) {
-        assert !node.accept(IsReference.INSTANCE, null)
-                || (type == ValType.Any || type == ValType.Reference) : type;
-        assert (type != ValType.Reference) || node.accept(IsReference.INSTANCE, null) : type;
+        assert type == ValType.Reference : "lhs is not reference: " + type;
 
-        if (node.accept(IsReference.INSTANCE, null)) {
-            if (type == ValType.Reference) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.Reference_PutValue_);
-            } else {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.Reference_PutValue);
-            }
-        }
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_PutValue);
     }
 
     private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {
@@ -113,19 +96,17 @@ class DestructuringAssignmentGenerator {
             node.accept(init, key);
         }
 
+        protected final ValType expression(Expression node, ExpressionVisitor mv) {
+            return codegen.expression(node, mv);
+        }
+
+        protected final ValType expressionValue(Expression node, ExpressionVisitor mv) {
+            return codegen.expressionValue(node, mv);
+        }
+
         @Override
         protected final R visit(Node node, V value) {
             throw new IllegalStateException();
-        }
-
-        /**
-         * Calls <code>GetValue(o)</code> if the expression could possibly be a reference
-         */
-        protected final void invokeGetValue(Expression node, ExpressionVisitor mv) {
-            if (node.accept(IsReference.INSTANCE, null)) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.Reference_GetValue);
-            }
         }
     }
 
@@ -204,8 +185,7 @@ class DestructuringAssignmentGenerator {
         @Override
         public Void visit(AssignmentRestElement node, Integer index) {
             // stack: [obj] -> [lref, obj]
-            ValType valType = codegen.expression(node.getTarget(), mv);
-            assert valType == ValType.Reference : "lhs is primitive";
+            ValType refType = expression(node.getTarget(), mv);
             mv.swap();
 
             mv.iconst(index);
@@ -214,7 +194,7 @@ class DestructuringAssignmentGenerator {
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
             // stack: [lref, rest] -> []
-            PutValue(node.getTarget(), valType, mv);
+            PutValue(node.getTarget(), refType, mv);
 
             return null;
         }
@@ -256,9 +236,8 @@ class DestructuringAssignmentGenerator {
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    ValType type = codegen.expression(initialiser, mv);
+                    ValType type = expressionValue(initialiser, mv);
                     mv.toBoxed(type);
-                    invokeGetValue(initialiser, mv);
                 }
                 mv.mark(undef);
             }
@@ -274,8 +253,7 @@ class DestructuringAssignmentGenerator {
                 DestructuringAssignmentEvaluation(target);
             } else {
                 // stack: [v'] -> [lref, 'v]
-                ValType refType = codegen.expression(target, mv);
-                assert refType == ValType.Reference : "lhs is primitive";
+                ValType refType = expression(target, mv);
                 mv.swap();
 
                 // stack: [lref, 'v] -> []

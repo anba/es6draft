@@ -57,10 +57,6 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         super(codegen);
     }
 
-    protected ValType expression(Expression node, ExpressionVisitor mv) {
-        return codegen.expression(node, mv);
-    }
-
     @Override
     protected Void visit(Node node, ExpressionVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
@@ -105,8 +101,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     @Override
     public Void visit(ComprehensionIf node, ExpressionVisitor mv) {
         Label lblTest = new Label();
-        ValType type = expression(node.getTest(), mv);
-        invokeGetValue(node.getTest(), mv);
+        ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
         mv.ifeq(lblTest);
 
@@ -128,9 +123,8 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     public Void visit(ComprehensionFor node, ExpressionVisitor mv) {
         Label lblContinue = new Label(), lblBreak = new Label();
 
-        ValType type = expression(node.getExpression(), mv);
+        ValType type = expressionValue(node.getExpression(), mv);
         mv.toBoxed(type);
-        invokeGetValue(node.getExpression(), mv);
 
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_iterate);

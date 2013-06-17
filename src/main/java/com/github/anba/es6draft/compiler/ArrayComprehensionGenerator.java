@@ -73,9 +73,8 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
     protected Void visit(Expression node, ExpressionVisitor mv) {
         assert result != -1 : "array-comprehension generator not initialised";
 
-        ValType type = expression(node, mv);
+        ValType type = expressionValue(node, mv);
         mv.toBoxed(type);
-        invokeGetValue(node, mv);
         mv.load(result, Types.ArrayList);
         mv.swap();
         mv.invoke(Methods.ArrayList_add);

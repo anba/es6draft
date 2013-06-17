@@ -67,13 +67,6 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
     }
 
     @Override
-    protected Void visit(Expression node, StatementVisitor mv) {
-        ValType type = codegen.expression(node, mv);
-        mv.toBoxed(type);
-        return null;
-    }
-
-    @Override
     protected Void visit(StatementListItem node, StatementVisitor mv) {
         codegen.statement(node, mv);
         return null;
@@ -168,7 +161,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         }
 
         // stack -> switchValue
-        ValType expressionValueType = codegen.expressionValue(node.getExpression(), mv);
+        ValType expressionValueType = expressionValue(node.getExpression(), mv);
         mv.toBoxed(expressionValueType);
 
         int switchValue = mv.newVariable(Types.Object);
@@ -252,8 +245,8 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
             } else {
                 Label next = new Label();
                 mv.load(switchValue, Types.Object);
-                expr.accept(this, mv);
-                invokeGetValue(expr, mv);
+                ValType type = expressionValue(expr, mv);
+                mv.toBoxed(type);
                 mv.invoke(Methods.ScriptRuntime_strictEqualityComparison);
                 mv.ifeq(next);
                 mv.goTo(stmtLabel);

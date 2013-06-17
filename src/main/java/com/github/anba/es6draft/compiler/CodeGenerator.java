@@ -51,9 +51,9 @@ class CodeGenerator implements AutoCloseable {
 
     private static class Methods {
         // class: Reference
-        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
+        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "GetValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
+                Type.getMethodType(Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_GetTemplateCallSite = MethodDesc.create(
@@ -370,9 +370,8 @@ class CodeGenerator implements AutoCloseable {
         tailCall(node.getExpression(), body);
 
         body.enterScope(node);
-        ValType type = expression(node.getExpression(), body);
+        ValType type = expressionValue(node.getExpression(), body);
         body.toBoxed(type);
-        invokeGetValue(node.getExpression(), body);
         body.exitScope();
 
         body.areturn();
@@ -473,13 +472,6 @@ class CodeGenerator implements AutoCloseable {
         }
     }
 
-    private void invokeGetValue(Expression node, ExpressionVisitor mv) {
-        if (node.accept(IsReference.INSTANCE, null)) {
-            mv.loadExecutionContext();
-            mv.invoke(Methods.Reference_GetValue);
-        }
-    }
-
     ValType expression(Expression node, ExpressionVisitor mv) {
         return node.accept(exprgen, mv);
     }
@@ -487,7 +479,12 @@ class CodeGenerator implements AutoCloseable {
     ValType expressionValue(Expression node, ExpressionVisitor mv) {
         Expression nodeValue = node.asValue();
         ValType type = nodeValue.accept(exprgen, mv);
-        invokeGetValue(nodeValue, mv);
+
+        if (type == ValType.Reference) {
+            mv.loadExecutionContext();
+            mv.invoke(Methods.Reference_GetValue);
+        }
+
         return type;
     }
 

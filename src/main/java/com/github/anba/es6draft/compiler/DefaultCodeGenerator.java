@@ -143,15 +143,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                         .getMethodType(Types.LexicalEnvironment, Types.ScriptObject,
                                 Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
 
-        // class: Reference
-        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
-                Types.Reference, "GetValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Static,
-                Types.Reference, "PutValue", Type.getMethodType(Type.VOID_TYPE, Types.Object,
-                        Types.Object, Types.ExecutionContext));
-
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_CreateDefaultConstructor = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "CreateDefaultConstructor",
@@ -198,6 +189,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         } else if (expr instanceof CallExpression) {
             mv.setTailCall((CallExpression) expr);
         }
+    }
+
+    protected final ValType expression(Expression node, ExpressionVisitor mv) {
+        return codegen.expression(node, mv);
+    }
+
+    protected final ValType expressionValue(Expression node, ExpressionVisitor mv) {
+        return codegen.expressionValue(node, mv);
     }
 
     /**
@@ -273,15 +272,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * Calls <code>GetValue(o)</code> if the expression could possibly be a reference
-     */
-    protected final void invokeGetValue(Expression node, ExpressionVisitor mv) {
-        if (node.accept(IsReference.INSTANCE, null)) {
-            GetValue(mv);
-        }
-    }
-
-    /**
      * stack: [object] -> [boolean]
      */
     protected final void isUndefinedOrNull(ExpressionVisitor mv) {
@@ -347,22 +337,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [Object] -> [Object]
-     */
-    protected final void GetValue(ExpressionVisitor mv) {
-        mv.loadExecutionContext();
-        mv.invoke(Methods.Reference_GetValue);
-    }
-
-    /**
-     * stack: [Object, Object] -> []
-     */
-    protected final void PutValue(ExpressionVisitor mv) {
-        mv.loadExecutionContext();
-        mv.invoke(Methods.Reference_PutValue);
-    }
-
-    /**
      * stack: [Object] -> [boolean]
      */
     protected final ValType ToPrimitive(ValType from, ExpressionVisitor mv) {
@@ -421,6 +395,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             return;
         }
         case Object:
+            mv.pop();
+            mv.iconst(true);
+            return;
         case Any:
         default:
             mv.invoke(Methods.AbstractOperations_ToBoolean);
@@ -625,10 +602,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         case Boolean:
             mv.toBoxed(from);
             break;
+        case Object:
+            return;
         case Undefined:
         case Null:
         case String:
-        case Object:
         case Any:
         default:
             break;
@@ -664,9 +642,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getDefaultClassProto);
         } else {
-            ValType type = codegen.expression(def.getHeritage(), mv);
+            ValType type = expressionValue(def.getHeritage(), mv);
             mv.toBoxed(type);
-            invokeGetValue(def.getHeritage(), mv);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getClassProto);
         }

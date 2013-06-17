@@ -154,10 +154,6 @@ class InstructionVisitor extends InstructionAdapter {
         variables.freeVariable(var);
     }
 
-    public void iconst(boolean b) {
-        iconst(b ? 1 : 0);
-    }
-
     public void begin() {
         visitCode();
     }
@@ -171,6 +167,29 @@ class InstructionVisitor extends InstructionAdapter {
         Label start = new Label();
         mv.visitLabel(start);
         mv.visitLineNumber(line, start);
+    }
+
+    /**
+     * value → not(value)
+     */
+    public void not() {
+        iconst(1);
+        xor(Type.INT_TYPE);
+    }
+
+    /**
+     * value → bitnot(value)
+     */
+    public void bitnot() {
+        iconst(-1);
+        xor(Type.INT_TYPE);
+    }
+
+    /**
+     * [] → value
+     */
+    public void iconst(boolean b) {
+        iconst(b ? 1 : 0);
     }
 
     /**

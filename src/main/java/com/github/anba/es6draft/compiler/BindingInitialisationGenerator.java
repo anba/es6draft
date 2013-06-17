@@ -47,11 +47,7 @@ class BindingInitialisationGenerator {
                 Type.getMethodType(Types.EnvironmentRecord));
 
         // class: Reference
-        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Static,
-                Types.Reference, "GetValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc Reference_PutValue_ = MethodDesc.create(MethodType.Virtual,
+        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "PutValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
@@ -133,14 +129,8 @@ class BindingInitialisationGenerator {
             throw new IllegalStateException();
         }
 
-        /**
-         * Calls <code>GetValue(o)</code> if the expression could possibly be a reference
-         */
-        protected final void invokeGetValue(Expression node, ExpressionVisitor mv) {
-            if (node.accept(IsReference.INSTANCE, null)) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.Reference_GetValue);
-            }
+        protected final ValType expressionValue(Expression node, ExpressionVisitor mv) {
+            return codegen.expressionValue(node, mv);
         }
 
         protected final void dupArgs() {
@@ -262,7 +252,7 @@ class BindingInitialisationGenerator {
                 mv.swap();
                 // stack: [ref, value] -> []
                 mv.loadExecutionContext();
-                mv.invoke(Methods.Reference_PutValue_);
+                mv.invoke(Methods.Reference_PutValue);
             }
 
             return null;
@@ -321,9 +311,8 @@ class BindingInitialisationGenerator {
                     mv.ifeq(undef);
                     {
                         mv.pop();
-                        ValType type = codegen.expression(initialiser, mv);
+                        ValType type = expressionValue(initialiser, mv);
                         mv.toBoxed(type);
-                        invokeGetValue(initialiser, mv);
                         mv.loadExecutionContext();
                         mv.swap();
                         mv.invoke(Methods.AbstractOperations_ToObject);
@@ -406,9 +395,8 @@ class BindingInitialisationGenerator {
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    ValType type = codegen.expression(initialiser, mv);
+                    ValType type = expressionValue(initialiser, mv);
                     mv.toBoxed(type);
-                    invokeGetValue(initialiser, mv);
                     if (binding instanceof BindingPattern) {
                         mv.loadExecutionContext();
                         mv.swap();

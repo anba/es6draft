@@ -82,11 +82,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Type.getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Intrinsics));
 
         // class: Reference
-        static final MethodDesc Reference_GetValue_ = MethodDesc.create(MethodType.Virtual,
+        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "GetValue",
                 Type.getMethodType(Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc Reference_PutValue_ = MethodDesc.create(MethodType.Virtual,
+        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "PutValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
@@ -192,7 +192,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         Types.Reference, Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_RegExp = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "RegExp", Type.getMethodType(Types.Object,
+                Types.ScriptRuntime, "RegExp", Type.getMethodType(Types.ScriptObject,
                         Types.ExecutionContext, Types.String, Types.String));
 
         static final MethodDesc ScriptRuntime_SpreadArray = MethodDesc.create(MethodType.Static,
@@ -245,37 +245,21 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         Expression valueNode = node.asValue();
         ValType type = valueNode.accept(this, mv);
         GetValue(valueNode, type, mv);
-        return type;
+        return (type != ValType.Reference ? type : ValType.Any);
     }
 
     private void GetValue(Expression node, ValType type, ExpressionVisitor mv) {
-        assert !node.accept(IsReference.INSTANCE, null)
-                || (type == ValType.Any || type == ValType.Reference) : type;
-        assert (type != ValType.Reference) || node.accept(IsReference.INSTANCE, null) : type;
-
-        if (node.accept(IsReference.INSTANCE, null)) {
-            if (type == ValType.Reference) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.Reference_GetValue_);
-            } else {
-                GetValue(mv);
-            }
+        if (type == ValType.Reference) {
+            mv.loadExecutionContext();
+            mv.invoke(Methods.Reference_GetValue);
         }
     }
 
     private void PutValue(Expression node, ValType type, ExpressionVisitor mv) {
-        assert !node.accept(IsReference.INSTANCE, null)
-                || (type == ValType.Any || type == ValType.Reference) : type;
-        assert (type != ValType.Reference) || node.accept(IsReference.INSTANCE, null) : type;
+        assert type == ValType.Reference : "lhs is not reference: " + type;
 
-        if (node.accept(IsReference.INSTANCE, null)) {
-            if (type == ValType.Reference) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.Reference_PutValue_);
-            } else {
-                PutValue(mv);
-            }
-        }
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_PutValue);
     }
 
     /**
@@ -483,7 +467,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.aconst("length");
             mv.iconst(nextIndex);
             mv.toBoxed(Type.INT_TYPE);
-            mv.iconst(0);
+            mv.iconst(false);
             mv.invoke(Methods.AbstractOperations_Put);
         } else {
             // stack: [array, nextIndex]
@@ -502,7 +486,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             // stack: [array, cx, array, (nextIndex)]
             mv.aconst("length");
             mv.swap();
-            mv.iconst(0);
+            mv.iconst(false);
             mv.invoke(Methods.AbstractOperations_Put);
         }
 
@@ -639,7 +623,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 mv.toBoxed(rtype);
                 PutValue(left, ltype, mv);
 
-                return (rtype != ValType.Reference ? rtype : ValType.Object);
+                return rtype;
             }
         } else {
             switch (node.getOperator()) {
@@ -1183,8 +1167,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.loadExecutionContext();
             invokeDynamicOperator(node.getOperator(), mv);
 
-            mv.iconst(1);
-            mv.xor(Type.INT_TYPE);
+            mv.not();
             return ValType.Boolean;
         }
         case SHEQ: {
@@ -1209,8 +1192,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
             invokeDynamicOperator(node.getOperator(), mv);
 
-            mv.iconst(1);
-            mv.xor(Type.INT_TYPE);
+            mv.not();
             return ValType.Boolean;
         }
         case BITAND: {
@@ -1337,7 +1319,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             type = evalAndGetValue(e, mv);
         }
         assert type != null;
-        return (type != ValType.Reference ? type : ValType.Any);
+        return type;
     }
 
     @Override
@@ -1611,8 +1593,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            mv.loadExecutionContext();
-            mv.invoke(Methods.Reference_GetValue_);
+            GetValue(node, ValType.Reference, mv);
 
             return ValType.Any;
         } else if (node.getExpression() != null) {
@@ -1623,8 +1604,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            mv.loadExecutionContext();
-            mv.invoke(Methods.Reference_GetValue_);
+            GetValue(node, ValType.Reference, mv);
 
             return ValType.Any;
         } else if (node.getArguments() != null) {
@@ -1633,9 +1613,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            // dummy SuperExpression() to match 'Reference' value-type
-            EvaluateCall(node, new SuperExpression(), ValType.Reference, node.getArguments(),
-                    false, mv);
+            EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
 
             return ValType.Any;
         } else {
@@ -1644,8 +1622,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
-            mv.loadExecutionContext();
-            mv.invoke(Methods.Reference_GetValue_);
+            GetValue(node, ValType.Reference, mv);
 
             return ValType.Any;
         }
@@ -1815,8 +1792,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             ToInt32(type, mv);
-            mv.iconst(-1);
-            mv.xor(Type.INT_TYPE);
+            mv.bitnot();
             return ValType.Number_int;
         }
         case NOT: {
@@ -1824,8 +1800,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             ToBoolean(type, mv);
-            mv.iconst(1);
-            mv.xor(Type.INT_TYPE);
+            mv.not();
             return ValType.Boolean;
         }
         default:

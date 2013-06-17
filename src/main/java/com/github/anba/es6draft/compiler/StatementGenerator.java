@@ -56,6 +56,11 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
 
+        // class: Reference
+        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "PutValue",
+                Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
+
         // class: ScriptException
         static final MethodDesc ScriptException_getValue = MethodDesc.create(MethodType.Virtual,
                 Types.ScriptException, "getValue", Type.getMethodType(Types.Object));
@@ -84,16 +89,19 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     /* ----------------------------------------------------------------------------------------- */
 
-    @Override
-    protected Void visit(Node node, StatementVisitor mv) {
-        throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
+    /**
+     * stack: [Reference, Object] -> []
+     */
+    private void PutValue(Expression node, ValType type, StatementVisitor mv) {
+        assert type == ValType.Reference : "lhs is not reference: " + type;
+
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_PutValue);
     }
 
     @Override
-    protected Void visit(Expression node, StatementVisitor mv) {
-        ValType type = codegen.expression(node, mv);
-        mv.toBoxed(type);
-        return null;
+    protected Void visit(Node node, StatementVisitor mv) {
+        throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     @Override
@@ -179,8 +187,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         if (abrupt.contains(Abrupt.Continue)) {
             restoreEnvironment(mv, savedEnv);
         }
-        ValType type = codegen.expression(node.getTest(), mv);
-        invokeGetValue(node.getTest(), mv);
+        ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
         mv.ifne(l0);
         mv.mark(lblBreak);
@@ -202,14 +209,13 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     @Override
     public Void visit(ExpressionStatement node, StatementVisitor mv) {
-        Expression expr = node.getExpression();
-        expr.accept(this, mv);
-        invokeGetValue(expr, mv);
+        ValType type = expressionValue(node.getExpression(), mv);
         if (mv.isCompletionValue()) {
+            mv.toBoxed(type);
             mv.checkcast(Types.Object);
             mv.storeCompletionValue();
         } else {
-            mv.pop();
+            mv.pop(type);
         }
         return null;
     }
@@ -245,8 +251,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         }
 
         // Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
-        expr.accept(this, mv);
-        invokeGetValue(expr, mv);
+        ValType type = expressionValue(expr, mv);
+        mv.toBoxed(type);
 
         mv.dup();
         isUndefinedOrNull(mv);
@@ -281,9 +287,9 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 ToObject(ValType.Any, mv);
                 DestructuringAssignment((AssignmentPattern) lhs, mv);
             } else {
-                lhs.accept(this, mv);
+                ValType lhsType = expression((Expression) lhs, mv);
                 mv.swap();
-                PutValue(mv);
+                PutValue((Expression) lhs, lhsType, mv);
             }
         } else if (lhs instanceof VariableStatement) {
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
@@ -370,9 +376,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         if (head == null) {
             // empty
         } else if (head instanceof Expression) {
-            head.accept(this, mv);
-            invokeGetValue((Expression) head, mv);
-            mv.pop();
+            ValType type = expressionValue((Expression) head, mv);
+            mv.pop(type);
         } else if (head instanceof VariableStatement) {
             head.accept(this, mv);
         } else {
@@ -429,14 +434,12 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             restoreEnvironment(mv, savedEnv);
         }
         if (node.getStep() != null) {
-            node.getStep().accept(this, mv);
-            invokeGetValue(node.getStep(), mv);
-            mv.pop();
+            ValType type = expressionValue(node.getStep(), mv);
+            mv.pop(type);
         }
         mv.mark(lblTest);
         if (node.getTest() != null) {
-            ValType type = codegen.expression(node.getTest(), mv);
-            invokeGetValue(node.getTest(), mv);
+            ValType type = expressionValue(node.getTest(), mv);
             ToBoolean(type, mv);
             mv.ifne(lblStmt);
         } else {
@@ -482,8 +485,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
     public Void visit(IfStatement node, StatementVisitor mv) {
         Label l0 = new Label(), l1 = new Label();
 
-        ValType type = codegen.expression(node.getTest(), mv);
-        invokeGetValue(node.getTest(), mv);
+        ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
         mv.ifeq(l0);
         node.getThen().accept(this, mv);
@@ -536,11 +538,12 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Binding binding = node.getBinding();
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
-            initialiser.accept(this, mv);
-            invokeGetValue(initialiser, mv);
+            ValType type = expressionValue(initialiser, mv);
             if (binding instanceof BindingPattern) {
                 // ToObject(...)
-                ToObject(ValType.Any, mv);
+                ToObject(type, mv);
+            } else {
+                mv.toBoxed(type);
             }
         } else {
             assert binding instanceof BindingIdentifier;
@@ -561,8 +564,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             if (!mv.isWrapped()) {
                 tailCall(expr, mv);
             }
-            expr.accept(this, mv);
-            invokeGetValue(expr, mv);
+            ValType type = expressionValue(expr, mv);
+            mv.toBoxed(type);
         } else {
             mv.get(Fields.Undefined_UNDEFINED);
         }
@@ -622,8 +625,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     @Override
     public Void visit(ThrowStatement node, StatementVisitor mv) {
-        node.getExpression().accept(this, mv);
-        invokeGetValue(node.getExpression(), mv);
+        ValType type = expressionValue(node.getExpression(), mv);
+        mv.toBoxed(type);
         mv.invoke(Methods.ScriptRuntime_throw);
         mv.pop(); // explicit pop required
         return null;
@@ -871,11 +874,12 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Binding binding = node.getBinding();
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
-            initialiser.accept(this, mv);
-            invokeGetValue(initialiser, mv);
+            ValType type = expressionValue(initialiser, mv);
             if (binding instanceof BindingPattern) {
                 // ToObject(...)
-                ToObject(ValType.Any, mv);
+                ToObject(type, mv);
+            } else {
+                mv.toBoxed(type);
             }
             BindingInitialisation(binding, mv);
         } else {
@@ -914,8 +918,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         if (abrupt.contains(Abrupt.Continue)) {
             restoreEnvironment(mv, savedEnv);
         }
-        ValType type = codegen.expression(node.getTest(), mv);
-        invokeGetValue(node.getTest(), mv);
+        ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
         mv.ifne(lblNext);
         mv.mark(lblBreak);
@@ -932,11 +935,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
     @Override
     public Void visit(WithStatement node, StatementVisitor mv) {
         // with(<Expression>)
-        node.getExpression().accept(this, mv);
-        invokeGetValue(node.getExpression(), mv);
+        ValType type = expressionValue(node.getExpression(), mv);
 
         // ToObject(<Expression>)
-        ToObject(ValType.Any, mv);
+        ToObject(type, mv);
 
         // create new object lexical environment (withEnvironment-flag = true)
         mv.enterScope(node);

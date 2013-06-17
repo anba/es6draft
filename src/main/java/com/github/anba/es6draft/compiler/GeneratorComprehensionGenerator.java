@@ -49,9 +49,8 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
-        ValType type = expression(node, mv);
+        ValType type = expressionValue(node, mv);
         mv.toBoxed(type);
-        invokeGetValue(node, mv);
         mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_yield);

@@ -68,13 +68,6 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     }
 
     @Override
-    protected Void visit(Expression node, ExpressionVisitor mv) {
-        ValType type = codegen.expression(node, mv);
-        mv.toBoxed(type);
-        return null;
-    }
-
-    @Override
     public Void visit(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
         codegen.compile(node, mv);
 
@@ -125,21 +118,13 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     @Override
     public Void visit(PropertyNameDefinition node, ExpressionVisitor mv) {
         Identifier propertyName = node.getPropertyName();
+        String propName = PropName(propertyName);
 
-        String propName = propertyName.getName();
-        if ("__proto__".equals(propName)) {
-            // FIXME: spec bug? not defined in spec
-            propertyName.accept(this, mv);
-            invokeGetValue(propertyName, mv);
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
-        } else {
-            mv.aconst(propName);
-            propertyName.accept(this, mv);
-            invokeGetValue(propertyName, mv);
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_defineProperty);
-        }
+        mv.aconst(propName);
+        ValType type = expressionValue(propertyName, mv);
+        mv.toBoxed(type);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_defineProperty);
 
         return null;
     }
@@ -151,14 +136,14 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
 
         String propName = PropName(propertyName);
         if ("__proto__".equals(propName)) {
-            propertyValue.accept(this, mv);
-            invokeGetValue(propertyValue, mv);
+            ValType type = expressionValue(propertyValue, mv);
+            mv.toBoxed(type);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else {
             mv.aconst(propName);
-            propertyValue.accept(this, mv);
-            invokeGetValue(propertyValue, mv);
+            ValType type = expressionValue(propertyValue, mv);
+            mv.toBoxed(type);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty);
         }

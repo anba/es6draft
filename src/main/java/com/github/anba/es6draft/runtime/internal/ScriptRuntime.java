@@ -17,7 +17,6 @@ import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstra
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
-import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteStrictArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.InstantiateArgumentsObject;
@@ -246,7 +245,7 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Evaluation
      */
-    public static Object RegExp(ExecutionContext cx, String re, String flags) {
+    public static ScriptObject RegExp(ExecutionContext cx, String re, String flags) {
         // FIXME: spec bug (call abstract operation RegExpCreate?!) (bug 749)
         Constructor ctor = (Constructor) cx.getIntrinsic(Intrinsics.RegExp);
         return ctor.construct(cx, re, flags);
@@ -1300,8 +1299,7 @@ public final class ScriptRuntime {
         Object[] argList = SpreadArray(cx.identifierValue("args", true), cx);
         Callable f = CheckCallable(func, cx);
         Object thisValue = GetCallThisValue(ref, cx);
-        Object result = f.call(cx, thisValue, argList);
-        GetValue(result, cx);
+        f.call(cx, thisValue, argList);
 
         return completionValue;
     }
