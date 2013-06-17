@@ -23,6 +23,11 @@ public class PropertyAccessorValue extends PropertyAccessor {
     }
 
     @Override
+    public PropertyAccessorValue asValue() {
+        return this;
+    }
+
+    @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
     }

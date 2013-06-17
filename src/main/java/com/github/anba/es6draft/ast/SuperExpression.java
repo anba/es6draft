@@ -55,16 +55,18 @@ public class SuperExpression extends LeftHandSideExpression {
 
     @Override
     public Expression asValue() {
+        SuperExpressionValue value;
         if (name != null) {
-            return new SuperExpressionValue(name);
+            value = new SuperExpressionValue(name);
+        } else if (expression != null) {
+            value = new SuperExpressionValue(expression);
+        } else if (arguments != null) {
+            value = new SuperExpressionValue(arguments);
+        } else {
+            value = new SuperExpressionValue();
         }
-        if (expression != null) {
-            return new SuperExpressionValue(expression);
-        }
-        if (arguments != null) {
-            return new SuperExpressionValue(arguments);
-        }
-        return new SuperExpressionValue();
+        value.setLine(getLine());
+        return value;
     }
 
     @Override

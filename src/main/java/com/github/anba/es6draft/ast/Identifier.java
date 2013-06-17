@@ -29,7 +29,9 @@ public class Identifier extends LeftHandSideExpression implements PropertyName {
 
     @Override
     public IdentifierValue asValue() {
-        return new IdentifierValue(name);
+        IdentifierValue value = new IdentifierValue(name);
+        value.setLine(getLine());
+        return value;
     }
 
     @Override

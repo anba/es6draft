@@ -34,7 +34,9 @@ public class PropertyAccessor extends LeftHandSideExpression {
 
     @Override
     public PropertyAccessorValue asValue() {
-        return new PropertyAccessorValue(base, name);
+        PropertyAccessorValue value = new PropertyAccessorValue(base, name);
+        value.setLine(getLine());
+        return value;
     }
 
     @Override
