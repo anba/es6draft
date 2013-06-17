@@ -54,6 +54,7 @@ final class Types {
     static final Type Number = Type.getType(Number.class);
     static final Type Object = Type.getType(Object.class);
     static final Type Object_ = Type.getType(Object[].class);
+    static final Type StackOverflowError = Type.getType(StackOverflowError.class);
     static final Type String = Type.getType(String.class);
     static final Type String_ = Type.getType(String[].class);
     static final Type StringBuilder = Type.getType(StringBuilder.class);

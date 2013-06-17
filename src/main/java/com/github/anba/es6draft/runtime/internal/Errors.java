@@ -23,14 +23,14 @@ public final class Errors {
     private Errors() {
     }
 
-    private static Object newError(ExecutionContext cx, Intrinsics constructor, Messages.Key key) {
+    static Object newError(ExecutionContext cx, Intrinsics constructor, Messages.Key key) {
         Realm realm = cx.getRealm();
         String message = realm.message(key);
         ScriptObject nativeError = realm.getIntrinsic(constructor);
         return ((Constructor) nativeError).construct(cx, message);
     }
 
-    private static Object newError(ExecutionContext cx, Intrinsics constructor, Messages.Key key,
+    static Object newError(ExecutionContext cx, Intrinsics constructor, Messages.Key key,
             String... args) {
         Realm realm = cx.getRealm();
         MessageFormat format = new MessageFormat(realm.message(key), realm.getLocale());

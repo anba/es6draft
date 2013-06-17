@@ -41,6 +41,7 @@ public class Messages {
     public enum Key {/* @formatter:off */
         // internal
         InternalError("internal.error"),
+        StackOverflow("internal.stackoverflow"),
 
         // TokenStream
         InvalidNumberLiteral("parser.invalid_number_literal"),

@@ -72,6 +72,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         static final MethodDesc ScriptRuntime_throw = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "_throw",
                 Type.getMethodType(Types.ScriptException, Types.Object));
+
+        static final MethodDesc ScriptRuntime_toInternalError = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "toInternalError", Type.getMethodType(
+                        Types.ScriptException, Types.StackOverflowError, Types.ExecutionContext));
     }
 
     public StatementGenerator(CodeGenerator codegen) {
@@ -634,22 +638,29 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         BlockStatement finallyBlock = node.getFinallyBlock();
 
         if (catchNode != null && finallyBlock != null) {
-            Label startCatch = new Label();
+            Label startCatchFinally = new Label();
             Label endCatch = new Label(), handlerCatch = new Label();
             Label endFinally = new Label(), handlerFinally = new Label();
+            Label handlerCatchStackOverflow = new Label();
+            Label handlerFinallyStackOverflow = new Label();
             Label noException = new Label();
             Label exceptionHandled = new Label();
 
             mv.enterFinallyScoped();
 
             int savedEnv = saveEnvironment(mv);
-            mv.mark(startCatch);
+            mv.mark(startCatchFinally);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
             mv.exitWrapped();
             mv.nop();
             mv.mark(endCatch);
             mv.goTo(noException);
+
+            // StackOverflowError -> ScriptException
+            mv.mark(handlerCatchStackOverflow);
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_toInternalError);
 
             mv.mark(handlerCatch);
             restoreEnvironment(mv, savedEnv);
@@ -667,6 +678,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.exitFinally();
             mv.goTo(exceptionHandled);
 
+            mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
             int var = mv.newVariable(Types.Throwable);
             mv.store(var, Types.Throwable);
@@ -703,12 +715,17 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.mark(exceptionHandled);
 
             mv.freeVariable(savedEnv);
-            mv.visitTryCatchBlock(startCatch, endCatch, handlerCatch,
+            mv.visitTryCatchBlock(startCatchFinally, endCatch, handlerCatch,
                     Types.ScriptException.getInternalName());
-            mv.visitTryCatchBlock(startCatch, endFinally, handlerFinally,
+            mv.visitTryCatchBlock(startCatchFinally, endCatch, handlerCatchStackOverflow,
+                    Types.StackOverflowError.getInternalName());
+            mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinally,
                     Types.ScriptException.getInternalName());
+            mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinallyStackOverflow,
+                    Types.StackOverflowError.getInternalName());
         } else if (catchNode != null) {
             Label startCatch = new Label(), endCatch = new Label(), handlerCatch = new Label();
+            Label handlerCatchStackOverflow = new Label();
             Label exceptionHandled = new Label();
 
             int savedEnv = saveEnvironment(mv);
@@ -719,6 +736,12 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.nop();
             mv.mark(endCatch);
             mv.goTo(exceptionHandled);
+
+            // StackOverflowError -> ScriptException
+            mv.mark(handlerCatchStackOverflow);
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_toInternalError);
+
             mv.mark(handlerCatch);
             restoreEnvironment(mv, savedEnv);
             catchNode.accept(this, mv);
@@ -727,9 +750,12 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.freeVariable(savedEnv);
             mv.visitTryCatchBlock(startCatch, endCatch, handlerCatch,
                     Types.ScriptException.getInternalName());
+            mv.visitTryCatchBlock(startCatch, endCatch, handlerCatchStackOverflow,
+                    Types.StackOverflowError.getInternalName());
         } else {
             assert finallyBlock != null;
             Label startFinally = new Label(), endFinally = new Label(), handlerFinally = new Label();
+            Label handlerFinallyStackOverflow = new Label();
             Label noException = new Label();
             Label exceptionHandled = new Label();
 
@@ -747,6 +773,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             // restore temp abrupt targets
             List<Label> tempLabels = mv.exitFinallyScoped();
 
+            mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
             int var = mv.newVariable(Types.Throwable);
             mv.store(var, Types.Throwable);
@@ -785,6 +812,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.freeVariable(savedEnv);
             mv.visitTryCatchBlock(startFinally, endFinally, handlerFinally,
                     Types.ScriptException.getInternalName());
+            mv.visitTryCatchBlock(startFinally, endFinally, handlerFinallyStackOverflow,
+                    Types.StackOverflowError.getInternalName());
         }
 
         return null;

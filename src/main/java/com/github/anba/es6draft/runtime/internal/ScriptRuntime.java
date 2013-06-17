@@ -867,6 +867,19 @@ public final class ScriptRuntime {
         throw new ScriptException(val);
     }
 
+    /**
+     * 12.14 The try Statement
+     */
+    public static ScriptException toInternalError(StackOverflowError e, ExecutionContext cx) {
+        Object internalError = Errors.newError(cx, Intrinsics.InternalError,
+                Messages.Key.StackOverflow, "StackOverflow");
+        assert internalError instanceof ErrorObject;
+        ScriptException exception = ((ErrorObject) internalError).getException();
+        // use stacktrace from original error
+        exception.setStackTrace(e.getStackTrace());
+        return exception;
+    }
+
     /* ***************************************************************************************** */
 
     /**
