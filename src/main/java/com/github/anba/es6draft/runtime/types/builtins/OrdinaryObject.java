@@ -467,7 +467,9 @@ public class OrdinaryObject implements ScriptObject {
                 if (!Type.isObject(receiver)) {
                     return false;
                 }
-                return CreateOwnDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+                // TODO: proposed patch for https://bugs.ecmascript.org/show_bug.cgi?id=1549
+                // return CreateOwnDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+                ownDesc = new PropertyDescriptor(value, true, true, true).toProperty();
             }
         }
         /* step 5 */
@@ -511,7 +513,9 @@ public class OrdinaryObject implements ScriptObject {
                 if (!Type.isObject(receiver)) {
                     return false;
                 }
-                return CreateOwnDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+                // TODO: proposed patch for https://bugs.ecmascript.org/show_bug.cgi?id=1549
+                // return CreateOwnDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+                ownDesc = new PropertyDescriptor(value, true, true, true).toProperty();
             }
         }
         /* step 5 */
