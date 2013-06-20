@@ -171,14 +171,14 @@ public class Repl {
 
     private void handleException(Throwable e) {
         String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-        console.printf("%s\n", message);
+        console.printf("%s%n", message);
         if (options.contains(Option.StackTrace)) {
             printStackTrace(e);
         }
     }
 
     private void handleException(ScriptException e) {
-        console.printf("uncaught exception: %s\n", e.getMessage());
+        console.printf("uncaught exception: %s%n", e.getMessage());
         if (options.contains(Option.StackTrace)) {
             printStackTrace(e);
         }
@@ -189,24 +189,19 @@ public class Repl {
      */
     private com.github.anba.es6draft.ast.Script read(Realm realm, int line) {
         StringBuilder source = new StringBuilder();
-        try {
-            for (;;) {
-                String s = console.readLine();
-                if (s == null) {
-                    continue;
-                }
-                source.append(s).append('\n');
-                try {
-                    EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
-                    Parser parser = new Parser("typein", line, options);
-                    return parser.parse(source);
-                } catch (ParserEOFException e) {
-                    continue;
-                }
+        for (;;) {
+            String s = console.readLine();
+            if (s == null) {
+                continue;
             }
-        } catch (ParserException | StackOverflowError e) {
-            handleException(e);
-            return null;
+            source.append(s).append('\n');
+            try {
+                EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
+                Parser parser = new Parser("typein", line, options);
+                return parser.parse(source);
+            } catch (ParserEOFException e) {
+                continue;
+            }
         }
     }
 
@@ -214,34 +209,16 @@ public class Repl {
      * REPL: Eval
      */
     private Object eval(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
-        if (parsedScript.getStatements().isEmpty()) {
-            console.writer().println();
-            return null;
-        }
-        try {
-            Script script = script(parsedScript);
-            return ScriptLoader.ScriptEvaluation(script, realm, false);
-        } catch (ScriptException e) {
-            handleException(e);
-            return null;
-        } catch (ParserException | CompilationException | StackOverflowError e) {
-            handleException(e);
-            return null;
-        }
+        Script script = script(parsedScript);
+        return ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
     /**
      * REPL: Print
      */
     private void print(Realm realm, Object result) {
-        try {
-            if (result != UNDEFINED) {
-                console.writer().println(ToSource(realm.defaultContext(), result));
-            }
-        } catch (ScriptException e) {
-            handleException(e);
-        } catch (StackOverflowError e) {
-            handleException(e);
+        if (result != UNDEFINED) {
+            console.printf("%s%n", ToSource(realm.defaultContext(), result));
         }
     }
 
@@ -257,18 +234,19 @@ public class Repl {
             try {
                 console.printf("js> ");
                 com.github.anba.es6draft.ast.Script parsedScript = read(realm, line);
-                if (parsedScript == null) {
+                if (parsedScript.getStatements().isEmpty()) {
                     continue;
                 }
                 Object result = eval(realm, parsedScript);
-                if (result == null) {
-                    continue;
-                }
                 print(realm, result);
             } catch (StopExecutionException e) {
                 if (e.getReason() == Reason.Quit) {
                     System.exit(0);
                 }
+            } catch (ScriptException e) {
+                handleException(e);
+            } catch (ParserException | CompilationException | StackOverflowError e) {
+                handleException(e);
             }
         }
     }
