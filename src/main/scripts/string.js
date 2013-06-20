@@ -16,6 +16,10 @@ const String_prototype_match = String.prototype.match,
       String_prototype_search = String.prototype.search,
       String_prototype_replace = String.prototype.replace;
 
+function ToFlatPattern(p) {
+  return String_prototype_replace.call(p, /[|^$\\()[\]{}.?*+]/g, "\\$&");
+}
+
 Object.defineProperties(Object.assign(String.prototype, {
   match(regexp, flags) {
     if (typeof regexp == 'string' && flags !== void 0) {
@@ -31,7 +35,7 @@ Object.defineProperties(Object.assign(String.prototype, {
   },
   replace(searchValue, replaceValue, flags) {
     if (typeof searchValue == 'string' && flags !== void 0) {
-      searchValue = new RegExp(searchValue, flags);
+      searchValue = new RegExp(ToFlatPattern(searchValue), flags);
     }
     return String_prototype_replace.call(this, searchValue, replaceValue);
   },

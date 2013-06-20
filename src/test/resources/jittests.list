@@ -727,6 +727,7 @@ tests/auto-regress/bug583680.js
 tests/auto-regress/bug620637.js
 tests/basic/bug539379.js
 tests/basic/bug632964-regexp.js
+tests/basic/bug826581.js
 tests/basic/bug849777.js
 tests/basic/math-jit-tests.js
 tests/basic/testBug614653.js
