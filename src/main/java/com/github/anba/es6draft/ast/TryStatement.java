@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.List;
+
 /**
  * <h1>12 Statements and Declarations</h1>
  * <ul>
@@ -16,10 +18,13 @@ public class TryStatement extends Statement {
     private BlockStatement tryBlock;
     private CatchNode catchNode;
     private BlockStatement finallyBlock;
+    private List<GuardedCatchNode> guardedCatchNodes;
 
-    public TryStatement(BlockStatement tryBlock, CatchNode catchNode, BlockStatement finallyBlock) {
+    public TryStatement(BlockStatement tryBlock, CatchNode catchNode,
+            List<GuardedCatchNode> guardedCatchNodes, BlockStatement finallyBlock) {
         this.tryBlock = tryBlock;
         this.catchNode = catchNode;
+        this.guardedCatchNodes = guardedCatchNodes;
         this.finallyBlock = finallyBlock;
     }
 
@@ -29,6 +34,10 @@ public class TryStatement extends Statement {
 
     public CatchNode getCatchNode() {
         return catchNode;
+    }
+
+    public List<GuardedCatchNode> getGuardedCatchNodes() {
+        return guardedCatchNodes;
     }
 
     public BlockStatement getFinallyBlock() {

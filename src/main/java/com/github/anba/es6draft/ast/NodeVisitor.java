@@ -120,6 +120,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(GeneratorExpression node, V value);
 
+    R visit(GuardedCatchNode node, V value);
+
     R visit(Identifier node, V value);
 
     R visit(IdentifierValue node, V value);

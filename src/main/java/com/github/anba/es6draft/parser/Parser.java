@@ -319,7 +319,10 @@ public class Parser {
         HTMLComments,
 
         /** Moz-Extension: for-each */
-        ForEachStatement;
+        ForEachStatement,
+
+        /** Moz-Extension: catch(x if y) */
+        GuardedCatch;
 
         public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -334,6 +337,9 @@ public class Parser {
             }
             if (compatOptions.contains(CompatibilityOption.ForEachStatement)) {
                 options.add(Option.ForEachStatement);
+            }
+            if (compatOptions.contains(CompatibilityOption.GuardedCatch)) {
+                options.add(Option.GuardedCatch);
             }
             return options;
         }
@@ -3623,25 +3629,63 @@ public class Parser {
     private TryStatement tryStatement() {
         BlockStatement tryBlock, finallyBlock = null;
         CatchNode catchNode = null;
+        List<GuardedCatchNode> guardedCatchNodes = emptyList();
         consume(Token.TRY);
         tryBlock = block(NO_INHERITED_BINDING);
         Token tok = token();
         if (tok == Token.CATCH) {
-            consume(Token.CATCH);
-            BlockContext catchScope = enterBlockContext();
+            if (isEnabled(Option.GuardedCatch)) {
+                guardedCatchNodes = newSmallList();
+                while (token() == Token.CATCH && catchNode == null) {
+                    consume(Token.CATCH);
+                    BlockContext catchScope = enterBlockContext();
 
-            consume(Token.LP);
-            Binding catchParameter = binding();
-            addLexDeclaredName(catchParameter);
-            consume(Token.RP);
+                    consume(Token.LP);
+                    Binding catchParameter = binding();
+                    addLexDeclaredName(catchParameter);
 
-            // catch-block receives a blacklist of forbidden lexical declarable names
-            BlockStatement catchBlock = block(catchParameter);
-            removeLexDeclaredName((ScopeContext) catchBlock.getScope(), catchParameter);
+                    Expression guard;
+                    if (token() == Token.IF) {
+                        consume(Token.IF);
+                        guard = expression(true);
+                    } else {
+                        guard = null;
+                    }
 
-            exitBlockContext();
-            catchNode = new CatchNode(catchScope, catchParameter, catchBlock);
-            catchScope.node = catchNode;
+                    consume(Token.RP);
+
+                    // catch-block receives a blacklist of forbidden lexical declarable names
+                    BlockStatement catchBlock = block(catchParameter);
+                    removeLexDeclaredName((ScopeContext) catchBlock.getScope(), catchParameter);
+
+                    exitBlockContext();
+                    if (guard != null) {
+                        GuardedCatchNode guardedCatchNode = new GuardedCatchNode(catchScope,
+                                catchParameter, guard, catchBlock);
+                        catchScope.node = guardedCatchNode;
+                        guardedCatchNodes.add(guardedCatchNode);
+                    } else {
+                        catchNode = new CatchNode(catchScope, catchParameter, catchBlock);
+                        catchScope.node = catchNode;
+                    }
+                }
+            } else {
+                consume(Token.CATCH);
+                BlockContext catchScope = enterBlockContext();
+
+                consume(Token.LP);
+                Binding catchParameter = binding();
+                addLexDeclaredName(catchParameter);
+                consume(Token.RP);
+
+                // catch-block receives a blacklist of forbidden lexical declarable names
+                BlockStatement catchBlock = block(catchParameter);
+                removeLexDeclaredName((ScopeContext) catchBlock.getScope(), catchParameter);
+
+                exitBlockContext();
+                catchNode = new CatchNode(catchScope, catchParameter, catchBlock);
+                catchScope.node = catchNode;
+            }
 
             if (token() == Token.FINALLY) {
                 consume(Token.FINALLY);
@@ -3652,7 +3696,7 @@ public class Parser {
             finallyBlock = block(NO_INHERITED_BINDING);
         }
 
-        return new TryStatement(tryBlock, catchNode, finallyBlock);
+        return new TryStatement(tryBlock, catchNode, guardedCatchNodes, finallyBlock);
     }
 
     /**

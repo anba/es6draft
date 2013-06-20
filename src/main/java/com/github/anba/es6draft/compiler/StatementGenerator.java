@@ -651,9 +651,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
         BlockStatement tryBlock = node.getTryBlock();
         CatchNode catchNode = node.getCatchNode();
+        List<GuardedCatchNode> guardedCatchNodes = node.getGuardedCatchNodes();
         BlockStatement finallyBlock = node.getFinallyBlock();
 
-        if (catchNode != null && finallyBlock != null) {
+        if ((catchNode != null || !guardedCatchNodes.isEmpty()) && finallyBlock != null) {
             Label startCatchFinally = new Label();
             Label endCatch = new Label(), handlerCatch = new Label();
             Label endFinally = new Label(), handlerFinally = new Label();
@@ -681,7 +682,29 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.mark(handlerCatch);
             restoreEnvironment(mv, savedEnv);
             mv.enterWrapped();
-            catchNode.accept(this, mv);
+            if (!guardedCatchNodes.isEmpty()) {
+                mv.enterCatchWithGuarded(node, new Label());
+
+                int var = mv.newVariable(Types.ScriptException);
+                mv.store(var, Types.ScriptException);
+                for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
+                    mv.load(var, Types.ScriptException);
+                    guardedCatchNode.accept(this, mv);
+                }
+                if (catchNode != null) {
+                    mv.load(var, Types.ScriptException);
+                    catchNode.accept(this, mv);
+                } else {
+                    mv.load(var, Types.ScriptException);
+                    mv.athrow();
+                }
+
+                mv.freeVariable(var);
+                mv.mark(mv.catchWithGuardedLabel());
+                mv.exitCatchWithGuarded(node);
+            } else {
+                catchNode.accept(this, mv);
+            }
             mv.exitWrapped();
             mv.mark(endFinally);
 
@@ -739,7 +762,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                     Types.ScriptException.getInternalName());
             mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinallyStackOverflow,
                     Types.StackOverflowError.getInternalName());
-        } else if (catchNode != null) {
+        } else if (catchNode != null || !guardedCatchNodes.isEmpty()) {
             Label startCatch = new Label(), endCatch = new Label(), handlerCatch = new Label();
             Label handlerCatchStackOverflow = new Label();
             Label exceptionHandled = new Label();
@@ -760,7 +783,29 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.mark(handlerCatch);
             restoreEnvironment(mv, savedEnv);
-            catchNode.accept(this, mv);
+            if (!guardedCatchNodes.isEmpty()) {
+                mv.enterCatchWithGuarded(node, new Label());
+
+                int var = mv.newVariable(Types.ScriptException);
+                mv.store(var, Types.ScriptException);
+                for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
+                    mv.load(var, Types.ScriptException);
+                    guardedCatchNode.accept(this, mv);
+                }
+                if (catchNode != null) {
+                    mv.load(var, Types.ScriptException);
+                    catchNode.accept(this, mv);
+                } else {
+                    mv.load(var, Types.ScriptException);
+                    mv.athrow();
+                }
+
+                mv.freeVariable(var);
+                mv.mark(mv.catchWithGuardedLabel());
+                mv.exitCatchWithGuarded(node);
+            } else {
+                catchNode.accept(this, mv);
+            }
             mv.mark(exceptionHandled);
 
             mv.freeVariable(savedEnv);
@@ -874,6 +919,63 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         pushLexicalEnvironment(mv);
 
         catchBlock.accept(this, mv);
+
+        // restore previous lexical environment
+        popLexicalEnvironment(mv);
+        mv.exitScope();
+
+        return null;
+    }
+
+    @Override
+    public Void visit(GuardedCatchNode node, StatementVisitor mv) {
+        Binding catchParameter = node.getCatchParameter();
+        BlockStatement catchBlock = node.getCatchBlock();
+
+        // stack: [e] -> [ex]
+        mv.invoke(Methods.ScriptException_getValue);
+
+        // create new declarative lexical environment
+        // stack: [ex] -> [ex, catchEnv]
+        mv.enterScope(node);
+        newDeclarativeEnvironment(mv);
+        {
+            // stack: [ex, catchEnv] -> [catchEnv, ex, envRec]
+            mv.dupX1();
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+
+            // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
+            // [catchEnv, ex, envRec] -> [catchEnv, envRec, ex]
+            for (String name : BoundNames(catchParameter)) {
+                mv.dup();
+                mv.aconst(name);
+                mv.iconst(false);
+                mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+            }
+            mv.swap();
+
+            if (catchParameter instanceof BindingPattern) {
+                // ToObject(...)
+                ToObject(ValType.Any, mv);
+            }
+
+            // stack: [catchEnv, envRec, ex] -> [catchEnv]
+            BindingInitialisationWithEnvironment(catchParameter, mv);
+        }
+        // stack: [catchEnv] -> []
+        pushLexicalEnvironment(mv);
+
+        Label l0 = new Label();
+        ToBoolean(expressionValue(node.getGuard(), mv), mv);
+        mv.ifeq(l0);
+        {
+            catchBlock.accept(this, mv);
+
+            // restore previous lexical environment and go to end of catch block
+            popLexicalEnvironment(mv);
+            mv.goTo(mv.catchWithGuardedLabel());
+        }
+        mv.mark(l0);
 
         // restore previous lexical environment
         popLexicalEnvironment(mv);

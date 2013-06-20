@@ -96,6 +96,24 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
         return reportSize(node, size, value);
     }
 
+    private int analyze(Node node, Node left, Node middle, Node right,
+            List<? extends Node> children, int nodeSize, int childFactor, CodeSizeHandler value) {
+        int size = nodeSize + childFactor * children.size();
+        if (left != null) {
+            size += left.accept(this, value);
+        }
+        if (middle != null) {
+            size += middle.accept(this, value);
+        }
+        if (right != null) {
+            size += right.accept(this, value);
+        }
+        for (Node child : children) {
+            size += child.accept(this, value);
+        }
+        return reportSize(node, size, value);
+    }
+
     private int analyze(Node node, List<? extends Node> children, int nodeSize, int childFactor,
             CodeSizeHandler value) {
         int size = nodeSize + childFactor * children.size();
@@ -402,6 +420,12 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(GuardedCatchNode node, CodeSizeHandler value) {
+        return analyze(node, node.getCatchParameter(), node.getGuard(), node.getCatchBlock(), 45,
+                value);
+    }
+
+    @Override
     public Integer visit(Identifier node, CodeSizeHandler value) {
         return 10;
     }
@@ -610,8 +634,8 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(TryStatement node, CodeSizeHandler value) {
-        return analyze(node, node.getTryBlock(), node.getCatchNode(), node.getFinallyBlock(), 35,
-                value);
+        return analyze(node, node.getTryBlock(), node.getCatchNode(), node.getFinallyBlock(),
+                node.getGuardedCatchNodes(), 35, 15, value);
     }
 
     @Override

@@ -282,6 +282,11 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             return nonExportable.add(node);
         }
 
+        private boolean neverExport(List<? extends Node> nodes) {
+            // never exportable to sub-method
+            return nonExportable.addAll(nodes);
+        }
+
         private boolean isExportable(Node node) {
             return !nonExportable.contains(node);
         }
@@ -344,7 +349,8 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             return pop(node, stack, startOffset);
         }
 
-        private boolean visit(Node node, Node left, Node middle, Node right, ArrayDeque<Node> stack) {
+        private boolean visit(Node node, Node left, Node middle, Node right,
+                List<? extends Node> children, ArrayDeque<Node> stack) {
             int startOffset = push(node, stack);
             left.accept(this, stack);
             if (middle != null) {
@@ -353,13 +359,15 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
             if (right != null) {
                 right.accept(this, stack);
             }
+            for (Node child : children) {
+                child.accept(this, stack);
+            }
             return pop(node, stack, startOffset);
         }
 
         private boolean visit(Node node, List<? extends Node> children, ArrayDeque<Node> stack) {
             int startOffset = push(node, stack);
-            for (int i = 0, len = children.size(); i < len; i++) {
-                Node child = children.get(i);
+            for (Node child : children) {
                 child.accept(this, stack);
             }
             return pop(node, stack, startOffset);
@@ -443,6 +451,11 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
 
         @Override
+        public Boolean visit(GuardedCatchNode node, ArrayDeque<Node> stack) {
+            return node.getCatchBlock().accept(this, stack);
+        }
+
+        @Override
         public Boolean visit(IfStatement node, ArrayDeque<Node> stack) {
             return visit(node, node.getThen(), node.getOtherwise(), stack);
         }
@@ -484,6 +497,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         public Boolean visit(TryStatement node, ArrayDeque<Node> stack) {
             // don't export try/catch/finally blocks individually
             neverExport(node.getTryBlock());
+            neverExport(node.getGuardedCatchNodes());
             if (node.getCatchNode() != null) {
                 neverExport(node.getCatchNode().getCatchBlock());
             }
@@ -491,7 +505,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
                 neverExport(node.getFinallyBlock());
             }
             return visit(node, node.getTryBlock(), node.getCatchNode(), node.getFinallyBlock(),
-                    stack);
+                    node.getGuardedCatchNodes(), stack);
         }
 
         @Override

@@ -22,6 +22,7 @@ import com.github.anba.es6draft.ast.BreakableStatement;
 import com.github.anba.es6draft.ast.ContinueStatement;
 import com.github.anba.es6draft.ast.IterationStatement;
 import com.github.anba.es6draft.ast.LabelledStatement;
+import com.github.anba.es6draft.ast.TryStatement;
 import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
 
 /**
@@ -38,6 +39,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
         final Map<String, Label> namedContinueLabels = new HashMap<>(4);
 
         Label returnLabel = null;
+
+        // label after last catch node
+        final Deque<Label> catchLabels = new ArrayDeque<>(4);
 
         // temporary labels in try-catch-finally blocks
         List<Label> tempLabels = null;
@@ -249,6 +253,14 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
+    void enterCatchWithGuarded(TryStatement node, Label lblCatch) {
+        labels.catchLabels.push(lblCatch);
+    }
+
+    void exitCatchWithGuarded(TryStatement node) {
+        labels.catchLabels.pop();
+    }
+
     Label returnLabel() {
         return labels.returnLabel();
     }
@@ -261,5 +273,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
     Label continueLabel(ContinueStatement node) {
         String name = node.getLabel();
         return labels.continueLabel(name);
+    }
+
+    Label catchWithGuardedLabel() {
+        return labels.catchLabels.peek();
     }
 }
