@@ -277,7 +277,7 @@ public class TokenStream {
         for (;;) {
             int c = input.get();
             if (c == EOF) {
-                throw error(Messages.Key.UnterminatedTemplateLiteral);
+                throw eofError(Messages.Key.UnterminatedTemplateLiteral);
             }
             if (c == '`') {
                 current = Token.TEMPLATE;
@@ -309,7 +309,7 @@ public class TokenStream {
 
             c = input.get();
             if (c == EOF) {
-                throw error(Messages.Key.UnterminatedTemplateLiteral);
+                throw eofError(Messages.Key.UnterminatedTemplateLiteral);
             }
             // EscapeSequence
             if (isLineTerminator(c)) {
@@ -802,7 +802,7 @@ public class TokenStream {
                 hasLineTerminator = true;
             }
             if (c == EOF) {
-                throw error(Messages.Key.UnterminatedComment);
+                throw eofError(Messages.Key.UnterminatedComment);
             }
         }
         return Token.COMMENT;
@@ -1015,7 +1015,7 @@ public class TokenStream {
         for (;;) {
             int c = input.get();
             if (c == EOF) {
-                throw error(Messages.Key.UnterminatedStringLiteral);
+                throw eofError(Messages.Key.UnterminatedStringLiteral);
             }
             if (c == quoteChar) {
                 break;
@@ -1305,6 +1305,10 @@ public class TokenStream {
 
     private ParserException error(Messages.Key messageKey, String... args) {
         throw new ParserException(ExceptionType.SyntaxError, line, messageKey, args);
+    }
+
+    private ParserException eofError(Messages.Key messageKey, String... args) {
+        throw new ParserEOFException(line, messageKey, args);
     }
 
     private boolean match(int c) {
