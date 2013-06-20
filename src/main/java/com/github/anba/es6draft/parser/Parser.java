@@ -97,16 +97,32 @@ public class Parser {
             }
         }
 
-        void setReferencesSuper() {
+        ParseContext findSuperContext() {
             ParseContext cx = this;
             while (cx.kind == ContextKind.ArrowFunction) {
                 cx = cx.parent;
             }
-            cx.superReference = true;
+            return cx;
+        }
+
+        void setReferencesSuper() {
+            superReference = true;
         }
 
         boolean hasSuperReference() {
             return superReference;
+        }
+
+        boolean isFunction() {
+            switch (kind) {
+            case ArrowFunction:
+            case Function:
+            case Generator:
+                return true;
+            case Script:
+            default:
+                return false;
+            }
         }
 
         int countLiterals() {
@@ -3338,7 +3354,7 @@ public class Parser {
      * </pre>
      */
     private ReturnStatement returnStatement() {
-        if (context.kind == ContextKind.Script) {
+        if (!context.isFunction()) {
             reportSyntaxError(Messages.Key.InvalidReturnStatement);
         }
 
@@ -4127,10 +4143,12 @@ public class Parser {
             }
             lhs = new NewExpression(expr, args);
         } else if (token() == Token.SUPER) {
-            if (context.kind == ContextKind.Script && !options.contains(Option.FunctionCode)) {
+            ParseContext cx = context.findSuperContext();
+            if (cx.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)) {
                 reportSyntaxError(Messages.Key.InvalidSuperExpression);
             }
-            context.setReferencesSuper();
+            cx.setReferencesSuper();
+
             consume(Token.SUPER);
             switch (token()) {
             case DOT:
