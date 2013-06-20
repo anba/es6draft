@@ -59,7 +59,7 @@ public class Parser {
     }
 
     private enum ContextKind {
-        Script, Function, Generator, ArrowFunction
+        Script, Module, Function, Generator, ArrowFunction
     }
 
     private static class ParseContext {
@@ -119,6 +119,7 @@ public class Parser {
             case Function:
             case Generator:
                 return true;
+            case Module:
             case Script:
             default:
                 return false;
@@ -141,6 +142,7 @@ public class Parser {
         }
     }
 
+    // TODO: rename - not used exclusively for functions, also used for scripts and modules
     private static class FunctionContext extends ScopeContext implements FunctionScope {
         final ScopeContext enclosing;
         Set<String> parameterNames = null;
@@ -700,10 +702,46 @@ public class Parser {
     }
 
     public Script parse(CharSequence source) throws ParserException {
+        return parseScript(source);
+    }
+
+    public Script parseScript(CharSequence source) throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
         ts = new TokenStream(this, new StringTokenStreamInput(source), sourceLine);
         return script();
+    }
+
+    public ModuleDeclaration parseModule(CharSequence source) throws ParserException {
+        if (ts != null)
+            throw new IllegalStateException();
+
+        newContext(ContextKind.Script);
+        try {
+            applyStrictMode(true); // defaults to strict?
+
+            ModuleDeclaration module;
+            newContext(ContextKind.Module);
+            try {
+                ts = new TokenStream(this, new StringTokenStreamInput(source), sourceLine);
+                ts.init();
+
+                String moduleName = sourceFile; // only basename(sourceFile)?
+                List<StatementListItem> body = moduleBody(Token.EOF);
+
+                FunctionContext scope = context.funContext;
+                module = new ModuleDeclaration(moduleName, body, scope);
+                scope.node = module;
+            } finally {
+                restoreContext();
+            }
+
+            createScript(module);
+
+            return module;
+        } finally {
+            restoreContext();
+        }
     }
 
     public FunctionDefinition parseFunction(CharSequence formals, CharSequence bodyText)
@@ -878,10 +916,10 @@ public class Parser {
             if (MODULES_ENABLED) {
                 // TODO: implement modules
                 if (token() == Token.IMPORT) {
-                    importDeclaration();
-                } else if (token() == Token.NAME && "module".equals(getName(token()))
-                        && peek() == Token.STRING && !ts.hasNextLineTerminator()) {
-                    moduleDeclaration();
+                    list.add(importDeclaration());
+                } else if (isName("module") && (peek() == Token.STRING || isIdentifier(peek()))
+                        && !ts.hasNextLineTerminator()) {
+                    list.add(moduleDeclaration());
                 } else {
                     list.add(statementListItem());
                 }
@@ -896,110 +934,40 @@ public class Parser {
      * <strong>[14.2] Modules</strong>
      * 
      * <pre>
-     * ImportDeclaration ::= "import" ImportClause ("," ImportClause)* ";"
-     * </pre>
-     */
-    private void importDeclaration() {
-        consume(Token.IMPORT);
-        importClause();
-        while (token() == Token.COMMA) {
-            consume(Token.COMMA);
-            importClause();
-        }
-        semicolon();
-    }
-
-    /**
-     * <strong>[14.2] Modules</strong>
-     * 
-     * <pre>
-     * ImportClause ::= StringLiteral "as" Identifier
-     *               |  ImportSpecifierSet "from" ModuleSpecifier
-     * </pre>
-     */
-    private void importClause() {
-        if (token() == Token.STRING) {
-            moduleImport();
-        } else {
-            importSpecifierSet();
-            consume("from");
-            moduleSpecifier();
-        }
-    }
-
-    /**
-     * <strong>[14.2] Modules</strong>
-     * 
-     * <pre>
-     * ModuleImport ::= StringLiteral "as" Identifier
-     * </pre>
-     */
-    private void moduleImport() {
-        consume(Token.STRING);
-        consume("as");
-        identifier();
-    }
-
-    /**
-     * <strong>[14.2] Modules</strong>
-     * 
-     * <pre>
-     * ImportSpecifierSet ::= "{" ImportSpecifier ("," ImportSpecifier)* "}"
-     * </pre>
-     */
-    private void importSpecifierSet() {
-        consume(Token.LC);
-        importSpecifier();
-        while (token() != Token.RC) {
-            consume(Token.COMMA);
-            importSpecifier();
-        }
-        consume(Token.RC);
-    }
-
-    /**
-     * <strong>[14.2] Modules</strong>
-     * 
-     * <pre>
-     * ImportSpecifier ::= Identifier (":" Identifier)?
-     * </pre>
-     */
-    private void importSpecifier() {
-        identifier();
-        if (token() == Token.COLON) {
-            consume(Token.COLON);
-            identifier();
-        }
-    }
-
-    /**
-     * <strong>[14.2] Modules</strong>
-     * 
-     * <pre>
-     * ModuleSpecifier ::= StringLiteral | Identifier
-     * </pre>
-     */
-    private void moduleSpecifier() {
-        if (token() == Token.STRING) {
-            consume(Token.STRING);
-        } else {
-            identifier();
-        }
-    }
-
-    /**
-     * <strong>[14.2] Modules</strong>
-     * 
-     * <pre>
      * ModuleDeclaration ::= "module" [NoNewline] StringLiteral "{" ModuleBody "}"
+     *                    |  "module" Identifier "from" StringLiteral ";"
      * </pre>
      */
-    private void moduleDeclaration() {
-        consume("module");
-        consume(Token.STRING);
-        consume(Token.LC);
-        moduleBody();
-        consume(Token.RC);
+    private ModuleDeclaration moduleDeclaration() {
+        newContext(ContextKind.Module);
+        try {
+            consume("module");
+            if (token() == Token.STRING) {
+                String moduleName = stringLiteral();
+                consume(Token.LC);
+                List<StatementListItem> body = moduleBody(Token.RC);
+                consume(Token.RC);
+
+                FunctionContext scope = context.funContext;
+                ModuleDeclaration module = new ModuleDeclaration(moduleName, body, scope);
+                scope.node = module;
+
+                return module;
+            } else {
+                String identifier = identifier();
+                consume("from");
+                String moduleName = stringLiteral();
+                semicolon();
+
+                FunctionContext scope = context.funContext;
+                ModuleDeclaration module = new ModuleDeclaration(identifier, moduleName, scope);
+                scope.node = module;
+
+                return module;
+            }
+        } finally {
+            restoreContext();
+        }
     }
 
     /**
@@ -1011,16 +979,15 @@ public class Parser {
      *                |  ExportDeclaration
      * </pre>
      */
-    private List<StatementListItem> moduleBody() {
+    private List<StatementListItem> moduleBody(Token end) {
         List<StatementListItem> list = newList();
-        while (token() != Token.RC) {
-            if (token() == Token.IMPORT) {
-                importDeclaration();
-            } else if (token() == Token.EXPORT) {
-                exportDeclaration();
-            } else if (token() == Token.NAME && "module".equals(getName(token()))
-                    && peek() == Token.STRING && !ts.hasNextLineTerminator()) {
-                moduleDeclaration();
+        while (token() != end) {
+            // actually: ExportDeclaration | ImportDeclaration | StatementListItem
+            // TODO: are nested modules (still) allowed? (disabled for now)
+            if (token() == Token.EXPORT) {
+                list.add(exportDeclaration());
+            } else if (token() == Token.IMPORT) {
+                list.add(importDeclaration());
             } else {
                 list.add(statementListItem());
             }
@@ -1032,77 +999,50 @@ public class Parser {
      * <strong>[14.2] Modules</strong>
      * 
      * <pre>
-     * ExportDeclaration ::= "export" ExportSpecifierSet ("," ExportSpecifierSet)* ";"
+     * ExportDeclaration ::= "export" ExportSpecifierSet ";"
+     *                    |  "export" "default" AssignmentExpression ";"
      *                    |  "export" VariableDeclaration
      *                    |  "export" FunctionDeclaration
-     *                    |  "export" "get" Identifier "(" ")" "{" FunctionBody "}"
-     *                    |  "export" "set" Identifier "(" DestructuringPattern ")" "{" FunctionBody "}"
-     *                    |  "export" "=" Expression ";"
+     *                    |  "export" ClassDeclaration
      * </pre>
      */
-    private void exportDeclaration() {
+    private ExportDeclaration exportDeclaration() {
         consume(Token.EXPORT);
         switch (token()) {
-        case VAR:
-            variableStatement();
-            break;
-        case LET:
-        case CONST:
-            // "export" VariableDeclaration
-            lexicalDeclaration(true);
-            break;
-        case FUNCTION:
-            // "export" FunctionDeclaration
-            if (LOOKAHEAD(Token.MUL)) {
-                generatorDeclaration();
-            } else {
-                functionDeclaration();
-            }
-            break;
-        case CLASS:
-            classDeclaration();
-            break;
-        case ASSIGN:
-            // "export" "=" Expression ";"
-            consume(Token.ASSIGN);
-            expression(true);
+        case LC:
+        case MUL: {
+            // "export" ExportSpecifierSet ";"
+            ExportSpecifierSet exportSpecifierSet = exportSpecifierSet();
             semicolon();
-            break;
-        case NAME: {
-            // "export" "get" Identifier "(" ")" "{" FunctionBody "}"
-            // "export" "set" Identifier "(" DestructuringPattern ")" "{" FunctionBody "}"
-            String name = getName(Token.NAME);
-            if (("get".equals(name) || "set".equals(name)) && isIdentifier(peek())) {
-                if ("get".equals(name)) {
-                    consume("get");
-                    identifier();
-                    consume(Token.LP);
-                    consume(Token.RP);
-                    consume(Token.LC);
-                    functionBody(Token.RC);
-                    consume(Token.RC);
-                } else {
-                    consume("set");
-                    identifier();
-                    consume(Token.LP);
-                    binding();
-                    consume(Token.RP);
-                    consume(Token.LC);
-                    functionBody(Token.RC);
-                    consume(Token.RC);
-                }
-                break;
-            }
-            // fall-through
+            return new ExportDeclaration(exportSpecifierSet);
         }
-        default:
-            // "export" ExportSpecifierSet ("," ExportSpecifierSet)* ";"
-            exportSpecifierSet();
-            while (token() == Token.COMMA) {
-                exportSpecifierSet();
-            }
+
+        case DEFAULT: {
+            // "export" "default" AssignmentExpression ";"
+            consume(Token.DEFAULT);
+            Expression expression = assignmentExpression(true);
             semicolon();
-            break;
+            return new ExportDeclaration(expression);
+        }
+
+        case VAR: {
+            // "export" VariableDeclaration
+            VariableStatement variableStatement = variableStatement();
+            return new ExportDeclaration(variableStatement);
+        }
+
+        case FUNCTION:
+        case CLASS:
+        case LET:
+        case CONST: {
+            // "export" FunctionDeclaration
+            // "export" ClassDeclaration
+            Declaration declaration = declaration();
+            return new ExportDeclaration(declaration);
+        }
+
+        default:
+            throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
         }
     }
 
@@ -1110,37 +1050,40 @@ public class Parser {
      * <strong>[14.2] Modules</strong>
      * 
      * <pre>
-     * ExportSpecifierSet ::= "{" ExportSpecifier ("," ExportSpecifier)* "}"
-     *                     |  Identifier
-     *                     |  "*" ("from" Path)?
-     * ExportSpecifier ::= Identifier (":" Path)?
-     * 
-     * Path ::= Identifier ("." Identifier)*
+     * ExportSpecifierSet ::= "{" (ExportSpecifier ("," ExportSpecifier)* ","?)? "}"
+     *                     |   "*" ("from" ModuleSpecifier)?
      * </pre>
      */
-    private void exportSpecifierSet() {
-        switch (token()) {
-        case LC:
-            // "{" ExportSpecifier ("," ExportSpecifier)* "}"
+    private ExportSpecifierSet exportSpecifierSet() {
+        if (token() == Token.LC) {
+            List<ExportSpecifier> exports = newSmallList();
             consume(Token.LC);
-            exportSpecifier();
-            while (token() == Token.COMMA) {
-                consume(Token.COMMA);
-                exportSpecifier();
+            while (token() != Token.RC) {
+                exports.add(exportSpecifier());
+                if (token() == Token.COMMA) {
+                    consume(Token.COMMA);
+                } else {
+                    break;
+                }
             }
             consume(Token.RC);
-            break;
-        case MUL:
-            // "*" ("from" Path)?
-            consume(Token.MUL);
-            if (token() == Token.NAME && "from".equals(getName(Token.NAME))) {
+            // FIXME: re-export should also work with named exports
+            String sourceModule = null;
+            if (isName("from")) {
                 consume("from");
-                path();
+                sourceModule = moduleSpecifier();
             }
-            break;
-        default:
-            identifier();
-            break;
+
+            return new ExportSpecifierSet(exports, sourceModule);
+        } else {
+            consume(Token.MUL);
+            String sourceModule = null;
+            if (isName("from")) {
+                consume("from");
+                sourceModule = moduleSpecifier();
+            }
+
+            return new ExportSpecifierSet(sourceModule);
         }
     }
 
@@ -1148,14 +1091,54 @@ public class Parser {
      * <strong>[14.2] Modules</strong>
      * 
      * <pre>
-     * ExportSpecifier ::= Identifier (":" Path)?
+     * ExportSpecifier ::= Identifier ("as" IdentifierName)?
      * </pre>
      */
-    private void exportSpecifier() {
-        identifier();
-        if (token() == Token.COLON) {
-            consume(Token.COLON);
-            path();
+    private ExportSpecifier exportSpecifier() {
+        String localName = identifier();
+        String externalName;
+        if (isName("as")) {
+            consume("as");
+            externalName = identifierName();
+        } else {
+            externalName = localName;
+        }
+        return new ExportSpecifier(localName, externalName);
+    }
+
+    /**
+     * <strong>[14.2] Modules</strong>
+     * 
+     * <pre>
+     * ModuleSpecifier ::= StringLiteral
+     * </pre>
+     */
+    private String moduleSpecifier() {
+        return stringLiteral();
+    }
+
+    /**
+     * <strong>[14.2] Modules</strong>
+     * 
+     * <pre>
+     * ImportDeclaration ::= "import" ImportSpecifierSet "from" ModuleSpecifier ";"
+     *                    |  "import" ModuleSpecifier ";"
+     * </pre>
+     */
+    private ImportDeclaration importDeclaration() {
+        consume(Token.IMPORT);
+        if (token() == Token.STRING) {
+            String moduleSpecifier = moduleSpecifier();
+            semicolon();
+
+            return new ImportDeclaration(moduleSpecifier);
+        } else {
+            ImportSpecifierSet importSpecifierSet = importSpecifierSet();
+            consume("from");
+            String moduleSpecifier = moduleSpecifier();
+            semicolon();
+
+            return new ImportDeclaration(importSpecifierSet, moduleSpecifier);
         }
     }
 
@@ -1163,15 +1146,56 @@ public class Parser {
      * <strong>[14.2] Modules</strong>
      * 
      * <pre>
-     * Path ::= Identifier ("." Identifier)*
+     * ImportSpecifierSet ::= Identifier
+     *                     |  "{" (ImportSpecifier ("," ImportSpecifier)* ","?)? "}"
      * </pre>
      */
-    private void path() {
-        identifier();
-        while (token() == Token.DOT) {
-            consume(Token.DOT);
-            identifier();
+    private ImportSpecifierSet importSpecifierSet() {
+        if (isIdentifier(token())) {
+            String defaultImport = identifier();
+
+            return new ImportSpecifierSet(defaultImport);
+        } else {
+            List<ImportSpecifier> imports = newSmallList();
+            consume(Token.LC);
+            while (token() != Token.RC) {
+                imports.add(importSpecifier());
+                if (token() == Token.COMMA) {
+                    consume(Token.COMMA);
+                } else {
+                    break;
+                }
+            }
+            consume(Token.RC);
+
+            return new ImportSpecifierSet(imports);
         }
+    }
+
+    /**
+     * <strong>[14.2] Modules</strong>
+     * 
+     * <pre>
+     * ImportSpecifier ::= Identifier ("as" Identifier)?
+     *                  |  ReservedWord "as" Identifier
+     * </pre>
+     */
+    private ImportSpecifier importSpecifier() {
+        String externalName, localName;
+        if (isIdentifier(token())) {
+            externalName = identifier();
+            if (isName("as")) {
+                consume("as");
+                localName = identifier();
+            } else {
+                localName = externalName;
+            }
+        } else {
+            externalName = identifierName();
+            consume("as");
+            localName = identifier();
+        }
+        return new ImportSpecifier(externalName, localName);
     }
 
     /**
@@ -2283,6 +2307,29 @@ public class Parser {
     private StatementListItem statementListItem() {
         switch (token()) {
         case FUNCTION:
+        case CLASS:
+        case LET:
+        case CONST:
+            return declaration();
+        default:
+            return statement();
+        }
+    }
+
+    /**
+     * <strong>[12.1] Block</strong>
+     * 
+     * <pre>
+     * Declaration :
+     *     FunctionDeclaration
+     *     GeneratorDeclaration
+     *     ClassDeclaration
+     *     LexicalDeclaration
+     * </pre>
+     */
+    private Declaration declaration() {
+        switch (token()) {
+        case FUNCTION:
             if (LOOKAHEAD(Token.MUL)) {
                 return generatorDeclaration();
             } else {
@@ -2294,7 +2341,7 @@ public class Parser {
         case CONST:
             return lexicalDeclaration(true);
         default:
-            return statement();
+            throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
         }
     }
 
@@ -4144,7 +4191,8 @@ public class Parser {
             lhs = new NewExpression(expr, args);
         } else if (token() == Token.SUPER) {
             ParseContext cx = context.findSuperContext();
-            if (cx.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)) {
+            if (cx.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
+                    || cx.kind == ContextKind.Module) {
                 reportSyntaxError(Messages.Key.InvalidSuperExpression);
             }
             cx.setReferencesSuper();
@@ -4732,6 +4780,11 @@ public class Parser {
      */
     private boolean noLineTerminator() {
         return !ts.hasCurrentLineTerminator();
+    }
+
+    private boolean isName(String name) {
+        Token tok = token();
+        return (tok == Token.NAME && name.equals(getName(tok)));
     }
 
     /**

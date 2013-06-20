@@ -320,6 +320,27 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(ExportDeclaration node, CodeSizeHandler value) {
+        return analyze(node, node.getDeclaration(), node.getExportSpecifierSet(),
+                node.getExpression(), node.getVariableStatement(), 0, value);
+    }
+
+    @Override
+    public Integer visit(ExportSpecifier node, CodeSizeHandler value) {
+        return 0;
+    }
+
+    @Override
+    public Integer visit(ExportSpecifierSet node, CodeSizeHandler value) {
+        return 0;
+    }
+
+    @Override
+    public Integer visit(ExpressionMethod node, CodeSizeHandler value) {
+        return 5;
+    }
+
+    @Override
     public Integer visit(ExpressionStatement node, CodeSizeHandler value) {
         return analyze(node, node.getExpression(), 5, value);
     }
@@ -391,21 +412,18 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
-    public Integer visit(SpreadArrayLiteral node, CodeSizeHandler value) {
-        // don't descend into synthetic nodes
-        return 10;
+    public Integer visit(ImportDeclaration node, CodeSizeHandler value) {
+        return 0;
     }
 
     @Override
-    public Integer visit(SpreadElementMethod node, CodeSizeHandler value) {
-        // don't descend into synthetic nodes
-        return 10;
+    public Integer visit(ImportSpecifier node, CodeSizeHandler value) {
+        return 0;
     }
 
     @Override
-    public Integer visit(PropertyDefinitionsMethod node, CodeSizeHandler value) {
-        // don't descend into synthetic nodes
-        return 10;
+    public Integer visit(ImportSpecifierSet node, CodeSizeHandler value) {
+        return 0;
     }
 
     @Override
@@ -430,8 +448,8 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
-    public Integer visit(ExpressionMethod node, CodeSizeHandler value) {
-        return 5;
+    public Integer visit(ModuleDeclaration node, CodeSizeHandler value) {
+        return 0;
     }
 
     @Override
@@ -475,6 +493,12 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(PropertyDefinitionsMethod node, CodeSizeHandler value) {
+        // don't descend into synthetic nodes
+        return 10;
+    }
+
+    @Override
     public Integer visit(PropertyNameDefinition node, CodeSizeHandler value) {
         return 15;
     }
@@ -500,8 +524,20 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(SpreadArrayLiteral node, CodeSizeHandler value) {
+        // don't descend into synthetic nodes
+        return 10;
+    }
+
+    @Override
     public Integer visit(SpreadElement node, CodeSizeHandler value) {
         return analyze(node, node.getExpression(), 10, value);
+    }
+
+    @Override
+    public Integer visit(SpreadElementMethod node, CodeSizeHandler value) {
+        // don't descend into synthetic nodes
+        return 10;
     }
 
     @Override

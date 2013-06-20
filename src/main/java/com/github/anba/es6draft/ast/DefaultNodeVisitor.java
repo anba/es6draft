@@ -255,6 +255,21 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(ExportDeclaration node, V value) {
+        return visit((StatementListItem) node, value);
+    }
+
+    @Override
+    public R visit(ExportSpecifier node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
+    public R visit(ExportSpecifierSet node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
     public R visit(ExpressionMethod node, V value) {
         return visit((Expression) node, value);
     }
@@ -325,6 +340,21 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(ImportDeclaration node, V value) {
+        return visit((StatementListItem) node, value);
+    }
+
+    @Override
+    public R visit(ImportSpecifier node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
+    public R visit(ImportSpecifierSet node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
     public R visit(SpreadArrayLiteral node, V value) {
         return visit((ArrayLiteral) node, value);
     }
@@ -357,6 +387,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     @Override
     public R visit(MethodDefinition node, V value) {
         return visit((PropertyDefinition) node, value);
+    }
+
+    @Override
+    public R visit(ModuleDeclaration node, V value) {
+        return visit((StatementListItem) node, value);
     }
 
     @Override
