@@ -711,12 +711,6 @@ tests/basic/testBug709633.js
 tests/basic/testBug756918.js
 tests/basic/throw-apply-too-many-args.js
 
-# catch(x if y) extension not supported
-tests/basic/bug593663-regexp.js
-tests/basic/bug640078.js
-tests/basic/bug787309.js
-tests/basic/bug787848.js
-
 
 #######################################
 # Compilation or runtime issues       #
