@@ -274,6 +274,8 @@ public class Repl {
         Set<CompatibilityOption> compatOpts;
         if (options.contains(Option.Strict)) {
             compatOpts = CompatibilityOption.StrictCompatibility();
+        } else if (options.contains(Option.MozillaShell)) {
+            compatOpts = CompatibilityOption.MozCompatibility();
         } else {
             compatOpts = CompatibilityOption.WebCompatibility();
         }

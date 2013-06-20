@@ -280,6 +280,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(ForEachStatement node, V value) {
+        return visit((Statement) node, value);
+    }
+
+    @Override
     public R visit(ForInStatement node, V value) {
         return visit((Statement) node, value);
     }

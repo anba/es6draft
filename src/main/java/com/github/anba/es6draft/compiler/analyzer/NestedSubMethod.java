@@ -423,6 +423,11 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
 
         @Override
+        public Boolean visit(ForEachStatement node, ArrayDeque<Node> stack) {
+            return visit(node, node.getStatement(), stack);
+        }
+
+        @Override
         public Boolean visit(ForInStatement node, ArrayDeque<Node> stack) {
             return visit(node, node.getStatement(), stack);
         }

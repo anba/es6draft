@@ -346,6 +346,11 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(ForEachStatement node, CodeSizeHandler value) {
+        return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 50, value);
+    }
+
+    @Override
     public Integer visit(ForInStatement node, CodeSizeHandler value) {
         return analyze(node, node.getHead(), node.getExpression(), node.getStatement(), 50, value);
     }

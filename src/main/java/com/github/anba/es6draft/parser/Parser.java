@@ -316,7 +316,10 @@ public class Parser {
         OctalEscapeSequence,
 
         /** B.1.3 HTML-like Comments */
-        HTMLComments;
+        HTMLComments,
+
+        /** Moz-Extension: for-each */
+        ForEachStatement;
 
         public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -328,6 +331,9 @@ public class Parser {
             }
             if (compatOptions.contains(CompatibilityOption.HTMLComments)) {
                 options.add(Option.HTMLComments);
+            }
+            if (compatOptions.contains(CompatibilityOption.ForEachStatement)) {
+                options.add(Option.ForEachStatement);
             }
             return options;
         }
@@ -612,6 +618,11 @@ public class Parser {
         }
         throw new ParserException(ExceptionType.SyntaxError, ts.getLine(),
                 Messages.Key.UnexpectedToken, actual.toString(), expected);
+    }
+
+    private ParserException reportTokenMismatch(Token expected, String actual) {
+        throw new ParserException(ExceptionType.SyntaxError, ts.getLine(),
+                Messages.Key.UnexpectedToken, actual, expected.toString());
     }
 
     private static ParserException reportError(ExceptionType type, int line,
@@ -2977,6 +2988,11 @@ public class Parser {
      */
     private IterationStatement forStatement(Set<String> labelSet) {
         consume(Token.FOR);
+        boolean each = false;
+        if (token() != Token.LP && isName("each") && isEnabled(Option.ForEachStatement)) {
+            consume("each");
+            each = true;
+        }
         consume(Token.LP);
 
         BlockContext lexBlockContext = null;
@@ -2999,6 +3015,10 @@ public class Parser {
         default:
             head = expression(false);
             break;
+        }
+
+        if (each && token() != Token.IN) {
+            reportTokenMismatch(Token.LP, "each");
         }
 
         if (token() == Token.SEMI) {
@@ -3050,12 +3070,21 @@ public class Parser {
                 exitBlockContext();
             }
 
-            ForInStatement iteration = new ForInStatement(lexBlockContext, labelCx.abrupts,
-                    labelCx.labelSet, head, expr, stmt);
-            if (lexBlockContext != null) {
-                lexBlockContext.node = iteration;
+            if (each) {
+                ForEachStatement iteration = new ForEachStatement(lexBlockContext, labelCx.abrupts,
+                        labelCx.labelSet, head, expr, stmt);
+                if (lexBlockContext != null) {
+                    lexBlockContext.node = iteration;
+                }
+                return iteration;
+            } else {
+                ForInStatement iteration = new ForInStatement(lexBlockContext, labelCx.abrupts,
+                        labelCx.labelSet, head, expr, stmt);
+                if (lexBlockContext != null) {
+                    lexBlockContext.node = iteration;
+                }
+                return iteration;
             }
-            return iteration;
         } else {
             head = validateForInOf(head);
             consume("of");

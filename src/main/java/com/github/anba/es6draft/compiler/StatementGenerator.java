@@ -70,6 +70,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 Types.ScriptRuntime, "enumerate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_enumerateValues = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "enumerateValues",
+                Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "iterate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
@@ -221,7 +225,14 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
     }
 
     private enum IterationKind {
-        Enumerate, Iterate
+        Enumerate, Iterate, EnumerateValues
+    }
+
+    @Override
+    public Void visit(ForEachStatement node, StatementVisitor mv) {
+        visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
+                IterationKind.EnumerateValues, mv);
+        return null;
     }
 
     @Override
@@ -263,6 +274,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.loadExecutionContext();
         if (iterationKind == IterationKind.Enumerate) {
             mv.invoke(Methods.ScriptRuntime_enumerate);
+        } else if (iterationKind == IterationKind.EnumerateValues) {
+            mv.invoke(Methods.ScriptRuntime_enumerateValues);
         } else {
             assert iterationKind == IterationKind.Iterate;
             mv.invoke(Methods.ScriptRuntime_iterate);

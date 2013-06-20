@@ -146,6 +146,20 @@ class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>> {
 
     /**
      * <pre>
+     * for each (ForDeclaration in Expression ) Statement
+     * ForDeclaration : LetOrConst ForBinding
+     * </pre>
+     */
+    @Override
+    public List<String> visit(ForEachStatement node, List<String> value) {
+        if (node.getHead() instanceof LexicalDeclaration) {
+            return node.getHead().accept(this, value);
+        }
+        return value;
+    }
+
+    /**
+     * <pre>
      * for (ForDeclaration in Expression ) Statement
      * ForDeclaration : LetOrConst ForBinding
      * </pre>

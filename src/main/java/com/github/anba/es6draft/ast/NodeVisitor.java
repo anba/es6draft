@@ -100,6 +100,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(ExpressionStatement node, V value);
 
+    R visit(ForEachStatement node, V value);
+
     R visit(ForInStatement node, V value);
 
     R visit(FormalParameterList node, V value);

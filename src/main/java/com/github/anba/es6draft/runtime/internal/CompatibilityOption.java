@@ -78,7 +78,12 @@ public enum CompatibilityOption {
      * <p>
      * <strong>Not Implemented</strong>
      */
-    BlockFunctionDeclaration;
+    BlockFunctionDeclaration,
+
+    /**
+     * Moz-Extension: for-each
+     */
+    ForEachStatement;
 
     /**
      * Returns a set of all options for strict-compatibility
@@ -91,6 +96,13 @@ public enum CompatibilityOption {
      * Returns a set of all options for web-compatibility
      */
     public static final Set<CompatibilityOption> WebCompatibility() {
-        return EnumSet.allOf(CompatibilityOption.class);
+        return EnumSet.range(LegacyOctalIntegerLiteral, BlockFunctionDeclaration);
+    }
+
+    /**
+     * Returns a set of all options for mozilla-compatibility
+     */
+    public static final Set<CompatibilityOption> MozCompatibility() {
+        return EnumSet.range(LegacyOctalIntegerLiteral, ForEachStatement);
     }
 }

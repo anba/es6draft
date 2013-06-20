@@ -87,7 +87,7 @@ public class MozillaJSTest {
         }
     }
 
-    private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
+    private static Set<CompatibilityOption> options = CompatibilityOption.MozCompatibility();
     private static ScriptCache scriptCache = new ScriptCache(Parser.Option.from(options));
     private static Script legacyMozilla;
 

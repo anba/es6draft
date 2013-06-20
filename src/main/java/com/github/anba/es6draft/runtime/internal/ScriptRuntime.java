@@ -857,6 +857,46 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 12.6.4 The for-in and for-of Statements<br>
+     * Extension: 'for-each' statement
+     * <p>
+     * Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
+     */
+    public static Iterator<?> enumerateValues(Object o, ExecutionContext cx) {
+        /* step 5 */
+        ScriptObject obj = ToObject(cx, o);
+        /* step 6, step 8 */
+        ScriptObject keys = obj.enumerate(cx);
+        /* step 9 */
+        return new ValuesIterator(cx, obj, FromListIterator(cx, keys));
+    }
+
+    private static class ValuesIterator extends SimpleIterator<Object> {
+        private final ExecutionContext cx;
+        private final ScriptObject object;
+        private final Iterator<?> keysIterator;
+
+        ValuesIterator(ExecutionContext cx, ScriptObject object, Iterator<?> keysIterator) {
+            this.cx = cx;
+            this.object = object;
+            this.keysIterator = keysIterator;
+        }
+
+        @Override
+        protected Object tryNext() {
+            if (keysIterator.hasNext()) {
+                Object pk = ToPropertyKey(cx, keysIterator.next());
+                if (pk instanceof String) {
+                    return Get(cx, object, (String) pk);
+                } else {
+                    return Get(cx, object, (Symbol) pk);
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
      * 12.13 The throw Statement
      */
     public static ScriptException _throw(Object val) {
