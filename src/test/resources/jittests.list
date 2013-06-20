@@ -179,6 +179,12 @@ tests/basic/testStaticsInRegExp.js
 # Different maximal stack depth
 tests/basic/bug522136.js
 
+# destructuring difference
+tests/auto-regress/bug532363.js
+
+# rest-parameters vs. arguments object
+tests/arguments/bug844048.js
+
 
 ############################################
 # Misc proxy implementation isssues        #
@@ -373,6 +379,7 @@ tests/basic/testAssigningWatchedDeletedProperty.js
 tests/basic/testBug584650.js
 tests/basic/testWatchRecursion.js
 tests/pic/fuzz1.js
+tests/pic/fuzz3.js
 tests/pic/watch1.js
 tests/pic/watch1a.js
 tests/pic/watch2.js
@@ -499,6 +506,7 @@ tests/arguments/genexpr-4.js
 tests/arguments/genexpr-5.js
 tests/arguments/genexpr-6.js
 tests/arguments/strict-args-generator-flushstack.js
+tests/auto-regress/bug487570.js
 tests/auto-regress/bug488963.js
 tests/auto-regress/bug521694.js
 tests/auto-regress/bug563034.js
@@ -571,109 +579,11 @@ tests/basic/bug790629-2.js
 tests/basic/bug790629-3.js
 tests/basic/bug790629-4.js
 tests/basic/function-tosource-genexpr.js
+tests/basic/testBug709929.js
 tests/basic/testBug773927.js
 tests/collections/Map-constructor-generator-2.js
 tests/collections/Map-constructor-generator-3.js
 tests/collections/Set-constructor-generator-2.js
-
-# for-each statement not supported (e4x)
-tests/arguments/bug554670-1.js
-tests/arguments/bug554670-2.js
-tests/arguments/bug844048.js
-tests/auto-regress/bug466654.js
-tests/auto-regress/bug475658.js
-tests/auto-regress/bug487570.js
-tests/auto-regress/bug493662.js
-tests/auto-regress/bug495962.js
-tests/auto-regress/bug504516.js
-tests/auto-regress/bug510644.js
-tests/auto-regress/bug515440.js
-tests/auto-regress/bug520513.js
-tests/auto-regress/bug521169.js
-tests/auto-regress/bug525618.js
-tests/auto-regress/bug531513.js
-tests/auto-regress/bug532363.js
-tests/auto-regress/bug568275.js
-tests/auto-regress/bug568826.js
-tests/auto-regress/bug576846.js
-tests/auto-regress/bug591418.js
-tests/auto-regress/bug592224.js
-tests/auto-regress/bug593605.js
-tests/auto-regress/bug592226.js
-tests/auto-regress/bug600128.js
-tests/auto-regress/bug600889.js
-tests/auto-regress/bug601396.js
-tests/auto-regress/bug620640.js
-tests/auto-regress/bug652177.js
-tests/auto-regress/bug657986.js
-tests/auto-regress/bug669044.js
-tests/auto-regress/bug690650.js
-tests/auto-regress/bug754712.js
-tests/auto-regress/bug779850.js
-tests/auto-regress/bug811606.js
-tests/basic/bug464403.js
-tests/basic/bug465902.js
-tests/basic/bug527288.js
-tests/basic/bug547911-2.js
-tests/basic/bug551705.js
-tests/basic/bug547911-1.js
-tests/basic/bug569849.js
-tests/basic/bug609502-3.js
-tests/basic/bug627692-1.js
-tests/basic/bug641224.js
-tests/basic/bug642772-3.js
-tests/basic/bug677957-2.js
-tests/basic/bug678087.js
-tests/basic/bug677957-1.js
-tests/basic/bug700501.js
-tests/basic/bug704795.js
-tests/basic/bug739694-1.js
-tests/basic/delete-named-names.js
-tests/basic/delete-indexed-names.js
-tests/basic/firstSlotConflict.js
-tests/basic/testBug462388.js
-tests/basic/testBug465261.js
-tests/basic/testBug462407.js
-tests/basic/testBug465483.js
-tests/basic/testBug466128.js
-tests/basic/testBug474769.js
-tests/basic/testBug465688.js
-tests/basic/testBug504520Harder.js
-tests/basic/testBug520503-2.js
-tests/basic/testBug560098.js
-tests/basic/testBug579646.js
-tests/basic/testBug579647.js
-tests/basic/testBug595916.js
-tests/basic/testBug667915.js
-tests/basic/testBug709929.js
-tests/basic/testBug736012.js
-tests/basic/testBug773108.js
-tests/basic/testDivOverflow.js
-tests/basic/testFewerGlobalsInInnerTree.js
-tests/basic/testForEach.js
-tests/basic/testGlobalMultitrees1.js
-tests/basic/testLetWithUnstableGlobal.js
-tests/basic/testOverRecursed5.js
-tests/basic/testStringResolve.js
-tests/basic/testSuppressDeletedProperty.js
-tests/basic/testThinForEach.js
-tests/basic/testUndemoteLateGlobalSlots.js
-tests/basic/truthies.js
-tests/closures/bug496987.js
-tests/closures/bug497015-1.js
-tests/closures/bug497015-2.js
-tests/closures/bug540133.js
-tests/closures/flat-closure-4.js
-tests/closures/flat-closure-6.js
-tests/closures/flat-closure-5.js
-tests/closures/t019.js
-tests/closures/t018.js
-tests/pic/bug558616.js
-tests/pic/bug582899.js
-tests/for-of/syntax-1.js
-tests/pic/fuzz2.js
-tests/pic/fuzz3.js
-tests/self-hosting/for-each-in-over-uncloned-method.js
 
 # function expression closure not supported
 tests/arguments/destructuring-exprbody.js
@@ -742,6 +652,7 @@ tests/basic/function-tosource-getset.js
 tests/basic/testInterpreterReentry4.js
 
 # let-scoped expression block
+tests/auto-regress/bug475658.js
 tests/auto-regress/bug491806.js
 tests/auto-regress/bug496251.js
 tests/auto-regress/bug521163.js
@@ -762,9 +673,11 @@ tests/basic/bug727921.js
 tests/basic/expression-autopsy.js
 tests/basic/testAliasedLet.js
 tests/basic/testBadLetBodyWithArguments.js
+tests/basic/testBug579647.js
 tests/basic/testBug692274-4.js
 tests/basic/testBug703857.js
 tests/basic/testBug714650.js
+tests/basic/testBug773108.js
 tests/basic/testBug776191.js
 tests/basic/testClosureIncrSideExit.js
 tests/basic/testGlobalOptimize-2.js
