@@ -584,7 +584,7 @@ public class Parser {
 
     private ParserException reportTokenMismatch(Token expected, Token actual) {
         if (actual == Token.EOF) {
-            throw new ParserEOFException(Messages.Key.UnexpectedToken, ts.getLine(),
+            throw new ParserEOFException(ts.getLine(), Messages.Key.UnexpectedToken,
                     actual.toString(), expected.toString());
         }
         throw new ParserException(ExceptionType.SyntaxError, ts.getLine(),
@@ -593,7 +593,7 @@ public class Parser {
 
     private ParserException reportTokenMismatch(String expected, Token actual) {
         if (actual == Token.EOF) {
-            throw new ParserEOFException(Messages.Key.UnexpectedToken, ts.getLine(),
+            throw new ParserEOFException(ts.getLine(), Messages.Key.UnexpectedToken,
                     actual.toString(), expected);
         }
         throw new ParserException(ExceptionType.SyntaxError, ts.getLine(),
