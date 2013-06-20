@@ -329,7 +329,8 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             return UNDEFINED;
         }
         String source = ((Callable) function).toSource();
-        Parser parser = new Parser("<decompileBody>", 1, EnumSet.noneOf(Parser.Option.class));
+        EnumSet<Parser.Option> options = Parser.Option.from(getRealm().getOptions());
+        Parser parser = new Parser("<decompileBody>", 1, options);
         com.github.anba.es6draft.ast.Script parsedScript = parser.parse("(" + source + ")");
         ExpressionStatement expr = (ExpressionStatement) parsedScript.getStatements().get(0);
         FunctionNode fnode = (FunctionNode) expr.getExpression();

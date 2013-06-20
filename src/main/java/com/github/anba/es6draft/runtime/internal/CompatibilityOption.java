@@ -21,12 +21,12 @@ public enum CompatibilityOption {
     /**
      * B.1.1 Numeric Literals
      */
-    OctalInteger,
+    LegacyOctalIntegerLiteral,
 
     /**
      * B.1.2 String Literals
      */
-    OctalEscape,
+    OctalEscapeSequence,
 
     /**
      * B.1.3 HTML-like Comments

@@ -310,29 +310,25 @@ public class Parser {
         Strict, FunctionCode, LocalScope, DirectEval, EvalScript,
 
         /** B.1.1 Numeric Literals */
-        NoLegacyOctalIntegerLiteral,
+        LegacyOctalIntegerLiteral,
 
         /** B.1.2 String Literals */
-        NoOctalEscapeSequence,
+        OctalEscapeSequence,
 
         /** B.1.3 HTML-like Comments */
-        NoHTMLComments;
-
-        public static void addAll(Set<Option> options, Set<CompatibilityOption> compatOptions) {
-            if (!compatOptions.contains(CompatibilityOption.OctalInteger)) {
-                options.add(Option.NoLegacyOctalIntegerLiteral);
-            }
-            if (!compatOptions.contains(CompatibilityOption.OctalInteger)) {
-                options.add(Option.NoOctalEscapeSequence);
-            }
-            if (!compatOptions.contains(CompatibilityOption.HTMLComments)) {
-                options.add(Option.NoHTMLComments);
-            }
-        }
+        HTMLComments;
 
         public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
-            addAll(options, compatOptions);
+            if (compatOptions.contains(CompatibilityOption.LegacyOctalIntegerLiteral)) {
+                options.add(Option.LegacyOctalIntegerLiteral);
+            }
+            if (compatOptions.contains(CompatibilityOption.OctalEscapeSequence)) {
+                options.add(Option.OctalEscapeSequence);
+            }
+            if (compatOptions.contains(CompatibilityOption.HTMLComments)) {
+                options.add(Option.HTMLComments);
+            }
             return options;
         }
     }

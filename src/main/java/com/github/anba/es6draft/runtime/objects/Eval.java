@@ -115,8 +115,8 @@ public final class Eval {
     private static Script script(ExecutionContext cx, CharSequence source, boolean strict,
             boolean globalCode, boolean directEval, boolean globalScope) {
         try {
-            EnumSet<Parser.Option> options = EnumSet.of(Parser.Option.EvalScript);
-            Parser.Option.addAll(options, cx.getRealm().getOptions());
+            EnumSet<Parser.Option> options = Parser.Option.from(cx.getRealm().getOptions());
+            options.add(Parser.Option.EvalScript);
             if (strict) {
                 options.add(Parser.Option.Strict);
             }
