@@ -1187,11 +1187,10 @@ public class Parser {
                 break directive;
             }
             // got a directive
-            String string = ts.getString();
+            String string = stringLiteral();
             if (!hasEscape && "use strict".equals(string)) {
                 strict = true;
             }
-            consume(Token.STRING);
             semicolon();
             statements.add(new ExpressionStatement(new StringLiteral(string)));
         }
@@ -3625,13 +3624,9 @@ public class Parser {
             consume(tok);
             return new BooleanLiteral(tok == Token.TRUE);
         case NUMBER:
-            double number = ts.getNumber();
-            consume(tok);
-            return new NumericLiteral(number);
+            return new NumericLiteral(numericLiteral());
         case STRING:
-            String string = ts.getString();
-            consume(tok);
-            return new StringLiteral(string);
+            return new StringLiteral(stringLiteral());
         case DIV:
         case ASSIGN_DIV:
             return regularExpressionLiteral(tok);
@@ -4010,13 +4005,9 @@ public class Parser {
     private PropertyName propertyName() {
         switch (token()) {
         case STRING:
-            String string = ts.getString();
-            consume(Token.STRING);
-            return new StringLiteral(string);
+            return new StringLiteral(stringLiteral());
         case NUMBER:
-            double number = ts.getNumber();
-            consume(Token.NUMBER);
-            return new NumericLiteral(number);
+            return new NumericLiteral(numericLiteral());
         default:
             return new Identifier(identifierName());
         }
@@ -4858,5 +4849,23 @@ public class Parser {
         default:
             return false;
         }
+    }
+
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     */
+    private double numericLiteral() {
+        double number = ts.getNumber();
+        consume(Token.NUMBER);
+        return number;
+    }
+
+    /**
+     * <strong>[7.8.4] String Literals</strong>
+     */
+    private String stringLiteral() {
+        String string = ts.getString();
+        consume(Token.STRING);
+        return string;
     }
 }
