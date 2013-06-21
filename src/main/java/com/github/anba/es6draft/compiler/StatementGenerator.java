@@ -103,6 +103,25 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.invoke(Methods.Reference_PutValue);
     }
 
+    /**
+     * stack: [envRec] -> [envRec]
+     */
+    private void createImmutableBinding(String name, StatementVisitor mv) {
+        mv.dup();
+        mv.aconst(name);
+        mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
+    }
+
+    /**
+     * stack: [envRec] -> [envRec]
+     */
+    private void createMutableBinding(String name, boolean deletable, StatementVisitor mv) {
+        mv.dup();
+        mv.aconst(name);
+        mv.iconst(deletable);
+        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+    }
+
     @Override
     protected Void visit(Node node, StatementVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
@@ -333,16 +352,11 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 // stack: [iterEnv, nextValue, envRec] -> [iterEnv, envRec, nextValue]
                 for (String name : BoundNames(lexicalBinding.getBinding())) {
                     if (IsConstantDeclaration(lexDecl)) {
-                        mv.dup();
-                        mv.aconst(name);
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `env`)
-                        mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
+                        createImmutableBinding(name, mv);
                     } else {
-                        mv.dup();
-                        mv.aconst(name);
-                        mv.iconst(false);
                         // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
-                        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                        createMutableBinding(name, false, mv);
                     }
 
                 }
@@ -407,16 +421,11 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 boolean isConst = IsConstantDeclaration(lexDecl);
                 for (String dn : BoundNames(lexDecl)) {
                     if (isConst) {
-                        mv.dup();
-                        mv.aconst(dn);
                         // FIXME: spec bug (CreateImmutableBinding concrete method of `loopEnv`)
-                        mv.invoke(Methods.EnvironmentRecord_createImmutableBinding);
+                        createImmutableBinding(dn, mv);
                     } else {
-                        mv.dup();
-                        mv.aconst(dn);
-                        mv.iconst(false);
                         // FIXME: spec bug (CreateMutableBinding concrete method of `loopEnv`)
-                        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                        createMutableBinding(dn, false, mv);
                     }
                 }
                 mv.pop();
@@ -564,10 +573,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
                 // stack: [env, envRec, envRec] -> [env, envRec, envRec]
                 for (String name : BoundNames(binding.getBinding())) {
-                    mv.dup();
-                    mv.aconst(name);
-                    mv.iconst(false);
-                    mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                    createMutableBinding(name, false, mv);
                 }
 
                 Expression initialiser = binding.getInitialiser();
@@ -954,10 +960,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
             // [catchEnv, ex, envRec] -> [catchEnv, envRec, ex]
             for (String name : BoundNames(catchParameter)) {
-                mv.dup();
-                mv.aconst(name);
-                mv.iconst(false);
-                mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                createMutableBinding(name, false, mv);
             }
             mv.swap();
 
@@ -1001,10 +1004,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             // FIXME: spec bug (CreateMutableBinding concrete method of `catchEnv`)
             // [catchEnv, ex, envRec] -> [catchEnv, envRec, ex]
             for (String name : BoundNames(catchParameter)) {
-                mv.dup();
-                mv.aconst(name);
-                mv.iconst(false);
-                mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                createMutableBinding(name, false, mv);
             }
             mv.swap();
 

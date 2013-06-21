@@ -274,6 +274,16 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     /**
+     * stack: [envRec] -> [envRec]
+     */
+    private void createMutableBinding(String name, boolean deletable, ExpressionVisitor mv) {
+        mv.dup();
+        mv.aconst(name);
+        mv.iconst(deletable);
+        mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+    }
+
+    /**
      * [11.2.3 EvaluateCall Abstract Operation]
      */
     private void EvaluateCall(Expression call, Expression base, ValType type,
@@ -1454,10 +1464,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
                 // stack: [env, envRec, envRec] -> [env, envRec, envRec]
                 for (String name : BoundNames(binding.getBinding())) {
-                    mv.dup();
-                    mv.aconst(name);
-                    mv.iconst(false);
-                    mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                    createMutableBinding(name, false, mv);
                 }
 
                 Expression initialiser = binding.getInitialiser();
