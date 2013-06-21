@@ -21,6 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -52,7 +53,11 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         // long byteOffsetInt = ToUint32(realm, byteOffset);
         long totalOffset = byteOffset + ToUint32(cx, Get(cx, view, "byteOffset"));
         long byteLength = ToUint32(cx, Get(cx, view, "byteLength"));
-        if (totalOffset >= byteLength) {
+        // FIXME: spec bug - range check is invalid
+        // if (totalOffset >= byteLength) {
+        // throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
+        // }
+        if (byteOffset + type.size() > byteLength) {
             throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
         ArrayBufferObject buffer = (ArrayBufferObject) Get(cx, view, "buffer");
@@ -68,7 +73,11 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         // long byteOffsetInt = ToUint32(realm, byteOffset);
         long totalOffset = byteOffset + ToUint32(cx, Get(cx, view, "byteOffset"));
         long byteLength = ToUint32(cx, Get(cx, view, "byteLength"));
-        if (totalOffset >= byteLength) {
+        // FIXME: spec bug - range check is invalid
+        // if (totalOffset >= byteLength) {
+        // throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
+        // }
+        if (byteOffset + type.size() > byteLength) {
             throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
         ArrayBufferObject buffer = (ArrayBufferObject) Get(cx, view, "buffer");
@@ -298,5 +307,11 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
                     ElementKind.Float64, ToNumber(cx, value));
             return UNDEFINED;
         }
+
+        /**
+         * FIXME: missing in spec
+         */
+        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        public static final String toStringTag = "DataView";
     }
 }
