@@ -81,14 +81,19 @@ public enum CompatibilityOption {
     BlockFunctionDeclaration,
 
     /**
-     * Moz-Extension: for-each
+     * Moz-Extension: for-each statement
      */
     ForEachStatement,
 
     /**
-     * Moz-Extension: catch(x if y)
+     * Moz-Extension: guarded catch
      */
-    GuardedCatch;
+    GuardedCatch,
+
+    /**
+     * Moz-Extension: expression closure
+     */
+    ExpressionClosure;
 
     /**
      * Returns a set of all options for strict-compatibility
@@ -108,6 +113,6 @@ public enum CompatibilityOption {
      * Returns a set of all options for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, GuardedCatch);
+        return EnumSet.range(LegacyOctalIntegerLiteral, ExpressionClosure);
     }
 }

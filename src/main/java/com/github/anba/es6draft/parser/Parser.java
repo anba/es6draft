@@ -318,11 +318,14 @@ public class Parser {
         /** B.1.3 HTML-like Comments */
         HTMLComments,
 
-        /** Moz-Extension: for-each */
+        /** Moz-Extension: for-each statement */
         ForEachStatement,
 
-        /** Moz-Extension: catch(x if y) */
-        GuardedCatch;
+        /** Moz-Extension: guarded catch */
+        GuardedCatch,
+
+        /** Moz-Extension: expression closure */
+        ExpressionClosure;
 
         public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -340,6 +343,9 @@ public class Parser {
             }
             if (compatOptions.contains(CompatibilityOption.GuardedCatch)) {
                 options.add(Option.GuardedCatch);
+            }
+            if (compatOptions.contains(CompatibilityOption.ExpressionClosure)) {
+                options.add(Option.ExpressionClosure);
             }
             return options;
         }
@@ -1371,14 +1377,30 @@ public class Parser {
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
-            consume(Token.LC);
-            int startBody = ts.position();
-            List<StatementListItem> statements = functionBody(Token.RC);
-            consume(Token.RC);
-            int endFunction = ts.position() - 1;
 
-            String header = ts.range(startFunction, startBody - 1);
-            String body = ts.range(startBody, endFunction);
+            String header, body;
+            List<StatementListItem> statements;
+            if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+                // need to call manually b/c functionBody() isn't used here
+                applyStrictMode(false);
+
+                int startBody = ts.position();
+                statements = Collections.<StatementListItem> singletonList(new ReturnStatement(
+                        assignmentExpression(true)));
+                int endFunction = ts.position();
+
+                header = ts.range(startFunction, startBody);
+                body = "return " + ts.range(startBody, endFunction);
+            } else {
+                consume(Token.LC);
+                int startBody = ts.position();
+                statements = functionBody(Token.RC);
+                consume(Token.RC);
+                int endFunction = ts.position() - 1;
+
+                header = ts.range(startFunction, startBody - 1);
+                body = ts.range(startBody, endFunction);
+            }
 
             FunctionContext scope = context.funContext;
             FunctionDeclaration function = new FunctionDeclaration(scope, identifier, parameters,
@@ -1417,14 +1439,30 @@ public class Parser {
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
-            consume(Token.LC);
-            int startBody = ts.position();
-            List<StatementListItem> statements = functionBody(Token.RC);
-            consume(Token.RC);
-            int endFunction = ts.position() - 1;
 
-            String header = ts.range(startFunction, startBody - 1);
-            String body = ts.range(startBody, endFunction);
+            String header, body;
+            List<StatementListItem> statements;
+            if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+                // need to call manually b/c functionBody() isn't used here
+                applyStrictMode(false);
+
+                int startBody = ts.position();
+                statements = Collections.<StatementListItem> singletonList(new ReturnStatement(
+                        assignmentExpression(true)));
+                int endFunction = ts.position();
+
+                header = ts.range(startFunction, startBody);
+                body = "return " + ts.range(startBody, endFunction);
+            } else {
+                consume(Token.LC);
+                int startBody = ts.position();
+                statements = functionBody(Token.RC);
+                consume(Token.RC);
+                int endFunction = ts.position() - 1;
+
+                header = ts.range(startFunction, startBody - 1);
+                body = ts.range(startBody, endFunction);
+            }
 
             FunctionContext scope = context.funContext;
             FunctionExpression function = new FunctionExpression(scope, identifier, parameters,
@@ -1723,51 +1761,88 @@ public class Parser {
             List<StatementListItem> statements;
 
             int line = ts.getLine();
-            int startFunction, startBody, endFunction;
+            String header, body;
             switch (type) {
-            case Getter:
+            case Getter: {
                 consume(Token.NAME);
                 propertyName = propertyName();
                 consume(Token.LP);
-                startFunction = ts.position() - 1;
+                int startFunction = ts.position() - 1;
                 parameters = new FormalParameterList(Collections.<FormalParameter> emptyList());
                 consume(Token.RP);
-                consume(Token.LC);
-                startBody = ts.position();
-                statements = functionBody(Token.RC);
-                consume(Token.RC);
-                endFunction = ts.position() - 1;
+
+                if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+                    // need to call manually b/c functionBody() isn't used here
+                    applyStrictMode(false);
+
+                    int startBody = ts.position();
+                    statements = Collections.<StatementListItem> singletonList(new ReturnStatement(
+                            assignmentExpression(true)));
+                    int endFunction = ts.position();
+
+                    header = "function " + ts.range(startFunction, startBody);
+                    body = "return " + ts.range(startBody, endFunction);
+                } else {
+                    consume(Token.LC);
+                    int startBody = ts.position();
+                    statements = functionBody(Token.RC);
+                    consume(Token.RC);
+                    int endFunction = ts.position() - 1;
+
+                    header = "function " + ts.range(startFunction, startBody - 1);
+                    body = ts.range(startBody, endFunction);
+                }
                 break;
-            case Setter:
+            }
+            case Setter: {
                 consume(Token.NAME);
                 propertyName = propertyName();
                 consume(Token.LP);
-                startFunction = ts.position() - 1;
+                int startFunction = ts.position() - 1;
                 parameters = propertySetParameterList();
                 consume(Token.RP);
-                consume(Token.LC);
-                startBody = ts.position();
-                statements = functionBody(Token.RC);
-                consume(Token.RC);
-                endFunction = ts.position() - 1;
+
+                if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+                    // need to call manually b/c functionBody() isn't used here
+                    applyStrictMode(false);
+
+                    int startBody = ts.position();
+                    statements = Collections.<StatementListItem> singletonList(new ReturnStatement(
+                            assignmentExpression(true)));
+                    int endFunction = ts.position();
+
+                    header = "function " + ts.range(startFunction, startBody);
+                    body = "return " + ts.range(startBody, endFunction);
+                } else {
+                    consume(Token.LC);
+                    int startBody = ts.position();
+                    statements = functionBody(Token.RC);
+                    consume(Token.RC);
+                    int endFunction = ts.position() - 1;
+
+                    header = "function " + ts.range(startFunction, startBody - 1);
+                    body = ts.range(startBody, endFunction);
+                }
                 break;
+            }
             case Function:
-            default:
+            default: {
                 propertyName = propertyName();
                 consume(Token.LP);
-                startFunction = ts.position() - 1;
+                int startFunction = ts.position() - 1;
                 parameters = strictFormalParameters(Token.RP);
                 consume(Token.RP);
                 consume(Token.LC);
-                startBody = ts.position();
+                int startBody = ts.position();
                 statements = functionBody(Token.RC);
                 consume(Token.RC);
-                endFunction = ts.position() - 1;
+                int endFunction = ts.position() - 1;
+
+                header = "function " + ts.range(startFunction, startBody - 1);
+                body = ts.range(startBody, endFunction);
                 break;
             }
-
-            String header = "function " + ts.range(startFunction, startBody - 1);
-            String body = ts.range(startBody, endFunction);
+            }
 
             FunctionContext scope = context.funContext;
             MethodDefinition method = new MethodDefinition(scope, type, propertyName, parameters,
