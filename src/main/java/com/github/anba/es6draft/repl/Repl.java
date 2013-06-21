@@ -184,6 +184,13 @@ public class Repl {
         }
     }
 
+    private void printException(Exception e) {
+        System.err.println(e);
+        if (options.contains(Option.StackTrace)) {
+            printStackTrace(e);
+        }
+    }
+
     /**
      * REPL: Read
      */
@@ -302,7 +309,7 @@ public class Repl {
             try {
                 global.eval(ShellGlobalObject.compileScript(scriptCache, name));
             } catch (ParserException | CompilationException | IOException e) {
-                System.err.println(e);
+                printException(e);
             }
         }
 
@@ -321,7 +328,7 @@ public class Repl {
             try {
                 global.eval(script, script);
             } catch (ParserException | CompilationException | IOException e) {
-                System.err.println(e);
+                printException(e);
             }
         }
     }
