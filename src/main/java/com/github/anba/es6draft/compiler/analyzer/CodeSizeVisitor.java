@@ -466,6 +466,11 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(LetStatement node, CodeSizeHandler value) {
+        return analyze(node, node.getBindings(), node.getStatement(), 25, 5, value);
+    }
+
+    @Override
     public Integer visit(LexicalBinding node, CodeSizeHandler value) {
         return analyze(node, node.getInitialiser(), 5, value);
     }

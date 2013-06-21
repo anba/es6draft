@@ -41,7 +41,7 @@ public class Parser {
     private static final boolean MODULES_ENABLED = false;
     private static final boolean DEBUG = false;
 
-    private static final Binding NO_INHERITED_BINDING = null;
+    private static final List<Binding> NO_INHERITED_BINDING = Collections.emptyList();
     private static final Set<String> EMPTY_LABEL_SET = Collections.emptySet();
 
     private final String sourceFile;
@@ -534,8 +534,20 @@ public class Parser {
         }
     }
 
-    private void removeLexDeclaredName(ScopeContext scope, Binding binding) {
-        HashSet<String> lexDeclaredNames = scope.lexDeclaredNames;
+    private void addLexDeclaredNames(List<Binding> bindings) {
+        for (Binding binding : bindings) {
+            addLexDeclaredName(binding);
+        }
+    }
+
+    private void removeLexDeclaredNames(List<Binding> bindings) {
+        for (Binding binding : bindings) {
+            removeLexDeclaredName(binding);
+        }
+    }
+
+    private void removeLexDeclaredName(Binding binding) {
+        HashSet<String> lexDeclaredNames = context.scopeContext.lexDeclaredNames;
         if (binding instanceof BindingIdentifier) {
             BindingIdentifier bindingIdentifier = (BindingIdentifier) binding;
             String name = BoundName(bindingIdentifier);
@@ -2363,13 +2375,16 @@ public class Parser {
      *     { StatementList<sub>opt</sub> }
      * </pre>
      */
-    private BlockStatement block(Binding inherited) {
+    private BlockStatement block(List<Binding> inherited) {
         consume(Token.LC);
         BlockContext scope = enterBlockContext();
-        if (inherited != null) {
-            addLexDeclaredName(inherited);
+        if (!inherited.isEmpty()) {
+            addLexDeclaredNames(inherited);
         }
         List<StatementListItem> list = statementList(Token.RC);
+        if (!inherited.isEmpty()) {
+            removeLexDeclaredNames(inherited);
+        }
         exitBlockContext();
         consume(Token.RC);
 
@@ -3751,8 +3766,7 @@ public class Parser {
                     consume(Token.RP);
 
                     // catch-block receives a blacklist of forbidden lexical declarable names
-                    BlockStatement catchBlock = block(catchParameter);
-                    removeLexDeclaredName((ScopeContext) catchBlock.getScope(), catchParameter);
+                    BlockStatement catchBlock = block(singletonList(catchParameter));
 
                     exitBlockContext();
                     if (guard != null) {
@@ -3775,8 +3789,7 @@ public class Parser {
                 consume(Token.RP);
 
                 // catch-block receives a blacklist of forbidden lexical declarable names
-                BlockStatement catchBlock = block(catchParameter);
-                removeLexDeclaredName((ScopeContext) catchBlock.getScope(), catchParameter);
+                BlockStatement catchBlock = block(singletonList(catchParameter));
 
                 exitBlockContext();
                 catchNode = new CatchNode(catchScope, catchParameter, catchBlock);
@@ -3815,7 +3828,7 @@ public class Parser {
      * 
      * <pre>
      * LetStatement :
-     *     let ( BindingList ) { StatementList<sub>opt</sub> }
+     *     let ( BindingList ) BlockStatement
      * </pre>
      */
     private Statement letStatement() {
@@ -3834,27 +3847,24 @@ public class Parser {
 
             LetExpression letExpression = new LetExpression(scope, bindings, expression);
             scope.node = letExpression;
-
             return new ExpressionStatement(letExpression);
         } else {
-            // transform let statement into standard block statement:
-            // let (BindingList) { StatementList }
-            // => BlockStatement [ LexicalDeclaration[let BindingList]; StatementList ]
-
-            LexicalDeclaration decl = new LexicalDeclaration(LexicalDeclaration.Type.Let, bindings);
-            addLexScopedDeclaration(decl);
-
-            consume(Token.LC);
-            List<StatementListItem> list = statementList(Token.RC);
-            consume(Token.RC);
+            BlockStatement letBlock = block(toBindings(bindings));
 
             exitBlockContext();
 
-            BlockStatement block = new BlockStatement(scope, merge(
-                    Collections.<StatementListItem> singletonList(decl), list));
+            LetStatement block = new LetStatement(scope, bindings, letBlock);
             scope.node = block;
             return block;
         }
+    }
+
+    private List<Binding> toBindings(List<LexicalBinding> lexicalBindings) {
+        ArrayList<Binding> bindings = new ArrayList<>(lexicalBindings.size());
+        for (LexicalBinding lexicalBinding : lexicalBindings) {
+            bindings.add(lexicalBinding.getBinding());
+        }
+        return bindings;
     }
 
     /* ***************************************************************************************** */

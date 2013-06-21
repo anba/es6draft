@@ -9,21 +9,20 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.1 Primary Expressions</h2>
+ * <h1>12 Statements and Declarations</h1><br>
  * <ul>
- * <li>Extension: 'let' expression
+ * <li>Extension: 'let' statement
  * </ul>
  */
-public class LetExpression extends Expression implements ScopedNode {
+public class LetStatement extends Statement implements ScopedNode {
     private BlockScope scope;
     private List<LexicalBinding> bindings;
-    private Expression expression;
+    private BlockStatement statement;
 
-    public LetExpression(BlockScope scope, List<LexicalBinding> bindings, Expression expression) {
+    public LetStatement(BlockScope scope, List<LexicalBinding> bindings, BlockStatement statement) {
         this.scope = scope;
         this.bindings = bindings;
-        this.expression = expression;
+        this.statement = statement;
     }
 
     @Override
@@ -35,8 +34,8 @@ public class LetExpression extends Expression implements ScopedNode {
         return bindings;
     }
 
-    public Expression getExpression() {
-        return expression;
+    public BlockStatement getStatement() {
+        return statement;
     }
 
     @Override

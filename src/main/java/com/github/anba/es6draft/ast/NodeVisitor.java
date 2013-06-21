@@ -144,6 +144,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(LetExpression node, V value);
 
+    R visit(LetStatement node, V value);
+
     R visit(LexicalBinding node, V value);
 
     R visit(LexicalDeclaration node, V value);

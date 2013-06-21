@@ -547,6 +547,60 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
     }
 
     @Override
+    public Void visit(LetStatement node, StatementVisitor mv) {
+        // create new declarative lexical environment
+        // stack: [] -> [env]
+        mv.enterScope(node);
+        newDeclarativeEnvironment(mv);
+        {
+            // stack: [env] -> [env, envRec]
+            mv.dup();
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+
+            // stack: [env, envRec] -> [env]
+            for (LexicalBinding binding : node.getBindings()) {
+                // stack: [env, envRec] -> [env, envRec, envRec]
+                mv.dup();
+
+                // stack: [env, envRec, envRec] -> [env, envRec, envRec]
+                for (String name : BoundNames(binding.getBinding())) {
+                    mv.dup();
+                    mv.aconst(name);
+                    mv.iconst(false);
+                    mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                }
+
+                Expression initialiser = binding.getInitialiser();
+                if (initialiser != null) {
+                    ValType type = expressionValue(initialiser, mv);
+                    if (binding.getBinding() instanceof BindingPattern) {
+                        ToObject(type, mv);
+                    } else {
+                        mv.toBoxed(type);
+                    }
+                } else {
+                    assert binding.getBinding() instanceof BindingIdentifier;
+                    mv.get(Fields.Undefined_UNDEFINED);
+                }
+
+                // stack: [env, envRec, envRec, value] -> [env, envRec]
+                BindingInitialisationWithEnvironment(binding.getBinding(), mv);
+            }
+            mv.pop();
+        }
+        // stack: [env] -> []
+        pushLexicalEnvironment(mv);
+
+        node.getStatement().accept(this, mv);
+
+        // restore previous lexical environment
+        popLexicalEnvironment(mv);
+        mv.exitScope();
+
+        return null;
+    }
+
+    @Override
     public Void visit(LexicalBinding node, StatementVisitor mv) {
         Binding binding = node.getBinding();
         Expression initialiser = node.getInitialiser();

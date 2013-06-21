@@ -390,6 +390,11 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(LetStatement node, V value) {
+        return visit((Statement) node, value);
+    }
+
+    @Override
     public R visit(LexicalBinding node, V value) {
         return visit((Node) node, value);
     }
