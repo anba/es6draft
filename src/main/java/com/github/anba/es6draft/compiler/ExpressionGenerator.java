@@ -17,11 +17,11 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
-import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
@@ -1367,6 +1367,17 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     @Override
+    public ValType visit(ExpressionMethod node, ExpressionVisitor mv) {
+        codegen.compile(node, mv);
+
+        String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
+        mv.loadExecutionContext();
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
+
+        return ValType.Any;
+    }
+
+    @Override
     public ValType visit(FunctionExpression node, ExpressionVisitor mv) {
         codegen.compile(node);
 
@@ -1412,17 +1423,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     @Override
     public ValType visit(IdentifierValue node, ExpressionVisitor mv) {
         return identifierResolution.resolveValue(node, mv);
-    }
-
-    @Override
-    public ValType visit(ExpressionMethod node, ExpressionVisitor mv) {
-        codegen.compile(node, mv);
-
-        String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
-        mv.loadExecutionContext();
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
-
-        return ValType.Any;
     }
 
     @Override
