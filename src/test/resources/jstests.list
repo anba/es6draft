@@ -201,6 +201,7 @@ js1_6/extensions/regress-470310.js
 js1_6/Array/regress-304828.js
 js1_6/Regress/regress-355002.js
 js1_7/block/regress-348685.js
+js1_7/block/regress-351497.js
 js1_7/extensions/regress-355052-01.js
 js1_7/extensions/regress-355052-02.js
 js1_7/extensions/regress-355052-03.js
@@ -260,7 +261,11 @@ js1_8_5/extensions/correct-this-for-nonnatives-on-array-proto-chain.js
 js1_5/extensions/scope-001.js
 
 # ES6: let-var temporary dead zone
+js1_7/block/order-of-operation.js
 js1_8_1/regress/regress-452498-103.js
+
+# const is block-scoped
+js1_7/block/regress-349507.js
 
 # ES6-change: Future Reserved Words now used
 ecma_5/misc/future-reserved-words.js
@@ -272,6 +277,7 @@ ecma_5/strict/13.1.js
 ecma_5/strict/regress-532254.js
 js1_8_1/regress/regress-509354.js
 js1_8_1/strict/12.2.1.js
+js1_8_1/strict/let-block-eval-arguments.js
 
 # ES6-change: var-redeclaration in try-catch verboten
 ecma_3/ExecutionContexts/regress-448595-01.js
@@ -301,6 +307,7 @@ js1_5/Regress/regress-252892.js
 js1_8/regress/regress-459185.js
 js1_8/regress/regress-459186.js
 js1_8_1/regress/regress-452498-052.js
+js1_8_1/regress/regress-452498-053.js
 js1_8_1/regress/regress-452498-123.js
 js1_8_5/regress/regress-600137.js
 js1_8_5/regress/regress-672892.js
@@ -603,66 +610,40 @@ js1_8_5/extensions/recursion.js
 js1_8_5/extensions/regress-627859.js
 js1_8_5/extensions/sps-generators.js
 js1_8_5/extensions/typedarray.js
-
-# let-scoped expression block
-js1_7/block/order-of-operation.js
-js1_7/block/regress-349507.js
-js1_7/block/regress-351497.js
 js1_7/block/regress-343765.js
-js1_7/block/regress-344262.js
-js1_7/block/regress-344370.js
-js1_7/block/regress-345542.js
 js1_7/block/regress-349653.js
+js1_8_5/extensions/regress-672804-3.js
+
+# let-expression
+js1_7/block/regress-344262.js
+js1_7/block/regress-345542.js
 js1_7/block/regress-352616.js
 js1_7/block/regress-352624.js
-js1_7/block/regress-396900.js
-js1_7/block/regress-341939.js
-js1_7/expressions/regress-421806.js
-js1_7/expressions/regress-349818.js
 js1_7/expressions/regress-349624.js
-js1_7/extensions/regress-349619.js
+js1_7/expressions/regress-349818.js
+js1_7/expressions/regress-421806.js
 js1_7/extensions/regress-353454.js
-js1_7/extensions/regress-366668-02.js
 js1_7/extensions/regress-429266.js
-js1_7/extensions/regress-470176.js
-js1_7/regress/regress-355832-01.js
-js1_7/regress/regress-355832-02.js
-js1_7/regress/regress-361566.js
-js1_7/regress/regress-373827-01.js
-js1_7/regress/regress-373827-02.js
-js1_8/regress/regress-464092-01.js
-js1_8/regress/regress-464092-02.js
-js1_8/regress/regress-471660.js
-js1_8/regress/regress-472528-01.js
-js1_8/regress/regress-472528-02.js
-js1_8_1/regress/regress-452498-050.js
-js1_8_1/regress/regress-452498-053.js
-js1_8_1/regress/regress-496922.js
-js1_8_1/regress/regress-522123.js
-js1_8_1/strict/let-block-eval-arguments.js
-js1_8_5/regress/regress-541255-3.js
-js1_8_5/regress/regress-554955-1.js
-js1_8_5/regress/regress-554955-3.js
-js1_8_5/regress/regress-554955-4.js
-js1_8_5/regress/regress-554955-6.js
-js1_8_5/regress/regress-592202-1.js
-js1_8_5/regress/regress-592202-2.js
-js1_8_5/regress/regress-673070-1.js
-js1_8_5/regress/regress-673070-2.js
 js1_7/regress/regress-352870-02.js
-js1_7/regress/regress-353079.js
+js1_7/regress/regress-361566.js
 js1_7/regress/regress-373828.js
 js1_7/regress/regress-387951.js
 js1_7/regress/regress-414553.js
 js1_8/regress/regress-453492.js
+js1_8/regress/regress-464092-01.js
+js1_8/regress/regress-464092-02.js
+js1_8/regress/regress-472528-01.js
+js1_8/regress/regress-472528-02.js
 js1_8_1/regress/regress-420399.js
 js1_8_1/regress/regress-452498-178.js
-js1_8_5/extensions/findReferences-02.js
 js1_8_5/extensions/regress-668438.js
 js1_8_5/extensions/regress-672804-1.js
 js1_8_5/extensions/regress-672804-2.js
-js1_8_5/extensions/regress-672804-3.js
 js1_8_5/regress/regress-569464.js
+js1_8_5/regress/regress-592202-1.js
+js1_8_5/regress/regress-592202-2.js
+js1_8_5/regress/regress-673070-1.js
+js1_8_5/regress/regress-673070-2.js
 
 
 #######################################
