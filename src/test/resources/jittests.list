@@ -126,6 +126,7 @@ tests/basic/bug717208.js
 tests/basic/bug732087.js
 
 # __iterator__ not supported
+tests/basic/testBrandedVsGeneric.js
 tests/basic/testCustomIterator.js
 tests/basic/bug684922.js
 
@@ -149,8 +150,11 @@ tests/basic/error-toString.js
 # different Function toSource behaviour
 tests/basic/function-tosource-bug779694.js
 tests/basic/function-tosource-constructor.js
+tests/basic/function-tosource-exprbody.js
 tests/basic/function-tosource-func-proto.js
+tests/basic/function-tosource-getset.js
 tests/basic/function-tosource-lambda.js
+tests/basic/function-tosource-strict.js
 
 # Date parser
 tests/sunspider/check-date-format-tofte.js
@@ -210,6 +214,7 @@ tests/basic/bug821850.js
 tests/auto-regress/bug578015.js
 tests/auto-regress/bug727330.js
 tests/basic/bug763440.js
+tests/for-of/semantics-11.js
 
 # SpiderMonkey does not support [[Origin]] for PropertyDescriptors
 tests/proxy/testDirectProxyDefineProperty2.js
@@ -318,6 +323,9 @@ tests/proxy/testDirectProxyConstruct2.js
 # ES6 related syntax changes          #
 #######################################
 
+# throws early ReferenceError instead of SyntaxError
+tests/basic/function-tosource-exprbody-bug777834.js
+
 # ES6-change: no longer SyntaxError
 tests/basic/testBug775807.js
 
@@ -326,6 +334,7 @@ tests/basic/bug646968-3.js
 
 # ES6-change: 'eval'/'arguments' not allowed in binding pattern
 tests/arguments/rest-arguments-as-parameters.js
+tests/basic/testBug741497.js
 
 # missing const initialiser
 tests/auto-regress/bug495843.js
@@ -443,6 +452,7 @@ tests/basic/shell-watchdog.js
 tests/basic/properly-remove-timeout-root-before-shutdown.js
 tests/basic/timeout-check.js
 # deserialize
+tests/basic/bug744285.js
 tests/basic/bug754242.js
 tests/basic/testBug616454.js
 # clone
@@ -453,6 +463,8 @@ tests/basic/save-frame-chain.js
 # evaluate() with newContext option
 tests/basic/cross-context-stack-1.js
 tests/basic/bug863084.js
+# decompileThis
+tests/basic/decompile-script.js
 
 # Unsupported 'Testing' functions
 # gcparam
@@ -482,6 +494,7 @@ tests/basic/functionnames.js
 # getObjectMetadata/setObjectMetadata/setObjectMetadataCallback
 tests/basic/metadata-hook.js
 # getBuildConfiguration
+tests/basic/bug815652.js
 tests/basic/testOOMInAutoEnterCompartment.js
 
 
@@ -584,72 +597,10 @@ tests/basic/testBug773927.js
 tests/collections/Map-constructor-generator-2.js
 tests/collections/Map-constructor-generator-3.js
 tests/collections/Set-constructor-generator-2.js
-
-# function expression closure not supported
-tests/arguments/destructuring-exprbody.js
-tests/auto-regress/bug488034.js
-tests/auto-regress/bug488421.js
-tests/auto-regress/bug490191.js
-tests/auto-regress/bug496270.js
-tests/auto-regress/bug580200.js
-tests/auto-regress/bug650658.js
-tests/auto-regress/bug659779.js
-tests/auto-regress/bug698150.js
-tests/auto-regress/bug732719.js
-tests/auto-regress/bug763989.js
-tests/auto-regress/bug830049.js
-tests/basic/bug709634.js
-tests/basic/bug744285.js
-tests/basic/bug830049.js
-tests/basic/bug832203.js
-tests/basic/decompile-script.js
-tests/basic/newArrayTest.js
-tests/basic/shapelessCalleeTest.js
-tests/basic/string-contains.js
-tests/basic/string-endswith.js
-tests/basic/string-repeat.js
-tests/basic/string-startswith.js
-tests/basic/testBrandedVsGeneric.js
-tests/basic/testBug783441.js
-tests/basic/testCallProtoMethod.js
 tests/basic/testCrossCompartmentTransparency.js
-tests/basic/testDynamicUsage.js
-tests/basic/testHeavy2.js
-tests/basic/testHeavy.js
 tests/basic/testImplicitArgumentsInGenExprs.js
-tests/basic/testInterpreterReentry5.js
-tests/basic/testObjectToNumber.js
-tests/basic/testObjectToString.js
-tests/basic/testShiftRightArithmetic.js
-tests/basic/testShiftRightLogical.js
-tests/basic/testShiftLeft.js
+tests/auto-regress/bug496270.js
 tests/closures/flat-closure-3.js
-tests/for-of/semantics-11.js
-tests/pic/arguments.js
-tests/pic/bug558099.js
-tests/auto-regress/bug630770.js
-tests/auto-regress/bug730806.js
-tests/auto-regress/bug746376.js
-tests/auto-regress/bug748119.js
-tests/auto-regress/bug756236.js
-tests/auto-regress/bug778557.js
-tests/basic/bug650148.js
-tests/basic/bug651966.js
-tests/basic/bug657225.js
-tests/basic/bug673766.js
-tests/basic/bug708805.js
-tests/basic/bug729364.js
-tests/basic/bug728086.js
-tests/basic/bug808067.js
-tests/basic/bug815652.js
-tests/basic/forVarInWith.js
-tests/basic/function-tosource-exprbody.js
-tests/basic/function-tosource-exprbody-bug777834.js
-tests/basic/function-tosource-strict.js
-tests/basic/testBug740442.js
-tests/basic/testBug741497.js
-tests/basic/function-tosource-getset.js
-tests/basic/testInterpreterReentry4.js
 
 # let-scoped expression block
 tests/auto-regress/bug475658.js
@@ -669,6 +620,7 @@ tests/basic/bug646968-1.js
 tests/basic/bug646968-6.js
 tests/basic/bug647695.js
 tests/basic/bug662338.js
+tests/basic/bug708805.js
 tests/basic/bug727921.js
 tests/basic/expression-autopsy.js
 tests/basic/testAliasedLet.js
@@ -680,6 +632,7 @@ tests/basic/testBug714650.js
 tests/basic/testBug773108.js
 tests/basic/testBug776191.js
 tests/basic/testClosureIncrSideExit.js
+tests/basic/testDynamicUsage.js
 tests/basic/testGlobalOptimize-2.js
 tests/basic/testGlobalOptimize-5.js
 tests/basic/testGlobalOptimize-3.js

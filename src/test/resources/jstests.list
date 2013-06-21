@@ -21,6 +21,12 @@ ecma_3/Number/15.7.4.7-1.js
 # Invalid test: RegExec sets lastIndex to 0 if no match found
 ecma_5/RegExp/exec.js
 
+# ES6 spec bug: `Map()` etc. must be called with explicit `new`
+js1_8_5/extensions/weakmap.js
+
+# ES6 spec incomplete for DataView
+js1_8_5/extensions/dataview.js
+
 
 ####################################
 # Intl only partially supported    #
@@ -112,9 +118,11 @@ ecma/String/15.5.4.12-5.js
 
 # different function source representation
 ecma_5/extensions/strict-function-toSource.js
+ecma_5/extensions/uneval-strict-functions.js
 js1_5/extensions/regress-313803.js
 js1_7/extensions/regress-367629.js
 js1_7/extensions/regress-381301.js
+js1_8/extensions/regress-385729.js
 js1_8_5/regress/regress-584355.js
 
 # Extended toPrecision() range
@@ -134,6 +142,9 @@ ecma_5/extensions/getOwnPropertyNames-__proto__.js
 
 # old 'Proxy' design prototype restriction
 ecma_5/extensions/proxy-__proto__.js
+
+# old 'Proxy' not completely emulated
+js1_8_5/extensions/proxy-enumerateOwn-duplicates.js
 
 # Array.prototype.sort does not throw if no setter defined
 js1_6/extensions/regress-414098.js
@@ -195,6 +206,7 @@ js1_7/extensions/regress-355052-02.js
 js1_7/extensions/regress-355052-03.js
 js1_7/regress/regress-363040-01.js
 js1_8/extensions/regress-353116.js
+js1_8/extensions/regress-469625.js
 js1_8/regress/regress-455981-01.js
 js1_8/regress/regress-455981-02.js
 js1_8_1/regress/regress-452498-092.js
@@ -230,6 +242,15 @@ ecma_5/Object/15.2.3.3-01.js
 ecma_5/Object/15.2.3.4-04.js
 ecma_5/strict/15.10.7.js
 
+# WeakMap.prototype.set returns this object
+js1_8_5/extensions/regress-697515.js
+
+# strict 'caller' no longer throws TypeError, returns null instead
+js1_8_5/extensions/censor-strict-caller.js
+
+# [[Set]] on non-existant property key triggers [[Set]] on prototype
+js1_8_5/extensions/correct-this-for-nonnatives-on-array-proto-chain.js
+
 
 #######################################
 # ES6 related syntax changes          #
@@ -258,6 +279,7 @@ js1_5/Regress/regress-146596.js
 
 # lexical declared variables must not be redeclared
 js1_8_1/regress/regress-452498-054.js
+js1_8_5/extensions/clone-complex-object.js
 
 # ES6-change: function declaration in block allowed
 ecma_5/extensions/strict-function-statements.js
@@ -297,6 +319,7 @@ js1_5/Regress/regress-360969-04.js
 js1_6/Regress/regress-372565.js
 js1_8_1/regress/regress-452498-101.js
 js1_8_1/regress/regress-452498-112.js
+js1_8_1/regress/regress-452498-160.js
 js1_8_1/regress/regress-452498-187.js
 js1_8_1/regress/regress-452498-192.js
 
@@ -311,6 +334,9 @@ js1_8/regress/regress-467495-03.js
 js1_8/regress/regress-467495-04.js
 js1_8/regress/regress-467495-05.js
 js1_8/regress/regress-467495-06.js
+
+# Declaration directly nested in Statement not allowed
+js1_8_1/regress/regress-452498-102.js
 
 
 ############################################
@@ -354,6 +380,19 @@ js1_8_1/extensions/regress-452498-193.js
 js1_8_1/extensions/regress-452498-196.js
 js1_8_1/extensions/regress-520572.js
 js1_8/extensions/regress-481989.js
+js1_8_5/extensions/regress-604781-1.js
+js1_8_5/extensions/regress-604781-2.js
+js1_8_5/extensions/regress-627984-1.js
+js1_8_5/extensions/regress-627984-2.js
+js1_8_5/extensions/regress-627984-3.js
+js1_8_5/extensions/regress-627984-4.js
+js1_8_5/extensions/regress-627984-5.js
+js1_8_5/extensions/regress-627984-6.js
+js1_8_5/extensions/regress-627984-7.js
+js1_8_5/extensions/regress-631723.js
+js1_8_5/extensions/regress-636697.js
+js1_8_5/extensions/regress-637985.js
+js1_8_5/extensions/watch-undefined-setter.js
 js1_8_5/regress/regress-533876.js
 js1_8_5/regress/regress-635195.js
 js1_8_5/regress/regress-636394.js
@@ -382,6 +421,22 @@ js1_8_5/regress/regress-736792.js
 # trap() not supported
 js1_8_5/regress/regress-476088.js
 
+# clone() not supported
+js1_8_5/extensions/regress-677589.js
+
+# serialize()/deserialize() not supported
+js1_8_5/extensions/clone-forge.js
+js1_8_5/extensions/clone-leaf-object.js
+js1_8_5/extensions/clone-object.js
+js1_8_5/extensions/clone-regexp.js
+js1_8_5/extensions/clone-simple.js
+js1_8_5/extensions/clone-typed-array.js
+js1_8_5/extensions/clone-v1-typed-array.js
+
+# Reflect not supported
+js1_8_5/extensions/reflect-parse.js
+js1_8_5/extensions/regress-696109.js
+
 
 #######################################
 # Test for syntax extensions          #
@@ -398,6 +453,12 @@ js1_5/LexicalConventions/regress-343675.js
 js1_6/extensions/regress-465443.js
 js1_8_1/extensions/regress-437288-01.js
 js1_8_5/regress/regress-383902.js
+
+# let + for-each is invalid in JS1.6
+js1_6/extensions/regress-352392.js
+
+# Iterator + for-each returns [key,value] pairs
+js1_7/iterable/regress-568056.js
 
 # Old Generator, GeneratorComprehension syntax
 js1_5/Regress/regress-352009.js
@@ -534,40 +595,14 @@ js1_8_1/regress/regress-452498-139.js
 js1_8_1/regress/regress-452498-099-a.js
 js1_7/geniter/regress-355834.js
 js1_8_1/regress/regress-452498-119.js
-
-# let + for-each is invalid in JS1.6
-js1_6/extensions/regress-352392.js
-
-# Iterator + for-each returns [key,value] pairs
-js1_7/iterable/regress-568056.js
-
-# function expression closure not supported
-ecma_3/FunExpr/regress-545980.js
-ecma_5/extensions/uneval-strict-functions.js
-js1_8/extensions/expclo.js
-js1_8/extensions/expclo2.js
-js1_8/extensions/regress-385729.js
-js1_8/extensions/regress-422269.js
-js1_8/extensions/regress-452913.js
-js1_8/extensions/regress-454744.js
-js1_8/extensions/regress-469625.js
 js1_8/genexps/regress-634472.js
-js1_8/regress/regress-452491.js
-js1_8/regress/regress-464096.js
-js1_8/regress/regress-465220.js
-js1_8/regress/regress-465460-01.js
-js1_8_1/regress/regress-452498-121.js
 js1_8_1/regress/regress-452498-130.js
-js1_8_5/regress/regress-607863.js
-js1_8_5/regress/regress-646820-1.js
-js1_8_5/regress/regress-646820-2.js
-js1_8_5/regress/regress-646820-3.js
-js1_8/regress/regress-459389.js
-js1_8/regress/regress-467495-01.js
-js1_8_1/regress/regress-452498-027.js
-js1_8_1/regress/regress-452498-079.js
-js1_8_1/regress/regress-452498-102.js
-js1_8_1/regress/regress-452498-160.js
+js1_8_5/extensions/findReferences-03.js
+js1_8_5/extensions/is-generator.js
+js1_8_5/extensions/recursion.js
+js1_8_5/extensions/regress-627859.js
+js1_8_5/extensions/sps-generators.js
+js1_8_5/extensions/typedarray.js
 
 # let-scoped expression block
 js1_7/block/order-of-operation.js
@@ -622,67 +657,12 @@ js1_7/regress/regress-414553.js
 js1_8/regress/regress-453492.js
 js1_8_1/regress/regress-420399.js
 js1_8_1/regress/regress-452498-178.js
-js1_8_5/regress/regress-569464.js
-
-# js1_8_5/extensions/shell.js uses 'catch (x if y)' extension and function expression closure
-js1_8_5/extensions/array-length-protochange.js
-js1_8_5/extensions/arraybuffer-prototype.js
-js1_8_5/extensions/censor-strict-caller.js
-js1_8_5/extensions/clone-complex-object.js
-js1_8_5/extensions/clone-errors.js
-js1_8_5/extensions/clone-forge.js
-js1_8_5/extensions/clone-leaf-object.js
-js1_8_5/extensions/clone-object.js
-js1_8_5/extensions/clone-regexp.js
-js1_8_5/extensions/clone-simple.js
-js1_8_5/extensions/clone-typed-array.js
-js1_8_5/extensions/compound-assign-const.js
-js1_8_5/extensions/correct-this-for-nonnatives-on-array-proto-chain.js
-js1_8_5/extensions/dataview.js
-js1_8_5/extensions/destructure-accessor.js
-js1_8_5/extensions/findReferences-01.js
 js1_8_5/extensions/findReferences-02.js
-js1_8_5/extensions/findReferences-03.js
-js1_8_5/extensions/findReferences-04.js
-js1_8_5/extensions/is-generator.js
-js1_8_5/extensions/proxy-enumerateOwn-duplicates.js
-js1_8_5/extensions/proxy-proto-setter.js
-js1_8_5/extensions/sps-generators.js
-js1_8_5/extensions/recursion.js
-js1_8_5/extensions/reflect-parse.js
-js1_8_5/extensions/regress-558541.js
-js1_8_5/extensions/regress-604781-1.js
-js1_8_5/extensions/regress-604781-2.js
-js1_8_5/extensions/regress-627859.js
-js1_8_5/extensions/regress-627984-1.js
-js1_8_5/extensions/regress-627984-2.js
-js1_8_5/extensions/regress-627984-3.js
-js1_8_5/extensions/regress-627984-4.js
-js1_8_5/extensions/regress-627984-5.js
-js1_8_5/extensions/regress-627984-6.js
-js1_8_5/extensions/regress-627984-7.js
-js1_8_5/extensions/regress-631723.js
-js1_8_5/extensions/regress-636697.js
-js1_8_5/extensions/regress-636818.js
-js1_8_5/extensions/regress-637985.js
-js1_8_5/extensions/regress-645160.js
-js1_8_5/extensions/regress-650753.js
 js1_8_5/extensions/regress-668438.js
 js1_8_5/extensions/regress-672804-1.js
 js1_8_5/extensions/regress-672804-2.js
 js1_8_5/extensions/regress-672804-3.js
-js1_8_5/extensions/regress-677589.js
-js1_8_5/extensions/regress-677924.js
-js1_8_5/extensions/regress-691746.js
-js1_8_5/extensions/regress-696109.js
-js1_8_5/extensions/regress-697515.js
-js1_8_5/extensions/scripted-proxies.js
-js1_8_5/extensions/toSource-0.js
-js1_8_5/extensions/typedarray-subarray-of-subarray.js
-js1_8_5/extensions/typedarray.js
-js1_8_5/extensions/watch-undefined-setter.js
-js1_8_5/extensions/weakmap.js
-js1_8_5/extensions/clone-v1-typed-array.js
+js1_8_5/regress/regress-569464.js
 
 
 #######################################
