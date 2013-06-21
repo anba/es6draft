@@ -105,6 +105,7 @@ js1_5/extensions/regress-429739.js
 js1_5/extensions/regress-564577.js
 
 # __iterator__ not supported
+js1_7/extensions/regress-353454.js
 js1_7/extensions/regress-354945-01.js
 js1_7/extensions/regress-354945-02.js
 
@@ -202,6 +203,7 @@ js1_6/Array/regress-304828.js
 js1_6/Regress/regress-355002.js
 js1_7/block/regress-348685.js
 js1_7/block/regress-351497.js
+js1_7/block/regress-352616.js
 js1_7/extensions/regress-355052-01.js
 js1_7/extensions/regress-355052-02.js
 js1_7/extensions/regress-355052-03.js
@@ -210,6 +212,7 @@ js1_8/extensions/regress-353116.js
 js1_8/extensions/regress-469625.js
 js1_8/regress/regress-455981-01.js
 js1_8/regress/regress-455981-02.js
+js1_8_1/regress/regress-420399.js
 js1_8_1/regress/regress-452498-092.js
 js1_8_1/regress/regress-452498-185.js
 js1_8_1/regress/regress-452498-191.js
@@ -345,6 +348,9 @@ js1_8/regress/regress-467495-06.js
 # Declaration directly nested in Statement not allowed
 js1_8_1/regress/regress-452498-102.js
 
+# destructuring with undefined/null
+js1_8_5/regress/regress-592202-1.js
+
 
 ############################################
 # Unsupported built-in object functions    #
@@ -426,6 +432,8 @@ js1_8_1/extensions/strict-warning.js
 js1_8_5/regress/regress-736792.js
 
 # trap() not supported
+js1_8_5/extensions/regress-672804-1.js
+js1_8_5/extensions/regress-672804-2.js
 js1_8_5/regress/regress-476088.js
 
 # clone() not supported
@@ -613,37 +621,9 @@ js1_8_5/extensions/typedarray.js
 js1_7/block/regress-343765.js
 js1_7/block/regress-349653.js
 js1_8_5/extensions/regress-672804-3.js
-
-# let-expression
-js1_7/block/regress-344262.js
-js1_7/block/regress-345542.js
-js1_7/block/regress-352616.js
-js1_7/block/regress-352624.js
-js1_7/expressions/regress-349624.js
-js1_7/expressions/regress-349818.js
-js1_7/expressions/regress-421806.js
-js1_7/extensions/regress-353454.js
-js1_7/extensions/regress-429266.js
 js1_7/regress/regress-352870-02.js
-js1_7/regress/regress-361566.js
-js1_7/regress/regress-373828.js
-js1_7/regress/regress-387951.js
-js1_7/regress/regress-414553.js
-js1_8/regress/regress-453492.js
-js1_8/regress/regress-464092-01.js
-js1_8/regress/regress-464092-02.js
-js1_8/regress/regress-472528-01.js
-js1_8/regress/regress-472528-02.js
-js1_8_1/regress/regress-420399.js
-js1_8_1/regress/regress-452498-178.js
 js1_8_5/extensions/regress-668438.js
-js1_8_5/extensions/regress-672804-1.js
-js1_8_5/extensions/regress-672804-2.js
 js1_8_5/regress/regress-569464.js
-js1_8_5/regress/regress-592202-1.js
-js1_8_5/regress/regress-592202-2.js
-js1_8_5/regress/regress-673070-1.js
-js1_8_5/regress/regress-673070-2.js
 
 
 #######################################

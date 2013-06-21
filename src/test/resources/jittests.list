@@ -155,6 +155,7 @@ tests/basic/function-tosource-func-proto.js
 tests/basic/function-tosource-getset.js
 tests/basic/function-tosource-lambda.js
 tests/basic/function-tosource-strict.js
+tests/basic/testLet.js
 
 # Date parser
 tests/sunspider/check-date-format-tofte.js
@@ -165,6 +166,7 @@ tests/basic/bug827104.js
 tests/basic/bug839420.js
 tests/basic/expression-autopsy.js
 tests/basic/testBug566556.js
+tests/basic/testBug579647.js
 tests/basic/testBug604210.js
 tests/basic/testDontClobberScannerError.js
 tests/basic/testErrorReportIn_getPrototypeOf.js
@@ -380,6 +382,7 @@ tests/auto-regress/bug537854.js
 tests/auto-regress/bug560796.js
 tests/basic/testBug578044.js
 tests/basic/testEvalCalledFromWatchOverSetter.js
+tests/basic/testNonStubGetter.js
 tests/basic/testSettingWatchPointOnReadOnlyProp.js
 tests/auto-regress/bug638735.js
 tests/basic/bug510437.js
@@ -605,31 +608,9 @@ tests/closures/flat-closure-3.js
 tests/auto-regress/bug475658.js
 tests/basic/bug727921.js
 tests/closures/incr-exit-3.js
-
-# let expression
 tests/auto-regress/bug491806.js
-tests/auto-regress/bug523793.js
-tests/auto-regress/bug531298.js
-tests/auto-regress/bug745158.js
-tests/basic/bug646968-1.js
-tests/basic/bug646968-6.js
-tests/basic/bug647695.js
-tests/basic/bug662338.js
-tests/basic/bug708805.js
-tests/basic/testBug579647.js
-tests/basic/testBug692274-4.js
 tests/basic/testBug773108.js
 tests/basic/testDynamicUsage.js
-tests/basic/testLet.js
-tests/basic/testNonStubGetter.js
-tests/basic/bug510642.js
-tests/basic/bug646968-2.js
-tests/basic/regress-bug720680.js
-tests/basic/testBug709633.js
-tests/basic/throw-apply-too-many-args.js
-tests/closures/bug540131-3.js
-tests/auto-regress/bug569774.js
-tests/auto-regress/bug800407.js
 
 
 #######################################
