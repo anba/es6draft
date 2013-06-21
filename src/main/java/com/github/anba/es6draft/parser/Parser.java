@@ -325,7 +325,10 @@ public class Parser {
         GuardedCatch,
 
         /** Moz-Extension: expression closure */
-        ExpressionClosure;
+        ExpressionClosure,
+
+        /** Moz-Extension: let statement */
+        LetStatement;
 
         public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -346,6 +349,9 @@ public class Parser {
             }
             if (compatOptions.contains(CompatibilityOption.ExpressionClosure)) {
                 options.add(Option.ExpressionClosure);
+            }
+            if (compatOptions.contains(CompatibilityOption.LetStatement)) {
+                options.add(Option.LetStatement);
             }
             return options;
         }
@@ -2327,6 +2333,8 @@ public class Parser {
             return tryStatement();
         case DEBUGGER:
             return debuggerStatement();
+        case LET:
+            return letStatement();
         case NAME:
             if (LOOKAHEAD(Token.COLON)) {
                 return labelledStatement();
@@ -2394,9 +2402,12 @@ public class Parser {
      */
     private StatementListItem statementListItem() {
         switch (token()) {
+        case LET:
+            if (LOOKAHEAD(Token.LP) && isEnabled(Option.LetStatement)) {
+                return statement();
+            }
         case FUNCTION:
         case CLASS:
-        case LET:
         case CONST:
             return declaration();
         default:
@@ -3787,6 +3798,36 @@ public class Parser {
         semicolon();
 
         return new DebuggerStatement();
+    }
+
+    /**
+     * <strong>[Extension] The <code>let</code> Statement</strong>
+     * 
+     * <pre>
+     * LetStatement :
+     *     let ( BindingList ) { StatementList<sub>opt</sub> }
+     * </pre>
+     */
+    private Statement letStatement() {
+        BlockContext scope = enterBlockContext();
+        consume(Token.LET);
+
+        consume(Token.LP);
+        List<LexicalBinding> bindings = bindingList(false, true);
+        LexicalDeclaration decl = new LexicalDeclaration(LexicalDeclaration.Type.Let, bindings);
+        addLexScopedDeclaration(decl);
+        consume(Token.RP);
+
+        consume(Token.LC);
+        List<StatementListItem> list = statementList(Token.RC);
+        consume(Token.RC);
+
+        exitBlockContext();
+
+        BlockStatement block = new BlockStatement(scope, merge(
+                Collections.<StatementListItem> singletonList(decl), list));
+        scope.node = block;
+        return block;
     }
 
     /* ***************************************************************************************** */
