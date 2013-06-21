@@ -14,10 +14,10 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
+import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
+import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.SpreadArrayLiteral;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
-import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
-import com.github.anba.es6draft.ast.synthetic.PropertyAccessorValue;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 
@@ -458,6 +458,11 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     @Override
     public Integer visit(LabelledStatement node, CodeSizeHandler value) {
         return 15;
+    }
+
+    @Override
+    public Integer visit(LetExpression node, CodeSizeHandler value) {
+        return analyze(node, node.getBindings(), node.getExpression(), 25, 5, value);
     }
 
     @Override

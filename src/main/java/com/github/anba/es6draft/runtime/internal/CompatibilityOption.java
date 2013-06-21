@@ -98,7 +98,12 @@ public enum CompatibilityOption {
     /**
      * Moz-Extension: let statement
      */
-    LetStatement;
+    LetStatement,
+
+    /**
+     * Moz-Extension: let expression
+     */
+    LetExpression;
 
     /**
      * Returns a set of all options for strict-compatibility
@@ -118,6 +123,6 @@ public enum CompatibilityOption {
      * Returns a set of all options for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, LetStatement);
+        return EnumSet.range(LegacyOctalIntegerLiteral, LetExpression);
     }
 }

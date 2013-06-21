@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.Substitutions;
 
 import java.util.ArrayList;
@@ -66,6 +67,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 "directEval", Type.getMethodType(Types.Object, Types.Object,
                         Types.ExecutionContext, Type.BOOLEAN_TYPE, Type.BOOLEAN_TYPE));
 
+        // class: EnvironmentRecord
+        static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
+                MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
+                Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
+
         // class: ExecutionContext
         static final MethodDesc ExecutionContext_thisResolution = MethodDesc.create(
                 MethodType.Virtual, Types.ExecutionContext, "thisResolution",
@@ -75,6 +81,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         static final MethodDesc ExoticArray_ArrayCreate = MethodDesc.create(MethodType.Static,
                 Types.ExoticArray, "ArrayCreate",
                 Type.getMethodType(Types.ExoticArray, Types.ExecutionContext, Type.LONG_TYPE));
+
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
 
         // class: OrdinaryObject
         static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(MethodType.Static,
@@ -1423,6 +1434,60 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     @Override
     public ValType visit(IdentifierValue node, ExpressionVisitor mv) {
         return identifierResolution.resolveValue(node, mv);
+    }
+
+    @Override
+    public ValType visit(LetExpression node, ExpressionVisitor mv) {
+        // create new declarative lexical environment
+        // stack: [] -> [env]
+        mv.enterScope(node);
+        newDeclarativeEnvironment(mv);
+        {
+            // stack: [env] -> [env, envRec]
+            mv.dup();
+            mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+
+            // stack: [env, envRec] -> [env]
+            for (LexicalBinding binding : node.getBindings()) {
+                // stack: [env, envRec] -> [env, envRec, envRec]
+                mv.dup();
+
+                // stack: [env, envRec, envRec] -> [env, envRec, envRec]
+                for (String name : BoundNames(binding.getBinding())) {
+                    mv.dup();
+                    mv.aconst(name);
+                    mv.iconst(false);
+                    mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
+                }
+
+                Expression initialiser = binding.getInitialiser();
+                if (initialiser != null) {
+                    ValType type = expressionValue(initialiser, mv);
+                    if (binding.getBinding() instanceof BindingPattern) {
+                        ToObject(type, mv);
+                    } else {
+                        mv.toBoxed(type);
+                    }
+                } else {
+                    assert binding.getBinding() instanceof BindingIdentifier;
+                    mv.get(Fields.Undefined_UNDEFINED);
+                }
+
+                // stack: [env, envRec, envRec, value] -> [env, envRec]
+                BindingInitialisationWithEnvironment(binding.getBinding(), mv);
+            }
+            mv.pop();
+        }
+        // stack: [env] -> []
+        pushLexicalEnvironment(mv);
+
+        ValType type = evalAndGetValue(node.getExpression(), mv);
+
+        // restore previous lexical environment
+        popLexicalEnvironment(mv);
+        mv.exitScope();
+
+        return type;
     }
 
     @Override

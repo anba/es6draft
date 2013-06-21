@@ -142,4 +142,9 @@ class IsValidSimpleAssignmentTarget extends StaticSemanticsVisitor<Boolean, Bool
     public Boolean visit(CommaExpression node, Boolean strict) {
         return false;
     }
+
+    @Override
+    public Boolean visit(LetExpression node, Boolean value) {
+        return false;
+    }
 }

@@ -328,7 +328,10 @@ public class Parser {
         ExpressionClosure,
 
         /** Moz-Extension: let statement */
-        LetStatement;
+        LetStatement,
+
+        /** Moz-Extension: let expression */
+        LetExpression;
 
         public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -352,6 +355,9 @@ public class Parser {
             }
             if (compatOptions.contains(CompatibilityOption.LetStatement)) {
                 options.add(Option.LetStatement);
+            }
+            if (compatOptions.contains(CompatibilityOption.LetExpression)) {
+                options.add(Option.LetExpression);
             }
             return options;
         }
@@ -2334,14 +2340,17 @@ public class Parser {
         case DEBUGGER:
             return debuggerStatement();
         case LET:
-            return letStatement();
+            if (isEnabled(Option.LetStatement)) {
+                return letStatement();
+            }
+            break;
         case NAME:
             if (LOOKAHEAD(Token.COLON)) {
                 return labelledStatement();
             }
         default:
-            return expressionStatement();
         }
+        return expressionStatement();
     }
 
     /**
@@ -2403,7 +2412,8 @@ public class Parser {
     private StatementListItem statementListItem() {
         switch (token()) {
         case LET:
-            if (LOOKAHEAD(Token.LP) && isEnabled(Option.LetStatement)) {
+            if (LOOKAHEAD(Token.LP)
+                    && (isEnabled(Option.LetStatement) || isEnabled(Option.LetExpression))) {
                 return statement();
             }
         case FUNCTION:
@@ -3814,20 +3824,37 @@ public class Parser {
 
         consume(Token.LP);
         List<LexicalBinding> bindings = bindingList(false, true);
-        LexicalDeclaration decl = new LexicalDeclaration(LexicalDeclaration.Type.Let, bindings);
-        addLexScopedDeclaration(decl);
         consume(Token.RP);
 
-        consume(Token.LC);
-        List<StatementListItem> list = statementList(Token.RC);
-        consume(Token.RC);
+        if (token() != Token.LC && isEnabled(Option.LetExpression)) {
+            // let expression disguised as let statement
+            Expression expression = assignmentExpression(true);
 
-        exitBlockContext();
+            exitBlockContext();
 
-        BlockStatement block = new BlockStatement(scope, merge(
-                Collections.<StatementListItem> singletonList(decl), list));
-        scope.node = block;
-        return block;
+            LetExpression letExpression = new LetExpression(scope, bindings, expression);
+            scope.node = letExpression;
+
+            return new ExpressionStatement(letExpression);
+        } else {
+            // transform let statement into standard block statement:
+            // let (BindingList) { StatementList }
+            // => BlockStatement [ LexicalDeclaration[let BindingList]; StatementList ]
+
+            LexicalDeclaration decl = new LexicalDeclaration(LexicalDeclaration.Type.Let, bindings);
+            addLexScopedDeclaration(decl);
+
+            consume(Token.LC);
+            List<StatementListItem> list = statementList(Token.RC);
+            consume(Token.RC);
+
+            exitBlockContext();
+
+            BlockStatement block = new BlockStatement(scope, merge(
+                    Collections.<StatementListItem> singletonList(decl), list));
+            scope.node = block;
+            return block;
+        }
     }
 
     /* ***************************************************************************************** */
@@ -3898,6 +3925,10 @@ public class Parser {
             }
         case TEMPLATE:
             return templateLiteral(false);
+        case LET:
+            if (isEnabled(Option.LetExpression)) {
+                return letExpression();
+            }
         default:
             int line = ts.getLine();
             Identifier identifier = new Identifier(identifier());
@@ -4332,6 +4363,32 @@ public class Parser {
         consume(Token.TEMPLATE);
 
         return new TemplateLiteral(tagged, elements);
+    }
+
+    /**
+     * <strong>[Extension] The <code>let</code> Expression</strong>
+     * 
+     * <pre>
+     * LetExpression :
+     *     let ( BindingList ) AssignmentExpression
+     * </pre>
+     */
+    private LetExpression letExpression() {
+        BlockContext scope = enterBlockContext();
+        consume(Token.LET);
+
+        consume(Token.LP);
+        List<LexicalBinding> bindings = bindingList(false, true);
+        consume(Token.RP);
+
+        Expression expression = assignmentExpression(true);
+
+        exitBlockContext();
+
+        LetExpression letExpression = new LetExpression(scope, bindings, expression);
+        scope.node = letExpression;
+
+        return letExpression;
     }
 
     /**
