@@ -53,7 +53,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         // long byteOffsetInt = ToUint32(realm, byteOffset);
         long totalOffset = byteOffset + ToUint32(cx, Get(cx, view, "byteOffset"));
         long byteLength = ToUint32(cx, Get(cx, view, "byteLength"));
-        // FIXME: spec bug - range check is invalid
+        // FIXME: spec bug - range check is invalid (bug 1568)
         // if (totalOffset >= byteLength) {
         // throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         // }
@@ -73,7 +73,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         // long byteOffsetInt = ToUint32(realm, byteOffset);
         long totalOffset = byteOffset + ToUint32(cx, Get(cx, view, "byteOffset"));
         long byteLength = ToUint32(cx, Get(cx, view, "byteLength"));
-        // FIXME: spec bug - range check is invalid
+        // FIXME: spec bug - range check is invalid (bug 1568)
         // if (totalOffset >= byteLength) {
         // throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         // }
