@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.tailCall;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TemplateStrings;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,8 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.parser.Parser.Option;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
@@ -68,15 +71,17 @@ class CodeGenerator implements AutoCloseable {
 
     private final ClassWriter cw;
     private final String className;
+    private final EnumSet<Option> options;
     private ExecutorService sourceCompressor;
 
     private StatementGenerator stmtgen = new StatementGenerator(this);
     private ExpressionGenerator exprgen = new ExpressionGenerator(this);
     private PropertyGenerator propgen = new PropertyGenerator(this);
 
-    CodeGenerator(ClassWriter cw, String className) {
+    CodeGenerator(ClassWriter cw, String className, EnumSet<Parser.Option> options) {
         this.cw = cw;
         this.className = className;
+        this.options = options;
         if (INCLUDE_SOURCE) {
             this.sourceCompressor = Executors.newFixedThreadPool(1);
         }
@@ -84,6 +89,10 @@ class CodeGenerator implements AutoCloseable {
 
     String getClassName() {
         return className;
+    }
+
+    boolean isEnabled(Parser.Option option) {
+        return options.contains(option);
     }
 
     @Override

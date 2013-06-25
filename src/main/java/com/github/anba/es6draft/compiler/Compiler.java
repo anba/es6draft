@@ -16,6 +16,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.util.TraceClassVisitor;
 
 import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.Scope;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
@@ -23,6 +24,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeAnalysis;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeException;
+import com.github.anba.es6draft.parser.Parser;
 
 /**
  *
@@ -67,7 +69,7 @@ public class Compiler {
             throw new CompilationException(e.getMessage());
         }
 
-        try (CodeGenerator codegen = new CodeGenerator(cw, className)) {
+        try (CodeGenerator codegen = new CodeGenerator(cw, className, script.getOptions())) {
             // generate code
             codegen.compile(script);
 
@@ -103,7 +105,7 @@ public class Compiler {
             throw new CompilationException(e.getMessage());
         }
 
-        try (CodeGenerator codegen = new CodeGenerator(cw, className)) {
+        try (CodeGenerator codegen = new CodeGenerator(cw, className, optionsFrom(function))) {
             // generate code
             codegen.compile(function);
 
@@ -121,6 +123,14 @@ public class Compiler {
         }
 
         return bytes;
+    }
+
+    private static EnumSet<Parser.Option> optionsFrom(FunctionNode function) {
+        Scope enclosingScope = function.getScope().getEnclosingScope();
+        if (enclosingScope != null && enclosingScope.getNode() instanceof Script) {
+            return ((Script) enclosingScope.getNode()).getOptions();
+        }
+        return EnumSet.noneOf(Parser.Option.class);
     }
 
     private static void debug(byte[] b) {
