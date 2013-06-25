@@ -18,7 +18,58 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class DataViewObject extends OrdinaryObject {
+    /** [[ViewedArrayBuffer]] */
+    private ArrayBufferObject buffer;
+
+    /** [[ByteLength]] */
+    private long byteLength;
+
+    /** [[ByteOffset]] */
+    private long byteOffset;
+
     public DataViewObject(Realm realm) {
         super(realm);
+    }
+
+    /**
+     * [[ViewedArrayBuffer]]
+     */
+    public ArrayBufferObject getBuffer() {
+        return buffer;
+    }
+
+    /**
+     * [[ViewedArrayBuffer]]
+     */
+    public void setBuffer(ArrayBufferObject data) {
+        this.buffer = data;
+    }
+
+    /**
+     * [[ByteLength]]
+     */
+    public long getByteLength() {
+        return byteLength;
+    }
+
+    /**
+     * [[ByteLength]]
+     */
+    public void setByteLength(long byteLength) {
+        this.byteLength = byteLength;
+    }
+
+    /**
+     * [[ByteOffset]]
+     */
+    public long getByteOffset() {
+        return byteOffset;
+    }
+
+    /**
+     * [[ByteOffset]]
+     */
+    public void setByteOffset(long byteOffset) {
+        this.byteOffset = byteOffset;
     }
 }

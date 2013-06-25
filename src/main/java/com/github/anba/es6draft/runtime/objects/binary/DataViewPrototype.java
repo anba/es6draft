@@ -6,24 +6,22 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor.GetViewValue;
+import static com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor.SetViewValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -45,57 +43,10 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.13.7.4 Properties of the DataView Prototype Object<br>
-     * GetValue(byteOffset, isLittleEndian, type)
-     */
-    public static double GetValue(ExecutionContext cx, DataViewObject view, long byteOffset,
-            boolean isLittleEndian, ElementKind type) {
-        // long byteOffsetInt = ToUint32(realm, byteOffset);
-        long totalOffset = byteOffset + ToUint32(cx, Get(cx, view, "byteOffset"));
-        long byteLength = ToUint32(cx, Get(cx, view, "byteLength"));
-        // FIXME: spec bug - range check is invalid (bug 1568)
-        // if (totalOffset >= byteLength) {
-        // throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
-        // }
-        if (byteOffset + type.size() > byteLength) {
-            throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
-        }
-        ArrayBufferObject buffer = (ArrayBufferObject) Get(cx, view, "buffer");
-        return GetValueFromBuffer(buffer, totalOffset, type, !isLittleEndian);
-    }
-
-    /**
-     * 15.13.7.4 Properties of the DataView Prototype Object<br>
-     * SetValue(byteOffset, isLittleEndian, type, value)
-     */
-    public static void SetValue(ExecutionContext cx, DataViewObject view, long byteOffset,
-            boolean isLittleEndian, ElementKind type, double value) {
-        // long byteOffsetInt = ToUint32(realm, byteOffset);
-        long totalOffset = byteOffset + ToUint32(cx, Get(cx, view, "byteOffset"));
-        long byteLength = ToUint32(cx, Get(cx, view, "byteLength"));
-        // FIXME: spec bug - range check is invalid (bug 1568)
-        // if (totalOffset >= byteLength) {
-        // throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
-        // }
-        if (byteOffset + type.size() > byteLength) {
-            throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
-        }
-        ArrayBufferObject buffer = (ArrayBufferObject) Get(cx, view, "buffer");
-        SetValueInBuffer(buffer, totalOffset, type, value, !isLittleEndian);
-    }
-
-    /**
      * 15.13.7.4 Properties of the DataView Prototype Object
      */
     public enum Properties {
         ;
-
-        private static DataViewObject DataViewObject(ExecutionContext cx, ScriptObject m) {
-            if (m instanceof DataViewObject) {
-                return (DataViewObject) m;
-            }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
 
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
@@ -106,13 +57,41 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.DataView;
 
+        // TODO: 15.13.7.5 Properties of DataView Instances
+
+        @Accessor(name = "byteLength", type = Accessor.Type.Getter)
+        public static Object byteLength(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof DataViewObject)
+                    || ((DataViewObject) thisValue).getBuffer() == null) {
+                throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return ((DataViewObject) thisValue).getByteLength();
+        }
+
+        @Accessor(name = "buffer", type = Accessor.Type.Getter)
+        public static Object buffer(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof DataViewObject)
+                    || ((DataViewObject) thisValue).getBuffer() == null) {
+                throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return ((DataViewObject) thisValue).getBuffer();
+        }
+
+        @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
+        public static Object byteOffset(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof DataViewObject)
+                    || ((DataViewObject) thisValue).getBuffer() == null) {
+                throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return ((DataViewObject) thisValue).getByteOffset();
+        }
+
         /**
          * 15.13.7.4.2 DataView.prototype.getInt8(byteOffset)
          */
         @Function(name = "getInt8", arity = 1)
         public static Object getInt8(ExecutionContext cx, Object thisValue, Object byteOffset) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            return GetValue(cx, view, ToUint32(cx, byteOffset), true, ElementKind.Int8);
+            return GetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementKind.Int8);
         }
 
         /**
@@ -120,8 +99,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "getUint8", arity = 1)
         public static Object getUint8(ExecutionContext cx, Object thisValue, Object byteOffset) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            return GetValue(cx, view, ToUint32(cx, byteOffset), true, ElementKind.Uint8);
+            return GetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementKind.Uint8);
         }
 
         /**
@@ -130,10 +108,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getInt16", arity = 2)
         public static Object getInt16(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            return GetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Int16);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Int16);
         }
 
         /**
@@ -142,10 +117,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getUint16", arity = 2)
         public static Object getUint16(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            return GetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Uint16);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Uint16);
         }
 
         /**
@@ -154,10 +126,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getInt32", arity = 2)
         public static Object getInt32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            return GetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Int32);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Int32);
         }
 
         /**
@@ -166,10 +135,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getUint32", arity = 2)
         public static Object getUint32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            return GetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Uint32);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Uint32);
         }
 
         /**
@@ -178,10 +144,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getFloat32", arity = 2)
         public static Object getFloat32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            return GetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Float32);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Float32);
         }
 
         /**
@@ -190,10 +153,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getFloat64", arity = 2)
         public static Object getFloat64(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            return GetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Float64);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Float64);
         }
 
         /**
@@ -202,11 +162,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setInt8", arity = 2)
         public static Object setInt8(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            // FIXME: spec bug? (return value vs. web reality)
-            SetValue(cx, view, ToUint32(cx, byteOffset), true, ElementKind.Int8,
-                    ToNumber(cx, value));
+            SetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementKind.Int8, value);
             return UNDEFINED;
         }
 
@@ -216,11 +172,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setUint8", arity = 2)
         public static Object setUint8(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            // FIXME: spec bug? (return value vs. web reality)
-            SetValue(cx, view, ToUint32(cx, byteOffset), true, ElementKind.Uint8,
-                    ToNumber(cx, value));
+            SetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementKind.Uint8, value);
             return UNDEFINED;
         }
 
@@ -230,11 +182,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setInt16", arity = 3)
         public static Object setInt16(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            // FIXME: spec bug? (return value vs. web reality)
-            SetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Int16, ToNumber(cx, value));
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Int16, value);
             return UNDEFINED;
         }
 
@@ -244,11 +192,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setUint16", arity = 3)
         public static Object setUint16(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            // FIXME: spec bug? (return value vs. web reality)
-            SetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Uint16, ToNumber(cx, value));
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Uint16, value);
             return UNDEFINED;
         }
 
@@ -258,11 +202,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setInt32", arity = 3)
         public static Object setInt32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            // FIXME: spec bug? (return value vs. web reality)
-            SetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Int32, ToNumber(cx, value));
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Int32, value);
             return UNDEFINED;
         }
 
@@ -272,11 +212,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setUint32", arity = 3)
         public static Object setUint32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            // FIXME: spec bug? (return value vs. web reality)
-            SetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Uint32, ToNumber(cx, value));
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Uint32, value);
             return UNDEFINED;
         }
 
@@ -286,11 +222,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setFloat32", arity = 3)
         public static Object setFloat32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            // FIXME: spec bug? (return value vs. web reality)
-            SetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Float32, ToNumber(cx, value));
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Float32, value);
             return UNDEFINED;
         }
 
@@ -300,16 +232,12 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setFloat64", arity = 3)
         public static Object setFloat64(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            DataViewObject view = DataViewObject(cx, ToObject(cx, thisValue));
-            // FIXME: spec bug? (evaluation order vs. web reality)
-            // FIXME: spec bug? (return value vs. web reality)
-            SetValue(cx, view, ToUint32(cx, byteOffset), ToBoolean(littleEndian),
-                    ElementKind.Float64, ToNumber(cx, value));
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Float64, value);
             return UNDEFINED;
         }
 
         /**
-         * FIXME: missing in spec
+         * 15.13.7.4.18 DataView.prototype[ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "DataView";

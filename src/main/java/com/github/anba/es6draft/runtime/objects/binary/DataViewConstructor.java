@@ -6,26 +6,30 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
@@ -33,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h2>15.13 Binary Data Objects</h2><br>
  * <h3>15.13.7 DataView Objects</h3>
  * <ul>
- * <li>15.13.7.1 The DataView Constructor Called as a Function
+ * <li>15.13.7.1 Abstract Operations For DataView Objects
  * <li>15.13.7.2 The DataView Constructor
  * <li>15.13.7.3 Properties of the DataView Constructor
  * </ul>
@@ -49,43 +53,161 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    private static class DataViewObjectAllocator implements ObjectAllocator<DataViewObject> {
+        static final ObjectAllocator<DataViewObject> INSTANCE = new DataViewObjectAllocator();
+
+        @Override
+        public DataViewObject newInstance(Realm realm) {
+            return new DataViewObject(realm);
+        }
+    }
+
     /**
-     * 15.13.7.1 The DataView Constructor Called as a Function
+     * 15.13.7.1 Abstract Operations For DataView Objects <br>
+     * GetViewValue(view, requestIndex, isLittleEndian, type)
+     */
+    public static double GetViewValue(ExecutionContext cx, Object view, Object requestIndex,
+            Object isLittleEndian, ElementKind type) {
+        ScriptObject v = ToObject(cx, view);
+        // FIXME: DataView update in bug 1568 tests for [[ViewedArrayBuffer]] which applies to
+        // DataView objects as well as TypedArray objects
+        if (!(v instanceof DataViewObject)) {
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        DataViewObject dataView = (DataViewObject) v;
+        ArrayBufferObject buffer = dataView.getBuffer();
+        if (buffer == null) {
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        double numberIndex = ToNumber(cx, requestIndex);
+        double getIndex = ToInteger(numberIndex);
+        if (numberIndex != getIndex || getIndex < 0) {
+            throwRangeError(cx, Messages.Key.InvalidByteOffset);
+        }
+        boolean littleEndian = false; // default value
+        if (!Type.isUndefined(isLittleEndian)) {
+            littleEndian = ToBoolean(isLittleEndian);
+        }
+        long viewOffset = dataView.getByteOffset();
+        long viewSize = dataView.getByteLength();
+        int elementSize = type.size();
+        if (getIndex + elementSize > viewSize) {
+            throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
+        }
+        long bufferIndex = (long) getIndex + viewOffset;
+        return GetValueFromBuffer(buffer, bufferIndex, type, !littleEndian);
+    }
+
+    /**
+     * 15.13.7.1 Abstract Operations For DataView Objects <br>
+     * SetViewValue(view, requestIndex, isLittleEndian, type, value)
+     */
+    public static void SetViewValue(ExecutionContext cx, Object view, Object requestIndex,
+            Object isLittleEndian, ElementKind type, Object value) {
+        ScriptObject v = ToObject(cx, view);
+        // FIXME: DataView update in bug 1568 tests for [[ViewedArrayBuffer]] which applies to
+        // DataView objects as well as TypedArray objects
+        if (!(v instanceof DataViewObject)) {
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        DataViewObject dataView = (DataViewObject) v;
+        ArrayBufferObject buffer = dataView.getBuffer();
+        if (buffer == null) {
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        double numberIndex = ToNumber(cx, requestIndex);
+        double getIndex = ToInteger(numberIndex);
+        if (numberIndex != getIndex || getIndex < 0) {
+            throwRangeError(cx, Messages.Key.InvalidByteOffset);
+        }
+        boolean littleEndian = false; // default value
+        if (!Type.isUndefined(isLittleEndian)) {
+            littleEndian = ToBoolean(isLittleEndian);
+        }
+        long viewOffset = dataView.getByteOffset();
+        long viewSize = dataView.getByteLength();
+        int elementSize = type.size();
+        if (getIndex + elementSize > viewSize) {
+            throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
+        }
+        long bufferIndex = (long) getIndex + viewOffset;
+        SetValueInBuffer(buffer, bufferIndex, type, ToNumber(cx, value), !littleEndian);
+    }
+
+    /**
+     * 15.13.7.2.1 DataView (buffer, byteOffset=0, byteLength=undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = realm().defaultContext();
-        return construct(calleeContext, args);
+        Object buffer = args.length > 0 ? args[0] : UNDEFINED;
+        Object byteOffset = args.length > 1 ? args[1] : 0;
+        Object byteLength = args.length > 2 ? args[2] : UNDEFINED;
+        /* step 1 (implicit) */
+        /* step 2 */
+        // FIXME: DataView update in bug 1568 tests for [[ViewedArrayBuffer]] which applies to
+        // DataView objects as well as TypedArray objects
+        if (!Type.isObject(thisValue) || !(thisValue instanceof DataViewObject)
+                || ((DataViewObject) thisValue).getBuffer() != null) {
+            return OrdinaryConstruct(calleeContext, this, args);
+        }
+        DataViewObject dataView = (DataViewObject) thisValue;
+        /* step 3 */
+        if (!Type.isObject(buffer)) {
+            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        }
+        /* step 4 */
+        if (!(buffer instanceof ArrayBufferObject)) {
+            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        }
+        ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
+        /* step 5 */
+        double numberOffset = ToNumber(calleeContext, byteOffset);
+        /* steps 6-7 */
+        double offset = ToInteger(numberOffset);
+        /* step 8 */
+        if (numberOffset != offset || offset < 0) {
+            throwRangeError(calleeContext, Messages.Key.InvalidByteOffset);
+        }
+        /* step 9 */
+        long bufferByteLength = bufferObj.getByteLength();
+        /* step 10 */
+        if (offset >= bufferByteLength) {
+            throwRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
+        }
+        /* steps 11-12 */
+        long viewByteLength, viewByteOffset = (long) offset;
+        if (Type.isUndefined(byteLength)) {
+            viewByteLength = bufferByteLength - viewByteOffset;
+        } else {
+            double numberLength = ToNumber(calleeContext, byteLength);
+            double viewLength = ToInteger(numberLength);
+            if (numberLength != viewLength || viewLength < 0) {
+                throwRangeError(calleeContext, Messages.Key.InvalidByteOffset);
+            }
+            viewByteLength = (long) viewLength;
+            if (offset + viewByteLength > bufferByteLength) {
+                throwRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
+            }
+        }
+        /* step 13 */
+        if (dataView.getBuffer() != null) {
+            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        }
+        /* steps 14-16 */
+        dataView.setBuffer(bufferObj);
+        dataView.setByteLength(viewByteLength);
+        dataView.setByteOffset(viewByteOffset);
+        /* steps 17 */
+        return dataView;
     }
 
     /**
-     * 15.13.7.2.1 new DataView(buffer [, byteOffset [, byteLength]])
+     * 15.13.7.2.2 new DataView( ... argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        Object buffer = args.length > 0 ? args[0] : UNDEFINED;
-        ScriptObject obj = ToObject(callerContext, buffer);
-        if (!(obj instanceof ArrayBufferObject)) {
-            throwTypeError(callerContext, Messages.Key.IncompatibleObject);
-        }
-        long byteOffset = args.length > 1 ? ToUint32(callerContext, args[1]) : 0;
-        long bufferLength = ToUint32(callerContext, Get(callerContext, obj, "byteLength"));
-        long byteLength = args.length > 2 ? ToUint32(callerContext, args[2])
-                : (bufferLength - byteOffset);
-        if (byteOffset + byteLength > bufferLength) {
-            throwRangeError(callerContext, Messages.Key.ArrayOffsetOutOfRange);
-        }
-
-        DataViewObject view = new DataViewObject(callerContext.getRealm());
-        view.setPrototype(callerContext.getIntrinsic(Intrinsics.DataViewPrototype));
-        view.defineOwnProperty(callerContext, "byteLength", new PropertyDescriptor(byteLength,
-                false, false, false));
-        view.defineOwnProperty(callerContext, "buffer", new PropertyDescriptor(obj, false, false,
-                false));
-        view.defineOwnProperty(callerContext, "byteOffset", new PropertyDescriptor(byteOffset,
-                false, false, false));
-
-        return view;
+        return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
@@ -111,5 +233,15 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.DataViewPrototype;
+
+        /**
+         * 15.13.7.3.2 DataView [ @@create ] ( )
+         */
+        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.DataViewPrototype,
+                    DataViewObjectAllocator.INSTANCE);
+        }
     }
 }
