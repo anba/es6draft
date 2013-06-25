@@ -490,6 +490,8 @@ tests/basic/cross-context-stack-1.js
 tests/basic/bug863084.js
 # decompileThis
 tests/basic/decompile-script.js
+# getSelfHostedValue
+tests/self-hosting/self-hosted-class.js
 
 # Unsupported 'Testing' functions
 # gcparam
@@ -584,6 +586,7 @@ tests/basic/bug790629-2.js
 tests/basic/bug790629-3.js
 tests/basic/bug790629-4.js
 tests/basic/bug791465.js
+tests/basic/bug864099.js
 tests/basic/function-tosource-genexpr.js
 tests/basic/testArrayComp1.js
 tests/basic/testArrayComp2.js
