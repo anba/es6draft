@@ -21,21 +21,26 @@ const iteratorSym = getSym("@@iterator");
 
 function toProxyHandler(handler) {
   var TypeErrorThrower = () => { throw TypeError() };
+  /* fundamental traps mapping:
+   * getOwnPropertyDescriptor -> getOwnPropertyDescriptor
+   * getPropertyDescriptor -> -
+   * getOwnPropertyNames -> ownKeys
+   * getPropertyNames -> -
+   * defineProperty -> defineProperty
+   * delete -> deleteProperty
+   * fix -> -
+   */
   var proxyHandler = {
     getOwnPropertyDescriptor: TypeErrorThrower,
-    getPropertyDescriptor: TypeErrorThrower,
-    getOwnPropertyNames: TypeErrorThrower,
-    getPropertyNames: TypeErrorThrower,
     defineProperty: TypeErrorThrower,
-    delete: TypeErrorThrower,
+    deleteProperty: TypeErrorThrower,
     ownKeys: TypeErrorThrower,
   };
 
   // fundamental traps
   if ('getOwnPropertyDescriptor' in handler) {
     proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getOwnPropertyDescriptor'](pk);
-  }
-  if (!('getOwnPropertyDescriptor' in handler) && 'getPropertyDescriptor' in handler) {
+  } else if ('getPropertyDescriptor' in handler) {
     proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getPropertyDescriptor'](pk);
   }
   if ('getOwnPropertyNames' in handler) {
