@@ -103,7 +103,12 @@ public enum CompatibilityOption {
     /**
      * Moz-Extension: let expression
      */
-    LetExpression;
+    LetExpression,
+
+    /**
+     * Moz-Extension: legacy (star-less) generators
+     */
+    LegacyGenerator;
 
     /**
      * Returns a set of all options for strict-compatibility
@@ -123,6 +128,6 @@ public enum CompatibilityOption {
      * Returns a set of all options for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, LetExpression);
+        return EnumSet.range(LegacyOctalIntegerLiteral, LegacyGenerator);
     }
 }

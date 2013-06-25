@@ -59,7 +59,7 @@ public class Parser {
     }
 
     private enum ContextKind {
-        Script, Module, Function, Generator, ArrowFunction
+        Script, Module, Function, Generator, ArrowFunction, Method
     }
 
     private static class ParseContext {
@@ -68,6 +68,7 @@ public class Parser {
 
         boolean superReference = false;
         boolean yieldAllowed = false;
+        boolean returnAllowed = false;
 
         StrictMode strictMode = StrictMode.Unknown;
         boolean explicitStrict = false;
@@ -92,6 +93,7 @@ public class Parser {
             this.kind = kind;
             this.funContext = new FunctionContext(this);
             this.scopeContext = funContext;
+            this.returnAllowed = isFunction();
             if (parent.strictMode == StrictMode.Strict) {
                 this.strictMode = parent.strictMode;
             }
@@ -118,6 +120,7 @@ public class Parser {
             case ArrowFunction:
             case Function:
             case Generator:
+            case Method:
                 return true;
             case Module:
             case Script:
@@ -306,6 +309,10 @@ public class Parser {
         }
     }
 
+    @SuppressWarnings("serial")
+    private static class RetryGenerator extends RuntimeException {
+    }
+
     public enum Option {
         Strict, FunctionCode, LocalScope, DirectEval, EvalScript,
 
@@ -331,7 +338,10 @@ public class Parser {
         LetStatement,
 
         /** Moz-Extension: let expression */
-        LetExpression;
+        LetExpression,
+
+        /** Moz-Extension: legacy (star-less) generators */
+        LegacyGenerator;
 
         public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -358,6 +368,9 @@ public class Parser {
             }
             if (compatOptions.contains(CompatibilityOption.LetExpression)) {
                 options.add(Option.LetExpression);
+            }
+            if (compatOptions.contains(CompatibilityOption.LegacyGenerator)) {
+                options.add(Option.LegacyGenerator);
             }
             return options;
         }
@@ -830,6 +843,9 @@ public class Parser {
                 function_StaticSemantics(function);
 
                 function = inheritStrictness(function);
+            } catch (RetryGenerator e) {
+                // don't bother with legacy support here
+                throw reportSyntaxError(Messages.Key.InvalidYieldStatement);
             } finally {
                 restoreContext();
             }
@@ -1775,7 +1791,7 @@ public class Parser {
         }
 
         MethodType type = methodType();
-        newContext(ContextKind.Function);
+        newContext(ContextKind.Method);
         if (alwaysStrict) {
             context.strictMode = StrictMode.Strict;
         }
@@ -2019,13 +2035,15 @@ public class Parser {
      *     function * BindingIdentifier ( FormalParameters ) { FunctionBody }
      * </pre>
      */
-    private GeneratorDeclaration generatorDeclaration() {
+    private GeneratorDeclaration generatorDeclaration(boolean starless) {
         newContext(ContextKind.Generator);
         try {
             int line = ts.getLine();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
-            consume(Token.MUL);
+            if (!starless) {
+                consume(Token.MUL);
+            }
             BindingIdentifier identifier = bindingIdentifier();
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -2063,13 +2081,15 @@ public class Parser {
      *     function * BindingIdentifier<sub>opt</sub> ( FormalParameters ) { FunctionBody }
      * </pre>
      */
-    private GeneratorExpression generatorExpression() {
+    private GeneratorExpression generatorExpression(boolean starless) {
         newContext(ContextKind.Generator);
         try {
             int line = ts.getLine();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
-            consume(Token.MUL);
+            if (!starless) {
+                consume(Token.MUL);
+            }
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
                 identifier = bindingIdentifier();
@@ -2128,6 +2148,9 @@ public class Parser {
      */
     private YieldExpression yieldExpression() {
         if (!context.yieldAllowed) {
+            if (context.kind == ContextKind.Function && isEnabled(Option.LegacyGenerator)) {
+                throw new RetryGenerator();
+            }
             reportSyntaxError(Messages.Key.InvalidYieldStatement);
         }
 
@@ -2454,11 +2477,7 @@ public class Parser {
     private Declaration declaration() {
         switch (token()) {
         case FUNCTION:
-            if (LOOKAHEAD(Token.MUL)) {
-                return generatorDeclaration();
-            } else {
-                return functionDeclaration();
-            }
+            return functionOrGeneratorDeclaration();
         case CLASS:
             return classDeclaration();
         case LET:
@@ -2466,6 +2485,20 @@ public class Parser {
             return lexicalDeclaration(true);
         default:
             throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+        }
+    }
+
+    private Declaration functionOrGeneratorDeclaration() {
+        if (LOOKAHEAD(Token.MUL)) {
+            return generatorDeclaration(false);
+        } else {
+            long marker = ts.marker();
+            try {
+                return functionDeclaration();
+            } catch (RetryGenerator e) {
+                ts.reset(marker);
+                return generatorDeclaration(true);
+            }
         }
     }
 
@@ -3543,7 +3576,7 @@ public class Parser {
      * </pre>
      */
     private ReturnStatement returnStatement() {
-        if (!context.isFunction()) {
+        if (!context.returnAllowed) {
             reportSyntaxError(Messages.Key.InvalidReturnStatement);
         }
 
@@ -3920,11 +3953,7 @@ public class Parser {
         case LC:
             return objectLiteral();
         case FUNCTION:
-            if (LOOKAHEAD(Token.MUL)) {
-                return generatorExpression();
-            } else {
-                return functionExpression();
-            }
+            return functionOrGeneratorExpression();
         case CLASS:
             return classExpression();
         case LP:
@@ -3944,6 +3973,20 @@ public class Parser {
             Identifier identifier = new Identifier(identifier());
             identifier.setLine(line);
             return identifier;
+        }
+    }
+
+    private Expression functionOrGeneratorExpression() {
+        if (LOOKAHEAD(Token.MUL)) {
+            return generatorExpression(false);
+        } else {
+            long marker = ts.marker();
+            try {
+                return functionExpression();
+            } catch (RetryGenerator e) {
+                ts.reset(marker);
+                return generatorExpression(true);
+            }
         }
     }
 
