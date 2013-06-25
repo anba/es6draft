@@ -105,6 +105,11 @@ js1_5/extensions/regress-429739.js
 js1_5/extensions/regress-564577.js
 
 # __iterator__ not supported
+js1_7/extensions/basic-for-each.js
+js1_7/extensions/basic-for-in.js
+js1_7/extensions/basic-Iterator.js
+js1_7/extensions/iterator-ctor.js
+js1_7/extensions/regress-346021.js
 js1_7/extensions/regress-353454.js
 js1_7/extensions/regress-354945-01.js
 js1_7/extensions/regress-354945-02.js
@@ -207,6 +212,10 @@ js1_7/block/regress-352616.js
 js1_7/extensions/regress-355052-01.js
 js1_7/extensions/regress-355052-02.js
 js1_7/extensions/regress-355052-03.js
+js1_7/geniter/regress-345855.js
+js1_7/geniter/regress-349012-05.js
+js1_7/geniter/regress-351120.js
+js1_7/geniter/regress-392310.js
 js1_7/regress/regress-363040-01.js
 js1_8/extensions/regress-353116.js
 js1_8/extensions/regress-469625.js
@@ -232,6 +241,14 @@ js1_5/Regress/regress-259935.js
 # SpiderMonkey restriction test
 js1_8_5/regress/regress-610026.js
 js1_8_5/regress/regress-665355.js
+
+# specific js-version related tests
+js1_5/Regress/regress-351515.js
+js1_6/extensions/regress-352392.js
+js1_7/geniter/regress-366941.js
+
+# Iterator + for-each returns [key,value] pairs
+js1_7/iterable/regress-568056.js
 
 
 #######################################
@@ -297,6 +314,9 @@ ecma_5/extensions/strict-function-statements.js
 ecma_3/Function/scope-001.js
 js1_8_5/regress/regress-554955-5.js
 js1_8_5/regress/regress-602621.js
+
+# ES6: block scope
+js1_7/block/regress-343765.js
 
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
 js1_7/extensions/regress-591450.js
@@ -386,6 +406,7 @@ js1_5/Regress/regress-361467.js
 js1_5/Regress/regress-355344.js
 js1_5/Regress/regress-355341.js
 js1_5/Regress/regress-506567.js
+js1_7/extensions/regress-453955.js
 js1_7/extensions/regress-473282.js
 js1_7/GC/regress-381374.js
 js1_8/extensions/regress-394709.js
@@ -448,9 +469,39 @@ js1_8_5/extensions/clone-simple.js
 js1_8_5/extensions/clone-typed-array.js
 js1_8_5/extensions/clone-v1-typed-array.js
 
+# enableSPSProfilingAssertions() not supported
+js1_8_5/extensions/sps-generators.js
+
 # Reflect not supported
 js1_8_5/extensions/reflect-parse.js
 js1_8_5/extensions/regress-696109.js
+
+
+#######################################
+# Legacy generator issues             #
+#######################################
+
+# legacy generator syntax in setter
+js1_7/extensions/regress-346642-06.js
+
+# legacy generator syntax in Function()
+js1_7/geniter/regress-355834.js
+
+# different syntax rules for yield
+js1_7/geniter/regress-351514.js
+
+# yield+return(value) not allowed in legacy generators
+js1_7/geniter/regress-352197.js
+js1_8/genexps/regress-683738.js
+
+# close() runs finally-blocks but skips catch
+js1_7/extensions/regress-350312.js
+js1_8/genexps/regress-349331.js
+
+# for-in/of executes close()
+js1_8/genexps/regress-347739.js
+js1_8/genexps/regress-349012-01.js
+js1_8/genexps/regress-349326.js
 
 
 #######################################
@@ -463,167 +514,69 @@ ecma_3/extensions/regress-368516.js
 # keywords and reserved words allowed as Identifier in Spidermonkey
 js1_8_1/regress/regress-452498-117.js
 js1_5/LexicalConventions/regress-343675.js
+js1_7/lexical/regress-351515.js
 
 # Spidermonkey 'const' feature
 js1_6/extensions/regress-465443.js
 js1_8_1/extensions/regress-437288-01.js
 js1_8_5/regress/regress-383902.js
 
-# let + for-each is invalid in JS1.6
-js1_6/extensions/regress-352392.js
-
-# Iterator + for-each returns [key,value] pairs
-js1_7/iterable/regress-568056.js
-
-# Old Generator, GeneratorComprehension syntax
+# Old GeneratorComprehension syntax
 js1_5/Regress/regress-352009.js
-js1_5/Regress/regress-351515.js
 js1_6/extensions/regress-475144.js
 js1_6/Regress/regress-350417.js
-js1_7/block/regress-350793-01.js
-js1_7/extensions/basic-for-each.js
-js1_7/extensions/basic-for-in.js
-js1_7/extensions/basic-Iterator.js
-js1_7/extensions/iterator-ctor.js
-js1_7/extensions/regress-346021.js
-js1_7/extensions/regress-346642-06.js
-js1_7/extensions/regress-350312.js
-js1_7/extensions/regress-352885-01.js
-js1_7/extensions/regress-352885-02.js
-js1_7/extensions/regress-355512.js
-js1_7/extensions/regress-372364.js
-js1_7/extensions/regress-387955-01.js
-js1_7/extensions/regress-387955-02.js
-js1_7/extensions/regress-392308.js
-js1_7/extensions/regress-453955.js
+js1_7/block/regress-349653.js
 js1_7/extensions/regress-455982-01.js
 js1_7/extensions/regress-455982-02.js
-js1_7/GC/regress-341675.js
-js1_7/geniter/regress-345855.js
-js1_7/geniter/regress-351514.js
-js1_7/geniter/regress-352197.js
-js1_7/geniter/326466-01.js
-js1_7/geniter/close-returns-undefined.js
 js1_7/geniter/evens.js
-js1_7/geniter/fibonacci-matrix-generator.js
-js1_7/geniter/gen-with-call-obj.js
-js1_7/geniter/iterator-toString.js
-js1_7/geniter/message-value-passing.js
-js1_7/geniter/multiple-close.js
-js1_7/geniter/nested-yield.js
-js1_7/geniter/pi-generator.js
-js1_7/geniter/regress-345879-01.js
-js1_7/geniter/regress-345879-02.js
-js1_7/geniter/regress-349012-02.js
-js1_7/geniter/regress-349012-03.js
-js1_7/geniter/regress-349012-04.js
-js1_7/geniter/regress-349012-05.js
-js1_7/geniter/regress-349023-01.js
-js1_7/geniter/regress-349023-02.js
-js1_7/geniter/regress-349023-03.js
-js1_7/geniter/regress-349362.js
-js1_7/geniter/regress-350621.js
-js1_7/geniter/regress-351120.js
-js1_7/geniter/regress-352876.js
-js1_7/geniter/regress-359062.js
-js1_7/geniter/regress-366941.js
-js1_7/geniter/regress-382335.js
-js1_7/geniter/regress-387871.js
-js1_7/geniter/regress-390918.js
-js1_7/geniter/regress-392310.js
-js1_7/geniter/regress-466206.js
-js1_7/geniter/send-no-rhs.js
-js1_7/geniter/sequential-yields.js
-js1_7/geniter/simple-fib.js
-js1_7/geniter/throw-after-close.js
-js1_7/geniter/throw-forever.js
-js1_7/geniter/unreachable-yield.js
-js1_7/geniter/yield-new.js
-js1_7/geniter/yield-undefined.js
-js1_7/iterable/regress-341499.js
-js1_7/iterable/regress-341510.js
-js1_7/iterable/regress-341815.js
-js1_7/iterable/regress-341821.js
-js1_7/iterable/regress-412467.js
-js1_7/lexical/regress-351515.js
-js1_7/regress/regress-372331.js
-js1_7/regress/regress-385133-01.js
-js1_7/regress/regress-385133-02.js
-js1_7/regress/regress-385393-05.js
-js1_7/regress/regress-416601.js
-js1_7/regress/regress-419803.js
-js1_7/regress/regress-453411.js
-js1_8/extensions/regress-476427.js
-js1_8/extensions/regress-476869.js
-js1_8/genexps/regress-683738.js
-js1_8/genexps/regress-347739.js
-js1_8/genexps/regress-349012-01.js
-js1_8/genexps/regress-349326.js
-js1_8/genexps/regress-349331.js
-js1_8/genexps/regress-380237-01.js
-js1_8/genexps/regress-384991.js
-js1_8/genexps/regress-665286.js
-js1_8/genexps/regress-667131.js
-js1_8/regress/regress-384412.js
-js1_8/regress/regress-461930.js
-js1_8/regress/regress-461932.js
-js1_8/regress/regress-463334-01.js
-js1_8/regress/regress-463334-02.js
-js1_8/regress/regress-465460-09.js
-js1_8/regress/regress-471373.js
-js1_8/regress/regress-477581.js
-js1_8/regress/regress-366941.js
-js1_8_1/regress/regress-452498-082.js
-js1_8_1/regress/regress-452498-138.js
-js1_8_1/regress/regress-524264.js
-js1_8_1/regress/regress-530879.js
-js1_8_5/regress/no-array-comprehension-length-limit.js
 js1_7/geniter/regress-345736.js
+js1_7/iterable/regress-412467.js
+js1_7/regress/regress-352870-02.js
 js1_7/regress/regress-428706.js
 js1_7/regress/regress-461235.js
 js1_7/regress/regress-461945.js
+js1_8/extensions/regress-385393-01.js
 js1_8/extensions/regress-385393-10.js
 js1_8/extensions/regress-385393-11.js
 js1_8/extensions/regress-452476.js
 js1_8/extensions/regress-455973.js
+js1_8/genexps/arguments-property-access-in-generator.js
+js1_8/genexps/regress-380237-01.js
+js1_8/genexps/regress-380237-02.js
+js1_8/genexps/regress-384991.js
+js1_8/genexps/regress-634472.js
+js1_8/genexps/regress-665286.js
 js1_8/genexps/regress-666852.js
+js1_8/genexps/regress-667131.js
+js1_8/regress/regress-384412.js
 js1_8/regress/regress-463783.js
 js1_8_1/jit/testDeepBailFromNonNative.js
 js1_8_1/regress/regress-452498-038.js
+js1_8_1/regress/regress-452498-068.js
+js1_8_1/regress/regress-452498-082.js
+js1_8_1/regress/regress-452498-098.js
+js1_8_1/regress/regress-452498-099.js
+js1_8_1/regress/regress-452498-099-a.js
+js1_8_1/regress/regress-452498-119.js
+js1_8_1/regress/regress-452498-130.js
+js1_8_1/regress/regress-452498-135.js
+js1_8_1/regress/regress-452498-138.js
+js1_8_1/regress/regress-452498-139.js
+js1_8_1/regress/regress-507424.js
+js1_8_1/regress/regress-515885.js
+js1_8_1/strict/generator-eval-arguments.js
+js1_8_5/extensions/regress-627859.js
+js1_8_5/extensions/regress-668438.js
+js1_8_5/extensions/regress-672804-3.js
+js1_8_5/extensions/typedarray.js
+js1_8_5/regress/no-array-comprehension-length-limit.js
 js1_8_5/regress/regress-541255-0.js
 js1_8_5/regress/regress-541255-1.js
 js1_8_5/regress/regress-541255-2.js
 js1_8_5/regress/regress-541255-4.js
-js1_8/genexps/arguments-property-access-in-generator.js
-js1_8/genexps/regress-380237-02.js
-js1_8_1/regress/regress-452498-068.js
-js1_8_1/regress/regress-452498-098.js
-js1_8_1/regress/regress-452498-099.js
-js1_8_1/regress/regress-452498-135.js
-js1_8_1/regress/regress-507424.js
-js1_8_1/regress/regress-515885.js
-js1_8_1/strict/generator-eval-arguments.js
+js1_8_5/regress/regress-569464.js
 js1_8_5/regress/regress-576847.js
 js1_8_5/regress/regress-620750.js
-js1_8/extensions/regress-385393-01.js
-js1_8_1/regress/regress-452498-139.js
-js1_8_1/regress/regress-452498-099-a.js
-js1_7/geniter/regress-355834.js
-js1_8_1/regress/regress-452498-119.js
-js1_8/genexps/regress-634472.js
-js1_8_1/regress/regress-452498-130.js
-js1_8_5/extensions/findReferences-03.js
-js1_8_5/extensions/is-generator.js
-js1_8_5/extensions/recursion.js
-js1_8_5/extensions/regress-627859.js
-js1_8_5/extensions/sps-generators.js
-js1_8_5/extensions/typedarray.js
-js1_7/block/regress-343765.js
-js1_7/block/regress-349653.js
-js1_8_5/extensions/regress-672804-3.js
-js1_7/regress/regress-352870-02.js
-js1_8_5/extensions/regress-668438.js
-js1_8_5/regress/regress-569464.js
 
 
 #######################################
@@ -660,6 +613,7 @@ js1_2/regexp/regress-9141.js
 
 # StackOverflow (CodeAnalyzer recursion)
 js1_5/Expressions/regress-394673.js
+js1_5/Regress/regress-98901.js
 
 # OutOfMemory: Java heap space
 js1_5/Regress/regress-422348.js
@@ -694,6 +648,7 @@ js1_5/Regress/regress-303213.js
 js1_5/Regress/regress-321971.js
 js1_5/Regress/regress-360969-05.js
 js1_5/Regress/regress-360969-06.js
+js1_8/extensions/regress-476427.js
 ecma_5/Object/15.2.3.6-dictionary-redefinition-1-of-8.js
 ecma_5/Object/15.2.3.6-dictionary-redefinition-2-of-8.js
 ecma_5/Object/15.2.3.6-dictionary-redefinition-3-of-8.js

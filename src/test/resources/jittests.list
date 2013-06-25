@@ -29,6 +29,8 @@ tests/collections/Map-constructor-1.js
 tests/collections/Map-constructor-2.js
 tests/collections/Map-constructor-3.js
 tests/collections/Map-constructor-duplicates.js
+tests/collections/Map-constructor-generator-1.js
+tests/collections/Map-constructor-generator-exception.js
 tests/collections/Map-delete-size.js
 tests/collections/Map-iterator-add-remove.js
 tests/collections/Map-iterator-2.js
@@ -65,6 +67,8 @@ tests/collections/Set-clear-iterators-3.js
 tests/collections/Set-clear-5.js
 tests/collections/Set-delete-size.js
 tests/collections/Set-constructor-3.js
+tests/collections/Set-constructor-generator-1.js
+tests/collections/Set-constructor-generator-2.js
 tests/collections/Set-iterator-add-1.js
 tests/collections/Set-clear-gc.js
 tests/collections/Set-iterator-2.js
@@ -133,6 +137,9 @@ tests/basic/bug684922.js
 # emulated ArrayIterator.prototype.next does not work cross-global
 tests/for-of/next-3.js
 
+# emulated Iterator does not work cross-global
+tests/basic/testCrossCompartmentTransparency.js
+
 
 ############################################
 # Implementation specific differences      #
@@ -167,6 +174,7 @@ tests/basic/bug839420.js
 tests/basic/expression-autopsy.js
 tests/basic/testBug566556.js
 tests/basic/testBug579647.js
+tests/basic/testBug593559.js
 tests/basic/testBug604210.js
 tests/basic/testDontClobberScannerError.js
 tests/basic/testErrorReportIn_getPrototypeOf.js
@@ -217,6 +225,7 @@ tests/basic/bug821850.js
 tests/auto-regress/bug578015.js
 tests/auto-regress/bug727330.js
 tests/basic/bug763440.js
+tests/basic/testBug579602.js
 tests/for-of/semantics-11.js
 
 # SpiderMonkey does not support [[Origin]] for PropertyDescriptors
@@ -224,6 +233,9 @@ tests/proxy/testDirectProxyDefineProperty2.js
 
 # SpiderMonkey does not support CompletePropertyDescriptor
 tests/proxy/testDirectProxyGetOwnPropertyDescriptor10.js
+
+# Proxy + .iterator in for-in
+tests/basic/testBug771242.js
 
 # SpiderMonkey does not support "ownKeys" trap
 tests/proxy/testDirectProxyGetOwnPropertyNames2.js
@@ -321,6 +333,9 @@ tests/collections/Set-surfaces-1.js
 # ES6 [[Construct]] restricted to return Objects
 tests/proxy/testDirectProxyConstruct2.js
 
+# ES6-change: <this> within generator is always a generator object
+tests/auto-regress/bug678090.js
+
 
 #######################################
 # ES6 related syntax changes          #
@@ -348,6 +363,9 @@ tests/auto-regress/bug735936.js
 # let variable must no be redeclared
 tests/basic/bug778268.js
 
+# lex-scoped variable re-declaration on global with eval
+tests/bug825379.js
+
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
 tests/auto-regress/bug765055.js
 
@@ -370,6 +388,9 @@ tests/basic/bug738841.js
 tests/auto-regress/bug596817.js
 tests/closures/bug540136.js
 tests/closures/bug540348.js
+
+# non-default parameters allowed after defaults
+tests/arguments/defaults-invalid-syntax.js
 
 
 ############################################
@@ -503,18 +524,27 @@ tests/basic/testOOMInAutoEnterCompartment.js
 
 
 #######################################
+# Legacy generator issues             #
+#######################################
+
+# for-of does not call GeneratorPrototype#close() finalizer
+tests/for-of/generators-5.js
+tests/for-of/generators-6.js
+tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
+
+# Function() with legacy generator source code
+tests/basic/testBug603193.js
+
+
+#######################################
 # Test for syntax extensions          #
 #######################################
 
 # Spidermonkey 'const' feature
 tests/basic/bug821470.js
 
-# Old Generator, GeneratorComprehension syntax
-tests/bug825379.js
-tests/arguments/bug843985.js
-tests/arguments/defaults-bug759904.js
+# Old GeneratorComprehension syntax
 tests/arguments/defaults-bug790424.js
-tests/arguments/defaults-invalid-syntax.js
 tests/arguments/defaults-strict-mode.js
 tests/arguments/genexpr-1.js
 tests/arguments/genexpr-2.js
@@ -522,95 +552,49 @@ tests/arguments/genexpr-3.js
 tests/arguments/genexpr-4.js
 tests/arguments/genexpr-5.js
 tests/arguments/genexpr-6.js
-tests/arguments/strict-args-generator-flushstack.js
+tests/auto-regress/bug475658.js
 tests/auto-regress/bug487570.js
 tests/auto-regress/bug488963.js
-tests/auto-regress/bug521694.js
-tests/auto-regress/bug563034.js
-tests/auto-regress/bug568281.js
-tests/auto-regress/bug622167.js
-tests/auto-regress/bug678090.js
-tests/auto-regress/bug690396.js
-tests/auto-regress/bug761864.js
-tests/basic/bug528644.js
-tests/basic/bug560234b.js
-tests/basic/bug563243.js
-tests/basic/bug631082.js
-tests/basic/bug660538.js
-tests/basic/bug716013.js
-tests/basic/bug744356.js
-tests/basic/bug767234.js
-tests/basic/bug852016-2.js
-tests/basic/testBug550210.js
-tests/basic/testBug579602.js
-tests/basic/testBug593559.js
-tests/basic/testBug603193.js
-tests/basic/testBug630064.js
-tests/basic/testBug704351.js
-tests/basic/testBug705879.js
-tests/basic/testBug771242.js
-tests/basic/testDeepBailInMoreIter.js
-tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
-tests/basic/testGeneratorDeepBail.js
-tests/basic/testInterpreterReentry3.js
-tests/basic/testThatGenExpsActuallyDecompile.js
-tests/closures/bug540243.js
-tests/closures/bug541239.js
-tests/collections/Map-constructor-generator-1.js
-tests/collections/Map-constructor-generator-exception.js
-tests/collections/Set-constructor-generator-1.js
-tests/for-of/decompiler.js
-tests/for-of/generators-1.js
-tests/for-of/generators-3.js
-tests/for-of/generators-4.js
-tests/for-of/generators-2.js
-tests/for-of/generators-5.js
-tests/for-of/generators-6.js
-tests/for-of/proxy-2.js
-tests/for-of/semantics-03.js
-tests/for-of/semantics-04.js
-tests/for-of/semantics-10.js
-tests/for-of/semantics-09.js
+tests/auto-regress/bug491806.js
+tests/auto-regress/bug496270.js
 tests/auto-regress/bug595911.js
-tests/basic/bug510655.js
-tests/basic/bug630377.js
-tests/basic/bug627692-2.js
-tests/basic/bug791465.js
-tests/basic/spread-array-invalid-syntax.js
-tests/basic/testArrayComp1.js
-tests/basic/testArrayComp2.js
-tests/basic/testInterpreterReentry2.js
-tests/collections/Map-iterator-remove-1.js
-tests/collections/Map-values-2.js
-tests/collections/Set-iterator-remove-1.js
-tests/for-of/array-comprehension.js
-tests/for-of/array-holes-7.js
-tests/for-of/bug-728079-js17-3.js
-tests/for-of/bug-728079-js17-2.js
 tests/auto-regress/bug589093.js
 tests/auto-regress/bug622318.js
 tests/auto-regress/bug691593.js
 tests/auto-regress/bug780405.js
+tests/closures/incr-exit-3.js
+tests/closures/flat-closure-3.js
+tests/for-of/array-comprehension.js
+tests/for-of/array-holes-7.js
+tests/for-of/bug-728079-js17-2.js
+tests/for-of/bug-728079-js17-3.js
+tests/for-of/decompiler.js
+tests/for-of/generators-4.js
+tests/for-of/proxy-2.js
+tests/collections/Map-constructor-generator-2.js
+tests/collections/Map-constructor-generator-3.js
+tests/collections/Map-iterator-remove-1.js
+tests/collections/Map-values-2.js
+tests/collections/Set-iterator-remove-1.js
+tests/basic/bug510655.js
+tests/basic/bug630377.js
+tests/basic/bug660538.js
 tests/basic/bug790629-1.js
 tests/basic/bug790629-2.js
 tests/basic/bug790629-3.js
 tests/basic/bug790629-4.js
+tests/basic/bug791465.js
 tests/basic/function-tosource-genexpr.js
+tests/basic/testArrayComp1.js
+tests/basic/testArrayComp2.js
 tests/basic/testBug709929.js
-tests/basic/testBug773927.js
-tests/collections/Map-constructor-generator-2.js
-tests/collections/Map-constructor-generator-3.js
-tests/collections/Set-constructor-generator-2.js
-tests/basic/testCrossCompartmentTransparency.js
-tests/basic/testImplicitArgumentsInGenExprs.js
-tests/auto-regress/bug496270.js
-tests/closures/flat-closure-3.js
-tests/auto-regress/bug475658.js
-tests/basic/bug727921.js
-tests/closures/incr-exit-3.js
-tests/auto-regress/bug491806.js
 tests/basic/testBug773108.js
+tests/basic/testBug773927.js
 tests/basic/testDynamicUsage.js
+tests/basic/testImplicitArgumentsInGenExprs.js
+tests/basic/testInterpreterReentry2.js
+tests/basic/testInterpreterReentry3.js
+tests/basic/testThatGenExpsActuallyDecompile.js
 
 
 #######################################
