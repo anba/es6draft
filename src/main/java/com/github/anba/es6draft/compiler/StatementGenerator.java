@@ -24,6 +24,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.parser.Parser;
 
 /**
  *
@@ -290,14 +291,35 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.pop();
         mv.goTo(lblBreak);
         mv.mark(loopstart);
-        mv.loadExecutionContext();
-        if (iterationKind == IterationKind.Enumerate) {
-            mv.invoke(Methods.ScriptRuntime_enumerate);
-        } else if (iterationKind == IterationKind.EnumerateValues) {
-            mv.invoke(Methods.ScriptRuntime_enumerateValues);
-        } else {
-            assert iterationKind == IterationKind.Iterate;
+
+        if ((iterationKind == IterationKind.Enumerate || iterationKind == IterationKind.EnumerateValues)
+                && codegen.isEnabled(Parser.Option.LegacyGenerator)) {
+            // legacy generator mode, both, for-in and for-each, perform Iterate on generators
+            Label l0 = new Label(), l1 = new Label();
+            mv.dup();
+            mv.instanceOf(Types.GeneratorObject);
+            mv.ifeq(l0);
+            mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_iterate);
+            mv.goTo(l1);
+            mv.mark(l0);
+            mv.loadExecutionContext();
+            if (iterationKind == IterationKind.Enumerate) {
+                mv.invoke(Methods.ScriptRuntime_enumerate);
+            } else {
+                mv.invoke(Methods.ScriptRuntime_enumerateValues);
+            }
+            mv.mark(l1);
+        } else {
+            mv.loadExecutionContext();
+            if (iterationKind == IterationKind.Enumerate) {
+                mv.invoke(Methods.ScriptRuntime_enumerate);
+            } else if (iterationKind == IterationKind.EnumerateValues) {
+                mv.invoke(Methods.ScriptRuntime_enumerateValues);
+            } else {
+                assert iterationKind == IterationKind.Iterate;
+                mv.invoke(Methods.ScriptRuntime_iterate);
+            }
         }
 
         int var = mv.newVariable(Types.Iterator);

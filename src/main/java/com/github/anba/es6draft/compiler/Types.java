@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
+import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Null;
@@ -85,6 +86,9 @@ final class Types {
 
     // es6draft.runtime.objects
     static final Type Eval = Type.getType(Eval.class);
+
+    // es6draft.runtime.objects.iteration
+    static final Type GeneratorObject = Type.getType(GeneratorObject.class);
 
     // es6draft.runtime.types
     static final Type Callable = Type.getType(Callable.class);
