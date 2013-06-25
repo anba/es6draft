@@ -76,6 +76,14 @@ public class GeneratorPrototype extends OrdinaryObject implements Initialisable 
         }
 
         /**
+         * 15.19.4.2.x Generator.prototype.@@iterator ()
+         */
+        @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
+        public static Object iterator(ExecutionContext cx, Object thisValue) {
+            return thisValue;
+        }
+
+        /**
          * 15.19.4.2.5 Generator.prototype [ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,

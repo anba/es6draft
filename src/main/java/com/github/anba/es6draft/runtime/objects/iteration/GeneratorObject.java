@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.GeneratorThread.newGeneratorThreadFactory;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -25,11 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -67,34 +62,6 @@ public class GeneratorObject extends OrdinaryObject {
         super(realm);
         this.in = new SynchronousQueue<>();
         this.out = new SynchronousQueue<>();
-
-        /* 15.19.4.2.1  @@iterator */
-        // FIXME: spec bug - this does not make any sense....
-        PropertyDescriptor desc = new PropertyDescriptor(new IteratorFunction(realm, this), false,
-                false, true);
-        ordinaryDefineOwnProperty(BuiltinSymbol.iterator.get(), desc);
-    }
-
-    private static class IteratorFunction extends BuiltinFunction {
-        private final GeneratorObject generator;
-
-        IteratorFunction(Realm realm, GeneratorObject generator) {
-            super(realm);
-            this.generator = generator;
-            ExecutionContext cx = realm.defaultContext();
-            setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-            defineOwnProperty(cx, "name", new PropertyDescriptor("@@iterator", false, false, false));
-            defineOwnProperty(cx, "length", new PropertyDescriptor(0, false, false, false));
-            AddRestrictedFunctionProperties(cx, this);
-        }
-
-        /**
-         * [[Call]]
-         */
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            return generator;
-        }
     }
 
     /**
