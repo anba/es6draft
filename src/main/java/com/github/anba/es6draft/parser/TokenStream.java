@@ -106,7 +106,6 @@ public class TokenStream {
 
     public void reset(long marker) {
         input.reset((int) marker);
-        this.line = (int) (marker >>> 32);
         //
         this.hasLineTerminator = false;
         this.hasCurrentLineTerminator = true;
@@ -114,6 +113,8 @@ public class TokenStream {
         this.current = scanTokenNoComment();
         this.nextposition = input.position();
         this.next = null;
+        //
+        this.line = (int) (marker >>> 32);
     }
 
     public String getString() {
