@@ -54,6 +54,10 @@ public class Script extends AstNode implements ScopedNode {
         return strict;
     }
 
+    public EnumSet<Parser.Option> getOptions() {
+        return options;
+    }
+
     public boolean isEvalScript() {
         return options.contains(Parser.Option.EvalScript);
     }
