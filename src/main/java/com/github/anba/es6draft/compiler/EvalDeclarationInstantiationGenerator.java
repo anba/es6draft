@@ -160,8 +160,9 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
             if (d instanceof GeneratorDeclaration) {
                 String fn = BoundName(d);
                 // stack: [] -> [fo]
-                InstantiateGeneratorObject(context, env, (GeneratorDeclaration) d, mv);
-                setMutableBinding(envRec, fn, false, mv);
+                InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) d, mv);
+                // setMutableBinding(lexEnvRec, fn, false, mv);
+                initialiseBinding(lexEnvRec, fn, mv);
             }
         }
         // end-modification
