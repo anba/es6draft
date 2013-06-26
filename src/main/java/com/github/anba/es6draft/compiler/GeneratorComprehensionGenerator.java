@@ -24,6 +24,8 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
                 Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
     }
 
+    private boolean initialised = false;
+
     GeneratorComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
     }
@@ -35,6 +37,11 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     public Void visit(GeneratorComprehension node, ExpressionVisitor mv) {
+        if (initialised) {
+            return visit((Expression) node, mv);
+        }
+        this.initialised = true;
+
         node.getComprehension().accept(this, mv);
 
         return null;
@@ -49,6 +56,8 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
+        assert initialised : "generator-comprehension generator not initialised";
+
         ValType type = expressionValue(node, mv);
         mv.toBoxed(type);
         mv.loadExecutionContext();

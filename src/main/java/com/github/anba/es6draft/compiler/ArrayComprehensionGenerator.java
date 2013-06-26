@@ -44,7 +44,9 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     public Void visit(ArrayComprehension node, ExpressionVisitor mv) {
-        assert result == -1 : "array-comprehension generator re-used";
+        if (result != -1) {
+            return visit((Expression) node, mv);
+        }
 
         this.result = mv.newVariable(Types.ArrayList);
         mv.anew(Types.ArrayList);
