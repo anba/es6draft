@@ -433,6 +433,7 @@
                     <include name="source.js" />
                     <include name="statics.js" />
                     <include name="string.js" />
+                    <include name="typed-array.js" />
                   </fileset>
                 </concat>
                 <concat destfile="${project.build.outputDirectory}/scripts/v8legacy.js"
