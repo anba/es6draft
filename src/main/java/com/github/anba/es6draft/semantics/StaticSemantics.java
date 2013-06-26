@@ -155,6 +155,13 @@ public final class StaticSemantics {
     }
 
     /**
+     * Static Semantics: LexicallyDeclaredNames
+     */
+    public static Set<String> LexicallyDeclaredNames(BlockScope scope) {
+        return emptyIfNull(scope.lexicallyDeclaredNames());
+    }
+
+    /**
      * 14.1 Script
      * <p>
      * Static Semantics: LexicallyDeclaredNames
