@@ -103,13 +103,19 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
      * FIXME: spec bug (not defined in spec)
      */
     public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
-            ArrayBufferObject srcData, ElementKind srcType, ElementKind destType, long length) {
+            ArrayBufferObject srcData, ElementKind srcType, ElementKind destType,
+            long startByteIndex, long length) {
+        assert startByteIndex >= 0 && (startByteIndex <= length * srcType.size() || length == 0) : "startByteIndex="
+                + startByteIndex + ", length=" + length + ", srcType.size=" + srcType.size();
+        assert startByteIndex % srcType.size() == 0;
+
         ArrayBufferObject destData = AllocateArrayBuffer(cx,
                 cx.getIntrinsic(Intrinsics.ArrayBuffer));
         SetArrayBufferData(cx, destData, length * destType.size());
 
         for (long index = 0; index < length; ++index) {
-            double value = GetValueFromBuffer(srcData, index * srcType.size(), srcType, false);
+            double value = GetValueFromBuffer(srcData, startByteIndex + index * srcType.size(),
+                    srcType, false);
             SetValueInBuffer(destData, index * destType.size(), destType, value, false);
         }
 

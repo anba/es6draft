@@ -152,7 +152,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         long targetLength = target.getArrayLength();
-        double targetOffset = ToInteger(cx, offset);
+        double targetOffset = (offset == UNDEFINED ? 0 : ToInteger(cx, offset));
         if (targetOffset < 0) {
             throwRangeError(cx, Messages.Key.InvalidByteOffset);
         }
@@ -179,7 +179,8 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
                 String pk = ToString(k);
                 Object kValue = Get(cx, src, pk);
                 double kNumber = ToNumber(cx, kValue);
-                SetValueInBuffer(targetBuffer, k * targetElementSize, targetType, kNumber, false);
+                // FIXME: spec bug "k * targetElementSize" => "targetByteIndex"
+                SetValueInBuffer(targetBuffer, targetByteIndex, targetType, kNumber, false);
             }
             return UNDEFINED;
         } else {
@@ -197,7 +198,11 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
                 throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
             }
             if (SameValue(srcBuffer, targetBuffer)) {
-                srcBuffer = CloneArrayBuffer(cx, srcBuffer, srcType, srcType, srcLength);
+                // FIXME: spec bug - either make full copy or adjust srcByteOffset!
+                srcBuffer = CloneArrayBuffer(cx, srcBuffer, srcType, srcType, srcByteOffset,
+                        srcLength);
+                assert srcBuffer.getByteLength() == srcLength * srcType.size();
+                srcByteOffset = 0;
             }
             long targetByteIndex = (long) (targetOffset * targetElementSize + targetByteOffset);
             long srcByteIndex = srcByteOffset;
@@ -222,7 +227,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         long srcLength = array.getArrayLength();
-        double beginInt = ToInteger(cx, begin);
+        double beginInt = (begin == UNDEFINED ? 0 : ToInteger(cx, begin));
         if (beginInt < 0) {
             beginInt = srcLength + beginInt;
         }

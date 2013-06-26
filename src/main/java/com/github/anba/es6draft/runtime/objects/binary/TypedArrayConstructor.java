@@ -168,9 +168,11 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         long elementLength = srcArray.getArrayLength();
+        long srcByteOffset = srcArray.getByteOffset();
         ElementKind srcType = srcArray.getElementKind();
         ArrayBufferObject srcData = srcArray.getBuffer();
-        ArrayBufferObject data = CloneArrayBuffer(cx, srcData, srcType, elementType, elementLength);
+        ArrayBufferObject data = CloneArrayBuffer(cx, srcData, srcType, elementType, srcByteOffset,
+                elementLength);
         int elementSize = elementType.size();
         long byteLength = elementSize * elementLength;
         // FIXME: spec bug (remove this call <-> CloneArrayBuffer?)
