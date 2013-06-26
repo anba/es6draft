@@ -108,7 +108,10 @@ public enum CompatibilityOption {
     /**
      * Moz-Extension: legacy (star-less) generators
      */
-    LegacyGenerator;
+    LegacyGenerator,
+
+    /** Moz-Extension: legacy comprehension forms */
+    LegacyComprehension;
 
     /**
      * Returns a set of all options for strict-compatibility
@@ -128,6 +131,6 @@ public enum CompatibilityOption {
      * Returns a set of all options for mozilla-compatibility
      */
     public static final Set<CompatibilityOption> MozCompatibility() {
-        return EnumSet.range(LegacyOctalIntegerLiteral, LegacyGenerator);
+        return EnumSet.range(LegacyOctalIntegerLiteral, LegacyComprehension);
     }
 }

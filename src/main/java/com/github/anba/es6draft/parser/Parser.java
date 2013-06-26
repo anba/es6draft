@@ -341,7 +341,10 @@ public class Parser {
         LetExpression,
 
         /** Moz-Extension: legacy (star-less) generators */
-        LegacyGenerator;
+        LegacyGenerator,
+
+        /** Moz-Extension: legacy comprehension forms */
+        LegacyComprehension;
 
         public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -371,6 +374,9 @@ public class Parser {
             }
             if (compatOptions.contains(CompatibilityOption.LegacyGenerator)) {
                 options.add(Option.LegacyGenerator);
+            }
+            if (compatOptions.contains(CompatibilityOption.LegacyComprehension)) {
+                options.add(Option.LegacyComprehension);
             }
             return options;
         }
@@ -4020,6 +4026,7 @@ public class Parser {
      * </pre>
      */
     private Expression coverParenthesisedExpressionAndArrowParameterList() {
+        long marker = ts.marker();
         consume(Token.LP);
         Expression expr;
         if (token() == Token.RP) {
@@ -4029,6 +4036,10 @@ public class Parser {
         } else {
             // inlined `expression(true)`
             expr = assignmentExpressionNoValidation(true);
+            if (token() == Token.FOR && isEnabled(Option.LegacyComprehension)) {
+                ts.reset(marker);
+                return legacyGeneratorComprehension();
+            }
             if (token() == Token.COMMA) {
                 List<Expression> list = new ArrayList<>();
                 list.add(expr);
@@ -4078,7 +4089,24 @@ public class Parser {
         if (LOOKAHEAD(Token.FOR)) {
             return arrayComprehension();
         } else {
-            return arrayLiteral();
+            if (isEnabled(Option.LegacyComprehension)) {
+                switch (peek()) {
+                case RB:
+                case COMMA:
+                case TRIPLE_DOT:
+                    break;
+                default:
+                    long marker = ts.marker();
+                    consume(Token.LB);
+                    Expression expression = assignmentExpressionNoValidation(true);
+                    if (token() == Token.FOR) {
+                        ts.reset(marker);
+                        return legacyArrayComprehension();
+                    }
+                    return arrayLiteral(expression);
+                }
+            }
+            return arrayLiteral(null);
         }
     }
 
@@ -4102,10 +4130,15 @@ public class Parser {
      *     ... AssignmentExpression
      * </pre>
      */
-    private ArrayInitialiser arrayLiteral() {
-        consume(Token.LB);
+    private ArrayLiteral arrayLiteral(Expression expr) {
         List<Expression> list = newList();
         boolean needComma = false;
+        if (expr == null) {
+            consume(Token.LB);
+        } else {
+            list.add(expr);
+            needComma = true;
+        }
         for (Token tok; (tok = token()) != Token.RB;) {
             if (needComma) {
                 consume(Token.COMMA);
@@ -4217,6 +4250,86 @@ public class Parser {
         Expression expression = assignmentExpression(true);
         consume(Token.RP);
         return new ComprehensionIf(expression);
+    }
+
+    /**
+     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * 
+     * <pre>
+     * LegacyArrayComprehension :
+     *     [ LegacyComprehension ]
+     * </pre>
+     */
+    private ArrayComprehension legacyArrayComprehension() {
+        consume(Token.LB);
+        LegacyComprehension comprehension = legacyComprehension();
+        consume(Token.RB);
+
+        return new ArrayComprehension(comprehension);
+    }
+
+    /**
+     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * 
+     * <pre>
+     * LegacyComprehension :
+     *     AssignmentExpression LegacyComprehensionForList LegacyComprehensionIf<sub>opt</sub>
+     * LegacyComprehensionForList :
+     *     LegacyComprehensionFor LegacyComprehensionForList<sub>opt</sub>
+     * LegacyComprehensionFor :
+     *     for ( ForBinding of Expression )
+     *     for ( ForBinding in Expression )
+     *     for each ( ForBinding in Expression )
+     * LegacyComprehensionIf :
+     *     if ( Expression )
+     * </pre>
+     */
+    private LegacyComprehension legacyComprehension() {
+        BlockContext scope = enterBlockContext();
+        Expression expr = assignmentExpression(true);
+
+        assert token() == Token.FOR : "empty legacy comprehension";
+
+        List<ComprehensionQualifier> list = newSmallList();
+        while (token() == Token.FOR) {
+            consume(Token.FOR);
+            boolean each = false;
+            if (token() != Token.LP && isName("each")) {
+                consume("each");
+                each = true;
+            }
+            consume(Token.LP);
+            Binding b = binding();
+            addLexDeclaredName(b);
+
+            LegacyComprehensionFor.IterationKind iterationKind;
+            if (each) {
+                consume(Token.IN);
+                iterationKind = LegacyComprehensionFor.IterationKind.EnumerateValues;
+            } else if (token() == Token.IN) {
+                consume(Token.IN);
+                iterationKind = LegacyComprehensionFor.IterationKind.Enumerate;
+            } else {
+                consume("of");
+                iterationKind = LegacyComprehensionFor.IterationKind.Iterate;
+            }
+            Expression expression = expression(true);
+            consume(Token.RP);
+
+            list.add(new LegacyComprehensionFor(iterationKind, b, expression));
+        }
+
+        if (token() == Token.IF) {
+            consume(Token.IF);
+            consume(Token.LP);
+            Expression expression = expression(true);
+            consume(Token.RP);
+            list.add(new ComprehensionIf(expression));
+        }
+
+        exitBlockContext();
+
+        return new LegacyComprehension(scope, list, expr);
     }
 
     /**
@@ -4377,6 +4490,28 @@ public class Parser {
             context.yieldAllowed = false;
             consume(Token.LP);
             Comprehension comprehension = comprehension();
+            consume(Token.RP);
+
+            return new GeneratorComprehension(comprehension);
+        } finally {
+            context.yieldAllowed = yieldAllowed;
+        }
+    }
+
+    /**
+     * <strong>[11.1.7] Generator Comprehensions</strong>
+     * 
+     * <pre>
+     * LegacyGeneratorComprehension :
+     *     ( LegacyComprehension )
+     * </pre>
+     */
+    private GeneratorComprehension legacyGeneratorComprehension() {
+        boolean yieldAllowed = context.yieldAllowed;
+        try {
+            context.yieldAllowed = false;
+            consume(Token.LP);
+            LegacyComprehension comprehension = legacyComprehension();
             consume(Token.RP);
 
             return new GeneratorComprehension(comprehension);
@@ -4604,8 +4739,25 @@ public class Parser {
      */
     private List<Expression> arguments() {
         List<Expression> args = newSmallList();
+        long marker = ts.marker();
         consume(Token.LP);
         if (token() != Token.RP) {
+            if (token() != Token.TRIPLE_DOT && isEnabled(Option.LegacyComprehension)) {
+                Expression expr = assignmentExpression(true);
+                if (token() == Token.FOR) {
+                    ts.reset(marker);
+                    args.add(legacyGeneratorComprehension());
+                    return args;
+                }
+                args.add(expr);
+                if (token() == Token.COMMA) {
+                    consume(Token.COMMA);
+                } else {
+                    consume(Token.RP);
+                    return args;
+                }
+            }
+
             for (;;) {
                 Expression expr;
                 if (token() == Token.TRIPLE_DOT) {

@@ -142,6 +142,10 @@ public interface NodeVisitor<R, V> {
 
     R visit(LabelledStatement node, V value);
 
+    R visit(LegacyComprehension node, V value);
+
+    R visit(LegacyComprehensionFor node, V value);
+
     R visit(LetExpression node, V value);
 
     R visit(LetStatement node, V value);

@@ -385,6 +385,16 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(LegacyComprehension node, V value) {
+        return visit((Comprehension) node, value);
+    }
+
+    @Override
+    public R visit(LegacyComprehensionFor node, V value) {
+        return visit((ComprehensionQualifier) node, value);
+    }
+
+    @Override
     public R visit(LetExpression node, V value) {
         return visit((Expression) node, value);
     }

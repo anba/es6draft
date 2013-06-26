@@ -461,6 +461,16 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(LegacyComprehension node, CodeSizeHandler value) {
+        return analyze(node, node.getList(), node.getExpression(), 50, 0, value);
+    }
+
+    @Override
+    public Integer visit(LegacyComprehensionFor node, CodeSizeHandler value) {
+        return analyze(node, node.getBinding(), node.getExpression(), 40, value);
+    }
+
+    @Override
     public Integer visit(LetExpression node, CodeSizeHandler value) {
         return analyze(node, node.getBindings(), node.getExpression(), 25, 5, value);
     }
