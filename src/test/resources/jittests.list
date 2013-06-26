@@ -30,6 +30,8 @@ tests/collections/Map-constructor-2.js
 tests/collections/Map-constructor-3.js
 tests/collections/Map-constructor-duplicates.js
 tests/collections/Map-constructor-generator-1.js
+tests/collections/Map-constructor-generator-2.js
+tests/collections/Map-constructor-generator-3.js
 tests/collections/Map-constructor-generator-exception.js
 tests/collections/Map-delete-size.js
 tests/collections/Map-iterator-add-remove.js
@@ -40,18 +42,21 @@ tests/collections/Map-iterator-add-1.js
 tests/collections/Map-iterator-pairs-3.js
 tests/collections/Map-iterator-proxies-1.js
 tests/collections/Map-iterator-proxies-2.js
+tests/collections/Map-iterator-remove-1.js
 tests/collections/Map-iterator-remove-2.js
+tests/collections/Map-iterator-remove-3.js
+tests/collections/Map-iterator-remove-4.js
+tests/collections/Map-iterator-remove-5.js
+tests/collections/Map-iterator-remove-6.js
 tests/collections/Map-iterator-1.js
 tests/collections/Map-iterator-order.js
 tests/collections/Map-iterator-add-2.js
 tests/collections/Map-set-size.js
-tests/collections/Map-iterator-remove-5.js
 tests/collections/Map-iterators-3.js
 tests/collections/Map-size.js
 tests/collections/Map-values-1.js
-tests/collections/Map-iterator-remove-4.js
+tests/collections/Map-values-2.js
 tests/collections/Set-clear-1.js
-tests/collections/Map-iterator-remove-3.js
 tests/collections/Set-clear-2.js
 tests/collections/Set-clear-3.js
 tests/collections/Set-clear-4.js
@@ -61,7 +66,6 @@ tests/collections/Set-clear-iterators-1.js
 tests/collections/Set-constructor-1.js
 tests/collections/Set-constructor-2.js
 tests/collections/Set-add-size.js
-tests/collections/Map-iterator-remove-6.js
 tests/collections/Set-iterator-1.js
 tests/collections/Set-clear-iterators-3.js
 tests/collections/Set-clear-5.js
@@ -80,6 +84,7 @@ tests/collections/Set-iterator-gc-1.js
 tests/collections/Set-iterator-gc-2.js
 tests/collections/Set-iterator-proxies-1.js
 tests/collections/Set-iterator-proxies-2.js
+tests/collections/Set-iterator-remove-1.js
 tests/collections/Set-iterator-remove-3.js
 tests/collections/Set-iterator-remove-2.js
 tests/collections/Set-iterator-remove-4.js
@@ -112,6 +117,9 @@ tests/basic/bug829821.js
 # maybe ES6 spec bug in TypedArrays
 tests/basic/testArrayBufferSlice.js
 
+# DataView range issue -> new DataView(new Int8Array(0).buffer,0,0) ?
+tests/basic/bug842482.js
+
 
 ###################
 # Misc issues     #
@@ -130,9 +138,11 @@ tests/basic/bug717208.js
 tests/basic/bug732087.js
 
 # __iterator__ not supported
+tests/basic/bug684922.js
+tests/basic/testArrayComp1.js
+tests/basic/testArrayComp2.js
 tests/basic/testBrandedVsGeneric.js
 tests/basic/testCustomIterator.js
-tests/basic/bug684922.js
 
 # emulated ArrayIterator.prototype.next does not work cross-global
 tests/for-of/next-3.js
@@ -159,6 +169,7 @@ tests/basic/function-tosource-bug779694.js
 tests/basic/function-tosource-constructor.js
 tests/basic/function-tosource-exprbody.js
 tests/basic/function-tosource-func-proto.js
+tests/basic/function-tosource-genexpr.js
 tests/basic/function-tosource-getset.js
 tests/basic/function-tosource-lambda.js
 tests/basic/function-tosource-strict.js
@@ -199,6 +210,12 @@ tests/auto-regress/bug532363.js
 
 # rest-parameters vs. arguments object
 tests/arguments/bug844048.js
+
+# no dynamic access to arguments in generator comprehensions
+tests/basic/bug852016.js
+
+# SpiderMonkey restriction test
+tests/basic/testBug773108.js
 
 
 ############################################
@@ -355,6 +372,7 @@ tests/arguments/rest-arguments-as-parameters.js
 tests/basic/testBug741497.js
 
 # missing const initialiser
+tests/auto-regress/bug487570.js
 tests/auto-regress/bug495843.js
 
 # cannot assign to 'arguments'
@@ -391,6 +409,9 @@ tests/closures/bug540348.js
 
 # non-default parameters allowed after defaults
 tests/arguments/defaults-invalid-syntax.js
+
+# re-assignement to 'const' is not an early error
+tests/basic/bug821470.js
 
 
 ############################################
@@ -535,69 +556,8 @@ tests/for-of/generators-6.js
 tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
 
 # Function() with legacy generator source code
-tests/basic/testBug603193.js
-
-
-#######################################
-# Test for syntax extensions          #
-#######################################
-
-# Spidermonkey 'const' feature
-tests/basic/bug821470.js
-
-# Old GeneratorComprehension syntax
-tests/arguments/defaults-bug790424.js
-tests/arguments/defaults-strict-mode.js
-tests/arguments/genexpr-1.js
-tests/arguments/genexpr-2.js
-tests/arguments/genexpr-3.js
-tests/arguments/genexpr-4.js
-tests/arguments/genexpr-5.js
-tests/arguments/genexpr-6.js
-tests/auto-regress/bug475658.js
-tests/auto-regress/bug487570.js
-tests/auto-regress/bug488963.js
 tests/auto-regress/bug491806.js
-tests/auto-regress/bug496270.js
-tests/auto-regress/bug595911.js
-tests/auto-regress/bug589093.js
-tests/auto-regress/bug622318.js
-tests/auto-regress/bug691593.js
-tests/auto-regress/bug780405.js
-tests/closures/incr-exit-3.js
-tests/closures/flat-closure-3.js
-tests/for-of/array-comprehension.js
-tests/for-of/array-holes-7.js
-tests/for-of/bug-728079-js17-2.js
-tests/for-of/bug-728079-js17-3.js
-tests/for-of/decompiler.js
-tests/for-of/generators-4.js
-tests/for-of/proxy-2.js
-tests/collections/Map-constructor-generator-2.js
-tests/collections/Map-constructor-generator-3.js
-tests/collections/Map-iterator-remove-1.js
-tests/collections/Map-values-2.js
-tests/collections/Set-iterator-remove-1.js
-tests/basic/bug510655.js
-tests/basic/bug630377.js
-tests/basic/bug660538.js
-tests/basic/bug790629-1.js
-tests/basic/bug790629-2.js
-tests/basic/bug790629-3.js
-tests/basic/bug790629-4.js
-tests/basic/bug791465.js
-tests/basic/bug864099.js
-tests/basic/function-tosource-genexpr.js
-tests/basic/testArrayComp1.js
-tests/basic/testArrayComp2.js
-tests/basic/testBug709929.js
-tests/basic/testBug773108.js
-tests/basic/testBug773927.js
-tests/basic/testDynamicUsage.js
-tests/basic/testImplicitArgumentsInGenExprs.js
-tests/basic/testInterpreterReentry2.js
-tests/basic/testInterpreterReentry3.js
-tests/basic/testThatGenExpsActuallyDecompile.js
+tests/basic/testBug603193.js
 
 
 #######################################
