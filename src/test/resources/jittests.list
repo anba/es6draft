@@ -387,6 +387,9 @@ tests/bug825379.js
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
 tests/auto-regress/bug765055.js
 
+# ES6-change: block-scoped function declaration
+tests/basic/bug-826124.js
+
 # Declaration directly nested in Statement
 tests/auto-regress/bug771027.js
 tests/basic/bug639797.js
@@ -558,6 +561,7 @@ tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
 # Function() with legacy generator source code
 tests/auto-regress/bug491806.js
 tests/basic/testBug603193.js
+tests/parser/yield-without-operand.js
 
 
 #######################################
