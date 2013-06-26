@@ -3890,7 +3890,8 @@ public class Parser {
         consume(Token.RP);
 
         if (token() != Token.LC && isEnabled(Option.LetExpression)) {
-            // let expression disguised as let statement
+            // let expression disguised as let statement - also error in strict mode(!)
+            reportStrictModeSyntaxError(Messages.Key.UnexpectedToken, token().toString());
             Expression expression = assignmentExpression(true);
 
             exitBlockContext();
