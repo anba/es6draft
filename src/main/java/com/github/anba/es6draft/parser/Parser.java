@@ -2167,13 +2167,30 @@ public class Parser {
         }
         // TODO: NoLineTerminator() restriction or context dependent?
         Expression expr;
-        if (delegatedYield || !(token() == Token.SEMI || token() == Token.RC)) {
+        if (delegatedYield) {
+            expr = assignmentExpression(true);
+        } else if (assignmentExpressionForYield()) {
+            // TODO: make this an option
             expr = assignmentExpression(true);
         } else {
             // extension: allow Spidermonkey syntax
             expr = null;
         }
         return new YieldExpression(delegatedYield, expr);
+    }
+
+    private boolean assignmentExpressionForYield() {
+        switch (token()) {
+        case COLON:
+        case COMMA:
+        case RB:
+        case RC:
+        case RP:
+        case SEMI:
+            return false;
+        default:
+            return noLineTerminator();
+        }
     }
 
     /**
