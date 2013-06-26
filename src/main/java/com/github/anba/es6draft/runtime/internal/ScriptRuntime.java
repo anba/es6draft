@@ -231,12 +231,15 @@ public final class ScriptRuntime {
 
     public static ExoticArguments GeneratorComprehensionInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
-        LexicalEnvironment env = cx.getVariableEnvironment();
-        EnvironmentRecord envRec = env.getEnvRec();
-        envRec.createImmutableBinding("arguments");
+        // FIXME: spec bug - generator comprehensions are defined in terms of generator functions
+        // which means they inherit the [[Call]] definition from 8.3.15.1 and the function
+        // declaration instantiation code from 10.5.3
+        // LexicalEnvironment env = cx.getVariableEnvironment();
+        // EnvironmentRecord envRec = env.getEnvRec();
+        // envRec.createImmutableBinding("arguments");
         ExoticArguments ao = InstantiateArgumentsObject(cx, args);
         CompleteStrictArgumentsObject(cx, ao);
-        envRec.initialiseBinding("arguments", ao);
+        // envRec.initialiseBinding("arguments", ao);
         return ao;
     }
 
