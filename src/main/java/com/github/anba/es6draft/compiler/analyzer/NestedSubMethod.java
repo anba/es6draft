@@ -422,7 +422,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
 
         @Override
         public Boolean visit(EmptyStatement node, ArrayDeque<Node> stack) {
-            return export(node, stack);
+            return neverExport(node);
         }
 
         @Override

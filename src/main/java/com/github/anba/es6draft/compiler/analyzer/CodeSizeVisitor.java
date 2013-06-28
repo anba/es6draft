@@ -457,7 +457,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(LabelledStatement node, CodeSizeHandler value) {
-        return 15;
+        return analyze(node, node.getStatement(), 15, value);
     }
 
     @Override
