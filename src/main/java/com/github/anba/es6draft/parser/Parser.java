@@ -2193,6 +2193,7 @@ public class Parser {
         case RC:
         case RP:
         case SEMI:
+        case EOF:
             return false;
         default:
             return noLineTerminator();
@@ -3605,7 +3606,8 @@ public class Parser {
 
         Expression expr = null;
         consume(Token.RETURN);
-        if (noLineTerminator() && !(token() == Token.SEMI || token() == Token.RC)) {
+        if (noLineTerminator()
+                && !(token() == Token.SEMI || token() == Token.RC || token() == Token.EOF)) {
             expr = expression(true);
         }
         semicolon();
