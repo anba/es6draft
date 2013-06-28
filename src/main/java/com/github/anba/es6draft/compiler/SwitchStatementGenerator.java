@@ -243,14 +243,11 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
                 assert defaultClause == null;
                 defaultClause = stmtLabel;
             } else {
-                Label next = new Label();
                 mv.load(switchValue, Types.Object);
                 ValType type = expressionValue(expr, mv);
                 mv.toBoxed(type);
                 mv.invoke(Methods.ScriptRuntime_strictEqualityComparison);
-                mv.ifeq(next);
-                mv.goTo(stmtLabel);
-                mv.mark(next);
+                mv.ifne(stmtLabel);
             }
         }
 
