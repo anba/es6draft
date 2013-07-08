@@ -345,27 +345,7 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     public void toBoxed(ValType type) {
-        switch (type) {
-        case Number:
-            toBoxed(Type.DOUBLE_TYPE);
-            return;
-        case Number_int:
-            toBoxed(Type.INT_TYPE);
-            return;
-        case Number_uint:
-            toBoxed(Type.LONG_TYPE);
-            return;
-        case Boolean:
-            toBoxed(Type.BOOLEAN_TYPE);
-            return;
-        case Undefined:
-        case Null:
-        case String:
-        case Object:
-        case Any:
-        default:
-            return;
-        }
+        toBoxed(type.toType());
     }
 
     public void toBoxed(Type type) {

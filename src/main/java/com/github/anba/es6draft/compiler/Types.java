@@ -52,6 +52,7 @@ final class Types {
     static final Type CharSequence = Type.getType(CharSequence.class);
     static final Type Double = Type.getType(Double.class);
     static final Type Integer = Type.getType(Integer.class);
+    static final Type Long = Type.getType(Long.class);
     static final Type Number = Type.getType(Number.class);
     static final Type Object = Type.getType(Object.class);
     static final Type Object_ = Type.getType(Object[].class);

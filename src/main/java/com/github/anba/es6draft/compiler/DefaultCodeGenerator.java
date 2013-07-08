@@ -334,6 +334,58 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 return false;
             }
         }
+
+        public Type toType() {
+            switch (this) {
+            case Boolean:
+                return Type.BOOLEAN_TYPE;
+            case String:
+                return Types.CharSequence;
+            case Number:
+                return Type.DOUBLE_TYPE;
+            case Number_int:
+                return Type.INT_TYPE;
+            case Number_uint:
+                return Type.LONG_TYPE;
+            case Object:
+                return Types.ScriptObject;
+            case Reference:
+                return Types.Reference;
+            case Null:
+                return Types.Null;
+            case Undefined:
+                return Types.Undefined;
+            case Any:
+            default:
+                return Types.Object;
+            }
+        }
+
+        public Type toBoxedType() {
+            switch (this) {
+            case Boolean:
+                return Types.Boolean;
+            case String:
+                return Types.CharSequence;
+            case Number:
+                return Types.Double;
+            case Number_int:
+                return Types.Integer;
+            case Number_uint:
+                return Types.Long;
+            case Object:
+                return Types.ScriptObject;
+            case Reference:
+                return Types.Reference;
+            case Null:
+                return Types.Null;
+            case Undefined:
+                return Types.Undefined;
+            case Any:
+            default:
+                return Types.Object;
+            }
+        }
     }
 
     /**
