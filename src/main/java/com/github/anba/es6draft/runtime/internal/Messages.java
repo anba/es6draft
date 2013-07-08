@@ -72,7 +72,7 @@ public class Messages {
         EmptyParenthesisedExpression("parser.empty_parenthesised_expression"),
         InvalidSpreadExpression("parser.invalid_spread_expression"),
         InvalidConstructorMethod("parser.invalid_constructor_method"),
-        InvalidPrototypeMethod("invalid_prototype_method"),
+        InvalidPrototypeMethod("parser.invalid_prototype_method"),
         InvalidSuperExpression("parser.invalid_super_expression"),
         SuperOutsideClass("parser.super_outside_class"),
         MissingColonAfterPropertyId("parser.missing_colon_after_property_id"),
