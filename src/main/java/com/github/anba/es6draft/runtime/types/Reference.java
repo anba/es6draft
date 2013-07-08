@@ -23,19 +23,19 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
  * <li>8.2.4 The Reference Specification Type
  * </ul>
  */
-public abstract class Reference {
+public abstract class Reference<BASE, NAME> {
     private Reference() {
     }
 
     /**
      * GetBase(V)
      */
-    public abstract Object getBase();
+    public abstract BASE getBase();
 
     /**
      * GetReferencedName(V)
      */
-    public abstract Object getReferencedName();
+    public abstract NAME getReferencedName();
 
     /**
      * IsStrictReference(V)
@@ -83,7 +83,7 @@ public abstract class Reference {
     public static Object GetValue(Object v, ExecutionContext cx) {
         if (!(v instanceof Reference))
             return v;
-        return ((Reference) v).GetValue(cx);
+        return ((Reference<?, ?>) v).GetValue(cx);
     }
 
     /**
@@ -93,7 +93,7 @@ public abstract class Reference {
         if (!(v instanceof Reference)) {
             throw throwReferenceError(cx, Messages.Key.InvalidReference);
         }
-        ((Reference) v).PutValue(w, cx);
+        ((Reference<?, ?>) v).PutValue(w, cx);
     }
 
     /**
@@ -102,10 +102,10 @@ public abstract class Reference {
     public static Object GetThisValue(ExecutionContext cx, Object v) {
         if (!(v instanceof Reference))
             return v;
-        return ((Reference) v).GetThisValue(cx);
+        return ((Reference<?, ?>) v).GetThisValue(cx);
     }
 
-    public static final class IdentifierReference extends Reference {
+    public static final class IdentifierReference extends Reference<EnvironmentRecord, String> {
         private final EnvironmentRecord base;
         private final String referencedName;
         private final boolean strictReference;
@@ -187,7 +187,7 @@ public abstract class Reference {
         }
     }
 
-    protected static abstract class PropertyReference extends Reference {
+    protected static abstract class PropertyReference<NAME> extends Reference<Object, NAME> {
         protected final Object base;
         protected final Type type;
         protected final boolean strictReference;
@@ -249,7 +249,7 @@ public abstract class Reference {
         }
     }
 
-    public static final class PropertyNameReference extends PropertyReference {
+    public static final class PropertyNameReference extends PropertyReference<String> {
         private String referencedName;
 
         public PropertyNameReference(Object base, String referencedName, boolean strictReference) {
@@ -302,7 +302,7 @@ public abstract class Reference {
         }
     }
 
-    public static final class PropertySymbolReference extends PropertyReference {
+    public static final class PropertySymbolReference extends PropertyReference<Symbol> {
         private Symbol referencedName;
 
         public PropertySymbolReference(Object base, Symbol referencedName, boolean strictReference) {
@@ -342,7 +342,7 @@ public abstract class Reference {
         }
     }
 
-    protected static abstract class SuperReference extends Reference {
+    protected static abstract class SuperReference<NAME> extends Reference<ScriptObject, NAME> {
         private final ScriptObject base;
         private final boolean strictReference;
         private final Object thisValue;
@@ -389,7 +389,7 @@ public abstract class Reference {
         }
     }
 
-    public static final class SuperNameReference extends SuperReference {
+    public static final class SuperNameReference extends SuperReference<String> {
         private String referencedName;
 
         public SuperNameReference(ScriptObject base, String referencedName,
@@ -420,7 +420,7 @@ public abstract class Reference {
         }
     }
 
-    public static final class SuperSymbolReference extends SuperReference {
+    public static final class SuperSymbolReference extends SuperReference<Symbol> {
         private Symbol referencedName;
 
         public SuperSymbolReference(ScriptObject base, Symbol referencedName,

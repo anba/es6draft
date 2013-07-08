@@ -59,8 +59,8 @@ public final class LexicalEnvironment {
     /**
      * 10.2.2.1 GetIdentifierReference (lex, name, strict)
      */
-    public static Reference getIdentifierReference(LexicalEnvironment lex, String name,
-            boolean strict) {
+    public static Reference<EnvironmentRecord, String> getIdentifierReference(
+            LexicalEnvironment lex, String name, boolean strict) {
         EnvironmentRecord envRec = getIdentifierRecord(lex, name);
         return new Reference.IdentifierReference(envRec, name, strict);
     }

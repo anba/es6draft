@@ -164,7 +164,7 @@ public final class ExecutionContext {
     /**
      * 10.4.1 Identifier Resolution
      */
-    public Reference identifierResolution(String name, boolean strict) {
+    public Reference<EnvironmentRecord, String> identifierResolution(String name, boolean strict) {
         return LexicalEnvironment.getIdentifierReference(lexEnv, name, strict);
     }
 

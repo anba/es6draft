@@ -311,8 +311,8 @@ public final class ScriptRuntime {
      * Runtime Semantics: Evaluation<br>
      * MemberExpression : MemberExpression . IdentifierName
      */
-    public static Reference getProperty(Object baseValue, String propertyNameString,
-            ExecutionContext cx, boolean strict) {
+    public static Reference<Object, String> getProperty(Object baseValue,
+            String propertyNameString, ExecutionContext cx, boolean strict) {
         /* step 1-6 (generated code) */
         /* step 7 */
         CheckObjectCoercible(cx, baseValue);
@@ -332,7 +332,8 @@ public final class ScriptRuntime {
         /* step 7 */
         CheckObjectCoercible(cx, baseValue);
         /* step 8-10 */
-        Reference ref = new Reference.PropertyNameReference(baseValue, propertyNameString, strict);
+        Reference<Object, String> ref = new Reference.PropertyNameReference(baseValue,
+                propertyNameString, strict);
         return ref.GetValue(cx);
     }
 
@@ -342,7 +343,7 @@ public final class ScriptRuntime {
      * Runtime Semantics: Evaluation<br>
      * MemberExpression : MemberExpression [ Expression ]
      */
-    public static Reference getElement(Object baseValue, Object propertyNameValue,
+    public static Reference<Object, ?> getElement(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
         /* step 1-6 (generated code) */
         /* step 7 */
@@ -371,12 +372,12 @@ public final class ScriptRuntime {
         Object propertyKey = ToPropertyKey(cx, propertyNameValue);
         /* step 9-10 */
         if (propertyKey instanceof String) {
-            Reference ref = new Reference.PropertyNameReference(baseValue, (String) propertyKey,
-                    strict);
+            Reference<Object, String> ref = new Reference.PropertyNameReference(baseValue,
+                    (String) propertyKey, strict);
             return ref.GetValue(cx);
         }
-        Reference ref = new Reference.PropertySymbolReference(baseValue, (Symbol) propertyKey,
-                strict);
+        Reference<Object, Symbol> ref = new Reference.PropertySymbolReference(baseValue,
+                (Symbol) propertyKey, strict);
         return ref.GetValue(cx);
     }
 
@@ -431,7 +432,7 @@ public final class ScriptRuntime {
         Object thisValue;
         if (ref instanceof Reference) {
             /* step 7 */
-            Reference r = (Reference) ref;
+            Reference<?, ?> r = (Reference<?, ?>) ref;
             if (r.isPropertyReference()) {
                 thisValue = GetThisValue(cx, r);
             } else {
@@ -455,7 +456,7 @@ public final class ScriptRuntime {
      */
     public static boolean IsBuiltinEval(Object ref, Callable f, ExecutionContext cx) {
         if (ref instanceof Reference) {
-            Reference r = (Reference) ref;
+            Reference<?, ?> r = (Reference<?, ?>) ref;
             if (!r.isPropertyReference()) {
                 assert !r.isUnresolvableReference() && r.getBase() instanceof EnvironmentRecord;
                 return (f == cx.getRealm().getBuiltinEval());
@@ -469,8 +470,8 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      */
-    public static Reference MakeSuperReference(ExecutionContext cx, String propertyKey,
-            boolean strict) {
+    public static Reference<ScriptObject, String> MakeSuperReference(ExecutionContext cx,
+            String propertyKey, boolean strict) {
         EnvironmentRecord envRec = cx.getThisEnvironment();
         if (!envRec.hasSuperBinding()) {
             throwReferenceError(cx, Messages.Key.MissingSuperBinding);
@@ -545,7 +546,7 @@ public final class ScriptRuntime {
         if (!(expr instanceof Reference)) {
             return true;
         }
-        Reference ref = (Reference) expr;
+        Reference<?, ?> ref = (Reference<?, ?>) expr;
         /* step 4 */
         if (ref.isUnresolvableReference()) {
             if (ref.isStrictReference()) {
@@ -584,7 +585,7 @@ public final class ScriptRuntime {
      */
     public static String typeof(Object val, ExecutionContext cx) {
         if (val instanceof Reference) {
-            Reference ref = (Reference) val;
+            Reference<?, ?> ref = (Reference<?, ?>) val;
             if (ref.isUnresolvableReference()) {
                 return "undefined";
             }
@@ -1336,7 +1337,7 @@ public final class ScriptRuntime {
         Object completionValue = UNDEFINED;
 
         // super()
-        Reference ref = MakeSuperReference(cx, null, true);
+        Reference<ScriptObject, String> ref = MakeSuperReference(cx, null, true);
         // EvaluateCall: super(...args)
         Object func = ref.GetValue(cx);
         Object[] argList = SpreadArray(cx.identifierValue("args", true), cx);
