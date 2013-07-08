@@ -436,7 +436,7 @@ class CodeGenerator implements AutoCloseable {
 
     void compile(SpreadElementMethod node, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
-            ExpressionVisitor body = new InlineArraySpreadVisitor(this, node, mv);
+            ExpressionVisitor body = new SpreadElementMethodVisitor(this, node, mv);
             body.lineInfo(node);
             body.begin();
 
@@ -450,7 +450,7 @@ class CodeGenerator implements AutoCloseable {
 
     void compile(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
-            ExpressionVisitor body = new InlinePropertyDefinitionVisitor(this, node, mv);
+            ExpressionVisitor body = new PropertyDefinitionsMethodVisitor(this, node, mv);
             body.lineInfo(node);
             body.begin();
 
@@ -480,6 +480,8 @@ class CodeGenerator implements AutoCloseable {
             body.end();
         }
     }
+
+    /* ----------------------------------------------------------------------------------------- */
 
     ValType expression(Expression node, ExpressionVisitor mv) {
         return node.accept(exprgen, mv);
@@ -542,14 +544,6 @@ class CodeGenerator implements AutoCloseable {
         }
     }
 
-    private abstract static class ExpressionVisitorImpl extends ExpressionVisitor {
-        protected ExpressionVisitorImpl(CodeGenerator codegen, String methodName,
-                Type methodDescriptor, boolean strict, boolean globalCode) {
-            super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, globalCode);
-        }
-    }
-
     private static class ScriptStatementVisitor extends StatementVisitorImpl {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
@@ -579,6 +573,14 @@ class CodeGenerator implements AutoCloseable {
                 StatementVisitor parent) {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .getCodeType(), parent.isCompletionValue(), false);
+        }
+    }
+
+    private abstract static class ExpressionVisitorImpl extends ExpressionVisitor {
+        protected ExpressionVisitorImpl(CodeGenerator codegen, String methodName,
+                Type methodDescriptor, boolean strict, boolean globalCode) {
+            super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
+                    methodName, methodDescriptor, strict, globalCode);
         }
     }
 
@@ -614,22 +616,22 @@ class CodeGenerator implements AutoCloseable {
         }
     }
 
-    private static class InlineArraySpreadVisitor extends ExpressionVisitorImpl {
+    private static class SpreadElementMethodVisitor extends ExpressionVisitorImpl {
         static final Type methodDescriptor = Type.getMethodType(Type.INT_TYPE,
                 Types.ExecutionContext, Types.ExoticArray, Type.INT_TYPE);
 
-        InlineArraySpreadVisitor(CodeGenerator codegen, SpreadElementMethod node,
+        SpreadElementMethodVisitor(CodeGenerator codegen, SpreadElementMethod node,
                 ExpressionVisitor parent) {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .isGlobalCode());
         }
     }
 
-    private static class InlinePropertyDefinitionVisitor extends ExpressionVisitorImpl {
+    private static class PropertyDefinitionsMethodVisitor extends ExpressionVisitorImpl {
         static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.ScriptObject);
 
-        InlinePropertyDefinitionVisitor(CodeGenerator codegen, PropertyDefinitionsMethod node,
+        PropertyDefinitionsMethodVisitor(CodeGenerator codegen, PropertyDefinitionsMethod node,
                 ExpressionVisitor parent) {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .isGlobalCode());
