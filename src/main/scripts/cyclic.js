@@ -23,7 +23,7 @@ const Function_call = Function.prototype.call.bind(Function.prototype.call);
 const wm = new WeakMap(), cs = new Set();
 
 function checkCycle(fn, o, ...args) {
-  if (typeof this == 'function' || typeof o == 'object' && o !== null) {
+  if (typeof o == 'function' || typeof o == 'object' && o !== null) {
     if (wm.has(o)) {
       return "";
     }
@@ -37,7 +37,7 @@ function checkCycle(fn, o, ...args) {
   try {
     return Function_call(fn, o, ...args);
   } finally {
-    if (typeof this == 'function' || typeof o == 'object' && o !== null) {
+    if (typeof o == 'function' || typeof o == 'object' && o !== null) {
       wm.delete(o);
     } else {
       cs.delete(o);
