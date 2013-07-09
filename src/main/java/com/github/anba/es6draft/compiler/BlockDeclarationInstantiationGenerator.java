@@ -68,30 +68,33 @@ class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantia
             }
         }
 
-        // stack: [env, envRec] -> [envRec, env]
-        mv.swap();
+        if (!functionsToInitialize.isEmpty()) {
+            // stack: [env, envRec] -> [envRec, env]
+            mv.swap();
 
-        /* step 4 */
-        for (Declaration f : functionsToInitialize) {
-            String fn = BoundName(f);
+            /* step 4 */
+            for (Declaration f : functionsToInitialize) {
+                String fn = BoundName(f);
 
-            // stack: [envRec, env] -> [envRec, env, envRec, env, cx]
-            mv.dup2();
-            mv.loadExecutionContext();
+                // stack: [envRec, env] -> [envRec, env, envRec, env, cx]
+                mv.dup2();
+                mv.loadExecutionContext();
 
-            // stack: [envRec, env, envRec, env, cx] -> [envRec, env, envRec, fo]
-            if (f instanceof FunctionDeclaration) {
-                InstantiateFunctionObject((FunctionDeclaration) f, mv);
-            } else {
-                InstantiateGeneratorObject((GeneratorDeclaration) f, mv);
+                // stack: [envRec, env, envRec, env, cx] -> [envRec, env, envRec, fo]
+                if (f instanceof FunctionDeclaration) {
+                    InstantiateFunctionObject((FunctionDeclaration) f, mv);
+                } else {
+                    InstantiateGeneratorObject((GeneratorDeclaration) f, mv);
+                }
+
+                // stack: [envRec, env, envRec, fo] -> [envRec, env]
+                initialiseBinding(fn, mv);
             }
 
-            // stack: [envRec, env, envRec, fo] -> [envRec, env]
-            initialiseBinding(fn, mv);
+            // stack: [envRec, env] -> [env]
+            mv.swap();
         }
 
-        // stack: [envRec, env] -> [env]
-        mv.swap();
         mv.pop();
     }
 }
