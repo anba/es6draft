@@ -55,7 +55,7 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         Object message = args.length > 0 ? args[0] : UNDEFINED;
 
         ErrorObject obj;

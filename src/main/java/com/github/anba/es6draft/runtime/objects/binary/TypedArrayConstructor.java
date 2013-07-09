@@ -96,7 +96,7 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         Object arg0 = args.length > 0 ? args[0] : UNDEFINED;
         if (!Type.isObject(arg0)) {
             return callWithLength(calleeContext, thisValue, arg0, args);

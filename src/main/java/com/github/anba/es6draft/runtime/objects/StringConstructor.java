@@ -55,7 +55,7 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         CharSequence s = (args.length > 0 ? ToString(calleeContext, args[0]) : "");
         if (thisValue instanceof ExoticString) {
             ExoticString obj = (ExoticString) thisValue;

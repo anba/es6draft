@@ -53,7 +53,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         double n = (args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0);
         if (thisValue instanceof NumberObject) {
             NumberObject obj = (NumberObject) thisValue;

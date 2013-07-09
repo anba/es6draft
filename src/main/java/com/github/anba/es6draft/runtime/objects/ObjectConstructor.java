@@ -61,7 +61,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         Object value = args.length > 0 ? args[0] : UNDEFINED;
         if (Type.isUndefinedOrNull(value)) {
             return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);

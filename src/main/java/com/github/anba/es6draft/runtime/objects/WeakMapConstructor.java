@@ -58,7 +58,7 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
 
         /* steps 1-4 */

@@ -39,6 +39,13 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         return realm;
     }
 
+    /**
+     * Returns the callee execution context
+     */
+    protected final ExecutionContext calleeContext() {
+        return realm.defaultContext();
+    }
+
     @Override
     public String toSource() {
         Property desc = ordinaryGetOwnProperty("name");

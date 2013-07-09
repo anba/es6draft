@@ -69,7 +69,7 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
 
         /* steps 1-7 */
         int argCount = args.length;

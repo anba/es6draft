@@ -58,7 +58,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         Realm realm = calleeContext.getRealm();
         int numberOfArgs = args.length;
         if (numberOfArgs >= 2) {

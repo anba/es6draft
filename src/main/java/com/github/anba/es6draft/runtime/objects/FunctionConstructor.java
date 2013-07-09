@@ -63,7 +63,7 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
 
         /* steps 1-7 */
         int argCount = args.length;

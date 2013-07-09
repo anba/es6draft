@@ -668,14 +668,15 @@ public final class Properties {
             Map<String, PropertyDescriptor> accessors1,
             Map<BuiltinSymbol, PropertyDescriptor> accessors2) {
         if (accessors1 != null) {
+            ExecutionContext cx = realm.defaultContext();
             for (Entry<String, PropertyDescriptor> entry : accessors1.entrySet()) {
-                owner.defineOwnProperty(realm.defaultContext(), entry.getKey(), entry.getValue());
+                owner.defineOwnProperty(cx, entry.getKey(), entry.getValue());
             }
         }
         if (accessors2 != null) {
+            ExecutionContext cx = realm.defaultContext();
             for (Entry<BuiltinSymbol, PropertyDescriptor> entry : accessors2.entrySet()) {
-                owner.defineOwnProperty(realm.defaultContext(), entry.getKey().get(),
-                        entry.getValue());
+                owner.defineOwnProperty(cx, entry.getKey().get(), entry.getValue());
             }
         }
     }

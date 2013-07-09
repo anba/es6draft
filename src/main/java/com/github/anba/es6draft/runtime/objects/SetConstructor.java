@@ -59,7 +59,7 @@ public class SetConstructor extends BuiltinFunction implements Constructor, Init
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
         Object comparator = args.length > 1 ? args[1] : UNDEFINED;
 

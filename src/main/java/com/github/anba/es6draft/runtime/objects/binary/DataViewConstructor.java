@@ -139,7 +139,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         Object buffer = args.length > 0 ? args[0] : UNDEFINED;
         Object byteOffset = args.length > 1 ? args[1] : 0;
         Object byteLength = args.length > 2 ? args[2] : UNDEFINED;

@@ -249,7 +249,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         Object length = args.length > 0 ? args[0] : UNDEFINED;
         if (!(Type.isUndefined(thisValue) || Type.isObject(thisValue))) {
             throwTypeError(calleeContext, Messages.Key.IncompatibleObject);

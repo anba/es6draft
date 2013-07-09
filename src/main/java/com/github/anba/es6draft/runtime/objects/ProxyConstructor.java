@@ -40,7 +40,7 @@ public class ProxyConstructor extends BuiltinFunction implements Constructor, In
 
     @Override
     public ExoticProxy call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         Object target = args.length > 0 ? args[0] : UNDEFINED;
         Object handler = args.length > 1 ? args[1] : UNDEFINED;
         return CreateProxy(calleeContext, target, handler);
