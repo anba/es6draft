@@ -23,6 +23,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  *
@@ -196,31 +197,31 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
-    protected final int saveEnvironment(AbruptNode node, StatementVisitor mv) {
+    protected final Variable saveEnvironment(AbruptNode node, StatementVisitor mv) {
         EnumSet<Abrupt> abrupt = node.getAbrupt();
         if (abrupt.contains(Abrupt.Break) || abrupt.contains(Abrupt.Continue)) {
             return saveEnvironment(mv);
         }
-        return -1;
+        return null;
     }
 
     /**
      * stack: [] -> []
      */
-    protected final int saveEnvironment(StatementVisitor mv) {
-        int savedEnv = mv.newVariable(Types.LexicalEnvironment);
+    protected final Variable saveEnvironment(StatementVisitor mv) {
+        Variable savedEnv = mv.newVariable("savedEnv", Types.LexicalEnvironment);
         getLexicalEnvironment(mv);
-        mv.store(savedEnv, Types.LexicalEnvironment);
+        mv.store(savedEnv);
         return savedEnv;
     }
 
     /**
      * stack: [] -> []
      */
-    protected final void restoreEnvironment(AbruptNode node, Abrupt abrupt, int savedEnv,
+    protected final void restoreEnvironment(AbruptNode node, Abrupt abrupt, Variable savedEnv,
             StatementVisitor mv) {
         if (node.getAbrupt().contains(abrupt)) {
-            assert savedEnv != -1;
+            assert savedEnv != null;
             restoreEnvironment(mv, savedEnv);
         }
     }
@@ -228,14 +229,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
-    protected final void restoreEnvironment(StatementVisitor mv, int savedEnv) {
+    protected final void restoreEnvironment(StatementVisitor mv, Variable savedEnv) {
         mv.loadExecutionContext();
-        mv.load(savedEnv, Types.LexicalEnvironment);
+        mv.load(savedEnv);
         mv.invoke(Methods.ExecutionContext_restoreLexicalEnvironment);
     }
 
-    protected final void freeVariable(int var, StatementVisitor mv) {
-        if (var != -1) {
+    protected final void freeVariable(Variable var, StatementVisitor mv) {
+        if (var != null) {
             mv.freeVariable(var);
         }
     }

@@ -27,6 +27,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -79,26 +80,26 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
     private void generate(Script evalScript, InstructionVisitor mv) {
         // FIXME: spec incomplete (using modified ES5.1 algorithm for now...)
 
-        int context = EXECUTION_CONTEXT;
-        int lexEnv = LEX_ENV;
-        int varEnv = VAR_ENV;
-        int deletableBindings = DELETABLE_BINDINGS;
+        Variable context = mv.getParameter(EXECUTION_CONTEXT);
+        Variable lexEnv = mv.getParameter(LEX_ENV);
+        Variable varEnv = mv.getParameter(VAR_ENV);
+        Variable deletableBindings = mv.getParameter(DELETABLE_BINDINGS);
 
-        int env = varEnv;
-        int envRec = mv.newVariable(Types.EnvironmentRecord);
-        mv.load(env, Types.LexicalEnvironment);
+        Variable env = varEnv;
+        Variable envRec = mv.newVariable("envRec", Types.EnvironmentRecord);
+        mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-        mv.store(envRec, Types.EnvironmentRecord);
+        mv.store(envRec);
 
-        int lexEnvRec = mv.newVariable(Types.EnvironmentRecord);
-        mv.load(lexEnv, Types.LexicalEnvironment);
+        Variable lexEnvRec = mv.newVariable("lexEnvRec", Types.EnvironmentRecord);
+        mv.load(lexEnv);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-        mv.store(lexEnvRec, Types.EnvironmentRecord);
+        mv.store(lexEnvRec);
 
         // begin-modification
         for (String name : LexicallyDeclaredNames(evalScript)) {
-            mv.load(context, Types.ExecutionContext);
-            mv.load(lexEnvRec, Types.EnvironmentRecord);
+            mv.load(context);
+            mv.load(lexEnvRec);
             mv.aconst(name);
             mv.invoke(Methods.ScriptRuntime_bindingNotPresentOrThrow);
         }

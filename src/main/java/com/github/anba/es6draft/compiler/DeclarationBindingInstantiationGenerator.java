@@ -18,6 +18,7 @@ import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -76,8 +77,8 @@ class DeclarationBindingInstantiationGenerator {
      * <p>
      * stack: [] -> [boolean]
      */
-    protected void hasBinding(int envRec, String name, InstructionVisitor mv) {
-        mv.load(envRec, Types.EnvironmentRecord);
+    protected void hasBinding(Variable envRec, String name, InstructionVisitor mv) {
+        mv.load(envRec);
         hasBinding(name, mv);
     }
 
@@ -96,9 +97,9 @@ class DeclarationBindingInstantiationGenerator {
      * <p>
      * stack: [] -> []
      */
-    protected void createMutableBinding(int envRec, String name, boolean deletable,
+    protected void createMutableBinding(Variable envRec, String name, boolean deletable,
             InstructionVisitor mv) {
-        mv.load(envRec, Types.EnvironmentRecord);
+        mv.load(envRec);
         createMutableBinding(name, deletable, mv);
     }
 
@@ -118,11 +119,11 @@ class DeclarationBindingInstantiationGenerator {
      * <p>
      * stack: [] -> []
      */
-    protected void createMutableBinding(int envRec, String name, int deletable,
+    protected void createMutableBinding(Variable envRec, String name, Variable deletable,
             InstructionVisitor mv) {
-        mv.load(envRec, Types.EnvironmentRecord);
+        mv.load(envRec);
         mv.aconst(name);
-        mv.load(deletable, Type.BOOLEAN_TYPE);
+        mv.load(deletable);
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
 
@@ -131,8 +132,8 @@ class DeclarationBindingInstantiationGenerator {
      * <p>
      * stack: [] -> []
      */
-    protected void createImmutableBinding(int envRec, String name, InstructionVisitor mv) {
-        mv.load(envRec, Types.EnvironmentRecord);
+    protected void createImmutableBinding(Variable envRec, String name, InstructionVisitor mv) {
+        mv.load(envRec);
         createImmutableBinding(name, mv);
     }
 
@@ -151,8 +152,8 @@ class DeclarationBindingInstantiationGenerator {
      * <p>
      * stack: [obj] -> []
      */
-    protected void initialiseBinding(int envRec, String name, InstructionVisitor mv) {
-        mv.load(envRec, Types.EnvironmentRecord);
+    protected void initialiseBinding(Variable envRec, String name, InstructionVisitor mv) {
+        mv.load(envRec);
         mv.swap();
         initialiseBinding(name, mv);
     }
@@ -173,8 +174,9 @@ class DeclarationBindingInstantiationGenerator {
      * <p>
      * stack: [obj] -> []
      */
-    protected void setMutableBinding(int envRec, String name, boolean strict, InstructionVisitor mv) {
-        mv.load(envRec, Types.EnvironmentRecord);
+    protected void setMutableBinding(Variable envRec, String name, boolean strict,
+            InstructionVisitor mv) {
+        mv.load(envRec);
         mv.swap();
         setMutableBinding(name, strict, mv);
     }
@@ -197,10 +199,10 @@ class DeclarationBindingInstantiationGenerator {
      * <p>
      * stack: [] -> [fo]
      */
-    protected void InstantiateFunctionObject(int context, int env, FunctionDeclaration f,
+    protected void InstantiateFunctionObject(Variable context, Variable env, FunctionDeclaration f,
             InstructionVisitor mv) {
-        mv.load(env, Types.LexicalEnvironment);
-        mv.load(context, Types.ExecutionContext);
+        mv.load(env);
+        mv.load(context);
 
         InstantiateFunctionObject(f, mv);
     }
@@ -226,10 +228,10 @@ class DeclarationBindingInstantiationGenerator {
      * <p>
      * stack: [] -> [fo]
      */
-    protected void InstantiateGeneratorObject(int context, int env, GeneratorDeclaration f,
-            InstructionVisitor mv) {
-        mv.load(env, Types.LexicalEnvironment);
-        mv.load(context, Types.ExecutionContext);
+    protected void InstantiateGeneratorObject(Variable context, Variable env,
+            GeneratorDeclaration f, InstructionVisitor mv) {
+        mv.load(env);
+        mv.load(context);
 
         InstantiateGeneratorObject(f, mv);
     }

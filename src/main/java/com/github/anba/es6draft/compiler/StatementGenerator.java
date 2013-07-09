@@ -23,6 +23,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.parser.Parser;
 
 /**
@@ -194,7 +195,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         // L1: <statement>
         // IFNE ToBoolean(<expr>) L1
 
-        int savedEnv = saveEnvironment(node, mv);
+        Variable savedEnv = saveEnvironment(node, mv);
 
         mv.mark(lblNext);
         {
@@ -266,7 +267,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Label lblContinue = new Label(), lblBreak = new Label();
         Label loopstart = new Label();
 
-        int savedEnv = saveEnvironment(node, mv);
+        Variable savedEnv = saveEnvironment(node, mv);
 
         // Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
         ValType type = expressionValue(expr, mv);
@@ -309,16 +310,16 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             }
         }
 
-        int var = mv.newVariable(Types.Iterator);
-        mv.store(var, Types.Iterator);
+        Variable iter = mv.newVariable("iter", Types.Iterator);
+        mv.store(iter);
 
         mv.mark(lblContinue);
         restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
 
-        mv.load(var, Types.Iterator);
+        mv.load(iter);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifeq(lblBreak);
-        mv.load(var, Types.Iterator);
+        mv.load(iter);
         mv.invoke(Methods.Iterator_next);
 
         if (lhs instanceof Expression) {
@@ -398,7 +399,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.mark(lblBreak);
         restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
 
-        mv.freeVariable(var);
+        mv.freeVariable(iter);
         freeVariable(savedEnv, mv);
     }
 
@@ -440,7 +441,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             lexDecl.accept(this, mv);
         }
 
-        int savedEnv = saveEnvironment(node, mv);
+        Variable savedEnv = saveEnvironment(node, mv);
 
         Label lblTest = new Label(), lblStmt = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
@@ -523,7 +524,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     @Override
     public Void visit(LabelledStatement node, StatementVisitor mv) {
-        int savedEnv = saveEnvironment(node, mv);
+        Variable savedEnv = saveEnvironment(node, mv);
 
         Label label = new Label();
         mv.enterLabelled(node, label);
@@ -645,12 +646,12 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.loadExecutionContext();
         mv.loadCompletionValue();
 
-        int r = -1;
+        Variable ref = null;
         if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
-            r = mv.newVariable(Types.boolean_);
+            ref = mv.newVariable("ref", Types.boolean_);
             mv.newarray(1, Type.BOOLEAN_TYPE);
             mv.dup();
-            mv.store(r, Types.boolean_);
+            mv.store(ref);
         } else {
             mv.aconst(null);
         }
@@ -660,8 +661,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
 
         if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
-            mv.load(r, Types.boolean_);
-            mv.freeVariable(r);
+            mv.load(ref);
+            mv.freeVariable(ref);
             mv.aload(0, Type.BOOLEAN_TYPE);
 
             Label noReturn = new Label();
@@ -716,7 +717,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.enterFinallyScoped();
 
-            int savedEnv = saveEnvironment(mv);
+            Variable savedEnv = saveEnvironment(mv);
             mv.mark(startCatchFinally);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
@@ -736,21 +737,21 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             if (!guardedCatchNodes.isEmpty()) {
                 mv.enterCatchWithGuarded(node, new Label());
 
-                int var = mv.newVariable(Types.ScriptException);
-                mv.store(var, Types.ScriptException);
+                Variable exception = mv.newVariable("exception", Types.ScriptException);
+                mv.store(exception);
                 for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
-                    mv.load(var, Types.ScriptException);
+                    mv.load(exception);
                     guardedCatchNode.accept(this, mv);
                 }
                 if (catchNode != null) {
-                    mv.load(var, Types.ScriptException);
+                    mv.load(exception);
                     catchNode.accept(this, mv);
                 } else {
-                    mv.load(var, Types.ScriptException);
+                    mv.load(exception);
                     mv.athrow();
                 }
 
-                mv.freeVariable(var);
+                mv.freeVariable(exception);
                 mv.mark(mv.catchWithGuardedLabel());
                 mv.exitCatchWithGuarded(node);
             } else {
@@ -770,15 +771,15 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
-            int var = mv.newVariable(Types.Throwable);
-            mv.store(var, Types.Throwable);
+            Variable throwable = mv.newVariable("throwable", Types.Throwable);
+            mv.store(throwable);
             restoreEnvironment(mv, savedEnv);
             mv.enterFinally();
             finallyBlock.accept(this, mv);
             mv.exitFinally();
-            mv.load(var, Types.Throwable);
+            mv.load(throwable);
             mv.athrow();
-            mv.freeVariable(var);
+            mv.freeVariable(throwable);
 
             mv.mark(noException);
             mv.enterFinally();
@@ -818,7 +819,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             Label handlerCatchStackOverflow = new Label();
             Label exceptionHandled = new Label();
 
-            int savedEnv = saveEnvironment(mv);
+            Variable savedEnv = saveEnvironment(mv);
             mv.mark(startCatch);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
@@ -837,21 +838,21 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             if (!guardedCatchNodes.isEmpty()) {
                 mv.enterCatchWithGuarded(node, new Label());
 
-                int var = mv.newVariable(Types.ScriptException);
-                mv.store(var, Types.ScriptException);
+                Variable exception = mv.newVariable("exception", Types.ScriptException);
+                mv.store(exception);
                 for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
-                    mv.load(var, Types.ScriptException);
+                    mv.load(exception);
                     guardedCatchNode.accept(this, mv);
                 }
                 if (catchNode != null) {
-                    mv.load(var, Types.ScriptException);
+                    mv.load(exception);
                     catchNode.accept(this, mv);
                 } else {
-                    mv.load(var, Types.ScriptException);
+                    mv.load(exception);
                     mv.athrow();
                 }
 
-                mv.freeVariable(var);
+                mv.freeVariable(exception);
                 mv.mark(mv.catchWithGuardedLabel());
                 mv.exitCatchWithGuarded(node);
             } else {
@@ -873,7 +874,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.enterFinallyScoped();
 
-            int savedEnv = saveEnvironment(mv);
+            Variable savedEnv = saveEnvironment(mv);
             mv.mark(startFinally);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
@@ -887,15 +888,15 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
-            int var = mv.newVariable(Types.Throwable);
-            mv.store(var, Types.Throwable);
+            Variable throwable = mv.newVariable("throwable", Types.Throwable);
+            mv.store(throwable);
             restoreEnvironment(mv, savedEnv);
             mv.enterFinally();
             finallyBlock.accept(this, mv);
             mv.exitFinally();
-            mv.load(var, Types.Throwable);
+            mv.load(throwable);
             mv.athrow();
-            mv.freeVariable(var);
+            mv.freeVariable(throwable);
 
             mv.mark(noException);
             mv.enterFinally();
@@ -1061,7 +1062,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Label lblNext = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
 
-        int savedEnv = saveEnvironment(node, mv);
+        Variable savedEnv = saveEnvironment(node, mv);
 
         mv.goTo(lblContinue);
         mv.mark(lblNext);

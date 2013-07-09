@@ -29,6 +29,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * 11.1.4.2 Array Comprehension
@@ -190,14 +191,14 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_iterate);
 
-        int var = mv.newVariable(Types.Iterator);
-        mv.store(var, Types.Iterator);
+        Variable iter = mv.newVariable("iter", Types.Iterator);
+        mv.store(iter);
 
         mv.mark(lblContinue);
-        mv.load(var, Types.Iterator);
+        mv.load(iter);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifeq(lblBreak);
-        mv.load(var, Types.Iterator);
+        mv.load(iter);
         mv.invoke(Methods.Iterator_next);
 
         // create new declarative lexical environment
@@ -234,7 +235,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
         mv.goTo(lblContinue);
         mv.mark(lblBreak);
-        mv.freeVariable(var);
+        mv.freeVariable(iter);
 
         return null;
     }
@@ -279,14 +280,14 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             mv.invoke(Methods.ScriptRuntime_iterate);
         }
 
-        int var = mv.newVariable(Types.Iterator);
-        mv.store(var, Types.Iterator);
+        Variable iter = mv.newVariable("iter", Types.Iterator);
+        mv.store(iter);
 
         mv.mark(lblContinue);
-        mv.load(var, Types.Iterator);
+        mv.load(iter);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifeq(lblBreak);
-        mv.load(var, Types.Iterator);
+        mv.load(iter);
         mv.invoke(Methods.Iterator_next);
 
         if (node.getBinding() instanceof BindingPattern) {
@@ -301,7 +302,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
         mv.goTo(lblContinue);
         mv.mark(lblBreak);
-        mv.freeVariable(var);
+        mv.freeVariable(iter);
 
         return null;
     }

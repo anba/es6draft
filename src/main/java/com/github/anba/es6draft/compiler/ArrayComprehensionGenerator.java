@@ -12,6 +12,7 @@ import com.github.anba.es6draft.ast.ArrayComprehension;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * 11.1.4.2 Array Comprehension
@@ -31,7 +32,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
                 Types.ArrayList, "add", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
-    private int result = -1;
+    private Variable result = null;
 
     ArrayComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
@@ -44,20 +45,21 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     public Void visit(ArrayComprehension node, ExpressionVisitor mv) {
-        if (result != -1) {
+        if (result != null) {
+            // nested array comprehension
             return visit((Expression) node, mv);
         }
 
-        this.result = mv.newVariable(Types.ArrayList);
+        this.result = mv.newVariable("result", Types.ArrayList);
         mv.anew(Types.ArrayList);
         mv.dup();
         mv.invoke(Methods.ArrayList_init);
-        mv.store(result, Types.ArrayList);
+        mv.store(result);
 
         node.getComprehension().accept(this, mv);
 
         mv.loadExecutionContext();
-        mv.load(result, Types.ArrayList);
+        mv.load(result);
         mv.invoke(Methods.AbstractOperations_CreateArrayFromList);
         mv.freeVariable(result);
 
@@ -73,11 +75,11 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
-        assert result != -1 : "array-comprehension generator not initialised";
+        assert result != null : "array-comprehension generator not initialised";
 
         ValType type = expressionValue(node, mv);
         mv.toBoxed(type);
-        mv.load(result, Types.ArrayList);
+        mv.load(result);
         mv.swap();
         mv.invoke(Methods.ArrayList_add);
         mv.pop();

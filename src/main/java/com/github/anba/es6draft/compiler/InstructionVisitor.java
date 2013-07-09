@@ -80,6 +80,32 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
+    static class Variable {
+        private final String name;
+        private final Type type;
+        private final int var;
+
+        private Variable(String name, Type type, int var) {
+            this.name = name;
+            this.type = type;
+            this.var = var;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Type getType() {
+            return type;
+        }
+    }
+
+    static class TypedVariable<T> extends Variable {
+        private TypedVariable(String name, Type type, int var) {
+            super(name, type, var);
+        }
+    }
+
     enum MethodType {
         Interface, Virtual, Special, Static
     }
@@ -127,6 +153,12 @@ class InstructionVisitor extends InstructionAdapter {
     final String methodName;
     final Type methodDescriptor;
     final Variables variables = new Variables();
+    final ClassValue<Type> typeCache = new ClassValue<Type>() {
+        @Override
+        protected Type computeValue(Class<?> type) {
+            return Type.getType(type);
+        }
+    };
 
     protected InstructionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor) {
         super(Opcodes.ASM4, mv);
@@ -138,6 +170,7 @@ class InstructionVisitor extends InstructionAdapter {
     private void initParams(Type methodType) {
         Type[] argumentTypes = methodType.getArgumentTypes();
         for (int i = 0, len = argumentTypes.length; i < len; ++i) {
+            // FIXME: var-size!
             reserveFixedSlot(i, argumentTypes[i]);
         }
     }
@@ -146,12 +179,46 @@ class InstructionVisitor extends InstructionAdapter {
         variables.reserveFixedSlot(var, type);
     }
 
-    public int newVariable(Type type) {
-        return variables.newVariable(type);
+    private static int parameterSlot(int index, Type[] argumentTypes) {
+        int slot = 0;
+        for (int i = 0; i < index; ++i) {
+            slot += argumentTypes[i].getSize();
+        }
+        return slot;
     }
 
-    public void freeVariable(int var) {
-        variables.freeVariable(var);
+    public Variable getParameter(int index) {
+        Type[] argTypes = methodDescriptor.getArgumentTypes();
+        return new Variable("(parameter)", argTypes[index], parameterSlot(index, argTypes));
+    }
+
+    public <T> TypedVariable<T> getParameter(int index, Class<T> clazz) {
+        Type[] argTypes = methodDescriptor.getArgumentTypes();
+        if (!argTypes[index].equals(typeCache.get(clazz))) {
+            throw new IllegalArgumentException();
+        }
+        return new TypedVariable<>("(parameter)", argTypes[index], parameterSlot(index, argTypes));
+    }
+
+    public Variable newVariable(String name, Type type) {
+        return new Variable(name, type, variables.newVariable(type));
+    }
+
+    public <T> TypedVariable<T> newVariable(String name, Class<T> clazz) {
+        Type type = typeCache.get(clazz);
+        return new TypedVariable<>(name, type, variables.newVariable(type));
+    }
+
+    public void freeVariable(Variable var) {
+        variables.freeVariable(var.var);
+    }
+
+    public void load(Variable var) {
+        load(var.var, var.type);
+    }
+
+    public void store(Variable var) {
+        store(var.var, var.type);
     }
 
     public void begin() {

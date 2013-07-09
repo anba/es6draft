@@ -29,6 +29,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -102,21 +103,21 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     }
 
     private void generate(FunctionNode func, ExpressionVisitor mv) {
-        int context = EXECUTION_CONTEXT;
+        Variable context = mv.getParameter(EXECUTION_CONTEXT);
 
-        int env = mv.newVariable(Types.LexicalEnvironment);
+        Variable env = mv.newVariable("env", Types.LexicalEnvironment);
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getVariableEnvironment);
-        mv.store(env, Types.LexicalEnvironment);
+        mv.store(env);
 
-        int envRec = mv.newVariable(Types.EnvironmentRecord);
-        mv.load(env, Types.LexicalEnvironment);
+        Variable envRec = mv.newVariable("envRec", Types.EnvironmentRecord);
+        mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-        mv.store(envRec, Types.EnvironmentRecord);
+        mv.store(envRec);
 
-        int undef = mv.newVariable(Types.Undefined);
+        Variable undef = mv.newVariable("undef", Types.Undefined);
         mv.get(Fields.Undefined_UNDEFINED);
-        mv.store(undef, Types.Undefined);
+        mv.store(undef);
 
         Set<String> bindings = new HashSet<>();
         /* [10.5.3] step 1 */
@@ -159,7 +160,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 bindings.add(paramName);
                 createMutableBinding(envRec, paramName, false, mv);
                 // stack: [undefined] -> []
-                mv.load(undef, Types.Undefined);
+                mv.load(undef);
                 initialiseBinding(envRec, paramName, mv);
             }
         }
@@ -181,7 +182,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 bindings.add(varName);
                 createMutableBinding(envRec, varName, false, mv);
                 // FIXME: spec bug (partially reported in Bug 1420)
-                mv.load(undef, Types.Undefined);
+                mv.load(undef);
                 initialiseBinding(envRec, varName, mv);
             }
         }
@@ -254,7 +255,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.invoke(Methods.ExoticArguments_CompleteStrictArgumentsObject);
     }
 
-    private void CompleteMappedArgumentsObject(int env, FormalParameterList formals,
+    private void CompleteMappedArgumentsObject(Variable env, FormalParameterList formals,
             ExpressionVisitor mv) {
         // stack: [ao] -> [ao]
         mv.dup();
@@ -262,7 +263,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.swap();
         mv.load(FUNCTION, Types.FunctionObject);
         astore_string(mv, mappedNames(formals));
-        mv.load(env, Types.LexicalEnvironment);
+        mv.load(env);
         mv.invoke(Methods.ExoticArguments_CompleteMappedArgumentsObject);
     }
 

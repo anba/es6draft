@@ -26,6 +26,7 @@ import com.github.anba.es6draft.ast.SwitchClause;
 import com.github.anba.es6draft.ast.SwitchStatement;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  *
@@ -153,14 +154,14 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
 
     @Override
     public Void visit(SwitchStatement node, StatementVisitor mv) {
-        int savedEnv = saveEnvironment(node, mv);
+        Variable savedEnv = saveEnvironment(node, mv);
 
         // stack -> switchValue
         ValType expressionValueType = expressionValue(node.getExpression(), mv);
         mv.toBoxed(expressionValueType);
 
-        int switchValue = mv.newVariable(Types.Object);
-        mv.store(switchValue, Types.Object);
+        Variable switchValue = mv.newVariable("switchValue", Types.Object);
+        mv.store(switchValue);
 
         mv.enterScope(node);
         Collection<Declaration> declarations = LexicalDeclarations(node);
@@ -221,8 +222,8 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * L2: ...
      * </pre>
      */
-    private Label[] emitGenericSwitch(List<SwitchClause> clauses, Label lblBreak, int switchValue,
-            StatementVisitor mv) {
+    private Label[] emitGenericSwitch(List<SwitchClause> clauses, Label lblBreak,
+            Variable switchValue, StatementVisitor mv) {
         Label defaultClause = null;
         int index = 0;
         Label[] labels = new Label[clauses.size()];
@@ -233,7 +234,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
                 assert defaultClause == null;
                 defaultClause = stmtLabel;
             } else {
-                mv.load(switchValue, Types.Object);
+                mv.load(switchValue);
                 ValType type = expressionValue(expr, mv);
                 mv.toBoxed(type);
                 mv.invoke(Methods.ScriptRuntime_strictEqualityComparison);
@@ -272,8 +273,8 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * }
      * </pre>
      */
-    private Label[] emitStringSwitch(List<SwitchClause> clauses, Label lblBreak, int switchValue,
-            StatementVisitor mv) {
+    private Label[] emitStringSwitch(List<SwitchClause> clauses, Label lblBreak,
+            Variable switchValue, StatementVisitor mv) {
         Label defaultClause = null;
         long[] values = new long[clauses.size()];
         Label[] labels = new Label[clauses.size()];
@@ -294,16 +295,16 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
         // test for string-ness: type is java.lang.CharSequence
-        mv.load(switchValue, Types.Object);
+        mv.load(switchValue);
         mv.instanceOf(Types.CharSequence);
         mv.ifeq(switchDefault);
 
-        int switchValueString = mv.newVariable(Types.String);
-        mv.load(switchValue, Types.Object);
+        Variable switchValueString = mv.newVariable("switchValueString", Types.String);
+        mv.load(switchValue);
         mv.checkcast(Types.CharSequence);
         mv.invoke(Methods.CharSequence_toString);
         mv.dup();
-        mv.store(switchValueString, Types.String);
+        mv.store(switchValueString);
         mv.invoke(Methods.String_hashCode);
 
         mv.freeVariable(switchValue);
@@ -335,7 +336,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
                 mv.mark(switchLabels[j++]);
             }
             String string = ((StringLiteral) clauses.get(index).getExpression()).getValue();
-            mv.load(switchValueString, Types.String);
+            mv.load(switchValueString);
             mv.aconst(string);
             mv.invoke(Methods.String_equals);
             mv.ifne(labels[index]);
@@ -368,8 +369,8 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * }
      * </pre>
      */
-    private Label[] emitCharSwitch(List<SwitchClause> clauses, Label lblBreak, int switchValue,
-            StatementVisitor mv) {
+    private Label[] emitCharSwitch(List<SwitchClause> clauses, Label lblBreak,
+            Variable switchValue, StatementVisitor mv) {
         Label defaultClause = null;
         long[] values = new long[clauses.size()];
         Label[] labels = new Label[clauses.size()];
@@ -390,21 +391,21 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
         // test for char-ness: type is java.lang.CharSequence
-        mv.load(switchValue, Types.Object);
+        mv.load(switchValue);
         mv.instanceOf(Types.CharSequence);
         mv.ifeq(switchDefault);
 
         // test for char-ness: value is char (string with only one character)
-        int switchValueChar = mv.newVariable(Types.CharSequence);
-        mv.load(switchValue, Types.Object);
+        Variable switchValueChar = mv.newVariable("switchValueChar", Types.CharSequence);
+        mv.load(switchValue);
         mv.checkcast(Types.CharSequence);
         mv.dup();
-        mv.store(switchValueChar, Types.CharSequence);
+        mv.store(switchValueChar);
         mv.invoke(Methods.CharSequence_length);
         mv.iconst(1);
         mv.ificmpne(switchDefault);
 
-        mv.load(switchValueChar, Types.CharSequence);
+        mv.load(switchValueChar);
         mv.iconst(0);
         mv.invoke(Methods.CharSequence_charAt);
         mv.cast(Type.CHAR_TYPE, Type.INT_TYPE);
@@ -438,7 +439,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * }
      * </pre>
      */
-    private Label[] emitIntSwitch(List<SwitchClause> clauses, Label lblBreak, int switchValue,
+    private Label[] emitIntSwitch(List<SwitchClause> clauses, Label lblBreak, Variable switchValue,
             StatementVisitor mv) {
         Label defaultClause = null;
         long[] values = new long[clauses.size()];
@@ -460,24 +461,24 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
         // test for int-ness: type is java.lang.Number
-        mv.load(switchValue, Types.Object);
+        mv.load(switchValue);
         mv.instanceOf(Types.Number);
         mv.ifeq(switchDefault);
 
         // test for int-ness: value is integer
-        int switchValueNum = mv.newVariable(Type.DOUBLE_TYPE);
-        mv.load(switchValue, Types.Object);
+        Variable switchValueNum = mv.newVariable("switchValueNum", Type.DOUBLE_TYPE);
+        mv.load(switchValue);
         mv.checkcast(Types.Number);
         mv.invoke(Methods.Number_doubleValue);
         mv.dup2();
         mv.dup2();
-        mv.store(switchValueNum, Type.DOUBLE_TYPE);
+        mv.store(switchValueNum);
         mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
         mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
         mv.cmpl(Type.DOUBLE_TYPE);
         mv.ifne(switchDefault);
 
-        mv.load(switchValueNum, Type.DOUBLE_TYPE);
+        mv.load(switchValueNum);
         mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
 
         mv.freeVariable(switchValueNum);
