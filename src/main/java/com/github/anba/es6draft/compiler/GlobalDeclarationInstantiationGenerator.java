@@ -24,7 +24,11 @@ import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -92,11 +96,15 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     }
 
     private void generate(Script script, InstructionVisitor mv) {
-        Variable context = mv.getParameter(EXECUTION_CONTEXT);
-        Variable env = mv.getParameter(GLOBALENV);
-        Variable deletableBindings = mv.getParameter(DELETABLE_BINDINGS);
+        TypedVariable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
+                ExecutionContext.class);
+        TypedVariable<LexicalEnvironment> env = mv
+                .getParameter(GLOBALENV, LexicalEnvironment.class);
+        TypedVariable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS,
+                boolean.class);
 
-        Variable envRec = mv.newVariable("envRec", Types.GlobalEnvironmentRecord);
+        TypedVariable<GlobalEnvironmentRecord> envRec = mv.newVariable("envRec",
+                GlobalEnvironmentRecord.class);
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.checkcast(Types.GlobalEnvironmentRecord);

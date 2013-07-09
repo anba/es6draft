@@ -29,7 +29,11 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
+import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -103,14 +107,15 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     }
 
     private void generate(FunctionNode func, ExpressionVisitor mv) {
-        Variable context = mv.getParameter(EXECUTION_CONTEXT);
+        TypedVariable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
+                ExecutionContext.class);
 
-        Variable env = mv.newVariable("env", Types.LexicalEnvironment);
+        TypedVariable<LexicalEnvironment> env = mv.newVariable("env", LexicalEnvironment.class);
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getVariableEnvironment);
         mv.store(env);
 
-        Variable envRec = mv.newVariable("envRec", Types.EnvironmentRecord);
+        TypedVariable<EnvironmentRecord> envRec = mv.newVariable("envRec", EnvironmentRecord.class);
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.store(envRec);
