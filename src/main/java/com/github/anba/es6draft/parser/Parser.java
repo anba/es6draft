@@ -387,7 +387,7 @@ public class Parser {
         this.sourceLine = sourceLine;
         this.options = EnumSet.copyOf(options);
         context = new ParseContext();
-        context.strictMode = options.contains(Option.Strict) ? StrictMode.Strict
+        context.strictMode = this.options.contains(Option.Strict) ? StrictMode.Strict
                 : StrictMode.NonStrict;
     }
 
