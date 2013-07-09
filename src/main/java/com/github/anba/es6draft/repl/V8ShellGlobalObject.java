@@ -14,9 +14,9 @@ import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 
 /**
@@ -39,9 +39,9 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
      */
     public static V8ShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
             final Path script, final ScriptCache scriptCache, final Set<CompatibilityOption> options) {
-        Realm realm = Realm.newRealm(new GlobalObjectCreator<V8ShellGlobalObject>() {
+        Realm realm = Realm.newRealm(new ObjectAllocator<V8ShellGlobalObject>() {
             @Override
-            public V8ShellGlobalObject createGlobal(Realm realm) {
+            public V8ShellGlobalObject newInstance(Realm realm) {
                 return new V8ShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
         }, options);

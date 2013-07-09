@@ -30,6 +30,7 @@ import org.junit.runners.Parameterized.Parameters;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.ExceptionHandler;
 import com.github.anba.es6draft.util.LazyInit;
@@ -85,9 +86,9 @@ public final class Test262 extends BaseTest262 {
         Path testfile = Paths.get(path);
         final Test262Info info = Test262Info.from(testfile);
 
-        Realm realm = Realm.newRealm(new Realm.GlobalObjectCreator<Test262GlobalObject>() {
+        Realm realm = Realm.newRealm(new ObjectAllocator<Test262GlobalObject>() {
             @Override
-            public Test262GlobalObject createGlobal(Realm realm) {
+            public Test262GlobalObject newInstance(Realm realm) {
                 return new Test262GlobalObject(realm, libpath, cache, info, sourceName);
             }
         }, options);

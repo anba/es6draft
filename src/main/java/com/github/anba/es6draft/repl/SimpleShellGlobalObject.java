@@ -17,10 +17,10 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
+import com.github.anba.es6draft.runtime.internal.ScriptCache;
 
 /**
  *
@@ -39,9 +39,9 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
 
     public static SimpleShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
             final Path script, final ScriptCache scriptCache, final Set<CompatibilityOption> options) {
-        Realm realm = Realm.newRealm(new GlobalObjectCreator<SimpleShellGlobalObject>() {
+        Realm realm = Realm.newRealm(new ObjectAllocator<SimpleShellGlobalObject>() {
             @Override
-            public SimpleShellGlobalObject createGlobal(Realm realm) {
+            public SimpleShellGlobalObject newInstance(Realm realm) {
                 return new SimpleShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
         }, options);

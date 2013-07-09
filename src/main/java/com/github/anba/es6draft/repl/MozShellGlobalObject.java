@@ -32,8 +32,8 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.Realm.GlobalObjectCreator;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
@@ -69,9 +69,9 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     public static MozShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
             final Path script, final Path libdir, final ScriptCache scriptCache,
             final Set<CompatibilityOption> options) {
-        Realm realm = Realm.newRealm(new GlobalObjectCreator<MozShellGlobalObject>() {
+        Realm realm = Realm.newRealm(new ObjectAllocator<MozShellGlobalObject>() {
             @Override
-            public MozShellGlobalObject createGlobal(Realm realm) {
+            public MozShellGlobalObject newInstance(Realm realm) {
                 return new MozShellGlobalObject(realm, console, baseDir, script, scriptCache,
                         libdir);
             }
