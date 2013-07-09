@@ -23,8 +23,10 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
  *
@@ -195,7 +197,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         // L1: <statement>
         // IFNE ToBoolean(<expr>) L1
 
-        Variable savedEnv = saveEnvironment(node, mv);
+        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         mv.mark(lblNext);
         {
@@ -267,7 +269,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Label lblContinue = new Label(), lblBreak = new Label();
         Label loopstart = new Label();
 
-        Variable savedEnv = saveEnvironment(node, mv);
+        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         // Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
         ValType type = expressionValue(expr, mv);
@@ -441,7 +443,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             lexDecl.accept(this, mv);
         }
 
-        Variable savedEnv = saveEnvironment(node, mv);
+        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Label lblTest = new Label(), lblStmt = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
@@ -524,7 +526,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     @Override
     public Void visit(LabelledStatement node, StatementVisitor mv) {
-        Variable savedEnv = saveEnvironment(node, mv);
+        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Label label = new Label();
         mv.enterLabelled(node, label);
@@ -717,7 +719,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.enterFinallyScoped();
 
-            Variable savedEnv = saveEnvironment(mv);
+            TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
             mv.mark(startCatchFinally);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
@@ -819,7 +821,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             Label handlerCatchStackOverflow = new Label();
             Label exceptionHandled = new Label();
 
-            Variable savedEnv = saveEnvironment(mv);
+            TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
             mv.mark(startCatch);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
@@ -874,7 +876,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.enterFinallyScoped();
 
-            Variable savedEnv = saveEnvironment(mv);
+            TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
             mv.mark(startFinally);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
@@ -1062,7 +1064,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Label lblNext = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
 
-        Variable savedEnv = saveEnvironment(node, mv);
+        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         mv.goTo(lblContinue);
         mv.mark(lblNext);

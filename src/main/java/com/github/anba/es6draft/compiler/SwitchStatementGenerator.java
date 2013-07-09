@@ -26,7 +26,9 @@ import com.github.anba.es6draft.ast.SwitchClause;
 import com.github.anba.es6draft.ast.SwitchStatement;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
  *
@@ -154,7 +156,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
 
     @Override
     public Void visit(SwitchStatement node, StatementVisitor mv) {
-        Variable savedEnv = saveEnvironment(node, mv);
+        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         // stack -> switchValue
         ValType expressionValueType = expressionValue(node.getExpression(), mv);
