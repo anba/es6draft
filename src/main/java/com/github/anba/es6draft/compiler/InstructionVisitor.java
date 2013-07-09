@@ -163,9 +163,9 @@ class InstructionVisitor extends InstructionAdapter {
 
     private void initParams(Type methodType) {
         Type[] argumentTypes = methodType.getArgumentTypes();
-        for (int i = 0, len = argumentTypes.length; i < len; ++i) {
-            // FIXME: var-size!
-            reserveFixedSlot(i, argumentTypes[i]);
+        for (int i = 0, var = 0, len = argumentTypes.length; i < len; ++i) {
+            reserveFixedSlot(var, argumentTypes[i]);
+            var += argumentTypes[i].getSize();
         }
     }
 
