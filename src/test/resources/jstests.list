@@ -27,6 +27,9 @@ js1_8_5/extensions/weakmap.js
 # ES6 spec incomplete for DataView
 js1_8_5/extensions/dataview.js
 
+# ES6 Array.prototype.find/findIndex: ToInteger or ToUint32
+ecma_6/Array/find_findindex.js
+
 
 ####################################
 # Intl only partially supported    #

@@ -139,6 +139,7 @@ tests/basic/bug732087.js
 
 # __iterator__ not supported
 tests/basic/bug684922.js
+tests/basic/bug885648.js
 tests/basic/testArrayComp1.js
 tests/basic/testArrayComp2.js
 tests/basic/testBrandedVsGeneric.js
@@ -182,6 +183,7 @@ tests/sunspider/check-date-format-xparb.js
 # different error message
 tests/basic/bug827104.js
 tests/basic/bug839420.js
+tests/basic/bug882416.js
 tests/basic/expression-autopsy.js
 tests/basic/testBug566556.js
 tests/basic/testBug579647.js
