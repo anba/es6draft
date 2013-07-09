@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.tailCall;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
+import static com.github.anba.es6draft.semantics.StaticSemantics.TailCallNodes;
 import static com.github.anba.es6draft.semantics.StaticSemantics.TemplateStrings;
 
 import java.util.EnumSet;
@@ -28,9 +28,9 @@ import org.objectweb.asm.commons.CodeSizeEvaluator;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.FunctionNode.StrictMode;
-import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
+import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
@@ -376,7 +376,7 @@ class CodeGenerator implements AutoCloseable {
         body.begin();
 
         // call expression in concise function body is always in tail-call position
-        body.setTailCall(tailCall(node.getExpression()));
+        body.setTailCall(TailCallNodes(node.getExpression()));
 
         body.enterScope(node);
         ValType type = expressionValue(node.getExpression(), body);

@@ -9,6 +9,7 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.TailCallNodes;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -631,12 +632,12 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Expression expr = node.getExpression();
         if (expr != null) {
             if (!mv.isWrapped()) {
-                mv.setTailCall(tailCall(expr));
+                mv.setTailCall(TailCallNodes(expr));
             }
             ValType type = expressionValue(expr, mv);
             mv.toBoxed(type);
             if (!mv.isWrapped()) {
-                mv.setTailCall(tailCall(null));
+                mv.setTailCall(TailCallNodes(null));
             }
         } else {
             mv.get(Fields.Undefined_UNDEFINED);

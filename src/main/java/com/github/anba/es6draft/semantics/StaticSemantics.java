@@ -7,9 +7,13 @@
 package com.github.anba.es6draft.semantics;
 
 import static com.github.anba.es6draft.semantics.StaticSemanticsVisitor.forEach;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -315,6 +319,37 @@ public final class StaticSemantics {
             substitutions.add(elements.get(i));
         }
         return substitutions;
+    }
+
+    /**
+     * Static Semantics: TailCallNodes (not in spec)
+     */
+    public static Set<CallExpression> TailCallNodes(Expression expr) {
+        while (expr instanceof CommaExpression) {
+            List<Expression> list = ((CommaExpression) expr).getOperands();
+            expr = list.get(list.size() - 1);
+        }
+        if (expr instanceof CallExpression) {
+            return singleton((CallExpression) expr);
+        } else if (expr instanceof ConditionalExpression) {
+            HashSet<CallExpression> tail = new HashSet<>(8);
+            for (ArrayDeque<Expression> queue = new ArrayDeque<>(singleton(expr)); !queue.isEmpty();) {
+                Expression e = queue.remove();
+                while (e instanceof CommaExpression) {
+                    List<Expression> list = ((CommaExpression) e).getOperands();
+                    e = list.get(list.size() - 1);
+                }
+                if (e instanceof CallExpression) {
+                    tail.add((CallExpression) e);
+                } else if (e instanceof ConditionalExpression) {
+                    queue.add(((ConditionalExpression) e).getThen());
+                    queue.add(((ConditionalExpression) e).getOtherwise());
+                }
+            }
+            return tail;
+        } else {
+            return emptySet();
+        }
     }
 
     //

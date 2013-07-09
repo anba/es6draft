@@ -9,20 +9,21 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PrototypeMethodDefinitions;
 import static com.github.anba.es6draft.semantics.StaticSemantics.StaticMethodDefinitions;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
 
-import java.util.ArrayDeque;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.AbruptNode;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
+import com.github.anba.es6draft.ast.AssignmentPattern;
+import com.github.anba.es6draft.ast.Binding;
+import com.github.anba.es6draft.ast.ClassDefinition;
+import com.github.anba.es6draft.ast.DefaultNodeVisitor;
+import com.github.anba.es6draft.ast.Expression;
+import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
@@ -177,34 +178,6 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
     protected DefaultCodeGenerator(CodeGenerator codegen) {
         this.codegen = codegen;
-    }
-
-    protected static final Set<CallExpression> tailCall(Expression expr) {
-        while (expr instanceof CommaExpression) {
-            List<Expression> list = ((CommaExpression) expr).getOperands();
-            expr = list.get(list.size() - 1);
-        }
-        if (expr instanceof CallExpression) {
-            return singleton((CallExpression) expr);
-        } else if (expr instanceof ConditionalExpression) {
-            HashSet<CallExpression> tail = new HashSet<>(8);
-            for (ArrayDeque<Expression> queue = new ArrayDeque<>(singleton(expr)); !queue.isEmpty();) {
-                Expression e = queue.remove();
-                while (e instanceof CommaExpression) {
-                    List<Expression> list = ((CommaExpression) e).getOperands();
-                    e = list.get(list.size() - 1);
-                }
-                if (e instanceof CallExpression) {
-                    tail.add((CallExpression) e);
-                } else if (e instanceof ConditionalExpression) {
-                    queue.add(((ConditionalExpression) e).getThen());
-                    queue.add(((ConditionalExpression) e).getOtherwise());
-                }
-            }
-            return tail;
-        } else {
-            return emptySet();
-        }
     }
 
     protected final ValType expression(Expression node, ExpressionVisitor mv) {
