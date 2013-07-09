@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
@@ -229,13 +230,14 @@ public class Realm {
         return collator;
     }
 
+    @Deprecated
     public interface GlobalObjectCreator<GLOBAL extends GlobalObject> {
         GLOBAL createGlobal(Realm realm);
     }
 
-    private static final GlobalObjectCreator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new GlobalObjectCreator<GlobalObject>() {
+    private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
         @Override
-        public GlobalObject createGlobal(Realm realm) {
+        public GlobalObject newInstance(Realm realm) {
             return new GlobalObject(realm);
         }
     };
@@ -244,10 +246,21 @@ public class Realm {
         return newRealm(DEFAULT_GLOBAL_OBJECT, CompatibilityOption.WebCompatibility());
     }
 
-    public static Realm newRealm(GlobalObjectCreator<? extends GlobalObject> creator,
+    @Deprecated
+    public static Realm newRealm(final GlobalObjectCreator<? extends GlobalObject> creator,
+            Set<CompatibilityOption> options) {
+        return newRealm(new ObjectAllocator<GlobalObject>() {
+            @Override
+            public GlobalObject newInstance(Realm realm) {
+                return creator.createGlobal(realm);
+            }
+        }, options);
+    }
+
+    public static Realm newRealm(ObjectAllocator<? extends GlobalObject> allocator,
             Set<CompatibilityOption> options) {
         Realm realm = new Realm();
-        GlobalObject globalThis = creator.createGlobal(realm);
+        GlobalObject globalThis = allocator.newInstance(realm);
         ExecutionContext defaultContext = newScriptExecutionContext(realm);
         GlobalEnvironmentRecord envRec = new GlobalEnvironmentRecord(defaultContext, globalThis);
         LexicalEnvironment globalEnv = new LexicalEnvironment(defaultContext, envRec);
