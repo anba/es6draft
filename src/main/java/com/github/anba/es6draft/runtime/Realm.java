@@ -230,11 +230,6 @@ public class Realm {
         return collator;
     }
 
-    @Deprecated
-    public interface GlobalObjectCreator<GLOBAL extends GlobalObject> {
-        GLOBAL createGlobal(Realm realm);
-    }
-
     private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
         @Override
         public GlobalObject newInstance(Realm realm) {
@@ -244,17 +239,6 @@ public class Realm {
 
     public static Realm newRealm() {
         return newRealm(DEFAULT_GLOBAL_OBJECT, CompatibilityOption.WebCompatibility());
-    }
-
-    @Deprecated
-    public static Realm newRealm(final GlobalObjectCreator<? extends GlobalObject> creator,
-            Set<CompatibilityOption> options) {
-        return newRealm(new ObjectAllocator<GlobalObject>() {
-            @Override
-            public GlobalObject newInstance(Realm realm) {
-                return creator.createGlobal(realm);
-            }
-        }, options);
     }
 
     public static Realm newRealm(ObjectAllocator<? extends GlobalObject> allocator,
