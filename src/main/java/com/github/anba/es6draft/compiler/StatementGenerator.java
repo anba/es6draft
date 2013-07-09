@@ -228,7 +228,6 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         ValType type = expressionValue(node.getExpression(), mv);
         if (mv.isCompletionValue()) {
             mv.toBoxed(type);
-            mv.checkcast(Types.Object);
             mv.storeCompletionValue();
         } else {
             mv.pop(type);
