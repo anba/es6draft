@@ -11,14 +11,13 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDecla
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
+import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
@@ -189,38 +188,31 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     @Override
     public Void visit(DoWhileStatement node, StatementVisitor mv) {
-        Label l0 = new Label();
+        Label lblNext = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
 
         // L1: <statement>
         // IFNE ToBoolean(<expr>) L1
 
-        int savedEnv = -1;
-        EnumSet<Abrupt> abrupt = node.getAbrupt();
-        if (abrupt.contains(Abrupt.Break) || abrupt.contains(Abrupt.Continue)) {
-            savedEnv = saveEnvironment(mv);
-        }
+        int savedEnv = saveEnvironment(node, mv);
 
-        mv.mark(l0);
+        mv.mark(lblNext);
         {
             mv.enterIteration(node, lblBreak, lblContinue);
             node.getStatement().accept(this, mv);
             mv.exitIteration(node);
         }
         mv.mark(lblContinue);
-        if (abrupt.contains(Abrupt.Continue)) {
-            restoreEnvironment(mv, savedEnv);
-        }
+        restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+
         ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
-        mv.ifne(l0);
+        mv.ifne(lblNext);
+
         mv.mark(lblBreak);
-        if (abrupt.contains(Abrupt.Break)) {
-            restoreEnvironment(mv, savedEnv);
-        }
-        if (savedEnv != -1) {
-            mv.freeVariable(savedEnv);
-        }
+        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+
+        freeVariable(savedEnv, mv);
 
         return null;
     }
@@ -275,11 +267,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Label lblContinue = new Label(), lblBreak = new Label();
         Label loopstart = new Label();
 
-        int savedEnv = -1;
-        EnumSet<Abrupt> abrupt = node.getAbrupt();
-        if (abrupt.contains(Abrupt.Break) || abrupt.contains(Abrupt.Continue)) {
-            savedEnv = saveEnvironment(mv);
-        }
+        int savedEnv = saveEnvironment(node, mv);
 
         // Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
         ValType type = expressionValue(expr, mv);
@@ -326,9 +314,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.store(var, Types.Iterator);
 
         mv.mark(lblContinue);
-        if (abrupt.contains(Abrupt.Continue)) {
-            restoreEnvironment(mv, savedEnv);
-        }
+        restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+
         mv.load(var, Types.Iterator);
         mv.invoke(Methods.Iterator_hasNext);
         mv.ifeq(lblBreak);
@@ -410,13 +397,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
         mv.goTo(lblContinue);
         mv.mark(lblBreak);
+        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+
         mv.freeVariable(var);
-        if (abrupt.contains(Abrupt.Break)) {
-            restoreEnvironment(mv, savedEnv);
-        }
-        if (savedEnv != -1) {
-            mv.freeVariable(savedEnv);
-        }
+        freeVariable(savedEnv, mv);
     }
 
     @Override
@@ -457,11 +441,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             lexDecl.accept(this, mv);
         }
 
-        int savedEnv = -1;
-        EnumSet<Abrupt> abrupt = node.getAbrupt();
-        if (abrupt.contains(Abrupt.Break) || abrupt.contains(Abrupt.Continue)) {
-            savedEnv = saveEnvironment(mv);
-        }
+        int savedEnv = saveEnvironment(node, mv);
 
         Label lblTest = new Label(), lblStmt = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
@@ -474,13 +454,13 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.exitIteration(node);
         }
         mv.mark(lblContinue);
-        if (abrupt.contains(Abrupt.Continue)) {
-            restoreEnvironment(mv, savedEnv);
-        }
+        restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+
         if (node.getStep() != null) {
             ValType type = expressionValue(node.getStep(), mv);
             mv.pop(type);
         }
+
         mv.mark(lblTest);
         if (node.getTest() != null) {
             ValType type = expressionValue(node.getTest(), mv);
@@ -489,13 +469,11 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         } else {
             mv.goTo(lblStmt);
         }
+
         mv.mark(lblBreak);
-        if (abrupt.contains(Abrupt.Break)) {
-            restoreEnvironment(mv, savedEnv);
-        }
-        if (savedEnv != -1) {
-            mv.freeVariable(savedEnv);
-        }
+        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+
+        freeVariable(savedEnv, mv);
 
         if (head instanceof LexicalDeclaration) {
             popLexicalEnvironment(mv);
@@ -546,11 +524,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     @Override
     public Void visit(LabelledStatement node, StatementVisitor mv) {
-        int savedEnv = -1;
-        EnumSet<Abrupt> abrupt = node.getAbrupt();
-        if (abrupt.contains(Abrupt.Break)) {
-            savedEnv = saveEnvironment(mv);
-        }
+        int savedEnv = saveEnvironment(node, mv);
 
         Label label = new Label();
         mv.enterLabelled(node, label);
@@ -558,12 +532,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.exitLabelled(node);
         mv.mark(label);
 
-        if (abrupt.contains(Abrupt.Break)) {
-            restoreEnvironment(mv, savedEnv);
-        }
-        if (savedEnv != -1) {
-            mv.freeVariable(savedEnv);
-        }
+        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        freeVariable(savedEnv, mv);
 
         return null;
     }
@@ -1092,11 +1062,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Label lblNext = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
 
-        int savedEnv = -1;
-        EnumSet<Abrupt> abrupt = node.getAbrupt();
-        if (abrupt.contains(Abrupt.Break) || abrupt.contains(Abrupt.Continue)) {
-            savedEnv = saveEnvironment(mv);
-        }
+        int savedEnv = saveEnvironment(node, mv);
 
         mv.goTo(lblContinue);
         mv.mark(lblNext);
@@ -1106,19 +1072,16 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.exitIteration(node);
         }
         mv.mark(lblContinue);
-        if (abrupt.contains(Abrupt.Continue)) {
-            restoreEnvironment(mv, savedEnv);
-        }
+        restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+
         ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
         mv.ifne(lblNext);
+
         mv.mark(lblBreak);
-        if (abrupt.contains(Abrupt.Break)) {
-            restoreEnvironment(mv, savedEnv);
-        }
-        if (savedEnv != -1) {
-            mv.freeVariable(savedEnv);
-        }
+        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+
+        freeVariable(savedEnv, mv);
 
         return null;
     }

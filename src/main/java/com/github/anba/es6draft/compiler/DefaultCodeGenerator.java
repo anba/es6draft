@@ -10,20 +10,14 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMeth
 import static com.github.anba.es6draft.semantics.StaticSemantics.PrototypeMethodDefinitions;
 import static com.github.anba.es6draft.semantics.StaticSemantics.StaticMethodDefinitions;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.AssignmentPattern;
-import com.github.anba.es6draft.ast.Binding;
-import com.github.anba.es6draft.ast.CallExpression;
-import com.github.anba.es6draft.ast.ClassDefinition;
-import com.github.anba.es6draft.ast.CommaExpression;
-import com.github.anba.es6draft.ast.ConditionalExpression;
-import com.github.anba.es6draft.ast.DefaultNodeVisitor;
-import com.github.anba.es6draft.ast.Expression;
-import com.github.anba.es6draft.ast.MethodDefinition;
+import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
@@ -202,6 +196,17 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
+    protected final int saveEnvironment(AbruptNode node, StatementVisitor mv) {
+        EnumSet<Abrupt> abrupt = node.getAbrupt();
+        if (abrupt.contains(Abrupt.Break) || abrupt.contains(Abrupt.Continue)) {
+            return saveEnvironment(mv);
+        }
+        return -1;
+    }
+
+    /**
+     * stack: [] -> []
+     */
     protected final int saveEnvironment(StatementVisitor mv) {
         int savedEnv = mv.newVariable(Types.LexicalEnvironment);
         getLexicalEnvironment(mv);
@@ -212,10 +217,27 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
+    protected final void restoreEnvironment(AbruptNode node, Abrupt abrupt, int savedEnv,
+            StatementVisitor mv) {
+        if (node.getAbrupt().contains(abrupt)) {
+            assert savedEnv != -1;
+            restoreEnvironment(mv, savedEnv);
+        }
+    }
+
+    /**
+     * stack: [] -> []
+     */
     protected final void restoreEnvironment(StatementVisitor mv, int savedEnv) {
         mv.loadExecutionContext();
         mv.load(savedEnv, Types.LexicalEnvironment);
         mv.invoke(Methods.ExecutionContext_restoreLexicalEnvironment);
+    }
+
+    protected final void freeVariable(int var, StatementVisitor mv) {
+        if (var != -1) {
+            mv.freeVariable(var);
+        }
     }
 
     /**

@@ -10,13 +10,12 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarat
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
+import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
@@ -154,11 +153,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
 
     @Override
     public Void visit(SwitchStatement node, StatementVisitor mv) {
-        int savedEnv = -1;
-        EnumSet<Abrupt> abrupt = node.getAbrupt();
-        if (abrupt.contains(Abrupt.Break)) {
-            savedEnv = saveEnvironment(mv);
-        }
+        int savedEnv = saveEnvironment(node, mv);
 
         // stack -> switchValue
         ValType expressionValueType = expressionValue(node.getExpression(), mv);
@@ -191,26 +186,21 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         mv.enterBreakable(node, lblBreak);
         int index = 0;
         for (SwitchClause switchClause : node.getClauses()) {
-            Label stmtLabel = labels[index++];
-            mv.mark(stmtLabel);
+            mv.mark(labels[index++]);
             for (StatementListItem stmt : switchClause.getStatements()) {
                 stmt.accept(this, mv);
             }
         }
         mv.exitBreakable(node);
-        mv.mark(lblBreak);
 
         if (!declarations.isEmpty()) {
             popLexicalEnvironment(mv);
         }
         mv.exitScope();
 
-        if (abrupt.contains(Abrupt.Break)) {
-            restoreEnvironment(mv, savedEnv);
-        }
-        if (savedEnv != -1) {
-            mv.freeVariable(savedEnv);
-        }
+        mv.mark(lblBreak);
+        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        freeVariable(savedEnv, mv);
 
         return null;
     }
