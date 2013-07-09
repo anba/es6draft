@@ -137,7 +137,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
          */
         @Value(name = "EPSILON", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
-        public static final Double EPSILON = Double.MIN_NORMAL;
+        public static final Double EPSILON = Math.ulp(1.0);
 
         /**
          * 15.7.3.8 Number.MAX_INTEGER
