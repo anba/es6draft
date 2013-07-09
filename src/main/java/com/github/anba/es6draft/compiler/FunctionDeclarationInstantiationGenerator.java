@@ -30,7 +30,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -261,8 +260,8 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.invoke(Methods.ExoticArguments_CompleteStrictArgumentsObject);
     }
 
-    private void CompleteMappedArgumentsObject(Variable env, FormalParameterList formals,
-            ExpressionVisitor mv) {
+    private void CompleteMappedArgumentsObject(TypedVariable<LexicalEnvironment> env,
+            FormalParameterList formals, ExpressionVisitor mv) {
         // stack: [ao] -> [ao]
         mv.dup();
         mv.loadExecutionContext();
