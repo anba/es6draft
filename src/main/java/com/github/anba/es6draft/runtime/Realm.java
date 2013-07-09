@@ -258,11 +258,75 @@ public class Realm {
         realm.defaultContext = defaultContext;
         realm.options = EnumSet.copyOf(options);
 
-        // intrinsics (1)
+        // intrinsics: 15.2 - 15.12
+        initialiseFundamentalObjects(realm);
+        initialiseStandardObjects(realm);
+        initialiseNativeErrors(realm);
+        initialiseInternalObjects(realm);
+
+        // intrinsics: 15.13 - 15.19
+        initialiseBinaryModule(realm);
+        initialiseCollectionModule(realm);
+        initialiseReflectModule(realm);
+        initialiseIterationModule(realm);
+
+        // intrinsics: Internationalization API
+        initialiseInternationalisation(realm);
+
+        // finish initialising global object
+        globalThis.initialise(defaultContext);
+
+        // store reference to built-in eval
+        realm.builtinEval = (Callable) Get(defaultContext, globalThis, "eval");
+
+        return realm;
+    }
+
+    /**
+     * <h1>15.2 Object Objects - 15.3 Function Objects</h1>
+     * 
+     * Fundamental built-in objects which must be initialised early
+     */
+    private static void initialiseFundamentalObjects(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
         ObjectConstructor objectConstructor = new ObjectConstructor(realm);
         ObjectPrototype objectPrototype = new ObjectPrototype(realm);
         FunctionConstructor functionConstructor = new FunctionConstructor(realm);
         FunctionPrototype functionPrototype = new FunctionPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.Object, objectConstructor);
+        intrinsics.put(Intrinsics.ObjectPrototype, objectPrototype);
+        intrinsics.put(Intrinsics.Function, functionConstructor);
+        intrinsics.put(Intrinsics.FunctionPrototype, functionPrototype);
+
+        // create [[ThrowTypeError]] unique function (needs to be done before init'ing intrinsics)
+        realm.throwTypeError = OrdinaryFunction.createThrowTypeError(defaultContext);
+
+        // initialisation phase
+        objectConstructor.initialise(defaultContext);
+        objectPrototype.initialise(defaultContext);
+        functionConstructor.initialise(defaultContext);
+        functionPrototype.initialise(defaultContext);
+
+        // Object.prototype.toString is also an intrinsic
+        Object objectPrototypeToString = Get(defaultContext, objectPrototype, "toString");
+        intrinsics.put(Intrinsics.ObjProto_toString, (ScriptObject) objectPrototypeToString);
+    }
+
+    /**
+     * <h1>15.4 Array Objects - 15.12 The JSON Object</h1>
+     * 
+     * Standard built-in objects
+     */
+    private static void initialiseStandardObjects(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
         ArrayConstructor arrayConstructor = new ArrayConstructor(realm);
         ArrayPrototype arrayPrototype = new ArrayPrototype(realm);
         ArrayIteratorPrototype arrayIteratorPrototype = new ArrayIteratorPrototype(realm);
@@ -280,26 +344,56 @@ public class Realm {
         ErrorConstructor errorConstructor = new ErrorConstructor(realm);
         ErrorPrototype errorPrototype = new ErrorPrototype(realm);
         JSONObject jsonObject = new JSONObject(realm);
-        MapConstructor mapConstructor = new MapConstructor(realm);
-        MapPrototype mapPrototype = new MapPrototype(realm);
-        MapIteratorPrototype mapIteratorPrototype = new MapIteratorPrototype(realm);
-        WeakMapConstructor weakMapConstructor = new WeakMapConstructor(realm);
-        WeakMapPrototype weakMapPrototype = new WeakMapPrototype(realm);
-        SetConstructor setConstructor = new SetConstructor(realm);
-        SetPrototype setPrototype = new SetPrototype(realm);
-        SetIteratorPrototype setIteratorPrototype = new SetIteratorPrototype(realm);
 
-        // Generators
-        GeneratorFunctionConstructor generatorFunctionConstructor = new GeneratorFunctionConstructor(
-                realm);
-        GeneratorPrototype generatorPrototype = new GeneratorPrototype(realm);
-        GeneratorFunctionPrototype generator = new GeneratorFunctionPrototype(realm);
+        // registration phase
+        intrinsics.put(Intrinsics.Array, arrayConstructor);
+        intrinsics.put(Intrinsics.ArrayPrototype, arrayPrototype);
+        intrinsics.put(Intrinsics.ArrayIteratorPrototype, arrayIteratorPrototype);
+        intrinsics.put(Intrinsics.String, stringConstructor);
+        intrinsics.put(Intrinsics.StringPrototype, stringPrototype);
+        intrinsics.put(Intrinsics.Boolean, booleanConstructor);
+        intrinsics.put(Intrinsics.BooleanPrototype, booleanPrototype);
+        intrinsics.put(Intrinsics.Number, numberConstructor);
+        intrinsics.put(Intrinsics.NumberPrototype, numberPrototype);
+        intrinsics.put(Intrinsics.Math, mathObject);
+        intrinsics.put(Intrinsics.Date, dateConstructor);
+        intrinsics.put(Intrinsics.DatePrototype, datePrototype);
+        intrinsics.put(Intrinsics.RegExp, regExpConstructor);
+        intrinsics.put(Intrinsics.RegExpPrototype, regExpPrototype);
+        intrinsics.put(Intrinsics.Error, errorConstructor);
+        intrinsics.put(Intrinsics.ErrorPrototype, errorPrototype);
+        intrinsics.put(Intrinsics.JSON, jsonObject);
 
-        // Proxy
-        ProxyConstructor proxyConstructor = new ProxyConstructor(realm);
-        Reflect reflect = new Reflect(realm);
+        // initialisation phase
+        arrayConstructor.initialise(defaultContext);
+        arrayPrototype.initialise(defaultContext);
+        arrayIteratorPrototype.initialise(defaultContext);
+        stringConstructor.initialise(defaultContext);
+        stringPrototype.initialise(defaultContext);
+        booleanConstructor.initialise(defaultContext);
+        booleanPrototype.initialise(defaultContext);
+        numberConstructor.initialise(defaultContext);
+        numberPrototype.initialise(defaultContext);
+        mathObject.initialise(defaultContext);
+        dateConstructor.initialise(defaultContext);
+        datePrototype.initialise(defaultContext);
+        regExpConstructor.initialise(defaultContext);
+        regExpPrototype.initialise(defaultContext);
+        errorConstructor.initialise(defaultContext);
+        errorPrototype.initialise(defaultContext);
+        jsonObject.initialise(defaultContext);
+    }
 
-        // native errors
+    /**
+     * <h1>15.11.6 Native Error Types Used in This Standard</h1>
+     * 
+     * Native Error built-in objects
+     */
+    private static void initialiseNativeErrors(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
         NativeErrorConstructor evalErrorConstructor = new NativeErrorConstructor(realm,
                 ErrorType.EvalError);
         NativeErrorPrototype evalErrorPrototype = new NativeErrorPrototype(realm,
@@ -328,7 +422,146 @@ public class Realm {
         NativeErrorPrototype internalErrorPrototype = new NativeErrorPrototype(realm,
                 ErrorType.InternalError);
 
-        // binary module intrinsics
+        // registration phase
+        intrinsics.put(Intrinsics.EvalError, evalErrorConstructor);
+        intrinsics.put(Intrinsics.EvalErrorPrototype, evalErrorPrototype);
+        intrinsics.put(Intrinsics.RangeError, rangeErrorConstructor);
+        intrinsics.put(Intrinsics.RangeErrorPrototype, rangeErrorPrototype);
+        intrinsics.put(Intrinsics.ReferenceError, referenceErrorConstructor);
+        intrinsics.put(Intrinsics.ReferenceErrorPrototype, referenceErrorPrototype);
+        intrinsics.put(Intrinsics.SyntaxError, syntaxErrorConstructor);
+        intrinsics.put(Intrinsics.SyntaxErrorPrototype, syntaxErrorPrototype);
+        intrinsics.put(Intrinsics.TypeError, typeErrorConstructor);
+        intrinsics.put(Intrinsics.TypeErrorPrototype, typeErrorPrototype);
+        intrinsics.put(Intrinsics.URIError, uriErrorConstructor);
+        intrinsics.put(Intrinsics.URIErrorPrototype, uriErrorPrototype);
+        intrinsics.put(Intrinsics.InternalError, internalErrorConstructor);
+        intrinsics.put(Intrinsics.InternalErrorPrototype, internalErrorPrototype);
+
+        // initialisation phase
+        evalErrorConstructor.initialise(defaultContext);
+        evalErrorPrototype.initialise(defaultContext);
+        rangeErrorConstructor.initialise(defaultContext);
+        rangeErrorPrototype.initialise(defaultContext);
+        referenceErrorConstructor.initialise(defaultContext);
+        referenceErrorPrototype.initialise(defaultContext);
+        syntaxErrorConstructor.initialise(defaultContext);
+        syntaxErrorPrototype.initialise(defaultContext);
+        typeErrorConstructor.initialise(defaultContext);
+        typeErrorPrototype.initialise(defaultContext);
+        uriErrorConstructor.initialise(defaultContext);
+        uriErrorPrototype.initialise(defaultContext);
+        internalErrorConstructor.initialise(defaultContext);
+        internalErrorPrototype.initialise(defaultContext);
+    }
+
+    /**
+     * Additional internal built-in objects used in this implementation
+     */
+    private static void initialiseInternalObjects(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
+        ListIteratorPrototype listIteratorPrototype = new ListIteratorPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.ListIteratorPrototype, listIteratorPrototype);
+
+        // initialisation phase
+        listIteratorPrototype.initialise(defaultContext);
+    }
+
+    /**
+     * <h1>15.14 Map Objects - 15.16 Set Objects</h1>
+     */
+    private static void initialiseCollectionModule(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
+        MapConstructor mapConstructor = new MapConstructor(realm);
+        MapPrototype mapPrototype = new MapPrototype(realm);
+        MapIteratorPrototype mapIteratorPrototype = new MapIteratorPrototype(realm);
+        WeakMapConstructor weakMapConstructor = new WeakMapConstructor(realm);
+        WeakMapPrototype weakMapPrototype = new WeakMapPrototype(realm);
+        SetConstructor setConstructor = new SetConstructor(realm);
+        SetPrototype setPrototype = new SetPrototype(realm);
+        SetIteratorPrototype setIteratorPrototype = new SetIteratorPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.Map, mapConstructor);
+        intrinsics.put(Intrinsics.MapPrototype, mapPrototype);
+        intrinsics.put(Intrinsics.MapIteratorPrototype, mapIteratorPrototype);
+        intrinsics.put(Intrinsics.WeakMap, weakMapConstructor);
+        intrinsics.put(Intrinsics.WeakMapPrototype, weakMapPrototype);
+        intrinsics.put(Intrinsics.Set, setConstructor);
+        intrinsics.put(Intrinsics.SetPrototype, setPrototype);
+        intrinsics.put(Intrinsics.SetIteratorPrototype, setIteratorPrototype);
+
+        // initialisation phase
+        mapConstructor.initialise(defaultContext);
+        mapPrototype.initialise(defaultContext);
+        mapIteratorPrototype.initialise(defaultContext);
+        weakMapConstructor.initialise(defaultContext);
+        weakMapPrototype.initialise(defaultContext);
+        setConstructor.initialise(defaultContext);
+        setPrototype.initialise(defaultContext);
+        setIteratorPrototype.initialise(defaultContext);
+    }
+
+    /**
+     * <h1>15.17 The Reflect Module - 15.18 Proxy Objects</h1>
+     */
+    private static void initialiseReflectModule(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
+        ProxyConstructor proxyConstructor = new ProxyConstructor(realm);
+        Reflect reflect = new Reflect(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.Proxy, proxyConstructor);
+        intrinsics.put(Intrinsics.Reflect, reflect);
+
+        // initialisation phase
+        proxyConstructor.initialise(defaultContext);
+        reflect.initialise(defaultContext);
+    }
+
+    /**
+     * <h1>15.19 The "std:iteration" Module</h1>
+     */
+    private static void initialiseIterationModule(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
+        GeneratorFunctionConstructor generatorFunctionConstructor = new GeneratorFunctionConstructor(
+                realm);
+        GeneratorPrototype generatorPrototype = new GeneratorPrototype(realm);
+        GeneratorFunctionPrototype generator = new GeneratorFunctionPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.GeneratorFunction, generatorFunctionConstructor);
+        intrinsics.put(Intrinsics.GeneratorPrototype, generatorPrototype);
+        intrinsics.put(Intrinsics.Generator, generator);
+
+        // initialisation phase
+        generatorFunctionConstructor.initialise(defaultContext);
+        generatorPrototype.initialise(defaultContext);
+        generator.initialise(defaultContext);
+    }
+
+    /**
+     * <h1>15.13 Binary Data Objects</h1>
+     */
+    private static void initialiseBinaryModule(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
         ArrayBufferConstructor arrayBufferConstructor = new ArrayBufferConstructor(realm);
         ArrayBufferPrototype arrayBufferPrototype = new ArrayBufferPrototype(realm);
         TypedArrayConstructor int8ArrayConstructor = new TypedArrayConstructor(realm,
@@ -366,73 +599,7 @@ public class Realm {
         DataViewConstructor dataViewConstructor = new DataViewConstructor(realm);
         DataViewPrototype dataViewPrototype = new DataViewPrototype(realm);
 
-        // Internationalization API
-        IntlObject intlObject = new IntlObject(realm);
-        CollatorConstructor collatorConstructor = new CollatorConstructor(realm);
-        CollatorPrototype collatorPrototype = new CollatorPrototype(realm);
-        NumberFormatConstructor numberFormatConstructor = new NumberFormatConstructor(realm);
-        NumberFormatPrototype numberFormatPrototype = new NumberFormatPrototype(realm);
-        DateTimeFormatConstructor dateTimeFormatConstructor = new DateTimeFormatConstructor(realm);
-        DateTimeFormatPrototype dateTimeFormatPrototype = new DateTimeFormatPrototype(realm);
-
-        // internal intrinsics
-        ListIteratorPrototype listIteratorPrototype = new ListIteratorPrototype(realm);
-
-        // intrinsics (2)
-        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
-        intrinsics.put(Intrinsics.Object, objectConstructor);
-        intrinsics.put(Intrinsics.ObjectPrototype, objectPrototype);
-        intrinsics.put(Intrinsics.Function, functionConstructor);
-        intrinsics.put(Intrinsics.FunctionPrototype, functionPrototype);
-        intrinsics.put(Intrinsics.Array, arrayConstructor);
-        intrinsics.put(Intrinsics.ArrayPrototype, arrayPrototype);
-        intrinsics.put(Intrinsics.ArrayIteratorPrototype, arrayIteratorPrototype);
-        intrinsics.put(Intrinsics.String, stringConstructor);
-        intrinsics.put(Intrinsics.StringPrototype, stringPrototype);
-        intrinsics.put(Intrinsics.Boolean, booleanConstructor);
-        intrinsics.put(Intrinsics.BooleanPrototype, booleanPrototype);
-        intrinsics.put(Intrinsics.Number, numberConstructor);
-        intrinsics.put(Intrinsics.NumberPrototype, numberPrototype);
-        intrinsics.put(Intrinsics.Math, mathObject);
-        intrinsics.put(Intrinsics.Date, dateConstructor);
-        intrinsics.put(Intrinsics.DatePrototype, datePrototype);
-        intrinsics.put(Intrinsics.RegExp, regExpConstructor);
-        intrinsics.put(Intrinsics.RegExpPrototype, regExpPrototype);
-        intrinsics.put(Intrinsics.Error, errorConstructor);
-        intrinsics.put(Intrinsics.ErrorPrototype, errorPrototype);
-        intrinsics.put(Intrinsics.JSON, jsonObject);
-        intrinsics.put(Intrinsics.Map, mapConstructor);
-        intrinsics.put(Intrinsics.MapPrototype, mapPrototype);
-        intrinsics.put(Intrinsics.MapIteratorPrototype, mapIteratorPrototype);
-        intrinsics.put(Intrinsics.WeakMap, weakMapConstructor);
-        intrinsics.put(Intrinsics.WeakMapPrototype, weakMapPrototype);
-        intrinsics.put(Intrinsics.Set, setConstructor);
-        intrinsics.put(Intrinsics.SetPrototype, setPrototype);
-        intrinsics.put(Intrinsics.SetIteratorPrototype, setIteratorPrototype);
-
-        intrinsics.put(Intrinsics.GeneratorFunction, generatorFunctionConstructor);
-        intrinsics.put(Intrinsics.GeneratorPrototype, generatorPrototype);
-        intrinsics.put(Intrinsics.Generator, generator);
-        intrinsics.put(Intrinsics.Proxy, proxyConstructor);
-        intrinsics.put(Intrinsics.Reflect, reflect);
-
-        // native errors
-        intrinsics.put(Intrinsics.EvalError, evalErrorConstructor);
-        intrinsics.put(Intrinsics.EvalErrorPrototype, evalErrorPrototype);
-        intrinsics.put(Intrinsics.RangeError, rangeErrorConstructor);
-        intrinsics.put(Intrinsics.RangeErrorPrototype, rangeErrorPrototype);
-        intrinsics.put(Intrinsics.ReferenceError, referenceErrorConstructor);
-        intrinsics.put(Intrinsics.ReferenceErrorPrototype, referenceErrorPrototype);
-        intrinsics.put(Intrinsics.SyntaxError, syntaxErrorConstructor);
-        intrinsics.put(Intrinsics.SyntaxErrorPrototype, syntaxErrorPrototype);
-        intrinsics.put(Intrinsics.TypeError, typeErrorConstructor);
-        intrinsics.put(Intrinsics.TypeErrorPrototype, typeErrorPrototype);
-        intrinsics.put(Intrinsics.URIError, uriErrorConstructor);
-        intrinsics.put(Intrinsics.URIErrorPrototype, uriErrorPrototype);
-        intrinsics.put(Intrinsics.InternalError, internalErrorConstructor);
-        intrinsics.put(Intrinsics.InternalErrorPrototype, internalErrorPrototype);
-
-        // binary module intrinsics
+        // registration phase
         intrinsics.put(Intrinsics.ArrayBuffer, arrayBufferConstructor);
         intrinsics.put(Intrinsics.ArrayBufferPrototype, arrayBufferPrototype);
         intrinsics.put(Intrinsics.Int8Array, int8ArrayConstructor);
@@ -456,75 +623,7 @@ public class Realm {
         intrinsics.put(Intrinsics.DataView, dataViewConstructor);
         intrinsics.put(Intrinsics.DataViewPrototype, dataViewPrototype);
 
-        // Internationalization API
-        intrinsics.put(Intrinsics.Intl, intlObject);
-        intrinsics.put(Intrinsics.Intl_Collator, collatorConstructor);
-        intrinsics.put(Intrinsics.Intl_CollatorPrototype, collatorPrototype);
-        intrinsics.put(Intrinsics.Intl_NumberFormat, numberFormatConstructor);
-        intrinsics.put(Intrinsics.Intl_NumberFormatPrototype, numberFormatPrototype);
-        intrinsics.put(Intrinsics.Intl_DateTimeFormat, dateTimeFormatConstructor);
-        intrinsics.put(Intrinsics.Intl_DateTimeFormatPrototype, dateTimeFormatPrototype);
-
-        // internal intrinsics
-        intrinsics.put(Intrinsics.ListIteratorPrototype, listIteratorPrototype);
-
-        // create [[ThrowTypeError]] unique function (needs to be done before init'ing intrinsics)
-        realm.throwTypeError = OrdinaryFunction.createThrowTypeError(defaultContext);
-
-        // intrinsics (3)
-        objectConstructor.initialise(defaultContext);
-        objectPrototype.initialise(defaultContext);
-        functionConstructor.initialise(defaultContext);
-        functionPrototype.initialise(defaultContext);
-        arrayConstructor.initialise(defaultContext);
-        arrayPrototype.initialise(defaultContext);
-        arrayIteratorPrototype.initialise(defaultContext);
-        stringConstructor.initialise(defaultContext);
-        stringPrototype.initialise(defaultContext);
-        booleanConstructor.initialise(defaultContext);
-        booleanPrototype.initialise(defaultContext);
-        numberConstructor.initialise(defaultContext);
-        numberPrototype.initialise(defaultContext);
-        mathObject.initialise(defaultContext);
-        dateConstructor.initialise(defaultContext);
-        datePrototype.initialise(defaultContext);
-        regExpConstructor.initialise(defaultContext);
-        regExpPrototype.initialise(defaultContext);
-        errorConstructor.initialise(defaultContext);
-        errorPrototype.initialise(defaultContext);
-        jsonObject.initialise(defaultContext);
-        mapConstructor.initialise(defaultContext);
-        mapPrototype.initialise(defaultContext);
-        mapIteratorPrototype.initialise(defaultContext);
-        weakMapConstructor.initialise(defaultContext);
-        weakMapPrototype.initialise(defaultContext);
-        setConstructor.initialise(defaultContext);
-        setPrototype.initialise(defaultContext);
-        setIteratorPrototype.initialise(defaultContext);
-
-        generatorFunctionConstructor.initialise(defaultContext);
-        generatorPrototype.initialise(defaultContext);
-        generator.initialise(defaultContext);
-        proxyConstructor.initialise(defaultContext);
-        reflect.initialise(defaultContext);
-
-        // native errors
-        evalErrorConstructor.initialise(defaultContext);
-        evalErrorPrototype.initialise(defaultContext);
-        rangeErrorConstructor.initialise(defaultContext);
-        rangeErrorPrototype.initialise(defaultContext);
-        referenceErrorConstructor.initialise(defaultContext);
-        referenceErrorPrototype.initialise(defaultContext);
-        syntaxErrorConstructor.initialise(defaultContext);
-        syntaxErrorPrototype.initialise(defaultContext);
-        typeErrorConstructor.initialise(defaultContext);
-        typeErrorPrototype.initialise(defaultContext);
-        uriErrorConstructor.initialise(defaultContext);
-        uriErrorPrototype.initialise(defaultContext);
-        internalErrorConstructor.initialise(defaultContext);
-        internalErrorPrototype.initialise(defaultContext);
-
-        // binary module intrinsics
+        // initialisation phase
         arrayBufferConstructor.initialise(defaultContext);
         arrayBufferPrototype.initialise(defaultContext);
         int8ArrayConstructor.initialise(defaultContext);
@@ -547,8 +646,37 @@ public class Realm {
         float64ArrayPrototype.initialise(defaultContext);
         dataViewConstructor.initialise(defaultContext);
         dataViewPrototype.initialise(defaultContext);
+    }
 
-        // Internationalization API
+    /**
+     * <h1>Internationalisation API (ECMA-402)</h1><br>
+     * <h2>8 The Intl Object - 12 DateTimeFormat Objects</h2>
+     * 
+     * Additional built-in objects from the Internationalisation API
+     */
+    private static void initialiseInternationalisation(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
+        IntlObject intlObject = new IntlObject(realm);
+        CollatorConstructor collatorConstructor = new CollatorConstructor(realm);
+        CollatorPrototype collatorPrototype = new CollatorPrototype(realm);
+        NumberFormatConstructor numberFormatConstructor = new NumberFormatConstructor(realm);
+        NumberFormatPrototype numberFormatPrototype = new NumberFormatPrototype(realm);
+        DateTimeFormatConstructor dateTimeFormatConstructor = new DateTimeFormatConstructor(realm);
+        DateTimeFormatPrototype dateTimeFormatPrototype = new DateTimeFormatPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.Intl, intlObject);
+        intrinsics.put(Intrinsics.Intl_Collator, collatorConstructor);
+        intrinsics.put(Intrinsics.Intl_CollatorPrototype, collatorPrototype);
+        intrinsics.put(Intrinsics.Intl_NumberFormat, numberFormatConstructor);
+        intrinsics.put(Intrinsics.Intl_NumberFormatPrototype, numberFormatPrototype);
+        intrinsics.put(Intrinsics.Intl_DateTimeFormat, dateTimeFormatConstructor);
+        intrinsics.put(Intrinsics.Intl_DateTimeFormatPrototype, dateTimeFormatPrototype);
+
+        // initialisation phase
         intlObject.initialise(defaultContext);
         collatorConstructor.initialise(defaultContext);
         collatorPrototype.initialise(defaultContext);
@@ -556,20 +684,5 @@ public class Realm {
         numberFormatPrototype.initialise(defaultContext);
         dateTimeFormatConstructor.initialise(defaultContext);
         dateTimeFormatPrototype.initialise(defaultContext);
-
-        // internal intrinsics
-        listIteratorPrototype.initialise(defaultContext);
-
-        // intrinsics (4)
-        Object objectPrototypeToString = Get(defaultContext, objectPrototype, "toString");
-        intrinsics.put(Intrinsics.ObjProto_toString, (ScriptObject) objectPrototypeToString);
-
-        // finish initialising global object
-        globalThis.initialise(defaultContext);
-
-        // store reference to built-in eval
-        realm.builtinEval = (Callable) Get(defaultContext, globalThis, "eval");
-
-        return realm;
     }
 }
