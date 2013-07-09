@@ -27,7 +27,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -83,23 +83,20 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
     private void generate(Script evalScript, InstructionVisitor mv) {
         // FIXME: spec incomplete (using modified ES5.1 algorithm for now...)
 
-        TypedVariable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
+        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
-        TypedVariable<LexicalEnvironment> lexEnv = mv.getParameter(LEX_ENV,
-                LexicalEnvironment.class);
-        TypedVariable<LexicalEnvironment> varEnv = mv.getParameter(VAR_ENV,
-                LexicalEnvironment.class);
-        TypedVariable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS,
-                boolean.class);
+        Variable<LexicalEnvironment> lexEnv = mv.getParameter(LEX_ENV, LexicalEnvironment.class);
+        Variable<LexicalEnvironment> varEnv = mv.getParameter(VAR_ENV, LexicalEnvironment.class);
+        Variable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS, boolean.class);
 
-        TypedVariable<LexicalEnvironment> env = varEnv;
-        TypedVariable<EnvironmentRecord> envRec = mv.newVariable("envRec", EnvironmentRecord.class);
+        Variable<LexicalEnvironment> env = varEnv;
+        Variable<EnvironmentRecord> envRec = mv.newVariable("envRec", EnvironmentRecord.class);
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.store(envRec);
 
-        TypedVariable<EnvironmentRecord> lexEnvRec = mv.newVariable("lexEnvRec",
-                EnvironmentRecord.class);
+        Variable<EnvironmentRecord> lexEnvRec = mv
+                .newVariable("lexEnvRec", EnvironmentRecord.class);
         mv.load(lexEnv);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.store(lexEnvRec);

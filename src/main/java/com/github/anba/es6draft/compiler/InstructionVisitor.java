@@ -80,7 +80,7 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
-    static class Variable {
+    static class Variable<T> {
         private final String name;
         private final Type type;
         private final int var;
@@ -97,12 +97,6 @@ class InstructionVisitor extends InstructionAdapter {
 
         public Type getType() {
             return type;
-        }
-    }
-
-    static class TypedVariable<T> extends Variable {
-        private TypedVariable(String name, Type type, int var) {
-            super(name, type, var);
         }
     }
 
@@ -187,37 +181,37 @@ class InstructionVisitor extends InstructionAdapter {
         return slot;
     }
 
-    public Variable getParameter(int index) {
+    public Variable<?> getParameter(int index) {
         Type[] argTypes = methodDescriptor.getArgumentTypes();
-        return new Variable("(parameter)", argTypes[index], parameterSlot(index, argTypes));
+        return new Variable<>("(parameter)", argTypes[index], parameterSlot(index, argTypes));
     }
 
-    public <T> TypedVariable<T> getParameter(int index, Class<T> clazz) {
+    public <T> Variable<T> getParameter(int index, Class<T> clazz) {
         Type[] argTypes = methodDescriptor.getArgumentTypes();
         if (!argTypes[index].equals(typeCache.get(clazz))) {
             throw new IllegalArgumentException();
         }
-        return new TypedVariable<>("(parameter)", argTypes[index], parameterSlot(index, argTypes));
+        return new Variable<>("(parameter)", argTypes[index], parameterSlot(index, argTypes));
     }
 
-    public Variable newVariable(String name, Type type) {
-        return new Variable(name, type, variables.newVariable(type));
+    public Variable<?> newVariable(String name, Type type) {
+        return new Variable<>(name, type, variables.newVariable(type));
     }
 
-    public <T> TypedVariable<T> newVariable(String name, Class<T> clazz) {
+    public <T> Variable<T> newVariable(String name, Class<T> clazz) {
         Type type = typeCache.get(clazz);
-        return new TypedVariable<>(name, type, variables.newVariable(type));
+        return new Variable<>(name, type, variables.newVariable(type));
     }
 
-    public void freeVariable(Variable var) {
+    public void freeVariable(Variable<?> var) {
         variables.freeVariable(var.var);
     }
 
-    public void load(Variable var) {
+    public void load(Variable<?> var) {
         load(var.var, var.type);
     }
 
-    public void store(Variable var) {
+    public void store(Variable<?> var) {
         store(var.var, var.type);
     }
 

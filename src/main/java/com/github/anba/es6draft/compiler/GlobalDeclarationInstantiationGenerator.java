@@ -24,7 +24,7 @@ import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -95,14 +95,12 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     }
 
     private void generate(Script script, InstructionVisitor mv) {
-        TypedVariable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
+        Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
-        TypedVariable<LexicalEnvironment> env = mv
-                .getParameter(GLOBALENV, LexicalEnvironment.class);
-        TypedVariable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS,
-                boolean.class);
+        Variable<LexicalEnvironment> env = mv.getParameter(GLOBALENV, LexicalEnvironment.class);
+        Variable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS, boolean.class);
 
-        TypedVariable<GlobalEnvironmentRecord> envRec = mv.newVariable("envRec",
+        Variable<GlobalEnvironmentRecord> envRec = mv.newVariable("envRec",
                 GlobalEnvironmentRecord.class);
         mv.load(env);
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
@@ -191,40 +189,40 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.areturn();
     }
 
-    private void canDeclareLexicalScopedOrThrow(TypedVariable<ExecutionContext> context,
-            TypedVariable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
+    private void canDeclareLexicalScopedOrThrow(Variable<ExecutionContext> context,
+            Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name);
         mv.invoke(Methods.ScriptRuntime_canDeclareLexicalScopedOrThrow);
     }
 
-    private void canDeclareVarScopedOrThrow(TypedVariable<ExecutionContext> context,
-            TypedVariable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
+    private void canDeclareVarScopedOrThrow(Variable<ExecutionContext> context,
+            Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name);
         mv.invoke(Methods.ScriptRuntime_canDeclareVarScopedOrThrow);
     }
 
-    private void canDeclareGlobalFunctionOrThrow(TypedVariable<ExecutionContext> context,
-            TypedVariable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
+    private void canDeclareGlobalFunctionOrThrow(Variable<ExecutionContext> context,
+            Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name);
         mv.invoke(Methods.ScriptRuntime_canDeclareGlobalFunctionOrThrow);
     }
 
-    private void canDeclareGlobalVarOrThrow(TypedVariable<ExecutionContext> context,
-            TypedVariable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
+    private void canDeclareGlobalVarOrThrow(Variable<ExecutionContext> context,
+            Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
         mv.load(context);
         mv.load(envRec);
         mv.aconst(name);
         mv.invoke(Methods.ScriptRuntime_canDeclareGlobalVarOrThrow);
     }
 
-    private void createGlobalVarBinding(TypedVariable<GlobalEnvironmentRecord> envRec, String name,
-            TypedVariable<Boolean> deletableBindings, InstructionVisitor mv) {
+    private void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec, String name,
+            Variable<Boolean> deletableBindings, InstructionVisitor mv) {
         // stack: [] -> []
         mv.load(envRec);
         mv.aconst(name);
@@ -232,8 +230,8 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalVarBinding);
     }
 
-    private void createGlobalFunctionBinding(TypedVariable<GlobalEnvironmentRecord> envRec,
-            String name, TypedVariable<Boolean> deletableBindings, InstructionVisitor mv) {
+    private void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec, String name,
+            Variable<Boolean> deletableBindings, InstructionVisitor mv) {
         // stack: [fo] -> []
         mv.load(envRec);
         mv.swap();

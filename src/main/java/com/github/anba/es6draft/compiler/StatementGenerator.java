@@ -24,7 +24,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -198,7 +198,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         // L1: <statement>
         // IFNE ToBoolean(<expr>) L1
 
-        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         mv.mark(lblNext);
         {
@@ -270,7 +270,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Label lblContinue = new Label(), lblBreak = new Label();
         Label loopstart = new Label();
 
-        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         // Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
         ValType type = expressionValue(expr, mv);
@@ -314,7 +314,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         }
 
         @SuppressWarnings("rawtypes")
-        TypedVariable<Iterator> iter = mv.newVariable("iter", Iterator.class);
+        Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
         mv.store(iter);
 
         mv.mark(lblContinue);
@@ -445,7 +445,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             lexDecl.accept(this, mv);
         }
 
-        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Label lblTest = new Label(), lblStmt = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
@@ -528,7 +528,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     @Override
     public Void visit(LabelledStatement node, StatementVisitor mv) {
-        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Label label = new Label();
         mv.enterLabelled(node, label);
@@ -650,7 +650,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.loadExecutionContext();
         mv.loadCompletionValue();
 
-        TypedVariable<boolean[]> ref = null;
+        Variable<boolean[]> ref = null;
         if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
             ref = mv.newVariable("ref", boolean[].class);
             mv.newarray(1, Type.BOOLEAN_TYPE);
@@ -721,7 +721,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.enterFinallyScoped();
 
-            TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
+            Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
             mv.mark(startCatchFinally);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
@@ -741,7 +741,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             if (!guardedCatchNodes.isEmpty()) {
                 mv.enterCatchWithGuarded(node, new Label());
 
-                TypedVariable<ScriptException> exception = mv.newVariable("exception",
+                Variable<ScriptException> exception = mv.newVariable("exception",
                         ScriptException.class);
                 mv.store(exception);
                 for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
@@ -776,7 +776,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
-            TypedVariable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
+            Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
             mv.store(throwable);
             restoreEnvironment(mv, savedEnv);
             mv.enterFinally();
@@ -824,7 +824,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             Label handlerCatchStackOverflow = new Label();
             Label exceptionHandled = new Label();
 
-            TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
+            Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
             mv.mark(startCatch);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
@@ -843,7 +843,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             if (!guardedCatchNodes.isEmpty()) {
                 mv.enterCatchWithGuarded(node, new Label());
 
-                TypedVariable<ScriptException> exception = mv.newVariable("exception",
+                Variable<ScriptException> exception = mv.newVariable("exception",
                         ScriptException.class);
                 mv.store(exception);
                 for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
@@ -880,7 +880,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.enterFinallyScoped();
 
-            TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
+            Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
             mv.mark(startFinally);
             mv.enterWrapped();
             tryBlock.accept(this, mv);
@@ -894,7 +894,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
-            TypedVariable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
+            Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
             mv.store(throwable);
             restoreEnvironment(mv, savedEnv);
             mv.enterFinally();
@@ -1068,7 +1068,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Label lblNext = new Label();
         Label lblContinue = new Label(), lblBreak = new Label();
 
-        TypedVariable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         mv.goTo(lblContinue);
         mv.mark(lblNext);

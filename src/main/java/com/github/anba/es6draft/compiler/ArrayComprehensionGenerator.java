@@ -14,7 +14,7 @@ import com.github.anba.es6draft.ast.ArrayComprehension;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * 11.1.4.2 Array Comprehension
@@ -35,7 +35,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
     }
 
     @SuppressWarnings("rawtypes")
-    private TypedVariable<ArrayList> result = null;
+    private Variable<ArrayList> result = null;
 
     ArrayComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);

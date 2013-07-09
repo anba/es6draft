@@ -23,7 +23,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
@@ -199,7 +198,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
-    protected final TypedVariable<LexicalEnvironment> saveEnvironment(AbruptNode node,
+    protected final Variable<LexicalEnvironment> saveEnvironment(AbruptNode node,
             StatementVisitor mv) {
         EnumSet<Abrupt> abrupt = node.getAbrupt();
         if (abrupt.contains(Abrupt.Break) || abrupt.contains(Abrupt.Continue)) {
@@ -211,9 +210,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [] -> []
      */
-    protected final TypedVariable<LexicalEnvironment> saveEnvironment(StatementVisitor mv) {
-        TypedVariable<LexicalEnvironment> savedEnv = mv.newVariable("savedEnv",
-                LexicalEnvironment.class);
+    protected final Variable<LexicalEnvironment> saveEnvironment(StatementVisitor mv) {
+        Variable<LexicalEnvironment> savedEnv = mv
+                .newVariable("savedEnv", LexicalEnvironment.class);
         getLexicalEnvironment(mv);
         mv.store(savedEnv);
         return savedEnv;
@@ -223,7 +222,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [] -> []
      */
     protected final void restoreEnvironment(AbruptNode node, Abrupt abrupt,
-            TypedVariable<LexicalEnvironment> savedEnv, StatementVisitor mv) {
+            Variable<LexicalEnvironment> savedEnv, StatementVisitor mv) {
         if (node.getAbrupt().contains(abrupt)) {
             assert savedEnv != null;
             restoreEnvironment(mv, savedEnv);
@@ -234,13 +233,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * stack: [] -> []
      */
     protected final void restoreEnvironment(StatementVisitor mv,
-            TypedVariable<LexicalEnvironment> savedEnv) {
+            Variable<LexicalEnvironment> savedEnv) {
         mv.loadExecutionContext();
         mv.load(savedEnv);
         mv.invoke(Methods.ExecutionContext_restoreLexicalEnvironment);
     }
 
-    protected final void freeVariable(Variable var, StatementVisitor mv) {
+    protected final void freeVariable(Variable<?> var, StatementVisitor mv) {
         if (var != null) {
             mv.freeVariable(var);
         }

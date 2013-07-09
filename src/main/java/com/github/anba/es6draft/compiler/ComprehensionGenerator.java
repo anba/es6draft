@@ -29,7 +29,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * 11.1.4.2 Array Comprehension
@@ -192,7 +192,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         mv.invoke(Methods.ScriptRuntime_iterate);
 
         @SuppressWarnings("rawtypes")
-        TypedVariable<Iterator> iter = mv.newVariable("iter", Iterator.class);
+        Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
         mv.store(iter);
 
         mv.mark(lblContinue);
@@ -282,7 +282,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         }
 
         @SuppressWarnings("rawtypes")
-        TypedVariable<Iterator> iter = mv.newVariable("iter", Iterator.class);
+        Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
         mv.store(iter);
 
         mv.mark(lblContinue);
