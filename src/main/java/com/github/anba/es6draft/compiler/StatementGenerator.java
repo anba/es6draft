@@ -631,10 +631,13 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Expression expr = node.getExpression();
         if (expr != null) {
             if (!mv.isWrapped()) {
-                tailCall(expr, mv);
+                mv.setTailCall(tailCall(expr));
             }
             ValType type = expressionValue(expr, mv);
             mv.toBoxed(type);
+            if (!mv.isWrapped()) {
+                mv.setTailCall(tailCall(null));
+            }
         } else {
             mv.get(Fields.Undefined_UNDEFINED);
         }

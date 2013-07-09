@@ -375,8 +375,8 @@ class CodeGenerator implements AutoCloseable {
         body.lineInfo(node);
         body.begin();
 
-        // call expression in concise function is always in tail-call position
-        tailCall(node.getExpression(), body);
+        // call expression in concise function body is always in tail-call position
+        body.setTailCall(tailCall(node.getExpression()));
 
         body.enterScope(node);
         ValType type = expressionValue(node.getExpression(), body);

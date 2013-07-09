@@ -6,7 +6,8 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import java.util.HashSet;
+import static java.util.Collections.emptySet;
+
 import java.util.Set;
 
 import org.objectweb.asm.MethodVisitor;
@@ -25,7 +26,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private final boolean globalCode;
     private Scope scope;
     // tail-call support
-    private Set<CallExpression> tail = null;
+    private Set<CallExpression> tail = emptySet();
 
     protected ExpressionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
             boolean strict, boolean globalCode) {
@@ -69,13 +70,11 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     boolean isTailCall(CallExpression expr) {
-        return tail != null && tail.contains(expr);
+        return tail.contains(expr);
     }
 
-    void setTailCall(CallExpression expr) {
-        if (tail == null) {
-            tail = new HashSet<>();
-        }
-        tail.add(expr);
+    void setTailCall(Set<CallExpression> tail) {
+        assert tail != null;
+        this.tail = tail;
     }
 }
