@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
-import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
 import com.github.anba.es6draft.ast.MethodDefinition.MethodType;
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;

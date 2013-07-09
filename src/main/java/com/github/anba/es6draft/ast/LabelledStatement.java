@@ -9,15 +9,13 @@ package com.github.anba.es6draft.ast;
 import java.util.EnumSet;
 import java.util.Set;
 
-import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
-
 /**
  * <h1>12 Statements and Declarations</h1>
  * <ul>
  * <li>12.12 Labelled Statements
  * </ul>
  */
-public class LabelledStatement extends Statement {
+public class LabelledStatement extends Statement implements AbruptNode {
     private EnumSet<Abrupt> abrupt;
     private Set<String> labels;
     private Statement statement;
@@ -28,11 +26,13 @@ public class LabelledStatement extends Statement {
         this.statement = statement;
     }
 
+    @Override
     public EnumSet<Abrupt> getAbrupt() {
         return abrupt;
     }
 
-    public Set<String> getLabels() {
+    @Override
+    public Set<String> getLabelSet() {
         return labels;
     }
 

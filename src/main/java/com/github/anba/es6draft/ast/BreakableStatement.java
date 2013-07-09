@@ -6,24 +6,10 @@
  */
 package com.github.anba.es6draft.ast;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 /**
  * <h1>12 Statements and Declarations</h1>
  */
-public abstract class BreakableStatement extends Statement {
+public abstract class BreakableStatement extends Statement implements AbruptNode {
     protected BreakableStatement() {
-    }
-
-    /**
-     * Returns the set of labels for this statement
-     */
-    public abstract Set<String> getLabelSet();
-
-    public abstract EnumSet<Abrupt> getAbrupt();
-
-    public enum Abrupt {
-        Break, Continue
     }
 }

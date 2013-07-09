@@ -17,13 +17,13 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.BreakStatement;
 import com.github.anba.es6draft.ast.BreakableStatement;
 import com.github.anba.es6draft.ast.ContinueStatement;
 import com.github.anba.es6draft.ast.IterationStatement;
 import com.github.anba.es6draft.ast.LabelledStatement;
 import com.github.anba.es6draft.ast.TryStatement;
-import com.github.anba.es6draft.ast.BreakableStatement.Abrupt;
 
 /**
  * 
@@ -239,7 +239,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
         Labels labels = this.labels;
-        for (String label : node.getLabels()) {
+        for (String label : node.getLabelSet()) {
             labels.namedBreakLabels.put(label, lblBreak);
         }
     }
@@ -248,7 +248,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
         Labels labels = this.labels;
-        for (String label : node.getLabels()) {
+        for (String label : node.getLabelSet()) {
             labels.namedBreakLabels.remove(label);
         }
     }

@@ -300,7 +300,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
                         break;
                     }
                 } else if (stmt instanceof LabelledStatement) {
-                    if (label != null && ((LabelledStatement) stmt).getLabels().contains(label)) {
+                    if (label != null && ((LabelledStatement) stmt).getLabelSet().contains(label)) {
                         break;
                     }
                 }
