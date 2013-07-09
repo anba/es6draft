@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDecla
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.objectweb.asm.Label;
@@ -24,9 +25,9 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.ScriptException;
 
 /**
  *
@@ -312,7 +313,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             }
         }
 
-        Variable iter = mv.newVariable("iter", Types.Iterator);
+        @SuppressWarnings("rawtypes")
+        TypedVariable<Iterator> iter = mv.newVariable("iter", Iterator.class);
         mv.store(iter);
 
         mv.mark(lblContinue);
@@ -648,9 +650,9 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.loadExecutionContext();
         mv.loadCompletionValue();
 
-        Variable ref = null;
+        TypedVariable<boolean[]> ref = null;
         if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
-            ref = mv.newVariable("ref", Types.boolean_);
+            ref = mv.newVariable("ref", boolean[].class);
             mv.newarray(1, Type.BOOLEAN_TYPE);
             mv.dup();
             mv.store(ref);
@@ -739,7 +741,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             if (!guardedCatchNodes.isEmpty()) {
                 mv.enterCatchWithGuarded(node, new Label());
 
-                Variable exception = mv.newVariable("exception", Types.ScriptException);
+                TypedVariable<ScriptException> exception = mv.newVariable("exception",
+                        ScriptException.class);
                 mv.store(exception);
                 for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
                     mv.load(exception);
@@ -773,7 +776,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
-            Variable throwable = mv.newVariable("throwable", Types.Throwable);
+            TypedVariable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
             mv.store(throwable);
             restoreEnvironment(mv, savedEnv);
             mv.enterFinally();
@@ -840,7 +843,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             if (!guardedCatchNodes.isEmpty()) {
                 mv.enterCatchWithGuarded(node, new Label());
 
-                Variable exception = mv.newVariable("exception", Types.ScriptException);
+                TypedVariable<ScriptException> exception = mv.newVariable("exception",
+                        ScriptException.class);
                 mv.store(exception);
                 for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
                     mv.load(exception);
@@ -890,7 +894,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
             mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
-            Variable throwable = mv.newVariable("throwable", Types.Throwable);
+            TypedVariable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
             mv.store(throwable);
             restoreEnvironment(mv, savedEnv);
             mv.enterFinally();

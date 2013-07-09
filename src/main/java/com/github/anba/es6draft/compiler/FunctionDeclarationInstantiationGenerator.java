@@ -34,6 +34,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.types.Undefined;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -120,7 +121,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.store(envRec);
 
-        Variable undef = mv.newVariable("undef", Types.Undefined);
+        TypedVariable<Undefined> undef = mv.newVariable("undef", Undefined.class);
         mv.get(Fields.Undefined_UNDEFINED);
         mv.store(undef);
 

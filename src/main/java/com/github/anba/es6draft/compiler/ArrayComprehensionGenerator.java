@@ -6,13 +6,15 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import java.util.ArrayList;
+
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.ArrayComprehension;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.InstructionVisitor.TypedVariable;
 
 /**
  * 11.1.4.2 Array Comprehension
@@ -32,7 +34,8 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
                 Types.ArrayList, "add", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object));
     }
 
-    private Variable result = null;
+    @SuppressWarnings("rawtypes")
+    private TypedVariable<ArrayList> result = null;
 
     ArrayComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
@@ -50,7 +53,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
             return visit((Expression) node, mv);
         }
 
-        this.result = mv.newVariable("result", Types.ArrayList);
+        this.result = mv.newVariable("result", ArrayList.class);
         mv.anew(Types.ArrayList);
         mv.dup();
         mv.invoke(Methods.ArrayList_init);
