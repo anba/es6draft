@@ -27,6 +27,11 @@ public interface TokenStreamInput {
     int unget(int c);
 
     /**
+     * Returns the character at {@code position() + 1} without changing the actual position
+     */
+    int peek(int i);
+
+    /**
      * Returns the current position in the input
      */
     int position();

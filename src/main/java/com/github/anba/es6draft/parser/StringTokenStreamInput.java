@@ -35,6 +35,14 @@ public class StringTokenStreamInput implements TokenStreamInput {
     }
 
     @Override
+    public int peek(int i) {
+        assert i >= 0;
+        if (cursor + i >= length)
+            return EOF;
+        return source.charAt(cursor + i);
+    }
+
+    @Override
     public int position() {
         return cursor;
     }

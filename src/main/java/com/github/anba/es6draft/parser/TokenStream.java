@@ -193,7 +193,7 @@ public class TokenStream {
         if (start == Token.ASSIGN_DIV) {
             buffer.add('=');
         } else {
-            int c = peek();
+            int c = input.peek(0);
             if (c == '/' || c == '*') {
                 throw error(Messages.Key.InvalidRegExpLiteral);
             }
@@ -341,7 +341,7 @@ public class TokenStream {
                 c = '\u000B';
                 break;
             case '0':
-                if (isDecimalDigit(peek())) {
+                if (isDecimalDigit(input.peek(0))) {
                     throw error(Messages.Key.InvalidNULLEscape);
                 }
                 c = '\0';
@@ -508,7 +508,7 @@ public class TokenStream {
         case ']':
             return Token.RB;
         case '.':
-            switch (peek()) {
+            switch (input.peek(0)) {
             case '0':
             case '1':
             case '2':
@@ -521,7 +521,7 @@ public class TokenStream {
             case '9':
                 return readNumberLiteral(c);
             case '.':
-                if (peek2() == '.') {
+                if (input.peek(1) == '.') {
                     mustMatch('.');
                     mustMatch('.');
                     return Token.TRIPLE_DOT;
@@ -547,7 +547,7 @@ public class TokenStream {
                 }
             } else if (match('=')) {
                 return Token.LE;
-            } else if (peek() == '!' && peek2() == '-' && peek3() == '-'
+            } else if (input.peek(0) == '!' && input.peek(1) == '-' && input.peek(2) == '-'
                     && parser.isEnabled(Parser.Option.HTMLComments)) {
                 // html start-comment
                 mustMatch('!');
@@ -608,7 +608,7 @@ public class TokenStream {
             }
         case '-':
             if (match('-')) {
-                if (peek() == '>' && hasLineTerminator
+                if (input.peek(0) == '>' && hasLineTerminator
                         && parser.isEnabled(Parser.Option.HTMLComments)) {
                     // html end-comment at line start
                     mustMatch('>');
@@ -1069,7 +1069,7 @@ public class TokenStream {
                 c = readUnicode();
                 break;
             case '0':
-                if (isDecimalDigit(peek())) {
+                if (isDecimalDigit(input.peek(0))) {
                     if (!parser.isEnabled(Parser.Option.OctalEscapeSequence)) {
                         throw error(Messages.Key.InvalidNULLEscape);
                     }
@@ -1325,29 +1325,5 @@ public class TokenStream {
         if (!match(c)) {
             throw error(Messages.Key.UnexpectedCharacter, String.valueOf((char) c));
         }
-    }
-
-    private int peek() {
-        int c = input.get();
-        input.unget(c);
-        return c;
-    }
-
-    private int peek2() {
-        int c = input.get();
-        int d = input.get();
-        input.unget(d);
-        input.unget(c);
-        return d;
-    }
-
-    private int peek3() {
-        int c = input.get();
-        int d = input.get();
-        int e = input.get();
-        input.unget(e);
-        input.unget(d);
-        input.unget(c);
-        return e;
     }
 }
