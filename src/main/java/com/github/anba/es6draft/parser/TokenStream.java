@@ -183,6 +183,42 @@ public class TokenStream {
 
     //
 
+    /**
+     * <strong>[7.8.4] Regular Expression Literals</strong>
+     * 
+     * <pre>
+     * RegularExpressionLiteral ::
+     *     / RegularExpressionBody / RegularExpressionFlags
+     * RegularExpressionBody ::
+     *     RegularExpressionFirstChar RegularExpressionChars
+     * RegularExpressionChars ::
+     *     [empty]
+     *     RegularExpressionChars RegularExpressionChar
+     * RegularExpressionFirstChar ::
+     *     RegularExpressionNonTerminator but not one of * or \ or / or [
+     *     RegularExpressionBackslashSequence
+     *     RegularExpressionClass
+     * RegularExpressionChar ::
+     *     RegularExpressionNonTerminator but not one of \ or / or [
+     *     RegularExpressionBackslashSequence
+     *     RegularExpressionClass
+     * RegularExpressionBackslashSequence ::
+     *     \ RegularExpressionNonTerminator
+     * RegularExpressionNonTerminator ::
+     *     SourceCharacter but not LineTerminator
+     * RegularExpressionClass ::
+     *     [ RegularExpressionClassChars ]
+     * RegularExpressionClassChars ::
+     *     [empty]
+     *     RegularExpressionClassChars RegularExpressionClassChar
+     * RegularExpressionClassChar ::
+     *     RegularExpressionNonTerminator but not one of ] or \
+     *     RegularExpressionBackslashSequence
+     * RegularExpressionFlags ::
+     *     [empty]
+     *     RegularExpressionFlags IdentifierPart
+     * </pre>
+     */
     public String[] readRegularExpression(Token start) {
         assert start == Token.DIV || start == Token.ASSIGN_DIV;
         assert next == null : "regular expression in lookahead";
@@ -240,7 +276,7 @@ public class TokenStream {
     //
 
     /**
-     * <strong>[7.8.6] Template Literal Lexical Components</strong>
+     * <strong>[7.8.5] Template Literal Lexical Components</strong>
      * 
      * <pre>
      * Template ::
@@ -385,6 +421,18 @@ public class TokenStream {
         return tok;
     }
 
+    /**
+     * <strong>[7.5] Token</strong>
+     * 
+     * <pre>
+     * Token ::
+     *     IdentifierName
+     *     Punctuator
+     *     NumericLiteral
+     *     StringLiteral
+     *     Template
+     * </pre>
+     */
     private Token scanToken() {
         TokenStreamInput input = this.input;
 
@@ -682,6 +730,19 @@ public class TokenStream {
         return Token.ERROR;
     }
 
+    /**
+     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * 
+     * <pre>
+     * IdentifierStart ::
+     *     UnicodeIDStart
+     *     $
+     *     _
+     *     \ UnicodeEscapeSequence
+     * UnicodeIDStart ::
+     *     any Unicode character with the Unicode property “ID_Start”.
+     * </pre>
+     */
     private static boolean isIdentifierStart(int c) {
         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '$' || c == '_')
             return true;
@@ -700,6 +761,21 @@ public class TokenStream {
         return false;
     }
 
+    /**
+     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * 
+     * <pre>
+     * IdentifierPart ::
+     *     UnicodeIDContinue
+     *     $
+     *     _
+     *     \ UnicodeEscapeSequence 
+     *     &lt;ZWNJ&gt;
+     *     &lt;ZWJ&gt;
+     * UnicodeIDContinue ::
+     *     any Unicode character with the Unicode property “ID_Continue”
+     * </pre>
+     */
     private static boolean isIdentifierPart(int c) {
         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '$'
                 || c == '_')
@@ -769,6 +845,18 @@ public class TokenStream {
         return (c == 0x0A || c == 0x0D || c == 0x2028 || c == 0x2029);
     }
 
+    /**
+     * <strong>[7.4] Comments</strong>
+     * 
+     * <pre>
+     * SingleLineComment ::
+     *     // SingleLineCommentChars<sub>opt</sub>
+     * SingleLineCommentChars ::
+     *     SingleLineCommentChar SingleLineCommentChars<sub>opt</sub>
+     * SingleLineCommentChar ::
+     *     SourceCharacter but not LineTerminator
+     * </pre>
+     */
     private Token readSingleComment() {
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
@@ -786,6 +874,24 @@ public class TokenStream {
         return Token.COMMENT;
     }
 
+    /**
+     * <strong>[7.4] Comments</strong>
+     * 
+     * <pre>
+     * MultiLineComment ::
+     *     /* MultiLineCommentChars<sub>opt</sub> &#42;/
+     * MultiLineCommentChars ::
+     *     MultiLineNotAsteriskChar MultiLineCommentChars<sub>opt</sub>
+     *     PostAsteriskCommentChars<sub>opt</sub>
+     * PostAsteriskCommentChars ::
+     *     MultiLineNotForwardSlashOrAsteriskChar MultiLineCommentChars<sub>opt</sub>
+     *     PostAsteriskCommentChars<sub>opt</sub>
+     * MultiLineNotAsteriskChar ::
+     *     SourceCharacter but not *
+     * MultiLineNotForwardSlashOrAsteriskChar ::
+     *     SourceCharacter but not one of / or *
+     * </pre>
+     */
     private Token readMultiComment() {
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
@@ -809,6 +915,17 @@ public class TokenStream {
         return Token.COMMENT;
     }
 
+    /**
+     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * 
+     * <pre>
+     * Identifier ::
+     *     IdentifierName but not ReservedWord
+     * IdentifierName ::
+     *     IdentifierStart
+     *     IdentifierName IdentifierPart
+     * </pre>
+     */
     private Token readIdentifier(int c) {
         assert isIdentifierStart(c);
 
@@ -833,13 +950,22 @@ public class TokenStream {
             }
         }
 
-        Token tok = keywordOrLiteral(buffer);
+        Token tok = readReservedWord(buffer);
         if (tok != null) {
             return tok;
         }
         return Token.NAME;
     }
 
+    /**
+     * <strong>[7.8.6] String Literals</strong>
+     * 
+     * <pre>
+     * UnicodeEscapeSequence ::
+     *     u HexDigit HexDigit HexDigit HexDigit
+     *     u{ HexDigits }
+     * </pre>
+     */
     private int readUnicode() {
         TokenStreamInput input = this.input;
         int c = input.get();
@@ -864,7 +990,56 @@ public class TokenStream {
         return c;
     }
 
-    private Token keywordOrLiteral(StringBuffer buffer) {
+    /**
+     * <strong>[7.6.1] Reserved Words</strong>
+     * 
+     * <pre>
+     * ReservedWord ::
+     *     Keyword
+     *     FutureReservedWord
+     *     NullLiteral
+     *     BooleanLiteral
+     * </pre>
+     * 
+     * <strong>[7.6.1.1] Keywords</strong>
+     * 
+     * <pre>
+     * Keyword :: one of
+     *     break        delete      import      this
+     *     case         do          in          throw
+     *     catch        else        instanceof  try
+     *     class        export      let         typeof
+     *     continue     finally     new         var
+     *     const        for         return      void
+     *     debugger     function    super       while
+     *     default      if          switch      with
+     * </pre>
+     * 
+     * <strong>[7.6.1.2] Future Reserved Words</strong>
+     * 
+     * <pre>
+     * FutureReservedWord :: one of
+     *     enum         extends
+     *     implements   private     public      yield
+     *     interface    package     protected   static
+     * </pre>
+     * 
+     * <strong>[7.8.1] Null Literals</strong>
+     * 
+     * <pre>
+     * NullLiteral ::
+     *     null
+     * </pre>
+     * 
+     * <strong>[7.8.2] Boolean Literals</strong>
+     * 
+     * <pre>
+     * BooleanLiteral ::
+     *     true
+     *     false
+     * </pre>
+     */
+    private Token readReservedWord(StringBuffer buffer) {
         int length = buffer.length;
         if (length < 2 || length > 10)
             return null;
@@ -1006,6 +1181,61 @@ public class TokenStream {
         return true;
     }
 
+    /**
+     * <strong>[7.8.6] String Literals</strong>
+     * 
+     * <pre>
+     * StringLiteral ::
+     *     " DoubleStringCharacters<sub>opt</sub> "
+     *     ' SingleStringCharacters<sub>opt</sub> '
+     * DoubleStringCharacters ::
+     *     DoubleStringCharacter DoubleStringCharacters<sub>opt</sub>
+     * SingleStringCharacters ::
+     *     SingleStringCharacter SingleStringCharacters<sub>opt</sub>
+     * DoubleStringCharacter ::
+     *     SourceCharacter but not one of " or \ or LineTerminator
+     *     \ EscapeSequence
+     *     LineContinuation
+     * SingleStringCharacter ::
+     *     SourceCharacter but not one of ' or \ or LineTerminator
+     *     \ EscapeSequence
+     *     LineContinuation
+     * LineContinuation ::
+     *     \ LineTerminatorSequence
+     * EscapeSequence ::
+     *     CharacterEscapeSequence
+     *     0  [lookahead &#x2209; DecimalDigit]
+     *     HexEscapeSequence
+     *     UnicodeEscapeSequence
+     * CharacterEscapeSequence ::
+     *     SingleEscapeCharacter
+     *     NonEscapeCharacter
+     * SingleEscapeCharacter ::  one of
+     *     ' "  \  b f n r t v
+     * NonEscapeCharacter ::
+     *     SourceCharacter but not one of EscapeCharacter or LineTerminator
+     * EscapeCharacter ::
+     *     SingleEscapeCharacter
+     *     DecimalDigit
+     *     x
+     *     u
+     * HexEscapeSequence ::
+     *     x HexDigit HexDigit
+     * UnicodeEscapeSequence ::
+     *     u HexDigit HexDigit HexDigit HexDigit
+     *     u{ HexDigits }
+     * </pre>
+     * 
+     * <strong>[B.1.2] String Literals</strong>
+     * 
+     * <pre>
+     * EscapeSequence ::
+     *     CharacterEscapeSequence
+     *     OctalEscapeSequence
+     *     HexEscapeSequence
+     *     UnicodeEscapeSequence
+     * </pre>
+     */
     private Token readString(int quoteChar) {
         assert quoteChar == '"' || quoteChar == '\'';
 
@@ -1109,6 +1339,21 @@ public class TokenStream {
         return Token.STRING;
     }
 
+    /**
+     * <strong>[B.1.2] String Literals</strong>
+     * 
+     * <pre>
+     * OctalEscapeSequence ::
+     *     OctalDigit [lookahead &#x2209; DecimalDigit]
+     *     ZeroToThree OctalDigit [lookahead &#x2209; DecimalDigit]
+     *     FourToSeven OctalDigit
+     *     ZeroToThree OctalDigit OctalDigit
+     * ZeroToThree :: one of
+     *     0 1 2 3
+     * FourToSeven :: one of
+     *     4 5 6 7
+     * </pre>
+     */
     private int readOctalEscape(int c) {
         parser.reportStrictModeSyntaxError(Messages.Key.StrictModeOctalEscapeSequence);
         int d = (c - '0');
@@ -1131,6 +1376,17 @@ public class TokenStream {
         return d;
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * NumericLiteral ::
+     *     DecimalLiteral
+     *     BinaryIntegerLiteral
+     *     OctalIntegerLiteral
+     *     HexIntegerLiteral
+     * </pre>
+     */
     private Token readNumberLiteral(int c) {
         if (c == '0') {
             int d = input.get();
@@ -1154,6 +1410,18 @@ public class TokenStream {
         return Token.NUMBER;
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * HexIntegerLiteral ::
+     *     0x HexDigits
+     *     0X HexDigits
+     * HexDigits ::
+     *     HexDigit
+     *     HexDigits HexDigit
+     * </pre>
+     */
     private double readHexIntegerLiteral() {
         TokenStreamInput input = this.input;
         StringBuffer buffer = this.buffer();
@@ -1171,6 +1439,16 @@ public class TokenStream {
         return parseHex(buffer.cbuf, buffer.length);
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * BinaryIntegerLiteral ::
+     *     0b BinaryDigit
+     *     0B BinaryDigit
+     *     BinaryIntegerLiteral BinaryDigit
+     * </pre>
+     */
     private double readBinaryIntegerLiteral() {
         TokenStreamInput input = this.input;
         StringBuffer buffer = this.buffer();
@@ -1188,6 +1466,16 @@ public class TokenStream {
         return parseBinary(buffer.cbuf, buffer.length);
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * OctalIntegerLiteral ::
+     *     0o OctalDigit
+     *     0O OctalDigit
+     *     OctalIntegerLiteral OctalDigit
+     * </pre>
+     */
     private double readOctalIntegerLiteral() {
         TokenStreamInput input = this.input;
         StringBuffer buffer = this.buffer();
@@ -1205,6 +1493,15 @@ public class TokenStream {
         return parseOctal(buffer.cbuf, buffer.length);
     }
 
+    /**
+     * <strong>[B.1.1] Numeric Literals</strong>
+     * 
+     * <pre>
+     * LegacyOctalIntegerLiteral ::
+     *     0 OctalDigit
+     *     LegacyOctalIntegerLiteral OctalDigit
+     * </pre>
+     */
     private double readLegacyOctalIntegerLiteral() {
         TokenStreamInput input = this.input;
         StringBuffer buffer = this.buffer();
@@ -1228,6 +1525,32 @@ public class TokenStream {
         return parseOctal(buffer.cbuf, buffer.length);
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * DecimalLiteral ::
+     *     DecimalIntegerLiteral . DecimalDigits<sub>opt</sub> ExponentPart<sub>opt</sub>
+     *     . DecimalDigits ExponentPart<sub>opt</sub>
+     *     DecimalIntegerLiteral ExponentPart<sub>opt</sub>
+     * DecimalIntegerLiteral ::
+     *     0
+     *     NonZeroDigit DecimalDigits<sub>opt</sub>
+     * DecimalDigits ::
+     *     DecimalDigit
+     *     DecimalDigits DecimalDigit
+     * NonZeroDigit :: one of
+     *     1 2 3 4 5 6 7 8 9
+     * ExponentPart ::
+     *     ExponentIndicator SignedInteger
+     * ExponentIndicator :: one of
+     *     e E
+     * SignedInteger ::
+     *     DecimalDigits
+     *     + DecimalDigits
+     *     - DecimalDigits
+     * </pre>
+     */
     private double readDecimalLiteral(int c) {
         return readDecimalLiteral(c, true);
     }
@@ -1274,25 +1597,65 @@ public class TokenStream {
     }
 
     private boolean isDecimalDigitOrIdentifierStart(int c) {
-        return (c >= '0' && c <= '9') || isIdentifierStart(c);
+        return isDecimalDigit(c) || isIdentifierStart(c);
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * DecimalDigit :: one of
+     *     0 1 2 3 4 5 6 7 8 9
+     * </pre>
+     */
     private static boolean isDecimalDigit(int c) {
         return (c >= '0' && c <= '9');
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * BinaryDigit :: one of
+     *     0  1
+     * </pre>
+     */
     private static boolean isBinaryDigit(int c) {
         return (c == '0' || c == '1');
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * OctalDigit :: one of
+     *     0  1  2  3  4  5  6  7
+     * </pre>
+     */
     private static boolean isOctalDigit(int c) {
         return (c >= '0' && c <= '7');
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * HexDigit :: one of
+     *     0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
+     * </pre>
+     */
     private static boolean isHexDigit(int c) {
         return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
     }
 
+    /**
+     * <strong>[7.8.3] Numeric Literals</strong>
+     * 
+     * <pre>
+     * HexDigit :: one of
+     *     0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
+     * </pre>
+     */
     private static int hexDigit(int c) {
         if (c >= '0' && c <= '9') {
             return (c - '0');
