@@ -1312,16 +1312,11 @@ public class TokenStream {
         throw new ParserEOFException(line, messageKey, args);
     }
 
-    private boolean match(int c) {
-        int d = input.get();
-        if (c == d) {
-            return true;
-        }
-        input.unget(d);
-        return false;
+    private boolean match(char c) {
+        return input.match(c);
     }
 
-    private void mustMatch(int c) {
+    private void mustMatch(char c) {
         if (!match(c)) {
             throw error(Messages.Key.UnexpectedCharacter, String.valueOf((char) c));
         }

@@ -27,6 +27,11 @@ public interface TokenStreamInput {
     int unget(int c);
 
     /**
+     * Advances the position if the current character is equal to {@code c}
+     */
+    boolean match(char c);
+
+    /**
      * Returns the character at {@code position() + 1} without changing the actual position
      */
     int peek(int i);
