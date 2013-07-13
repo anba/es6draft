@@ -7,7 +7,12 @@
 package com.github.anba.es6draft.compiler;
 
 import java.io.PrintWriter;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.EnumSet;
+import java.util.Formatter;
+import java.util.Locale;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -43,13 +48,13 @@ public class Compiler {
     }
 
     public enum Option {
-        Debug
+        Debug, SourceMap
     }
 
-    private final boolean debug;
+    private final EnumSet<Option> options;
 
     public Compiler(EnumSet<Option> options) {
-        this.debug = options.contains(Option.Debug);
+        this.options = EnumSet.copyOf(options);
     }
 
     public byte[] compile(Script script, String className) {
@@ -61,7 +66,7 @@ public class Compiler {
         ClassWriter cw = new ClassWriter(flags);
         cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, className, null,
                 superClassName, interfaces);
-        cw.visitSource(script.getSourceFile(), null);
+        cw.visitSource(script.getSourceFile(), sourceMap(script));
 
         try (CodeSizeAnalysis analysis = new CodeSizeAnalysis()) {
             analysis.submit(script);
@@ -81,7 +86,7 @@ public class Compiler {
         cw.visitEnd();
 
         byte[] bytes = cw.toByteArray();
-        if (debug) {
+        if (options.contains(Option.Debug)) {
             debug(bytes);
         }
 
@@ -118,7 +123,7 @@ public class Compiler {
         cw.visitEnd();
 
         byte[] bytes = cw.toByteArray();
-        if (debug) {
+        if (options.contains(Option.Debug)) {
             debug(bytes);
         }
 
@@ -136,6 +141,36 @@ public class Compiler {
     private static void debug(byte[] b) {
         ClassReader cr = new ClassReader(b);
         cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), ClassReader.SKIP_DEBUG);
+    }
+
+    private String sourceMap(Script script) {
+        if (!options.contains(Option.SourceMap)) {
+            return null;
+        }
+        String sourceFile = script.getSourceFile();
+        Path path;
+        try {
+            path = Paths.get(sourceFile);
+        } catch (InvalidPathException e) {
+            // return here if 'sourceFile' is not a valid path
+            return null;
+        }
+        // line numbers are limited to uint16 in bytecode, valid line count not needed for smap
+        final int maxLineCount = 0xffff;
+        try (Formatter smap = new Formatter(Locale.ROOT)) {
+            smap.format("SMAP%n");
+            smap.format("%s%n", script.getSourceFile());
+            smap.format("Script%n");
+            smap.format("*S Script%n");
+            smap.format("*F%n");
+            smap.format("+ 1 %s%n", path.getFileName());
+            smap.format("%s%n", path);
+            smap.format("*L%n");
+            smap.format("%d#1,%d:%d%n", script.getLine(), maxLineCount, script.getLine());
+            smap.format("*E%n");
+
+            return smap.toString();
+        }
     }
 
     private static void defaultScriptConstructor(ClassWriter cw, String className,
