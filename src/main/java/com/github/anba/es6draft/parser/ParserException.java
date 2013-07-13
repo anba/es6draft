@@ -27,14 +27,16 @@ public class ParserException extends InternalException {
     }
 
     private final Messages.Key messageKey;
-    private final int line;
+    private final int line, column;
     private final ExceptionType type;
     private final String[] messageArguments;
 
-    public ParserException(ExceptionType type, int line, Messages.Key messageKey, String... args) {
+    public ParserException(ExceptionType type, int line, int column, Messages.Key messageKey,
+            String... args) {
         super(messageKey.name());
         this.type = type;
         this.line = line;
+        this.column = column;
         this.messageKey = messageKey;
         this.messageArguments = args;
     }
@@ -42,7 +44,9 @@ public class ParserException extends InternalException {
     @Override
     public String getMessage() {
         String message = type.toString() + ": " + getFormattedMessage();
-        if (line != -1) {
+        if (line != -1 && column != -1) {
+            message += " (line " + line + ", column " + column + ")";
+        } else if (line != -1) {
             message += " (line " + line + ")";
         }
         return message;

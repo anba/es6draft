@@ -142,7 +142,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
         Pattern match;
         BitSet negativeLAGroups;
         try {
-            RegExpParser parser = RegExpParser.parse(p, f, -1);
+            RegExpParser parser = RegExpParser.parse(p, f, -1, -1);
             match = parser.getPattern();
             negativeLAGroups = parser.getNegativeLookaheadGroups();
             // System.out.printf("pattern = '%s'\n", match.pattern());

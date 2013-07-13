@@ -659,66 +659,70 @@ public class Parser {
 
     private ParserException reportTokenMismatch(Token expected, Token actual) {
         if (actual == Token.EOF) {
-            throw new ParserEOFException(ts.getLine(), Messages.Key.UnexpectedToken,
-                    actual.toString(), expected.toString());
+            throw new ParserEOFException(ts.getLine(), ts.getColumn(),
+                    Messages.Key.UnexpectedToken, actual.toString(), expected.toString());
         }
-        throw new ParserException(ExceptionType.SyntaxError, ts.getLine(),
+        throw new ParserException(ExceptionType.SyntaxError, ts.getLine(), ts.getColumn(),
                 Messages.Key.UnexpectedToken, actual.toString(), expected.toString());
     }
 
     private ParserException reportTokenMismatch(String expected, Token actual) {
         if (actual == Token.EOF) {
-            throw new ParserEOFException(ts.getLine(), Messages.Key.UnexpectedToken,
-                    actual.toString(), expected);
+            throw new ParserEOFException(ts.getLine(), ts.getColumn(),
+                    Messages.Key.UnexpectedToken, actual.toString(), expected);
         }
-        throw new ParserException(ExceptionType.SyntaxError, ts.getLine(),
+        throw new ParserException(ExceptionType.SyntaxError, ts.getLine(), ts.getColumn(),
                 Messages.Key.UnexpectedToken, actual.toString(), expected);
     }
 
     private ParserException reportTokenMismatch(Token expected, String actual) {
-        throw new ParserException(ExceptionType.SyntaxError, ts.getLine(),
+        throw new ParserException(ExceptionType.SyntaxError, ts.getLine(), ts.getColumn(),
                 Messages.Key.UnexpectedToken, actual, expected.toString());
     }
 
-    private static ParserException reportError(ExceptionType type, int line,
+    private ParserException reportError(ExceptionType type, int line, int column,
             Messages.Key messageKey, String... args) {
-        throw new ParserException(type, line, messageKey, args);
+        throw new ParserException(type, line, column, messageKey, args);
     }
 
-    private static ParserException reportSyntaxError(Messages.Key messageKey, int line,
-            String... args) {
-        throw reportError(ExceptionType.SyntaxError, line, messageKey, args);
+    private ParserException reportSyntaxError(Messages.Key messageKey, Node node, String... args) {
+        // TODO: store column info in Node
+        throw reportError(ExceptionType.SyntaxError, node.getLine(), -1, messageKey, args);
     }
 
     private ParserException reportSyntaxError(Messages.Key messageKey, String... args) {
-        throw reportError(ExceptionType.SyntaxError, ts.getLine(), messageKey, args);
+        throw reportError(ExceptionType.SyntaxError, ts.getLine(), ts.getColumn(), messageKey, args);
     }
 
     private ParserException reportReferenceError(Messages.Key messageKey, String... args) {
-        throw reportError(ExceptionType.ReferenceError, ts.getLine(), messageKey, args);
+        throw reportError(ExceptionType.ReferenceError, ts.getLine(), ts.getColumn(), messageKey,
+                args);
     }
 
-    private void reportStrictModeError(ExceptionType type, int line, Messages.Key messageKey,
-            String... args) {
+    private void reportStrictModeError(ExceptionType type, int line, int column,
+            Messages.Key messageKey, String... args) {
         if (context.strictMode == StrictMode.Unknown) {
             if (context.strictError == null) {
-                context.strictError = new ParserException(type, line, messageKey, args);
+                context.strictError = new ParserException(type, line, column, messageKey, args);
             }
         } else if (context.strictMode == StrictMode.Strict) {
-            reportError(type, line, messageKey, args);
+            reportError(type, line, column, messageKey, args);
         }
     }
 
-    private void reportStrictModeSyntaxError(Messages.Key messageKey, int line, String... args) {
-        reportStrictModeError(ExceptionType.SyntaxError, line, messageKey, args);
+    private void reportStrictModeSyntaxError(Messages.Key messageKey, Node node, String... args) {
+        // TODO: store column info in Node
+        reportStrictModeError(ExceptionType.SyntaxError, node.getLine(), -1, messageKey, args);
     }
 
     void reportStrictModeSyntaxError(Messages.Key messageKey, String... args) {
-        reportStrictModeError(ExceptionType.SyntaxError, ts.getLine(), messageKey, args);
+        reportStrictModeError(ExceptionType.SyntaxError, ts.getLine(), ts.getColumn(), messageKey,
+                args);
     }
 
     void reportStrictModeReferenceError(Messages.Key messageKey, String... args) {
-        reportStrictModeError(ExceptionType.ReferenceError, ts.getLine(), messageKey, args);
+        reportStrictModeError(ExceptionType.ReferenceError, ts.getLine(), ts.getColumn(),
+                messageKey, args);
     }
 
     /**
@@ -2516,11 +2520,11 @@ public class Parser {
         if (LOOKAHEAD(Token.MUL)) {
             return generatorDeclaration(false);
         } else {
-            long marker = ts.marker();
+            long position = ts.position(), lineinfo = ts.lineinfo();
             try {
                 return functionDeclaration();
             } catch (RetryGenerator e) {
-                ts.reset(marker);
+                ts.reset(position, lineinfo);
                 return generatorDeclaration(true);
             }
         }
@@ -3403,7 +3407,7 @@ public class Parser {
                 if (propertyValue instanceof AssignmentExpression) {
                     AssignmentExpression assignment = (AssignmentExpression) propertyValue;
                     if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
-                        reportSyntaxError(Messages.Key.InvalidDestructuring, p.getLine());
+                        reportSyntaxError(Messages.Key.InvalidDestructuring, p);
                     }
                     target = destructuringAssignmentTarget(assignment.getLeft());
                     initialiser = assignment.getRight();
@@ -3422,7 +3426,7 @@ public class Parser {
                 property = assignmentProperty(def.getPropertyName(), def.getInitialiser());
             } else {
                 assert p instanceof MethodDefinition;
-                throw reportSyntaxError(Messages.Key.InvalidDestructuring, p.getLine());
+                throw reportSyntaxError(Messages.Key.InvalidDestructuring, p);
             }
             list.add(property);
         }
@@ -3451,7 +3455,7 @@ public class Parser {
                 if (e instanceof AssignmentExpression) {
                     AssignmentExpression assignment = (AssignmentExpression) e;
                     if (assignment.getOperator() != AssignmentExpression.Operator.ASSIGN) {
-                        reportSyntaxError(Messages.Key.InvalidDestructuring, e.getLine());
+                        reportSyntaxError(Messages.Key.InvalidDestructuring, e);
                     }
                     target = destructuringAssignmentTarget(assignment.getLeft());
                     initialiser = assignment.getRight();
@@ -3478,7 +3482,7 @@ public class Parser {
         if (lhs instanceof Identifier) {
             String name = ((Identifier) lhs).getName();
             if ("eval".equals(name) || "arguments".equals(name)) {
-                reportSyntaxError(Messages.Key.InvalidAssignmentTarget, lhs.getLine());
+                reportSyntaxError(Messages.Key.InvalidAssignmentTarget, lhs);
             }
             return (Identifier) lhs;
         } else if (lhs instanceof ElementAccessor) {
@@ -3509,7 +3513,7 @@ public class Parser {
         }
         // FIXME: spec bug (IsInvalidAssignmentPattern not defined) (Bug 716)
         // everything else => invalid lhs
-        throw reportSyntaxError(Messages.Key.InvalidDestructuring, lhs.getLine());
+        throw reportSyntaxError(Messages.Key.InvalidDestructuring, lhs);
     }
 
     private AssignmentProperty assignmentProperty(Identifier identifier, Expression initialiser) {
@@ -3518,7 +3522,7 @@ public class Parser {
         case "arguments":
         case "this":
         case "super":
-            reportSyntaxError(Messages.Key.InvalidDestructuring, identifier.getLine());
+            reportSyntaxError(Messages.Key.InvalidDestructuring, identifier);
         }
         return new AssignmentProperty(identifier, initialiser);
     }
@@ -3545,9 +3549,9 @@ public class Parser {
         LabelContext target = findContinueTarget(label);
         if (target == null) {
             if (label == null) {
-                throw reportSyntaxError(Messages.Key.InvalidContinueTarget);
+                reportSyntaxError(Messages.Key.InvalidContinueTarget);
             } else {
-                throw reportSyntaxError(Messages.Key.LabelTargetNotFound, label);
+                reportSyntaxError(Messages.Key.LabelTargetNotFound, label);
             }
         }
         if (target.type != StatementType.Iteration) {
@@ -3580,9 +3584,9 @@ public class Parser {
         LabelContext target = findBreakTarget(label);
         if (target == null) {
             if (label == null) {
-                throw reportSyntaxError(Messages.Key.InvalidBreakTarget);
+                reportSyntaxError(Messages.Key.InvalidBreakTarget);
             } else {
-                throw reportSyntaxError(Messages.Key.LabelTargetNotFound, label);
+                reportSyntaxError(Messages.Key.LabelTargetNotFound, label);
             }
         }
         target.mark(Abrupt.Break);
@@ -3875,10 +3879,13 @@ public class Parser {
      * </pre>
      */
     private DebuggerStatement debuggerStatement() {
+        int line = ts.getLine();
         consume(Token.DEBUGGER);
         semicolon();
 
-        return new DebuggerStatement();
+        DebuggerStatement debuggerStatement = new DebuggerStatement();
+        debuggerStatement.setLine(line);
+        return debuggerStatement;
     }
 
     /**
@@ -4006,11 +4013,11 @@ public class Parser {
         if (LOOKAHEAD(Token.MUL)) {
             return generatorExpression(false);
         } else {
-            long marker = ts.marker();
+            long position = ts.position(), lineinfo = ts.lineinfo();
             try {
                 return functionExpression();
             } catch (RetryGenerator e) {
-                ts.reset(marker);
+                ts.reset(position, lineinfo);
                 return generatorExpression(true);
             }
         }
@@ -4028,7 +4035,7 @@ public class Parser {
      * </pre>
      */
     private Expression coverParenthesisedExpressionAndArrowParameterList() {
-        long marker = ts.marker();
+        long position = ts.position(), lineinfo = ts.lineinfo();
         consume(Token.LP);
         Expression expr;
         if (token() == Token.RP) {
@@ -4039,7 +4046,7 @@ public class Parser {
             // inlined `expression(true)`
             expr = assignmentExpressionNoValidation(true);
             if (token() == Token.FOR && isEnabled(Option.LegacyComprehension)) {
-                ts.reset(marker);
+                ts.reset(position, lineinfo);
                 return legacyGeneratorComprehension();
             }
             if (token() == Token.COMMA) {
@@ -4098,11 +4105,13 @@ public class Parser {
                 case TRIPLE_DOT:
                     break;
                 default:
-                    long marker = ts.marker();
+                    // TODO: report eclipse formatter bug
+                    long position = ts.position(),
+                    lineinfo = ts.lineinfo();
                     consume(Token.LB);
                     Expression expression = assignmentExpressionNoValidation(true);
                     if (token() == Token.FOR) {
-                        ts.reset(marker);
+                        ts.reset(position, lineinfo);
                         return legacyArrayComprehension();
                     }
                     return arrayLiteral(expression);
@@ -4383,7 +4392,7 @@ public class Parser {
             } else if (def instanceof MethodDefinition) {
                 MethodDefinition method = (MethodDefinition) def;
                 if (method.hasSuperReference()) {
-                    throw reportSyntaxError(Messages.Key.SuperOutsideClass, def.getLine());
+                    reportSyntaxError(Messages.Key.SuperOutsideClass, def);
                 }
                 MethodDefinition.MethodType type = method.getType();
                 kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
@@ -4391,25 +4400,23 @@ public class Parser {
             } else {
                 assert def instanceof CoverInitialisedName;
                 // Always throw a Syntax Error if this production is present
-                throw reportSyntaxError(Messages.Key.MissingColonAfterPropertyId, def.getLine(),
-                        key);
+                throw reportSyntaxError(Messages.Key.MissingColonAfterPropertyId, def, key);
             }
             // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any
             // duplicate entries [...]
             if (values.containsKey(key)) {
                 int prev = values.get(key);
                 if (kind == VALUE && prev != VALUE) {
-                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def.getLine(), key);
+                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def, key);
                 }
                 if (kind == VALUE && prev == VALUE) {
-                    reportStrictModeSyntaxError(Messages.Key.DuplicatePropertyDefinition,
-                            def.getLine(), key);
+                    reportStrictModeSyntaxError(Messages.Key.DuplicatePropertyDefinition, def, key);
                 }
                 if (kind == GETTER && prev != SETTER) {
-                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def.getLine(), key);
+                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def, key);
                 }
                 if (kind == SETTER && prev != GETTER) {
-                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def.getLine(), key);
+                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def, key);
                 }
                 values.put(key, prev | kind);
             } else {
@@ -4532,14 +4539,14 @@ public class Parser {
      */
     private Expression regularExpressionLiteral(Token tok) {
         String[] re = ts.readRegularExpression(tok);
-        consume(tok);
         regularExpressionLiteral_StaticSemantics(re[0], re[1]);
+        consume(tok);
         return new RegularExpressionLiteral(re[0], re[1]);
     }
 
     private void regularExpressionLiteral_StaticSemantics(String p, String f) {
         // parse to validate regular expression, but ignore actual result
-        RegExpParser.parse(p, f, ts.getLine());
+        RegExpParser.parse(p, f, ts.getLine(), ts.getColumn());
     }
 
     /**
@@ -4741,13 +4748,13 @@ public class Parser {
      */
     private List<Expression> arguments() {
         List<Expression> args = newSmallList();
-        long marker = ts.marker();
+        long position = ts.position(), lineinfo = ts.lineinfo();
         consume(Token.LP);
         if (token() != Token.RP) {
             if (token() != Token.TRIPLE_DOT && isEnabled(Option.LegacyComprehension)) {
                 Expression expr = assignmentExpression(true);
                 if (token() == Token.FOR) {
-                    ts.reset(marker);
+                    ts.reset(position, lineinfo);
                     args.add(legacyGeneratorComprehension());
                     return args;
                 }
@@ -5094,7 +5101,7 @@ public class Parser {
         if (token() == Token.YIELD) {
             return yieldExpression();
         }
-        long marker = ts.marker();
+        long position = ts.position(), lineinfo = ts.lineinfo();
         Expression left = binaryExpression(allowIn);
         Token tok = token();
         if (tok == Token.HOOK) {
@@ -5111,7 +5118,7 @@ public class Parser {
                     literals.pop();
                 }
             }
-            ts.reset(marker);
+            ts.reset(position, lineinfo);
             return arrowFunction();
         } else if (tok == Token.ASSIGN) {
             LeftHandSideExpression lhs = validateAssignment(left);

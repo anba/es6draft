@@ -25,6 +25,7 @@ public class TokenStream {
     private final Parser parser;
     private final TokenStreamInput input;
     private int line;
+    private int linestart;
     // stream position
     private int position;
     private int nextposition;
@@ -77,6 +78,17 @@ public class TokenStream {
         return buffer;
     }
 
+    private void incrementLine() {
+        line += 1;
+        linestart = input.position();
+    }
+
+    private void incrementLineAndUpdate() {
+        line += 1;
+        linestart = input.position();
+        hasLineTerminator = true;
+    }
+
     public TokenStream(Parser parser, TokenStreamInput input, int line) {
         this.parser = parser;
         this.input = input;
@@ -91,8 +103,8 @@ public class TokenStream {
         return input.range(from, to);
     }
 
-    public long marker() {
-        return ((long) line << 32) | position;
+    public long lineinfo() {
+        return ((long) line << 32) | linestart;
     }
 
     public void init() {
@@ -102,10 +114,12 @@ public class TokenStream {
         this.current = scanTokenNoComment();
         this.nextposition = input.position();
         this.next = null;
+        //
+        this.linestart = position;
     }
 
-    public void reset(long marker) {
-        input.reset((int) marker);
+    public void reset(long position, long lineinfo) {
+        input.reset((int) position);
         //
         this.hasLineTerminator = false;
         this.hasCurrentLineTerminator = true;
@@ -114,7 +128,8 @@ public class TokenStream {
         this.nextposition = input.position();
         this.next = null;
         //
-        this.line = (int) (marker >>> 32);
+        this.line = (int) (lineinfo >>> 32);
+        this.linestart = (int) lineinfo;
     }
 
     public String getString() {
@@ -134,6 +149,10 @@ public class TokenStream {
 
     public int getLine() {
         return line;
+    }
+
+    public int getColumn() {
+        return input.position() - linestart;
     }
 
     //
@@ -336,7 +355,7 @@ public class TokenStream {
                     } else {
                         buffer.add(c);
                     }
-                    line += 1;
+                    incrementLine();
                     continue;
                 }
                 // TODO: add substring range
@@ -354,7 +373,7 @@ public class TokenStream {
                 if (c == '\r' && match('\n')) {
                     // \r\n sequence
                 }
-                line += 1;
+                incrementLine();
                 continue;
             }
             switch (c) {
@@ -447,14 +466,12 @@ public class TokenStream {
                     continue;
                 }
                 if (c == '\n') {
-                    line += 1;
-                    hasLineTerminator = true;
+                    incrementLineAndUpdate();
                     continue;
                 }
                 if (c == '\r') {
                     match('\n');
-                    line += 1;
-                    hasLineTerminator = true;
+                    incrementLineAndUpdate();
                     continue;
                 }
             } else if (c >= 0xA0) {
@@ -463,8 +480,7 @@ public class TokenStream {
                     continue;
                 }
                 if (isLineTerminator(c)) {
-                    line += 1;
-                    hasLineTerminator = true;
+                    incrementLineAndUpdate();
                     continue;
                 }
             }
@@ -905,8 +921,7 @@ public class TokenStream {
                 if (c == '\r') {
                     match('\n');
                 }
-                line += 1;
-                hasLineTerminator = true;
+                incrementLineAndUpdate();
             }
             if (c == EOF) {
                 throw eofError(Messages.Key.UnterminatedComment);
@@ -1266,7 +1281,7 @@ public class TokenStream {
                 if (c == '\r' && match('\n')) {
                     // \r\n sequence
                 }
-                line += 1;
+                incrementLine();
                 continue;
             }
             // escape sequences
@@ -1668,11 +1683,12 @@ public class TokenStream {
     }
 
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, line, messageKey, args);
+        throw new ParserException(ExceptionType.SyntaxError, getLine(), getColumn(), messageKey,
+                args);
     }
 
     private ParserException eofError(Messages.Key messageKey, String... args) {
-        throw new ParserEOFException(line, messageKey, args);
+        throw new ParserEOFException(getLine(), getColumn(), messageKey, args);
     }
 
     private boolean match(char c) {

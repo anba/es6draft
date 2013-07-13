@@ -38,7 +38,8 @@ public final class RegExpParser {
     private final String source;
     private final int length;
     private final int flags;
-    private int sourceLine;
+    private final int sourceLine;
+    private final int sourceColumn;
     private StringBuilder out;
     private int pos = 0;
 
@@ -55,15 +56,17 @@ public final class RegExpParser {
     // backref limit
     private int backreflimit = BACKREF_LIMIT;
 
-    private RegExpParser(String source, int flags, int sourceLine) {
+    private RegExpParser(String source, int flags, int sourceLine, int sourceColumn) {
         this.source = source;
         this.length = source.length();
         this.flags = flags;
         this.sourceLine = sourceLine;
+        this.sourceColumn = sourceColumn;
         this.out = new StringBuilder(length);
     }
 
-    public static RegExpParser parse(String p, String f, int sourceLine) throws ParserException {
+    public static RegExpParser parse(String p, String f, int sourceLine, int sourceColumn)
+            throws ParserException {
         // flags :: g | i | m | u | y
         final int global = 0b00001, ignoreCase = 0b00010, multiline = 0b00100, unicode = 0b01000, sticky = 0b10000;
         int flags = 0b00000;
@@ -74,20 +77,35 @@ public final class RegExpParser {
             if (flag != -1 && (flags & flag) == 0) {
                 flags |= flag;
             } else {
+                String detail;
+                Messages.Key reason;
                 switch (flag) {
                 case global:
-                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "global");
+                    detail = "global";
+                    reason = Messages.Key.DuplicateRegExpFlag;
+                    break;
                 case ignoreCase:
-                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "ignoreCase");
+                    detail = "ignoreCase";
+                    reason = Messages.Key.DuplicateRegExpFlag;
+                    break;
                 case multiline:
-                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "multiline");
+                    detail = "multiline";
+                    reason = Messages.Key.DuplicateRegExpFlag;
+                    break;
                 case unicode:
-                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "unicode");
+                    detail = "unicode";
+                    reason = Messages.Key.DuplicateRegExpFlag;
+                    break;
                 case sticky:
-                    throw error(sourceLine, Messages.Key.DuplicateRegExpFlag, "sticky");
+                    detail = "sticky";
+                    reason = Messages.Key.DuplicateRegExpFlag;
+                    break;
                 default:
-                    throw error(sourceLine, Messages.Key.InvalidRegExpFlag, String.valueOf(c));
+                    detail = String.valueOf(c);
+                    reason = Messages.Key.InvalidRegExpFlag;
+                    break;
                 }
+                throw error(sourceLine, sourceColumn, reason, detail);
             }
         }
 
@@ -100,13 +118,13 @@ public final class RegExpParser {
             iflags |= Pattern.MULTILINE;
         }
 
-        RegExpParser parser = new RegExpParser(p, iflags, sourceLine);
+        RegExpParser parser = new RegExpParser(p, iflags, sourceLine, sourceColumn);
         parser.pattern();
         String regexp = parser.out.toString();
         try {
             parser.pattern = Pattern.compile(regexp, iflags);
         } catch (PatternSyntaxException e) {
-            throw error(sourceLine, Messages.Key.InvalidRegExpPattern, e.getMessage());
+            throw error(sourceLine, sourceColumn, Messages.Key.InvalidRegExpPattern, e.getMessage());
         }
         return parser;
     }
@@ -119,12 +137,14 @@ public final class RegExpParser {
         return negativeLAGroups;
     }
 
-    private static ParserException error(int line, Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, line, messageKey, args);
+    private static ParserException error(int line, int column, Messages.Key messageKey,
+            String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, line, column, messageKey, args);
     }
 
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, sourceLine, messageKey, args);
+        throw new ParserException(ExceptionType.SyntaxError, sourceLine, sourceColumn, messageKey,
+                args);
     }
 
     private boolean isMultiline() {
