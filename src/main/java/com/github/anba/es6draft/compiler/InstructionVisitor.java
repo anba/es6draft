@@ -74,16 +74,18 @@ class InstructionVisitor extends InstructionAdapter {
         }
 
         void freeVariable(int var) {
+            assert variables.get(var);
             Type type = types[var];
             assert type != null && type != INVALID;
             variables.clear(var);
         }
     }
 
-    static class Variable<T> {
+    static final class Variable<T> {
         private final String name;
         private final Type type;
         private final int var;
+        private boolean live = true;
 
         private Variable(String name, Type type, int var) {
             this.name = name;
@@ -204,6 +206,7 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     public void freeVariable(Variable<?> var) {
+        assert var.live && !(var.live = false);
         variables.freeVariable(var.var);
     }
 
