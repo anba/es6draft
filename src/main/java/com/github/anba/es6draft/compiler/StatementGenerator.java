@@ -71,6 +71,9 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 Types.ScriptException, "getValue", Type.getMethodType(Types.Object));
 
         // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_debugger = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "debugger", Type.getMethodType(Type.VOID_TYPE));
+
         static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "enumerate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
@@ -187,7 +190,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
     @Override
     public Void visit(DebuggerStatement node, StatementVisitor mv) {
-        // no debugging facility supported
+        mv.lineInfo(node);
+        mv.invoke(Methods.ScriptRuntime_debugger);
         return null;
     }
 

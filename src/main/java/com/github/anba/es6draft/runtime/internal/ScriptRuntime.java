@@ -923,6 +923,12 @@ public final class ScriptRuntime {
         return exception;
     }
 
+    /**
+     * 12.15 The debugger statement
+     */
+    public static void debugger() {
+    }
+
     /* ***************************************************************************************** */
 
     /**
@@ -1395,6 +1401,7 @@ public final class ScriptRuntime {
      */
     public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
         if (cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
+            // TODO: check next draft update
             // use Put() to comply with current SpiderMonkey/JSC behaviour
             Put(cx, object, "__proto__", value, true);
         } else {
