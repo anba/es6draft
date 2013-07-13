@@ -37,6 +37,12 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
         declEnv = new DeclarativeEnvironmentRecord(cx);
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s: {%n  objectEnv=%s,%n  declEnv=%s%n}", getClass().getSimpleName(),
+                objectEnv, declEnv);
+    }
+
     /**
      * 10.2.1.4.1 HasBinding(N)
      */

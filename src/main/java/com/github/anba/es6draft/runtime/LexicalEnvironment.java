@@ -38,6 +38,11 @@ public final class LexicalEnvironment {
         this.envRec = envRec;
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s: {envRec=%s}", getClass().getSimpleName(), envRec);
+    }
+
     public EnvironmentRecord getEnvRec() {
         return envRec;
     }

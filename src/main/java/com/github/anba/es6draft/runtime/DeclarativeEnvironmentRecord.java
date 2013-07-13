@@ -11,7 +11,9 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -34,6 +36,12 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             this.mutable = mutable;
             this.deletable = deletable;
         }
+
+        @Override
+        public String toString() {
+            return String.format("{value = %s, mutable = %b, deletable = %b}", value, mutable,
+                    deletable);
+        }
     }
 
     protected final ExecutionContext cx;
@@ -41,6 +49,27 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
 
     public DeclarativeEnvironmentRecord(ExecutionContext cx) {
         this.cx = cx;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s: {bindings=%s}", getClass().getSimpleName(), toString(bindings));
+    }
+
+    private static <KEY, VALUE> String toString(Map<KEY, VALUE> map) {
+        if (map.isEmpty()) {
+            return "{}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        for (Iterator<Entry<KEY, VALUE>> iter = map.entrySet().iterator();;) {
+            Entry<KEY, VALUE> entry = iter.next();
+            sb.append("\n  ").append(entry.getKey()).append('=').append(entry.getValue());
+            if (!iter.hasNext())
+                break;
+            sb.append(',');
+        }
+        return sb.append('\n').append('}').toString();
     }
 
     /**
