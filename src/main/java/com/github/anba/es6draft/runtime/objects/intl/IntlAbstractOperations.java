@@ -269,7 +269,6 @@ public final class IntlAbstractOperations {
         if (Type.isUndefined(locales)) {
             return emptySet();
         }
-        Set<String> seen = new LinkedHashSet<>();
         if (Type.isString(locales)) {
             // handle the string-only case directly
             String tag = ToFlatString(cx, locales);
@@ -280,6 +279,7 @@ public final class IntlAbstractOperations {
             tag = CanonicalizeLanguageTag(langTag);
             return singleton(tag);
         }
+        Set<String> seen = new LinkedHashSet<>();
         ScriptObject o = ToObject(cx, locales);
         Object lenValue = Get(cx, o, "length");
         long len = ToUint32(cx, lenValue);
