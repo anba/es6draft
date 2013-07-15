@@ -172,17 +172,26 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
             pushLexicalEnvironment(mv);
         }
 
-        Label lblBreak = new Label();
-        Label[] labels;
+        List<SwitchClause> clauses = node.getClauses();
+        Label lblBreak = new Label(), lblDefault = null;
+        Label[] labels = new Label[clauses.size()];
+        for (int i = 0, size = clauses.size(); i < size; ++i) {
+            labels[i] = new Label();
+            if (clauses.get(i).getExpression() == null) {
+                assert lblDefault == null;
+                lblDefault = labels[i];
+            }
+        }
+
         SwitchType type = SwitchType.of(node);
         if (type == SwitchType.Int) {
-            labels = emitIntSwitch(node.getClauses(), lblBreak, switchValue, mv);
+            emitIntSwitch(node.getClauses(), labels, lblDefault, lblBreak, switchValue, mv);
         } else if (type == SwitchType.Char) {
-            labels = emitCharSwitch(node.getClauses(), lblBreak, switchValue, mv);
+            emitCharSwitch(node.getClauses(), labels, lblDefault, lblBreak, switchValue, mv);
         } else if (type == SwitchType.String) {
-            labels = emitStringSwitch(node.getClauses(), lblBreak, switchValue, mv);
+            emitStringSwitch(node.getClauses(), labels, lblDefault, lblBreak, switchValue, mv);
         } else {
-            labels = emitGenericSwitch(node.getClauses(), lblBreak, switchValue, mv);
+            emitGenericSwitch(node.getClauses(), labels, lblDefault, lblBreak, switchValue, mv);
         }
 
         mv.enterBreakable(node, lblBreak);
@@ -223,23 +232,18 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * L2: ...
      * </pre>
      */
-    private Label[] emitGenericSwitch(List<SwitchClause> clauses, Label lblBreak,
-            Variable<Object> switchValue, StatementVisitor mv) {
-        Label defaultClause = null;
+    private void emitGenericSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
+            Label lblBreak, Variable<Object> switchValue, StatementVisitor mv) {
         int index = 0;
-        Label[] labels = new Label[clauses.size()];
         for (SwitchClause switchClause : clauses) {
-            Label stmtLabel = labels[index++] = new Label();
+            Label caseLabel = labels[index++];
             Expression expr = switchClause.getExpression();
-            if (expr == null) {
-                assert defaultClause == null;
-                defaultClause = stmtLabel;
-            } else {
+            if (expr != null) {
                 mv.load(switchValue);
                 ValType type = expressionValue(expr, mv);
                 mv.toBoxed(type);
                 mv.invoke(Methods.ScriptRuntime_strictEqualityComparison);
-                mv.ifne(stmtLabel);
+                mv.ifne(caseLabel);
             }
         }
 
@@ -250,8 +254,6 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         } else {
             mv.goTo(lblBreak);
         }
-
-        return labels;
     }
 
     /**
@@ -274,25 +276,17 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * }
      * </pre>
      */
-    private Label[] emitStringSwitch(List<SwitchClause> clauses, Label lblBreak,
-            Variable<Object> switchValue, StatementVisitor mv) {
-        Label defaultClause = null;
-        long[] values = new long[clauses.size()];
-        Label[] labels = new Label[clauses.size()];
+    private void emitStringSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
+            Label lblBreak, Variable<Object> switchValue, StatementVisitor mv) {
+        long[] entries = new long[clauses.size()];
         for (int i = 0, j = 0, size = clauses.size(); i < size; ++i) {
-            Label stmtLabel = labels[i] = new Label();
-            SwitchClause switchClause = clauses.get(i);
-            Expression expr = switchClause.getExpression();
-            if (expr == null) {
-                assert defaultClause == null;
-                defaultClause = stmtLabel;
-            } else {
-                int value = ((StringLiteral) expr).getValue().hashCode();
-                values[j++] = ((long) value) << 32 | i;
+            Expression expr = clauses.get(i).getExpression();
+            if (expr != null) {
+                entries[j++] = Entry(((StringLiteral) expr).getValue().hashCode(), i);
             }
         }
 
-        int valuesLength = values.length - (defaultClause != null ? 1 : 0);
+        int entriesLength = entries.length - (defaultClause != null ? 1 : 0);
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
         // test for string-ness: type is java.lang.CharSequence
@@ -310,11 +304,11 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
 
         mv.freeVariable(switchValue);
 
-        int distinctValues = distinctValues(values, valuesLength);
+        int distinctValues = distinctValues(entries, entriesLength);
         Label[] switchLabels = new Label[distinctValues];
         int[] switchKeys = new int[distinctValues];
-        for (int i = 0, j = 0, lastValue = 0; i < valuesLength; ++i) {
-            int value = (int) (values[i] >> 32);
+        for (int i = 0, j = 0, lastValue = 0; i < entriesLength; ++i) {
+            int value = Value(entries[i]);
             if (i == 0 || value != lastValue) {
                 switchLabels[j] = new Label();
                 switchKeys[j] = value;
@@ -327,9 +321,9 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         mv.lookupswitch(switchDefault, switchKeys, switchLabels);
 
         // add String.equals() calls
-        for (int i = 0, j = 0, lastValue = 0; i < valuesLength; ++i) {
-            int value = (int) (values[i] >> 32);
-            int index = (int) (values[i]);
+        for (int i = 0, j = 0, lastValue = 0; i < entriesLength; ++i) {
+            int value = Value(entries[i]);
+            int index = Index(entries[i]);
             if (i == 0 || value != lastValue) {
                 if (i != 0) {
                     mv.goTo(switchDefault);
@@ -346,8 +340,6 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         mv.goTo(switchDefault);
 
         mv.freeVariable(switchValueString);
-
-        return labels;
     }
 
     /**
@@ -370,25 +362,17 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * }
      * </pre>
      */
-    private Label[] emitCharSwitch(List<SwitchClause> clauses, Label lblBreak,
-            Variable<Object> switchValue, StatementVisitor mv) {
-        Label defaultClause = null;
-        long[] values = new long[clauses.size()];
-        Label[] labels = new Label[clauses.size()];
+    private void emitCharSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
+            Label lblBreak, Variable<Object> switchValue, StatementVisitor mv) {
+        long[] entries = new long[clauses.size()];
         for (int i = 0, j = 0, size = clauses.size(); i < size; ++i) {
-            Label stmtLabel = labels[i] = new Label();
-            SwitchClause switchClause = clauses.get(i);
-            Expression expr = switchClause.getExpression();
-            if (expr == null) {
-                assert defaultClause == null;
-                defaultClause = stmtLabel;
-            } else {
-                int value = ((StringLiteral) expr).getValue().charAt(0);
-                values[j++] = ((long) value) << 32 | i;
+            Expression expr = clauses.get(i).getExpression();
+            if (expr != null) {
+                entries[j++] = Entry(((StringLiteral) expr).getValue().charAt(0), i);
             }
         }
 
-        int valuesLength = values.length - (defaultClause != null ? 1 : 0);
+        int entriesLength = entries.length - (defaultClause != null ? 1 : 0);
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
         // test for char-ness: type is java.lang.CharSequence
@@ -416,9 +400,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         mv.freeVariable(switchValue);
 
         // emit tableswitch or lookupswitch
-        switchInstruction(switchDefault, labels, values, valuesLength, mv);
-
-        return labels;
+        switchInstruction(switchDefault, labels, entries, entriesLength, mv);
     }
 
     /**
@@ -441,25 +423,17 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * }
      * </pre>
      */
-    private Label[] emitIntSwitch(List<SwitchClause> clauses, Label lblBreak,
-            Variable<Object> switchValue, StatementVisitor mv) {
-        Label defaultClause = null;
-        long[] values = new long[clauses.size()];
-        Label[] labels = new Label[clauses.size()];
+    private void emitIntSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
+            Label lblBreak, Variable<Object> switchValue, StatementVisitor mv) {
+        long[] entries = new long[clauses.size()];
         for (int i = 0, j = 0, size = clauses.size(); i < size; ++i) {
-            Label stmtLabel = labels[i] = new Label();
-            SwitchClause switchClause = clauses.get(i);
-            Expression expr = switchClause.getExpression();
-            if (expr == null) {
-                assert defaultClause == null;
-                defaultClause = stmtLabel;
-            } else {
-                int value = ((NumericLiteral) expr).getValue().intValue();
-                values[j++] = ((long) value) << 32 | i;
+            Expression expr = clauses.get(i).getExpression();
+            if (expr != null) {
+                entries[j++] = Entry(((NumericLiteral) expr).getValue().intValue(), i);
             }
         }
 
-        int valuesLength = values.length - (defaultClause != null ? 1 : 0);
+        int entriesLength = entries.length - (defaultClause != null ? 1 : 0);
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
         // test for int-ness: type is java.lang.Number
@@ -487,28 +461,26 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         mv.freeVariable(switchValue);
 
         // emit tableswitch or lookupswitch
-        switchInstruction(switchDefault, labels, values, valuesLength, mv);
-
-        return labels;
+        switchInstruction(switchDefault, labels, entries, entriesLength, mv);
     }
 
     /**
      * Shared implementation for int- and char-switches
      */
-    private void switchInstruction(Label switchDefault, Label[] labels, long[] values,
-            int valuesLength, StatementVisitor mv) {
-        int distinctValues = distinctValues(values, valuesLength);
-        int minValue = (int) (values[0] >> 32);
-        int maxValue = (int) (values[valuesLength - 1] >> 32);
+    private void switchInstruction(Label switchDefault, Label[] labels, long[] entries,
+            int entriesLength, StatementVisitor mv) {
+        int distinctValues = distinctValues(entries, entriesLength);
+        int minValue = Value(entries[0]);
+        int maxValue = Value(entries[entriesLength - 1]);
         int range = maxValue - minValue + 1;
         float density = (float) distinctValues / range;
-        if (density >= 0.5f) {
-            // System.out.printf("tableswitch [%d: %d - %d]\n", valuesLength, minValue, maxValue);
+        if (range > 0 && (range <= 5 || density >= 0.5f)) {
+            // System.out.printf("tableswitch [%d: %d - %d]\n", entriesLength, minValue, maxValue);
             Label[] switchLabels = new Label[range];
             Arrays.fill(switchLabels, switchDefault);
-            for (int i = 0, lastValue = 0; i < valuesLength; ++i) {
-                int value = (int) (values[i] >> 32);
-                int index = (int) (values[i]);
+            for (int i = 0, lastValue = 0; i < entriesLength; ++i) {
+                int value = Value(entries[i]);
+                int index = Index(entries[i]);
                 if (i == 0 || value != lastValue) {
                     switchLabels[value - minValue] = labels[index];
                 }
@@ -516,12 +488,12 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
             }
             mv.tableswitch(minValue, maxValue, switchDefault, switchLabels);
         } else {
-            // System.out.printf("lookupswitch [%d: %d - %d]\n", valuesLength, minValue, maxValue);
+            // System.out.printf("lookupswitch [%d: %d - %d]\n", entriesLength, minValue, maxValue);
             Label[] switchLabels = new Label[distinctValues];
             int[] switchKeys = new int[distinctValues];
-            for (int i = 0, j = 0, lastValue = 0; i < valuesLength; ++i) {
-                int value = (int) (values[i] >> 32);
-                int index = (int) (values[i]);
+            for (int i = 0, j = 0, lastValue = 0; i < entriesLength; ++i) {
+                int value = Value(entries[i]);
+                int index = Index(entries[i]);
                 if (i == 0 || value != lastValue) {
                     switchLabels[j] = labels[index];
                     switchKeys[j] = value;
@@ -533,18 +505,30 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         }
     }
 
-    private int distinctValues(long[] values, int length) {
+    private int distinctValues(long[] entries, int length) {
         // sort values in ascending order
-        Arrays.sort(values, 0, length);
+        Arrays.sort(entries, 0, length);
 
         int distinctValues = 0;
         for (int i = 0, lastValue = 0; i < length; ++i) {
-            int value = (int) (values[i] >> 32);
+            int value = Value(entries[i]);
             if (i == 0 || value != lastValue) {
                 distinctValues += 1;
             }
             lastValue = value;
         }
         return distinctValues;
+    }
+
+    private static final long Entry(int value, int index) {
+        return ((long) value) << 32 | index;
+    }
+
+    private static final int Index(long entry) {
+        return (int) entry;
+    }
+
+    private static final int Value(long entry) {
+        return (int) (entry >> 32);
     }
 }
