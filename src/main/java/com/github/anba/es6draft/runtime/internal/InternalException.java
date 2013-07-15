@@ -12,7 +12,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
  * Base class for internal exceptions
  */
 @SuppressWarnings("serial")
-public abstract class InternalException extends java.lang.RuntimeException {
+public abstract class InternalException extends RuntimeException {
     /**
      * {@inheritDoc}
      */
