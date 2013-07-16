@@ -23,10 +23,10 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.11 Error Objects</h2>
  * <ul>
- * <li>15.11.5 Properties of Error Instances
- * <li>15.11.7 NativeError Object Structure
+ * <li>15.11.4 Properties of Error Instances
+ * <li>15.11.6 NativeError Object Structure
  * <ul>
- * <li>15.11.7.5 Properties of NativeError Instances
+ * <li>15.11.6.5 Properties of NativeError Instances
  * </ul>
  * </ul>
  */
