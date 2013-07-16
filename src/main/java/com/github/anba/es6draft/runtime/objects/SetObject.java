@@ -15,7 +15,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.16 Set Objects</h2>
  * <ul>
- * <li>15.16.5 Properties of Set Instances
+ * <li>15.16.4 Properties of Set Instances
  * </ul>
  */
 public class SetObject extends OrdinaryObject {
