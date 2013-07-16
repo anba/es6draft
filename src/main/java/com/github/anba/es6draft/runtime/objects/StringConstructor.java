@@ -34,9 +34,8 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.5 String Objects</h2>
  * <ul>
- * <li>15.5.1 The String Constructor Called as a Function
- * <li>15.5.2 The String Constructor
- * <li>15.5.3 Properties of the String Constructor
+ * <li>15.5.1 The String Constructor
+ * <li>15.5.2 Properties of the String Constructor
  * </ul>
  */
 public class StringConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -71,7 +70,7 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
     }
 
     /**
-     * 15.5.2.1 new String ( [ value ] )
+     * 15.5.1.2 new String ( ... argumentsList )
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -79,7 +78,7 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
     }
 
     /**
-     * 15.5.3 Properties of the String Constructor
+     * 15.5.2 Properties of the String Constructor
      */
     public enum Properties {
         ;
@@ -96,14 +95,14 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
         public static final String name = "String";
 
         /**
-         * 15.5.3.1 String.prototype
+         * 15.5.2.1 String.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.StringPrototype;
 
         /**
-         * 15.5.3.2 String.fromCharCode ( ...codeUnits)
+         * 15.5.2.2 String.fromCharCode ( ...codeUnits)
          */
         @Function(name = "fromCharCode", arity = 1)
         public static Object fromCharCode(ExecutionContext cx, Object thisValue,
@@ -119,7 +118,7 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
-         * 15.5.3.3 String.fromCodePoint ( ...codePoints)
+         * 15.5.2.3 String.fromCodePoint ( ...codePoints)
          */
         @Function(name = "fromCodePoint", arity = 0)
         public static Object fromCodePoint(ExecutionContext cx, Object thisValue,
@@ -141,7 +140,7 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
-         * 15.5.3.4 String.raw ( callSite, ...substitutions)
+         * 15.5.2.4 String.raw ( callSite, ...substitutions)
          */
         @Function(name = "raw", arity = 1)
         public static Object raw(ExecutionContext cx, Object thisValue, Object callSite,
@@ -171,7 +170,7 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
-         * 15.5.4.5 String[ @@create ] ( )
+         * 15.5.2.5 String[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
