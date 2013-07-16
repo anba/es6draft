@@ -32,9 +32,9 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * 15.17 The Reflect Module
+ * 15.18 The Reflect Module
  * <p>
- * 15.17.1 Exported Function Properties Reflecting the Essentional Internal Methods<br>
+ * 15.18.1 Exported Function Properties Reflecting the Essentional Internal Methods<br>
  * 
  * TODO: remove representation as ordinary object
  */
@@ -50,7 +50,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
     }
 
     /**
-     * 15.17.1 Exported Function Properties Reflecting the Essentional Internal Methods
+     * 15.18.1 Exported Function Properties Reflecting the Essentional Internal Methods
      */
     public enum ReflectedFunctions {
         ;
@@ -59,7 +59,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         public static final Intrinsics __proto__ = null;
 
         /**
-         * 15.17.1.1 Reflect.getPrototypeOf (target)
+         * 15.18.1.1 Reflect.getPrototypeOf (target)
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object target) {
@@ -69,7 +69,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.2 Reflect.setPrototypeOf (target, proto)
+         * 15.18.1.2 Reflect.setPrototypeOf (target, proto)
          */
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object target,
@@ -83,7 +83,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.3 Reflect.isExtensible (target)
+         * 15.18.1.3 Reflect.isExtensible (target)
          */
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(ExecutionContext cx, Object thisValue, Object target) {
@@ -92,7 +92,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.4 Reflect.preventExtensions (target)
+         * 15.18.1.4 Reflect.preventExtensions (target)
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object target) {
@@ -101,7 +101,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.5 Reflect.has (target, propertyKey)
+         * 15.18.1.5 Reflect.has (target, propertyKey)
          */
         @Function(name = "has", arity = 2)
         public static Object has(ExecutionContext cx, Object thisValue, Object target,
@@ -117,7 +117,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.6 Reflect.hasOwn (target, propertyKey)
+         * 15.18.1.6 Reflect.hasOwn (target, propertyKey)
          */
         @Function(name = "hasOwn", arity = 2)
         public static Object hasOwn(ExecutionContext cx, Object thisValue, Object target,
@@ -133,7 +133,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.7 Reflect.getOwnPropertyDescriptor(target, propertyKey)
+         * 15.18.1.7 Reflect.getOwnPropertyDescriptor(target, propertyKey)
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
         public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
@@ -151,7 +151,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.8 Reflect.get (target, propertyKey, receiver=target)
+         * 15.18.1.8 Reflect.get (target, propertyKey, receiver=target)
          */
         @Function(name = "get", arity = 3)
         public static Object get(ExecutionContext cx, Object thisValue, Object target,
@@ -170,7 +170,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.9 Reflect.set (target, propertyKey, V, receiver=target)
+         * 15.18.1.9 Reflect.set (target, propertyKey, V, receiver=target)
          */
         @Function(name = "set", arity = 4)
         public static Object set(ExecutionContext cx, Object thisValue, Object target,
@@ -210,7 +210,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.10 Reflect.deleteProperty (target, propertyKey)
+         * 15.18.1.10 Reflect.deleteProperty (target, propertyKey)
          */
         @Function(name = "deleteProperty", arity = 2)
         public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target,
@@ -226,7 +226,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.11 Reflect.defineProperty(target, propertyKey, Attributes)
+         * 15.18.1.11 Reflect.defineProperty(target, propertyKey, Attributes)
          */
         @Function(name = "defineProperty", arity = 3)
         public static Object defineProperty(ExecutionContext cx, Object thisValue, Object target,
@@ -243,7 +243,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.12 Reflect.enumerate (target)
+         * 15.18.1.12 Reflect.enumerate (target)
          */
         @Function(name = "enumerate", arity = 1)
         public static Object enumerate(ExecutionContext cx, Object thisValue, Object target) {
@@ -253,7 +253,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 15.17.1.13 Reflect.ownKeys (target)
+         * 15.18.1.13 Reflect.ownKeys (target)
          */
         @Function(name = "ownKeys", arity = 1)
         public static Object ownKeys(ExecutionContext cx, Object thisValue, Object target) {
