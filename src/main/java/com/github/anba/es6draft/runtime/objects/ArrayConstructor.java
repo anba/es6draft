@@ -10,6 +10,10 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GetIterator;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorNext;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -90,7 +94,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         }
     }
 
-    private ExoticArray initOrCreateArray(ExecutionContext cx, Object thisValue, long length) {
+    private ExoticArray initOrCreateArray(ExecutionContext cx, Object thisValue, int length) {
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
             if (!array.getArrayInitialisationState()) {
@@ -187,48 +191,93 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         @Function(name = "from", arity = 1)
         public static Object from(ExecutionContext cx, Object thisValue, Object arrayLike,
                 Object mapfn, Object thisArg) {
-            /* step 1-2 */
+            /* step 1 */
+            Object c = thisValue;
+            /* step 2-3 */
             ScriptObject items = ToObject(cx, arrayLike);
-            // FIXME: spec bug (mapfn and thisArg unused) (bug 1276)
+            /* step 4-5 */
             Callable mapper = null;
-            if (!Type.isUndefined(mapfn)) {
+            boolean mapping;
+            if (Type.isUndefined(mapfn)) {
+                mapping = false;
+            } else {
                 if (!IsCallable(mapfn)) {
                     throw throwTypeError(cx, Messages.Key.NotCallable);
                 }
+                mapping = true;
                 mapper = (Callable) mapfn;
             }
-            /* step 3 */
+            /* step 6-7 */
+            boolean usingIterator = HasProperty(cx, items, BuiltinSymbol.iterator.get());
+            if (usingIterator) {
+                /* step 8 */
+                /* steps 8a-8b */
+                ScriptObject iterator = GetIterator(cx, items);
+                /* steps 8c-8e */
+                ScriptObject a;
+                if (IsConstructor(c)) {
+                    Object newObj = ((Constructor) c).construct(cx);
+                    a = ToObject(cx, newObj);
+                } else {
+                    a = ArrayCreate(cx, 0);
+                }
+                /* steps 8f-8h */
+                for (int k = 0;; ++k) {
+                    String pk = ToString(k);
+                    ScriptObject next = IteratorNext(cx, iterator);
+                    boolean done = IteratorComplete(cx, next);
+                    if (done) {
+                        Put(cx, a, "length", k, true);
+                        return a;
+                    }
+                    Object nextValue = IteratorValue(cx, next);
+                    Object mappedValue;
+                    if (mapping) {
+                        mappedValue = mapper.call(cx, thisArg, nextValue);
+                    } else {
+                        mappedValue = nextValue;
+                    }
+                    DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(mappedValue, true,
+                            true, true));
+                }
+            }
+            /* step 9 (?) */
+            /* step 10 */
             Object lenValue = Get(cx, items, "length");
-            /* step 4-5 */
+            /* step 11-12 */
             double len = ToInteger(cx, lenValue);
-            long llen = (long) len;
-            /* step 6 */
-            Object c = thisValue;
+            /* step 13-15 */
             ScriptObject a;
             if (IsConstructor(c)) {
-                /* step 7, 9 */
                 Object newObj = ((Constructor) c).construct(cx, len);
                 a = ToObject(cx, newObj);
             } else {
-                /* step 8, 9 */
-                a = ArrayCreate(cx, llen);
+                long arrayLen = ToUint32(len);
+                if (arrayLen != len) {
+                    throw throwRangeError(cx, Messages.Key.InvalidArrayLength);
+                }
+                a = ArrayCreate(cx, arrayLen);
             }
-            /* step 10-11 */
+            /* step 16-17 */
+            long llen = (long) len;
             for (long k = 0; k < llen; ++k) {
                 String pk = ToString(k);
                 boolean kPresent = HasProperty(cx, items, pk);
                 if (kPresent) {
                     Object kValue = Get(cx, items, pk);
-                    if (mapper != null) {
-                        kValue = mapper.call(cx, thisArg, kValue);
+                    Object mappedValue;
+                    if (mapping) {
+                        mappedValue = mapper.call(cx, thisArg, kValue, k, items);
+                    } else {
+                        mappedValue = kValue;
                     }
-                    DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(kValue, true, true,
-                            true));
+                    DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(mappedValue, true,
+                            true, true));
                 }
             }
-            /* step 12-13 */
+            /* step 18-19 */
             Put(cx, a, "length", len, true);
-            /* step 14 */
+            /* step 20 */
             return a;
         }
 
