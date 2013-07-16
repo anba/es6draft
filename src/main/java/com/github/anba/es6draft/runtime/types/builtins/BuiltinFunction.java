@@ -8,10 +8,12 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -46,6 +48,19 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         return realm.defaultContext();
     }
 
+    /**
+     * Creates the default function properties, i.e. 'name' and 'length', initialises the
+     * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
+     * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, com.github.anba.es6draft.runtime.types.ScriptObject)}
+     */
+    protected final void setupDefaultFunctionProperties(String name, int arity) {
+        ExecutionContext cx = realm.defaultContext();
+        setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
+        defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
+        defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, false));
+        AddRestrictedFunctionProperties(cx, this);
+    }
+
     @Override
     public String toSource() {
         Property desc = ordinaryGetOwnProperty("name");
@@ -56,7 +71,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * 8.3.19.3 [[Get]] (P, Receiver)
+     * 8.3.16.3 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
@@ -73,7 +88,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * 8.3.19.4 [[GetOwnProperty]] (P)
+     * 8.3.16.4 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
