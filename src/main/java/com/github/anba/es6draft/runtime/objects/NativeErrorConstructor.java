@@ -32,25 +32,25 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.11 Error Objects</h2>
  * <ul>
- * <li>15.11.6 Native Error Types Used in This Standard
- * <li>15.11.7 NativeError Object Structure
+ * <li>15.11.5 Native Error Types Used in This Standard
+ * <li>15.11.6 NativeError Object Structure
  * <ul>
- * <li>15.11.7.1 NativeError Constructors Called as Functions
- * <li>15.11.7.2 The NativeError Constructors
- * <li>15.11.7.3 Properties of the NativeError Constructors
+ * <li>15.11.6.1 NativeError Constructors Called as Functions
+ * <li>15.11.6.2 The NativeError Constructors
+ * <li>15.11.6.3 Properties of the NativeError Constructors
  * </ul>
  * </ul>
  */
 public class NativeErrorConstructor extends BuiltinFunction implements Constructor, Initialisable {
     /**
-     * 15.11.6 Native Error Types Used in This Standard
+     * 15.11.5 Native Error Types Used in This Standard
      * <ul>
-     * <li>15.11.6.1 EvalError
-     * <li>15.11.6.2 RangeError
-     * <li>15.11.6.3 ReferenceError
-     * <li>15.11.6.4 SyntaxError
-     * <li>15.11.6.5 TypeError
-     * <li>15.11.6.6 URIError
+     * <li>15.11.5.1 EvalError
+     * <li>15.11.5.2 RangeError
+     * <li>15.11.5.3 ReferenceError
+     * <li>15.11.5.4 SyntaxError
+     * <li>15.11.5.5 TypeError
+     * <li>15.11.5.6 URIError
      * </ul>
      */
     public enum ErrorType {
@@ -116,7 +116,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.11.7.1.1 NativeError (message)
+     * 15.11.6.1.1 NativeError (message)
      * <p>
      * <strong>Extension</strong>: NativeError (message, fileName, lineNumber)
      */
@@ -154,7 +154,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.11.7.2.1 new NativeError (... args)
+     * 15.11.6.1.2 new NativeError (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -162,7 +162,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Constructors
+     * 15.11.6.2 Properties of the NativeError Constructors
      */
     public enum EvalErrorConstructorProperties {
         ;
@@ -179,14 +179,14 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         public static final String name = "EvalError";
 
         /**
-         * 15.11.7.3.1 NativeError.prototype
+         * 15.11.6.2.1 NativeError.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.EvalErrorPrototype;
 
         /**
-         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         * 15.11.6.2.2 NativeError [ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -197,7 +197,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Constructors
+     * 15.11.6.2 Properties of the NativeError Constructors
      */
     public enum RangeErrorConstructorProperties {
         ;
@@ -214,14 +214,14 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         public static final String name = "RangeError";
 
         /**
-         * 15.11.7.3.1 NativeError.prototype
+         * 15.11.6.2.1 NativeError.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RangeErrorPrototype;
 
         /**
-         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         * 15.11.6.2.2 NativeError [ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -232,7 +232,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Constructors
+     * 15.11.6.2 Properties of the NativeError Constructors
      */
     public enum ReferenceErrorConstructorProperties {
         ;
@@ -249,14 +249,14 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         public static final String name = "ReferenceError";
 
         /**
-         * 15.11.7.3.1 NativeError.prototype
+         * 15.11.6.2.1 NativeError.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ReferenceErrorPrototype;
 
         /**
-         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         * 15.11.6.2.2 NativeError [ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -267,7 +267,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Constructors
+     * 15.11.6.2 Properties of the NativeError Constructors
      */
     public enum SyntaxErrorConstructorProperties {
         ;
@@ -284,14 +284,14 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         public static final String name = "SyntaxError";
 
         /**
-         * 15.11.7.3.1 NativeError.prototype
+         * 15.11.6.2.1 NativeError.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.SyntaxErrorPrototype;
 
         /**
-         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         * 15.11.6.2.2 NativeError [ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -302,7 +302,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Constructors
+     * 15.11.6.2 Properties of the NativeError Constructors
      */
     public enum TypeErrorConstructorProperties {
         ;
@@ -319,14 +319,14 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         public static final String name = "TypeError";
 
         /**
-         * 15.11.7.3.1 NativeError.prototype
+         * 15.11.6.2.1 NativeError.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.TypeErrorPrototype;
 
         /**
-         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         * 15.11.6.2.2 NativeError [ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -337,7 +337,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Constructors
+     * 15.11.6.2 Properties of the NativeError Constructors
      */
     public enum URIErrorConstructorProperties {
         ;
@@ -354,14 +354,14 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         public static final String name = "URIError";
 
         /**
-         * 15.11.7.3.1 NativeError.prototype
+         * 15.11.6.2.1 NativeError.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.URIErrorPrototype;
 
         /**
-         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         * 15.11.6.2.2 NativeError [ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -372,7 +372,7 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Constructors
+     * 15.11.6.2 Properties of the NativeError Constructors
      */
     public enum InternalErrorConstructorProperties {
         ;
@@ -389,14 +389,14 @@ public class NativeErrorConstructor extends BuiltinFunction implements Construct
         public static final String name = "InternalError";
 
         /**
-         * 15.11.7.3.1 NativeError.prototype
+         * 15.11.6.2.1 NativeError.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.InternalErrorPrototype;
 
         /**
-         * 15.11.7.3.2 NativeError [ @@create ] ( )
+         * 15.11.6.2.2 NativeError [ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
