@@ -32,9 +32,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.7 Number Objects</h2>
  * <ul>
- * <li>15.7.1 The Number Constructor Called as a Function
- * <li>15.7.2 The Number Constructor
- * <li>15.7.3 Properties of the Number Constructor
+ * <li>15.7.1 The Number Constructor
+ * <li>15.7.2 Properties of the Number Constructor
  * </ul>
  */
 public class NumberConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -66,7 +65,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
     }
 
     /**
-     * 15.7.2.1 new Number ( [ value ] )
+     * 15.7.1.2 new Number (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -74,7 +73,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
     }
 
     /**
-     * 15.7.3 Properties of the Number Constructor
+     * 15.7.2 Properties of the Number Constructor
      */
     public enum Properties {
         ;
@@ -91,63 +90,63 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
         public static final String name = "Number";
 
         /**
-         * 15.7.3.1 Number.prototype
+         * 15.7.2.1 Number.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.NumberPrototype;
 
         /**
-         * 15.7.3.2 Number.MAX_VALUE
+         * 15.7.2.2 Number.MAX_VALUE
          */
         @Value(name = "MAX_VALUE", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double MAX_VALUE = Double.MAX_VALUE;
 
         /**
-         * 15.7.3.3 Number.MIN_VALUE
+         * 15.7.2.3 Number.MIN_VALUE
          */
         @Value(name = "MIN_VALUE", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double MIN_VALUE = Double.MIN_VALUE;
 
         /**
-         * 15.7.3.4 Number.NaN
+         * 15.7.2.4 Number.NaN
          */
         @Value(name = "NaN", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double NaN = Double.NaN;
 
         /**
-         * 15.7.3.5 Number.NEGATIVE_INFINITY
+         * 15.7.2.5 Number.NEGATIVE_INFINITY
          */
         @Value(name = "NEGATIVE_INFINITY", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
         public static final Double NEGATIVE_INFINITY = Double.NEGATIVE_INFINITY;
 
         /**
-         * 15.7.3.6 Number.POSITIVE_INFINITY
+         * 15.7.2.6 Number.POSITIVE_INFINITY
          */
         @Value(name = "POSITIVE_INFINITY", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
         public static final Double POSITIVE_INFINITY = Double.POSITIVE_INFINITY;
 
         /**
-         * 15.7.3.7 Number.EPSILON
+         * 15.7.2.7 Number.EPSILON
          */
         @Value(name = "EPSILON", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double EPSILON = Math.ulp(1.0);
 
         /**
-         * 15.7.3.8 Number.MAX_INTEGER
+         * 15.7.2.8 Number.MAX_INTEGER
          */
         @Value(name = "MAX_INTEGER", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double MAX_INTEGER = (double) 0x1FFFFFFFFFFFFFL;
 
         /**
-         * 15.7.3.9 Number.parseInt (string, radix)
+         * 15.7.2.9 Number.parseInt (string, radix)
          */
         @Function(name = "parseInt", arity = 2)
         public static Object parseInt(ExecutionContext cx, Object thisValue, Object string,
@@ -156,7 +155,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
-         * 15.7.3.10 Number.parseFloat (string)
+         * 15.7.2.10 Number.parseFloat (string)
          */
         @Function(name = "parseFloat", arity = 1)
         public static Object parseFloat(ExecutionContext cx, Object thisValue, Object string) {
@@ -164,7 +163,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
-         * 15.7.3.11 Number.isNaN (number)
+         * 15.7.2.11 Number.isNaN (number)
          */
         @Function(name = "isNaN", arity = 1)
         public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
@@ -175,7 +174,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
-         * 15.7.3.12 Number.isFinite (number)
+         * 15.7.2.12 Number.isFinite (number)
          */
         @Function(name = "isFinite", arity = 1)
         public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
@@ -187,7 +186,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
-         * 15.7.3.13 Number.isInteger (number)
+         * 15.7.2.13 Number.isInteger (number)
          */
         @Function(name = "isInteger", arity = 1)
         public static Object isInteger(ExecutionContext cx, Object thisValue, Object number) {
@@ -198,7 +197,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
-         * 15.7.3.14 Number.toInteger (number)
+         * 15.7.2.14 Number.toInteger (number)
          */
         @Function(name = "toInteger", arity = 1)
         public static Object toInt(ExecutionContext cx, Object thisValue, Object number) {
@@ -206,7 +205,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
         }
 
         /**
-         * 15.7.3.15 Number[ @@create ] ( )
+         * 15.7.2.15 Number[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

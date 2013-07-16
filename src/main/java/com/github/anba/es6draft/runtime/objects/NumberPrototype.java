@@ -34,7 +34,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.7 Number Objects</h2>
  * <ul>
- * <li>15.7.4 Properties of the Number Prototype Object
+ * <li>15.7.3 Properties of the Number Prototype Object
  * </ul>
  */
 public class NumberPrototype extends OrdinaryObject implements Initialisable {
@@ -48,7 +48,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.7.4 Properties of the Number Prototype Object
+     * 15.7.3 Properties of the Number Prototype Object
      */
     public enum Properties {
         ;
@@ -73,13 +73,13 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.7.4.1 Number.prototype.constructor
+         * 15.7.3.1 Number.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Number;
 
         /**
-         * 15.7.4.2 Number.prototype.toString ( [ radix ] )
+         * 15.7.3.2 Number.prototype.toString ( [ radix ] )
          */
         @Function(name = "toString", arity = 1)
         public static Object toString(ExecutionContext cx, Object thisValue, Object radix) {
@@ -110,7 +110,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.7.4.3 Number.prototype.toLocaleString()<br>
+         * 15.7.3.3 Number.prototype.toLocaleString()<br>
          * 13.2.1 Number.prototype.toLocaleString ([locales [, options]])
          */
         @Function(name = "toLocaleString", arity = 0)
@@ -130,7 +130,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.7.4.4 Number.prototype.valueOf ( )
+         * 15.7.3.4 Number.prototype.valueOf ( )
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
@@ -138,7 +138,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.7.4.5 Number.prototype.toFixed (fractionDigits)
+         * 15.7.3.5 Number.prototype.toFixed (fractionDigits)
          */
         @Function(name = "toFixed", arity = 1)
         public static Object toFixed(ExecutionContext cx, Object thisValue, Object fractionDigits) {
@@ -156,13 +156,14 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.7.4.6 Number.prototype.toExponential (fractionDigits)
+         * 15.7.3.6 Number.prototype.toExponential (fractionDigits)
          */
         @Function(name = "toExponential", arity = 1)
         public static Object toExponential(ExecutionContext cx, Object thisValue,
                 Object fractionDigits) {
             double x = thisNumberValue(cx, thisValue);
             double f = ToInteger(cx, fractionDigits);
+            assert fractionDigits != UNDEFINED || f == 0;
             if (x != x) {
                 return "NaN";
             } else if (x == Double.POSITIVE_INFINITY) {
@@ -183,7 +184,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.7.4.7 Number.prototype.toPrecision (precision)
+         * 15.7.3.7 Number.prototype.toPrecision (precision)
          */
         @Function(name = "toPrecision", arity = 1)
         public static Object toPrecision(ExecutionContext cx, Object thisValue, Object precision) {
@@ -208,7 +209,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.7.4.8 Number.prototype.clz ()
+         * 15.7.3.8 Number.prototype.clz ()
          */
         @Function(name = "clz", arity = 0)
         public static Object clz(ExecutionContext cx, Object thisValue) {
