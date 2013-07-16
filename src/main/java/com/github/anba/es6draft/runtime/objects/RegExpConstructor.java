@@ -42,9 +42,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.10 RegExp (Regular Expression) Objects</h2>
  * <ul>
- * <li>15.10.3 The RegExp Constructor Called as a Function
- * <li>15.10.4 The RegExp Constructor
- * <li>15.10.5 Properties of the RegExp Constructor
+ * <li>15.10.3 The RegExp Constructor
+ * <li>15.10.4 Properties of the RegExp Constructor
  * </ul>
  */
 public class RegExpConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -96,11 +95,11 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
             f = flags;
         }
 
-        return RegExpInitialize(calleeContext, obj, p, f);
+        return RegExpInitialise(calleeContext, obj, p, f);
     }
 
     /**
-     * 15.10.4.1 new RegExp(pattern, flags)
+     * 15.10.3.2 new RegExp(...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -117,6 +116,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     }
 
     /**
+     * 15.10.3.3 Abstract Operations for the RegExp Constructor<br>
      * Runtime Semantics: RegExpAlloc Abstract Operation
      */
     public static RegExpObject RegExpAllocate(ExecutionContext cx, Object constructor) {
@@ -128,9 +128,10 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     }
 
     /**
-     * Runtime Semantics: RegExpInitialize Abstract Operation
+     * 15.10.3.3 Abstract Operations for the RegExp Constructor<br>
+     * Runtime Semantics: RegExpInitialise Abstract Operation
      */
-    public static RegExpObject RegExpInitialize(ExecutionContext cx, RegExpObject obj,
+    public static RegExpObject RegExpInitialise(ExecutionContext cx, RegExpObject obj,
             Object pattern, Object flags) {
         String p = (Type.isUndefined(pattern) ? "" : ToFlatString(cx, pattern));
         String f = (Type.isUndefined(flags) ? "" : ToFlatString(cx, flags));
@@ -158,14 +159,16 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     }
 
     /**
+     * 15.10.3.3 Abstract Operations for the RegExp Constructor<br>
      * Runtime Semantics: RegExpCreate Abstract Operation
      */
     public static RegExpObject RegExpCreate(ExecutionContext cx, Object pattern, Object flags) {
         RegExpObject obj = RegExpAllocate(cx, cx.getIntrinsic(Intrinsics.RegExp));
-        return RegExpInitialize(cx, obj, pattern, flags);
+        return RegExpInitialise(cx, obj, pattern, flags);
     }
 
     /**
+     * 15.10.3.3 Abstract Operations for the RegExp Constructor<br>
      * Runtime Semantics: EscapeRegExpPattern Abstract Operation
      */
     public static String EscapeRegExpPattern(String p, String f) {
@@ -225,7 +228,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
     }
 
     /**
-     * 15.10.5 Properties of the RegExp Constructor
+     * 15.10.4 Properties of the RegExp Constructor
      */
     public enum Properties {
         ;
@@ -242,7 +245,7 @@ public class RegExpConstructor extends BuiltinFunction implements Constructor, I
         public static final String name = "RegExp";
 
         /**
-         * 15.10.5.1 RegExp.prototype
+         * 15.10.4.1 RegExp.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
