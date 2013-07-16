@@ -132,38 +132,12 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object o) {
-            if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            ScriptObject proto = Type.objectValue(o).getInheritance(cx);
+            ScriptObject obj = ToObject(cx, o);
+            ScriptObject proto = obj.getInheritance(cx);
             if (proto != null) {
                 return proto;
             }
             return NULL;
-        }
-
-        /**
-         * 15.2.3.2 Object.setPrototypeOf ( O, proto )
-         */
-        @Function(name = "setPrototypeOf", arity = 2)
-        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
-                Object proto) {
-            if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            if (!(Type.isNull(proto) || Type.isObject(proto))) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            boolean status;
-            if (Type.isNull(proto)) {
-                status = Type.objectValue(o).setInheritance(cx, null);
-            } else {
-                status = Type.objectValue(o).setInheritance(cx, Type.objectValue(proto));
-            }
-            if (!status) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            return o;
         }
 
         /**
@@ -172,15 +146,13 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
         public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
                 Object o, Object p) {
-            if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
+            ScriptObject obj = ToObject(cx, o);
             Object key = ToPropertyKey(cx, p);
             Property desc;
             if (key instanceof String) {
-                desc = Type.objectValue(o).getOwnProperty(cx, (String) key);
+                desc = obj.getOwnProperty(cx, (String) key);
             } else {
-                desc = Type.objectValue(o).getOwnProperty(cx, (Symbol) key);
+                desc = obj.getOwnProperty(cx, (Symbol) key);
             }
             return FromPropertyDescriptor(cx, desc);
         }
@@ -190,10 +162,8 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "getOwnPropertyNames", arity = 1)
         public static Object getOwnPropertyNames(ExecutionContext cx, Object thisValue, Object o) {
-            if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            List<String> nameList = GetOwnPropertyNames(cx, Type.objectValue(o));
+            ScriptObject obj = ToObject(cx, o);
+            List<String> nameList = GetOwnPropertyNames(cx, obj);
             return CreateArrayFromList(cx, nameList);
         }
 
@@ -248,7 +218,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "seal", arity = 1)
         public static Object seal(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return o;
             }
             boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Sealed);
             if (!status) {
@@ -263,7 +233,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "freeze", arity = 1)
         public static Object freeze(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return o;
             }
             boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Frozen);
             if (!status) {
@@ -278,7 +248,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return o;
             }
             boolean status = Type.objectValue(o).preventExtensions(cx);
             if (!status) {
@@ -293,7 +263,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "isSealed", arity = 1)
         public static Object isSealed(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return true;
             }
             return TestIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Sealed);
         }
@@ -304,7 +274,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "isFrozen", arity = 1)
         public static Object isFrozen(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return true;
             }
             return TestIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Frozen);
         }
@@ -315,7 +285,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(ExecutionContext cx, Object thisValue, Object o) {
             if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return false;
             }
             return IsExtensible(cx, Type.objectValue(o));
         }
@@ -325,10 +295,8 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "keys", arity = 1)
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
-            if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            List<String> nameList = GetOwnPropertyKeys(cx, Type.objectValue(o));
+            ScriptObject obj = ToObject(cx, o);
+            List<String> nameList = GetOwnPropertyKeys(cx, obj);
             return CreateArrayFromList(cx, nameList);
         }
 
@@ -337,10 +305,8 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "getOwnPropertyKeys", arity = 1)
         public static Object getOwnPropertyKeys(ExecutionContext cx, Object thisValue, Object o) {
-            if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            return Type.objectValue(o).ownPropertyKeys(cx);
+            ScriptObject obj = ToObject(cx, o);
+            return obj.ownPropertyKeys(cx);
         }
 
         /**
@@ -455,6 +421,30 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                 throw pendingException;
             }
             return _target;
+        }
+
+        /**
+         * 15.2.3.19 Object.setPrototypeOf ( O, proto )
+         */
+        @Function(name = "setPrototypeOf", arity = 2)
+        public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
+                Object proto) {
+            if (!Type.isObject(o)) {
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
+            }
+            if (!(Type.isNull(proto) || Type.isObject(proto))) {
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            boolean status;
+            if (Type.isNull(proto)) {
+                status = Type.objectValue(o).setInheritance(cx, null);
+            } else {
+                status = Type.objectValue(o).setInheritance(cx, Type.objectValue(proto));
+            }
+            if (!status) {
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return o;
         }
     }
 
