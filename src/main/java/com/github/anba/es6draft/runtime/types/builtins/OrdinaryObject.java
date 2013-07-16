@@ -366,13 +366,17 @@ public class OrdinaryObject implements ScriptObject {
      */
     @Override
     public boolean hasProperty(ExecutionContext cx, String propertyKey) {
+        /* step 1 (implicit) */
+        /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
+        /* step 4 */
         if (!hasOwn) {
             ScriptObject parent = getInheritance(cx);
             if (parent != null) {
                 return parent.hasProperty(cx, propertyKey);
             }
         }
+        /* step 5 */
         return hasOwn;
     }
 
@@ -381,19 +385,24 @@ public class OrdinaryObject implements ScriptObject {
      */
     @Override
     public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
+        /* step 1 (implicit) */
+        /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
+        /* step 4 */
         if (!hasOwn) {
             ScriptObject parent = getInheritance(cx);
             if (parent != null) {
                 return parent.hasProperty(cx, propertyKey);
             }
         }
+        /* step 5 */
         return hasOwn;
     }
 
     /** 8.3.9 [[Get]] (P, Receiver) */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
+        /* step 1 (implicit) */
         /* step 2-3 */
         Property desc = getOwnProperty(cx, propertyKey);
         /* step 4 */
@@ -422,6 +431,7 @@ public class OrdinaryObject implements ScriptObject {
     /** 8.3.9 [[Get]] (P, Receiver) */
     @Override
     public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
+        /* step 1 (implicit) */
         /* step 2-3 */
         Property desc = getOwnProperty(cx, propertyKey);
         /* step 4 */
@@ -450,6 +460,7 @@ public class OrdinaryObject implements ScriptObject {
     /** 8.3.10 [[Set] (P, V, Receiver) */
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
+        /* step 1 (implicit) */
         /* step 2-3 */
         Property ownDesc = getOwnProperty(cx, propertyKey);
         /* step 4 */
@@ -458,12 +469,7 @@ public class OrdinaryObject implements ScriptObject {
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
-                if (!Type.isObject(receiver)) {
-                    return false;
-                }
-                // TODO: proposed patch for https://bugs.ecmascript.org/show_bug.cgi?id=1549
-                // return CreateOwnDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
-                ownDesc = new PropertyDescriptor(value, true, true, true).toProperty();
+                ownDesc = new PropertyDescriptor(UNDEFINED, true, true, true).toProperty();
             }
         }
         /* step 5 */
@@ -496,6 +502,7 @@ public class OrdinaryObject implements ScriptObject {
     /** 8.3.10 [[Set] (P, V, Receiver) */
     @Override
     public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
+        /* step 1 (implicit) */
         /* step 2-3 */
         Property ownDesc = getOwnProperty(cx, propertyKey);
         /* step 4 */
@@ -504,12 +511,7 @@ public class OrdinaryObject implements ScriptObject {
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
-                if (!Type.isObject(receiver)) {
-                    return false;
-                }
-                // TODO: proposed patch for https://bugs.ecmascript.org/show_bug.cgi?id=1549
-                // return CreateOwnDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
-                ownDesc = new PropertyDescriptor(value, true, true, true).toProperty();
+                ownDesc = new PropertyDescriptor(UNDEFINED, true, true, true).toProperty();
             }
         }
         /* step 5 */
@@ -717,6 +719,11 @@ public class OrdinaryObject implements ScriptObject {
         public OrdinaryObject newInstance(Realm realm) {
             return new OrdinaryObject(realm);
         }
+    }
+
+    /** 8.3.15 ObjectCreate Abstract Operation */
+    public static OrdinaryObject ObjectCreate(ExecutionContext cx) {
+        return ObjectCreate(cx, Intrinsics.ObjectPrototype, DefaultAllocator.INSTANCE);
     }
 
     /** 8.3.15 ObjectCreate Abstract Operation */
