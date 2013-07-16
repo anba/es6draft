@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.15 WeakMap Objects</h2>
  * <ul>
- * <li>15.15.4 Properties of the WeakMap Prototype Object
+ * <li>15.15.3 Properties of the WeakMap Prototype Object
  * </ul>
  */
 public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
@@ -43,7 +43,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.15.4 Properties of the WeakMap Prototype Object
+     * 15.15.3 Properties of the WeakMap Prototype Object
      */
     public enum Properties {
         ;
@@ -62,13 +62,13 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.15.4.1 WeakMap.prototype.constructor
+         * 15.15.3.1 WeakMap.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.WeakMap;
 
         /**
-         * 15.15.4.2 WeakMap.prototype.clear ()
+         * 15.15.3.2 WeakMap.prototype.clear ()
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
@@ -79,7 +79,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.15.4.3 WeakMap.prototype.delete ( key )
+         * 15.15.3.3 WeakMap.prototype.delete ( key )
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
@@ -92,7 +92,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.15.4.4 WeakMap.prototype.get ( key )
+         * 15.15.3.4 WeakMap.prototype.get ( key )
          */
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object key) {
@@ -106,7 +106,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.15.4.5 WeakMap.prototype.has ( key )
+         * 15.15.3.5 WeakMap.prototype.has ( key )
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
@@ -119,7 +119,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.15.4.6 WeakMap.prototype.set ( key , value )
+         * 15.15.3.6 WeakMap.prototype.set ( key , value )
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
@@ -133,7 +133,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.15.4.7 WeakMap.prototype.@@toStringTag
+         * 15.15.3.7 WeakMap.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

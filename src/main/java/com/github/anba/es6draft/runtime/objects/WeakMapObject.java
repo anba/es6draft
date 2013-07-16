@@ -15,7 +15,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.15 WeakMap Objects</h2>
  * <ul>
- * <li>15.15.5 Properties of WeakMap Instances
+ * <li>15.15.4 Properties of WeakMap Instances
  * </ul>
  */
 public class WeakMapObject extends OrdinaryObject {

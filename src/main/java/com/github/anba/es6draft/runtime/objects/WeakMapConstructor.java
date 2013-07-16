@@ -9,7 +9,9 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GetIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorNext;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -29,7 +31,6 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
@@ -37,9 +38,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.15 WeakMap Objects</h2>
  * <ul>
- * <li>15.15.1 The WeakMap Constructor Called as a Function
- * <li>15.15.2 The WeakMap Constructor
- * <li>15.15.3 Properties of the WeakMap Constructor
+ * <li>15.15.1 The WeakMap Constructor
+ * <li>15.15.2 Properties of the WeakMap Constructor
  * </ul>
  */
 public class WeakMapConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -54,7 +54,7 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
     }
 
     /**
-     * 15.15.1.1 WeakMap (iterable = undefined )
+     * 15.15.1.1 WeakMap (iterable = undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -75,13 +75,17 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
         }
 
         /* steps 5-7 */
-        Object itr, adder = null;
+        Object iter, adder = null;
         if (Type.isUndefinedOrNull(iterable)) {
-            itr = UNDEFINED;
+            iter = UNDEFINED;
         } else {
-            Symbol iterator = BuiltinSymbol.iterator.get();
-            // FIXME: spec bug? should iterable[@@iterator]() === undefined be an error?
-            itr = Invoke(calleeContext, iterable, iterator);
+            ScriptObject _iterable = ToObject(calleeContext, iterable);
+            boolean hasValues = HasProperty(calleeContext, _iterable, "entries");
+            if (hasValues) {
+                iter = Invoke(calleeContext, _iterable, "entries");
+            } else {
+                iter = GetIterator(calleeContext, _iterable);
+            }
             adder = Get(calleeContext, map, "set");
             if (!IsCallable(adder)) {
                 throw throwTypeError(calleeContext, Messages.Key.NotCallable);
@@ -91,21 +95,20 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
         /* step 8 */
         map.initialise();
 
-        /* steps 9-10 */
-        if (Type.isUndefined(itr)) {
+        /* step 9 */
+        if (Type.isUndefined(iter)) {
             return map;
         }
+        /* step 10 */
+        // explicit ToObject() call instead of implicit call through IteratorNext() -> Invoke()
+        ScriptObject iterator = ToObject(calleeContext, iter);
         for (;;) {
-            Object next = Invoke(calleeContext, itr, "next");
-            if (!Type.isObject(next)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
-            }
-            ScriptObject nextObject = Type.objectValue(next);
-            boolean done = IteratorComplete(calleeContext, nextObject);
+            ScriptObject next = IteratorNext(calleeContext, iterator);
+            boolean done = IteratorComplete(calleeContext, next);
             if (done) {
                 return map;
             }
-            Object nextValue = IteratorValue(calleeContext, nextObject);
+            Object nextValue = IteratorValue(calleeContext, next);
             ScriptObject entry = ToObject(calleeContext, nextValue);
             Object k = Get(calleeContext, entry, "0");
             Object v = Get(calleeContext, entry, "1");
@@ -114,7 +117,7 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
     }
 
     /**
-     * 15.15.2.1 new WeakMap ( ... args )
+     * 15.15.1.2 new WeakMap (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -122,7 +125,7 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
     }
 
     /**
-     * 15.15.3 Properties of the WeakMap Constructor
+     * 15.15.2 Properties of the WeakMap Constructor
      */
     public enum Properties {
         ;
@@ -139,14 +142,14 @@ public class WeakMapConstructor extends BuiltinFunction implements Constructor, 
         public static final String name = "WeakMap";
 
         /**
-         * 15.15.3.1 WeakMap.prototype
+         * 15.15.2.1 WeakMap.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.WeakMapPrototype;
 
         /**
-         * 15.15.3.2 WeakMap[ @@create ] ( )
+         * 15.15.2.2 WeakMap[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
