@@ -85,12 +85,12 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
     public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array,
             ArrayIterationKind kind) {
         // ObjectCreate()
-        ArrayIterator itr = new ArrayIterator(cx.getRealm());
-        itr.setPrototype(cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
-        itr.iteratedObject = array;
-        itr.nextIndex = 0;
-        itr.kind = kind;
-        return itr;
+        ArrayIterator iterator = new ArrayIterator(cx.getRealm());
+        iterator.setPrototype(cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
+        iterator.iteratedObject = array;
+        iterator.nextIndex = 0;
+        iterator.kind = kind;
+        return iterator;
     }
 
     /**
