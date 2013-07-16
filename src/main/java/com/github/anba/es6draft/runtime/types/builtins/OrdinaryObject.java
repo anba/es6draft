@@ -6,10 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SetIntegrityLevel;
-import static com.github.anba.es6draft.runtime.AbstractOperations.TestIntegrityLevel;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.MakeListIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -24,6 +22,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -558,7 +557,45 @@ public class OrdinaryObject implements ScriptObject {
         return true;
     }
 
-    /** 8.3.11 [[Delete]] (P) */
+    /** 8.3.11 [[Invoke]] (P, ArgumentsList, Receiver) */
+    @Override
+    public Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
+            Object receiver) {
+        /* step 1-2 (implicit) */
+        /* step 3-4 */
+        Object method = get(cx, propertyKey, receiver);
+        /* step 5 */
+        if (!Type.isObject(method)) {
+            throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 6 */
+        if (!IsCallable(method)) {
+            throwTypeError(cx, Messages.Key.NotCallable);
+        }
+        /* step 7 */
+        return ((Callable) method).call(cx, receiver, arguments);
+    }
+
+    /** 8.3.11 [[Invoke]] (P, ArgumentsList, Receiver) */
+    @Override
+    public Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments,
+            Object receiver) {
+        /* step 1-2 (implicit) */
+        /* step 3-4 */
+        Object method = get(cx, propertyKey, receiver);
+        /* step 5 */
+        if (!Type.isObject(method)) {
+            throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 6 */
+        if (!IsCallable(method)) {
+            throwTypeError(cx, Messages.Key.NotCallable);
+        }
+        /* step 7 */
+        return ((Callable) method).call(cx, receiver, arguments);
+    }
+
+    /** 8.3.12 [[Delete]] (P) */
     @Override
     public boolean delete(ExecutionContext cx, String propertyKey) {
         /* step 2 */
@@ -576,7 +613,7 @@ public class OrdinaryObject implements ScriptObject {
         return false;
     }
 
-    /** 8.3.11 [[Delete]] (P) */
+    /** 8.3.12 [[Delete]] (P) */
     @Override
     public boolean delete(ExecutionContext cx, Symbol propertyKey) {
         /* step 2 */
@@ -594,13 +631,13 @@ public class OrdinaryObject implements ScriptObject {
         return false;
     }
 
-    /** 8.3.12 [[Enumerate]] () */
+    /** 8.3.13 [[Enumerate]] () */
     @Override
     public final ScriptObject enumerate(ExecutionContext cx) {
         return MakeListIterator(cx, new EnumKeysIterator(cx, this));
     }
 
-    /** 8.3.12 [[Enumerate]] () */
+    /** 8.3.13 [[Enumerate]] () */
     protected Collection<String> enumerateKeys() {
         List<String> propList = new ArrayList<>();
         for (Object key : __keys__()) {
@@ -674,13 +711,13 @@ public class OrdinaryObject implements ScriptObject {
         }
     }
 
-    /** 8.3.13 [[OwnPropertyKeys]] ( ) */
+    /** 8.3.14 [[OwnPropertyKeys]] ( ) */
     @Override
     public final ScriptObject ownPropertyKeys(ExecutionContext cx) {
         return MakeListIterator(cx, enumerateOwnKeys().iterator());
     }
 
-    /** 8.3.13 [[OwnPropertyKeys]] ( ) */
+    /** 8.3.14 [[OwnPropertyKeys]] ( ) */
     protected Collection<Object> enumerateOwnKeys() {
         List<Object> keys = new ArrayList<>();
         for (Object key : __keys__()) {
@@ -700,17 +737,17 @@ public class OrdinaryObject implements ScriptObject {
         }
     }
 
-    /** 8.3.14 ObjectCreate Abstract Operation */
+    /** 8.3.15 ObjectCreate Abstract Operation */
     public static OrdinaryObject ObjectCreate(ExecutionContext cx, ScriptObject proto) {
         return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
     }
 
-    /** 8.3.14 ObjectCreate Abstract Operation */
+    /** 8.3.15 ObjectCreate Abstract Operation */
     public static OrdinaryObject ObjectCreate(ExecutionContext cx, Intrinsics proto) {
         return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
     }
 
-    /** 8.3.14 ObjectCreate Abstract Operation */
+    /** 8.3.15 ObjectCreate Abstract Operation */
     public static <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
@@ -718,7 +755,7 @@ public class OrdinaryObject implements ScriptObject {
         return obj;
     }
 
-    /** 8.3.14 ObjectCreate Abstract Operation */
+    /** 8.3.15 ObjectCreate Abstract Operation */
     public static <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             Intrinsics proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());

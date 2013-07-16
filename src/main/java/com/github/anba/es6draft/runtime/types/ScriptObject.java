@@ -65,6 +65,12 @@ public interface ScriptObject {
     /** [[Set] (P, V, Receiver) */
     boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver);
 
+    /** [[Invoke]] (P, ArgumentsList, Receiver) */
+    Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments, Object receiver);
+
+    /** [[Invoke]] (P, ArgumentsList, Receiver) */
+    Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments, Object receiver);
+
     /** [[Delete]] (P) */
     boolean delete(ExecutionContext cx, String propertyKey);
 
