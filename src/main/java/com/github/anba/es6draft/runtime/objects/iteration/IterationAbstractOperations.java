@@ -8,16 +8,21 @@ package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Invoke;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -74,7 +79,36 @@ public final class IterationAbstractOperations {
     }
 
     /**
-     * 15.19.4.3.5 IteratorComplete (itrResult)
+     * 15.19.4.3.5 GetIterator ( obj )
+     */
+    public static ScriptObject GetIterator(ExecutionContext cx, Object obj) {
+        Object iterator = Invoke(cx, obj, BuiltinSymbol.iterator.get());
+        if (!Type.isObject(iterator)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        return Type.objectValue(iterator);
+    }
+
+    /**
+     * 15.19.4.3.6 IteratorNext ( iterator, value )
+     */
+    public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator) {
+        return IteratorNext(cx, iterator, UNDEFINED);
+    }
+
+    /**
+     * 15.19.4.3.6 IteratorNext ( iterator, value )
+     */
+    public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator, Object value) {
+        Object result = Invoke(cx, iterator, "next", value);
+        if (!Type.isObject(result)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        return Type.objectValue(result);
+    }
+
+    /**
+     * 15.19.4.3.7 IteratorComplete (itrResult)
      */
     public static boolean IteratorComplete(ExecutionContext cx, ScriptObject itrResult) {
         Object done = Get(cx, itrResult, "done");
@@ -82,9 +116,32 @@ public final class IterationAbstractOperations {
     }
 
     /**
-     * 15.19.4.3.6 IteratorValue (itrResult)
+     * 15.19.4.3.8 IteratorValue (itrResult)
      */
     public static Object IteratorValue(ExecutionContext cx, ScriptObject itrResult) {
         return Get(cx, itrResult, "value");
+    }
+
+    /**
+     * 15.19.4.3.9 CreateEmptyIterator ( )
+     */
+    public static ScriptObject CreateEmptyIterator(ExecutionContext cx) {
+        OrdinaryObject obj = ObjectCreate(cx);
+        BuiltinFunction emptyNextMethod = new EmptyIteratorNextMethod(cx.getRealm());
+        CreateOwnDataProperty(cx, obj, "next", emptyNextMethod);
+        return obj;
+    }
+
+    private static final class EmptyIteratorNextMethod extends BuiltinFunction {
+        public EmptyIteratorNextMethod(Realm realm) {
+            super(realm);
+            setupDefaultFunctionProperties("next", 0);
+        }
+
+        @Override
+        public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ScriptObject result = CreateItrResultObject(calleeContext(), UNDEFINED, true);
+            return result;
+        }
     }
 }
