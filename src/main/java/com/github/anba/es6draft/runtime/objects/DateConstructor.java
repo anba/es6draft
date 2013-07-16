@@ -35,9 +35,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.9 Date Objects</h2>
  * <ul>
- * <li>15.9.2 The Date Constructor Called as a Function
- * <li>15.9.3 The Date Constructor
- * <li>15.9.4 Properties of the Date Constructor
+ * <li>15.9.2 The Date Constructor
+ * <li>15.9.3 Properties of the Date Constructor
  * </ul>
  */
 public class DateConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -135,7 +134,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
     }
 
     /**
-     * 15.9.3.1 new Date ( ...args )
+     * 15.9.2.4 new Date ( ... argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -143,7 +142,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
     }
 
     /**
-     * 15.9.4 Properties of the Date Constructor
+     * 15.9.3 Properties of the Date Constructor
      */
     public enum Properties {
         ;
@@ -160,14 +159,14 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
         public static final String name = "Date";
 
         /**
-         * 15.9.4.1 Date.prototype
+         * 15.9.3.1 Date.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.DatePrototype;
 
         /**
-         * 15.9.4.2 Date.parse (string)
+         * 15.9.3.2 Date.parse (string)
          */
         @Function(name = "parse", arity = 1)
         public static Object parse(ExecutionContext cx, Object thisValue, Object string) {
@@ -180,7 +179,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
         }
 
         /**
-         * 15.9.4.3 Date.UTC (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )
+         * 15.9.3.3 Date.UTC (year, month [, date [, hours [, minutes [, seconds [, ms ] ] ] ] ] )
          */
         @Function(name = "UTC", arity = 7)
         public static Object UTC(ExecutionContext cx, Object thisValue, Object year, Object month,
@@ -204,7 +203,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
         }
 
         /**
-         * 15.9.4.4 Date.now ( )
+         * 15.9.3.4 Date.now ( )
          */
         @Function(name = "now", arity = 0)
         public static Object now(ExecutionContext cx, Object thisValue) {
@@ -212,7 +211,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
         }
 
         /**
-         * 15.9.4.5 Date[ @@create ] ( )
+         * 15.9.3.5 Date[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

@@ -44,7 +44,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.9 Date Objects</h2>
  * <ul>
- * <li>15.9.5 Properties of the Date Prototype Object
+ * <li>15.9.4 Properties of the Date Prototype Object
  * </ul>
  */
 public class DatePrototype extends OrdinaryObject implements Initialisable {
@@ -113,7 +113,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.9.5 Properties of the Date Prototype Object
+     * 15.9.4 Properties of the Date Prototype Object
      */
     public enum Properties {
         ;
@@ -135,13 +135,13 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.9.5.1 Date.prototype.constructor
+         * 15.9.4.1 Date.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Date;
 
         /**
-         * 15.9.5.2 Date.prototype.toString ( )
+         * 15.9.4.2 Date.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -166,7 +166,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.3 Date.prototype.toDateString ( )
+         * 15.9.4.3 Date.prototype.toDateString ( )
          */
         @Function(name = "toDateString", arity = 0)
         public static Object toDateString(ExecutionContext cx, Object thisValue) {
@@ -185,7 +185,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.4 Date.prototype.toTimeString ( )
+         * 15.9.4.4 Date.prototype.toTimeString ( )
          */
         @Function(name = "toTimeString", arity = 0)
         public static Object toTimeString(ExecutionContext cx, Object thisValue) {
@@ -206,7 +206,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.5 Date.prototype.toLocaleString ( )<br>
+         * 15.9.4.5 Date.prototype.toLocaleString ( )<br>
          * 13.3.1 Date.prototype.toLocaleString ([locales [, options]])
          */
         @Function(name = "toLocaleString", arity = 0)
@@ -227,7 +227,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.6 Date.prototype.toLocaleDateString ( )<br>
+         * 15.9.4.6 Date.prototype.toLocaleDateString ( )<br>
          * 13.3.2 Date.prototype.toLocaleDateString ([locales [, options]])
          */
         @Function(name = "toLocaleDateString", arity = 0)
@@ -248,7 +248,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.7 Date.prototype.toLocaleTimeString ( )<br>
+         * 15.9.4.7 Date.prototype.toLocaleTimeString ( )<br>
          * 13.3.3 Date.prototype.toLocaleTimeString ([locales [, options]])
          */
         @Function(name = "toLocaleTimeString", arity = 0)
@@ -269,7 +269,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.8 Date.prototype.valueOf ( )
+         * 15.9.4.8 Date.prototype.valueOf ( )
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
@@ -277,7 +277,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.9 Date.prototype.getTime ( )
+         * 15.9.4.9 Date.prototype.getTime ( )
          */
         @Function(name = "getTime", arity = 0)
         public static Object getTime(ExecutionContext cx, Object thisValue) {
@@ -285,7 +285,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.10 Date.prototype.getFullYear ( )
+         * 15.9.4.10 Date.prototype.getFullYear ( )
          */
         @Function(name = "getFullYear", arity = 0)
         public static Object getFullYear(ExecutionContext cx, Object thisValue) {
@@ -298,7 +298,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.11 Date.prototype.getUTCFullYear ( )
+         * 15.9.4.11 Date.prototype.getUTCFullYear ( )
          */
         @Function(name = "getUTCFullYear", arity = 0)
         public static Object getUTCFullYear(ExecutionContext cx, Object thisValue) {
@@ -310,7 +310,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.12 Date.prototype.getMonth ( )
+         * 15.9.4.12 Date.prototype.getMonth ( )
          */
         @Function(name = "getMonth", arity = 0)
         public static Object getMonth(ExecutionContext cx, Object thisValue) {
@@ -323,7 +323,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.13 Date.prototype.getUTCMonth ( )
+         * 15.9.4.13 Date.prototype.getUTCMonth ( )
          */
         @Function(name = "getUTCMonth", arity = 0)
         public static Object getUTCMonth(ExecutionContext cx, Object thisValue) {
@@ -335,7 +335,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.14 Date.prototype.getDate ( )
+         * 15.9.4.14 Date.prototype.getDate ( )
          */
         @Function(name = "getDate", arity = 0)
         public static Object getDate(ExecutionContext cx, Object thisValue) {
@@ -348,7 +348,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.15 Date.prototype.getUTCDate ( )
+         * 15.9.4.15 Date.prototype.getUTCDate ( )
          */
         @Function(name = "getUTCDate", arity = 0)
         public static Object getUTCDate(ExecutionContext cx, Object thisValue) {
@@ -360,7 +360,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.16 Date.prototype.getDay ( )
+         * 15.9.4.16 Date.prototype.getDay ( )
          */
         @Function(name = "getDay", arity = 0)
         public static Object getDay(ExecutionContext cx, Object thisValue) {
@@ -373,7 +373,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.17 Date.prototype.getUTCDay ( )
+         * 15.9.4.17 Date.prototype.getUTCDay ( )
          */
         @Function(name = "getUTCDay", arity = 0)
         public static Object getUTCDay(ExecutionContext cx, Object thisValue) {
@@ -385,7 +385,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.18 Date.prototype.getHours ( )
+         * 15.9.4.18 Date.prototype.getHours ( )
          */
         @Function(name = "getHours", arity = 0)
         public static Object getHours(ExecutionContext cx, Object thisValue) {
@@ -398,7 +398,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.19 Date.prototype.getUTCHours ( )
+         * 15.9.4.19 Date.prototype.getUTCHours ( )
          */
         @Function(name = "getUTCHours", arity = 0)
         public static Object getUTCHours(ExecutionContext cx, Object thisValue) {
@@ -410,7 +410,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.20 Date.prototype.getMinutes ( )
+         * 15.9.4.20 Date.prototype.getMinutes ( )
          */
         @Function(name = "getMinutes", arity = 0)
         public static Object getMinutes(ExecutionContext cx, Object thisValue) {
@@ -423,7 +423,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.21 Date.prototype.getUTCMinutes ( )
+         * 15.9.4.21 Date.prototype.getUTCMinutes ( )
          */
         @Function(name = "getUTCMinutes", arity = 0)
         public static Object getUTCMinutes(ExecutionContext cx, Object thisValue) {
@@ -435,7 +435,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.22 Date.prototype.getSeconds ( )
+         * 15.9.4.22 Date.prototype.getSeconds ( )
          */
         @Function(name = "getSeconds", arity = 0)
         public static Object getSeconds(ExecutionContext cx, Object thisValue) {
@@ -448,7 +448,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.23 Date.prototype.getUTCSeconds ( )
+         * 15.9.4.23 Date.prototype.getUTCSeconds ( )
          */
         @Function(name = "getUTCSeconds", arity = 0)
         public static Object getUTCSeconds(ExecutionContext cx, Object thisValue) {
@@ -460,7 +460,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.24 Date.prototype.getMilliseconds ( )
+         * 15.9.4.24 Date.prototype.getMilliseconds ( )
          */
         @Function(name = "getMilliseconds", arity = 0)
         public static Object getMilliseconds(ExecutionContext cx, Object thisValue) {
@@ -473,7 +473,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.25 Date.prototype.getUTCMilliseconds ( )
+         * 15.9.4.25 Date.prototype.getUTCMilliseconds ( )
          */
         @Function(name = "getUTCMilliseconds", arity = 0)
         public static Object getUTCMilliseconds(ExecutionContext cx, Object thisValue) {
@@ -485,7 +485,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.26 Date.prototype.getTimezoneOffset ( )
+         * 15.9.4.26 Date.prototype.getTimezoneOffset ( )
          */
         @Function(name = "getTimezoneOffset", arity = 0)
         public static Object getTimezoneOffset(ExecutionContext cx, Object thisValue) {
@@ -498,7 +498,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.27 Date.prototype.setTime (time)
+         * 15.9.4.27 Date.prototype.setTime (time)
          */
         @Function(name = "setTime", arity = 1)
         public static Object setTime(ExecutionContext cx, Object thisValue, Object time) {
@@ -510,7 +510,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.28 Date.prototype.setMilliseconds (ms)
+         * 15.9.4.28 Date.prototype.setMilliseconds (ms)
          */
         @Function(name = "setMilliseconds", arity = 1)
         public static Object setMilliseconds(ExecutionContext cx, Object thisValue, Object ms) {
@@ -524,7 +524,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.29 Date.prototype.setUTCMilliseconds (ms)
+         * 15.9.4.29 Date.prototype.setUTCMilliseconds (ms)
          */
         @Function(name = "setUTCMilliseconds", arity = 1)
         public static Object setUTCMilliseconds(ExecutionContext cx, Object thisValue, Object ms) {
@@ -537,7 +537,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.30 Date.prototype.setSeconds (sec [, ms ] )
+         * 15.9.4.30 Date.prototype.setSeconds (sec [, ms ] )
          */
         @Function(name = "setSeconds", arity = 2)
         public static Object setSeconds(ExecutionContext cx, Object thisValue, Object sec,
@@ -553,7 +553,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.31 Date.prototype.setUTCSeconds (sec [, ms ] )
+         * 15.9.4.31 Date.prototype.setUTCSeconds (sec [, ms ] )
          */
         @Function(name = "setUTCSeconds", arity = 2)
         public static Object setUTCSeconds(ExecutionContext cx, Object thisValue, Object sec,
@@ -568,7 +568,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.32 Date.prototype.setMinutes (min [, sec [, ms ] ] )
+         * 15.9.4.32 Date.prototype.setMinutes (min [, sec [, ms ] ] )
          */
         @Function(name = "setMinutes", arity = 3)
         public static Object setMinutes(ExecutionContext cx, Object thisValue, Object min,
@@ -586,7 +586,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.33 Date.prototype.setUTCMinutes (min [, sec [, ms ] ] )
+         * 15.9.4.33 Date.prototype.setUTCMinutes (min [, sec [, ms ] ] )
          */
         @Function(name = "setUTCMinutes", arity = 3)
         public static Object setUTCMinutes(ExecutionContext cx, Object thisValue, Object min,
@@ -603,7 +603,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.34 Date.prototype.setHours (hour [, min [, sec [, ms ] ] ] )
+         * 15.9.4.34 Date.prototype.setHours (hour [, min [, sec [, ms ] ] ] )
          */
         @Function(name = "setHours", arity = 4)
         public static Object setHours(ExecutionContext cx, Object thisValue, Object hour,
@@ -623,7 +623,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.35 Date.prototype.setUTCHours (hour [, min [, sec [, ms ] ] ] )
+         * 15.9.4.35 Date.prototype.setUTCHours (hour [, min [, sec [, ms ] ] ] )
          */
         @Function(name = "setUTCHours", arity = 4)
         public static Object setUTCHours(ExecutionContext cx, Object thisValue, Object hour,
@@ -642,7 +642,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.36 Date.prototype.setDate (date)
+         * 15.9.4.36 Date.prototype.setDate (date)
          */
         @Function(name = "setDate", arity = 1)
         public static Object setDate(ExecutionContext cx, Object thisValue, Object date) {
@@ -657,7 +657,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.37 Date.prototype.setUTCDate (date)
+         * 15.9.4.37 Date.prototype.setUTCDate (date)
          */
         @Function(name = "setUTCDate", arity = 1)
         public static Object setUTCDate(ExecutionContext cx, Object thisValue, Object date) {
@@ -671,7 +671,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.38 Date.prototype.setMonth (month [, date ] )
+         * 15.9.4.38 Date.prototype.setMonth (month [, date ] )
          */
         @Function(name = "setMonth", arity = 2)
         public static Object setMonth(ExecutionContext cx, Object thisValue, Object month,
@@ -687,7 +687,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.39 Date.prototype.setUTCMonth (month [, date ] )
+         * 15.9.4.39 Date.prototype.setUTCMonth (month [, date ] )
          */
         @Function(name = "setUTCMonth", arity = 2)
         public static Object setUTCMonth(ExecutionContext cx, Object thisValue, Object month,
@@ -702,7 +702,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.40 Date.prototype.setFullYear (year [, month [, date ] ] )
+         * 15.9.4.40 Date.prototype.setFullYear (year [, month [, date ] ] )
          */
         @Function(name = "setFullYear", arity = 3)
         public static Object setFullYear(ExecutionContext cx, Object thisValue, Object year,
@@ -721,7 +721,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.41 Date.prototype.setUTCFullYear (year [, month [, date ] ] )
+         * 15.9.4.41 Date.prototype.setUTCFullYear (year [, month [, date ] ] )
          */
         @Function(name = "setUTCFullYear", arity = 3)
         public static Object setUTCFullYear(ExecutionContext cx, Object thisValue, Object year,
@@ -741,7 +741,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.42 Date.prototype.toUTCString ( )
+         * 15.9.4.42 Date.prototype.toUTCString ( )
          */
         @Function(name = "toUTCString", arity = 0)
         public static Object toUTCString(ExecutionContext cx, Object thisValue) {
@@ -753,7 +753,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.43 Date.prototype.toISOString ( )
+         * 15.9.4.43 Date.prototype.toISOString ( )
          */
         @Function(name = "toISOString", arity = 0)
         public static Object toISOString(ExecutionContext cx, Object thisValue) {
@@ -765,7 +765,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.44 Date.prototype.toJSON ( key )
+         * 15.9.4.44 Date.prototype.toJSON ( key )
          */
         @Function(name = "toJSON", arity = 1)
         public static Object toJSON(ExecutionContext cx, Object thisValue, Object key) {
@@ -782,7 +782,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.9.5.45 Date.prototype.@@ToPrimitive ( hint )
+         * 15.9.4.45 Date.prototype.@@ToPrimitive ( hint )
          */
         @Function(name = "@@ToPrimitive", arity = 1, symbol = BuiltinSymbol.ToPrimitive)
         public static Object ToPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
