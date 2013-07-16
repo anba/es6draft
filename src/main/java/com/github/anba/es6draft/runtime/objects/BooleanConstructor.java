@@ -30,9 +30,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.6 Boolean Objects</h2>
  * <ul>
- * <li>15.6.1 The Boolean Constructor Called as a Function
- * <li>15.6.2 The Boolean Constructor
- * <li>15.6.3 Properties of the Boolean Constructor
+ * <li>15.6.1 The Boolean Constructor
+ * <li>15.6.2 Properties of the Boolean Constructor
  * </ul>
  */
 public class BooleanConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -63,7 +62,7 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
     }
 
     /**
-     * 15.6.2.1 new Boolean (value)
+     * 15.6.1.2 new Boolean (... argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -71,7 +70,7 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
     }
 
     /**
-     * 15.6.3 Properties of the Boolean Constructor
+     * 15.6.2 Properties of the Boolean Constructor
      */
     public enum Properties {
         ;
@@ -88,14 +87,14 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
         public static final String name = "Boolean";
 
         /**
-         * 15.6.3.1 Boolean.prototype
+         * 15.6.2.1 Boolean.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.BooleanPrototype;
 
         /**
-         * 15.6.3.2 Boolean[ @@create ] ( )
+         * 15.6.2.2 Boolean[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

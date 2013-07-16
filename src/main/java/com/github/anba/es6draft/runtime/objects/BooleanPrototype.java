@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.6 Boolean Objects</h2>
  * <ul>
- * <li>15.6.4 Properties of the Boolean Prototype Object
+ * <li>15.6.3 Properties of the Boolean Prototype Object
  * </ul>
  */
 public class BooleanPrototype extends OrdinaryObject implements Initialisable {
@@ -38,7 +38,7 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.6.4 Properties of the Boolean Prototype Object
+     * 15.6.3 Properties of the Boolean Prototype Object
      */
     public enum Properties {
         ;
@@ -63,13 +63,13 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.6.4.1 Boolean.prototype.constructor
+         * 15.6.3.1 Boolean.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Boolean;
 
         /**
-         * 15.6.4.2 Boolean.prototype.toString ( )
+         * 15.6.3.2 Boolean.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -78,7 +78,7 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.6.4.3 Boolean.prototype.valueOf ( )
+         * 15.6.3.3 Boolean.prototype.valueOf ( )
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
