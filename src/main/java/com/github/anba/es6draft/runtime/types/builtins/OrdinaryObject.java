@@ -550,6 +550,9 @@ public class OrdinaryObject implements ScriptObject {
         Object method = get(cx, propertyKey, receiver);
         /* step 5 */
         if (!Type.isObject(method)) {
+            if (Type.isUndefined(method)) {
+                throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
+            }
             throwTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 6 */
@@ -569,6 +572,9 @@ public class OrdinaryObject implements ScriptObject {
         Object method = get(cx, propertyKey, receiver);
         /* step 5 */
         if (!Type.isObject(method)) {
+            if (Type.isUndefined(method)) {
+                throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
+            }
             throwTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 6 */

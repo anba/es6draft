@@ -146,6 +146,8 @@ public class Messages {
         InvalidGetter("propertydescriptor.invalid_getter"),
         InvalidSetter("propertydescriptor.invalid_setter"),
         InvalidDescriptor("propertydescriptor.invalid_descriptor"),
+        // ToIndex
+        InvalidIndex("abstractops.invalid_index"),
         // 9.1.1 ToPrimitive
         InvalidToPrimitiveHint("abstractops.invalid_to_primitive_hint"),
         NoPrimitiveRepresentation("abstractops.no_primitive_representation"),

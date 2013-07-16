@@ -45,6 +45,14 @@ public final class AbstractOperations {
     private AbstractOperations() {
     }
 
+    public static long ToIndex(ExecutionContext cx, double n) {
+        // TODO: throw RangeError?
+        // if (n > 0x1FFFFFFFFFFFFFL) {
+        // throwRangeError(cx, Messages.Key.InvalidIndex, Double.toString(n));
+        // }
+        return (long) n;
+    }
+
     /**
      * 9.1.1 ToPrimitive
      */
@@ -618,12 +626,13 @@ public final class AbstractOperations {
      */
     public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
             Object... args) {
-        ScriptObject obj = ToObject(cx, object);
-        Callable func = GetMethod(cx, obj, propertyKey);
-        if (func == null) {
-            throw throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
+        ScriptObject base;
+        if (Type.isObject(object)) {
+            base = Type.objectValue(object);
+        } else {
+            base = ToObject(cx, object);
         }
-        return func.call(cx, object, args);
+        return base.invoke(cx, propertyKey, args, object);
     }
 
     /**
@@ -631,12 +640,13 @@ public final class AbstractOperations {
      */
     public static Object Invoke(ExecutionContext cx, Object object, Symbol propertyKey,
             Object... args) {
-        ScriptObject obj = ToObject(cx, object);
-        Callable func = GetMethod(cx, obj, propertyKey);
-        if (func == null) {
-            throw throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
+        ScriptObject base;
+        if (Type.isObject(object)) {
+            base = Type.objectValue(object);
+        } else {
+            base = ToObject(cx, object);
         }
-        return func.call(cx, object, args);
+        return base.invoke(cx, propertyKey, args, object);
     }
 
     /**
@@ -789,14 +799,41 @@ public final class AbstractOperations {
         int n = 0;
         /* step 4 */
         for (Object e : elements) {
-            CreateOwnDataProperty(cx, array, ToString(n++), e);
+            boolean status = CreateOwnDataProperty(cx, array, ToString(n), e);
+            assert status;
+            n += 1;
         }
         /* step 5 */
         return array;
     }
 
     /**
-     * 9.3.12 OrdinaryHasInstance (C, O)
+     * 9.3.12 CreateListFromArrayLike (obj)
+     */
+    public static List<?> CreateListFromArrayLike(ExecutionContext cx, Object obj) {
+        /* step 1 */
+        if (!Type.isObject(obj)) {
+            throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        ScriptObject object = Type.objectValue(obj);
+        /* step 2 */
+        Object len = Get(cx, object, "length");
+        /* steps 3-4 */
+        long n = ToIndex(cx, ToInteger(cx, len));
+        /* step 5 */
+        ArrayList<Object> list = new ArrayList<>();
+        /* steps 6-7 */
+        for (long index = 0; index < n; ++index) {
+            String indexName = Long.toString(index); // ToString(index)
+            Object next = Get(cx, object, indexName);
+            list.add(next);
+        }
+        /* step 8 */
+        return list;
+    }
+
+    /**
+     * 9.3.13 OrdinaryHasInstance (C, O)
      */
     public static boolean OrdinaryHasInstance(ExecutionContext cx, Object c, Object o) {
         /* step 1 */
@@ -830,7 +867,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.13 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
+     * 9.3.14 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
      */
     public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx, Object constructor,
             Intrinsics intrinsicDefaultProto) {
@@ -851,7 +888,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
+     * 9.3.15 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
      */
     public static OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
             Object constructor, Intrinsics intrinsicDefaultProto) {
@@ -860,7 +897,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     * 9.3.15 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
      */
     public static <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
             ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,
