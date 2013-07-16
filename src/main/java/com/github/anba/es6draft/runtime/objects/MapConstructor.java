@@ -10,7 +10,9 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GetIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorNext;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -30,7 +32,6 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
@@ -38,9 +39,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.14 Map Objects</h2>
  * <ul>
- * <li>15.14.1 The Map Constructor Called as a Function
- * <li>15.14.2 The Map Constructor
- * <li>15.14.3 Properties of the Map Constructor
+ * <li>15.14.1 The Map Constructor
+ * <li>15.14.2 Properties of the Map Constructor
  * </ul>
  */
 public class MapConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -55,7 +55,7 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
     }
 
     /**
-     * 15.14.1.1 Map (iterable = undefined , comparator = undefined )
+     * 15.14.1.1 Map (iterable = undefined, comparator = undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -77,18 +77,16 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         }
 
         /* steps 5-7 */
-        Object itr, adder = null;
+        Object iter, adder = null;
         if (Type.isUndefinedOrNull(iterable)) {
-            itr = UNDEFINED;
+            iter = UNDEFINED;
         } else {
             ScriptObject _iterable = ToObject(calleeContext, iterable);
             boolean hasValues = HasProperty(calleeContext, _iterable, "entries");
-            // FIXME: spec bug? should iterable[@@iterator]() === undefined be an error?
             if (hasValues) {
-                itr = Invoke(calleeContext, _iterable, "entries");
+                iter = Invoke(calleeContext, _iterable, "entries");
             } else {
-                Symbol iterator = BuiltinSymbol.iterator.get();
-                itr = Invoke(calleeContext, _iterable, iterator);
+                iter = GetIterator(calleeContext, _iterable);
             }
             adder = Get(calleeContext, map, "set");
             if (!IsCallable(adder)) {
@@ -96,7 +94,7 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
             }
         }
 
-        /* steps 8-10 */
+        /* step 8 */
         MapObject.Comparator _comparator = MapObject.Comparator.SameValueZero;
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
@@ -104,23 +102,24 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
             }
             _comparator = MapObject.Comparator.SameValue;
         }
+
+        /* steps 9-10 */
         map.initialise(_comparator);
 
-        /* steps 11-12 */
-        if (Type.isUndefined(itr)) {
+        /* step 11 */
+        if (Type.isUndefined(iter)) {
             return map;
         }
+        /* step 12 */
+        // explicit ToObject() call instead of implicit call through IteratorNext() -> Invoke()
+        ScriptObject iterator = ToObject(calleeContext, iter);
         for (;;) {
-            Object next = Invoke(calleeContext, itr, "next");
-            if (!Type.isObject(next)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
-            }
-            ScriptObject nextObject = Type.objectValue(next);
-            boolean done = IteratorComplete(calleeContext, nextObject);
+            ScriptObject next = IteratorNext(calleeContext, iterator);
+            boolean done = IteratorComplete(calleeContext, next);
             if (done) {
                 return map;
             }
-            Object nextItem = IteratorValue(calleeContext, nextObject);
+            Object nextItem = IteratorValue(calleeContext, next);
             ScriptObject entry = ToObject(calleeContext, nextItem);
             Object k = Get(calleeContext, entry, "0");
             Object v = Get(calleeContext, entry, "1");
@@ -129,7 +128,7 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
     }
 
     /**
-     * 15.14.2.1 new Map ( ... args )
+     * 15.14.1.2 new Map (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -137,7 +136,7 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
     }
 
     /**
-     * 15.14.3 Properties of the Map Constructor
+     * 15.14.2 Properties of the Map Constructor
      */
     public enum Properties {
         ;
@@ -154,14 +153,14 @@ public class MapConstructor extends BuiltinFunction implements Constructor, Init
         public static final String name = "Map";
 
         /**
-         * 15.14.3.1 Map.prototype
+         * 15.14.2.1 Map.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.MapPrototype;
 
         /**
-         * 15.14.3.2 Map[ @@create ] ( )
+         * 15.14.2.2 Map[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

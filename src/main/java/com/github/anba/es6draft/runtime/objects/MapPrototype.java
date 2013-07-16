@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.14 Map Objects</h2>
  * <ul>
- * <li>15.14.4 Properties of the Map Prototype Object
+ * <li>15.14.3 Properties of the Map Prototype Object
  * </ul>
  */
 public class MapPrototype extends OrdinaryObject implements Initialisable {
@@ -50,13 +50,13 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
 
-        // 15.14.4.12 Map.prototype.@@iterator ( )
+        // 15.14.3.12 Map.prototype.@@iterator ( )
         defineOwnProperty(cx, BuiltinSymbol.iterator.get(),
                 new PropertyDescriptor(Get(cx, this, "entries"), true, false, true));
     }
 
     /**
-     * 15.14.4 Properties of the Map Prototype Object
+     * 15.14.3 Properties of the Map Prototype Object
      */
     public enum Properties {
         ;
@@ -75,13 +75,13 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.14.4.1 Map.prototype.constructor
+         * 15.14.3.1 Map.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Map;
 
         /**
-         * 15.14.4.2 Map.prototype.clear ()
+         * 15.14.3.2 Map.prototype.clear ()
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
@@ -92,7 +92,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.3 Map.prototype.delete ( key )
+         * 15.14.3.3 Map.prototype.delete ( key )
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
@@ -102,7 +102,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.4 Map.prototype.forEach ( callbackfn , thisArg = undefined )
+         * 15.14.3.4 Map.prototype.forEach ( callbackfn , thisArg = undefined )
          */
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -122,7 +122,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.5 Map.prototype.get ( key )
+         * 15.14.3.5 Map.prototype.get ( key )
          */
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object key) {
@@ -133,7 +133,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.6 Map.prototype.has ( key )
+         * 15.14.3.6 Map.prototype.has ( key )
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
@@ -143,7 +143,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.7 Map.prototype.entries ( )
+         * 15.14.3.7 Map.prototype.entries ( )
          */
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
@@ -152,7 +152,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.8 Map.prototype.keys ( )
+         * 15.14.3.8 Map.prototype.keys ( )
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
@@ -161,7 +161,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.9 Map.prototype.set ( key , value )
+         * 15.14.3.9 Map.prototype.set ( key , value )
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
@@ -172,7 +172,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.10 get Map.prototype.size
+         * 15.14.3.10 get Map.prototype.size
          */
         @Accessor(name = "size", type = Accessor.Type.Getter)
         public static Object size(ExecutionContext cx, Object thisValue) {
@@ -182,7 +182,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.11 Map.prototype.values ( )
+         * 15.14.3.11 Map.prototype.values ( )
          */
         @Function(name = "values", arity = 0)
         public static Object values(ExecutionContext cx, Object thisValue) {
@@ -191,7 +191,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.14.4.13 Map.prototype.@@toStringTag
+         * 15.14.3.13 Map.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
