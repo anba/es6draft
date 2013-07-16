@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <h1>8 Types</h1><br>
  * <h2>8.3 Ordinary Object Internal Methods and Internal Data Properties</h2>
  * <ul>
- * <li>8.3.15 Ordinary Function Objects
+ * <li>8.3.16 Ordinary Function Objects
  * </ul>
  */
 public abstract class FunctionObject extends OrdinaryObject implements Callable {
@@ -122,16 +122,16 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 8.3.15.3 [[Get]] (P, Receiver)
+     * 8.3.16.3 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
-        // no override necessary
+        // no override necessary (!)
         return super.get(cx, propertyKey, receiver);
     }
 
     /**
-     * 8.3.15.4 [[GetOwnProperty]] (P)
+     * 8.3.16.4 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {

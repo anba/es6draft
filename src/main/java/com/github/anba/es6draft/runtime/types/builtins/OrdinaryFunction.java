@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
@@ -32,7 +33,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <h1>8 Types</h1><br>
  * <h2>8.3 Ordinary Object Internal Methods and Internal Data Properties</h2>
  * <ul>
- * <li>8.3.15 Ordinary Function Objects
+ * <li>8.3.16 Ordinary Function Objects
  * </ul>
  */
 public class OrdinaryFunction extends FunctionObject {
@@ -47,7 +48,7 @@ public class OrdinaryFunction extends FunctionObject {
         }
 
         /**
-         * 8.3.15.2 [[Construct]] (argumentsList)
+         * 8.3.16.2 [[Construct]] (argumentsList)
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -56,29 +57,31 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 8.3.15.1 [[Call]] Internal Method
+     * 8.3.16.1 [[Call]] Internal Method
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        /* step 1 */
         if (!isInitialised()) {
             throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
+        /* steps 2-3 (implicit) */
         Object oldCaller = caller.getValue();
         Object oldArguments = arguments.getValue();
         try {
             FunctionObject caller = callerContext.getCurrentFunction();
-            /* step 1-11 */
+            /* steps 4-12 */
             ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
                     thisValue);
-            /* step 12-13 */
+            /* step 13-14 */
             ExoticArguments arguments = getFunction().functionDeclarationInstantiation(
                     calleeContext, this, args);
             if (isLegacy()) {
                 updateLegacyProperties(calleeContext, caller, arguments);
             }
-            /* step 14-15 */
+            /* step 15-16 */
             Object result = EvaluateBody(calleeContext, getCode());
-            /* step 16 */
+            /* step 17 */
             return result;
         } finally {
             if (isLegacy()) {
@@ -99,22 +102,24 @@ public class OrdinaryFunction extends FunctionObject {
                 Object thisValue = h[1];
                 Object[] args = (Object[]) h[2];
 
+                /* step 1 */
                 if (!f.isInitialised()) {
                     throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
                 }
+                /* steps 2-3 (implicit) */
                 Object oldCaller = f.caller.getValue();
                 Object oldArguments = f.arguments.getValue();
                 try {
                     FunctionObject caller = calleeContext.getCurrentFunction();
-                    /* step 1-11 */
+                    /* step 4-12 */
                     calleeContext = ExecutionContext.newFunctionExecutionContext(f, thisValue);
-                    /* step 12-13 */
+                    /* step 13-14 */
                     ExoticArguments arguments = f.getFunction().functionDeclarationInstantiation(
                             calleeContext, f, args);
                     if (f.isLegacy()) {
                         f.updateLegacyProperties(calleeContext, caller, arguments);
                     }
-                    /* step 14-15 */
+                    /* step 15-17 */
                     result = f.getCode().handle().invokeExact(calleeContext);
                 } finally {
                     if (f.isLegacy()) {
@@ -145,11 +150,13 @@ public class OrdinaryFunction extends FunctionObject {
     /* ***************************************************************************************** */
 
     /**
-     * 8.3.15.2.1 OrdinaryConstruct (F, argumentsList)
+     * 8.3.16.2.1 OrdinaryConstruct (F, argumentsList)
      */
     public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject OrdinaryConstruct(
             ExecutionContext cx, FUNCTION f, Object[] args) {
+        /* steps 1-2 */
         Object creator = Get(cx, f, BuiltinSymbol.create.get());
+        /* steps 3-5 */
         Object obj;
         if (!Type.isUndefined(creator)) {
             if (!IsCallable(creator)) {
@@ -159,21 +166,25 @@ public class OrdinaryFunction extends FunctionObject {
         } else {
             obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
         }
+        /* step 6 */
         if (!Type.isObject(obj)) {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
+        /* steps 7-8 */
         Object result = f.call(cx, obj, args);
+        /* step 9 */
         if (Type.isObject(result)) {
             return Type.objectValue(result);
         }
+        /* step 10 */
         return Type.objectValue(obj);
     }
 
     /**
-     * 8.3.15.5 FunctionAllocate Abstract Operation
+     * 8.3.16.5 FunctionAllocate Abstract Operation
      */
-    public static OrdinaryFunction FunctionAllocate(ExecutionContext cx, ScriptObject prototype,
-            FunctionKind kind) {
+    public static OrdinaryFunction FunctionAllocate(ExecutionContext cx,
+            ScriptObject functionPrototype, FunctionKind kind) {
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
         /* steps 4-6 */
@@ -186,8 +197,8 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 7 */
         f.functionKind = kind;
         /* step 8 */
-        f.setPrototype(prototype);
-        /* step 10 */
+        f.setPrototype(functionPrototype);
+        /* step 9 */
         // f.[[Extensible]] = true (implicit)
         /* step 10 */
         f.realm = realm;
@@ -198,34 +209,45 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 8.3.15.6 FunctionInitialize Abstract Operation
+     * 8.3.16.6 FunctionInitialise Abstract Operation
      */
-    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(
+    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment scope) {
-        return FunctionInitialize(cx, f, kind, function, scope, null, null);
+        return FunctionInitialise(cx, f, kind, function, scope, null, null);
     }
 
     /**
-     * 8.3.15.6 FunctionInitialize Abstract Operation
+     * 8.3.16.6 FunctionInitialise Abstract Operation
      */
-    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialize(
+    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment scope, ScriptObject homeObject, String methodName) {
         boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
-
-        /* step 2 */
-        f.scope = scope;
-        /* steps 3-4 */
-        f.function = function;
-        /* step 4 */
-        f.homeObject = homeObject;
-        /* step 5 */
-        f.methodName = methodName;
-        /* step 7 */
-        f.strict = strict;
+        // first update 'legacy' flag, otherwise AddRestrictedFunctionProperties() fails
         f.legacy = f.legacy && !strict;
+
+        /* step 1 */
+        int len = function.expectedArgumentCount();
+        /* step 2 */
+        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, false));
+        String name = function.functionName() != null ? function.functionName() : "";
+        DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor(name, false, false, false));
+        /* step 3 */
+        if (strict) {
+            AddRestrictedFunctionProperties(cx, f);
+        }
+        /* step 4 */
+        f.scope = scope;
+        /* steps 5-6 */
+        f.function = function;
+        /* step 7 */
+        f.homeObject = homeObject;
         /* step 8 */
+        f.methodName = methodName;
+        /* step 9 */
+        f.strict = strict;
+        /* steps 10-12 */
         if (kind == FunctionKind.Arrow) {
             f.thisMode = ThisMode.Lexical;
         } else if (strict) {
@@ -233,22 +255,12 @@ public class OrdinaryFunction extends FunctionObject {
         } else {
             f.thisMode = ThisMode.Global;
         }
-        /*  step 11 */
-        int len = function.expectedArgumentCount();
-        /* step 12 */
-        f.defineOwnProperty(cx, "length", new PropertyDescriptor(len, false, false, false));
-        String name = function.functionName() != null ? function.functionName() : "";
-        f.defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
         /* step 13 */
-        if (strict) {
-            AddRestrictedFunctionProperties(cx, f);
-        }
-        /* step 14 */
         return f;
     }
 
     /**
-     * 8.3.15.7 FunctionCreate Abstract Operation
+     * 8.3.16.7 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
@@ -256,45 +268,46 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 8.3.15.7 FunctionCreate Abstract Operation
+     * 8.3.16.7 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype) {
-        return FunctionCreate(cx, kind, function, scope, prototype, null, null);
+            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
+        return FunctionCreate(cx, kind, function, scope, functionPrototype, null, null);
     }
 
     /**
-     * 8.3.15.7 FunctionCreate Abstract Operation
+     * 8.3.16.7 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
-            ScriptObject homeObject, String methodName) {
+            RuntimeInfo.Function function, LexicalEnvironment scope,
+            ScriptObject functionPrototype, ScriptObject homeObject, String methodName) {
         assert !function.isGenerator();
         /* step 1 */
-        if (prototype == null) {
-            prototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        if (functionPrototype == null) {
+            functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         }
         /* step 2 */
-        OrdinaryFunction f = FunctionAllocate(cx, prototype, kind);
+        OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, kind);
         /* step 3 */
-        return FunctionInitialize(cx, f, kind, function, scope, homeObject, methodName);
+        return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
     }
 
     /**
-     * 8.3.15.8 AddRestrictedFunctionProperties Abstract Operation
+     * 8.3.16.9 AddRestrictedFunctionProperties Abstract Operation
      */
     public static void AddRestrictedFunctionProperties(ExecutionContext cx, ScriptObject obj) {
         /*  step 1  */
         Callable thrower = cx.getRealm().getThrowTypeError();
         /*  step 2  */
-        obj.defineOwnProperty(cx, "caller", new PropertyDescriptor(thrower, thrower, false, false));
+        DefinePropertyOrThrow(cx, obj, "caller", new PropertyDescriptor(thrower, thrower, false,
+                false));
         /*  step 3  */
-        obj.defineOwnProperty(cx, "arguments", new PropertyDescriptor(thrower, thrower, false,
+        DefinePropertyOrThrow(cx, obj, "arguments", new PropertyDescriptor(thrower, thrower, false,
                 false));
     }
 
     /**
-     * 8.3.15.8 The %ThrowTypeError% Function Object
+     * 8.3.16.9 The %ThrowTypeError% Function Object
      */
     private static class TypeErrorThrower extends BuiltinFunction {
         TypeErrorThrower(Realm realm) {
@@ -309,25 +322,32 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 8.3.15.8 The %ThrowTypeError% Function Object
+     * 8.3.16.9 The %ThrowTypeError% Function Object
      */
     public static Callable createThrowTypeError(ExecutionContext cx) {
-        /* step 1-4 (implicit) */
+        /* step 1 */
+        assert cx.getIntrinsic(Intrinsics.FunctionPrototype) != null;
+        /* step 2 */
+        ScriptObject functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        /* step 3-8 (implicit) */
+        // inlined FunctionAllocate()
         TypeErrorThrower f = new TypeErrorThrower(cx.getRealm());
-        f.setPrototype(cx.getIntrinsic(Intrinsics.FunctionPrototype));
-        f.defineOwnProperty(cx, "length", new PropertyDescriptor(0, false, false, false));
-        f.defineOwnProperty(cx, "name", new PropertyDescriptor("ThrowTypeError", false, false,
+        f.setPrototype(functionPrototype);
+        // inlined FunctionInitialise()
+        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(0, false, false, false));
+        DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor("ThrowTypeError", false, false,
                 false));
-        f.defineOwnProperty(cx, "caller", new PropertyDescriptor(f, f, false, false));
-        f.defineOwnProperty(cx, "arguments", new PropertyDescriptor(f, f, false, false));
-        /* step 5 */
+        // inlined AddRestrictedFunctionProperties()
+        DefinePropertyOrThrow(cx, f, "caller", new PropertyDescriptor(f, f, false, false));
+        DefinePropertyOrThrow(cx, f, "arguments", new PropertyDescriptor(f, f, false, false));
+        /* step 9 */
         f.preventExtensions(cx);
-        /* step 6 */
+
         return f;
     }
 
     /**
-     * 8.3.15.9 MakeConstructor Abstract Operation
+     * 8.3.16.10 MakeConstructor Abstract Operation
      */
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f) {
         /*  step 2 */
@@ -339,7 +359,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 8.3.15.9 MakeConstructor Abstract Operation
+     * 8.3.16.9 MakeConstructor Abstract Operation
      */
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f,
             boolean writablePrototype, ScriptObject prototype) {
@@ -349,7 +369,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 8.3.15.9 MakeConstructor Abstract Operation
+     * 8.3.16.9 MakeConstructor Abstract Operation
      */
     private static void MakeConstructor(ExecutionContext cx, FunctionObject f,
             boolean writablePrototype, ScriptObject prototype, boolean installNeeded) {

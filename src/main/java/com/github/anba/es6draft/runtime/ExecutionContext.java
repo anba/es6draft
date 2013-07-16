@@ -119,10 +119,10 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.19.1 [[Call]] Internal Method
+     * 8.3.16.1 [[Call]] Internal Method
      */
     public static ExecutionContext newFunctionExecutionContext(FunctionObject f, Object thisArgument) {
-        /* 13.6.1, step 1-10 */
+        /* 8.3.16.1, step 4-12 */
         ExecutionContext calleeContext = new ExecutionContext();
         Realm calleeRealm = f.getRealm();
         calleeContext.realm = calleeRealm;

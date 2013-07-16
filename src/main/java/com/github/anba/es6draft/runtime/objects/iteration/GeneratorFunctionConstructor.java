@@ -11,7 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialise;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
@@ -121,7 +121,7 @@ public class GeneratorFunctionConstructor extends BuiltinFunction implements Con
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
 
         /* step 17-18 */
-        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
+        FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 19 */
         ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
         /* step 20 */

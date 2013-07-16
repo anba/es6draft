@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorStart;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialize;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialise;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -107,10 +107,10 @@ public class OrdinaryGenerator extends FunctionObject {
     /* ***************************************************************************************** */
 
     /**
-     * 8.3.15.5 FunctionAllocate Abstract Operation
+     * 8.3.16.5 FunctionAllocate Abstract Operation
      */
-    public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx, ScriptObject prototype,
-            FunctionKind kind) {
+    public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx,
+            ScriptObject functionPrototype, FunctionKind kind) {
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
         /* steps 4-6 */
@@ -118,8 +118,8 @@ public class OrdinaryGenerator extends FunctionObject {
         /* step 7 */
         f.functionKind = kind;
         /* step 8 */
-        f.setPrototype(prototype);
-        /* step 10 */
+        f.setPrototype(functionPrototype);
+        /* step 9 */
         // f.[[Extensible]] = true (implicit)
         /* step 10 */
         f.realm = realm;
@@ -131,7 +131,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 8.3.15.7 GeneratorFunctionCreate Abstract Operation
+     * 8.3.15.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
@@ -139,27 +139,27 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 8.3.15.7 GeneratorFunctionCreate Abstract Operation
+     * 8.3.15.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype) {
-        return GeneratorFunctionCreate(cx, kind, function, scope, prototype, null, null);
+            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
+        return GeneratorFunctionCreate(cx, kind, function, scope, functionPrototype, null, null);
     }
 
     /**
-     * 8.3.15.7 GeneratorFunctionCreate Abstract Operation
+     * 8.3.15.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject prototype,
-            ScriptObject homeObject, String methodName) {
+            RuntimeInfo.Function function, LexicalEnvironment scope,
+            ScriptObject functionPrototype, ScriptObject homeObject, String methodName) {
         assert function.isGenerator() && kind != FunctionKind.ConstructorMethod;
         /* step 1 */
-        if (prototype == null) {
-            prototype = cx.getIntrinsic(Intrinsics.Generator);
+        if (functionPrototype == null) {
+            functionPrototype = cx.getIntrinsic(Intrinsics.Generator);
         }
         /* step 2 */
-        OrdinaryGenerator f = FunctionAllocate(cx, prototype, kind);
+        OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, kind);
         /* step 3 */
-        return FunctionInitialize(cx, f, kind, function, scope, homeObject, methodName);
+        return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
     }
 }

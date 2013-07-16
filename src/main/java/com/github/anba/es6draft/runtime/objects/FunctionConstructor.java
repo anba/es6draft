@@ -115,7 +115,7 @@ public class FunctionConstructor extends BuiltinFunction implements Constructor,
         OrdinaryFunction fn = (OrdinaryFunction) f;
 
         /* step 18 */
-        FunctionInitialize(calleeContext, fn, FunctionKind.Normal, function, scope);
+        FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 19 */
         MakeConstructor(calleeContext, fn);
         /* step 20 */
