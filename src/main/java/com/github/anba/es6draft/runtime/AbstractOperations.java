@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.instanceOfOperator;
 import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
@@ -27,6 +28,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
+import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -43,14 +45,6 @@ import com.google.doubleconversion.DoubleConversion;
  */
 public final class AbstractOperations {
     private AbstractOperations() {
-    }
-
-    public static long ToIndex(ExecutionContext cx, double n) {
-        // TODO: throw RangeError?
-        // if (n > 0x1FFFFFFFFFFFFFL) {
-        // throwRangeError(cx, Messages.Key.InvalidIndex, Double.toString(n));
-        // }
-        return (long) n;
     }
 
     /**
@@ -810,7 +804,7 @@ public final class AbstractOperations {
     /**
      * 9.3.12 CreateListFromArrayLike (obj)
      */
-    public static List<?> CreateListFromArrayLike(ExecutionContext cx, Object obj) {
+    public static Object[] CreateListFromArrayLike(ExecutionContext cx, Object obj) {
         /* step 1 */
         if (!Type.isObject(obj)) {
             throwTypeError(cx, Messages.Key.NotObjectType);
@@ -819,14 +813,19 @@ public final class AbstractOperations {
         /* step 2 */
         Object len = Get(cx, object, "length");
         /* steps 3-4 */
-        long n = ToIndex(cx, ToInteger(cx, len));
+        double n = ToInteger(cx, len);
+        // CreateListFromArrayLike() is (currently) only used for argument arrays
+        if (n > FunctionPrototype.getMaxArguments()) {
+            throw throwRangeError(cx, Messages.Key.FunctionTooManyArguments);
+        }
+        int length = n > 0 ? (int) n : 0;
         /* step 5 */
-        ArrayList<Object> list = new ArrayList<>();
+        Object[] list = new Object[length];
         /* steps 6-7 */
-        for (long index = 0; index < n; ++index) {
-            String indexName = Long.toString(index); // ToString(index)
+        for (int index = 0; index < length; ++index) {
+            String indexName = ToString(index);
             Object next = Get(cx, object, indexName);
-            list.add(next);
+            list[index] = next;
         }
         /* step 8 */
         return list;

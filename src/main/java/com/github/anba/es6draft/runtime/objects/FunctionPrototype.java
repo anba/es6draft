@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -26,7 +25,6 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
@@ -116,21 +114,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             if (Type.isUndefinedOrNull(argArray)) {
                 return func.call(cx, thisArg);
             }
-            if (!Type.isObject(argArray)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            ScriptObject argarray = Type.objectValue(argArray);
-            Object len = Get(cx, argarray, "length");
-            long n = ToUint32(cx, len);
-            if (n > MAX_ARGUMENTS) {
-                throw throwRangeError(cx, Messages.Key.FunctionTooManyArguments);
-            }
-            Object[] argList = new Object[(int) n];
-            for (int index = 0; index < n; ++index) {
-                String indexName = ToString(index);
-                Object nextArg = Get(cx, argarray, indexName);
-                argList[index] = nextArg;
-            }
+            Object[] argList = CreateListFromArrayLike(cx, argArray);
             return func.call(cx, thisArg, argList);
         }
 

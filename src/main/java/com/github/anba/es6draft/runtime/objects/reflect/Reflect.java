@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.reflect;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListFromArrayLike;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -184,6 +185,27 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             } else {
                 assert key instanceof Symbol;
                 return obj.set(cx, (Symbol) key, value, receiver);
+            }
+        }
+
+        /**
+         * 15.18.1.10 Reflect.invoke (target, propertyKey, argumentsList, receiver=target)
+         */
+        @Function(name = "invoke", arity = 4)
+        public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target,
+                Object propertyKey, Object argumentsList,
+                @Optional(Optional.Default.NONE) Object receiver) {
+            ScriptObject obj = ToObject(cx, target);
+            Object key = ToPropertyKey(cx, propertyKey);
+            if (receiver == null) {
+                receiver = target;
+            }
+            Object[] argList = CreateListFromArrayLike(cx, argumentsList);
+            if (key instanceof String) {
+                return obj.invoke(cx, (String) key, argList, receiver);
+            } else {
+                assert key instanceof Symbol;
+                return obj.invoke(cx, (Symbol) key, argList, receiver);
             }
         }
 
