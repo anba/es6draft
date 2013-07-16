@@ -50,8 +50,6 @@ public class ExoticArray extends OrdinaryObject {
         this.arrayInitialisationState = arrayInitialisationState;
     }
 
-    // FIXME: spec bug (per introductory paragraph [[Set]] is overridden!)
-
     /**
      * 8.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
