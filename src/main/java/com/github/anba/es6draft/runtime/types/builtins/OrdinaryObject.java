@@ -129,6 +129,19 @@ public class OrdinaryObject implements ScriptObject {
         return true;
     }
 
+    /** 8.3.3 [[IsExtensible]] ( ) */
+    @Override
+    public boolean isExtensible(ExecutionContext cx) {
+        return extensible;
+    }
+
+    /** 8.3.4 [[PreventExtensions]] ( ) */
+    @Override
+    public boolean preventExtensions(ExecutionContext cx) {
+        this.extensible = false;
+        return true;
+    }
+
     /** 8.3.3 [[HasIntegrity]] ( Level ) */
     @Override
     public boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level) {

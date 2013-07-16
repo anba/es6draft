@@ -23,6 +23,12 @@ public interface ScriptObject {
     /** [[SetInheritance]] (V) */
     boolean setInheritance(ExecutionContext cx, ScriptObject prototype);
 
+    /** [[IsExtensible]] () */
+    boolean isExtensible(ExecutionContext cx);
+
+    /** [[PreventExtensions]] () */
+    boolean preventExtensions(ExecutionContext cx);
+
     /** [[HasIntegrity]] (Level) */
     boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level);
 

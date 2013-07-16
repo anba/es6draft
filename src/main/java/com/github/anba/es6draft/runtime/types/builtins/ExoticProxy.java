@@ -251,6 +251,46 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
+     * 8.5.3 [[IsExtensible]] ( )
+     */
+    @Override
+    public boolean isExtensible(ExecutionContext cx) {
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
+        Callable trap = GetMethod(cx, handler, "isExtensible");
+        if (trap == null) {
+            return target.isExtensible(cx);
+        }
+        Object trapResult = trap.call(cx, handler, target);
+        boolean booleanTrapResult = ToBoolean(trapResult);
+        boolean targetResult = target.isExtensible(cx);
+        if (booleanTrapResult != targetResult) {
+            throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
+        }
+        return booleanTrapResult;
+    }
+
+    /**
+     * 8.5.4 [[PreventExtensions]] ( )
+     */
+    @Override
+    public boolean preventExtensions(ExecutionContext cx) {
+        ScriptObject handler = proxyHandler;
+        ScriptObject target = proxyTarget;
+        Callable trap = GetMethod(cx, handler, "preventExtensions");
+        if (trap == null) {
+            return target.preventExtensions(cx);
+        }
+        Object trapResult = trap.call(cx, handler, target);
+        boolean booleanTrapResult = ToBoolean(trapResult);
+        boolean targetIsExtensible = target.isExtensible(cx);
+        if (booleanTrapResult && targetIsExtensible) {
+            throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
+        }
+        return booleanTrapResult;
+    }
+
+    /**
      * 8.5.3 [[HasIntegrity]] ( Level )
      */
     @Override

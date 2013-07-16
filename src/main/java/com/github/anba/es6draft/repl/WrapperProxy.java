@@ -128,6 +128,22 @@ class WrapperProxy implements ScriptObject {
     }
 
     /**
+     * [[IsExtensible]] ()
+     */
+    @Override
+    public boolean isExtensible(ExecutionContext cx) {
+        return proxyTarget.isExtensible(cx);
+    }
+
+    /**
+     * [[PreventExtensions]] ()
+     */
+    @Override
+    public boolean preventExtensions(ExecutionContext cx) {
+        return proxyTarget.preventExtensions(cx);
+    }
+
+    /**
      * [[HasIntegrity]] ( Level )
      */
     @Override
