@@ -6,7 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.MakeListIterator;
@@ -26,7 +28,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -138,25 +139,6 @@ public class OrdinaryObject implements ScriptObject {
     @Override
     public boolean preventExtensions(ExecutionContext cx) {
         this.extensible = false;
-        return true;
-    }
-
-    /** 8.3.3 [[HasIntegrity]] ( Level ) */
-    @Override
-    public boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level) {
-        if (level == IntegrityLevel.NonExtensible) {
-            return !extensible;
-        }
-        return TestIntegrityLevel(cx, this, level);
-    }
-
-    /** 8.3.4 [[SetIntegrity]] ( Level ) */
-    @Override
-    public boolean setIntegrity(ExecutionContext cx, IntegrityLevel level) {
-        this.extensible = false;
-        if (level != IntegrityLevel.NonExtensible) {
-            return SetIntegrityLevel(cx, this, level);
-        }
         return true;
     }
 

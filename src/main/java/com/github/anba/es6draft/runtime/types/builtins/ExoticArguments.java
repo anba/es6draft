@@ -20,7 +20,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -198,8 +197,8 @@ public class ExoticArguments extends OrdinaryObject {
         }
 
         @Override
-        public boolean setIntegrity(ExecutionContext cx, IntegrityLevel level) {
-            // ignore attempts to change integrity level
+        public boolean preventExtensions(ExecutionContext cx) {
+            // ignore attempts to change [[Extensible]]
             return true;
         }
 

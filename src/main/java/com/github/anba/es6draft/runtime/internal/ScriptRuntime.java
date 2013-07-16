@@ -286,12 +286,12 @@ public final class ScriptRuntime {
             rawObj.defineOwnProperty(cx, prop, new PropertyDescriptor(rawValue, false, true, false));
         }
         /* step 9-11 */
-        rawObj.setIntegrity(cx, IntegrityLevel.Frozen);
+        SetIntegrityLevel(cx, rawObj, IntegrityLevel.Frozen);
         siteObj.defineOwnProperty(cx, "raw", new PropertyDescriptor(rawObj, false, false, false));
-        siteObj.setIntegrity(cx, IntegrityLevel.Frozen);
+        SetIntegrityLevel(cx, siteObj, IntegrityLevel.Frozen);
         /* step 12 */
         realm.addTemplateCallSite(key, siteObj);
-
+        /* step 13 */
         return siteObj;
     }
 

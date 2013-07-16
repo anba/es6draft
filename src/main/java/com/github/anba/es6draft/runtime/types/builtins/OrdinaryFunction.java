@@ -23,7 +23,6 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo.Code;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -322,7 +321,7 @@ public class OrdinaryFunction extends FunctionObject {
         f.defineOwnProperty(cx, "caller", new PropertyDescriptor(f, f, false, false));
         f.defineOwnProperty(cx, "arguments", new PropertyDescriptor(f, f, false, false));
         /* step 5 */
-        f.setIntegrity(cx, IntegrityLevel.NonExtensible);
+        f.preventExtensions(cx);
         /* step 6 */
         return f;
     }

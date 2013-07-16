@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects.reflect;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -23,7 +22,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.modules.Module;
-import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -47,7 +45,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, ReflectedFunctions.class);
-        setIntegrity(cx, IntegrityLevel.NonExtensible);
+        preventExtensions(cx);
     }
 
     /**
@@ -89,7 +87,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(ExecutionContext cx, Object thisValue, Object target) {
             ScriptObject obj = ToObject(cx, target);
-            return IsExtensible(cx, obj);
+            return obj.isExtensible(cx);
         }
 
         /**
@@ -98,7 +96,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object target) {
             ScriptObject obj = ToObject(cx, target);
-            return obj.setIntegrity(cx, IntegrityLevel.NonExtensible);
+            return obj.preventExtensions(cx);
         }
 
         /**
@@ -241,42 +239,6 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             ScriptObject keys = obj.ownPropertyKeys(cx);
             // FIXME: spec bug (algorithm end at step 4 without return)
             return keys;
-        }
-
-        /**
-         * 15.17.1.14 Reflect.freeze (target)
-         */
-        @Function(name = "freeze", arity = 1)
-        public static Object freeze(ExecutionContext cx, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(cx, target);
-            return obj.setIntegrity(cx, IntegrityLevel.Frozen);
-        }
-
-        /**
-         * 15.17.1.15 Reflect.seal (target)
-         */
-        @Function(name = "seal", arity = 1)
-        public static Object seal(ExecutionContext cx, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(cx, target);
-            return obj.setIntegrity(cx, IntegrityLevel.Sealed);
-        }
-
-        /**
-         * 15.17.1.16 Reflect.isFrozen (target)
-         */
-        @Function(name = "isFrozen", arity = 1)
-        public static Object isFrozen(ExecutionContext cx, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(cx, target);
-            return obj.hasIntegrity(cx, IntegrityLevel.Frozen);
-        }
-
-        /**
-         * 15.17.1.17 Reflect.isSealed (target)
-         */
-        @Function(name = "isSealed", arity = 1)
-        public static Object isSealed(ExecutionContext cx, Object thisValue, Object target) {
-            ScriptObject obj = ToObject(cx, target);
-            return obj.hasIntegrity(cx, IntegrityLevel.Sealed);
         }
     }
 }

@@ -29,12 +29,6 @@ public interface ScriptObject {
     /** [[PreventExtensions]] () */
     boolean preventExtensions(ExecutionContext cx);
 
-    /** [[HasIntegrity]] (Level) */
-    boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level);
-
-    /** [[SetIntegrity]] (Level) */
-    boolean setIntegrity(ExecutionContext cx, IntegrityLevel level);
-
     /** [[HasOwnProperty]] (P) */
     boolean hasOwnProperty(ExecutionContext cx, String propertyKey);
 

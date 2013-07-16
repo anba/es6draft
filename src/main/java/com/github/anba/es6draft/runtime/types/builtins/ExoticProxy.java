@@ -22,7 +22,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
-import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -285,66 +284,6 @@ public class ExoticProxy implements ScriptObject {
         boolean booleanTrapResult = ToBoolean(trapResult);
         boolean targetIsExtensible = target.isExtensible(cx);
         if (booleanTrapResult && targetIsExtensible) {
-            throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
-        }
-        return booleanTrapResult;
-    }
-
-    /**
-     * 8.5.3 [[HasIntegrity]] ( Level )
-     */
-    @Override
-    public boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level) {
-        ScriptObject handler = proxyHandler;
-        ScriptObject target = proxyTarget;
-        String trapName;
-        if (level == IntegrityLevel.NonExtensible) {
-            trapName = "isExtensible";
-        } else if (level == IntegrityLevel.Sealed) {
-            trapName = "isSealed";
-        } else {
-            trapName = "isFrozen";
-        }
-        Callable trap = GetMethod(cx, handler, trapName);
-        if (trap == null) {
-            return target.hasIntegrity(cx, level);
-        }
-        Object trapResult = trap.call(cx, handler, target);
-        boolean booleanTrapResult = ToBoolean(trapResult);
-        // FIXME: spec bug - isExtensible() /= NonExtensible
-        if (level == IntegrityLevel.NonExtensible) {
-            booleanTrapResult = !booleanTrapResult;
-        }
-        boolean targetResult = target.hasIntegrity(cx, level);
-        if (booleanTrapResult != targetResult) {
-            throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
-        }
-        return booleanTrapResult;
-    }
-
-    /**
-     * 8.5.4 [[SetIntegrity]] ( Level )
-     */
-    @Override
-    public boolean setIntegrity(ExecutionContext cx, IntegrityLevel level) {
-        ScriptObject handler = proxyHandler;
-        ScriptObject target = proxyTarget;
-        String trapName;
-        if (level == IntegrityLevel.NonExtensible) {
-            trapName = "preventExtensions";
-        } else if (level == IntegrityLevel.Sealed) {
-            trapName = "seal";
-        } else {
-            trapName = "freeze";
-        }
-        Callable trap = GetMethod(cx, handler, trapName);
-        if (trap == null) {
-            return target.setIntegrity(cx, level);
-        }
-        Object trapResult = trap.call(cx, handler, target);
-        boolean booleanTrapResult = ToBoolean(trapResult);
-        boolean targetResult = target.hasIntegrity(cx, level);
-        if (booleanTrapResult != targetResult) {
             throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
         }
         return booleanTrapResult;

@@ -21,7 +21,6 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -141,22 +140,6 @@ class WrapperProxy implements ScriptObject {
     @Override
     public boolean preventExtensions(ExecutionContext cx) {
         return proxyTarget.preventExtensions(cx);
-    }
-
-    /**
-     * [[HasIntegrity]] ( Level )
-     */
-    @Override
-    public boolean hasIntegrity(ExecutionContext cx, IntegrityLevel level) {
-        return proxyTarget.hasIntegrity(cx, level);
-    }
-
-    /**
-     * [[SetIntegrity]] ( Level )
-     */
-    @Override
-    public boolean setIntegrity(ExecutionContext cx, IntegrityLevel level) {
-        return proxyTarget.setIntegrity(cx, level);
     }
 
     /**

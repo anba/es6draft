@@ -31,7 +31,15 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.types.*;
+import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
@@ -242,7 +250,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            boolean status = Type.objectValue(o).setIntegrity(cx, IntegrityLevel.Sealed);
+            boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Sealed);
             if (!status) {
                 throw throwTypeError(cx, Messages.Key.ObjectSealFailed);
             }
@@ -257,7 +265,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            boolean status = Type.objectValue(o).setIntegrity(cx, IntegrityLevel.Frozen);
+            boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Frozen);
             if (!status) {
                 throw throwTypeError(cx, Messages.Key.ObjectFreezeFailed);
             }
@@ -272,7 +280,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            boolean status = Type.objectValue(o).setIntegrity(cx, IntegrityLevel.NonExtensible);
+            boolean status = Type.objectValue(o).preventExtensions(cx);
             if (!status) {
                 throw throwTypeError(cx, Messages.Key.ObjectPreventExtensionsFailed);
             }
@@ -287,7 +295,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            return Type.objectValue(o).hasIntegrity(cx, IntegrityLevel.Sealed);
+            return TestIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Sealed);
         }
 
         /**
@@ -298,7 +306,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isObject(o)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            return Type.objectValue(o).hasIntegrity(cx, IntegrityLevel.Frozen);
+            return TestIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Frozen);
         }
 
         /**

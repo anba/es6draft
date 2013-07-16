@@ -468,8 +468,7 @@ public final class AbstractOperations {
      * 9.2.7 IsExtensible (O)
      */
     public static boolean IsExtensible(ExecutionContext cx, ScriptObject object) {
-        boolean notExtensible = object.hasIntegrity(cx, IntegrityLevel.NonExtensible);
-        return !notExtensible;
+        return object.isExtensible(cx);
     }
 
     /**
@@ -715,8 +714,7 @@ public final class AbstractOperations {
             throw pendingException;
         }
         /* step 9 */
-        // FIXME: spec bug ([[PreventExtensions]] -> [[SetIntegrity]] change missing)
-        return object.setIntegrity(cx, IntegrityLevel.NonExtensible);
+        return object.preventExtensions(cx);
     }
 
     /**

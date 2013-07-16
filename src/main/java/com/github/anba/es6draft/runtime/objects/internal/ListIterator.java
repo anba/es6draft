@@ -17,7 +17,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
-import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -41,7 +40,7 @@ public class ListIterator<T> extends OrdinaryObject {
     public static <T> ListIterator<T> MakeListIterator(ExecutionContext cx, Iterator<T> iterator) {
         ListIterator<T> itr = new ListIterator<>(cx.getRealm(), iterator);
         itr.setPrototype(cx.getIntrinsic(Intrinsics.ListIteratorPrototype));
-        itr.setIntegrity(cx, IntegrityLevel.NonExtensible);
+        itr.preventExtensions(cx);
         return itr;
     }
 
