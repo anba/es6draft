@@ -470,7 +470,7 @@ public class Realm {
     }
 
     /**
-     * <h1>15.14 Map Objects - 15.16 Set Objects</h1>
+     * <h1>15.14 Map Objects - 15.17 WeakSet Objects</h1>
      */
     private static void initialiseCollectionModule(Realm realm) {
         Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -485,6 +485,8 @@ public class Realm {
         SetConstructor setConstructor = new SetConstructor(realm);
         SetPrototype setPrototype = new SetPrototype(realm);
         SetIteratorPrototype setIteratorPrototype = new SetIteratorPrototype(realm);
+        WeakSetConstructor weakSetConstructor = new WeakSetConstructor(realm);
+        WeakSetPrototype weakSetPrototype = new WeakSetPrototype(realm);
 
         // registration phase
         intrinsics.put(Intrinsics.Map, mapConstructor);
@@ -495,6 +497,8 @@ public class Realm {
         intrinsics.put(Intrinsics.Set, setConstructor);
         intrinsics.put(Intrinsics.SetPrototype, setPrototype);
         intrinsics.put(Intrinsics.SetIteratorPrototype, setIteratorPrototype);
+        intrinsics.put(Intrinsics.WeakSet, weakSetConstructor);
+        intrinsics.put(Intrinsics.WeakSetPrototype, weakSetPrototype);
 
         // initialisation phase
         mapConstructor.initialise(defaultContext);
@@ -505,10 +509,12 @@ public class Realm {
         setConstructor.initialise(defaultContext);
         setPrototype.initialise(defaultContext);
         setIteratorPrototype.initialise(defaultContext);
+        weakSetConstructor.initialise(defaultContext);
+        weakSetPrototype.initialise(defaultContext);
     }
 
     /**
-     * <h1>15.17 The Reflect Module - 15.18 Proxy Objects</h1>
+     * <h1>15.18 The Reflect Module - 15.18.2 Proxy Objects</h1>
      */
     private static void initialiseReflectModule(Realm realm) {
         Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;

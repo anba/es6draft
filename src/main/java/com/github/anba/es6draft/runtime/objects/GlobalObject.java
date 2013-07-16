@@ -456,6 +456,12 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         @Value(name = "Set")
         public static final Intrinsics Set = Intrinsics.Set;
 
+        /**
+         * 15.1.4.? WeakSet ( . . . )
+         */
+        @Value(name = "WeakSet")
+        public static final Intrinsics WeakSet = Intrinsics.WeakSet;
+
         // TODO: Proxy
 
         @Value(name = "Proxy")

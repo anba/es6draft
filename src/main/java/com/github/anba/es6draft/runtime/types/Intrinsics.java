@@ -31,6 +31,8 @@ public enum Intrinsics {/* @formatter:off */
     Set,
     SetPrototype,
     SetIteratorPrototype,
+    WeakSet,
+    WeakSetPrototype,
     ErrorPrototype,
     EvalErrorPrototype,
     RangeErrorPrototype,
