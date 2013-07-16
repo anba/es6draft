@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.ArrayIterationKind;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -125,15 +126,26 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... items) {
             ScriptObject o = ToObject(cx, thisValue);
-            ScriptObject a = ArrayCreate(cx, 0);
+            ScriptObject a = null;
+            if (o instanceof ExoticArray) {
+                Object c = Get(cx, o, "constructor");
+                if (IsConstructor(c)) {
+                    Object newObj = ((Constructor) c).construct(cx, 0);
+                    a = ToObject(cx, newObj);
+                }
+            }
+            if (a == null) {
+                a = ArrayCreate(cx, 0);
+            }
             long n = 0;
             int itemsLength = items.length;
             items = Arrays.copyOf(items, itemsLength + 1, Object[].class);
             System.arraycopy(items, 0, items, 1, itemsLength);
             items[0] = o;
             for (Object item : items) {
-                if (item instanceof ExoticArray) {
-                    ExoticArray e = (ExoticArray) item;
+                boolean spreadable = IsConcatSpreadable(cx, item);
+                if (spreadable) {
+                    ScriptObject e = (ScriptObject) item;
                     long len = ToUint32(cx, Get(cx, e, "length"));
                     for (long k = 0; k < len; ++k, ++n) {
                         String p = ToString(k);
@@ -151,6 +163,23 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             }
             Put(cx, a, "length", n, true);
             return a;
+        }
+
+        /**
+         * 15.4.3.4.1 IsConcatSpreadable (O) Abstract Operation
+         */
+        public static boolean IsConcatSpreadable(ExecutionContext cx, Object o) {
+            if (!Type.isObject(o)) {
+                return false;
+            }
+            Object spreadable = Get(cx, Type.objectValue(o), BuiltinSymbol.isConcatSpreadable.get());
+            if (!Type.isUndefined(spreadable)) {
+                return ToBoolean(spreadable);
+            }
+            if (o instanceof ExoticArray) {
+                return true;
+            }
+            return false;
         }
 
         /**

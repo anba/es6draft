@@ -59,6 +59,11 @@ public enum BuiltinSymbol {
      */
     elementSet,
 
+    /**
+     * &#64;&#64;isConcatSpreadable
+     */
+    isConcatSpreadable,
+
     ;
 
     /**
