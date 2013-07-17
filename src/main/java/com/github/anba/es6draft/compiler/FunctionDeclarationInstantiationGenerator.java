@@ -15,15 +15,7 @@ import java.util.Set;
 
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.BindingElement;
-import com.github.anba.es6draft.ast.BindingIdentifier;
-import com.github.anba.es6draft.ast.Declaration;
-import com.github.anba.es6draft.ast.FormalParameter;
-import com.github.anba.es6draft.ast.FormalParameterList;
-import com.github.anba.es6draft.ast.FunctionDeclaration;
-import com.github.anba.es6draft.ast.FunctionNode;
-import com.github.anba.es6draft.ast.GeneratorDeclaration;
-import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
@@ -137,15 +129,20 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         List<StatementListItem> varDeclarations = VarScopedDeclarations(func);
         /* [10.5.3] step 6 */
         List<Declaration> functionsToInitialise = new ArrayList<>();
-        /* [10.5.3] step 7 */
-        boolean argumentsObjectNotNeeded = false;
-        /* [10.5.3] step 8 */
+        /* [10.5.3] step 7-8 */
+        boolean argumentsObjectNeeded;
+        if (func instanceof ArrowFunction) { // => [[ThisMode]] of func is lexical
+            argumentsObjectNeeded = false;
+        } else {
+            argumentsObjectNeeded = true;
+        }
+        /* [10.5.3] step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
             if (item instanceof FunctionDeclaration) {
                 FunctionDeclaration d = (FunctionDeclaration) item;
                 String fn = BoundName(d);
                 if ("arguments".equals(fn)) {
-                    argumentsObjectNotNeeded = true;
+                    argumentsObjectNeeded = false;
                 }
                 boolean alreadyDeclared = bindings.contains(fn);
                 if (!alreadyDeclared) {
@@ -155,12 +152,12 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 }
             }
         }
-        /* [10.5.3] step 9 */
+        /* [10.5.3] step 10 */
         for (String paramName : parameterNames) {
             boolean alreadyDeclared = bindings.contains(paramName);
             if (!alreadyDeclared) {
                 if ("arguments".equals(paramName)) {
-                    argumentsObjectNotNeeded = true;
+                    argumentsObjectNeeded = false;
                 }
                 bindings.add(paramName);
                 createMutableBinding(envRec, paramName, false, mv);
@@ -169,8 +166,8 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 initialiseBinding(envRec, paramName, mv);
             }
         }
-        /* [10.5.3] step 10-11 */
-        if (!argumentsObjectNotNeeded) {
+        /* [10.5.3] step 11-12 */
+        if (argumentsObjectNeeded) {
             bindings.add("arguments");
             if (strict) {
                 createImmutableBinding(envRec, "arguments", mv);
@@ -178,9 +175,9 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 createMutableBinding(envRec, "arguments", false, mv);
             }
         }
-        /* [10.5.3] step 12 */
-        Set<String> varNames = VarDeclaredNames(func);
         /* [10.5.3] step 13 */
+        Set<String> varNames = VarDeclaredNames(func);
+        /* [10.5.3] step 14 */
         for (String varName : varNames) {
             boolean alreadyDeclared = bindings.contains(varName);
             if (!alreadyDeclared) {
@@ -191,9 +188,9 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 initialiseBinding(envRec, varName, mv);
             }
         }
-        /* [10.5.3] step 14 */
-        List<Declaration> lexDeclarations = LexicallyScopedDeclarations(func);
         /* [10.5.3] step 15 */
+        List<Declaration> lexDeclarations = LexicallyScopedDeclarations(func);
+        /* [10.5.3] step 16 */
         for (Declaration d : lexDeclarations) {
             for (String dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
@@ -206,7 +203,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 functionsToInitialise.add(d);
             }
         }
-        /* [10.5.3] step 16 */
+        /* [10.5.3] step 17 */
         for (Declaration f : functionsToInitialise) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
@@ -219,13 +216,13 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             // setMutableBinding(envRec, fn, false, mv);
             initialiseBinding(envRec, fn, mv);
         }
-        /* [10.5.3] step 17-19 */
+        /* [10.5.3] step 18-20 */
         // stack: [] -> [ao]
         InstantiateArgumentsObject(mv);
-        /* [10.5.3] step 20-21 */
+        /* [10.5.3] step 21-22 */
         BindingInitialisation(func, mv);
-        /* [10.5.3] step 22 */
-        if (!argumentsObjectNotNeeded) {
+        /* [10.5.3] step 23 */
+        if (argumentsObjectNeeded) {
             if (strict) {
                 CompleteStrictArgumentsObject(mv);
             } else {
@@ -235,7 +232,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             mv.dup();
             initialiseBinding(envRec, "arguments", mv);
         }
-        /* [10.5.3] step 23 */
+        /* [10.5.3] step 24 */
         // stack: [ao] -> []
         mv.areturn();
     }
