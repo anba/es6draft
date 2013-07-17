@@ -50,16 +50,6 @@ public enum BuiltinSymbol {
     toStringTag,
 
     /**
-     * &#64;&#64;elementGet
-     */
-    elementGet,
-
-    /**
-     * &#64;&#64;elementSet
-     */
-    elementSet,
-
-    /**
      * &#64;&#64;isConcatSpreadable
      */
     isConcatSpreadable,
