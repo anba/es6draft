@@ -108,6 +108,19 @@ public final class IterationAbstractOperations {
     }
 
     /**
+     * FIXME: Not in spec<br>
+     * 15.19.4.3.? IteratorThrow ( iterator, value )
+     */
+    public static ScriptObject IteratorThrow(ExecutionContext cx, ScriptObject iterator,
+            Object value) {
+        Object result = Invoke(cx, iterator, "throw", value);
+        if (!Type.isObject(result)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        return Type.objectValue(result);
+    }
+
+    /**
      * 15.19.4.3.7 IteratorComplete (itrResult)
      */
     public static boolean IteratorComplete(ExecutionContext cx, ScriptObject itrResult) {

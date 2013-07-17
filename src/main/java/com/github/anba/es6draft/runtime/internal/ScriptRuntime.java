@@ -12,10 +12,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceErr
 import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorStart;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorYield;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteStrictArgumentsObject;
@@ -1322,32 +1319,26 @@ public final class ScriptRuntime {
      * </ul>
      */
     public static Object delegatedYield(Object value, ExecutionContext cx) {
-        if (!Type.isObject(value)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
-        }
-        Object iterator = Invoke(cx, value, BuiltinSymbol.iterator.get());
-        if (!Type.isObject(iterator)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
-        }
+        ScriptObject iterator = GetIterator(cx, value);
         boolean next = true;
         Object received = UNDEFINED;
         for (;;) {
-            Object inner = Invoke(cx, iterator, next ? "next" : "throw", received);
-            if (!Type.isObject(inner)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+            ScriptObject innerResult;
+            if (next) {
+                innerResult = IteratorNext(cx, iterator, received);
+            } else {
+                innerResult = IteratorThrow(cx, iterator, received);
             }
-            ScriptObject innerResult = Type.objectValue(inner);
             boolean done = IteratorComplete(cx, innerResult);
             if (done) {
-                // FIXME: spec bug - use IteratorValue() abstract operation
-                Object innerValue = Get(cx, innerResult, "value");
+                Object innerValue = IteratorValue(cx, innerResult);
                 return innerValue;
             }
             try {
                 received = GeneratorYield(cx, innerResult);
                 next = true;
             } catch (ScriptException e) {
-                if (HasProperty(cx, Type.objectValue(iterator), "throw")) {
+                if (HasProperty(cx, iterator, "throw")) {
                     // FIXME: spec bug - 'throw' handler somewhat incomplete
                     received = e.getValue();
                     next = false;
