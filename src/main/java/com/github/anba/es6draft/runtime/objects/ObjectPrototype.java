@@ -39,6 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -84,10 +85,10 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             if (Type.isNull(thisValue)) {
                 return "[object Null]";
             }
-            if (Type.isSymbol(thisValue)) {
+            ScriptObject o = ToObject(cx, thisValue);
+            if (o instanceof ExoticSymbol) {
                 return "[object Symbol]";
             }
-            ScriptObject o = ToObject(cx, thisValue);
             String builtinTag;
             if (o instanceof ExoticArray) {
                 builtinTag = "Array";

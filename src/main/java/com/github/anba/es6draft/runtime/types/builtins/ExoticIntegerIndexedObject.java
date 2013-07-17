@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <h1>8 Types</h1><br>
  * <h2>8.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>8.4.6 Integer Indexed Delegation Exotic Objects
+ * <li>8.4.6 Integer Indexed Exotic Objects
  * </ul>
  */
 public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {

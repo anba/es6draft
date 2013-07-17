@@ -711,9 +711,7 @@ public class OrdinaryObject implements ScriptObject {
     protected Collection<Object> enumerateOwnKeys() {
         List<Object> keys = new ArrayList<>();
         for (Object key : __keys__()) {
-            if (!(key instanceof Symbol && ((Symbol) key).isPrivate())) {
-                keys.add(key);
-            }
+            keys.add(key);
         }
         return keys;
     }

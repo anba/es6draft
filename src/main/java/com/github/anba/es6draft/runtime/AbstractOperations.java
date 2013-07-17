@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.google.doubleconversion.DoubleConversion;
@@ -153,8 +154,6 @@ public final class AbstractOperations {
             return !(d == 0 || Double.isNaN(d));
         case String:
             return Type.stringValue(val).length() != 0;
-        case Symbol:
-            return true;
         case Object:
         default:
             return true;
@@ -183,8 +182,6 @@ public final class AbstractOperations {
             return Type.numberValue(val);
         case String:
             return ToNumber(Type.stringValue(val));
-        case Symbol:
-            return Double.NaN;
         case Object:
         default:
             Object primValue = ToPrimitive(cx, val, Type.Number);
@@ -282,8 +279,6 @@ public final class AbstractOperations {
             return ToString(Type.numberValue(val));
         case String:
             return Type.stringValue(val);
-        case Symbol:
-            return "[object Symbol]";
         case Object:
         default:
             Object primValue = ToPrimitive(cx, val, Type.String);
@@ -338,8 +333,6 @@ public final class AbstractOperations {
             return NumberCreate(cx, Type.numberValue(val));
         case String:
             return StringCreate(cx, Type.stringValue(val));
-        case Symbol:
-            throw throwTypeError(cx, Messages.Key.SymbolObject);
         case Object:
         default:
             return Type.objectValue(val);
@@ -350,7 +343,7 @@ public final class AbstractOperations {
      * 9.1.10 ToPropertyKey
      */
     public static Object ToPropertyKey(ExecutionContext cx, Object val) {
-        if (Type.isSymbol(val)) {
+        if (val instanceof ExoticSymbol) {
             return val;
         }
         return ToFlatString(cx, val);
@@ -362,9 +355,6 @@ public final class AbstractOperations {
     public static Object CheckObjectCoercible(ExecutionContext cx, Object val) {
         if (Type.isUndefinedOrNull(val)) {
             throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
-        }
-        if (Type.isSymbol(val)) {
-            throw throwTypeError(cx, Messages.Key.SymbolObject);
         }
         return val;
     }
@@ -407,7 +397,7 @@ public final class AbstractOperations {
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
         }
-        assert tx == Type.Object || tx == Type.Symbol;
+        assert tx == Type.Object;
         return (x == y);
     }
 
@@ -445,7 +435,7 @@ public final class AbstractOperations {
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
         }
-        assert tx == Type.Object || tx == Type.Symbol;
+        assert tx == Type.Object;
         return (x == y);
     }
 
@@ -460,7 +450,7 @@ public final class AbstractOperations {
      * 9.2.6 IsPropertyKey
      */
     public static boolean IsPropertyKey(Object val) {
-        if (Type.isString(val) || Type.isSymbol(val)) {
+        if (Type.isString(val) || val instanceof ExoticSymbol) {
             return true;
         }
         return false;

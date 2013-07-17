@@ -92,7 +92,6 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             case String:
             case Boolean:
             case Number:
-            case Symbol:
                 return ToObject(calleeContext, value);
             case Null:
             case Undefined:
@@ -503,11 +502,9 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             } else {
                 assert key instanceof Symbol;
                 Symbol ownKey = (Symbol) key;
-                if (!ownKey.isPrivate()) {
-                    Property desc = object.getOwnProperty(cx, ownKey);
-                    if (desc != null && desc.isEnumerable()) {
-                        ownKeys.add(ownKey);
-                    }
+                Property desc = object.getOwnProperty(cx, ownKey);
+                if (desc != null && desc.isEnumerable()) {
+                    ownKeys.add(ownKey);
                 }
             }
         }

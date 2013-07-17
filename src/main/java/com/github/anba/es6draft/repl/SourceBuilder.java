@@ -17,6 +17,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 
 /**
  *
@@ -40,8 +41,6 @@ final class SourceBuilder {
             return stringToSource(Type.stringValue(value));
         case Number:
             return ToFlatString(cx, value);
-        case Symbol:
-            return Type.symbolValue(value).toString();
         case Object:
             ScriptObject objValue = Type.objectValue(value);
             Object toSource = Get(cx, objValue, "toSource");
@@ -50,6 +49,9 @@ final class SourceBuilder {
             }
             if (IsCallable(objValue)) {
                 return ((Callable) objValue).toSource();
+            }
+            if (objValue instanceof ExoticSymbol) {
+                return ((ExoticSymbol) objValue).toString();
             }
             if (stack.contains(objValue)) {
                 return "« ... »";

@@ -44,6 +44,7 @@ import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
@@ -602,10 +603,11 @@ public final class ScriptRuntime {
             return "number";
         case String:
             return "string";
-        case Symbol:
-            return "symbol";
         case Object:
         default:
+            if (val instanceof ExoticSymbol) {
+                return "symbol";
+            }
             if (IsCallable(val)) {
                 return "function";
             }
@@ -801,7 +803,7 @@ public final class ScriptRuntime {
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
         }
-        assert tx == Type.Object || tx == Type.Symbol;
+        assert tx == Type.Object;
         return (x == y);
     }
 

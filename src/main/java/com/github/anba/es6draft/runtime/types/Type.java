@@ -20,12 +20,11 @@ import org.mozilla.javascript.ConsString;
  * <li>8.1.3 The Boolean Type
  * <li>8.1.4 The String Type
  * <li>8.1.5 The Number Type
- * <li>8.1.6 The Symbol Type
- * <li>8.1.7 The Object Type
+ * <li>8.1.6 The Object Type
  * </ul>
  */
 public enum Type {
-    Undefined, Null, Boolean, String, Number, Symbol, Object;
+    Undefined, Null, Boolean, String, Number, Object;
 
     /**
      * Returns the {@link Type} of the input parameter
@@ -45,9 +44,6 @@ public enum Type {
         }
         if (val instanceof Double || val instanceof Integer || val instanceof Long) {
             return Number;
-        }
-        if (val instanceof Symbol) {
-            return Symbol;
         }
         assert val instanceof ScriptObject : (val != null ? val.getClass() : "<null>");
         return Object;
@@ -103,14 +99,6 @@ public enum Type {
 
     /**
      * Short cut for:<br>
-     * <code>Type.of(val) == Type.Symbol</code>
-     */
-    public static boolean isSymbol(Object val) {
-        return (val instanceof Symbol);
-    }
-
-    /**
-     * Short cut for:<br>
      * <code>Type.of(val) == Type.Object</code>
      */
     public static boolean isObject(Object val) {
@@ -139,14 +127,6 @@ public enum Type {
      */
     public static double numberValue(Object val) {
         return ((Number) val).doubleValue();
-    }
-
-    /**
-     * If {@code val} is a Symbol type, its value is returned. Otherwise a
-     * {@link ClassCastException} is thrown.
-     */
-    public static Symbol symbolValue(Object val) {
-        return (Symbol) val;
     }
 
     /**
