@@ -251,7 +251,9 @@ class CodeGenerator implements AutoCloseable {
         String n = methodNames.get(node);
         if (n == null) {
             String fname = node.getFunctionName();
-            if (fname.isEmpty()) {
+            if (fname == null) {
+                fname = "<...>";
+            } else if (fname.isEmpty()) {
                 fname = "anonymous";
             }
             n = addMethodName(node, fname);

@@ -34,6 +34,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
@@ -104,6 +105,7 @@ final class Types {
     // es6draft.runtime.types.builtins
     static final Type ExoticArguments = Type.getType(ExoticArguments.class);
     static final Type ExoticArray = Type.getType(ExoticArray.class);
+    static final Type ExoticSymbol = Type.getType(ExoticSymbol.class);
     static final Type FunctionObject = Type.getType(FunctionObject.class);
     static final Type OrdinaryGenerator = Type.getType(OrdinaryGenerator.class);
     static final Type OrdinaryFunction = Type.getType(OrdinaryFunction.class);

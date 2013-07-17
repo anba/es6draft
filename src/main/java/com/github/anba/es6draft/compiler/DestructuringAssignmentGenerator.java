@@ -31,6 +31,11 @@ class DestructuringAssignmentGenerator {
                 Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
                         Types.ExecutionContext, Types.ScriptObject, Types.String));
 
+        static final MethodDesc AbstractOperations_Get_Symbol = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
+                        Types.Object, Types.ExecutionContext, Types.ScriptObject,
+                        Types.ExoticSymbol));
+
         static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToObject",
                 Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
@@ -45,6 +50,10 @@ class DestructuringAssignmentGenerator {
                 MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
                         Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
                         Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_ensureExoticSymbol = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "ensureExoticSymbol",
+                Type.getMethodType(Types.ExoticSymbol, Types.Object, Types.ExecutionContext));
 
         // class: Type
         static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
@@ -96,6 +105,13 @@ class DestructuringAssignmentGenerator {
             node.accept(init, key);
         }
 
+        protected final void ComputedKeyedDestructuringAssignmentEvaluation(Node node,
+                ComputedPropertyName key) {
+            ComputedKeyedDestructuringAssignmentEvaluation init = new ComputedKeyedDestructuringAssignmentEvaluation(
+                    codegen, mv);
+            node.accept(init, key);
+        }
+
         protected final ValType expression(Expression node, ExpressionVisitor mv) {
             return codegen.expression(node, mv);
         }
@@ -137,7 +153,14 @@ class DestructuringAssignmentGenerator {
                     // AssignmentProperty : PropertyName : AssignmentElement
                     String name = PropName(property.getPropertyName());
                     // stack: [obj, obj] -> [obj]
-                    KeyedDestructuringAssignmentEvaluation(property, name);
+                    if (name != null) {
+                        KeyedDestructuringAssignmentEvaluation(property, name);
+                    } else {
+                        PropertyName propertyName = property.getPropertyName();
+                        assert propertyName instanceof ComputedPropertyName;
+                        ComputedKeyedDestructuringAssignmentEvaluation(property,
+                                (ComputedPropertyName) propertyName);
+                    }
                 }
             }
             // stack: [obj] -> []
@@ -226,6 +249,69 @@ class DestructuringAssignmentGenerator {
             mv.swap();
             mv.aconst(propertyName);
             mv.invoke(Methods.AbstractOperations_Get);
+
+            // step 3:
+            // stack: [v] -> [v']
+            if (initialiser != null) {
+                Label undef = new Label();
+                mv.dup();
+                mv.invoke(Methods.Type_isUndefined);
+                mv.ifeq(undef);
+                {
+                    mv.pop();
+                    ValType type = expressionValue(initialiser, mv);
+                    mv.toBoxed(type);
+                }
+                mv.mark(undef);
+            }
+
+            // step 4:
+            if (target instanceof AssignmentPattern) {
+                // stack: [v'] -> [vObj]
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.invoke(Methods.AbstractOperations_ToObject);
+
+                // stack: [vObj] -> []
+                DestructuringAssignmentEvaluation(target);
+            } else {
+                // stack: [v'] -> [lref, 'v]
+                ValType refType = expression(target, mv);
+                mv.swap();
+
+                // stack: [lref, 'v] -> []
+                PutValue(target, refType, mv);
+            }
+        }
+    }
+
+    private static final class ComputedKeyedDestructuringAssignmentEvaluation extends
+            RuntimeSemantics<Void, ComputedPropertyName> {
+        protected ComputedKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen,
+                ExpressionVisitor mv) {
+            super(codegen, mv);
+        }
+
+        @Override
+        public Void visit(AssignmentProperty node, ComputedPropertyName propertyName) {
+            generate(node.getTarget(), node.getInitialiser(), propertyName);
+            return null;
+        }
+
+        private void generate(LeftHandSideExpression target, Expression initialiser,
+                ComputedPropertyName propertyName) {
+            // step 1-2:
+            // stack: [obj] -> [v]
+            mv.loadExecutionContext();
+            mv.swap();
+            // Runtime Semantics: Evaluation
+            // ComputedPropertyName : [ AssignmentExpression ]
+            ValType propType = expressionValue(propertyName.getExpression(), mv);
+            mv.toBoxed(propType);
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_ensureExoticSymbol);
+            //
+            mv.invoke(Methods.AbstractOperations_Get_Symbol);
 
             // step 3:
             // stack: [v] -> [v']

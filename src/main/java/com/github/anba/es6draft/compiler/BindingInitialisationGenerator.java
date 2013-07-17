@@ -32,6 +32,11 @@ class BindingInitialisationGenerator {
                 Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
                         Types.ExecutionContext, Types.ScriptObject, Types.String));
 
+        static final MethodDesc AbstractOperations_Get_Symbol = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
+                        Types.Object, Types.ExecutionContext, Types.ScriptObject,
+                        Types.ExoticSymbol));
+
         static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToObject",
                 Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
@@ -56,6 +61,10 @@ class BindingInitialisationGenerator {
                 MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
                         Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
                         Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_ensureExoticSymbol = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "ensureExoticSymbol",
+                Type.getMethodType(Types.ExoticSymbol, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_throw = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "_throw",
@@ -121,6 +130,12 @@ class BindingInitialisationGenerator {
         protected final void KeyedBindingInitialisation(Node node, String key) {
             KeyedBindingInitialisation init = new KeyedBindingInitialisation(codegen, mv,
                     environment);
+            node.accept(init, key);
+        }
+
+        protected final void ComputedKeyedBindingInitialisation(Node node, ComputedPropertyName key) {
+            ComputedKeyedBindingInitialisation init = new ComputedKeyedBindingInitialisation(
+                    codegen, mv, environment);
             node.accept(init, key);
         }
 
@@ -213,7 +228,14 @@ class BindingInitialisationGenerator {
                     // BindingProperty : PropertyName : BindingElement
                     String name = PropName(property.getPropertyName());
                     // stack: [(env), value, (env), value] -> [(env), value]
-                    KeyedBindingInitialisation(property, name);
+                    if (name != null) {
+                        KeyedBindingInitialisation(property, name);
+                    } else {
+                        PropertyName propertyName = property.getPropertyName();
+                        assert propertyName instanceof ComputedPropertyName;
+                        ComputedKeyedBindingInitialisation(property,
+                                (ComputedPropertyName) propertyName);
+                    }
                 }
             }
             // stack: [(env), value] -> []
@@ -385,6 +407,66 @@ class BindingInitialisationGenerator {
             mv.swap();
             mv.aconst(propertyName);
             mv.invoke(Methods.AbstractOperations_Get);
+
+            // step 3-4:
+            // stack: [(env), value] -> [(env), v']
+            if (initialiser != null) {
+                Label undef = new Label();
+                mv.dup();
+                mv.invoke(Methods.Type_isUndefined);
+                mv.ifeq(undef);
+                {
+                    mv.pop();
+                    ValType type = expressionValue(initialiser, mv);
+                    mv.toBoxed(type);
+                    if (binding instanceof BindingPattern) {
+                        mv.loadExecutionContext();
+                        mv.swap();
+                        mv.invoke(Methods.AbstractOperations_ToObject);
+                    }
+                }
+                mv.mark(undef);
+            }
+            // FIXME: spec bug missing ToObject call
+            if (binding instanceof BindingPattern) {
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.invoke(Methods.AbstractOperations_ToObject);
+            }
+
+            // step 5:
+            // stack: [(env), v'] -> []
+            BindingInitialisation(binding);
+        }
+    }
+
+    private static final class ComputedKeyedBindingInitialisation extends
+            RuntimeSemantics<Void, ComputedPropertyName> {
+        protected ComputedKeyedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
+                EnvironmentType environment) {
+            super(codegen, mv, environment);
+        }
+
+        @Override
+        public Void visit(BindingProperty node, ComputedPropertyName key) {
+            generate(node.getBinding(), node.getInitialiser(), key);
+            return null;
+        }
+
+        private void generate(Binding binding, Expression initialiser,
+                ComputedPropertyName propertyName) {
+            // step 1-2:
+            // stack: [(env), value] -> [(env), v]
+            mv.loadExecutionContext();
+            mv.swap();
+            // Runtime Semantics: Evaluation
+            // ComputedPropertyName : [ AssignmentExpression ]
+            ValType propType = expressionValue(propertyName.getExpression(), mv);
+            mv.toBoxed(propType);
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_ensureExoticSymbol);
+            //
+            mv.invoke(Methods.AbstractOperations_Get_Symbol);
 
             // step 3-4:
             // stack: [(env), value] -> [(env), v']
