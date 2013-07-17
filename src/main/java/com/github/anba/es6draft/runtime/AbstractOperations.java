@@ -29,7 +29,15 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
-import com.github.anba.es6draft.runtime.types.*;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Callable;
+import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.IntegrityLevel;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
+import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -473,7 +481,7 @@ public final class AbstractOperations {
     /**
      * 9.3.1 Get (O, P)
      */
-    public static Object Get(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
+    public static Object Get(ExecutionContext cx, ScriptObject object, ExoticSymbol propertyKey) {
         return object.get(cx, propertyKey, object);
     }
 
@@ -491,7 +499,7 @@ public final class AbstractOperations {
     /**
      * 9.3.2 Put (O, P, V, Throw)
      */
-    public static void Put(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
+    public static void Put(ExecutionContext cx, ScriptObject object, ExoticSymbol propertyKey,
             Object value, boolean _throw) {
         boolean success = object.set(cx, propertyKey, value, object);
         if (!success && _throw) {
@@ -513,7 +521,7 @@ public final class AbstractOperations {
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
-            Symbol propertyKey, Object value) {
+            ExoticSymbol propertyKey, Object value) {
         assert !object.hasOwnProperty(cx, propertyKey);
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
         return object.defineOwnProperty(cx, propertyKey, newDesc);
@@ -534,7 +542,7 @@ public final class AbstractOperations {
      * 9.3.4 DefinePropertyOrThrow (O, P, desc)
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
-            Symbol propertyKey, PropertyDescriptor desc) {
+            ExoticSymbol propertyKey, PropertyDescriptor desc) {
         boolean success = object.defineOwnProperty(cx, propertyKey, desc);
         if (!success) {
             throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey.toString());
@@ -556,7 +564,7 @@ public final class AbstractOperations {
      * 9.3.5 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
-            Symbol propertyKey) {
+            ExoticSymbol propertyKey) {
         boolean success = object.delete(cx, propertyKey);
         if (!success) {
             throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, propertyKey.toString());
@@ -573,7 +581,8 @@ public final class AbstractOperations {
     /**
      * 9.3.6 HasProperty (O, P)
      */
-    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object,
+            ExoticSymbol propertyKey) {
         return object.hasProperty(cx, propertyKey);
     }
 
@@ -594,7 +603,8 @@ public final class AbstractOperations {
     /**
      * 9.3.7 GetMethod (O, P)
      */
-    public static Callable GetMethod(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
+    public static Callable GetMethod(ExecutionContext cx, ScriptObject object,
+            ExoticSymbol propertyKey) {
         Object func = object.get(cx, propertyKey, object);
         if (Type.isUndefined(func)) {
             return null;
@@ -622,7 +632,7 @@ public final class AbstractOperations {
     /**
      * 9.3.8 Invoke(O,P [,args])
      */
-    public static Object Invoke(ExecutionContext cx, Object object, Symbol propertyKey,
+    public static Object Invoke(ExecutionContext cx, Object object, ExoticSymbol propertyKey,
             Object... args) {
         ScriptObject base;
         if (Type.isObject(object)) {
@@ -655,8 +665,8 @@ public final class AbstractOperations {
                     if (key instanceof String) {
                         DefinePropertyOrThrow(cx, object, (String) key, nonConfigurable);
                     } else {
-                        assert key instanceof Symbol;
-                        DefinePropertyOrThrow(cx, object, (Symbol) key, nonConfigurable);
+                        assert key instanceof ExoticSymbol;
+                        DefinePropertyOrThrow(cx, object, (ExoticSymbol) key, nonConfigurable);
                     }
                 } catch (ScriptException e) {
                     if (pendingException == null) {
@@ -679,8 +689,8 @@ public final class AbstractOperations {
                     if (key instanceof String) {
                         currentDesc = object.getOwnProperty(cx, (String) key);
                     } else {
-                        assert key instanceof Symbol;
-                        currentDesc = object.getOwnProperty(cx, (Symbol) key);
+                        assert key instanceof ExoticSymbol;
+                        currentDesc = object.getOwnProperty(cx, (ExoticSymbol) key);
                     }
                     if (currentDesc != null) {
                         PropertyDescriptor desc;
@@ -692,8 +702,8 @@ public final class AbstractOperations {
                         if (key instanceof String) {
                             DefinePropertyOrThrow(cx, object, (String) key, desc);
                         } else {
-                            assert key instanceof Symbol;
-                            DefinePropertyOrThrow(cx, object, (Symbol) key, desc);
+                            assert key instanceof ExoticSymbol;
+                            DefinePropertyOrThrow(cx, object, (ExoticSymbol) key, desc);
                         }
                     }
                 } catch (ScriptException e) {
@@ -741,8 +751,8 @@ public final class AbstractOperations {
                 if (key instanceof String) {
                     currentDesc = object.getOwnProperty(cx, (String) key);
                 } else {
-                    assert key instanceof Symbol;
-                    currentDesc = object.getOwnProperty(cx, (Symbol) key);
+                    assert key instanceof ExoticSymbol;
+                    currentDesc = object.getOwnProperty(cx, (ExoticSymbol) key);
                 }
                 if (currentDesc != null) {
                     configurable |= currentDesc.isConfigurable();

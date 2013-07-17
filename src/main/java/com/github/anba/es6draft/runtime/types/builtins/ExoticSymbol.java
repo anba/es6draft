@@ -15,7 +15,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  * <h1>8 Types</h1><br>
@@ -24,7 +23,7 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * <li>8.4.4 Symbol Exotic Objects
  * </ul>
  */
-public final class ExoticSymbol extends Symbol implements ScriptObject {
+public final class ExoticSymbol implements ScriptObject {
     private final String name;
 
     public ExoticSymbol(String name) {
@@ -68,7 +67,7 @@ public final class ExoticSymbol extends Symbol implements ScriptObject {
 
     /** 8.4.4.5 [[HasOwnProperty]] (P) */
     @Override
-    public boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+    public boolean hasOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
         return false;
     }
 
@@ -80,7 +79,7 @@ public final class ExoticSymbol extends Symbol implements ScriptObject {
 
     /** 8.4.4.6 [[GetOwnProperty]] (P) */
     @Override
-    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
         return null;
     }
 
@@ -93,7 +92,7 @@ public final class ExoticSymbol extends Symbol implements ScriptObject {
 
     /** 8.4.4.7 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
+    public boolean defineOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey,
             PropertyDescriptor desc) {
         return false;
     }
@@ -106,7 +105,7 @@ public final class ExoticSymbol extends Symbol implements ScriptObject {
 
     /** 8.4.4.8 [[HasProperty]] (P) */
     @Override
-    public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
+    public boolean hasProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
         return false;
     }
 
@@ -118,7 +117,7 @@ public final class ExoticSymbol extends Symbol implements ScriptObject {
 
     /** 8.4.4.9 [[Get]] (P, Receiver) */
     @Override
-    public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
+    public Object get(ExecutionContext cx, ExoticSymbol propertyKey, Object receiver) {
         return UNDEFINED;
     }
 
@@ -130,7 +129,7 @@ public final class ExoticSymbol extends Symbol implements ScriptObject {
 
     /** 8.4.4.10 [[Set]] ( P, V, Receiver) */
     @Override
-    public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, ExoticSymbol propertyKey, Object value, Object receiver) {
         return false;
     }
 
@@ -143,7 +142,7 @@ public final class ExoticSymbol extends Symbol implements ScriptObject {
 
     /** 8.4.4.11 [[Invoke]] (P, ArgumentsList, Receiver) */
     @Override
-    public Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments,
+    public Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments,
             Object receiver) {
         throw throwTypeError(cx, Messages.Key.NotCallable);
     }
@@ -156,7 +155,7 @@ public final class ExoticSymbol extends Symbol implements ScriptObject {
 
     /** 8.4.4.12 [[Delete]] (P) */
     @Override
-    public boolean delete(ExecutionContext cx, Symbol propertyKey) {
+    public boolean delete(ExecutionContext cx, ExoticSymbol propertyKey) {
         return true;
     }
 

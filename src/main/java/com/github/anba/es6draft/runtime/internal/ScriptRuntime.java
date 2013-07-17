@@ -355,7 +355,7 @@ public final class ScriptRuntime {
         if (propertyKey instanceof String) {
             return new Reference.PropertyNameReference(baseValue, (String) propertyKey, strict);
         }
-        return new Reference.PropertySymbolReference(baseValue, (Symbol) propertyKey, strict);
+        return new Reference.PropertySymbolReference(baseValue, (ExoticSymbol) propertyKey, strict);
     }
 
     /**
@@ -377,8 +377,8 @@ public final class ScriptRuntime {
                     (String) propertyKey, strict);
             return ref.GetValue(cx);
         }
-        Reference<Object, Symbol> ref = new Reference.PropertySymbolReference(baseValue,
-                (Symbol) propertyKey, strict);
+        Reference<Object, ExoticSymbol> ref = new Reference.PropertySymbolReference(baseValue,
+                (ExoticSymbol) propertyKey, strict);
         return ref.GetValue(cx);
     }
 
@@ -566,7 +566,7 @@ public final class ScriptRuntime {
             if (referencedName instanceof String) {
                 deleteStatus = obj.delete(cx, (String) referencedName);
             } else {
-                deleteStatus = obj.delete(cx, (Symbol) referencedName);
+                deleteStatus = obj.delete(cx, (ExoticSymbol) referencedName);
             }
             if (!deleteStatus && ref.isStrictReference()) {
                 throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
@@ -705,7 +705,7 @@ public final class ScriptRuntime {
         if (p instanceof String) {
             return HasProperty(cx, Type.objectValue(rval), (String) p);
         } else {
-            return HasProperty(cx, Type.objectValue(rval), (Symbol) p);
+            return HasProperty(cx, Type.objectValue(rval), (ExoticSymbol) p);
         }
     }
 
@@ -895,7 +895,7 @@ public final class ScriptRuntime {
                 if (pk instanceof String) {
                     return Get(cx, object, (String) pk);
                 } else {
-                    return Get(cx, object, (Symbol) pk);
+                    return Get(cx, object, (ExoticSymbol) pk);
                 }
             }
             return null;

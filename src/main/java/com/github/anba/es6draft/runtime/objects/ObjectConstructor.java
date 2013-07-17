@@ -38,9 +38,9 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
@@ -151,7 +151,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (key instanceof String) {
                 desc = obj.getOwnProperty(cx, (String) key);
             } else {
-                desc = obj.getOwnProperty(cx, (Symbol) key);
+                desc = obj.getOwnProperty(cx, (ExoticSymbol) key);
             }
             return FromPropertyDescriptor(cx, desc);
         }
@@ -197,7 +197,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             if (key instanceof String) {
                 DefinePropertyOrThrow(cx, Type.objectValue(o), (String) key, desc);
             } else {
-                DefinePropertyOrThrow(cx, Type.objectValue(o), (Symbol) key, desc);
+                DefinePropertyOrThrow(cx, Type.objectValue(o), (ExoticSymbol) key, desc);
             }
             return o;
         }
@@ -347,8 +347,8 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                         }
                     }
                 } else {
-                    assert key instanceof Symbol;
-                    Symbol ownKey = (Symbol) key;
+                    assert key instanceof ExoticSymbol;
+                    ExoticSymbol ownKey = (ExoticSymbol) key;
                     Object value = Get(cx, _source, ownKey);
                     if (isSuperBoundTo(value, _source)) {
                         value = superBindTo(cx, value, _target);
@@ -400,8 +400,8 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                         }
                     }
                 } else {
-                    assert key instanceof Symbol;
-                    Symbol ownKey = (Symbol) key;
+                    assert key instanceof ExoticSymbol;
+                    ExoticSymbol ownKey = (ExoticSymbol) key;
                     Property desc = _source.getOwnProperty(cx, ownKey);
                     if (desc != null) {
                         try {
@@ -500,8 +500,8 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
                     ownKeys.add(ownKey);
                 }
             } else {
-                assert key instanceof Symbol;
-                Symbol ownKey = (Symbol) key;
+                assert key instanceof ExoticSymbol;
+                ExoticSymbol ownKey = (ExoticSymbol) key;
                 Property desc = object.getOwnProperty(cx, ownKey);
                 if (desc != null && desc.isEnumerable()) {
                     ownKeys.add(ownKey);

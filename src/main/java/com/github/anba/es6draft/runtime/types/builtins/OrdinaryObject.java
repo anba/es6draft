@@ -32,7 +32,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
@@ -70,22 +69,22 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     private void __put__(Object propertyKey, Property property) {
-        assert propertyKey instanceof String || propertyKey instanceof Symbol;
+        assert propertyKey instanceof String || propertyKey instanceof ExoticSymbol;
         properties.put(propertyKey, property);
     }
 
     private boolean __has__(Object propertyKey) {
-        assert propertyKey instanceof String || propertyKey instanceof Symbol;
+        assert propertyKey instanceof String || propertyKey instanceof ExoticSymbol;
         return properties.containsKey(propertyKey);
     }
 
     private Property __get__(Object propertyKey) {
-        assert propertyKey instanceof String || propertyKey instanceof Symbol;
+        assert propertyKey instanceof String || propertyKey instanceof ExoticSymbol;
         return properties.get(propertyKey);
     }
 
     private void __delete__(Object propertyKey) {
-        assert propertyKey instanceof String || propertyKey instanceof Symbol;
+        assert propertyKey instanceof String || propertyKey instanceof ExoticSymbol;
         properties.remove(propertyKey);
     }
 
@@ -150,7 +149,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 8.3.5 [[HasOwnProperty]] (P) */
     @Override
-    public boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+    public boolean hasOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
         return __has__(propertyKey);
     }
 
@@ -162,7 +161,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 8.3.6 [[GetOwnProperty]] (P) */
     @Override
-    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
         return ordinaryGetOwnProperty(propertyKey);
     }
 
@@ -182,7 +181,7 @@ public class OrdinaryObject implements ScriptObject {
     /**
      * 8.3.6.1 OrdinaryGetOwnProperty (O, P)
      */
-    protected final Property ordinaryGetOwnProperty(Symbol propertyKey) {
+    protected final Property ordinaryGetOwnProperty(ExoticSymbol propertyKey) {
         Property desc = __get__(propertyKey);
         /* step 2 */
         if (desc == null) {
@@ -202,7 +201,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 8.3.7 [[DefineOwnProperty]] (P, Desc) */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
+    public boolean defineOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey,
             PropertyDescriptor desc) {
         /* step 1 */
         return ordinaryDefineOwnProperty(propertyKey, desc);
@@ -223,7 +222,8 @@ public class OrdinaryObject implements ScriptObject {
     /**
      * 8.3.7.1 OrdinaryDefineOwnProperty (O, P, Desc)
      */
-    protected final boolean ordinaryDefineOwnProperty(Symbol propertyKey, PropertyDescriptor desc) {
+    protected final boolean ordinaryDefineOwnProperty(ExoticSymbol propertyKey,
+            PropertyDescriptor desc) {
         /* step 1 */
         Property current = ordinaryGetOwnProperty(propertyKey);
         /* step 2 */
@@ -253,7 +253,7 @@ public class OrdinaryObject implements ScriptObject {
      * 8.3.7.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
      */
     protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
-            Symbol propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
+            ExoticSymbol propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
         return __validateAndApplyPropertyDescriptor(object, propertyKey, extensible, desc, current);
     }
 
@@ -384,7 +384,7 @@ public class OrdinaryObject implements ScriptObject {
      * 8.3.8 [[HasProperty]](P)
      */
     @Override
-    public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
+    public boolean hasProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-3 */
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
@@ -430,7 +430,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 8.3.9 [[Get]] (P, Receiver) */
     @Override
-    public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
+    public Object get(ExecutionContext cx, ExoticSymbol propertyKey, Object receiver) {
         /* step 1 (implicit) */
         /* step 2-3 */
         Property desc = getOwnProperty(cx, propertyKey);
@@ -501,7 +501,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 8.3.10 [[Set] (P, V, Receiver) */
     @Override
-    public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, ExoticSymbol propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
         /* step 2-3 */
         Property ownDesc = getOwnProperty(cx, propertyKey);
@@ -565,7 +565,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 8.3.11 [[Invoke]] (P, ArgumentsList, Receiver) */
     @Override
-    public Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments,
+    public Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments,
             Object receiver) {
         /* step 1-2 (implicit) */
         /* step 3-4 */
@@ -605,7 +605,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 8.3.12 [[Delete]] (P) */
     @Override
-    public boolean delete(ExecutionContext cx, Symbol propertyKey) {
+    public boolean delete(ExecutionContext cx, ExoticSymbol propertyKey) {
         /* step 2 */
         Property desc = getOwnProperty(cx, propertyKey);
         /* step 3 */

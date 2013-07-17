@@ -32,7 +32,6 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
@@ -173,7 +172,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             if (p instanceof String) {
                 return o.hasOwnProperty(cx, (String) p);
             } else {
-                return o.hasOwnProperty(cx, (Symbol) p);
+                return o.hasOwnProperty(cx, (ExoticSymbol) p);
             }
         }
 

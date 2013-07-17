@@ -59,16 +59,16 @@ public enum BuiltinSymbol {
     ;
 
     /**
-     * Returns a {@link Symbol} object for this {@link BuiltinSymbol}
+     * Returns a {@link ExoticSymbol} object for this {@link BuiltinSymbol}
      */
-    public final Symbol get() {
+    public final ExoticSymbol get() {
         assert this != NONE;
         return symbols.get(this);
     }
 
-    private static final EnumMap<BuiltinSymbol, Symbol> symbols;
+    private static final EnumMap<BuiltinSymbol, ExoticSymbol> symbols;
     static {
-        EnumMap<BuiltinSymbol, Symbol> map = new EnumMap<>(BuiltinSymbol.class);
+        EnumMap<BuiltinSymbol, ExoticSymbol> map = new EnumMap<>(BuiltinSymbol.class);
         for (BuiltinSymbol builtin : values()) {
             if (builtin != NONE) {
                 String name = "@@" + builtin.name();
