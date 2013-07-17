@@ -3186,7 +3186,7 @@ public class Parser {
      * 
      * <pre>
      * IterationStatement :
-     *     do Statement while ( Expression ) ;
+     *     do Statement while ( Expression ) ;<sub>opt</sub>
      * </pre>
      */
     private DoWhileStatement doWhileStatement(Set<String> labelSet) {
