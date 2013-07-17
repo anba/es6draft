@@ -298,6 +298,11 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
+    public Integer visit(ComputedPropertyName node, CodeSizeHandler value) {
+        return analyze(node, node.getExpression(), 15, value);
+    }
+
+    @Override
     public Integer visit(ConditionalExpression node, CodeSizeHandler value) {
         return analyze(node, node.getTest(), node.getThen(), node.getOtherwise(), 20, value);
     }

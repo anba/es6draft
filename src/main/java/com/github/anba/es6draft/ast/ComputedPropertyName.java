@@ -13,22 +13,20 @@ package com.github.anba.es6draft.ast;
  * <li>11.1.5 Object Initialiser
  * </ul>
  */
-public class PropertyValueDefinition extends PropertyDefinition {
-    private PropertyName propertyName;
-    private Expression propertyValue;
+public class ComputedPropertyName extends AstNode implements PropertyName {
+    private Expression expression;
 
-    public PropertyValueDefinition(PropertyName propertyName, Expression propertyValue) {
-        this.propertyName = propertyName;
-        this.propertyValue = propertyValue;
+    public ComputedPropertyName(Expression expression) {
+        this.expression = expression;
+    }
+
+    public Expression getExpression() {
+        return expression;
     }
 
     @Override
-    public PropertyName getPropertyName() {
-        return propertyName;
-    }
-
-    public Expression getPropertyValue() {
-        return propertyValue;
+    public String getName() {
+        return null;
     }
 
     @Override

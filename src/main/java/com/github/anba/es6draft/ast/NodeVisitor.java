@@ -74,6 +74,8 @@ public interface NodeVisitor<R, V> {
 
     R visit(ComprehensionIf node, V value);
 
+    R visit(ComputedPropertyName node, V value);
+
     R visit(ConditionalExpression node, V value);
 
     R visit(ContinueStatement node, V value);
