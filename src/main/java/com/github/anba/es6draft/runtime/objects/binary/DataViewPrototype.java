@@ -91,7 +91,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "getInt8", arity = 1)
         public static Object getInt8(ExecutionContext cx, Object thisValue, Object byteOffset) {
-            return GetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementKind.Int8);
+            return GetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementType.Int8);
         }
 
         /**
@@ -99,7 +99,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "getUint8", arity = 1)
         public static Object getUint8(ExecutionContext cx, Object thisValue, Object byteOffset) {
-            return GetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementKind.Uint8);
+            return GetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementType.Uint8);
         }
 
         /**
@@ -108,7 +108,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getInt16", arity = 2)
         public static Object getInt16(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Int16);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Int16);
         }
 
         /**
@@ -117,7 +117,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getUint16", arity = 2)
         public static Object getUint16(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Uint16);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Uint16);
         }
 
         /**
@@ -126,7 +126,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getInt32", arity = 2)
         public static Object getInt32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Int32);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Int32);
         }
 
         /**
@@ -135,7 +135,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getUint32", arity = 2)
         public static Object getUint32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Uint32);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Uint32);
         }
 
         /**
@@ -144,7 +144,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getFloat32", arity = 2)
         public static Object getFloat32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Float32);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Float32);
         }
 
         /**
@@ -153,7 +153,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "getFloat64", arity = 2)
         public static Object getFloat64(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object littleEndian) {
-            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Float64);
+            return GetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Float64);
         }
 
         /**
@@ -162,7 +162,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setInt8", arity = 2)
         public static Object setInt8(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value) {
-            SetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementKind.Int8, value);
+            SetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementType.Int8, value);
             return UNDEFINED;
         }
 
@@ -172,7 +172,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setUint8", arity = 2)
         public static Object setUint8(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value) {
-            SetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementKind.Uint8, value);
+            SetViewValue(cx, thisValue, byteOffset, UNDEFINED, ElementType.Uint8, value);
             return UNDEFINED;
         }
 
@@ -182,7 +182,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setInt16", arity = 3)
         public static Object setInt16(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Int16, value);
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Int16, value);
             return UNDEFINED;
         }
 
@@ -192,7 +192,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setUint16", arity = 3)
         public static Object setUint16(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Uint16, value);
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Uint16, value);
             return UNDEFINED;
         }
 
@@ -202,7 +202,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setInt32", arity = 3)
         public static Object setInt32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Int32, value);
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Int32, value);
             return UNDEFINED;
         }
 
@@ -212,7 +212,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setUint32", arity = 3)
         public static Object setUint32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Uint32, value);
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Uint32, value);
             return UNDEFINED;
         }
 
@@ -222,7 +222,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setFloat32", arity = 3)
         public static Object setFloat32(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Float32, value);
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Float32, value);
             return UNDEFINED;
         }
 
@@ -232,7 +232,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "setFloat64", arity = 3)
         public static Object setFloat64(ExecutionContext cx, Object thisValue, Object byteOffset,
                 Object value, Object littleEndian) {
-            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementKind.Float64, value);
+            SetViewValue(cx, thisValue, byteOffset, littleEndian, ElementType.Float64, value);
             return UNDEFINED;
         }
 

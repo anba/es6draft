@@ -29,9 +29,11 @@ import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor;
 import com.github.anba.es6draft.runtime.objects.binary.DataViewPrototype;
-import com.github.anba.es6draft.runtime.objects.binary.ElementKind;
+import com.github.anba.es6draft.runtime.objects.binary.ElementType;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructor;
+import com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructorPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototype;
+import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.objects.internal.ListIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype;
@@ -567,44 +569,49 @@ public class Realm {
         // allocation phase
         ArrayBufferConstructor arrayBufferConstructor = new ArrayBufferConstructor(realm);
         ArrayBufferPrototype arrayBufferPrototype = new ArrayBufferPrototype(realm);
+        TypedArrayConstructorPrototype typedArrayConstructor = new TypedArrayConstructorPrototype(
+                realm);
+        TypedArrayPrototypePrototype typedArrayPrototype = new TypedArrayPrototypePrototype(realm);
         TypedArrayConstructor int8ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementKind.Int8);
-        TypedArrayPrototype int8ArrayPrototype = new TypedArrayPrototype(realm, ElementKind.Int8);
+                ElementType.Int8);
+        TypedArrayPrototype int8ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Int8);
         TypedArrayConstructor uint8ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementKind.Uint8);
-        TypedArrayPrototype uint8ArrayPrototype = new TypedArrayPrototype(realm, ElementKind.Uint8);
+                ElementType.Uint8);
+        TypedArrayPrototype uint8ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Uint8);
         TypedArrayConstructor uint8CArrayConstructor = new TypedArrayConstructor(realm,
-                ElementKind.Uint8C);
+                ElementType.Uint8C);
         TypedArrayPrototype uint8CArrayPrototype = new TypedArrayPrototype(realm,
-                ElementKind.Uint8C);
+                ElementType.Uint8C);
         TypedArrayConstructor int16ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementKind.Int16);
-        TypedArrayPrototype int16ArrayPrototype = new TypedArrayPrototype(realm, ElementKind.Int16);
+                ElementType.Int16);
+        TypedArrayPrototype int16ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Int16);
         TypedArrayConstructor uint16ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementKind.Uint16);
+                ElementType.Uint16);
         TypedArrayPrototype uint16ArrayPrototype = new TypedArrayPrototype(realm,
-                ElementKind.Uint16);
+                ElementType.Uint16);
         TypedArrayConstructor int32ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementKind.Int32);
-        TypedArrayPrototype int32ArrayPrototype = new TypedArrayPrototype(realm, ElementKind.Int32);
+                ElementType.Int32);
+        TypedArrayPrototype int32ArrayPrototype = new TypedArrayPrototype(realm, ElementType.Int32);
         TypedArrayConstructor uint32ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementKind.Uint32);
+                ElementType.Uint32);
         TypedArrayPrototype uint32ArrayPrototype = new TypedArrayPrototype(realm,
-                ElementKind.Uint32);
+                ElementType.Uint32);
         TypedArrayConstructor float32ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementKind.Float32);
+                ElementType.Float32);
         TypedArrayPrototype float32ArrayPrototype = new TypedArrayPrototype(realm,
-                ElementKind.Float32);
+                ElementType.Float32);
         TypedArrayConstructor float64ArrayConstructor = new TypedArrayConstructor(realm,
-                ElementKind.Float64);
+                ElementType.Float64);
         TypedArrayPrototype float64ArrayPrototype = new TypedArrayPrototype(realm,
-                ElementKind.Float64);
+                ElementType.Float64);
         DataViewConstructor dataViewConstructor = new DataViewConstructor(realm);
         DataViewPrototype dataViewPrototype = new DataViewPrototype(realm);
 
         // registration phase
         intrinsics.put(Intrinsics.ArrayBuffer, arrayBufferConstructor);
         intrinsics.put(Intrinsics.ArrayBufferPrototype, arrayBufferPrototype);
+        intrinsics.put(Intrinsics.TypedArray, typedArrayConstructor);
+        intrinsics.put(Intrinsics.TypedArrayPrototype, typedArrayPrototype);
         intrinsics.put(Intrinsics.Int8Array, int8ArrayConstructor);
         intrinsics.put(Intrinsics.Int8ArrayPrototype, int8ArrayPrototype);
         intrinsics.put(Intrinsics.Uint8Array, uint8ArrayConstructor);
@@ -629,6 +636,8 @@ public class Realm {
         // initialisation phase
         arrayBufferConstructor.initialise(defaultContext);
         arrayBufferPrototype.initialise(defaultContext);
+        typedArrayConstructor.initialise(defaultContext);
+        typedArrayPrototype.initialise(defaultContext);
         int8ArrayConstructor.initialise(defaultContext);
         int8ArrayPrototype.initialise(defaultContext);
         uint8ArrayConstructor.initialise(defaultContext);

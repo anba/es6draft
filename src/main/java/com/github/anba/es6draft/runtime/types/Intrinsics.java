@@ -72,6 +72,8 @@ public enum Intrinsics {/* @formatter:off */
     // not yet (?) in spec
     ArrayBuffer,
     ArrayBufferPrototype,
+    TypedArray,
+    TypedArrayPrototype,
     Int8Array,
     Int8ArrayPrototype,
     Uint8Array,

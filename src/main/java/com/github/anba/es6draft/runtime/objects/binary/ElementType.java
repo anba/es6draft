@@ -16,17 +16,42 @@ import com.google.doubleconversion.DoubleConversion;
  * <li>Table 36 – The TypedArray Constructors
  * </ul>
  */
-public enum ElementKind {
+public enum ElementType {
     Int8(1), Uint8(1), Uint8C(1), Int16(2), Uint16(2), Int32(4), Uint32(4), Float32(4), Float64(8);
 
     private int size;
 
-    private ElementKind(int size) {
+    private ElementType(int size) {
         this.size = size;
     }
 
     public int size() {
         return size;
+    }
+
+    public String getConstructorName() {
+        switch (this) {
+        case Int8:
+            return "Int8Array";
+        case Uint8:
+            return "Uint8Array";
+        case Uint8C:
+            return "Uint8ClampedArray";
+        case Int16:
+            return "Int16Array";
+        case Uint16:
+            return "Uint16Array";
+        case Int32:
+            return "Int32Array";
+        case Uint32:
+            return "Uint32Array";
+        case Float32:
+            return "Float32Array";
+        case Float64:
+            return "Float64Array";
+        default:
+            throw new IllegalStateException();
+        }
     }
 
     public static byte ToInt8(double v) {

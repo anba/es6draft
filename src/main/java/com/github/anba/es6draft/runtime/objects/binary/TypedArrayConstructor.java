@@ -6,15 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.AllocateArrayBuffer;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CloneArrayBuffer;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetArrayBufferData;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
@@ -23,14 +17,12 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
@@ -38,22 +30,32 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <h2>15.13 Binary Data Objects</h2><br>
  * <h3>15.13.6 TypedArray Object Structures</h3>
  * <ul>
- * <li>15.13.6.1 TypedArray Constructors Called as a Function
- * <li>15.13.6.2 The TypedArray Constructors
- * <li>15.13.6.3 Properties of the TypedArray Constructors
+ * <li>15.13.6.4 The TypedArray Constructors
+ * <li>15.13.6.5 Properties of the TypedArray Constructors
  * </ul>
  */
 public class TypedArrayConstructor extends BuiltinFunction implements Constructor, Initialisable {
-    private final ElementKind elementKind;
+    /** [[ElementType]] */
+    private final ElementType elementType;
 
-    public TypedArrayConstructor(Realm realm, ElementKind elementKind) {
+    public TypedArrayConstructor(Realm realm, ElementType elementType) {
         super(realm);
-        this.elementKind = elementKind;
+        this.elementType = elementType;
+    }
+
+    /** [[ElementType]] */
+    public ElementType getElementType() {
+        return elementType;
+    }
+
+    /** [[TypedArrayConstructor]] */
+    public String getTypedArrayConstructor() {
+        return elementType.getConstructorName();
     }
 
     @Override
     public void initialise(ExecutionContext cx) {
-        switch (elementKind) {
+        switch (elementType) {
         case Int8:
             createProperties(this, cx, Properties_Int8Array.class);
             break;
@@ -88,241 +90,37 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
     }
 
     /**
-     * 15.13.6.1.1 TypedArray ( length )<br>
-     * 15.13.6.1.2 TypedArray ( typedArray )<br>
-     * 15.13.6.1.3 TypedArray ( array )<br>
-     * 15.13.6.1.4 TypedArray ( buffer, byteOffset=0, length=undefined )<br>
-     * 15.13.6.1.5 TypedArray ( binary data stuff ) [TODO]<br>
+     * 15.13.6.4 TypedArray (...args)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        // FIXME: spec incomplete [[Call]] not defined
         ExecutionContext calleeContext = calleeContext();
-        Object arg0 = args.length > 0 ? args[0] : UNDEFINED;
-        if (!Type.isObject(arg0)) {
-            return callWithLength(calleeContext, thisValue, arg0, args);
-        } else {
-            if (arg0 instanceof TypedArrayObject) {
-                return callWithTypedArray(calleeContext, thisValue, (TypedArrayObject) arg0, args);
-            } else if (arg0 instanceof ArrayBufferObject) {
-                return callWithArrayBuffer(calleeContext, thisValue, (ArrayBufferObject) arg0, args);
-            } else {
-                return callWithArray(calleeContext, thisValue, (ScriptObject) arg0, args);
-            }
+        // let's assume this should work like super() in class constructors
+        ScriptObject superBase = getInheritance(calleeContext);
+        if (!IsCallable(superBase)) {
+            throwTypeError(calleeContext, Messages.Key.NotCallable);
         }
+        return ((Callable) superBase).call(calleeContext, thisValue, args);
     }
 
     /**
-     * 15.13.6.1.1 TypedArray ( length )
-     */
-    private Object callWithLength(ExecutionContext cx, Object thisValue, Object length,
-            Object[] args) {
-        ElementKind elementType = elementKind;
-        Object obj = thisValue;
-        if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        if (Type.isUndefined(obj) || !(obj instanceof TypedArrayObject)) {
-            return OrdinaryConstruct(cx, this, args);
-        }
-        TypedArrayObject array = (TypedArrayObject) obj;
-        if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
-        if (Type.isUndefined(length)) {
-            length = 0;
-        }
-        double numberLength = ToNumber(cx, length);
-        double elementLength = ToInteger(numberLength);
-        if (numberLength != elementLength || elementLength < 0) {
-            throwRangeError(cx, Messages.Key.InvalidBufferSize);
-        }
-        ArrayBufferObject data = AllocateArrayBuffer(cx, cx.getIntrinsic(Intrinsics.ArrayBuffer));
-        int elementSize = elementType.size();
-        long byteLength = (long) (elementSize * elementLength);
-        SetArrayBufferData(cx, data, byteLength);
-        array.setBuffer(data);
-        array.setElementKind(elementType);
-        array.setByteLength(byteLength);
-        array.setByteOffset(0);
-        array.setArrayLength((long) elementLength);
-        return array;
-    }
-
-    /**
-     * 15.13.6.1.2 TypedArray ( typedArray )
-     */
-    private Object callWithTypedArray(ExecutionContext cx, Object thisValue,
-            TypedArrayObject typedArray, Object[] args) {
-        TypedArrayObject srcArray = typedArray;
-        ElementKind elementType = elementKind;
-        Object obj = thisValue;
-        if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        if (Type.isUndefined(obj) || !(obj instanceof TypedArrayObject)) {
-            return OrdinaryConstruct(cx, this, args);
-        }
-        TypedArrayObject array = (TypedArrayObject) obj;
-        if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        long elementLength = srcArray.getArrayLength();
-        long srcByteOffset = srcArray.getByteOffset();
-        ElementKind srcType = srcArray.getElementKind();
-        ArrayBufferObject srcData = srcArray.getBuffer();
-        ArrayBufferObject data = CloneArrayBuffer(cx, srcData, srcType, elementType, srcByteOffset,
-                elementLength);
-        int elementSize = elementType.size();
-        long byteLength = elementSize * elementLength;
-        // FIXME: spec bug (remove this call <-> CloneArrayBuffer?)
-        // data = SetArrayBufferData(realm, data, byteLength);
-        array.setBuffer(data);
-        array.setElementKind(elementType);
-        array.setByteLength(byteLength);
-        array.setByteOffset(0);
-        array.setArrayLength(elementLength);
-        return array;
-    }
-
-    /**
-     * 15.13.6.1.3 TypedArray ( array )
-     */
-    private Object callWithArray(ExecutionContext cx, Object thisValue, ScriptObject _array,
-            Object[] args) {
-        Object obj = thisValue;
-        if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        // FIXME: spec bug (variable srcArray unused)
-        @SuppressWarnings("unused")
-        ScriptObject srcArray = _array;
-        ElementKind elementType = elementKind;
-        if (Type.isUndefined(obj) || !(obj instanceof TypedArrayObject)) {
-            return OrdinaryConstruct(cx, this, args);
-        }
-        TypedArrayObject array = (TypedArrayObject) obj;
-        if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        Object arrayLength = Get(cx, _array, "length");
-        // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
-        if (Type.isUndefined(arrayLength)) {
-            arrayLength = 0;
-        }
-        double numberLength = ToNumber(cx, arrayLength);
-        double elementLength = ToInteger(numberLength);
-        if (numberLength != elementLength || elementLength < 0) {
-            throwRangeError(cx, Messages.Key.InvalidBufferSize);
-        }
-        ArrayBufferObject data = AllocateArrayBuffer(cx, cx.getIntrinsic(Intrinsics.ArrayBuffer));
-        int elementSize = elementType.size();
-        long byteLength = (long) (elementSize * elementLength);
-        SetArrayBufferData(cx, data, byteLength);
-        for (long k = 0; k < elementLength; ++k) {
-            String pk = ToString(k);
-            // FIXME: spec bug (`Get(array, Pk)` instead of `Get(O, Pk)`)
-            Object kValue = Get(cx, _array, pk);
-            double kNumber = ToNumber(cx, kValue);
-            SetValueInBuffer(data, k * elementSize, elementType, kNumber, false);
-        }
-        array.setBuffer(data);
-        array.setElementKind(elementType);
-        array.setByteLength(byteLength);
-        array.setByteOffset(0);
-        array.setArrayLength((long) elementLength);
-        return array;
-    }
-
-    /**
-     * 15.13.6.1.4 TypedArray ( buffer, byteOffset=0, length=undefined )
-     */
-    private Object callWithArrayBuffer(ExecutionContext cx, Object thisValue,
-            ArrayBufferObject buffer, Object[] args) {
-        Object byteOffset = args.length > 1 ? args[1] : 0;
-        Object length = args.length > 2 ? args[2] : UNDEFINED;
-
-        Object obj = thisValue;
-        if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        {
-            // FIXME: spec bug (this check is not in spec)
-            if (Type.isUndefined(obj) || !(obj instanceof TypedArrayObject)) {
-                return OrdinaryConstruct(cx, this, args);
-            }
-        }
-
-        ElementKind elementType = elementKind;
-        int elementSize = elementType.size();
-        double offset = ToInteger(cx, byteOffset);
-        if (offset < 0) {
-            throwRangeError(cx, Messages.Key.InvalidByteOffset);
-        }
-        if (offset % elementSize != 0) {
-            throwRangeError(cx, Messages.Key.InvalidByteOffset);
-        }
-        long bufferByteLength = buffer.getByteLength();
-        long newByteLength;
-        if (Type.isUndefined(length)) {
-            if (bufferByteLength % elementSize != 0) {
-                throwRangeError(cx, Messages.Key.InvalidBufferSize);
-            }
-            newByteLength = (long) (bufferByteLength - offset);
-            if (newByteLength < 0) {
-                throwRangeError(cx, Messages.Key.InvalidBufferSize);
-            }
-        } else {
-            double numberLength = ToNumber(cx, length);
-            double newLength = ToInteger(numberLength);
-            if (numberLength != newLength || newLength < 0) {
-                throwRangeError(cx, Messages.Key.InvalidBufferSize);
-            }
-            newByteLength = (long) (newLength * elementSize);
-            if (offset + newByteLength > bufferByteLength) {
-                throwRangeError(cx, Messages.Key.InvalidBufferSize);
-            }
-        }
-        TypedArrayObject array = (TypedArrayObject) obj;
-        if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        array.setBuffer(buffer);
-        array.setElementKind(elementType);
-        array.setByteLength(newByteLength);
-        array.setByteOffset((long) offset);
-        array.setArrayLength(newByteLength / elementSize);
-        return array;
-    }
-
-    /**
-     * 15.13.6.2.1 new TypedArray (...args)
+     * 15.13.6.4 new TypedArray (...args)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
+        // FIXME: spec incomplete [[Construct]] not defined
         return OrdinaryConstruct(callerContext, this, args);
     }
 
     /**
-     * 15.13.6.3.2 TypedArray[ @@create ] ( )
-     */
-    private static TypedArrayObject createTypedArray(ExecutionContext cx, Object thisValue,
-            Intrinsics prototype) {
-        Object f = thisValue;
-        ScriptObject proto = GetPrototypeFromConstructor(cx, f, prototype);
-        TypedArrayObject obj = new TypedArrayObject(cx.getRealm());
-        obj.setPrototype(proto);
-        return obj;
-    }
-
-    /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Int8Array {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -333,33 +131,21 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         public static final String name = "Int8Array";
 
         /**
-         * 15.13.6.3.1 TypedArray.prototype
+         * 15.13.6.5.1 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Int8ArrayPrototype;
-
-        /**
-         * 15.13.6.3.2 TypedArray[ @@create ] ( )
-         */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return createTypedArray(cx, thisValue, prototype);
-        }
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Uint8Array {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -370,33 +156,21 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         public static final String name = "Uint8Array";
 
         /**
-         * 15.13.6.3.1 TypedArray.prototype
+         * 15.13.6.5.1 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint8ArrayPrototype;
-
-        /**
-         * 15.13.6.3.2 TypedArray[ @@create ] ( )
-         */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return createTypedArray(cx, thisValue, prototype);
-        }
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Uint8Clamped {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -407,33 +181,21 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         public static final String name = "Uint8Clamped";
 
         /**
-         * 15.13.6.3.1 TypedArray.prototype
+         * 15.13.6.5.1 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint8ClampedArrayPrototype;
-
-        /**
-         * 15.13.6.3.2 TypedArray[ @@create ] ( )
-         */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return createTypedArray(cx, thisValue, prototype);
-        }
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Int16Array {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -444,33 +206,21 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         public static final String name = "Int16Array";
 
         /**
-         * 15.13.6.3.1 TypedArray.prototype
+         * 15.13.6.5.1 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Int16ArrayPrototype;
-
-        /**
-         * 15.13.6.3.2 TypedArray[ @@create ] ( )
-         */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return createTypedArray(cx, thisValue, prototype);
-        }
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Uint16Array {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -481,33 +231,21 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         public static final String name = "Uint16Array";
 
         /**
-         * 15.13.6.3.1 TypedArray.prototype
+         * 15.13.6.5.1 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint16ArrayPrototype;
-
-        /**
-         * 15.13.6.3.2 TypedArray[ @@create ] ( )
-         */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return createTypedArray(cx, thisValue, prototype);
-        }
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Int32Array {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -518,33 +256,21 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         public static final String name = "Int32Array";
 
         /**
-         * 15.13.6.3.1 TypedArray.prototype
+         * 15.13.6.5.1 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Int32ArrayPrototype;
-
-        /**
-         * 15.13.6.3.2 TypedArray[ @@create ] ( )
-         */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return createTypedArray(cx, thisValue, prototype);
-        }
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Uint32Array {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -555,33 +281,21 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         public static final String name = "Uint32Array";
 
         /**
-         * 15.13.6.3.1 TypedArray.prototype
+         * 15.13.6.5.1 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint32ArrayPrototype;
-
-        /**
-         * 15.13.6.3.2 TypedArray[ @@create ] ( )
-         */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return createTypedArray(cx, thisValue, prototype);
-        }
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Float32Array {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -592,33 +306,21 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         public static final String name = "Float32Array";
 
         /**
-         * 15.13.6.3.1 TypedArray.prototype
+         * 15.13.6.5.1 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Float32ArrayPrototype;
-
-        /**
-         * 15.13.6.3.2 TypedArray[ @@create ] ( )
-         */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return createTypedArray(cx, thisValue, prototype);
-        }
     }
 
     /**
-     * 15.13.6.3 Properties of the TypedArray Constructors
+     * 15.13.6.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Float64Array {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -629,22 +331,10 @@ public class TypedArrayConstructor extends BuiltinFunction implements Constructo
         public static final String name = "Float64Array";
 
         /**
-         * 15.13.6.3.1 TypedArray.prototype
+         * 15.13.6.5.1 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Float64ArrayPrototype;
-
-        /**
-         * 15.13.6.3.2 TypedArray[ @@create ] ( )
-         */
-        @Function(
-                name = "@@create",
-                symbol = BuiltinSymbol.create,
-                arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = false))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            return createTypedArray(cx, thisValue, prototype);
-        }
     }
 }

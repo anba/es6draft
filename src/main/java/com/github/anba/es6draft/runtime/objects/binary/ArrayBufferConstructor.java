@@ -101,7 +101,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
      * FIXME: spec bug (not defined in spec)
      */
     public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
-            ArrayBufferObject srcData, ElementKind srcType, ElementKind destType,
+            ArrayBufferObject srcData, ElementType srcType, ElementType destType,
             long startByteIndex, long length) {
         assert startByteIndex >= 0 && (startByteIndex <= length * srcType.size() || length == 0) : "startByteIndex="
                 + startByteIndex + ", length=" + length + ", srcType.size=" + srcType.size();
@@ -155,7 +155,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
      * 15.13.5.1.3 GetValueFromBuffer (arrayBuffer, byteIndex, type, isBigEndian)
      */
     public static double GetValueFromBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
-            ElementKind type, boolean isBigEndian) {
+            ElementType type, boolean isBigEndian) {
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
         ByteBuffer block = arrayBuffer.getData();
         if ((block.order() == ByteOrder.BIG_ENDIAN) != isBigEndian) {
@@ -197,7 +197,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
      * 15.13.5.1.4 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isBigEndian)
      */
     public static void SetValueInBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
-            ElementKind type, double value, boolean isBigEndian) {
+            ElementType type, double value, boolean isBigEndian) {
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
         ByteBuffer block = arrayBuffer.getData();
         if ((block.order() == ByteOrder.BIG_ENDIAN) != isBigEndian) {
@@ -214,27 +214,27 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
             return;
 
         case Int8:
-            block.put(index, ElementKind.ToInt8(value));
+            block.put(index, ElementType.ToInt8(value));
             return;
         case Uint8:
-            block.put(index, ElementKind.ToUint8(value));
+            block.put(index, ElementType.ToUint8(value));
             return;
         case Uint8C:
-            block.put(index, ElementKind.ToUint8Clamp(value));
+            block.put(index, ElementType.ToUint8Clamp(value));
             return;
 
         case Int16:
-            block.putShort(index, ElementKind.ToInt16(value));
+            block.putShort(index, ElementType.ToInt16(value));
             return;
         case Uint16:
-            block.putShort(index, ElementKind.ToUint16(value));
+            block.putShort(index, ElementType.ToUint16(value));
             return;
 
         case Int32:
-            block.putInt(index, ElementKind.ToInt32(value));
+            block.putInt(index, ElementType.ToInt32(value));
             return;
         case Uint32:
-            block.putInt(index, ElementKind.ToUint32(value));
+            block.putInt(index, ElementType.ToUint32(value));
             return;
 
         default:

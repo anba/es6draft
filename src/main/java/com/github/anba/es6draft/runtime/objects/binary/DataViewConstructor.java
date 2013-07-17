@@ -67,7 +67,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
      * GetViewValue(view, requestIndex, isLittleEndian, type)
      */
     public static double GetViewValue(ExecutionContext cx, Object view, Object requestIndex,
-            Object isLittleEndian, ElementKind type) {
+            Object isLittleEndian, ElementType type) {
         ScriptObject v = ToObject(cx, view);
         // FIXME: DataView update in bug 1568 tests for [[ViewedArrayBuffer]] which applies to
         // DataView objects as well as TypedArray objects
@@ -103,7 +103,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
      * SetViewValue(view, requestIndex, isLittleEndian, type, value)
      */
     public static void SetViewValue(ExecutionContext cx, Object view, Object requestIndex,
-            Object isLittleEndian, ElementKind type, Object value) {
+            Object isLittleEndian, ElementType type, Object value) {
         ScriptObject v = ToObject(cx, view);
         // FIXME: DataView update in bug 1568 tests for [[ViewedArrayBuffer]] which applies to
         // DataView objects as well as TypedArray objects
