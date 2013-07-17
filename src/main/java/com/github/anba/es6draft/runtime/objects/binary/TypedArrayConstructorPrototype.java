@@ -254,7 +254,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
      */
     private Object callWithArrayBuffer(ExecutionContext cx, Object thisValue,
             ArrayBufferObject buffer, Object byteOffset, Object length) {
-        /* FIXME: missing check in spec */
+        /* FIXME: missing check in spec (?) */
         if (buffer.getData() == null) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }

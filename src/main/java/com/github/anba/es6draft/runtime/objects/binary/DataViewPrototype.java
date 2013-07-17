@@ -57,35 +57,6 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.DataView;
 
-        // TODO: 15.13.7.5 Properties of DataView Instances
-
-        @Accessor(name = "byteLength", type = Accessor.Type.Getter)
-        public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            if (!(thisValue instanceof DataViewObject)
-                    || ((DataViewObject) thisValue).getBuffer() == null) {
-                throwTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            return ((DataViewObject) thisValue).getByteLength();
-        }
-
-        @Accessor(name = "buffer", type = Accessor.Type.Getter)
-        public static Object buffer(ExecutionContext cx, Object thisValue) {
-            if (!(thisValue instanceof DataViewObject)
-                    || ((DataViewObject) thisValue).getBuffer() == null) {
-                throwTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            return ((DataViewObject) thisValue).getBuffer();
-        }
-
-        @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
-        public static Object byteOffset(ExecutionContext cx, Object thisValue) {
-            if (!(thisValue instanceof DataViewObject)
-                    || ((DataViewObject) thisValue).getBuffer() == null) {
-                throwTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            return ((DataViewObject) thisValue).getByteOffset();
-        }
-
         /**
          * 15.13.7.4.2 DataView.prototype.getInt8(byteOffset)
          */
@@ -103,7 +74,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.4 DataView.prototype.getInt16(byteOffset, littleEndian)
+         * 15.13.7.4.4 DataView.prototype.getInt16(byteOffset, littleEndian=false)
          */
         @Function(name = "getInt16", arity = 2)
         public static Object getInt16(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -112,7 +83,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.5 DataView.prototype.getUint16(byteOffset, littleEndian)
+         * 15.13.7.4.5 DataView.prototype.getUint16(byteOffset, littleEndian=false)
          */
         @Function(name = "getUint16", arity = 2)
         public static Object getUint16(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -121,7 +92,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.6 DataView.prototype.getInt32(byteOffset, littleEndian)
+         * 15.13.7.4.6 DataView.prototype.getInt32(byteOffset, littleEndian=false)
          */
         @Function(name = "getInt32", arity = 2)
         public static Object getInt32(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -130,7 +101,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.7 DataView.prototype.getUint32(byteOffset, littleEndian)
+         * 15.13.7.4.7 DataView.prototype.getUint32(byteOffset, littleEndian=false)
          */
         @Function(name = "getUint32", arity = 2)
         public static Object getUint32(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -139,7 +110,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.8 DataView.prototype.getFloat32(byteOffset, littleEndian)
+         * 15.13.7.4.8 DataView.prototype.getFloat32(byteOffset, littleEndian=false)
          */
         @Function(name = "getFloat32", arity = 2)
         public static Object getFloat32(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -148,7 +119,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.9 DataView.prototype.getFloat64(byteOffset, littleEndian)
+         * 15.13.7.4.9 DataView.prototype.getFloat64(byteOffset, littleEndian=false)
          */
         @Function(name = "getFloat64", arity = 2)
         public static Object getFloat64(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -177,7 +148,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.12 DataView.prototype.setInt16(byteOffset, value, littleEndian)
+         * 15.13.7.4.12 DataView.prototype.setInt16(byteOffset, value, littleEndian=false)
          */
         @Function(name = "setInt16", arity = 3)
         public static Object setInt16(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -187,7 +158,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.13 DataView.prototype.setUint16(byteOffset, value, littleEndian)
+         * 15.13.7.4.13 DataView.prototype.setUint16(byteOffset, value, littleEndian=false)
          */
         @Function(name = "setUint16", arity = 3)
         public static Object setUint16(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -197,7 +168,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.14 DataView.prototype.setInt32(byteOffset, value, littleEndian)
+         * 15.13.7.4.14 DataView.prototype.setInt32(byteOffset, value, littleEndian=false)
          */
         @Function(name = "setInt32", arity = 3)
         public static Object setInt32(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -207,7 +178,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.15 DataView.prototype.setUint32(byteOffset, value, littleEndian)
+         * 15.13.7.4.15 DataView.prototype.setUint32(byteOffset, value, littleEndian=false)
          */
         @Function(name = "setUint32", arity = 3)
         public static Object setUint32(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -217,7 +188,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.16 DataView.prototype.setFloat32(byteOffset, value, littleEndian)
+         * 15.13.7.4.16 DataView.prototype.setFloat32(byteOffset, value, littleEndian=false)
          */
         @Function(name = "setFloat32", arity = 3)
         public static Object setFloat32(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -227,7 +198,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.13.7.4.17 DataView.prototype.setFloat64(byteOffset, value, littleEndian)
+         * 15.13.7.4.17 DataView.prototype.setFloat64(byteOffset, value, littleEndian=false)
          */
         @Function(name = "setFloat64", arity = 3)
         public static Object setFloat64(ExecutionContext cx, Object thisValue, Object byteOffset,
@@ -241,5 +212,43 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "DataView";
+
+        // TODO: 15.13.7.5 Properties of DataView Instances
+
+        /**
+         * 15.13.7.5.1 byteLength
+         */
+        @Accessor(name = "byteLength", type = Accessor.Type.Getter)
+        public static Object byteLength(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof DataViewObject)
+                    || ((DataViewObject) thisValue).getBuffer() == null) {
+                throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return ((DataViewObject) thisValue).getByteLength();
+        }
+
+        /**
+         * 15.13.7.5.2 buffer
+         */
+        @Accessor(name = "buffer", type = Accessor.Type.Getter)
+        public static Object buffer(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof DataViewObject)
+                    || ((DataViewObject) thisValue).getBuffer() == null) {
+                throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return ((DataViewObject) thisValue).getBuffer();
+        }
+
+        /**
+         * 15.13.7.5.3 byteOffset
+         */
+        @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
+        public static Object byteOffset(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof DataViewObject)
+                    || ((DataViewObject) thisValue).getBuffer() == null) {
+                throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return ((DataViewObject) thisValue).getByteOffset();
+        }
     }
 }

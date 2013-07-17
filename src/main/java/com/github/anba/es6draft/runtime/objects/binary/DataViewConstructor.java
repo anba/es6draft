@@ -141,16 +141,12 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
         /* step 2 */
         // FIXME: DataView update in bug 1568 tests for [[ViewedArrayBuffer]] which applies to
         // DataView objects as well as TypedArray objects
-        if (!Type.isObject(thisValue) || !(thisValue instanceof DataViewObject)
+        if (!(thisValue instanceof DataViewObject)
                 || ((DataViewObject) thisValue).getBuffer() != null) {
             return OrdinaryConstruct(calleeContext, this, args);
         }
         DataViewObject dataView = (DataViewObject) thisValue;
-        /* step 3 */
-        if (!Type.isObject(buffer)) {
-            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        /* step 4 */
+        /* step 3-4 */
         if (!(buffer instanceof ArrayBufferObject)) {
             throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
