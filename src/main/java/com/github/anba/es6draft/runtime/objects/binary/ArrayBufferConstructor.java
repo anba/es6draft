@@ -35,7 +35,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -43,9 +42,8 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
  * <h3>15.13.5 ArrayBuffer Objects</h3>
  * <ul>
  * <li>15.13.5.1 Abstract Operations For ArrayBuffer Objects
- * <li>15.13.5.2 The ArrayBuffer Object Called as a Function
- * <li>15.13.5.3 The ArrayBuffer Constructor
- * <li>15.13.5.4 Properties of the ArrayBuffer Constructor
+ * <li>15.13.5.2 The ArrayBuffer Constructor
+ * <li>15.13.5.3 Properties of the ArrayBuffer Constructor
  * </ul>
  */
 public class ArrayBufferConstructor extends BuiltinFunction implements Constructor, Initialisable {
@@ -274,7 +272,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.13.5.3.1 new ArrayBuffer( ...args )
+     * 15.13.5.2.2 new ArrayBuffer(...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -282,7 +280,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.13.5.4 Properties of the ArrayBuffer Constructor
+     * 15.13.5.3 Properties of the ArrayBuffer Constructor
      */
     public enum Properties {
         ;
@@ -299,22 +297,19 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         public static final String name = "ArrayBuffer";
 
         /**
-         * 15.13.5.4.1 ArrayBuffer.prototype
+         * 15.13.5.3.1 ArrayBuffer.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ArrayBufferPrototype;
 
         /**
-         * 15.13.5.4.2 ArrayBuffer.isView ( arg )
+         * 15.13.5.3.2 ArrayBuffer.isView ( arg )
          */
         @Function(name = "isView", arity = 1)
         public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {
             if (!Type.isObject(arg)) {
                 return false;
-            }
-            if (arg instanceof ExoticArray) {
-                return true;
             }
             if (arg instanceof TypedArrayObject) {
                 return true;
@@ -323,7 +318,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         }
 
         /**
-         * 15.13.5.4.3 @@create ( )
+         * 15.13.5.3.3 @@create ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

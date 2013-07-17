@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h2>15.13 Binary Data Objects</h2><br>
  * <h3>15.13.5 ArrayBuffer Objects</h3>
  * <ul>
- * <li>15.13.5.5 Properties of the ArrayBuffer Prototype Object
+ * <li>15.13.5.4 Properties of the ArrayBuffer Prototype Object
  * </ul>
  */
 public class ArrayBufferPrototype extends OrdinaryObject implements Initialisable {
@@ -51,14 +51,17 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 15.13.5.5 Properties of the ArrayBuffer Prototype Object
+     * 15.13.5.4 Properties of the ArrayBuffer Prototype Object
      */
     public enum Properties {
         ;
 
         private static ArrayBufferObject ArrayBufferObject(ExecutionContext cx, ScriptObject m) {
             if (m instanceof ArrayBufferObject) {
-                return (ArrayBufferObject) m;
+                ArrayBufferObject buffer = (ArrayBufferObject) m;
+                if (buffer.getData() != null) {
+                    return buffer;
+                }
             }
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -67,13 +70,13 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.13.5.5.1 ArrayBuffer.prototype.constructor
+         * 15.13.5.4.1 ArrayBuffer.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.ArrayBuffer;
 
         /**
-         * 15.13.5.5.2 get ArrayBuffer.prototype.byteLength
+         * 15.13.5.4.2 get ArrayBuffer.prototype.byteLength
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
@@ -83,7 +86,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 15.13.5.5.3 ArrayBuffer.prototype.slice (start , end)
+         * 15.13.5.4.3 ArrayBuffer.prototype.slice (start, end)
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
@@ -95,13 +98,13 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             double relativeEnd = (Type.isUndefined(end) ? len : ToInteger(cx, end));
             double _final = relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(
                     relativeEnd, len);
-            double newLen = _final - first;
+            double newLen = Math.max(_final - first, 0);
             Callable ctor = GetMethod(cx, obj, "constructor");
             if (ctor == null || !IsConstructor(ctor)) {
                 throw throwTypeError(cx, Messages.Key.NotConstructor);
             }
             ArrayBufferObject _new = ArrayBufferObject(cx,
-                    ToObject(cx, ((Constructor) ctor).construct(cx, newLen)));
+                    ((Constructor) ctor).construct(cx, newLen));
             ByteBuffer fromBuf = obj.getData();
             ByteBuffer toBuf = _new.getData();
             CopyBlockElements(fromBuf, first, toBuf, 0, newLen);
@@ -109,7 +112,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 15.13.5.5.4 ArrayBuffer.prototype.@@toStringTag
+         * 15.13.5.4.4 ArrayBuffer.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "ArrayBuffer";
