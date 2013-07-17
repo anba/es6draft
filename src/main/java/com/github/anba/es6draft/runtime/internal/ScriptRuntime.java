@@ -126,7 +126,9 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         // String propertyName = ToString(ToUint32(nextIndex));
         String propertyName = ToString(nextIndex);
-        array.defineOwnProperty(cx, propertyName, new PropertyDescriptor(value, true, true, true));
+        boolean created = array.defineOwnProperty(cx, propertyName, new PropertyDescriptor(value,
+                true, true, true));
+        assert created;
     }
 
     /**
