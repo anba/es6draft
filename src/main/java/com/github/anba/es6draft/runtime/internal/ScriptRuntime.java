@@ -682,7 +682,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 11.8.1 The Abstract Relational Comparison Algorithm
+     * 11.8.1 Abstract Relational Comparison
      */
     public static int relationalComparison(Object x, Object y, boolean leftFirst,
             ExecutionContext cx) {
@@ -761,7 +761,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 11.9.1 The Abstract Equality Comparison Algorithm
+     * 11.9.1 Abstract Equality Comparison
      */
     public static boolean equalityComparison(Object x, Object y, ExecutionContext cx) {
         if (x == y) {
@@ -805,7 +805,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 11.9.1 The Strict Equality Comparison Algorithm
+     * 11.9.1 Strict Equality Comparison
      */
     public static boolean strictEqualityComparison(Object x, Object y) {
         if (x == y) {
