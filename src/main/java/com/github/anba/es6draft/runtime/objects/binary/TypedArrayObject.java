@@ -90,7 +90,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject {
         ElementType elementType = getElementType();
         int elementSize = elementType.size();
         long indexedPosition = (long) ((index * elementSize) + offset);
-        return GetValueFromBuffer(buffer, indexedPosition, elementType, false);
+        return GetValueFromBuffer(cx, buffer, indexedPosition, elementType);
     }
 
     /**
@@ -113,7 +113,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject {
         ElementType elementType = getElementType();
         int elementSize = elementType.size();
         long indexedPosition = (long) ((index * elementSize) + offset);
-        SetValueInBuffer(buffer, indexedPosition, elementType, numValue, false);
+        SetValueInBuffer(cx, buffer, indexedPosition, elementType, numValue);
         // FIXME: spec bug (elementSet) should return true/false
         // return numValue;
         return true;

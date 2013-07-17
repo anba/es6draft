@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects.binary;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyBlockElements;
@@ -28,7 +27,6 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -56,7 +54,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
     public enum Properties {
         ;
 
-        private static ArrayBufferObject ArrayBufferObject(ExecutionContext cx, ScriptObject m) {
+        private static ArrayBufferObject thisArrayBufferObject(ExecutionContext cx, Object m) {
             if (m instanceof ArrayBufferObject) {
                 ArrayBufferObject buffer = (ArrayBufferObject) m;
                 if (buffer.getData() != null) {
@@ -80,8 +78,8 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            ScriptObject obj = ToObject(cx, thisValue);
-            long length = ArrayBufferObject(cx, obj).getByteLength();
+            ArrayBufferObject obj = thisArrayBufferObject(cx, thisValue);
+            long length = obj.getByteLength();
             return length;
         }
 
@@ -90,7 +88,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
-            ArrayBufferObject obj = ArrayBufferObject(cx, ToObject(cx, thisValue));
+            ArrayBufferObject obj = thisArrayBufferObject(cx, thisValue);
             long len = obj.getByteLength();
             double relativeStart = ToInteger(cx, start);
             double first = relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(
@@ -103,7 +101,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             if (ctor == null || !IsConstructor(ctor)) {
                 throw throwTypeError(cx, Messages.Key.NotConstructor);
             }
-            ArrayBufferObject _new = ArrayBufferObject(cx,
+            ArrayBufferObject _new = thisArrayBufferObject(cx,
                     ((Constructor) ctor).construct(cx, newLen));
             ByteBuffer fromBuf = obj.getData();
             ByteBuffer toBuf = _new.getData();

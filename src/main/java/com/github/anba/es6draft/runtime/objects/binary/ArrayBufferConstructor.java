@@ -47,6 +47,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * </ul>
  */
 public class ArrayBufferConstructor extends BuiltinFunction implements Constructor, Initialisable {
+    private static final boolean IS_LITTLE_ENDIAN = true;
+
     public ArrayBufferConstructor(Realm realm) {
         super(realm);
     }
@@ -112,9 +114,9 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         SetArrayBufferData(cx, destData, length * destType.size());
 
         for (long index = 0; index < length; ++index) {
-            double value = GetValueFromBuffer(srcData, startByteIndex + index * srcType.size(),
-                    srcType, false);
-            SetValueInBuffer(destData, index * destType.size(), destType, value, false);
+            double value = GetValueFromBuffer(cx, srcData, startByteIndex + index * srcType.size(),
+                    srcType);
+            SetValueInBuffer(cx, destData, index * destType.size(), destType, value);
         }
 
         return destData;
@@ -152,27 +154,44 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.13.5.1.3 GetValueFromBuffer (arrayBuffer, byteIndex, type, isBigEndian)
+     * 15.13.5.1.3 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      */
-    public static double GetValueFromBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
-            ElementType type, boolean isBigEndian) {
+    public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
+            long byteIndex, ElementType type) {
+        return GetValueFromBuffer(cx, arrayBuffer, byteIndex, type, IS_LITTLE_ENDIAN);
+    }
+
+    /**
+     * 15.13.5.1.3 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     */
+    public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
+            long byteIndex, ElementType type, boolean isLittleEndian) {
+        /* steps 1-2 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
+        /* steps 3-4 */
         ByteBuffer block = arrayBuffer.getData();
-        if ((block.order() == ByteOrder.BIG_ENDIAN) != isBigEndian) {
-            block.order(isBigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+        if (block == null) {
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        /* steps 7-8 */
+        if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
+            block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         }
 
         int index = (int) byteIndex;
         switch (type) {
         case Float32: {
+            /* steps 5-6, 9 */
             double rawValue = block.getFloat(index);
             return Double.isNaN(rawValue) ? Double.NaN : rawValue;
         }
         case Float64: {
+            /* steps 5-6, 10 */
             double rawValue = block.getDouble(index);
             return Double.isNaN(rawValue) ? Double.NaN : rawValue;
         }
 
+        /* steps 5-6, 11, 13 */
         case Uint8:
         case Uint8C:
             return block.get(index) & 0xffL;
@@ -181,6 +200,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         case Uint32:
             return block.getInt(index) & 0xffffffffL;
 
+            /* steps 5-6, 12-13 */
         case Int8:
             return (long) block.get(index);
         case Int16:
@@ -194,25 +214,42 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     }
 
     /**
-     * 15.13.5.1.4 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isBigEndian)
+     * 15.13.5.1.4 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      */
-    public static void SetValueInBuffer(ArrayBufferObject arrayBuffer, long byteIndex,
-            ElementType type, double value, boolean isBigEndian) {
+    public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
+            long byteIndex, ElementType type, double value) {
+        SetValueInBuffer(cx, arrayBuffer, byteIndex, type, value, IS_LITTLE_ENDIAN);
+    }
+
+    /**
+     * 15.13.5.1.4 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     */
+    public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
+            long byteIndex, ElementType type, double value, boolean isLittleEndian) {
+        /* steps 1-2 */
         assert (byteIndex >= 0 && (byteIndex + type.size()) <= arrayBuffer.getByteLength());
+        /* steps 3-4 */
         ByteBuffer block = arrayBuffer.getData();
-        if ((block.order() == ByteOrder.BIG_ENDIAN) != isBigEndian) {
-            block.order(isBigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+        if (block == null) {
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        /* step 7-10 */
+        if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
+            block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         }
 
         int index = (int) byteIndex;
         switch (type) {
         case Float32:
+            /* steps 8, 11-12 */
             block.putFloat(index, (float) value);
             return;
         case Float64:
+            /* steps 9, 11-12 */
             block.putDouble(index, value);
             return;
 
+            /* steps 10-12 */
         case Int8:
             block.put(index, ElementType.ToInt8(value));
             return;
@@ -249,11 +286,8 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object length = args.length > 0 ? args[0] : UNDEFINED;
-        if (!(Type.isUndefined(thisValue) || Type.isObject(thisValue))) {
+        if (!(thisValue instanceof ArrayBufferObject)) {
             throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
-        }
-        if (Type.isUndefined(thisValue) || !(thisValue instanceof ArrayBufferObject)) {
-            return OrdinaryConstruct(calleeContext, this, args);
         }
         ArrayBufferObject buf = (ArrayBufferObject) thisValue;
         if (buf.getData() != null) {
@@ -311,7 +345,8 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
             if (!Type.isObject(arg)) {
                 return false;
             }
-            if (arg instanceof TypedArrayObject) {
+            // FIXME: TypedArrayObject or/and DataViewObject
+            if (arg instanceof TypedArrayObject || arg instanceof DataViewObject) {
                 return true;
             }
             return false;

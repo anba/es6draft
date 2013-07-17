@@ -164,7 +164,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                     Object kValue = Get(cx, src, pk);
                     double kNumber = ToNumber(cx, kValue);
                     // FIXME: spec bug "k * targetElementSize" => "targetByteIndex"
-                    SetValueInBuffer(targetBuffer, targetByteIndex, targetType, kNumber, false);
+                    SetValueInBuffer(cx, targetBuffer, targetByteIndex, targetType, kNumber);
                 }
                 return UNDEFINED;
             } else {
@@ -193,8 +193,8 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 long limit = (long) (targetByteIndex + targetElementSize
                         * Math.min(srcLength, targetLength - targetOffset));
                 for (; targetByteIndex < limit; srcByteIndex += srcElementSize, targetByteIndex += targetElementSize) {
-                    double value = GetValueFromBuffer(srcBuffer, srcByteIndex, srcType, false);
-                    SetValueInBuffer(targetBuffer, targetByteIndex, targetType, value, false);
+                    double value = GetValueFromBuffer(cx, srcBuffer, srcByteIndex, srcType);
+                    SetValueInBuffer(cx, targetBuffer, targetByteIndex, targetType, value);
                 }
                 return UNDEFINED;
             }

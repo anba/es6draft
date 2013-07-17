@@ -84,10 +84,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
         if (numberIndex != getIndex || getIndex < 0) {
             throwRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        boolean littleEndian = false; // default value
-        if (!Type.isUndefined(isLittleEndian)) {
-            littleEndian = ToBoolean(isLittleEndian);
-        }
+        boolean littleEndian = ToBoolean(isLittleEndian);
         long viewOffset = dataView.getByteOffset();
         long viewSize = dataView.getByteLength();
         int elementSize = type.size();
@@ -95,7 +92,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
             throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
         long bufferIndex = (long) getIndex + viewOffset;
-        return GetValueFromBuffer(buffer, bufferIndex, type, !littleEndian);
+        return GetValueFromBuffer(cx, buffer, bufferIndex, type, littleEndian);
     }
 
     /**
@@ -120,10 +117,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
         if (numberIndex != getIndex || getIndex < 0) {
             throwRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        boolean littleEndian = false; // default value
-        if (!Type.isUndefined(isLittleEndian)) {
-            littleEndian = ToBoolean(isLittleEndian);
-        }
+        boolean littleEndian = ToBoolean(isLittleEndian);
         long viewOffset = dataView.getByteOffset();
         long viewSize = dataView.getByteLength();
         int elementSize = type.size();
@@ -131,7 +125,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
             throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
         long bufferIndex = (long) getIndex + viewOffset;
-        SetValueInBuffer(buffer, bufferIndex, type, ToNumber(cx, value), !littleEndian);
+        SetValueInBuffer(cx, buffer, bufferIndex, type, ToNumber(cx, value), littleEndian);
     }
 
     /**

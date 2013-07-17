@@ -234,7 +234,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
             // FIXME: spec bug (`Get(array, Pk)` instead of `Get(O, Pk)`)
             Object kValue = Get(cx, _array, pk);
             double kNumber = ToNumber(cx, kValue);
-            SetValueInBuffer(data, k * elementSize, elementType, kNumber, false);
+            SetValueInBuffer(cx, data, k * elementSize, elementType, kNumber);
         }
         /* step 20 */
         if (array.getBuffer() != null) {
