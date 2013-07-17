@@ -12,7 +12,9 @@ import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstra
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialise;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -28,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <h1>8 Types</h1><br>
  * <h2>8.3 Ordinary Object Internal Methods and Internal Data Properties</h2>
  * <ul>
- * <li>8.3.15 Ordinary Function Objects
+ * <li>8.3.16 Ordinary Function Objects
  * </ul>
  */
 public class OrdinaryGenerator extends FunctionObject {
@@ -43,7 +45,7 @@ public class OrdinaryGenerator extends FunctionObject {
         }
 
         /**
-         * 8.3.15.2 [[Construct]] (argumentsList)
+         * 8.3.16.2 [[Construct]] (argumentsList)
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -52,7 +54,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 8.3.15.1 [[Call]] Internal Method
+     * 8.3.16.1 [[Call]] Internal Method
      */
     @Override
     public GeneratorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -66,7 +68,12 @@ public class OrdinaryGenerator extends FunctionObject {
         /* step 12-13 */
         getFunction().functionDeclarationInstantiation(calleeContext, this, args);
         /* step 14-15 */
-        GeneratorObject result = EvaluateBody(calleeContext, this);
+        GeneratorObject result;
+        if (getFunctionKind() != FunctionKind.Arrow) {
+            result = EvaluateBody(calleeContext, this);
+        } else {
+            result = EvaluateBodyComprehension(calleeContext, this);
+        }
         /* step 16 */
         return result;
     }
@@ -82,17 +89,44 @@ public class OrdinaryGenerator extends FunctionObject {
      */
     public static GeneratorObject EvaluateBody(ExecutionContext cx, OrdinaryGenerator functionObject) {
         /* step 1 */
-        Object thisValue = cx.thisResolution();
+        assert cx.getLexicalEnvironment().getEnvRec() instanceof FunctionEnvironmentRecord;
         /* step 2 */
-        GeneratorObject g;
-        if (!(thisValue instanceof GeneratorObject)) {
-            g = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.GeneratorPrototype,
-                    GeneratorObjectAllocator.INSTANCE);
+        EnvironmentRecord env = cx.getThisEnvironment();
+        /* step 3 */
+        Object g = env.getThisBinding();
+        /* step 4 */
+        GeneratorObject gen;
+        if (!(g instanceof GeneratorObject) || ((GeneratorObject) g).getState() != null) {
+            GeneratorObject newG = OrdinaryCreateFromConstructor(cx, functionObject,
+                    Intrinsics.GeneratorPrototype, GeneratorObjectAllocator.INSTANCE);
+            gen = newG;
         } else {
-            g = (GeneratorObject) thisValue;
+            gen = (GeneratorObject) g;
         }
         /* step 3 */
-        return GeneratorStart(cx, g, functionObject.getCode());
+        return GeneratorStart(cx, gen, functionObject.getCode());
+    }
+
+    /**
+     * 13.4 Generator Function Definitions
+     * <p>
+     * Runtime Semantics EvaluateBody
+     * 
+     * <pre>
+     * GeneratorBody : Comprehension
+     * </pre>
+     */
+    public static GeneratorObject EvaluateBodyComprehension(ExecutionContext cx,
+            OrdinaryGenerator functionObject) {
+        /* steps 1-2 */
+        GeneratorObject g = OrdinaryCreateFromConstructor(cx, functionObject,
+                Intrinsics.GeneratorPrototype, GeneratorObjectAllocator.INSTANCE);
+        /* step 3 */
+        assert g.getState() == null;
+        /* steps 4-5 */
+        GeneratorStart(cx, g, functionObject.getCode());
+        /* step 6 */
+        return g;
     }
 
     private static class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
@@ -111,6 +145,7 @@ public class OrdinaryGenerator extends FunctionObject {
      */
     public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, FunctionKind kind) {
+        assert kind != FunctionKind.ConstructorMethod;
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
         /* steps 4-6 */
@@ -131,7 +166,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 8.3.15.8 GeneratorFunctionCreate Abstract Operation
+     * 8.3.16.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
@@ -139,7 +174,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 8.3.15.8 GeneratorFunctionCreate Abstract Operation
+     * 8.3.16.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
@@ -148,7 +183,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 8.3.15.8 GeneratorFunctionCreate Abstract Operation
+     * 8.3.16.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,
@@ -165,7 +200,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 8.3.15.8 GeneratorFunctionCreate Abstract Operation
+     * 8.3.16.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,

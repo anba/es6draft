@@ -213,7 +213,7 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         /* step 2 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        /* steps 3-4 */
+        /* steps 1, 3-4 */
         String functionName = "";
         int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
                 | RuntimeInfo.FunctionFlags.Generator.getValue();

@@ -39,7 +39,7 @@ public class GeneratorObject extends OrdinaryObject {
     /**
      * [[GeneratorState]]
      */
-    private enum GeneratorState {
+    public enum GeneratorState {
         SuspendedStart, SuspendedYield, Executing, Completed
     }
 
@@ -64,16 +64,17 @@ public class GeneratorObject extends OrdinaryObject {
         this.out = new SynchronousQueue<>();
     }
 
+    /** [[GeneratorState]] */
+    public GeneratorState getState() {
+        return state;
+    }
+
     /**
      * @see IterationAbstractOperations#GeneratorStart(ExecutionContext, GeneratorObject,
      *      RuntimeInfo.Code)
      */
     void start(ExecutionContext cx, RuntimeInfo.Code code) {
-        // FIXME: spec bug - state must be <undefined>
-        if (state != null) {
-            // generator object already initialised
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
+        assert state == null;
         this.context = cx;
         this.code = code;
         this.state = GeneratorState.SuspendedStart;
