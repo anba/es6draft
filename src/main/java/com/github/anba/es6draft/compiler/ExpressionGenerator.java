@@ -293,25 +293,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         /* step 1-2 */
         GetValue(base, type, mv);
         /* step 3-4 */
-        boolean hasSpread = false;
-        if (arguments.isEmpty()) {
-            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
-        } else {
-            mv.newarray(arguments.size(), Types.Object);
-            for (int i = 0, size = arguments.size(); i < size; ++i) {
-                mv.dup();
-                mv.iconst(i);
-                /* [11.2.5 Argument Lists] ArgumentListEvaluation */
-                Expression argument = arguments.get(i);
-                hasSpread |= (argument instanceof CallSpreadElement);
-                ValType argtype = evalAndGetValue(argument, mv);
-                mv.toBoxed(argtype);
-                mv.astore(Types.Object);
-            }
-            if (hasSpread) {
-                mv.invoke(Methods.ScriptRuntime_toFlatArray);
-            }
-        }
+        boolean hasSpread = ArgumentListEvaluation(arguments, mv);
         // stack: [ref, func, args]
         mv.lineInfo(call);
 
@@ -438,6 +420,29 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         if (afterCall != null) {
             mv.mark(afterCall);
         }
+    }
+
+    private boolean ArgumentListEvaluation(List<Expression> arguments, ExpressionVisitor mv) {
+        boolean hasSpread = false;
+        if (arguments.isEmpty()) {
+            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
+        } else {
+            mv.newarray(arguments.size(), Types.Object);
+            for (int i = 0, size = arguments.size(); i < size; ++i) {
+                mv.dup();
+                mv.iconst(i);
+                /* [11.2.5 Argument Lists] ArgumentListEvaluation */
+                Expression argument = arguments.get(i);
+                hasSpread |= (argument instanceof CallSpreadElement);
+                ValType argtype = evalAndGetValue(argument, mv);
+                mv.toBoxed(argtype);
+                mv.astore(Types.Object);
+            }
+            if (hasSpread) {
+                mv.invoke(Methods.ScriptRuntime_toFlatArray);
+            }
+        }
+        return hasSpread;
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -1501,26 +1506,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     public ValType visit(NewExpression node, ExpressionVisitor mv) {
         ValType type = evalAndGetValue(node.getExpression(), mv);
         mv.toBoxed(type);
-        List<Expression> arguments = node.getArguments();
-        if (arguments.isEmpty()) {
-            mv.get(Fields.ScriptRuntime_EMPTY_ARRAY);
-        } else {
-            boolean hasSpread = false;
-            mv.newarray(arguments.size(), Types.Object);
-            for (int i = 0, size = arguments.size(); i < size; ++i) {
-                mv.dup();
-                mv.iconst(i);
-                /* [11.2.5 Argument Lists] ArgumentListEvaluation */
-                Expression argument = arguments.get(i);
-                hasSpread |= (argument instanceof CallSpreadElement);
-                ValType argtype = evalAndGetValue(argument, mv);
-                mv.toBoxed(argtype);
-                mv.astore(Types.Object);
-            }
-            if (hasSpread) {
-                mv.invoke(Methods.ScriptRuntime_toFlatArray);
-            }
-        }
+        ArgumentListEvaluation(node.getArguments(), mv);
         mv.lineInfo(node);
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
