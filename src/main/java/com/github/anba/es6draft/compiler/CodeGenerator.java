@@ -237,14 +237,29 @@ class CodeGenerator implements AutoCloseable {
         String fname = methodName(node);
         switch (name) {
         case Code:
-            return '!' + fname;
+            return insertMarker("!", fname, "");
         case Init:
-            return '!' + fname + "_init";
+            return insertMarker("!", fname, "_init");
         case RTI:
-            return fname + "_rti";
+            return insertMarker("", fname, "_rti");
         default:
             throw new IllegalStateException();
         }
+    }
+
+    private final String insertMarker(String prefix, String fname, String suffix) {
+        StringBuilder sb = new StringBuilder(2 + fname.length() + prefix.length() + suffix.length());
+        if (fname.charAt(0) != '\\') {
+            // simple concat if string not mangled
+            return sb.append(prefix).append(fname).append(suffix).toString();
+        }
+        if (fname.charAt(1) != '=') {
+            // add \= indicator before adding prefix
+            return sb.append("\\=").append(prefix).append(fname).append(suffix).toString();
+        }
+        // add \= indicator already present, add prefix after it
+        return sb.append(fname, 0, 2).append(prefix).append(fname, 2, fname.length())
+                .append(suffix).toString();
     }
 
     private final String methodName(FunctionNode node) {
