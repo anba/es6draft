@@ -1796,92 +1796,106 @@ public class Parser {
      * </pre>
      */
     private MethodDefinition methodDefinition(boolean alwaysStrict) {
-        if (token() == Token.MUL) {
+        switch (methodType()) {
+        case Generator:
             return generatorMethod(alwaysStrict);
+        case Getter:
+            return getterMethod(alwaysStrict);
+        case Setter:
+            return setterMethod(alwaysStrict);
+        case Function:
+        default:
+            return normalMethod(alwaysStrict);
         }
+    }
 
-        MethodType type = methodType();
+    /**
+     * <strong>[13.3] Method Definitions</strong>
+     * 
+     * <pre>
+     * MethodDefinition :
+     *     PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * </pre>
+     */
+    private MethodDefinition normalMethod(boolean alwaysStrict) {
+        int line = ts.getLine();
+        PropertyName propertyName = propertyName();
+        return normalMethod(line, propertyName, alwaysStrict);
+    }
+
+    private MethodDefinition normalMethod(int line, PropertyName propertyName, boolean alwaysStrict) {
         newContext(ContextKind.Method);
         if (alwaysStrict) {
             context.strictMode = StrictMode.Strict;
         }
         try {
-            PropertyName propertyName;
-            FormalParameterList parameters;
+            consume(Token.LP);
+            int startFunction = ts.position() - 1;
+            FormalParameterList parameters = strictFormalParameters(Token.RP);
+            consume(Token.RP);
+            consume(Token.LC);
+            int startBody = ts.position();
+            List<StatementListItem> statements = functionBody(Token.RC);
+            consume(Token.RC);
+            int endFunction = ts.position() - 1;
+
+            String header = "function " + ts.range(startFunction, startBody - 1);
+            String body = ts.range(startBody, endFunction);
+
+            FunctionContext scope = context.funContext;
+            MethodType type = MethodType.Function;
+            MethodDefinition method = new MethodDefinition(scope, type, propertyName, parameters,
+                    statements, context.hasSuperReference(), header, body);
+            method.setLine(line);
+            scope.node = method;
+
+            methodDefinition_StaticSemantics(method);
+
+            return inheritStrictness(method);
+        } finally {
+            restoreContext();
+        }
+    }
+
+    /**
+     * <strong>[13.3] Method Definitions</strong>
+     * 
+     * <pre>
+     * MethodDefinition :
+     *     get PropertyName ( ) { FunctionBody }
+     * </pre>
+     */
+    private MethodDefinition getterMethod(boolean alwaysStrict) {
+        int line = ts.getLine();
+
+        consume(Token.NAME);
+        PropertyName propertyName = propertyName();
+
+        newContext(ContextKind.Method);
+        if (alwaysStrict) {
+            context.strictMode = StrictMode.Strict;
+        }
+        try {
+            consume(Token.LP);
+            int startFunction = ts.position() - 1;
+            FormalParameterList parameters = new FormalParameterList(
+                    Collections.<FormalParameter> emptyList());
+            consume(Token.RP);
+
             List<StatementListItem> statements;
-
-            int line = ts.getLine();
             String header, body;
-            switch (type) {
-            case Getter: {
-                consume(Token.NAME);
-                propertyName = propertyName();
-                consume(Token.LP);
-                int startFunction = ts.position() - 1;
-                parameters = new FormalParameterList(Collections.<FormalParameter> emptyList());
-                consume(Token.RP);
+            if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+                // need to call manually b/c functionBody() isn't used here
+                applyStrictMode(false);
 
-                if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
-                    // need to call manually b/c functionBody() isn't used here
-                    applyStrictMode(false);
+                int startBody = ts.position();
+                statements = Collections.<StatementListItem> singletonList(new ReturnStatement(
+                        assignmentExpression(true)));
+                int endFunction = ts.position();
 
-                    int startBody = ts.position();
-                    statements = Collections.<StatementListItem> singletonList(new ReturnStatement(
-                            assignmentExpression(true)));
-                    int endFunction = ts.position();
-
-                    header = "function " + ts.range(startFunction, startBody);
-                    body = "return " + ts.range(startBody, endFunction);
-                } else {
-                    consume(Token.LC);
-                    int startBody = ts.position();
-                    statements = functionBody(Token.RC);
-                    consume(Token.RC);
-                    int endFunction = ts.position() - 1;
-
-                    header = "function " + ts.range(startFunction, startBody - 1);
-                    body = ts.range(startBody, endFunction);
-                }
-                break;
-            }
-            case Setter: {
-                consume(Token.NAME);
-                propertyName = propertyName();
-                consume(Token.LP);
-                int startFunction = ts.position() - 1;
-                parameters = propertySetParameterList();
-                consume(Token.RP);
-
-                if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
-                    // need to call manually b/c functionBody() isn't used here
-                    applyStrictMode(false);
-
-                    int startBody = ts.position();
-                    statements = Collections.<StatementListItem> singletonList(new ReturnStatement(
-                            assignmentExpression(true)));
-                    int endFunction = ts.position();
-
-                    header = "function " + ts.range(startFunction, startBody);
-                    body = "return " + ts.range(startBody, endFunction);
-                } else {
-                    consume(Token.LC);
-                    int startBody = ts.position();
-                    statements = functionBody(Token.RC);
-                    consume(Token.RC);
-                    int endFunction = ts.position() - 1;
-
-                    header = "function " + ts.range(startFunction, startBody - 1);
-                    body = ts.range(startBody, endFunction);
-                }
-                break;
-            }
-            case Function:
-            default: {
-                propertyName = propertyName();
-                consume(Token.LP);
-                int startFunction = ts.position() - 1;
-                parameters = strictFormalParameters(Token.RP);
-                consume(Token.RP);
+                header = "function " + ts.range(startFunction, startBody);
+                body = "return " + ts.range(startBody, endFunction);
+            } else {
                 consume(Token.LC);
                 int startBody = ts.position();
                 statements = functionBody(Token.RC);
@@ -1890,11 +1904,73 @@ public class Parser {
 
                 header = "function " + ts.range(startFunction, startBody - 1);
                 body = ts.range(startBody, endFunction);
-                break;
-            }
             }
 
             FunctionContext scope = context.funContext;
+            MethodType type = MethodType.Getter;
+            MethodDefinition method = new MethodDefinition(scope, type, propertyName, parameters,
+                    statements, context.hasSuperReference(), header, body);
+            method.setLine(line);
+            scope.node = method;
+
+            methodDefinition_StaticSemantics(method);
+
+            return inheritStrictness(method);
+        } finally {
+            restoreContext();
+        }
+    }
+
+    /**
+     * <strong>[13.3] Method Definitions</strong>
+     * 
+     * <pre>
+     * MethodDefinition :
+     *     set PropertyName ( PropertySetParameterList ) { FunctionBody }
+     * </pre>
+     */
+    private MethodDefinition setterMethod(boolean alwaysStrict) {
+        int line = ts.getLine();
+
+        consume(Token.NAME);
+        PropertyName propertyName = propertyName();
+
+        newContext(ContextKind.Method);
+        if (alwaysStrict) {
+            context.strictMode = StrictMode.Strict;
+        }
+        try {
+            consume(Token.LP);
+            int startFunction = ts.position() - 1;
+            FormalParameterList parameters = propertySetParameterList();
+            consume(Token.RP);
+
+            List<StatementListItem> statements;
+            String header, body;
+            if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+                // need to call manually b/c functionBody() isn't used here
+                applyStrictMode(false);
+
+                int startBody = ts.position();
+                statements = Collections.<StatementListItem> singletonList(new ReturnStatement(
+                        assignmentExpression(true)));
+                int endFunction = ts.position();
+
+                header = "function " + ts.range(startFunction, startBody);
+                body = "return " + ts.range(startBody, endFunction);
+            } else {
+                consume(Token.LC);
+                int startBody = ts.position();
+                statements = functionBody(Token.RC);
+                consume(Token.RC);
+                int endFunction = ts.position() - 1;
+
+                header = "function " + ts.range(startFunction, startBody - 1);
+                body = ts.range(startBody, endFunction);
+            }
+
+            FunctionContext scope = context.funContext;
+            MethodType type = MethodType.Setter;
             MethodDefinition method = new MethodDefinition(scope, type, propertyName, parameters,
                     statements, context.hasSuperReference(), header, body);
             method.setLine(line);
@@ -1923,6 +1999,9 @@ public class Parser {
     }
 
     private MethodType methodType() {
+        if (token() == Token.MUL) {
+            return MethodType.Generator;
+        }
         if (token() == Token.NAME) {
             String name = getName(Token.NAME);
             if (("get".equals(name) || "set".equals(name)) && isPropertyName(peek())) {
@@ -1933,7 +2012,8 @@ public class Parser {
     }
 
     private boolean isPropertyName(Token token) {
-        return token == Token.STRING || token == Token.NUMBER || isIdentifierName(token);
+        return token == Token.STRING || token == Token.NUMBER || token == Token.LB
+                || isIdentifierName(token);
     }
 
     private void methodDefinition_StaticSemantics(MethodDefinition method) {
@@ -2001,14 +2081,16 @@ public class Parser {
      * </pre>
      */
     private MethodDefinition generatorMethod(boolean alwaysStrict) {
+        int line = ts.getLine();
+
+        consume(Token.MUL);
+        PropertyName propertyName = propertyName();
+
         newContext(ContextKind.Generator);
         if (alwaysStrict) {
             context.strictMode = StrictMode.Strict;
         }
         try {
-            int line = ts.getLine();
-            consume(Token.MUL);
-            PropertyName propertyName = propertyName();
             consume(Token.LP);
             int startFunction = ts.position() - 1;
             FormalParameterList parameters = strictFormalParameters(Token.RP);
@@ -2313,6 +2395,10 @@ public class Parser {
         Map<String, Integer> values = new HashMap<>();
         for (MethodDefinition def : defs) {
             String key = PropName(def);
+            if (key == null) {
+                assert def.getPropertyName() instanceof ComputedPropertyName;
+                continue;
+            }
             if (isStatic) {
                 if ("prototype".equals(key)) {
                     reportSyntaxError(Messages.Key.InvalidPrototypeMethod);
@@ -4386,6 +4472,10 @@ public class Parser {
         for (PropertyDefinition def : object.getProperties()) {
             PropertyName propertyName = def.getPropertyName();
             String key = propertyName.getName();
+            if (key == null) {
+                assert propertyName instanceof ComputedPropertyName;
+                continue;
+            }
             final int kind;
             if (def instanceof PropertyValueDefinition || def instanceof PropertyNameDefinition) {
                 kind = VALUE;
@@ -4439,8 +4529,21 @@ public class Parser {
      * </pre>
      */
     private PropertyDefinition propertyDefinition() {
+        if (token() == Token.LB) {
+            // either `PropertyName : AssignmentExpression` or MethodDefinition (normal)
+            int line = ts.getLine();
+            PropertyName propertyName = computedPropertyName();
+            if (token() == Token.COLON) {
+                // it's the `PropertyName : AssignmentExpression` case
+                consume(Token.COLON);
+                Expression propertyValue = assignmentExpressionNoValidation(true);
+                return new PropertyValueDefinition(propertyName, propertyValue);
+            }
+            // otherwise it's MethodDefinition (normal)
+            return normalMethod(line, propertyName, false);
+        }
         if (LOOKAHEAD(Token.COLON)) {
-            PropertyName propertyName = propertyName();
+            PropertyName propertyName = literalPropertyName();
             consume(Token.COLON);
             Expression propertyValue = assignmentExpressionNoValidation(true);
             return new PropertyValueDefinition(propertyName, propertyValue);
@@ -4469,12 +4572,29 @@ public class Parser {
      * 
      * <pre>
      * PropertyName :
+     *   LiteralPropertyName
+     *   ComputedPropertyName
+     * </pre>
+     */
+    private PropertyName propertyName() {
+        if (token() != Token.LB) {
+            return literalPropertyName();
+        } else {
+            return computedPropertyName();
+        }
+    }
+
+    /**
+     * <strong>[11.1.5] Object Initialiser</strong>
+     * 
+     * <pre>
+     * PropertyName :
      *     IdentifierName
      *     StringLiteral
      *     NumericLiteral
      * </pre>
      */
-    private PropertyName propertyName() {
+    private PropertyName literalPropertyName() {
         switch (token()) {
         case STRING:
             return new StringLiteral(stringLiteral());
@@ -4483,6 +4603,22 @@ public class Parser {
         default:
             return new Identifier(identifierName());
         }
+    }
+
+    /**
+     * <strong>[11.1.5] Object Initialiser</strong>
+     * 
+     * <pre>
+     * ComputedPropertyName :
+     *     [ AssignmentExpression ]
+     * </pre>
+     */
+    private PropertyName computedPropertyName() {
+        consume(Token.LB);
+        Expression expression = assignmentExpression(true);
+        consume(Token.RB);
+
+        return new ComputedPropertyName(expression);
     }
 
     /**
