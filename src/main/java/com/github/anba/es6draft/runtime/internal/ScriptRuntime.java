@@ -169,6 +169,29 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 11.1.5 Object Initialiser
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     */
+    public static void defineProperty(ScriptObject object, ExoticSymbol propertyName, Object value,
+            ExecutionContext cx) {
+        DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
+                true));
+    }
+
+    /**
+     * 11.1.5 Object Initialiser
+     * <p>
+     * Runtime Semantics: Evaluation
+     */
+    public static ExoticSymbol ensureExoticSymbol(Object value, ExecutionContext cx) {
+        if (!(value instanceof ExoticSymbol)) {
+            throwTypeError(cx, Messages.Key.IncompatibleObject);// FIXME: change error message
+        }
+        return (ExoticSymbol) value;
+    }
+
+    /**
      * 11.1.7 Generator Comprehensions
      * <p>
      * Runtime Semantics: Evaluation
@@ -473,7 +496,7 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      */
-    public static Reference<ScriptObject, String> MakeSuperReference(ExecutionContext cx,
+    public static Reference<ScriptObject, ?> MakeSuperReference(ExecutionContext cx,
             String propertyKey, boolean strict) {
         EnvironmentRecord envRec = cx.getThisEnvironment();
         if (!envRec.hasSuperBinding()) {
@@ -487,7 +510,13 @@ public final class ScriptRuntime {
             throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         if (propertyKey == null) {
-            propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
+            Object pk = ((FunctionEnvironmentRecord) envRec).getMethodName();
+            if (pk instanceof ExoticSymbol) {
+                return new Reference.SuperSymbolReference(baseValue, (ExoticSymbol) pk, strict,
+                        actualThis);
+            }
+            assert pk instanceof String;
+            propertyKey = (String) pk;
         }
         return new Reference.SuperNameReference(baseValue, propertyKey, strict, actualThis);
     }
@@ -1051,6 +1080,27 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Property Definition Evaluation
      * <ul>
+     * <li>PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * </ul>
+     */
+    public static void EvaluatePropertyDefinition(ScriptObject object, ExoticSymbol propName,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        OrdinaryFunction closure;
+        if (fd.hasSuperReference()) {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
+        } else {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        }
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        DefinePropertyOrThrow(cx, object, propName, desc);
+    }
+
+    /**
+     * 13.3 Method Definitions
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     * <ul>
      * <li>get PropertyName ( ) { FunctionBody }
      * </ul>
      */
@@ -1076,10 +1126,59 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Property Definition Evaluation
      * <ul>
+     * <li>get PropertyName ( ) { FunctionBody }
+     * </ul>
+     */
+    public static void EvaluatePropertyDefinitionGetter(ScriptObject object, ExoticSymbol propName,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        OrdinaryFunction closure;
+        if (fd.hasSuperReference()) {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
+        } else {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        }
+        PropertyDescriptor desc = new PropertyDescriptor();
+        desc.setGetter(closure);
+        desc.setEnumerable(true);
+        desc.setConfigurable(true);
+        // FIXME: spec bug (not updated to use DefinePropertyOrThrow) (Bug 1417)
+        DefinePropertyOrThrow(cx, object, propName, desc);
+    }
+
+    /**
+     * 13.3 Method Definitions
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     * <ul>
      * <li>set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </ul>
      */
     public static void EvaluatePropertyDefinitionSetter(ScriptObject object, String propName,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        OrdinaryFunction closure;
+        if (fd.hasSuperReference()) {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propName);
+        } else {
+            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        }
+        PropertyDescriptor desc = new PropertyDescriptor();
+        desc.setSetter(closure);
+        desc.setEnumerable(true);
+        desc.setConfigurable(true);
+        DefinePropertyOrThrow(cx, object, propName, desc);
+    }
+
+    /**
+     * 13.3 Method Definitions
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     * <ul>
+     * <li>set PropertyName ( PropertySetParameterList ) { FunctionBody }
+     * </ul>
+     */
+    public static void EvaluatePropertyDefinitionSetter(ScriptObject object, ExoticSymbol propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction closure;
@@ -1122,6 +1221,38 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, String propName,
             RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (implicit) */
+        /* step 3 */
+        LexicalEnvironment scope = cx.getLexicalEnvironment();
+        /* step 4 (implicit) */
+        /* steps 5-6 */
+        OrdinaryGenerator closure;
+        if (fd.hasSuperReference()) {
+            closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope, null, object,
+                    propName);
+        } else {
+            closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
+        }
+        /* step 7 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 8 */
+        MakeConstructor(cx, closure, true, prototype);
+        /* step 9-11 */
+        PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        DefinePropertyOrThrow(cx, object, propName, desc);
+        /* step 12 (implicit) */
+    }
+
+    /**
+     * 13.4 Generator Function Definitions
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     * <ul>
+     * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
+     * </ul>
+     */
+    public static void EvaluatePropertyDefinitionGenerator(ScriptObject object,
+            ExoticSymbol propName, RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (implicit) */
         /* step 3 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
@@ -1347,7 +1478,7 @@ public final class ScriptRuntime {
         Object completionValue = UNDEFINED;
 
         // super()
-        Reference<ScriptObject, String> ref = MakeSuperReference(cx, null, true);
+        Reference<ScriptObject, ?> ref = MakeSuperReference(cx, null, true);
         // EvaluateCall: super(...args)
         Object func = ref.GetValue(cx);
         Object[] argList = SpreadArray(cx.identifierValue("args", true), cx);

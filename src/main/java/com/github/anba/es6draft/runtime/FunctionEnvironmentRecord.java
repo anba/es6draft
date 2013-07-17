@@ -19,10 +19,10 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecord {
     private final Object thisValue;
     private final ScriptObject homeObject;
-    private final String methodName;
+    private final Object methodName;
 
     public FunctionEnvironmentRecord(ExecutionContext cx, Object thisValue,
-            ScriptObject homeObject, String methodName) {
+            ScriptObject homeObject, Object methodName) {
         super(cx);
         this.thisValue = thisValue;
         this.homeObject = homeObject;
@@ -67,7 +67,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     /**
      * 10.2.1.3.5 GetMethodName ()
      */
-    public String getMethodName() {
+    public Object getMethodName() {
         return methodName;
     }
 }

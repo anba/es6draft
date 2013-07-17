@@ -45,7 +45,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /** [[HomeObject]] */
     protected ScriptObject homeObject;
     /** [[MethodName]] */
-    protected String methodName;
+    protected Object /* String|ExoticSymbol */methodName;
 
     protected boolean legacy;
     protected String source = null;
@@ -212,7 +212,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /**
      * [[MethodName]]
      */
-    public final String getMethodName() {
+    public final Object getMethodName() {
         return methodName;
     }
 }

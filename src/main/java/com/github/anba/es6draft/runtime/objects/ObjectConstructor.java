@@ -558,14 +558,26 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         if (value instanceof OrdinaryGenerator) {
             OrdinaryGenerator gen = (OrdinaryGenerator) value;
             assert gen.isInitialised() : "uninitialised function object";
+            Object methodName = gen.getMethodName();
+            if (methodName instanceof String) {
+                return GeneratorFunctionCreate(cx, gen.getFunctionKind(), gen.getFunction(),
+                        gen.getScope(), gen.getInheritance(cx), target, (String) methodName);
+            }
+            assert methodName instanceof ExoticSymbol;
             return GeneratorFunctionCreate(cx, gen.getFunctionKind(), gen.getFunction(),
-                    gen.getScope(), gen.getInheritance(cx), target, gen.getMethodName());
+                    gen.getScope(), gen.getInheritance(cx), target, (ExoticSymbol) methodName);
         } else {
             assert value instanceof OrdinaryFunction;
             OrdinaryFunction fn = (OrdinaryFunction) value;
             assert fn.isInitialised() : "uninitialised function object";
+            Object methodName = fn.getMethodName();
+            if (methodName instanceof String) {
+                return FunctionCreate(cx, fn.getFunctionKind(), fn.getFunction(), fn.getScope(),
+                        fn.getInheritance(cx), target, (String) methodName);
+            }
+            assert methodName instanceof ExoticSymbol;
             return FunctionCreate(cx, fn.getFunctionKind(), fn.getFunction(), fn.getScope(),
-                    fn.getInheritance(cx), target, fn.getMethodName());
+                    fn.getInheritance(cx), target, (ExoticSymbol) methodName);
         }
     }
 }

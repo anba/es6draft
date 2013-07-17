@@ -135,7 +135,7 @@ public class OrdinaryGenerator extends FunctionObject {
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
-        return GeneratorFunctionCreate(cx, kind, function, scope, null, null, null);
+        return GeneratorFunctionCreate(cx, kind, function, scope, null, null, (String) null);
     }
 
     /**
@@ -143,7 +143,8 @@ public class OrdinaryGenerator extends FunctionObject {
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
-        return GeneratorFunctionCreate(cx, kind, function, scope, functionPrototype, null, null);
+        return GeneratorFunctionCreate(cx, kind, function, scope, functionPrototype, null,
+                (String) null);
     }
 
     /**
@@ -152,6 +153,23 @@ public class OrdinaryGenerator extends FunctionObject {
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,
             ScriptObject functionPrototype, ScriptObject homeObject, String methodName) {
+        assert function.isGenerator() && kind != FunctionKind.ConstructorMethod;
+        /* step 1 */
+        if (functionPrototype == null) {
+            functionPrototype = cx.getIntrinsic(Intrinsics.Generator);
+        }
+        /* step 2 */
+        OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, kind);
+        /* step 3 */
+        return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
+    }
+
+    /**
+     * 8.3.15.8 GeneratorFunctionCreate Abstract Operation
+     */
+    public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment scope,
+            ScriptObject functionPrototype, ScriptObject homeObject, ExoticSymbol methodName) {
         assert function.isGenerator() && kind != FunctionKind.ConstructorMethod;
         /* step 1 */
         if (functionPrototype == null) {

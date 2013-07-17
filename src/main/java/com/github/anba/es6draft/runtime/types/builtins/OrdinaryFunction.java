@@ -214,7 +214,7 @@ public class OrdinaryFunction extends FunctionObject {
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment scope) {
-        return FunctionInitialise(cx, f, kind, function, scope, null, null);
+        return FunctionInitialise(cx, f, kind, function, scope, null, (String) null);
     }
 
     /**
@@ -260,11 +260,53 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
+     * 8.3.16.6 FunctionInitialise Abstract Operation
+     */
+    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
+            ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
+            LexicalEnvironment scope, ScriptObject homeObject, ExoticSymbol methodName) {
+        boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
+        // first update 'legacy' flag, otherwise AddRestrictedFunctionProperties() fails
+        f.legacy = f.legacy && !strict;
+
+        /* step 1 */
+        int len = function.expectedArgumentCount();
+        /* step 2 */
+        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, false));
+        String name = function.functionName() != null ? function.functionName() : "";
+        DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor(name, false, false, false));
+        /* step 3 */
+        if (strict) {
+            AddRestrictedFunctionProperties(cx, f);
+        }
+        /* step 4 */
+        f.scope = scope;
+        /* steps 5-6 */
+        f.function = function;
+        /* step 7 */
+        f.homeObject = homeObject;
+        /* step 8 */
+        f.methodName = methodName;
+        /* step 9 */
+        f.strict = strict;
+        /* steps 10-12 */
+        if (kind == FunctionKind.Arrow) {
+            f.thisMode = ThisMode.Lexical;
+        } else if (strict) {
+            f.thisMode = ThisMode.Strict;
+        } else {
+            f.thisMode = ThisMode.Global;
+        }
+        /* step 13 */
+        return f;
+    }
+
+    /**
      * 8.3.16.7 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
-        return FunctionCreate(cx, kind, function, scope, null, null, null);
+        return FunctionCreate(cx, kind, function, scope, null, null, (String) null);
     }
 
     /**
@@ -272,7 +314,7 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
-        return FunctionCreate(cx, kind, function, scope, functionPrototype, null, null);
+        return FunctionCreate(cx, kind, function, scope, functionPrototype, null, (String) null);
     }
 
     /**
@@ -281,6 +323,23 @@ public class OrdinaryFunction extends FunctionObject {
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,
             ScriptObject functionPrototype, ScriptObject homeObject, String methodName) {
+        assert !function.isGenerator();
+        /* step 1 */
+        if (functionPrototype == null) {
+            functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
+        }
+        /* step 2 */
+        OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, kind);
+        /* step 3 */
+        return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
+    }
+
+    /**
+     * 8.3.16.7 FunctionCreate Abstract Operation
+     */
+    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
+            RuntimeInfo.Function function, LexicalEnvironment scope,
+            ScriptObject functionPrototype, ScriptObject homeObject, ExoticSymbol methodName) {
         assert !function.isGenerator();
         /* step 1 */
         if (functionPrototype == null) {
