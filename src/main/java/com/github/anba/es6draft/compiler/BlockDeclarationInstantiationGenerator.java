@@ -45,7 +45,7 @@ class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantia
      */
     void generate(Collection<Declaration> declarations, StatementVisitor mv) {
         /* steps 1-2 */
-        List<Declaration> functionsToInitialize = new ArrayList<>();
+        List<Declaration> functionsToInitialise = new ArrayList<>();
 
         // stack: [env] -> [env, envRec]
         mv.dup();
@@ -64,16 +64,16 @@ class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantia
                 }
             }
             if (d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration) {
-                functionsToInitialize.add(d);
+                functionsToInitialise.add(d);
             }
         }
 
-        if (!functionsToInitialize.isEmpty()) {
+        if (!functionsToInitialise.isEmpty()) {
             // stack: [env, envRec] -> [envRec, env]
             mv.swap();
 
             /* step 4 */
-            for (Declaration f : functionsToInitialize) {
+            for (Declaration f : functionsToInitialise) {
                 String fn = BoundName(f);
 
                 // stack: [envRec, env] -> [envRec, env, envRec, env, cx]

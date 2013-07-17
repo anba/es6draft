@@ -136,7 +136,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         /* [10.5.3] step 5 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(func);
         /* [10.5.3] step 6 */
-        List<Declaration> functionsToInitialize = new ArrayList<>();
+        List<Declaration> functionsToInitialise = new ArrayList<>();
         /* [10.5.3] step 7 */
         boolean argumentsObjectNotNeeded = false;
         /* [10.5.3] step 8 */
@@ -150,7 +150,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 boolean alreadyDeclared = bindings.contains(fn);
                 if (!alreadyDeclared) {
                     bindings.add(fn);
-                    functionsToInitialize.add(d);
+                    functionsToInitialise.add(d);
                     createMutableBinding(envRec, fn, false, mv);
                 }
             }
@@ -203,11 +203,11 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 }
             }
             if (d instanceof GeneratorDeclaration) {
-                functionsToInitialize.add(d);
+                functionsToInitialise.add(d);
             }
         }
         /* [10.5.3] step 16 */
-        for (Declaration f : functionsToInitialize) {
+        for (Declaration f : functionsToInitialise) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
             if (f instanceof GeneratorDeclaration) {

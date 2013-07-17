@@ -125,7 +125,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         /* [10.5.1] step 6 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
         /* [10.5.1] step 7 */
-        List<FunctionDeclaration> functionsToInitialize = new ArrayList<>();
+        List<FunctionDeclaration> functionsToInitialise = new ArrayList<>();
         /* [10.5.1] step 8 */
         Set<String> declaredFunctionNames = new HashSet<>();
         /* [10.5.1] step 9 */
@@ -136,7 +136,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
                 if (!declaredFunctionNames.contains(fn)) {
                     canDeclareGlobalFunctionOrThrow(context, envRec, fn, mv);
                     declaredFunctionNames.add(fn);
-                    functionsToInitialize.add(d);
+                    functionsToInitialise.add(d);
                 }
             }
         }
@@ -156,7 +156,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
             }
         }
         /* [10.5.1] step 12-13 */
-        for (FunctionDeclaration f : functionsToInitialize) {
+        for (FunctionDeclaration f : functionsToInitialise) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
             InstantiateFunctionObject(context, env, f, mv);
