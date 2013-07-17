@@ -32,6 +32,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 
 /**
  * Simple interpreter to speed-up `eval` evaluation
@@ -518,6 +519,13 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     @Override
+    public Object visit(ComputedPropertyName node, ExecutionContext cx) {
+        Object exprValue = node.getExpression().accept(this, cx);
+        Object propName = GetValue(exprValue, cx);
+        return ScriptRuntime.ensureExoticSymbol(propName, cx);
+    }
+
+    @Override
     public Object visit(ConditionalExpression node, ExecutionContext cx) {
         Object test = node.getTest().accept(this, cx);
         test = GetValue(test, cx);
@@ -564,10 +572,21 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
             PropertyName propertyName = propValDef.getPropertyName();
             Expression propertyValue = propValDef.getPropertyValue();
 
+            String propName = PropName(propertyName);
+            if (propName == null) {
+                assert propertyName instanceof ComputedPropertyName;
+                Object pk = propertyName.accept(this, cx);
+                assert pk instanceof ExoticSymbol;
+
+                Object value = propertyValue.accept(this, cx);
+                value = GetValue(value, cx);
+
+                ScriptRuntime.defineProperty(obj, (ExoticSymbol) pk, value, cx);
+            }
+
             Object value = propertyValue.accept(this, cx);
             value = GetValue(value, cx);
 
-            String propName = PropName(propertyName);
             if ("__proto__".equals(propName)) {
                 ScriptRuntime.defineProtoProperty(obj, value, cx);
             } else {
@@ -782,6 +801,11 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
 
         @Override
+        public Boolean visit(ComputedPropertyName node, Void value) {
+            return node.getExpression().accept(this, value);
+        }
+
+        @Override
         public Boolean visit(ElementAccessor node, Void value) {
             return node.getBase().accept(this, value) && node.getElement().accept(this, value);
         }
@@ -823,7 +847,8 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
         @Override
         public Boolean visit(PropertyValueDefinition node, Void value) {
-            return node.getPropertyValue().accept(this, value);
+            return node.getPropertyName().accept(this, value)
+                    && node.getPropertyValue().accept(this, value);
         }
 
         @Override
