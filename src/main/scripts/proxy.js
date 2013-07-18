@@ -9,13 +9,15 @@
 "use strict";
 
 const Object = global.Object,
+      Function = global.Function,
       Array = global.Array,
       Proxy = global.Proxy,
       TypeError = global.TypeError;
 
 const Object_create = Object.create,
-      Object_assign = Object.assign,
-      Array_from = Array.from;
+      Object_assign = Object.assign;
+
+const Function_call = Function.prototype.call.bind(Function.prototype.call);
 
 const iteratorSym = getSym("@@iterator");
 
@@ -44,7 +46,7 @@ function toProxyHandler(handler) {
     proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getPropertyDescriptor'](pk);
   }
   if ('getOwnPropertyNames' in handler) {
-    proxyHandler['ownKeys'] = () => Array_from(handler['getOwnPropertyNames']()).values()[iteratorSym]();
+    proxyHandler['ownKeys'] = () => [...handler['getOwnPropertyNames']()].values()[iteratorSym]();
   }
   if ('defineProperty' in handler) {
     proxyHandler['defineProperty'] = (_, pk, desc) => (handler['defineProperty'](pk, desc), true);
@@ -110,7 +112,7 @@ function toProxyHandler(handler) {
     };
   }
   if ('enumerate' in handler) {
-    proxyHandler['enumerate'] = () => Array_from(handler['enumerate']()).values()[iteratorSym]();
+    proxyHandler['enumerate'] = () => [...handler['enumerate']()].values()[iteratorSym]();
   } else if ('iterate' in handler) {
     proxyHandler['enumerate'] = () => handler['iterate']()[iteratorSym]();
   } else {
@@ -119,8 +121,9 @@ function toProxyHandler(handler) {
     ).values()[iteratorSym]();
   }
   if ('keys' in handler) {
-    proxyHandler['ownKeys'] = () => Array_from(handler['keys']()).values()[iteratorSym]();
+    proxyHandler['ownKeys'] = () => [...handler['keys']()].values()[iteratorSym]();
   }
+  proxyHandler['invoke'] = (_, pk, args, receiver) => Function_call(proxyHandler['get'](_, pk, receiver), receiver, ...args);
   return proxyHandler;
 }
 
