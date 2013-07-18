@@ -432,6 +432,38 @@ public final class ScriptRuntime {
     /**
      * 11.2.3 Function Calls
      * <p>
+     * Runtime Semantics: EvaluateMethodCall Abstract Operation
+     */
+    public static Object OrdinaryInvokeGet(ScriptObject base, Reference<?, ?> ref,
+            Object thisValue, ExecutionContext cx) {
+        // step 3 in 8.3.11 [[Invoke]]
+        Object propertyKey = ref.getReferencedName();
+        if (propertyKey instanceof String) {
+            return base.get(cx, (String) propertyKey, thisValue);
+        }
+        return base.get(cx, (ExoticSymbol) propertyKey, thisValue);
+    }
+
+    /**
+     * 11.2.3 Function Calls
+     * <p>
+     * Runtime Semantics: EvaluateMethodCall Abstract Operation
+     */
+    public static Object EvaluateMethodCall(Object[] arguments, Reference<?, ?> ref,
+            ScriptObject base, ExecutionContext cx) {
+        assert ref.isPropertyReference() || !(base instanceof OrdinaryObject);
+        // EvaluateMethodCall - steps 7-13 (no tail call here)
+        Object thisValue = ref.GetThisValue(cx);
+        Object key = ref.getReferencedName();
+        if (key instanceof String) {
+            return base.invoke(cx, (String) key, arguments, thisValue);
+        }
+        return base.invoke(cx, (ExoticSymbol) key, arguments, thisValue);
+    }
+
+    /**
+     * 11.2.3 Function Calls
+     * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      */
     public static Callable CheckCallable(Object func, ExecutionContext cx) {

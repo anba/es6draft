@@ -30,7 +30,9 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.internal.SimpleBootstrap;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  *
@@ -73,6 +75,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
 
         // class: ExecutionContext
+        static final MethodDesc ExecutionContext_getRealm = MethodDesc.create(MethodType.Virtual,
+                Types.ExecutionContext, "getRealm", Type.getMethodType(Types.Realm));
+
         static final MethodDesc ExecutionContext_thisResolution = MethodDesc.create(
                 MethodType.Virtual, Types.ExecutionContext, "thisResolution",
                 Type.getMethodType(Types.Object));
@@ -92,7 +97,19 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Types.OrdinaryObject, "ObjectCreate",
                 Type.getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Intrinsics));
 
+        // class: Realm
+        static final MethodDesc Realm_getBuiltinEval = MethodDesc.create(MethodType.Virtual,
+                Types.Realm, "getBuiltinEval", Type.getMethodType(Types.Callable));
+
         // class: Reference
+        static final MethodDesc Reference_GetMethodCallThisValue = MethodDesc.create(
+                MethodType.Virtual, Types.Reference, "GetMethodCallThisValue",
+                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext));
+
+        static final MethodDesc Reference_GetThisValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "GetThisValue",
+                Type.getMethodType(Types.Object, Types.ExecutionContext));
+
         static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "GetValue",
                 Type.getMethodType(Types.Object, Types.ExecutionContext));
@@ -172,9 +189,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         .getMethodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_GetCallThisValue = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetCallThisValue",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
+        static final MethodDesc ScriptRuntime_EvaluateMethodCall = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateMethodCall", Type.getMethodType(
+                        Types.Object, Types.Object_, Types.Reference, Types.ScriptObject,
+                        Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_getElement = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "getElement", Type.getMethodType(Types.Reference,
@@ -194,13 +212,14 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         Types.Object, Types.Object, Types.String, Types.ExecutionContext,
                         Type.BOOLEAN_TYPE));
 
-        static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "IsBuiltinEval", Type.getMethodType(Type.BOOLEAN_TYPE,
-                        Types.Object, Types.Callable, Types.ExecutionContext));
-
         static final MethodDesc ScriptRuntime_MakeSuperReference = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "MakeSuperReference", Type.getMethodType(
                         Types.Reference, Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_OrdinaryInvokeGet = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "OrdinaryInvokeGet", Type.getMethodType(
+                        Types.Object, Types.ScriptObject, Types.Reference, Types.Object,
+                        Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_RegExp = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "RegExp", Type.getMethodType(Types.ScriptObject,
@@ -283,83 +302,305 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
 
+    private static boolean isPropertyReference(Expression base, ValType type) {
+        return type == ValType.Reference && !(base instanceof Identifier);
+    }
+
     /**
      * [11.2.3 EvaluateCall Abstract Operation]
      */
     private void EvaluateCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
-        // stack: [ref] -> [ref, ref]
-        mv.dup();
-        /* step 1-2 */
-        GetValue(base, type, mv);
-        /* step 3-4 */
-        boolean hasSpread = ArgumentListEvaluation(arguments, mv);
-        // stack: [ref, func, args]
-        mv.lineInfo(call);
+        if (type == ValType.Reference) {
+            if (isPropertyReference(base, type)) {
+                EvaluateMethodCall(call, base, type, arguments, mv);
+            } else {
+                EvaluateCallWithIdentRef(call, base, type, arguments, directEval, mv);
+            }
+        } else {
+            EvaluateCallWithValue(call, base, type, arguments, mv);
+        }
+    }
 
-        // stack: [ref, func, args] -> [ref, args, func]
+    /**
+     * [11.2.3 EvaluateMethodCall Abstract Operation]
+     */
+    private void EvaluateMethodCall(Expression call, Expression base, ValType type,
+            List<Expression> arguments, ExpressionVisitor mv) {
+        // only called for the property reference case (`obj.method(...)` or `obj[method](...)`)
+        assert isPropertyReference(base, type);
+
+        Label afterCall = new Label(), notMethodCall = new Label();
+
+        // FIXME: https://bugs.ecmascript.org/show_bug.cgi?id=1593
+
+        // stack: [ref] -> [args, ref]
+        ArgumentListEvaluation(arguments, mv);
         mv.swap();
 
-        // stack: [ref, args, func] -> [ref, args, func(Callable)]
+        mv.lineInfo(call);
+
+        // stack: [args, ref] -> [args, ref, base]
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_GetMethodCallThisValue);
+
+        mv.dup();
+        mv.instanceOf(Types.OrdinaryObject);
+        mv.ifne(notMethodCall);
+        {
+            // stack: [args, ref, base] -> [result]
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_EvaluateMethodCall);
+            mv.goTo(afterCall);
+        }
+        mv.mark(notMethodCall);
+
+        // this is an EvaluateMethodCall operation with an ordinary object as the base object,
+        // revert to the standard EvaluateCall operation to:
+        // (1) support tail calls (implementation specific)
+
+        // If thisValue is a primitive value, base is the corresponding primitive wrapper, e.g.
+        // if thisValue is a string, then base is String.prototype; regardless we don't need to
+        // perform any additional actions for this case (cf.
+        // Reference.PropertyNameReference.GetValuePrimitive), because primitives don't have own
+        // function valued properties, so property look-up takes place on the primitive wrapper
+        // in all cases.
+
+        // stack: [args, ref, base] -> [args, base, ref]
+        mv.swap();
+
+        // stack: [args, base, ref] -> [args, base, ref, thisValue]
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_GetThisValue);
+
+        // stack: [args, base, ref, thisValue] -> [args, thisValue, func]
+        mv.dupX2();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_OrdinaryInvokeGet);
+
+        // stack: [args, thisValue, func] -> [args, thisValue, func(Callable)]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_CheckCallable);
 
-        Label notEval = null, afterCall = null;
-        if (directEval) {
-            // test for possible direct-eval call
-            notEval = new Label();
-            afterCall = new Label();
+        // stack: [args, thisValue, func(Callable)] -> [result]
+        stdCall(call, mv);
 
-            // stack: [ref, args, func(Callable)] -> [args, ref, func(Callable)]
-            mv.swap();
-            mv.dupX2();
-            mv.pop();
+        mv.mark(afterCall);
+    }
 
-            // stack: [args, ref, func(Callable)] -> [args, ref, func(Callable), isDirectEval]
-            mv.dup2();
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_IsBuiltinEval);
-            mv.ifeq(notEval);
+    /**
+     * [11.2.3 EvaluateCall Abstract Operation]
+     */
+    private void EvaluateCallWithValue(Expression call, Expression base, ValType type,
+            List<Expression> arguments, ExpressionVisitor mv) {
+        assert type != ValType.Reference;
 
-            // stack: [args, ref, func(Callable)] -> [args]
-            mv.pop2();
+        /* step 1 (not applicable) */
 
-            // stack: [args] -> [arg0]
-            if (hasSpread) {
-                Label isEmpty = new Label(), after = new Label();
-                mv.dup();
-                mv.arraylength();
-                mv.ifeq(isEmpty);
-                mv.iconst(0);
-                mv.aload(Types.Object);
-                mv.goTo(after);
-                mv.mark(isEmpty);
-                mv.pop();
-                mv.get(Fields.Undefined_UNDEFINED);
-                mv.mark(after);
-            } else if (arguments.isEmpty()) {
-                mv.pop();
-                mv.get(Fields.Undefined_UNDEFINED);
-            } else {
-                mv.iconst(0);
-                mv.aload(Types.Object);
+        /* step 2 (see below) */
+        // thisValue = undefined;
+
+        /* steps 3-5 (no-op) */
+        // GetValue(...)
+
+        /* steps 6-7 */
+        // stack: [func] -> [args, func]
+        ArgumentListEvaluation(arguments, mv);
+        mv.swap();
+
+        // stack: [args, func]
+        mv.lineInfo(call);
+
+        /* steps 8-9 */
+        // stack: [args, func] -> [args, func(Callable)]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+
+        /* step 2 */
+        // stack: [args, func(Callable)] -> [args, thisValue, func(Callable)]
+        mv.get(Fields.Undefined_UNDEFINED);
+        mv.swap();
+
+        /* steps 10-14 */
+        // stack: [args, thisValue, func(Callable)] -> result
+        stdCall(call, mv);
+    }
+
+    /**
+     * [11.2.3 EvaluateCall Abstract Operation]
+     */
+    private void EvaluateCallWithIdentRef(Expression call, Expression base, ValType type,
+            List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
+        assert type == ValType.Reference && base instanceof Identifier;
+
+        Variable<ScriptObject> methodCallObject = mv.newVariable("methodCallObject",
+                ScriptObject.class);
+        Label argListEval = new Label();
+        Label afterCall = new Label();
+        Label stdCall = new Label(), stdCallCheck = new Label();
+
+        /* step 1 */
+        // 'getMethodCallThisValue' is a combination of step 1.b.i and step 4, cf. it retrieves
+        // the withBaseObject or throws if it is an unresolved reference
+        // stack: [ref] -> [ref, base]
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.Reference_GetMethodCallThisValue);
+
+        // stack: [ref, base] -> [ref, base]
+        mv.dup();
+        mv.store(methodCallObject);
+
+        // Below this point we're now in a combined EvaluateCall + EvaluateMethodCall operation,
+        // 'methodCallObject' acts as selector to decide which operation to use.
+
+        /* EvaluateCall: step 2 (not applicable) */
+        /* EvaluateMethodCall: steps 1-3 (not applicable) */
+
+        // stack: [ref, base] -> [ref|func]
+        mv.ifnonnull(argListEval);
+        {
+            /* EvaluateCall: steps 3-5 */
+            // stack: [ref] -> [func]
+            GetValue(base, type, mv);
+        }
+        mv.mark(argListEval);
+
+        // FIXME: https://bugs.ecmascript.org/show_bug.cgi?id=1593
+
+        /* EvaluateCall: steps 6-7 */
+        /* EvaluateMethodCall: steps 4-5 */
+        // stack: [ref|func] -> [args, ref|func]
+        boolean hasSpread = ArgumentListEvaluation(arguments, mv);
+        mv.swap();
+
+        // stack: [args, ref|func]
+        mv.lineInfo(call);
+
+        mv.load(methodCallObject);
+        mv.ifnull(stdCall);
+        {
+            // EvaluateMethodCall: steps 6-13
+            Label notMethodCall = new Label();
+
+            // stack: [args, ref] -> [args, ref(Reference)]
+            mv.checkcast(Types.Reference);
+
+            /* EvaluateMethodCall: step 6 */
+            // stack: [args, ref(Reference)] -> [args, ref(Reference), base]
+            mv.load(methodCallObject);
+
+            mv.dup();
+            mv.instanceOf(Types.OrdinaryObject);
+            mv.ifne(notMethodCall);
+            {
+                /* EvaluateMethodCall: steps 7-13 */
+                // stack: [args, ref(Reference), base] -> [result]
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_EvaluateMethodCall);
+                mv.goTo(afterCall);
             }
+            mv.mark(notMethodCall);
 
-            // stack: [args0] -> [result]
+            // this is an EvaluateMethodCall operation with an ordinary object as the base object,
+            // revert to the standard EvaluateCall operation to:
+            // (1) support direct-eval calls (specification issue) (TODO: bug 1590)
+            // (2) support tail calls (implementation specific)
+
+            // Note: base == thisValue (!)
+            // stack: [args, ref(Ref), base] -> [args, thisValue, base, ref(Ref), thisValue]
+            mv.dupX1();
+            mv.dupX1();
+
+            // stack: [args, thisValue, base, ref(Ref), thisValue] -> [args, thisValue, func]
             mv.loadExecutionContext();
-            mv.iconst(mv.isStrict());
-            mv.iconst(mv.isGlobalCode());
-            mv.invoke(Methods.Eval_directEval);
+            mv.invoke(Methods.ScriptRuntime_OrdinaryInvokeGet);
 
-            mv.goTo(afterCall);
-            mv.mark(notEval);
+            mv.goTo(stdCallCheck);
 
-            // stack: [args, ref, func(Callable)] -> [ref, args, func(Callable)]
-            mv.swap();
-            mv.dupX2();
-            mv.pop();
+            mv.freeVariable(methodCallObject);
+        }
+        mv.mark(stdCall);
+
+        // stack: [args, func] -> [args, thisValue, func]
+        mv.get(Fields.Undefined_UNDEFINED);
+        mv.swap();
+
+        mv.mark(stdCallCheck);
+
+        // stack: [args, thisValue, func] -> [args, thisValue, func(Callable)]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+
+        if (directEval) {
+            directEvalCall(call, base, type, arguments, hasSpread, afterCall, mv);
         }
 
+        stdCall(call, mv);
+
+        mv.mark(afterCall);
+    }
+
+    /**
+     * [15.1.2.1.1] Direct Call to Eval
+     */
+    private void directEvalCall(Expression call, Expression base, ValType type,
+            List<Expression> arguments, boolean hasSpread, Label afterCall, ExpressionVisitor mv) {
+        assert type == ValType.Reference && base instanceof Identifier;
+
+        // test for possible direct-eval call
+        Label notEval = new Label();
+
+        // stack: [args, thisValue, func(Callable)] -> [args, thisValue, func(Callable)]
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ExecutionContext_getRealm);
+        mv.invoke(Methods.Realm_getBuiltinEval);
+        mv.ifacmpne(notEval);
+
+        // stack: [args, thisValue, func(Callable)] -> [args]
+        mv.pop2();
+
+        // stack: [args] -> [arg0]
+        if (hasSpread) {
+            Label isEmpty = new Label(), after = new Label();
+            mv.dup();
+            mv.arraylength();
+            mv.ifeq(isEmpty);
+            mv.iconst(0);
+            mv.aload(Types.Object);
+            mv.goTo(after);
+            mv.mark(isEmpty);
+            mv.pop();
+            mv.get(Fields.Undefined_UNDEFINED);
+            mv.mark(after);
+        } else if (arguments.isEmpty()) {
+            mv.pop();
+            mv.get(Fields.Undefined_UNDEFINED);
+        } else {
+            mv.iconst(0);
+            mv.aload(Types.Object);
+        }
+
+        // stack: [args0] -> [result]
+        mv.loadExecutionContext();
+        mv.iconst(mv.isStrict());
+        mv.iconst(mv.isGlobalCode());
+        mv.invoke(Methods.Eval_directEval);
+
+        mv.goTo(afterCall);
+        mv.mark(notEval);
+    }
+
+    /**
+     * [11.2.3 EvaluateCall Abstract Operation]
+     */
+    private void stdCall(Expression call, ExpressionVisitor mv) {
+        // stack: [args, thisValue, func(Callable)]
+
+        /* steps 10, 12-13 */
         // TODO: tail-call for SuperExpression(call) or TemplateCallExpression?
         if (call instanceof CallExpression && mv.isTailCall((CallExpression) call)) {
             Label noTailCall = new Label();
@@ -367,13 +608,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.instanceOf(Types.OrdinaryFunction);
             mv.ifeq(noTailCall);
 
-            // stack: [ref, args, func(Callable)] -> [args, thisValue, func(Callable)]
-            mv.dup2X1();
-            mv.pop2();
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_GetCallThisValue);
-            mv.swap();
-
+            // stack: [args, thisValue, func(Callable)]
             mv.newarray(3, Types.Object);
 
             // store func(Callable)
@@ -403,25 +638,20 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.mark(noTailCall);
         }
 
-        // stack: [ref, args, func(Callable)] -> [func(Callable), cx, ref, args]
+        // stack: [args, thisValue, func(Callable)] -> [func(Callable), cx, thisValue, args]
         mv.loadExecutionContext();
         mv.dup2X2();
         mv.pop2();
-
-        // stack: [func(Callable), cx, ref, args] -> [func(Callable), cx, args, thisValue]
         mv.swap();
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_GetCallThisValue);
 
-        // stack: [func(Callable), cx, args, thisValue] -> [result]
-        mv.swap();
+        /* steps 11, 14 */
+        // stack: [func(Callable), cx, thisValue, args] -> [result]
         mv.invoke(Methods.Callable_call);
-
-        if (afterCall != null) {
-            mv.mark(afterCall);
-        }
     }
 
+    /**
+     * [11.2.5.1 ArgumentListEvaluation]
+     */
     private boolean ArgumentListEvaluation(List<Expression> arguments, ExpressionVisitor mv) {
         boolean hasSpread = false;
         if (arguments.isEmpty()) {
