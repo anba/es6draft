@@ -36,6 +36,8 @@ ecma_6/Array/find_findindex.js
 ####################################
 
 Intl/NumberFormat/StringBuffer.js
+Intl/NumberFormat/format.js
+Intl/NumberFormat/significantDigitsOfZero.js
 
 
 ###############################################################
