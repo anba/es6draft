@@ -10,6 +10,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
+import org.mozilla.javascript.MathImpl;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
@@ -356,7 +358,8 @@ public class MathObject extends OrdinaryObject implements Initialisable {
             if (d == Double.POSITIVE_INFINITY) {
                 return Double.POSITIVE_INFINITY;
             }
-            return Math.log(d + Math.sqrt(d * d - 1.0));
+            // return Math.log(d + Math.sqrt(d * d - 1.0));
+            return Math.acos(d);
         }
 
         /**
@@ -368,7 +371,8 @@ public class MathObject extends OrdinaryObject implements Initialisable {
             if (Double.isNaN(d) || d == 0.0 || Double.isInfinite(d)) {
                 return d;
             }
-            return Math.log(d + Math.sqrt(d * d + 1.0));
+            // return Math.log(d + Math.sqrt(d * d + 1.0));
+            return MathImpl.asinh(d);
         }
 
         /**
@@ -389,7 +393,8 @@ public class MathObject extends OrdinaryObject implements Initialisable {
             if (d == 0.0) {
                 return d;
             }
-            return (Math.log(1.0 + d) - Math.log(1.0 - d)) / 2.0;
+            // return (Math.log(1.0 + d) - Math.log(1.0 - d)) / 2.0;
+            return MathImpl.atanh(d);
         }
 
         /**
