@@ -29,6 +29,13 @@ tests/for-of/typedarrays-2.js
 tests/for-of/typedarrays-3.js
 tests/for-of/typedarrays-6.js
 
+# lib/asserts.js: assertDeepEq() calls `Map()` without `new`
+tests/arrays/sort-getter-only.js
+tests/collections/Array-of-2.js
+tests/collections/Array-of-3.js
+tests/collections/Array-of-generic-1.js
+tests/self-test/assertDeepEq.js
+
 # ES6 spec change: `Map()` etc. must be called with explicit `new`
 tests/collections/iterator-gc.js
 tests/collections/iterator-proto-1.js
@@ -143,6 +150,14 @@ tests/basic/bug842482.js
 # Misc issues     #
 ###################
 
+# invalid test, Array.of() creates properties with writable=enumerable=configurable=true, but
+# TypedArrays have non-configurable properties
+tests/collections/Array-of-generic-3.js
+
+# invalid test, Array.of() creates properties with DefinePropertyOrThrow(), but Proxy defined in
+# the test case does return a positive success value from [[DefineOwnProperty]]
+tests/collections/Array-of-ordering.js
+
 # invalid test case (relies on order in which elements are visited in Array.prototype.sort)
 # and its strcmp function is broken as well
 tests/basic/testBug720695.js
@@ -236,6 +251,9 @@ tests/basic/bug852016.js
 
 # SpiderMonkey restriction test
 tests/basic/testBug773108.js
+
+# SpiderMonkey restriction test for destructuring with spread
+tests/parser/bug-889628.js
 
 
 ############################################
