@@ -543,7 +543,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 8.3.11 [[Invoke]] (P, ArgumentsList, Receiver) */
     @Override
-    public Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
+    public final Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
             Object receiver) {
         /* step 1-2 (implicit) */
         /* step 3-4 */
@@ -565,7 +565,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 8.3.11 [[Invoke]] (P, ArgumentsList, Receiver) */
     @Override
-    public Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments,
+    public final Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments,
             Object receiver) {
         /* step 1-2 (implicit) */
         /* step 3-4 */
