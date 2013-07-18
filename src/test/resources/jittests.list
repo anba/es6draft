@@ -11,7 +11,25 @@ tests/arguments/defaults-scoping.js
 tests/arguments/defaults-with-rest.js
 tests/arguments/rest-alias-function.js
 
-# ES6 spec bug: `Map()` etc. must be called with explicit `new`
+# ES6 spec change: TypedArrays must be called with explicit `new`
+tests/auto-regress/bug601070.js
+tests/basic/bug578041.js
+tests/basic/bug618577.js
+tests/basic/bug623859.js
+tests/basic/bug648773.js
+tests/basic/bug652054.js
+tests/basic/bug836601.js
+tests/basic/testBug606138.js
+tests/basic/testDoubleZeroInSwitch2.js
+tests/basic/testOverRecursed5.js
+tests/basic/testSlowNativeWithNullThis.js
+tests/basic/typed-array-offsets.js
+tests/for-of/typedarrays-1.js
+tests/for-of/typedarrays-2.js
+tests/for-of/typedarrays-3.js
+tests/for-of/typedarrays-6.js
+
+# ES6 spec change: `Map()` etc. must be called with explicit `new`
 tests/collections/iterator-gc.js
 tests/collections/iterator-proto-1.js
 tests/collections/iterator-proto-2.js
@@ -315,6 +333,8 @@ tests/arrow-functions/strict-1.js
 tests/arrow-functions/strict-2.js
 tests/arrow-functions/syntax-errors.js
 
+# arrow function do not have arguments
+tests/arrow-functions/bug-885067-2.js
 
 #######################################
 # ES6 related runtime changes         #
