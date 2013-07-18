@@ -8,7 +8,6 @@ package com.github.anba.es6draft.interpreter;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckCallable;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.GetCallThisValue;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.IsBuiltinEval;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.Reference.GetValue;
@@ -22,6 +21,7 @@ import java.util.List;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.BinaryExpression.Operator;
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -29,10 +29,12 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Simple interpreter to speed-up `eval` evaluation
@@ -617,22 +619,84 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     @Override
     public Object visit(CallExpression node, ExecutionContext cx) {
         Object ref = node.getBase().accept(this, cx);
+        return EvaluateCall(ref, node.getArguments(), directEval(node), cx);
+    }
+
+    /**
+     * Runtime Semantics: EvaluateCall Abstract Operation
+     */
+    private Object EvaluateCall(Object ref, List<Expression> arguments, boolean directEval,
+            ExecutionContext cx) {
+        if (ref instanceof Reference) {
+            Reference<?, ?> rref = (Reference<?, ?>) ref;
+            if (rref.isPropertyReference()) {
+                return EvaluateMethodCall(rref, arguments, cx);
+            } else if (!rref.isUnresolvableReference()) {
+                assert rref instanceof Reference.IdentifierReference;
+                Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) rref;
+                ScriptObject thisValue = idref.getBase().withBaseObject();
+                // don't call EvaluateMethodCall if currently in direct-eval position and the
+                // base-object is an ordinary object (TODO: bug 1590)
+                if (thisValue != null && !(directEval && thisValue instanceof OrdinaryObject)) {
+                    Reference<Object, String> newRef = new Reference.PropertyNameReference(
+                            thisValue, idref.getReferencedName(), rref.isStrictReference());
+                    return EvaluateMethodCall(newRef, arguments, cx);
+                }
+            }
+        }
+        Object thisValue = UNDEFINED;
         Object func = GetValue(ref, cx);
-        List<Expression> arguments = node.getArguments();
+        Object[] argList = ArgumentListEvaluation(arguments, cx);
+        Callable f = CheckCallable(func, cx);
+        if (directEval && IsBuiltinEval(ref, f, cx)) {
+            Object x = argList.length > 0 ? argList[0] : UNDEFINED;
+            return Eval.directEval(x, cx, strict, globalCode);
+        }
+        if (directEval && ref instanceof Reference) {
+            // adjust thisValue if in with-statement, counterpart to the special direct-eval logic
+            // from above (TODO: bug 1590)
+            assert ref instanceof Reference.IdentifierReference;
+            Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) ref;
+            ScriptObject newThisValue = idref.getBase().withBaseObject();
+            if (newThisValue != null) {
+                assert newThisValue instanceof OrdinaryObject;
+                thisValue = newThisValue;
+            }
+        }
+        return f.call(cx, thisValue, argList);
+    }
+
+    /**
+     * Runtime Semantics: EvaluateMethodCall Abstract Operation
+     */
+    private Object EvaluateMethodCall(Reference<?, ?> ref, List<Expression> arguments,
+            ExecutionContext cx) {
+        assert ref.isPropertyReference();
+        // step 2 is bogus
+        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=1593
+        Object[] argList = ArgumentListEvaluation(arguments, cx);
+        Object base = ref.getBase();
+        if (ref.hasPrimitiveBase()) {
+            base = ToObject(cx, base);
+        }
+        assert base instanceof ScriptObject;
+        Object thisValue = ref.GetThisValue(cx);
+        Object key = ref.getReferencedName();
+        if (key instanceof String) {
+            return ((ScriptObject) base).invoke(cx, (String) key, argList, thisValue);
+        } else {
+            return ((ScriptObject) base).invoke(cx, (ExoticSymbol) key, argList, thisValue);
+        }
+    }
+
+    private Object[] ArgumentListEvaluation(List<Expression> arguments, ExecutionContext cx) {
         int size = arguments.size();
         Object[] args = new Object[size];
         for (int i = 0; i < size; ++i) {
             Object arg = arguments.get(i).accept(this, cx);
             args[i] = GetValue(arg, cx);
         }
-        Callable f = CheckCallable(func, cx);
-        if (directEval(node) && IsBuiltinEval(ref, f, cx)) {
-            Object x = args.length > 0 ? args[0] : UNDEFINED;
-            return Eval.directEval(x, cx, strict, globalCode);
-        }
-        Object thisValue = GetCallThisValue(ref, cx);
-        Object result = f.call(cx, thisValue, args);
-        return result;
+        return args;
     }
 
     private static boolean directEval(CallExpression node) {
@@ -647,13 +711,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     public Object visit(NewExpression node, ExecutionContext cx) {
         Object constructor = node.getExpression().accept(this, cx);
         constructor = GetValue(constructor, cx);
-        List<Expression> arguments = node.getArguments();
-        int size = arguments.size();
-        Object[] args = new Object[size];
-        for (int i = 0; i < size; ++i) {
-            Object arg = arguments.get(i).accept(this, cx);
-            args[i] = GetValue(arg, cx);
-        }
+        Object[] args = ArgumentListEvaluation(node.getArguments(), cx);
         return ScriptRuntime.EvaluateConstructorCall(constructor, args, cx);
     }
 
