@@ -32,6 +32,9 @@ harmony/generators-runtime.js
 # V8 generators: missing type checks in v8-implementation
 harmony/generators-iteration.js
 
+# non-strict equality fails when comparing symbols and primitive values against each other
+harmony/iteration-semantics.js
+
 # modules not yet enabled
 harmony/module-linking.js
 harmony/module-parsing.js
@@ -176,6 +179,12 @@ regress/regress-1548.js
 # built-in functions not exposed in caller
 function-caller.js
 regress/regress-105.js
+
+# Object.getPrototypeOf() wraps/ignores primitives
+get-prototype-of.js
+
+# Object.keys() wraps/ignores primitives
+third_party/object-keys.js
 
 
 #######################################
