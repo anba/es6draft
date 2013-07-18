@@ -2252,11 +2252,6 @@ public class Parser {
             consume(Token.MUL);
             delegatedYield = true;
         }
-        if (token() == Token.YIELD) {
-            // disallow `yield yield x` but allow `yield (yield x)`
-            // TODO: track spec changes, syntax not yet settled
-            reportSyntaxError(Messages.Key.InvalidYieldStatement);
-        }
         // TODO: NoLineTerminator() restriction or context dependent?
         Expression expr;
         if (delegatedYield) {
