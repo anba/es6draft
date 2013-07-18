@@ -121,7 +121,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
+        public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
          * 15.13.6.6.1 TypedArray.prototype.constructor
