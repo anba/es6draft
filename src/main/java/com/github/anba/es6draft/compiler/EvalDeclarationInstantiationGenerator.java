@@ -46,6 +46,10 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
     }
 
     private static class Methods {
+        // class: IllegalStateException
+        static final MethodDesc IllegalStateException_init = MethodDesc.create(MethodType.Special,
+                Types.IllegalStateException, "<init>", Type.getMethodType(Type.VOID_TYPE));
+
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
@@ -76,8 +80,20 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         InstructionVisitor mv = codegen.publicStaticMethod(methodName, methodType);
         mv.lineInfo(evalScript.getLine());
         mv.begin();
-        generate(evalScript, mv);
+        // only generate eval-script-init when requested
+        if (evalScript.isEvalScript()) {
+            generate(evalScript, mv);
+        } else {
+            generateExceptionThrower(mv);
+        }
         mv.end();
+    }
+
+    private void generateExceptionThrower(InstructionVisitor mv) {
+        mv.anew(Types.IllegalStateException);
+        mv.dup();
+        mv.invoke(Methods.IllegalStateException_init);
+        mv.athrow();
     }
 
     private void generate(Script evalScript, InstructionVisitor mv) {

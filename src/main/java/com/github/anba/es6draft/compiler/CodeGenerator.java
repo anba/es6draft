@@ -320,10 +320,8 @@ class CodeGenerator implements AutoCloseable {
     }
 
     void compile(Script node) {
-        // initialisation method
+        // initialisation methods
         new GlobalDeclarationInstantiationGenerator(this).generate(node);
-
-        // TODO: only generate eval-script-init when requested
         new EvalDeclarationInstantiationGenerator(this).generate(node);
 
         // runtime method
