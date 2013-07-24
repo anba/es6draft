@@ -13,34 +13,40 @@ const Object = global.Object,
       Array = global.Array,
       Error = global.Error,
       Set = global.Set,
-      WeakMap = global.WeakMap;
+      WeakSet = global.WeakSet;
 
 const Array_prototype_join = Array.prototype.join,
       Array_prototype_toLocaleString = Array.prototype.toLocaleString,
-      Error_prototype_toString = Error.prototype.toString;
+      Error_prototype_toString = Error.prototype.toString,
+      Set_prototype_add = Set.prototype.add,
+      Set_prototype_delete = Set.prototype.delete,
+      Set_prototype_has = Set.prototype.has,
+      WeakSet_prototype_add = WeakSet.prototype.add,
+      WeakSet_prototype_delete = WeakSet.prototype.delete,
+      WeakSet_prototype_has = WeakSet.prototype.has;
 
-const Function_call = Function.prototype.call.bind(Function.prototype.call);
-const wm = new WeakMap(), cs = new Set();
+const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
+const weakset = new WeakSet(), set = new Set();
 
 function checkCycle(fn, o, ...args) {
   if (typeof o == 'function' || typeof o == 'object' && o !== null) {
-    if (wm.has(o)) {
+    if ($CallFunction(WeakSet_prototype_has, weakset, o)) {
       return "";
     }
-    wm.set(o, null);
+    $CallFunction(WeakSet_prototype_add, weakset, o);
   } else {
-    if (cs.has(o)) {
+    if ($CallFunction(Set_prototype_has, set, o)) {
       return "" + o;
     }
-    cs.add(o);
+    $CallFunction(Set_prototype_add, set, o);
   }
   try {
-    return Function_call(fn, o, ...args);
+    return $CallFunction(fn, o, ...args);
   } finally {
     if (typeof o == 'function' || typeof o == 'object' && o !== null) {
-      wm.delete(o);
+      $CallFunction(WeakSet_prototype_delete, weakset, o);
     } else {
-      cs.delete(o);
+      $CallFunction(Set_prototype_delete, set, o);
     }
   }
 }
