@@ -172,7 +172,8 @@ public class MozillaJitTest {
     // Any file who's basename matches something in this set is ignored
     private static final Set<String> excludeFiles = new HashSet<>();
     private static final Set<String> excludeDirs = new HashSet<>(asList("asm.js", "baseline",
-            "debug", "gc", "ion", "jaeger", "modules", "parallelarray", "truthiness", "v8-v5"));
+            "debug", "gc", "ion", "jaeger", "modules", "parallel", "parallelarray", "truthiness",
+            "v8-v5"));
 
     private static List<MozTest> loadTests(Path searchdir, final Path basedir) throws IOException {
         BiFunction<Path, BufferedReader, MozTest> create = new BiFunction<Path, BufferedReader, MozTest>() {
