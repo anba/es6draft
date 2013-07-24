@@ -221,6 +221,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         Types.Object, Types.ScriptObject, Types.Reference, Types.Object,
                         Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_PrepareForTailCall = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "PrepareForTailCall",
+                Type.getMethodType(Types.Object_, Types.Object_, Types.Object, Types.Callable));
+
         static final MethodDesc ScriptRuntime_RegExp = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "RegExp", Type.getMethodType(Types.ScriptObject,
                         Types.ExecutionContext, Types.String, Types.String));
@@ -306,6 +310,36 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         return type == ValType.Reference && !(base instanceof Identifier);
     }
 
+    private static boolean isEnclosedByWithStatement(ExpressionVisitor mv) {
+        for (Scope scope = mv.getScope();;) {
+            Scope nextScope;
+            if (scope instanceof BlockScope) {
+                BlockScope blockScope = (BlockScope) scope;
+                if (blockScope.isDynamic()) {
+                    return true;
+                }
+                nextScope = scope.getParent();
+            } else if (scope instanceof FunctionScope) {
+                FunctionScope funScope = (FunctionScope) scope;
+                assert funScope.getParent() == null;
+                nextScope = funScope.getEnclosingScope();
+            } else {
+                assert false : "unknown scope class: " + scope.getClass().getName();
+                return false;
+            }
+            if (nextScope == null) {
+                ScopedNode node = scope.getNode();
+                if (node instanceof Script) {
+                    // FIXME: need to record with-statement information instead of simply returning
+                    // 'true' for all eval-scripts
+                    return ((Script) node).isEvalScript();
+                }
+                return false;
+            }
+            scope = nextScope;
+        }
+    }
+
     /**
      * [11.2.3 EvaluateCall Abstract Operation]
      */
@@ -314,8 +348,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         if (type == ValType.Reference) {
             if (isPropertyReference(base, type)) {
                 EvaluateMethodCall(call, base, type, arguments, mv);
-            } else {
+            } else if (isEnclosedByWithStatement(mv)) {
                 EvaluateCallWithIdentRef(call, base, type, arguments, directEval, mv);
+            } else {
+                EvaluateCallIdentRef(call, base, type, arguments, directEval, mv);
             }
         } else {
             EvaluateCallWithValue(call, base, type, arguments, mv);
@@ -426,6 +462,53 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         /* steps 10-14 */
         // stack: [args, thisValue, func(Callable)] -> result
         stdCall(call, mv);
+    }
+
+    /**
+     * [11.2.3 EvaluateCall Abstract Operation]
+     */
+    private void EvaluateCallIdentRef(Expression call, Expression base, ValType type,
+            List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
+        assert type == ValType.Reference && base instanceof Identifier;
+
+        Label afterCall = new Label();
+
+        /* step 1 */
+        // thisValue = undefined;
+
+        /* step 2 (not applicable) */
+
+        /* steps 3-5 */
+        // stack: [ref] -> [func]
+        GetValue(base, type, mv);
+
+        /* steps 6-7 */
+        // stack: [func] -> [args, func]
+        boolean hasSpread = ArgumentListEvaluation(arguments, mv);
+        mv.swap();
+
+        // stack: [args, func]
+        mv.lineInfo(call);
+
+        /* steps 8-9 */
+        // stack: [args, func] -> [args, func(Callable)]
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_CheckCallable);
+
+        /* step 1 */
+        // stack: [args, func(Callable)] -> [args, thisValue, func(Callable)]
+        mv.get(Fields.Undefined_UNDEFINED);
+        mv.swap();
+
+        if (directEval) {
+            directEvalCall(call, base, type, arguments, hasSpread, afterCall, mv);
+        }
+
+        /* steps 10-14 */
+        // stack: [args, thisValue, func(Callable)] -> result
+        stdCall(call, mv);
+
+        mv.mark(afterCall);
     }
 
     /**
@@ -608,31 +691,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.instanceOf(Types.OrdinaryFunction);
             mv.ifeq(noTailCall);
 
-            // stack: [args, thisValue, func(Callable)]
-            mv.newarray(3, Types.Object);
-
-            // store func(Callable)
-            mv.dupX1();
-            mv.swap();
-            mv.iconst(0);
-            mv.swap();
-            mv.astore(Types.Object);
-
-            // store thisValue
-            mv.dupX1();
-            mv.swap();
-            mv.iconst(1);
-            mv.swap();
-            mv.astore(Types.Object);
-
-            // store args
-            mv.dupX1();
-            mv.swap();
-            mv.iconst(2);
-            mv.swap();
-            mv.astore(Types.Object);
-
-            // stack: [<func(Callable), thisValue, args>]
+            // stack: [args, thisValue, func(Callable)] -> [<func(Callable), thisValue, args>]
+            mv.invoke(Methods.ScriptRuntime_PrepareForTailCall);
             mv.areturn(Types.Object_);
 
             mv.mark(noTailCall);
