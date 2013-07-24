@@ -116,12 +116,12 @@ final class SourceBuilder {
 
     private static String objectToSource(ExecutionContext cx, Set<ScriptObject> stack,
             ScriptObject value) {
-        List<String> keys = GetOwnPropertyKeys(cx, value);
+        List<Object> keys = GetOwnEnumerablePropertyKeys(cx, value);
         if (keys.isEmpty()) {
             return "{}";
         }
         StringBuilder properties = new StringBuilder();
-        for (String k : keys) {
+        for (Object k : keys) {
             String p = toSource(cx, stack, Get(cx, value, k));
             properties.append(',').append(k).append(':').append(p);
         }
