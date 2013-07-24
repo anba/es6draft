@@ -28,7 +28,7 @@ To start the shell, use `./src/main/bin/repl.sh`.
 
 ### Implementation Status ###
 
-[ECMAScript 6 draft rev. 15] [es6drafts] and additionally:
+[ECMAScript 6 draft rev. 16] [es6drafts] and additionally:
 * Tail calls (currently limited to user-defined functions)
 
 [ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
