@@ -474,6 +474,17 @@ public final class AbstractOperations {
     /**
      * 9.3.1 Get (O, P)
      */
+    public static Object Get(ExecutionContext cx, ScriptObject object, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return Get(cx, object, (String) propertyKey);
+        } else {
+            return Get(cx, object, (ExoticSymbol) propertyKey);
+        }
+    }
+
+    /**
+     * 9.3.1 Get (O, P)
+     */
     public static Object Get(ExecutionContext cx, ScriptObject object, String propertyKey) {
         return object.get(cx, propertyKey, object);
     }
@@ -483,6 +494,18 @@ public final class AbstractOperations {
      */
     public static Object Get(ExecutionContext cx, ScriptObject object, ExoticSymbol propertyKey) {
         return object.get(cx, propertyKey, object);
+    }
+
+    /**
+     * 9.3.2 Put (O, P, V, Throw)
+     */
+    public static void Put(ExecutionContext cx, ScriptObject object, Object propertyKey,
+            Object value, boolean _throw) {
+        if (propertyKey instanceof String) {
+            Put(cx, object, (String) propertyKey, value, _throw);
+        } else {
+            Put(cx, object, (ExoticSymbol) propertyKey, value, _throw);
+        }
     }
 
     /**
@@ -511,6 +534,18 @@ public final class AbstractOperations {
      * 9.3.3 CreateOwnDataProperty (O, P, V)
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
+            Object propertyKey, Object value) {
+        if (propertyKey instanceof String) {
+            return CreateOwnDataProperty(cx, object, (String) propertyKey, value);
+        } else {
+            return CreateOwnDataProperty(cx, object, (ExoticSymbol) propertyKey, value);
+        }
+    }
+
+    /**
+     * 9.3.3 CreateOwnDataProperty (O, P, V)
+     */
+    public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
         assert !object.hasOwnProperty(cx, propertyKey);
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
@@ -525,6 +560,18 @@ public final class AbstractOperations {
         assert !object.hasOwnProperty(cx, propertyKey);
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
         return object.defineOwnProperty(cx, propertyKey, newDesc);
+    }
+
+    /**
+     * 9.3.4 DefinePropertyOrThrow (O, P, desc)
+     */
+    public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            Object propertyKey, PropertyDescriptor desc) {
+        if (propertyKey instanceof String) {
+            DefinePropertyOrThrow(cx, object, (String) propertyKey, desc);
+        } else {
+            DefinePropertyOrThrow(cx, object, (ExoticSymbol) propertyKey, desc);
+        }
     }
 
     /**
@@ -553,6 +600,18 @@ public final class AbstractOperations {
      * 9.3.5 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            Object propertyKey) {
+        if (propertyKey instanceof String) {
+            DeletePropertyOrThrow(cx, object, (String) propertyKey);
+        } else {
+            DeletePropertyOrThrow(cx, object, (ExoticSymbol) propertyKey);
+        }
+    }
+
+    /**
+     * 9.3.5 DeletePropertyOrThrow (O, P)
+     */
+    public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             String propertyKey) {
         boolean success = object.delete(cx, propertyKey);
         if (!success) {
@@ -574,6 +633,17 @@ public final class AbstractOperations {
     /**
      * 9.3.6 HasProperty (O, P)
      */
+    public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return HasProperty(cx, object, (String) propertyKey);
+        } else {
+            return HasProperty(cx, object, (ExoticSymbol) propertyKey);
+        }
+    }
+
+    /**
+     * 9.3.6 HasProperty (O, P)
+     */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, String propertyKey) {
         return object.hasProperty(cx, propertyKey);
     }
@@ -584,6 +654,17 @@ public final class AbstractOperations {
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object,
             ExoticSymbol propertyKey) {
         return object.hasProperty(cx, propertyKey);
+    }
+
+    /**
+     * 9.3.7 GetMethod (O, P)
+     */
+    public static Callable GetMethod(ExecutionContext cx, ScriptObject object, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return GetMethod(cx, object, (String) propertyKey);
+        } else {
+            return GetMethod(cx, object, (ExoticSymbol) propertyKey);
+        }
     }
 
     /**
@@ -613,6 +694,18 @@ public final class AbstractOperations {
             throw throwTypeError(cx, Messages.Key.NotCallable);
         }
         return (Callable) func;
+    }
+
+    /**
+     * 9.3.8 Invoke(O,P [,args])
+     */
+    public static Object Invoke(ExecutionContext cx, Object object, Object propertyKey,
+            Object... args) {
+        if (propertyKey instanceof String) {
+            return Invoke(cx, object, (String) propertyKey, args);
+        } else {
+            return Invoke(cx, object, (ExoticSymbol) propertyKey, args);
+        }
     }
 
     /**
@@ -924,7 +1017,7 @@ public final class AbstractOperations {
     /**
      * Returns a list of all string-valued, enumerable [[OwnPropertyKeys]] of {@code obj}
      */
-    public static List<String> GetOwnPropertyKeys(ExecutionContext cx, ScriptObject obj) {
+    public static List<String> GetOwnEnumerablePropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
         Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
         List<String> nameList = new ArrayList<>();
@@ -936,6 +1029,28 @@ public final class AbstractOperations {
                 if (desc != null && desc.isEnumerable()) {
                     nameList.add(skey);
                 }
+            }
+        }
+        return nameList;
+    }
+
+    /**
+     * Returns a list of all enumerable [[OwnPropertyKeys]] of {@code obj}
+     */
+    public static List<Object> GetOwnEnumerablePropertyKeys(ExecutionContext cx, ScriptObject obj) {
+        // FIXME: spec clean-up (Bug 1142)
+        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
+        List<Object> nameList = new ArrayList<>();
+        while (keys.hasNext()) {
+            Object key = ToPropertyKey(cx, keys.next());
+            Property desc;
+            if (key instanceof String) {
+                desc = obj.getOwnProperty(cx, (String) key);
+            } else {
+                desc = obj.getOwnProperty(cx, (ExoticSymbol) key);
+            }
+            if (desc != null && desc.isEnumerable()) {
+                nameList.add(key);
             }
         }
         return nameList;
