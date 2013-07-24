@@ -20,7 +20,8 @@ const Object = global.Object,
       Error = global.Error,
       TypeError = global.TypeError,
       JSON = global.JSON,
-      WeakMap = global.WeakMap;
+      Intl = global.Intl,
+      WeakSet = global.WeakSet;
 
 const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
       Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
@@ -28,8 +29,10 @@ const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
       Array_isArray = Array.isArray,
       Array_prototype_join = Array.prototype.join;
 
+const symName = global.symName;
+
 function Quote(s, qc = '"') {
-  var r = '';
+  var r = "";
   for (var i = 0, len = s.length; i < len; ++i) {
     var c = s.charCodeAt(i);
     switch (c) {
@@ -79,11 +82,14 @@ function ToSource(o) {
       return "" + o;
     case 'string':
       return Quote(o);
+    case 'symbol':
+      return symName(o);
+    case 'function':
     case 'object':
-    default:
       if (o !== null && typeof o.toSource == 'function') {
         return o.toSource();
       }
+    default:
       return "null";
   }
 }
@@ -94,23 +100,23 @@ Object.defineProperty(Object.assign(global, {
   }
 }), "uneval", {enumerable: false});
 
-const wm = new WeakMap();
+const weakset = new WeakSet();
 var depth = 0;
 
-// duplicated definition from array-join.js to access shared 'wm' WeakMap
+// duplicated definition from array-join.js to access shared 'weakset' WeakSet
 Object.defineProperty(Object.assign(Array.prototype, {
   join(separator) {
     if (typeof this == 'function' || typeof this == 'object' && this !== null) {
-      if (wm.has(this)) {
+      if (weakset.has(this)) {
         return "";
       }
-      wm.set(this, null);
+      weakset.add(this);
     }
     try {
       return Array_prototype_join.call(this, separator);
     } finally {
       if (typeof this == 'function' || typeof this == 'object' && this !== null) {
-        wm.delete(this);
+        weakset.delete(this);
       }
     }
   }
@@ -124,12 +130,12 @@ Object.defineProperty(Object.assign(String.prototype, {
 
 Object.defineProperty(Object.assign(Object.prototype, {
   toSource() {
-    if (this == null) throw TypeError();
+    if (this == null) throw new TypeError();
     var obj = Object(this);
-    if (wm.has(obj)) {
+    if (weakset.has(obj)) {
       return "{}";
     }
-    wm.set(obj, null);
+    weakset.add(obj);
     depth += 1;
     try {
       var s = "";
@@ -159,7 +165,7 @@ Object.defineProperty(Object.assign(Object.prototype, {
       }
       return "({" + s + "})";
     } finally {
-      wm.delete(obj);
+      weakset.delete(obj);
       depth -= 1;
     }
   }
@@ -176,11 +182,11 @@ Object.defineProperty(Object.assign(Function.prototype, {
 
 Object.defineProperty(Object.assign(Array.prototype, {
   toSource() {
-    if (!Array_isArray(this)) throw TypeError();
-    if (wm.has(this)) {
+    if (!Array_isArray(this)) throw new TypeError();
+    if (weakset.has(this)) {
       return "[]";
     }
-    wm.set(this, null);
+    weakset.add(this);
     depth += 1;
     try {
       var s = "";
@@ -195,7 +201,7 @@ Object.defineProperty(Object.assign(Array.prototype, {
       }
       return "[" + s + "]";
     } finally {
-      wm.delete(this);
+      weakset.delete(this);
       depth -= 1;
     }
   }
@@ -246,6 +252,12 @@ Object.defineProperty(Object.assign(Error.prototype, {
 Object.defineProperty(Object.assign(JSON, {
   toSource() {
     return "JSON";
+  }
+}), "toSource", {enumerable: false});
+
+Object.defineProperty(Object.assign(Intl, {
+  toSource() {
+    return "Intl";
   }
 }), "toSource", {enumerable: false});
 
