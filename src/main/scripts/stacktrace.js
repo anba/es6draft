@@ -9,11 +9,16 @@
 "use strict";
 
 const Object = global.Object,
+      Function = global.Function,
       Math = global.Math,
       Error = global.Error;
 
 const Object_defineProperty = Object.defineProperty,
-      Error_prototype_toString = Error.prototype.toString;
+      Error_prototype_toString = Error.prototype.toString,
+      Math_floor = Math.floor,
+      Math_min = Math.min;
+
+const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 // stackTraceLimit defaults to 10
 Error.stackTraceLimit = 10;
@@ -27,12 +32,12 @@ Object.defineProperty(Error.prototype, "stack", {
     if (typeof limit != 'number') {
       return;
     }
-    var stacktrace = getStackTrace.call(this);
+    var stacktrace = $CallFunction(getStackTrace, this);
     if (!stacktrace) {
       return;
     }
-    var out = Error_prototype_toString.call(this);
-    var len = Math.min(stacktrace.length, Math.floor(limit));
+    var out = $CallFunction(Error_prototype_toString, this);
+    var len = Math_min(stacktrace.length, Math_floor(limit));
     for (var i = 0; i < len; ++i) {
       var elem = stacktrace[i];
       out += `\n    at ${elem.methodName} (${elem.fileName}:${elem.lineNumber})`;
@@ -41,7 +46,7 @@ Object.defineProperty(Error.prototype, "stack", {
   },
   set(v) {
     Object_defineProperty(this, "stack", {
-      value: v, writable: true, enumerable: true, configurable: true
+      __proto__: null, value: v, writable: true, enumerable: true, configurable: true
     });
   },
   enumerable: false, configurable: true

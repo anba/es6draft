@@ -13,9 +13,11 @@ const Object = global.Object,
       InternalError = global.InternalError,
       RangeError = global.RangeError;
 
-const instanceOf = Function.prototype.call.bind(Function.prototype[getSym("@@hasInstance")]);
+const hasInstanceSym = global.getSym("@@hasInstance");
 
-Object.defineProperty(RangeError, getSym("@@hasInstance"), {
+const instanceOf = Function.prototype.call.bind(Function.prototype[hasInstanceSym]);
+
+Object.defineProperty(RangeError, hasInstanceSym, {
   value(o) {
     return instanceOf(RangeError, o) || instanceOf(InternalError, o);
   }, configurable: true
