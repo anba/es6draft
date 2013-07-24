@@ -6,20 +6,17 @@
  */
 package com.github.anba.es6draft.runtime.objects.internal;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Invoke;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorNext;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 
 import java.util.Iterator;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -62,11 +59,7 @@ public class ListIterator<T> extends OrdinaryObject {
 
         @Override
         protected Object tryNext() {
-            Object nextResult = Invoke(cx, object, "next");
-            if (!Type.isObject(nextResult)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            ScriptObject next = Type.objectValue(nextResult);
+            ScriptObject next = IteratorNext(cx, object);
             boolean done = IteratorComplete(cx, next);
             if (done) {
                 return null;
