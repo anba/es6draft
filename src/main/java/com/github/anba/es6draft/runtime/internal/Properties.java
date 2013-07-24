@@ -26,8 +26,10 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 
+import com.github.anba.es6draft.repl.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -235,12 +237,18 @@ public final class Properties {
 
     private static final String INTERNAL_PACKAGE = "com.github.anba.es6draft.runtime.objects.";
 
-    private static class Converter {
-        final MethodHandle ToBooleanMH;
-        final MethodHandle ToStringMH;
-        final MethodHandle ToFlatStringMH;
-        final MethodHandle ToNumberMH;
-        final MethodHandle ToObjectMH;
+    public static final class Converter {
+        private final MethodHandle ToBooleanMH;
+        private final MethodHandle ToStringMH;
+        private final MethodHandle ToFlatStringMH;
+        private final MethodHandle ToNumberMH;
+        private final MethodHandle ToObjectMH;
+        private final MethodHandle ToBooleanArrayMH;
+        private final MethodHandle ToStringArrayMH;
+        private final MethodHandle ToFlatStringArrayMH;
+        private final MethodHandle ToNumberArrayMH;
+        private final MethodHandle ToObjectArrayMH;
+        private final MethodHandle ToScriptExceptionMH;
 
         Converter(ExecutionContext cx) {
             ToBooleanMH = _ToBooleanMH;
@@ -248,6 +256,50 @@ public final class Properties {
             ToFlatStringMH = MethodHandles.insertArguments(_ToFlatStringMH, 0, cx);
             ToNumberMH = MethodHandles.insertArguments(_ToNumberMH, 0, cx);
             ToObjectMH = MethodHandles.insertArguments(_ToObjectMH, 0, cx);
+
+            ToBooleanArrayMH = _ToBooleanArrayMH;
+            ToStringArrayMH = MethodHandles.insertArguments(_ToStringArrayMH, 0, cx);
+            ToFlatStringArrayMH = MethodHandles.insertArguments(_ToFlatStringArrayMH, 0, cx);
+            ToNumberArrayMH = MethodHandles.insertArguments(_ToNumberArrayMH, 0, cx);
+            ToObjectArrayMH = MethodHandles.insertArguments(_ToObjectArrayMH, 0, cx);
+
+            ToScriptExceptionMH = MethodHandles.insertArguments(_ToScriptExceptionMH, 0, cx);
+        }
+
+        private MethodHandle filterFor(Class<?> c) {
+            if (c == Object.class) {
+                return null;
+            } else if (c == Double.TYPE) {
+                return ToNumberMH;
+            } else if (c == Boolean.TYPE) {
+                return ToBooleanMH;
+            } else if (c == String.class) {
+                return ToFlatStringMH;
+            } else if (c == CharSequence.class) {
+                return ToStringMH;
+            } else if (c == ScriptObject.class) {
+                return ToObjectMH;
+            }
+            throw new IllegalArgumentException();
+        }
+
+        private MethodHandle arrayfilterFor(Class<?> c) {
+            assert c.isArray();
+            c = c.getComponentType();
+            if (c == Object.class) {
+                return null;
+            } else if (c == Double.TYPE) {
+                return ToNumberArrayMH;
+            } else if (c == Boolean.TYPE) {
+                return ToBooleanArrayMH;
+            } else if (c == String.class) {
+                return ToFlatStringArrayMH;
+            } else if (c == CharSequence.class) {
+                return ToStringArrayMH;
+            } else if (c == ScriptObject.class) {
+                return ToObjectArrayMH;
+            }
+            throw new IllegalArgumentException();
         }
 
         private static final MethodHandle _ToBooleanMH;
@@ -271,6 +323,91 @@ public final class Properties {
             } catch (NoSuchMethodException | IllegalAccessException e) {
                 throw new IllegalStateException(e);
             }
+        }
+
+        private static final MethodHandle _ToBooleanArrayMH;
+        private static final MethodHandle _ToStringArrayMH;
+        private static final MethodHandle _ToFlatStringArrayMH;
+        private static final MethodHandle _ToNumberArrayMH;
+        private static final MethodHandle _ToObjectArrayMH;
+        static {
+            Lookup lookup = MethodHandles.publicLookup();
+            try {
+                _ToStringArrayMH = lookup.findStatic(Converter.class, "ToString", MethodType
+                        .methodType(CharSequence[].class, ExecutionContext.class, Object[].class));
+                _ToFlatStringArrayMH = lookup.findStatic(Converter.class, "ToFlatString",
+                        MethodType.methodType(String[].class, ExecutionContext.class,
+                                Object[].class));
+                _ToNumberArrayMH = lookup.findStatic(Converter.class, "ToNumber", MethodType
+                        .methodType(double[].class, ExecutionContext.class, Object[].class));
+                _ToBooleanArrayMH = lookup.findStatic(Converter.class, "ToBoolean",
+                        MethodType.methodType(boolean[].class, Object[].class));
+                _ToObjectArrayMH = lookup.findStatic(Converter.class, "ToObject", MethodType
+                        .methodType(ScriptObject[].class, ExecutionContext.class, Object[].class));
+            } catch (NoSuchMethodException | IllegalAccessException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
+        public static boolean[] ToBoolean(Object[] source) {
+            boolean[] target = new boolean[source.length];
+            for (int i = 0; i < target.length; i++) {
+                target[i] = AbstractOperations.ToBoolean(source[i]);
+            }
+            return target;
+        }
+
+        public static CharSequence[] ToString(ExecutionContext cx, Object[] source) {
+            CharSequence[] target = new CharSequence[source.length];
+            for (int i = 0; i < target.length; i++) {
+                target[i] = AbstractOperations.ToString(cx, source[i]);
+            }
+            return target;
+        }
+
+        public static String[] ToFlatString(ExecutionContext cx, Object[] source) {
+            String[] target = new String[source.length];
+            for (int i = 0; i < target.length; i++) {
+                target[i] = AbstractOperations.ToFlatString(cx, source[i]);
+            }
+            return target;
+        }
+
+        public static double[] ToNumber(ExecutionContext cx, Object[] source) {
+            double[] target = new double[source.length];
+            for (int i = 0; i < target.length; i++) {
+                target[i] = AbstractOperations.ToNumber(cx, source[i]);
+            }
+            return target;
+        }
+
+        public static ScriptObject[] ToObject(ExecutionContext cx, Object[] source) {
+            ScriptObject[] target = new ScriptObject[source.length];
+            for (int i = 0; i < target.length; i++) {
+                target[i] = AbstractOperations.ToObject(cx, source[i]);
+            }
+            return target;
+        }
+
+        private static final MethodHandle _ToScriptExceptionMH;
+        static {
+            Lookup lookup = MethodHandles.publicLookup();
+            try {
+                _ToScriptExceptionMH = lookup.findStatic(Converter.class, "ToScriptException",
+                        MethodType.methodType(ScriptException.class, ExecutionContext.class,
+                                Exception.class));
+            } catch (NoSuchMethodException | IllegalAccessException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
+        public static ScriptException ToScriptException(ExecutionContext cx, Exception cause) {
+            if (cause instanceof StopExecutionException)
+                throw (StopExecutionException) cause;
+            if (cause instanceof ScriptException)
+                return (ScriptException) cause;
+            String info = Objects.toString(cause.getMessage(), cause.getClass().getSimpleName());
+            return Errors.throwInternalError(cx, Messages.Key.InternalError, info);
         }
     }
 
@@ -403,39 +540,27 @@ public final class Properties {
             MethodHandle unreflect, T owner) {
         MethodHandle handle = unreflect;
         handle = handle.bindTo(owner);
+        boolean varargs = unreflect.isVarargsCollector();
+
+        if (varargs) {
+            // bindTo() removes the var-args collector flag, restore it
+            MethodType type = unreflect.type();
+            Class<?> parameterType = type.parameterType(type.parameterCount() - 1);
+            handle = handle.asVarargsCollector(parameterType);
+        }
 
         MethodType type = handle.type();
         int pcount = type.parameterCount();
+        int actual = type.parameterCount() - (varargs ? 1 : 0);
         Class<?>[] params = type.parameterArray();
-        MethodHandle[] filters = null;
-        for (int p = 0; p < pcount; ++p) {
-            Class<?> c = params[p];
-            if (c == Object.class) {
-                continue;
-            }
-            if (c == Double.TYPE || c == Boolean.TYPE || c == String.class
-                    || c == CharSequence.class || c == ScriptObject.class) {
-                if (filters == null) {
-                    filters = new MethodHandle[pcount];
-                }
-                if (c == Double.TYPE) {
-                    filters[p] = converter.ToNumberMH;
-                } else if (c == Boolean.TYPE) {
-                    filters[p] = converter.ToBooleanMH;
-                } else if (c == String.class) {
-                    filters[p] = converter.ToFlatStringMH;
-                } else if (c == CharSequence.class) {
-                    filters[p] = converter.ToStringMH;
-                } else {
-                    filters[p] = converter.ToObjectMH;
-                }
-                continue;
-            }
-            throw new IllegalArgumentException();
+        MethodHandle[] filters = new MethodHandle[pcount];
+        for (int p = 0; p < actual; ++p) {
+            filters[p] = converter.filterFor(params[p]);
         }
-        if (filters != null) {
-            handle = MethodHandles.filterArguments(handle, 0, filters);
+        if (varargs) {
+            filters[pcount - 1] = converter.arrayfilterFor(params[pcount - 1]);
         }
+        handle = MethodHandles.filterArguments(handle, 0, filters);
 
         Class<?> returnType = type.returnType();
         if (returnType == Double.TYPE || returnType == Boolean.TYPE || returnType == String.class
@@ -450,11 +575,22 @@ public final class Properties {
             throw new IllegalArgumentException();
         }
 
+        MethodHandle filter;
+        if (varargs) {
+            filter = MethodHandles.insertArguments(ParameterFilter.filterVarArgs, 0, actual);
+        } else {
+            filter = filter(actual);
+        }
+
         MethodHandle spreader = MethodHandles.spreadInvoker(handle.type(), 0);
-        MethodHandle undefined = filter(pcount);
         handle = MethodHandles.insertArguments(spreader, 0, handle);
-        handle = MethodHandles.filterArguments(handle, 0, undefined);
+        handle = MethodHandles.filterArguments(handle, 0, filter);
         handle = MethodHandles.dropArguments(handle, 0, Object.class);
+
+        MethodHandle thrower = MethodHandles.throwException(handle.type().returnType(),
+                ScriptException.class);
+        thrower = MethodHandles.filterArguments(thrower, 0, converter.ToScriptExceptionMH);
+        handle = MethodHandles.catchException(handle, Exception.class, thrower);
 
         return handle;
     }
