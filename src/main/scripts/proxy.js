@@ -66,7 +66,7 @@ function toProxyHandler(handler) {
   } else {
     proxyHandler['hasOwn'] = (_, pk) => !!handler['getOwnPropertyDescriptor'](pk);
   }
-  if ('get' in handler) {
+  if ('get' in handler && typeof handler['get'] == 'function') {
     proxyHandler['get'] = (_, pk, receiver) => handler['get'](receiver, pk);
   } else {
     proxyHandler['get'] = (_, pk, receiver) => {
