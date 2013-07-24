@@ -183,7 +183,7 @@ public final class ScriptRuntime {
      */
     public static ExoticSymbol ensureExoticSymbol(Object value, ExecutionContext cx) {
         if (!(value instanceof ExoticSymbol)) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);// FIXME: change error message
+            throwTypeError(cx, Messages.Key.NotSymbol);
         }
         return (ExoticSymbol) value;
     }
@@ -254,15 +254,15 @@ public final class ScriptRuntime {
 
     public static ExoticArguments GeneratorComprehensionInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
-        // FIXME: spec bug - generator comprehensions are defined in terms of generator functions
-        // which means they inherit the [[Call]] definition from 8.3.15.1 and the function
-        // declaration instantiation code from 10.5.3
-        // LexicalEnvironment env = cx.getVariableEnvironment();
-        // EnvironmentRecord envRec = env.getEnvRec();
-        // envRec.createImmutableBinding("arguments");
+        // NB: generator comprehensions are defined in terms of generator functions which means they
+        // inherit the function declaration instantiation code from 10.5.3, replicate here the
+        // applicable algorithm steps (that means only steps 19-20, 24).
+
+        /* steps 1-18 (not applicable, argumentsObjectNeeded = false) */
+        /* steps 19-20 */
         ExoticArguments ao = InstantiateArgumentsObject(cx, args);
-        CompleteStrictArgumentsObject(cx, ao);
-        // envRec.initialiseBinding("arguments", ao);
+        /* steps 21-23 (not applicable, argumentsObjectNeeded = false) */
+        /* step 24 */
         return ao;
     }
 
@@ -1550,6 +1550,15 @@ public final class ScriptRuntime {
     public static Object DefaultEmptyConstructor(ExecutionContext cx) {
         Object completionValue = UNDEFINED;
         return completionValue;
+    }
+
+    /**
+     * 13.6 Tail Position Calls
+     * <p>
+     * Runtime Semantics: PrepareForTailCall
+     */
+    public static Object[] PrepareForTailCall(Object[] args, Object thisValue, Callable function) {
+        return new Object[] { function, thisValue, args };
     }
 
     /* ***************************************************************************************** */

@@ -138,6 +138,7 @@ public class Messages {
         NotObjectType("type.not_object_type"),
         NotObjectOrNull("type.not_object_or_null"),
         NotUndefined("type.not_undefined"),
+        NotSymbol("type.not_symbol"),
         NotExtensible("type.not_extensible"),
         IncompatibleObject("type.incompatible_object"),
         SymbolObject("type.symbol_object"),
