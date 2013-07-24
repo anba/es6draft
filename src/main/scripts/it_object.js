@@ -9,9 +9,20 @@
 "use strict";
 
 const Object = global.Object,
+      Function = global.Function,
       Error = global.Error,
       Proxy = global.Proxy,
       Reflect = global.Reflect;
+
+const Object_assign = Object.assign,
+      Reflect_getOwnPropertyDescriptor = Reflect.getOwnPropertyDescriptor,
+      Reflect_defineProperty = Reflect.defineProperty,
+      Reflect_get = Reflect.get,
+      Reflect_set = Reflect.set,
+      Reflect_deleteProperty = Reflect.deleteProperty,
+      Reflect_enumerate = Reflect.enumerate;
+
+const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 var it_custom = undefined;
 
@@ -34,29 +45,26 @@ const it_target = Object.create(Object.prototype, {
     get() { if (this === it) return it_custom },
     set(v) { if (this === it) it_custom = v },
     enumerable: true, configurable: true
-  }
+  },
+  [global.getSym("@@toStringTag")]: {value: "It"},
 });
 
-Object.defineProperty(it_target, getSym("@@toStringTag"), {
-  value: "It"
-});
-
-const it = Proxy(it_target, {
+const it = new Proxy(it_target, {
   getOwnPropertyDescriptor(t, pk) {
     if (pk in it_mapped) {
-      return Object.assign(Reflect.getOwnPropertyDescriptor(t, pk), {value: it_custom});
+      return Object_assign(Reflect_getOwnPropertyDescriptor(t, pk), {value: it_custom});
     }
-    return Reflect.getOwnPropertyDescriptor(t, pk);
+    return Reflect_getOwnPropertyDescriptor(t, pk);
   },
   defineProperty(t, pk, desc) {
     delete it_mapped[pk];
-    return Reflect.defineProperty(t, pk, desc);
+    return Reflect_defineProperty(t, pk, desc);
   },
   get(t, pk, r) {
     if (pk in it_mapped) {
       return it_custom;
     }
-    return Reflect.get(t, pk, r);
+    return Reflect_get(t, pk, r);
   },
   set(t, pk, v, r) {
     if (pk in it_mapped) {
@@ -65,17 +73,21 @@ const it = Proxy(it_target, {
       }
       return it_mapped[pk];
     }
-    return Reflect.set(t, pk, v, r);
+    return Reflect_set(t, pk, v, r);
+  },
+  invoke(t, pk, args, r) {
+    var f = this.get(t, pk, r);
+    return $CallFunction(f, r, ...args);
   },
   deleteProperty(t, pk) {
     delete it_mapped[pk];
-    return Reflect.deleteProperty(t, pk);
+    return Reflect_deleteProperty(t, pk);
   },
   enumerate(t) {
     if (it.enum_fail) {
-      throw Error("its enumeration failed");
+      throw new Error("its enumeration failed");
     }
-    return Reflect.enumerate(t);
+    return Reflect_enumerate(t);
   },
 });
 
