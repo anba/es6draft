@@ -154,4 +154,15 @@ public abstract class ShellGlobalObject extends GlobalObject {
     public Object newSym(String name) {
         return new ExoticSymbol(name);
     }
+
+    /**
+     * Returns the [[Name]] property of the symbol or undefined if the input is not a symbol
+     */
+    @Function(name = "symName", arity = 1)
+    public Object symName(Object symbol) {
+        if (symbol instanceof ExoticSymbol) {
+            return ((ExoticSymbol) symbol).toString();
+        }
+        return UNDEFINED;
+    }
 }
