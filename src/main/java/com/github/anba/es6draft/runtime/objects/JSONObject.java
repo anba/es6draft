@@ -170,7 +170,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                     }
                 }
             } else {
-                Iterable<String> keys = GetOwnPropertyKeys(cx, objVal);
+                Iterable<String> keys = GetOwnEnumerablePropertyNames(cx, objVal);
                 for (String p : keys) {
                     Object newElement = Walk(cx, reviver, objVal, p);
                     if (Type.isUndefined(newElement)) {
@@ -305,8 +305,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         if (propertyList != null) {
             k = propertyList;
         } else {
-            // FIXME: spec bug (should possibly use [[Keys]]) (Bug 1142)
-            k = GetOwnPropertyKeys(cx, value);
+            k = GetOwnEnumerablePropertyNames(cx, value);
         }
         List<String> partial = new ArrayList<>();
         for (String p : k) {

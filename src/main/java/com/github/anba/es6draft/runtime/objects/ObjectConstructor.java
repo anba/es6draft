@@ -194,11 +194,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             }
             Object key = ToPropertyKey(cx, p);
             PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
-            if (key instanceof String) {
-                DefinePropertyOrThrow(cx, Type.objectValue(o), (String) key, desc);
-            } else {
-                DefinePropertyOrThrow(cx, Type.objectValue(o), (ExoticSymbol) key, desc);
-            }
+            DefinePropertyOrThrow(cx, Type.objectValue(o), key, desc);
             return o;
         }
 
@@ -295,7 +291,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "keys", arity = 1)
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
             ScriptObject obj = ToObject(cx, o);
-            List<String> nameList = GetOwnPropertyKeys(cx, obj);
+            List<String> nameList = GetOwnEnumerablePropertyNames(cx, obj);
             return CreateArrayFromList(cx, nameList);
         }
 
@@ -333,32 +329,15 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             ScriptException pendingException = null;
             List<Object> keys = GetOwnEnumerableKeys(cx, _source);
             for (Object key : keys) {
-                if (key instanceof String) {
-                    String ownKey = (String) key;
-                    Object value = Get(cx, _source, ownKey);
-                    if (isSuperBoundTo(value, _source)) {
-                        value = superBindTo(cx, value, _target);
-                    }
-                    try {
-                        Put(cx, _target, ownKey, value, true);
-                    } catch (ScriptException e) {
-                        if (pendingException == null) {
-                            pendingException = e;
-                        }
-                    }
-                } else {
-                    assert key instanceof ExoticSymbol;
-                    ExoticSymbol ownKey = (ExoticSymbol) key;
-                    Object value = Get(cx, _source, ownKey);
-                    if (isSuperBoundTo(value, _source)) {
-                        value = superBindTo(cx, value, _target);
-                    }
-                    try {
-                        Put(cx, _target, ownKey, value, true);
-                    } catch (ScriptException e) {
-                        if (pendingException == null) {
-                            pendingException = e;
-                        }
+                Object value = Get(cx, _source, key);
+                if (isSuperBoundTo(value, _source)) {
+                    value = superBindTo(cx, value, _target);
+                }
+                try {
+                    Put(cx, _target, key, value, true);
+                } catch (ScriptException e) {
+                    if (pendingException == null) {
+                        pendingException = e;
                     }
                 }
             }
@@ -385,33 +364,20 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             ScriptException pendingException = null;
             List<Object> keys = GetOwnEnumerableKeys(cx, _source);
             for (Object key : keys) {
+                Property desc;
                 if (key instanceof String) {
-                    String ownKey = (String) key;
-                    Property desc = _source.getOwnProperty(cx, ownKey);
-                    if (desc != null) {
-                        try {
-                            PropertyDescriptor desc2 = fromDescriptor(cx,
-                                    desc.toPropertyDescriptor(), _source, _target);
-                            DefinePropertyOrThrow(cx, _target, ownKey, desc2);
-                        } catch (ScriptException e) {
-                            if (pendingException == null) {
-                                pendingException = e;
-                            }
-                        }
-                    }
+                    desc = _source.getOwnProperty(cx, (String) key);
                 } else {
-                    assert key instanceof ExoticSymbol;
-                    ExoticSymbol ownKey = (ExoticSymbol) key;
-                    Property desc = _source.getOwnProperty(cx, ownKey);
-                    if (desc != null) {
-                        try {
-                            PropertyDescriptor desc2 = fromDescriptor(cx,
-                                    desc.toPropertyDescriptor(), _source, _target);
-                            DefinePropertyOrThrow(cx, _target, ownKey, desc2);
-                        } catch (ScriptException e) {
-                            if (pendingException == null) {
-                                pendingException = e;
-                            }
+                    desc = _source.getOwnProperty(cx, (ExoticSymbol) key);
+                }
+                if (desc != null) {
+                    try {
+                        PropertyDescriptor newDesc = fromDescriptor(cx,
+                                desc.toPropertyDescriptor(), _source, _target);
+                        DefinePropertyOrThrow(cx, _target, key, newDesc);
+                    } catch (ScriptException e) {
+                        if (pendingException == null) {
+                            pendingException = e;
                         }
                     }
                 }
@@ -459,17 +425,16 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         }
         ScriptObject obj = Type.objectValue(o);
         ScriptObject props = ToObject(cx, properties);
-        // FIXME: spec bug ('keys of each enumerable own property' -> string/symbol/private ?)
-        List<String> names = GetOwnPropertyKeys(cx, props);
+        List<Object> names = GetOwnEnumerablePropertyKeys(cx, props);
         List<PropertyDescriptor> descriptors = new ArrayList<>();
-        for (String p : names) {
+        for (Object p : names) {
             Object descObj = Get(cx, props, p);
             PropertyDescriptor desc = ToPropertyDescriptor(cx, descObj);
             descriptors.add(desc);
         }
         ScriptException pendingException = null;
         for (int i = 0, size = names.size(); i < size; ++i) {
-            String p = names.get(i);
+            Object p = names.get(i);
             PropertyDescriptor desc = descriptors.get(i);
             try {
                 DefinePropertyOrThrow(cx, obj, p, desc);
@@ -493,19 +458,14 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         Iterator<?> keys = FromListIterator(cx, object.ownPropertyKeys(cx));
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
+            Property desc;
             if (key instanceof String) {
-                String ownKey = (String) key;
-                Property desc = object.getOwnProperty(cx, ownKey);
-                if (desc != null && desc.isEnumerable()) {
-                    ownKeys.add(ownKey);
-                }
+                desc = object.getOwnProperty(cx, (String) key);
             } else {
-                assert key instanceof ExoticSymbol;
-                ExoticSymbol ownKey = (ExoticSymbol) key;
-                Property desc = object.getOwnProperty(cx, ownKey);
-                if (desc != null && desc.isEnumerable()) {
-                    ownKeys.add(ownKey);
-                }
+                desc = object.getOwnProperty(cx, (ExoticSymbol) key);
+            }
+            if (desc != null && desc.isEnumerable()) {
+                ownKeys.add(key);
             }
         }
         return ownKeys;
