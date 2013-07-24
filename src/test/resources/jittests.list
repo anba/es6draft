@@ -5,6 +5,14 @@
 # <https://github.com/anba/es6draft>
 #
 
+# test failures caused by legacy iteration workaround
+tests/collections/Map-forEach.js
+tests/collections/Set-forEach.js
+
+# unknown Array.build() function
+tests/collections/Array-build-basic.js
+tests/collections/Array-build-surfaces.js
+
 # ES6-bug: declaration binding
 tests/arguments/defaults-bound-to-function.js
 tests/arguments/defaults-scoping.js

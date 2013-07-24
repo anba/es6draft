@@ -5,6 +5,9 @@
 # <https://github.com/anba/es6draft>
 #
 
+# spec "9.1.3.1 ToNumber Applied to the String Type" not updated for new number literals
+harmony/numeric-literals.js
+
 # spec bug: [[HasOwnProperty]] / [[Has]] not overridden for IndexedDelegationExoticObjects
 regress/regress-98773.js
 
