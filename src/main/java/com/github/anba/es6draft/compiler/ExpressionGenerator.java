@@ -194,6 +194,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         Types.Object, Types.Object_, Types.Reference, Types.ScriptObject,
                         Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_EvaluateMethodCallWithBaseObject = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateMethodCallWithBaseObject", Type
+                        .getMethodType(Types.Object, Types.Object_, Types.Reference,
+                                Types.ScriptObject, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_getElement = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "getElement", Type.getMethodType(Types.Reference,
                         Types.Object, Types.Object, Types.ExecutionContext, Type.BOOLEAN_TYPE));
@@ -582,7 +587,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 /* EvaluateMethodCall: steps 7-13 */
                 // stack: [args, ref(Reference), base] -> [result]
                 mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_EvaluateMethodCall);
+                mv.invoke(Methods.ScriptRuntime_EvaluateMethodCallWithBaseObject);
                 mv.goTo(afterCall);
             }
             mv.mark(notMethodCall);

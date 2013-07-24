@@ -451,9 +451,26 @@ public final class ScriptRuntime {
      */
     public static Object EvaluateMethodCall(Object[] arguments, Reference<?, ?> ref,
             ScriptObject base, ExecutionContext cx) {
-        assert ref.isPropertyReference() || !(base instanceof OrdinaryObject);
+        assert ref.isPropertyReference();
         // EvaluateMethodCall - steps 7-13 (no tail call here)
         Object thisValue = ref.GetThisValue(cx);
+        Object key = ref.getReferencedName();
+        if (key instanceof String) {
+            return base.invoke(cx, (String) key, arguments, thisValue);
+        }
+        return base.invoke(cx, (ExoticSymbol) key, arguments, thisValue);
+    }
+
+    /**
+     * 11.2.3 Function Calls
+     * <p>
+     * Runtime Semantics: EvaluateMethodCall Abstract Operation
+     */
+    public static Object EvaluateMethodCallWithBaseObject(Object[] arguments, Reference<?, ?> ref,
+            ScriptObject base, ExecutionContext cx) {
+        assert !ref.isPropertyReference() && !ref.isUnresolvableReference();
+        // EvaluateMethodCall - steps 7-13 (no tail call here)
+        Object thisValue = base;
         Object key = ref.getReferencedName();
         if (key instanceof String) {
             return base.invoke(cx, (String) key, arguments, thisValue);
