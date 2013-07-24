@@ -14,39 +14,41 @@ const Object = global.Object,
 const Object_defineProperty = Object.defineProperty,
       Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
 
+const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
+
 const GeneratorPrototype = Object.getPrototypeOf(function*(){}).prototype;
 const GeneratorPrototype_next = GeneratorPrototype.next;
-const genState = newSym("genState");
+const genState = global.newSym("genState");
 
 Object.defineProperty(GeneratorPrototype, "next", {
-  value() {
+  value(...args) {
     if (!Object_hasOwnProperty(this, genState)) {
-      Object_defineProperty(this, genState, {value: true});
+      Object_defineProperty(this, genState, {__proto__: null, value: true});
       // drop arguments on first call to next()
-      return GeneratorPrototype_next.call(this);
+      return $CallFunction(GeneratorPrototype_next, this);
     }
-    return GeneratorPrototype_next.apply(this, arguments);
+    return $CallFunction(GeneratorPrototype_next, this, ...args);
   },
   writable: true, enumerable: false, configurable: true
 });
 
 // add send() function to prototype
 Object.defineProperty(GeneratorPrototype, "send", {
-  value() {
+  value(...args) {
     if (!Object_hasOwnProperty(this, genState)) {
-      Object_defineProperty(this, genState, {value: true});
+      Object_defineProperty(this, genState, {__proto__: null, value: true});
       // drop arguments on first call to next()
-      return GeneratorPrototype_next.call(this);
+      return $CallFunction(GeneratorPrototype_next, this);
     }
-    return GeneratorPrototype_next.apply(this, arguments);
+    return $CallFunction(GeneratorPrototype_next, this, ...args);
   },
   writable: true, enumerable: false, configurable: true
 });
 
-const iteratorSym = getSym("@@iterator");
+const iteratorSym = global.getSym("@@iterator");
 
 Object.defineProperty(Object.prototype, iteratorSym, {
-  get() { return () => ({next: () => Object(this.next()) }) },
+  get() { return () => ({__proto__: null, next: () => Object(this.next())}) },
   enumerable: false, configurable: true
 });
 

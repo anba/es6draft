@@ -17,6 +17,8 @@ const Object_defineProperty = Object.defineProperty,
       Object_toString = Function.prototype.call.bind(Object.prototype.toString),
       Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
 
+const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
+
 const GeneratorFunction = Object.getPrototypeOf(function*(){}).constructor;
 const GeneratorPrototype = Object.getPrototypeOf(function*(){}).prototype;
 const GeneratorPrototype_next = GeneratorPrototype.next,
@@ -34,7 +36,7 @@ function GeneratorState(g) {
       return "closed";
     }
     if (!Object_hasOwnProperty(g, generatorStateSym)) {
-      Object_defineProperty(g, generatorStateSym, {value: "newborn", writable: true});
+      Object_defineProperty(g, generatorStateSym, {__proto__: null, value: "newborn", writable: true});
     }
     return g[generatorStateSym];
   }
@@ -44,7 +46,7 @@ function GeneratorResume(fn, g, v) {
   g[generatorStateSym] = "executing";
 
   try {
-    var result = fn.call(g, v);
+    var result = $CallFunction(fn, g, v);
   } catch (e) {
     // uncaught exception
     g[generatorStateSym] = "closed";
@@ -63,9 +65,9 @@ function GeneratorResume(fn, g, v) {
 Object.defineProperties(Object.assign(Function.prototype, {
   isGenerator() {
     return this instanceof GeneratorFunction;
-  },
+  }
 }), {
-  isGenerator: {enumerable: false},
+  isGenerator: {enumerable: false}
 });
 
 Object.defineProperty(GeneratorPrototype, iteratorSym, {
@@ -107,7 +109,7 @@ Object.defineProperties(Object.assign(GeneratorPrototype, {
         throw StopIteration;
       case "executing":
       default:
-        throw TypeError();
+        throw new TypeError();
     }
   },
   send(v) {
@@ -119,7 +121,7 @@ Object.defineProperties(Object.assign(GeneratorPrototype, {
         throw StopIteration;
       case "executing":
       default:
-        throw TypeError();
+        throw new TypeError();
     }
   },
   close() {
@@ -131,7 +133,7 @@ Object.defineProperties(Object.assign(GeneratorPrototype, {
         return;
       case "executing":
       default:
-        throw TypeError();
+        throw new TypeError();
     }
   },
   throw(e) {
@@ -144,7 +146,7 @@ Object.defineProperties(Object.assign(GeneratorPrototype, {
         throw e;
       case "executing":
       default:
-        throw TypeError();
+        throw new TypeError();
     }
   },
 }), {
