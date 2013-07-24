@@ -9,34 +9,40 @@
 "use strict";
 
 const Object = global.Object,
+      Function = global.Function,
       String = global.String,
+      RegExp = global.RegExp,
       TypeError = global.TypeError;
-
-Object.defineProperty(global, getSym("@@toStringTag"), {
-  value: "global", writable: true, enumerable: false, configurable: true
-});
 
 const Object_defineProperty = Object.defineProperty,
       Object_getPrototypeOf = Object.getPrototypeOf,
       Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
 
+const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
+
 function ToPropertyKey(pk) {
-  // only string valued property keys here
+  if (typeof pk == 'symbol') {
+    return pk;
+  }
   return String(pk);
 }
 
+Object.defineProperty(global, global.getSym("@@toStringTag"), {
+  value: "global", writable: true, enumerable: false, configurable: true
+});
+
 Object.defineProperties(Object.assign(Object.prototype, {
   __defineGetter__(name, getter) {
-    if (typeof getter != 'function') throw TypeError();
+    if (typeof getter != 'function') throw new TypeError();
     var pk = ToPropertyKey(name);
     var obj = (this != null ? Object(this) : global);
-    Object_defineProperty(obj, pk, {get: getter, enumerable: true, configurable: true});
+    Object_defineProperty(obj, pk, {__proto__: null, get: getter, enumerable: true, configurable: true});
   },
   __defineSetter__(name, setter) {
-    if (typeof setter != 'function') throw TypeError();
+    if (typeof setter != 'function') throw new TypeError();
     var pk = ToPropertyKey(name);
     var obj = (this != null ? Object(this) : global);
-    Object_defineProperty(obj, pk, {set: setter, enumerable: true, configurable: true});
+    Object_defineProperty(obj, pk, {__proto__: null, set: setter, enumerable: true, configurable: true});
   },
   __lookupGetter__(name) {
     var pk = ToPropertyKey(name);
@@ -61,14 +67,17 @@ Object.defineProperties(Object.assign(Object.prototype, {
   __lookupSetter__: {enumerable: false},
 });
 
-const String_prototype_replace = String.prototype.replace;
+const RegExp_prototype_replace = RegExp.prototype.replace;
+const trimLeftRE = /^\s+/, trimRightRE = /\s+$/;
 
 Object.defineProperties(Object.assign(String.prototype, {
   trimLeft() {
-    return String_prototype_replace.call(this, /^\s+/, "");
+    if (this == null) throw new TypeError();
+    return $CallFunction(RegExp_prototype_replace, trimLeftRE, "" + this, "");
   },
   trimRight() {
-    return String_prototype_replace.call(this, /\s+$/, "");
+    if (this == null) throw new TypeError();
+    return $CallFunction(RegExp_prototype_replace, trimRightRE, "" + this, "");
   },
 }), {
   trimLeft: {enumerable: false},
