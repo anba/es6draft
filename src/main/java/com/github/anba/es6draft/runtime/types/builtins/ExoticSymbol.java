@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public final class ExoticSymbol implements ScriptObject {
+    /** [[Name]] */
     private final String name;
 
     public ExoticSymbol(String name) {
