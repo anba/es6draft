@@ -2304,7 +2304,7 @@ public class Parser {
         consume(Token.LC);
         List<MethodDefinition> staticMethods = newList();
         List<MethodDefinition> prototypeMethods = newList();
-        classBody(staticMethods, prototypeMethods);
+        classBody(name, staticMethods, prototypeMethods);
         consume(Token.RC);
 
         ClassDeclaration decl = new ClassDeclaration(name, heritage, staticMethods,
@@ -2344,7 +2344,7 @@ public class Parser {
         }
         List<MethodDefinition> staticMethods = newList();
         List<MethodDefinition> prototypeMethods = newList();
-        classBody(staticMethods, prototypeMethods);
+        classBody(name, staticMethods, prototypeMethods);
         if (name != null) {
             exitBlockContext();
         }
@@ -2368,7 +2368,7 @@ public class Parser {
      *     ;
      * </pre>
      */
-    private void classBody(List<MethodDefinition> staticMethods,
+    private void classBody(BindingIdentifier className, List<MethodDefinition> staticMethods,
             List<MethodDefinition> prototypeMethods) {
         while (token() != Token.RC) {
             if (token() == Token.SEMI) {
@@ -2381,11 +2381,12 @@ public class Parser {
             }
         }
 
-        classBody_StaticSemantics(staticMethods, true);
-        classBody_StaticSemantics(prototypeMethods, false);
+        classBody_StaticSemantics(className, staticMethods, true);
+        classBody_StaticSemantics(className, prototypeMethods, false);
     }
 
-    private void classBody_StaticSemantics(List<MethodDefinition> defs, boolean isStatic) {
+    private void classBody_StaticSemantics(BindingIdentifier className,
+            List<MethodDefinition> defs, boolean isStatic) {
         final int VALUE = 0, GETTER = 1, SETTER = 2;
         Map<String, Integer> values = new HashMap<>();
         for (MethodDefinition def : defs) {
@@ -2401,6 +2402,9 @@ public class Parser {
             } else {
                 if ("constructor".equals(key) && SpecialMethod(def)) {
                     reportSyntaxError(Messages.Key.InvalidConstructorMethod);
+                }
+                if (className != null) {
+                    def.setFunctionName(className.getName());
                 }
             }
             MethodDefinition.MethodType type = def.getType();
