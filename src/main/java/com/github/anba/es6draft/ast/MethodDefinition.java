@@ -18,6 +18,7 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
     private FunctionScope scope;
     private MethodType type;
     private PropertyName propertyName;
+    private String functionName;
     private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private StrictMode strictMode;
@@ -57,7 +58,14 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
 
     @Override
     public String getFunctionName() {
+        if (functionName != null) {
+            return functionName;
+        }
         return propertyName.getName();
+    }
+
+    public void setFunctionName(String functionName) {
+        this.functionName = functionName;
     }
 
     @Override
