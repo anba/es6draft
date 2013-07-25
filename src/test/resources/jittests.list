@@ -30,10 +30,6 @@ tests/for-of/typedarrays-2.js
 tests/for-of/typedarrays-3.js
 tests/for-of/typedarrays-6.js
 
-# potential ES6 spec bug or deliberate change?
-tests/basic/testTypedArrayOutOfBounds.js
-tests/basic/typed-array-getprop-out-of-range.js
-
 # potential ES6 spec bug? for-of over undefined
 tests/for-of/non-iterable.js
 
@@ -43,15 +39,6 @@ tests/basic/number-isinteger.js
 # ES6 spec bug wrt destructuring
 tests/basic/bug719750.js
 tests/basic/testDestructuringFormalError.js
-
-# ES6 spec bug or SpiderMonkey bug?
-tests/basic/bug829821.js
-
-# maybe ES6 spec bug in TypedArrays
-tests/basic/testArrayBufferSlice.js
-
-# DataView range issue -> new DataView(new Int8Array(0).buffer,0,0) ?
-tests/basic/bug842482.js
 
 
 ###################
@@ -72,6 +59,9 @@ tests/collections/Array-of-ordering.js
 # invalid test case (relies on order in which elements are visited in Array.prototype.sort)
 # and its strcmp function is broken as well
 tests/basic/testBug720695.js
+
+# invalid test case Array.prototype.push calls Put() with throw=true
+tests/basic/bug829821.js
 
 # WithStatement vs. block scope
 tests/basic/testBug753158.js
@@ -256,21 +246,14 @@ tests/arrow-functions/length.js
 tests/arguments/rest-disallow-arguments.js
 tests/arrow-functions/arguments-4.js
 
-# arrow functions _do_ have arguments
+# arrow functions do not have arguments
 tests/arrow-functions/arguments-1.js
 tests/arrow-functions/arguments-2.js
 tests/arrow-functions/arguments-3.js
+tests/arrow-functions/bug-885067-2.js
 
 # different toString() representation for arrow-functions
 tests/arrow-functions/associativity-3.js
-
-# arrow functions are _not_ implicit strict-mode
-tests/arrow-functions/strict-1.js
-tests/arrow-functions/strict-2.js
-tests/arrow-functions/syntax-errors.js
-
-# arrow function do not have arguments
-tests/arrow-functions/bug-885067-2.js
 
 
 #######################################
