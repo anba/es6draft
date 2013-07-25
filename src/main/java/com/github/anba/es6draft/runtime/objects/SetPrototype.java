@@ -140,7 +140,7 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
             for (Iterator<Entry<Object, Void>> itr = entries.iterator(); itr.hasNext();) {
                 Entry<Object, Void> e = itr.next();
                 assert e != null;
-                callback.call(cx, thisArg, e.getKey(), s);
+                callback.call(cx, thisArg, e.getKey(), e.getKey(), s);
             }
             return UNDEFINED;
         }
