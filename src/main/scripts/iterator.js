@@ -20,6 +20,8 @@ const Object_keys = Object.keys,
       Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
       Array_isArray = Array.isArray;
 
+const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
+
 const iteratorSym = getSym("@@iterator"),
       toStringTagSym = getSym("@@toStringTag"),
       hasInstanceSym = getSym("@@hasInstance"),
@@ -51,9 +53,9 @@ function MakeIterator() {
       Array_isArray(obj) ? obj.map((v, k) => [k, v]) :
       keys ? Object_keys(Object(obj)) :
       Object_keys(Object(obj)).map(k => [k, obj[k]])
-    ).values()[iteratorSym]();
+    )[iteratorSym]();
     var next = iter.next.bind(iter);
-    Object_defineProperty(instance, nextSym, {value: next, configurable: false});
+    Object_defineProperty(instance, nextSym, {__proto__: null, value: next, configurable: false});
     return new Proxy(instance, {enumerate: () => iter});
   }
 
@@ -72,7 +74,7 @@ function MakeIterator() {
   Object.defineProperty(Iterator, createSym, {
     value: function() {
       var o = Object.create(Iterator.prototype);
-      Object_defineProperty(o, nextSym, {value: null, configurable: true});
+      Object_defineProperty(o, nextSym, {__proto__: null, value: null, configurable: true});
       return o;
     }, writable: false, enumerable: false, configurable: true
   });
@@ -116,7 +118,7 @@ function MakeIteratorAdapter() {
 
   class IteratorAdapter {
     constructor(iter) {
-      Object.defineProperty(this, iterSym, {value: iter});
+      Object_defineProperty(this, iterSym, {__proto__: null, value: iter});
     }
 
     next() {
@@ -157,24 +159,23 @@ Object.defineProperty(Object.prototype, iteratorSym, {
 // (internal) MakeBuiltinIterator
 function MakeBuiltinIterator(ctor) {
   const iterSym = newSym("iter");
+  const drainedSym = newSym("drained");
 
   class BuiltinIterator extends Iterator {
     constructor(obj, iterF) {
-      Object.defineProperty(this, iterSym, {value: iterF.call(obj)});
+      Object_defineProperty(this, iterSym, {__proto__: null, value: $CallFunction(iterF, obj)});
+      Object_defineProperty(this, drainedSym, {__proto__: null, value: false, configurable: true});
     }
 
     next() {
-      var next = this[iterSym].next();
-      if (Object(next) === next) {
-        if (next.done) {
-          throw StopIteration;
+      if (!this[drainedSym]) {
+        var next = this[iterSym].next();
+        if (Object(next) === next && !next.done) {
+          return next.value;
         }
-        return next.value;
+        Object_defineProperty(this, drainedSym, {__proto__: null, value: true, configurable: false});
       }
-    }
-
-    iterator() {
-      return this;
+      throw StopIteration;
     }
 
     get [toStringTagSym]() {
@@ -185,8 +186,12 @@ function MakeBuiltinIterator(ctor) {
       return this[iterSym];
     }
 
+    get [drainedSym]() {
+      return true;
+    }
+
     static [createSym]() {
-      return Function.prototype[createSym].call(this);
+      return $CallFunction(Function.prototype[createSym], this);
     }
   }
 
@@ -194,9 +199,9 @@ function MakeBuiltinIterator(ctor) {
 
   Object.defineProperties(BuiltinIterator.prototype, {
     next: {enumerable: false},
-    iterator: {enumerable: false},
     [toStringTagSym]: {enumerable: false},
     [iteratorSym]: {writable: false, enumerable: false},
+    [drainedSym]: {enumerable: false},
   });
 
   Object.defineProperties(BuiltinIterator, {
@@ -209,6 +214,7 @@ function MakeBuiltinIterator(ctor) {
 // make prototype.iterator() an own data property and remove @@iterator hook
 
 { /* Map.prototype */
+  const Map = global.Map;
   const BuiltinIterator = MakeBuiltinIterator(Map);
   const iterF = {
     keys: Map.prototype['keys'],
@@ -236,6 +242,7 @@ function MakeBuiltinIterator(ctor) {
 }
 
 { /* Set.prototype */
+  const Set = global.Set;
   const BuiltinIterator = MakeBuiltinIterator(Set);
   const iterF = {
     values: Set.prototype['values'],
@@ -297,6 +304,11 @@ function MakeBuiltinIterator(ctor) {
   });
 
   delete Array.prototype[iteratorSym];
+
+  // keys, values and entries currently disabled in SpiderMonkey :(
+  delete Array.prototype.keys;
+  delete Array.prototype.values;
+  delete Array.prototype.entries;
 }
 
 // make Strings and TypedArrays iterable
@@ -307,11 +319,219 @@ function MakeBuiltinIterator(ctor) {
   [String, ...TypedArrays].forEach(
     ctor => {
       Object.defineProperty(ctor.prototype, "iterator", {
-        value() { return ArrayPrototype_iterator.call(this) },
+        value() { return $CallFunction(ArrayPrototype_iterator, this) },
         writable: true, enumerable: false, configurable: true
       });
     }
   );
+}
+
+// create overrides for Map/Set/WeakMap/WeakSet
+
+{ /* Map */
+  const BuiltinMap = global.Map;
+  const isMapSym = newSym("isMap");
+
+  class Map extends BuiltinMap {
+    constructor(iterable, comparator = "is") {
+      if (!(typeof this == 'object' && this !== null)) {
+        if (this === undefined) {
+          return new Map(iterable, comparator);
+        }
+        throw new TypeError();
+      }
+      if (!Object_hasOwnProperty(this, isMapSym) || this[isMapSym] !== false) {
+        throw new TypeError();
+      }
+      Object_defineProperty(this, isMapSym, {__proto__: null, value: true, configurable: false});
+      if (iterable !== undefined) {
+        if ("entries" in iterable) {
+          iterable = iterable.entries()[iteratorSym]();
+        } else {
+          iterable = iterable.iterator()[iteratorSym]();
+        }
+      }
+      return super(iterable, comparator);
+    }
+
+    set(key, value) {
+      super(key, value);
+    }
+
+    get size() {
+      return super.size;
+    }
+
+    static [createSym]() {
+      var m = super();
+      Object_defineProperty(m, isMapSym, {__proto__: null, value: false, configurable: true});
+      return m;
+    }
+  }
+
+  Object.defineProperties(Map.prototype, {
+    set: {enumerable: false},
+    size: {enumerable: false},
+  });
+
+  Object.defineProperties(Map, {
+    [createSym]: {writable: false, enumerable: false},
+  });
+
+  Object.defineProperty(global, "Map", {
+    value: Map,
+    writable: true, enumerable: false, configurable: true
+  });
+}
+
+{ /* Set */
+  const BuiltinSet = global.Set;
+  const isSetSym = newSym("isSet");
+
+  class Set extends BuiltinSet {
+    constructor(iterable, comparator = "is") {
+      if (!(typeof this == 'object' && this !== null)) {
+        if (this === undefined) {
+          return new Set(iterable, comparator);
+        }
+        throw new TypeError();
+      }
+      if (!Object_hasOwnProperty(this, isSetSym) || this[isSetSym] !== false) {
+        throw new TypeError();
+      }
+      Object_defineProperty(this, isSetSym, {__proto__: null, value: true, configurable: false});
+      if (iterable !== undefined) {
+        iterable = iterable.iterator()[iteratorSym]();
+      }
+      return super(iterable, comparator);
+    }
+
+    add(value) {
+      super(value);
+    }
+
+    get size() {
+      return super.size;
+    }
+
+    static [createSym]() {
+      var m = super();
+      Object_defineProperty(m, isSetSym, {__proto__: null, value: false, configurable: true});
+      return m;
+    }
+  }
+
+  Object.defineProperties(Set.prototype, {
+    add: {enumerable: false},
+    size: {enumerable: false},
+  });
+
+  Object.defineProperties(Set, {
+    [createSym]: {writable: false, enumerable: false},
+  });
+
+  Object.defineProperty(global, "Set", {
+    value: Set,
+    writable: true, enumerable: false, configurable: true
+  });
+}
+
+{ /* WeakMap */
+  const BuiltinWeakMap = global.WeakMap;
+  const isWeakMapSym = newSym("isWeakMap");
+
+  class WeakMap extends BuiltinWeakMap {
+    constructor(iterable, comparator = undefined) {
+      if (!(typeof this == 'object' && this !== null)) {
+        if (this === undefined) {
+          return new WeakMap(iterable, comparator);
+        }
+        throw new TypeError();
+      }
+      if (!Object_hasOwnProperty(this, isWeakMapSym) || this[isWeakMapSym] !== false) {
+        throw new TypeError();
+      }
+      Object_defineProperty(this, isWeakMapSym, {__proto__: null, value: true, configurable: false});
+      if (iterable !== undefined) {
+        if ("entries" in iterable) {
+          iterable = iterable.entries()[iteratorSym]();
+        } else {
+          iterable = iterable.iterator()[iteratorSym]();
+        }
+      }
+      return super(iterable, comparator);
+    }
+
+    set(key, value) {
+      super(key, value);
+    }
+
+    static [createSym]() {
+      var m = super();
+      Object_defineProperty(m, isWeakMapSym, {__proto__: null, value: false, configurable: true});
+      return m;
+    }
+  }
+
+  Object.defineProperties(WeakMap.prototype, {
+    set: {enumerable: false},
+  });
+
+  Object.defineProperties(WeakMap, {
+    [createSym]: {writable: false, enumerable: false},
+  });
+
+  Object.defineProperty(global, "WeakMap", {
+    value: WeakMap,
+    writable: true, enumerable: false, configurable: true
+  });
+}
+
+{ /* WeakSet */
+  const BuiltinWeakSet = global.WeakSet;
+  const isWeakSetSym = newSym("isWeakSet");
+
+  class WeakSet extends BuiltinWeakSet {
+    constructor(iterable, comparator = undefined) {
+      if (!(typeof this == 'object' && this !== null)) {
+        if (this === undefined) {
+          return new WeakSet(iterable, comparator);
+        }
+        throw new TypeError();
+      }
+      if (!Object_hasOwnProperty(this, isWeakSetSym) || this[isWeakSetSym] !== false) {
+        throw new TypeError();
+      }
+      Object_defineProperty(this, isWeakSetSym, {__proto__: null, value: true, configurable: false});
+      if (iterable !== undefined) {
+        iterable = iterable.iterator()[iteratorSym]();
+      }
+      return super(iterable, comparator);
+    }
+
+    add(value) {
+      super(value);
+    }
+
+    static [createSym]() {
+      var m = super();
+      Object_defineProperty(m, isWeakSetSym, {__proto__: null, value: false, configurable: true});
+      return m;
+    }
+  }
+
+  Object.defineProperties(WeakSet.prototype, {
+    add: {enumerable: false},
+  });
+
+  Object.defineProperties(WeakSet, {
+    [createSym]: {writable: false, enumerable: false},
+  });
+
+  Object.defineProperty(global, "WeakSet", {
+    value: WeakSet,
+    writable: true, enumerable: false, configurable: true
+  });
 }
 
 })(this);
