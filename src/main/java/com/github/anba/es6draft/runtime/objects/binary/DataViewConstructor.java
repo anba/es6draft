@@ -162,7 +162,7 @@ public class DataViewConstructor extends BuiltinFunction implements Constructor,
         /* step 9 */
         long bufferByteLength = bufferObj.getByteLength();
         /* step 10 */
-        if (offset >= bufferByteLength) {
+        if (offset > bufferByteLength) {
             throwRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
         }
         /* steps 11-12 */
