@@ -21,9 +21,6 @@ ecma_3/Number/15.7.4.7-1.js
 # Invalid test: RegExec sets lastIndex to 0 if no match found
 ecma_5/RegExp/exec.js
 
-# ES6 spec bug: `Map()` etc. must be called with explicit `new`
-js1_8_5/extensions/weakmap.js
-
 # ES6 spec incomplete for DataView
 js1_8_5/extensions/dataview.js
 
@@ -275,9 +272,6 @@ js1_8_5/regress/regress-591846.js
 ecma_5/Object/15.2.3.3-01.js
 ecma_5/Object/15.2.3.4-04.js
 ecma_5/strict/15.10.7.js
-
-# WeakMap.prototype.set returns this object
-js1_8_5/extensions/regress-697515.js
 
 # strict 'caller' no longer throws TypeError, returns null instead
 js1_8_5/extensions/censor-strict-caller.js

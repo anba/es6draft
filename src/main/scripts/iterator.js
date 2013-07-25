@@ -462,6 +462,10 @@ function MakeBuiltinIterator(ctor) {
       return super(iterable, comparator);
     }
 
+    get(key, defaultValue) {
+      return this.has(key) ? super(key) : defaultValue;
+    }
+
     set(key, value) {
       super(key, value);
     }
