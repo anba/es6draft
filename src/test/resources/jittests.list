@@ -5,13 +5,6 @@
 # <https://github.com/anba/es6draft>
 #
 
-# test failures caused by legacy iteration workaround
-tests/collections/Map-forEach.js
-tests/collections/Set-forEach.js
-
-# unknown Array.build() function
-tests/collections/Array-build-basic.js
-tests/collections/Array-build-surfaces.js
 
 # ES6-bug: declaration binding
 tests/arguments/defaults-bound-to-function.js
@@ -36,99 +29,6 @@ tests/for-of/typedarrays-1.js
 tests/for-of/typedarrays-2.js
 tests/for-of/typedarrays-3.js
 tests/for-of/typedarrays-6.js
-
-# lib/asserts.js: assertDeepEq() calls `Map()` without `new`
-tests/arrays/sort-getter-only.js
-tests/collections/Array-of-2.js
-tests/collections/Array-of-3.js
-tests/collections/Array-of-generic-1.js
-tests/self-test/assertDeepEq.js
-
-# ES6 spec change: `Map()` etc. must be called with explicit `new`
-tests/collections/iterator-gc.js
-tests/collections/iterator-proto-1.js
-tests/collections/iterator-proto-2.js
-tests/collections/iterator-proto-surfaces.js
-tests/collections/Map-clear-1.js
-tests/collections/Map-clear-2.js
-tests/collections/Map-clear-3.js
-tests/collections/Map-clear-4.js
-tests/collections/Map-clear-5.js
-tests/collections/Map-clear-6.js
-tests/collections/Map-clear-gc.js
-tests/collections/Map-clear-iterators-1.js
-tests/collections/Map-clear-iterators-2.js
-tests/collections/Map-constructor-1.js
-tests/collections/Map-constructor-2.js
-tests/collections/Map-constructor-3.js
-tests/collections/Map-constructor-duplicates.js
-tests/collections/Map-constructor-generator-1.js
-tests/collections/Map-constructor-generator-2.js
-tests/collections/Map-constructor-generator-3.js
-tests/collections/Map-constructor-generator-exception.js
-tests/collections/Map-delete-size.js
-tests/collections/Map-iterator-add-remove.js
-tests/collections/Map-iterator-2.js
-tests/collections/Map-iterator-pairs-1.js
-tests/collections/Map-iterator-pairs-2.js
-tests/collections/Map-iterator-add-1.js
-tests/collections/Map-iterator-pairs-3.js
-tests/collections/Map-iterator-proxies-1.js
-tests/collections/Map-iterator-proxies-2.js
-tests/collections/Map-iterator-remove-1.js
-tests/collections/Map-iterator-remove-2.js
-tests/collections/Map-iterator-remove-3.js
-tests/collections/Map-iterator-remove-4.js
-tests/collections/Map-iterator-remove-5.js
-tests/collections/Map-iterator-remove-6.js
-tests/collections/Map-iterator-1.js
-tests/collections/Map-iterator-order.js
-tests/collections/Map-iterator-add-2.js
-tests/collections/Map-set-size.js
-tests/collections/Map-iterators-3.js
-tests/collections/Map-size.js
-tests/collections/Map-values-1.js
-tests/collections/Map-values-2.js
-tests/collections/Set-clear-1.js
-tests/collections/Set-clear-2.js
-tests/collections/Set-clear-3.js
-tests/collections/Set-clear-4.js
-tests/collections/Set-clear-6.js
-tests/collections/Set-clear-iterators-2.js
-tests/collections/Set-clear-iterators-1.js
-tests/collections/Set-constructor-1.js
-tests/collections/Set-constructor-2.js
-tests/collections/Set-add-size.js
-tests/collections/Set-iterator-1.js
-tests/collections/Set-clear-iterators-3.js
-tests/collections/Set-clear-5.js
-tests/collections/Set-delete-size.js
-tests/collections/Set-constructor-3.js
-tests/collections/Set-constructor-generator-1.js
-tests/collections/Set-constructor-generator-2.js
-tests/collections/Set-iterator-add-1.js
-tests/collections/Set-clear-gc.js
-tests/collections/Set-iterator-2.js
-tests/collections/Set-iterator-add-remove.js
-tests/collections/Set-iterator-add-2.js
-tests/collections/Set-iterator-gc-3.js
-tests/collections/Set-iterator-order.js
-tests/collections/Set-iterator-gc-1.js
-tests/collections/Set-iterator-gc-2.js
-tests/collections/Set-iterator-proxies-1.js
-tests/collections/Set-iterator-proxies-2.js
-tests/collections/Set-iterator-remove-1.js
-tests/collections/Set-iterator-remove-3.js
-tests/collections/Set-iterator-remove-2.js
-tests/collections/Set-iterator-remove-4.js
-tests/collections/Set-iterator-remove-5.js
-tests/collections/Set-size.js
-tests/collections/Set-iterator-remove-6.js
-tests/collections/Set-iterator-3.js
-tests/collections/Set-values-1.js
-tests/collections/Set-values-2.js
-tests/collections/WeakMap-clear.js
-tests/basic/bug808483.js
 
 # potential ES6 spec bug or deliberate change?
 tests/basic/testTypedArrayOutOfBounds.js
@@ -158,6 +58,9 @@ tests/basic/bug842482.js
 # Misc issues     #
 ###################
 
+# lib/asserts.js: assertDeepEq() considers `{a: 1, b: 2}` and `{b: 2, a: 1}` as different objects...
+tests/arrays/sort-getter-only.js
+
 # invalid test, Array.of() creates properties with writable=enumerable=configurable=true, but
 # TypedArrays have non-configurable properties
 tests/collections/Array-of-generic-3.js
@@ -186,8 +89,15 @@ tests/basic/testArrayComp2.js
 tests/basic/testBrandedVsGeneric.js
 tests/basic/testCustomIterator.js
 
+# Array spread works with iterables in SM
+tests/collections/Set-values-2.js
+
 # emulated ArrayIterator.prototype.next does not work cross-global
 tests/for-of/next-3.js
+
+# emulated Map/Set do not work cross-global
+tests/collections/Map-iterator-proxies-2.js
+tests/collections/Set-iterator-proxies-2.js
 
 # emulated Iterator does not work cross-global
 tests/basic/testCrossCompartmentTransparency.js
@@ -362,6 +272,7 @@ tests/arrow-functions/syntax-errors.js
 # arrow function do not have arguments
 tests/arrow-functions/bug-885067-2.js
 
+
 #######################################
 # ES6 related runtime changes         #
 #######################################
@@ -375,23 +286,11 @@ tests/basic/bug745360.js
 # RegExp.prototype.{source,ignoreCase,global,multiline} now accessor
 tests/basic/bug750307.js
 
-# ES6-change: +0 and -0 map to the same key by default
-tests/auto-regress/bug770954.js
-tests/collections/key-equality-0.js
-tests/collections/Map-gc-4.js
-
 # ES6-change: Array.prototype.splice calls Put("length") already in step 13
 tests/basic/splice-fail-step-16.js
 
-# Map.prototype.set returns the map instance
-tests/collections/Map-delete.js
-tests/collections/Map-get.js
-tests/collections/Map-scale.js
-tests/collections/Map-surfaces-3.js
-tests/collections/Set-scale.js
-tests/collections/Set-surfaces-3.js
-
 # ES6-change or? Map|Set.length is 0
+# Emulated Map/Set need to use delegation to pass surface test
 tests/collections/Map-surfaces-1.js
 tests/collections/Set-surfaces-1.js
 
