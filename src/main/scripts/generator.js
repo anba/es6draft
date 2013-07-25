@@ -32,19 +32,6 @@ Object.defineProperty(GeneratorPrototype, "next", {
   writable: true, enumerable: false, configurable: true
 });
 
-// add send() function to prototype
-Object.defineProperty(GeneratorPrototype, "send", {
-  value(...args) {
-    if (!Object_hasOwnProperty(this, genState)) {
-      Object_defineProperty(this, genState, {__proto__: null, value: true});
-      // drop arguments on first call to next()
-      return $CallFunction(GeneratorPrototype_next, this);
-    }
-    return $CallFunction(GeneratorPrototype_next, this, ...args);
-  },
-  writable: true, enumerable: false, configurable: true
-});
-
 const iteratorSym = global.getSym("@@iterator");
 
 Object.defineProperty(Object.prototype, iteratorSym, {
