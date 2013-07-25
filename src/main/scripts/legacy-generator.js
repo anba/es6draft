@@ -73,6 +73,9 @@ Object.defineProperties(Object.assign(Function.prototype, {
 Object.defineProperty(GeneratorPrototype, iteratorSym, {
   value() {
     return {
+      [iteratorSym]() {
+        return this;
+      },
       next: v => {
         try {
           var value = this.next(v);
@@ -149,11 +152,15 @@ Object.defineProperties(Object.assign(GeneratorPrototype, {
         throw new TypeError();
     }
   },
+  iterator() {
+    return this;
+  },
 }), {
   next: {enumerable: false},
   send: {enumerable: false},
   close: {enumerable: false},
   throw: {enumerable: false},
+  iterator: {enumerable: false},
 });
 
 })(this);
