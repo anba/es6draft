@@ -219,6 +219,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         static final MethodDesc ScriptRuntime_MakeSuperReference = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "MakeSuperReference", Type.getMethodType(
+                        Types.Reference, Types.ExecutionContext, Types.Object, Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_MakeStringSuperReference = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "MakeSuperReference", Type.getMethodType(
                         Types.Reference, Types.ExecutionContext, Types.String, Type.BOOLEAN_TYPE));
 
         static final MethodDesc ScriptRuntime_OrdinaryInvokeGet = MethodDesc.create(
@@ -1907,14 +1911,13 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.loadExecutionContext();
             mv.aconst(node.getName());
             mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+            mv.invoke(Methods.ScriptRuntime_MakeStringSuperReference);
 
             return ValType.Reference;
         } else if (node.getExpression() != null) {
             mv.loadExecutionContext();
             ValType type = evalAndGetValue(node.getExpression(), mv);
-            // ToPropertyKey()
-            ToFlatString(type, mv);
+            ToPropertyKey(type, mv);
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
@@ -1944,7 +1947,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.loadExecutionContext();
             mv.aconst(node.getName());
             mv.iconst(mv.isStrict());
-            mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
+            mv.invoke(Methods.ScriptRuntime_MakeStringSuperReference);
 
             GetValue(node, ValType.Reference, mv);
 
@@ -1952,8 +1955,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         } else if (node.getExpression() != null) {
             mv.loadExecutionContext();
             ValType type = evalAndGetValue(node.getExpression(), mv);
-            // ToPropertyKey()
-            ToFlatString(type, mv);
+            ToPropertyKey(type, mv);
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 

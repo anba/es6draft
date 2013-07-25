@@ -543,7 +543,7 @@ public final class ScriptRuntime {
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      */
     public static Reference<ScriptObject, ?> MakeSuperReference(ExecutionContext cx,
-            String propertyKey, boolean strict) {
+            Object propertyKey, boolean strict) {
         EnvironmentRecord envRec = cx.getThisEnvironment();
         if (!envRec.hasSuperBinding()) {
             throwReferenceError(cx, Messages.Key.MissingSuperBinding);
@@ -556,13 +556,33 @@ public final class ScriptRuntime {
             throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         if (propertyKey == null) {
-            Object pk = ((FunctionEnvironmentRecord) envRec).getMethodName();
-            if (pk instanceof ExoticSymbol) {
-                return new Reference.SuperSymbolReference(baseValue, (ExoticSymbol) pk, strict,
-                        actualThis);
-            }
-            assert pk instanceof String;
-            propertyKey = (String) pk;
+            propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
+        }
+        if (propertyKey instanceof ExoticSymbol) {
+            return new Reference.SuperSymbolReference(baseValue, (ExoticSymbol) propertyKey,
+                    strict, actualThis);
+        }
+        return new Reference.SuperNameReference(baseValue, (String) propertyKey, strict, actualThis);
+    }
+
+    /**
+     * 11.2.4 The super Keyword
+     * <p>
+     * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
+     */
+    public static Reference<ScriptObject, String> MakeSuperReference(ExecutionContext cx,
+            String propertyKey, boolean strict) {
+        assert propertyKey != null;
+        EnvironmentRecord envRec = cx.getThisEnvironment();
+        if (!envRec.hasSuperBinding()) {
+            throwReferenceError(cx, Messages.Key.MissingSuperBinding);
+        }
+        assert envRec instanceof FunctionEnvironmentRecord;
+        Object actualThis = envRec.getThisBinding();
+        ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
+        // CheckObjectCoercible(cx.getRealm(), baseValue);
+        if (baseValue == null) {
+            throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         return new Reference.SuperNameReference(baseValue, propertyKey, strict, actualThis);
     }
@@ -1518,7 +1538,7 @@ public final class ScriptRuntime {
         Object completionValue = UNDEFINED;
 
         // super()
-        Reference<ScriptObject, ?> ref = MakeSuperReference(cx, null, true);
+        Reference<ScriptObject, ?> ref = MakeSuperReference(cx, (Object) null, true);
         // EvaluateCall: super(...args)
         Object func = ref.GetValue(cx);
         Object[] argList = SpreadArray(cx.identifierValue("args", true), cx);

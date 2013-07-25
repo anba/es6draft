@@ -89,6 +89,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 Types.AbstractOperations, "ToObject",
                 Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
 
+        static final MethodDesc AbstractOperations_ToPropertyKey = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToPropertyKey",
+                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.Object));
+
         static final MethodDesc AbstractOperations_ToString = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "ToString",
                 Type.getMethodType(Types.CharSequence, Types.ExecutionContext, Types.Object));
@@ -689,6 +693,49 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         mv.invoke(Methods.AbstractOperations_ToObject);
     }
 
+    /**
+     * stack: [Object] -> [String|ExoticSymbol]
+     */
+    protected final void ToPropertyKey(ValType from, ExpressionVisitor mv) {
+        switch (from) {
+        case Number:
+            mv.invoke(Methods.AbstractOperations_ToString_double);
+            return;
+        case Number_int:
+            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
+            mv.invoke(Methods.AbstractOperations_ToString_double);
+            return;
+        case Number_uint:
+            mv.cast(Type.LONG_TYPE, Type.DOUBLE_TYPE);
+            mv.invoke(Methods.AbstractOperations_ToString_double);
+            return;
+        case Undefined:
+            mv.pop();
+            mv.aconst("undefined");
+            return;
+        case Null:
+            mv.pop();
+            mv.aconst("null");
+            return;
+        case Boolean:
+            mv.invoke(Methods.Boolean_toString);
+            return;
+        case String:
+            return;
+        case Object:
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invoke(Methods.AbstractOperations_ToFlatString);
+            return;
+        case Any:
+        default:
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invoke(Methods.AbstractOperations_ToPropertyKey);
+            return;
+        }
+    }
+
     protected void BindingInitialisation(Binding node, ExpressionVisitor mv) {
         new BindingInitialisationGenerator(codegen).generate(node, mv);
     }
@@ -759,7 +806,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         } else {
             // step 7
             if (def.getHeritage() != null) {
-                // FIXME: spec bug - `new (class extends null {})` throws TypeError
+                // FIXME: spec bug? - `new (class extends null {})` throws TypeError
                 mv.invoke(Methods.ScriptRuntime_CreateDefaultConstructor);
             } else {
                 mv.invoke(Methods.ScriptRuntime_CreateDefaultEmptyConstructor);
