@@ -22,6 +22,10 @@ ecma_3/Number/15.7.4.7-1.js
 ecma_5/RegExp/exec.js
 
 # ES6 spec incomplete for DataView
+# - invalid offsets throw RangeError instead of TypeError
+# - set[[U]Int[8,16,32]|Float[32,64]]() not required to have two arguments
+# - TypedArray and ArrayBuffer constructor require `new`
+# - no special [[Class]] for TypedArray/DataView prototypes
 js1_8_5/extensions/dataview.js
 
 # ES6 Array.prototype.find/findIndex: ToInteger or ToUint32
@@ -146,9 +150,6 @@ ecma_5/JSON/stringify.js
 
 # Object.keys() - for-in enumeration order
 ecma_5/Object/15.2.3.14-01.js
-
-# Error.prototype.toSource
-ecma_5/extensions/toSource-infinite-recursion.js
 
 # SpiderMonkey __proto__ not own property on Object.prototype
 ecma_5/extensions/getOwnPropertyNames-__proto__.js
