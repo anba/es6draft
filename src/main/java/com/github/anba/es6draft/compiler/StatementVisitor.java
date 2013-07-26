@@ -23,6 +23,7 @@ import com.github.anba.es6draft.ast.BreakableStatement;
 import com.github.anba.es6draft.ast.ContinueStatement;
 import com.github.anba.es6draft.ast.IterationStatement;
 import com.github.anba.es6draft.ast.LabelledStatement;
+import com.github.anba.es6draft.ast.TopLevelNode;
 import com.github.anba.es6draft.ast.TryStatement;
 
 /**
@@ -118,6 +119,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         GlobalScript, NonGlobalScript, Function,
     }
 
+    private final TopLevelNode topLevelNode;
     private final CodeType codeType;
     private final boolean completionValue;
     private Labels labels = new Labels(null);
@@ -127,8 +129,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
     private int wrapped = 0;
 
     protected StatementVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
-            boolean strict, CodeType codeType, boolean completionValue) {
+            boolean strict, TopLevelNode topLevelNode, CodeType codeType, boolean completionValue) {
         super(mv, methodName, methodDescriptor, strict, codeType == CodeType.GlobalScript);
+        this.topLevelNode = topLevelNode;
         this.codeType = codeType;
         this.completionValue = completionValue;
         // no return in script code
@@ -138,6 +141,10 @@ abstract class StatementVisitor extends ExpressionVisitor {
     abstract void storeCompletionValue();
 
     abstract void loadCompletionValue();
+
+    TopLevelNode getTopLevelNode() {
+        return topLevelNode;
+    }
 
     CodeType getCodeType() {
         return codeType;

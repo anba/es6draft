@@ -181,12 +181,20 @@ class CodeGenerator implements AutoCloseable {
         }
     }
 
-    final String methodName(StatementListMethod node) {
-        String n = methodNames.get(node);
-        if (n == null) {
-            n = addMethodName(node, "stmtmethod");
+    private final String getNameOrThrow(Node node) {
+        String name = methodNames.get(node);
+        if (name == null) {
+            throw new IllegalStateException("no method-name present for: " + node);
         }
-        return n;
+        return name;
+    }
+
+    final String methodName(StatementListMethod node) {
+        return getNameOrThrow(node);
+    }
+
+    private final String methodName(TopLevelNode topLevel, StatementListMethod node) {
+        return addMethodName(node, getCodeName(topLevel), '\'');
     }
 
     private final String methodName(TemplateLiteral node) {
@@ -208,7 +216,7 @@ class CodeGenerator implements AutoCloseable {
     final String methodName(SpreadElementMethod node) {
         String n = methodNames.get(node);
         if (n == null) {
-            n = addMethodName(node, "inlarrayspread");
+            n = addMethodName(node, "spread");
         }
         return n;
     }
@@ -216,7 +224,7 @@ class CodeGenerator implements AutoCloseable {
     final String methodName(PropertyDefinitionsMethod node) {
         String n = methodNames.get(node);
         if (n == null) {
-            n = addMethodName(node, "inlpropdef");
+            n = addMethodName(node, "propdef");
         }
         return n;
     }
@@ -224,7 +232,7 @@ class CodeGenerator implements AutoCloseable {
     final String methodName(ExpressionMethod node) {
         String n = methodNames.get(node);
         if (n == null) {
-            n = addMethodName(node, "methexpr");
+            n = addMethodName(node, "expr");
         }
         return n;
     }
@@ -277,9 +285,22 @@ class CodeGenerator implements AutoCloseable {
     }
 
     private final String addMethodName(Node node, String name) {
-        String n = JVMNames.toBytecodeName(name + "~" + methodCounter.incrementAndGet());
+        return addMethodName(node, name, '~');
+    }
+
+    private final String addMethodName(Node node, String name, char sep) {
+        assert !methodNames.containsKey(node);
+        String n = JVMNames.toBytecodeName(name + sep + methodCounter.incrementAndGet());
         methodNames.put(node, n);
         return n;
+    }
+
+    private final String getCodeName(TopLevelNode node) {
+        if (node instanceof FunctionNode) {
+            return methodName((FunctionNode) node, FunctionName.Code);
+        }
+        assert node instanceof Script;
+        return methodName((Script) node, ScriptName.Code);
     }
 
     /**
@@ -423,6 +444,7 @@ class CodeGenerator implements AutoCloseable {
         if (!isCompiled(node)) {
             StatementVisitor body = new StatementListMethodStatementVisitor(this, node, mv);
             body.lineInfo(node);
+            body.nop(); // force line-number entry
             body.begin();
 
             body.setScope(mv.getScope());
@@ -531,10 +553,10 @@ class CodeGenerator implements AutoCloseable {
         private final boolean initCompletionValue;
 
         protected StatementVisitorImpl(CodeGenerator codegen, String methodName,
-                Type methodDescriptor, boolean strict, CodeType codeType, boolean completionValue,
-                boolean initCompletionValue) {
+                Type methodDescriptor, boolean strict, TopLevelNode topLevelNode,
+                CodeType codeType, boolean completionValue, boolean initCompletionValue) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, codeType, completionValue);
+                    methodName, methodDescriptor, strict, topLevelNode, codeType, completionValue);
             this.initCompletionValue = initCompletionValue;
             reserveFixedSlot(COMPLETION_SLOT, COMPLETION_TYPE);
         }
@@ -565,7 +587,7 @@ class CodeGenerator implements AutoCloseable {
 
         ScriptStatementVisitor(CodeGenerator codegen, Script node) {
             super(codegen, codegen.methodName(node, ScriptName.Code), methodDescriptor, node
-                    .isStrict(), node.isGlobalCode() ? CodeType.GlobalScript
+                    .isStrict(), node, node.isGlobalCode() ? CodeType.GlobalScript
                     : CodeType.NonGlobalScript, true, true);
         }
     }
@@ -576,7 +598,7 @@ class CodeGenerator implements AutoCloseable {
 
         FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
             super(codegen, codegen.methodName(node, FunctionName.Code), methodDescriptor,
-                    IsStrict(node), CodeType.Function, false, true);
+                    IsStrict(node), node, CodeType.Function, false, true);
         }
     }
 
@@ -586,8 +608,9 @@ class CodeGenerator implements AutoCloseable {
 
         StatementListMethodStatementVisitor(CodeGenerator codegen, StatementListMethod node,
                 StatementVisitor parent) {
-            super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
-                    .getCodeType(), parent.isCompletionValue(), false);
+            super(codegen, codegen.methodName(parent.getTopLevelNode(), node), methodDescriptor,
+                    parent.isStrict(), parent.getTopLevelNode(), parent.getCodeType(), parent
+                            .isCompletionValue(), false);
         }
     }
 
