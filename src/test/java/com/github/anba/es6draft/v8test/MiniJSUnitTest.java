@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.mjstest;
+package com.github.anba.es6draft.v8test;
 
 import static com.github.anba.es6draft.repl.V8ShellGlobalObject.newGlobal;
 import static com.github.anba.es6draft.util.TestInfo.filterTests;
@@ -101,7 +101,7 @@ public class MiniJSUnitTest {
 
         // TODO: collect multiple failures
         List<Throwable> failures = new ArrayList<Throwable>();
-        MiniJSUnitConsole console = new MiniJSUnitConsole();
+        V8TestConsole console = new V8TestConsole();
         V8ShellGlobalObject global = newGlobal(console, testDir(), test.script, scriptCache,
                 options);
 

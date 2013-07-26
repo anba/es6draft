@@ -4,14 +4,14 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.mjstest;
+package com.github.anba.es6draft.v8test;
 
 import com.github.anba.es6draft.repl.ShellConsole;
 
 /**
  *
  */
-class MiniJSUnitConsole implements ShellConsole {
+class V8TestConsole implements ShellConsole {
     @Override
     public String readLine() {
         return "";
