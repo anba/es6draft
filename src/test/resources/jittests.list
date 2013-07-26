@@ -273,7 +273,7 @@ tests/basic/bug750307.js
 tests/basic/splice-fail-step-16.js
 
 # ES6-change or? Map|Set.length is 0
-# Emulated Map/Set need to use delegation to pass surface test
+# - Emulated Map/Set need to use delegation to pass surface test
 tests/collections/Map-surfaces-1.js
 tests/collections/Set-surfaces-1.js
 
@@ -403,6 +403,7 @@ tests/auto-regress/bug720396.js
 tests/basic/bug713226.js
 tests/basic/bug821340.js
 tests/basic/bug839313.js
+tests/basic/testBug895774.js
 tests/basic/testGeneratorDieButScopeAlive.js
 
 
