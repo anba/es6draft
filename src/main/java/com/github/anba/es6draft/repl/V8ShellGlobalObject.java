@@ -18,6 +18,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations;
 
 /**
  * Global object class with support for some v8-shell functions
@@ -87,5 +88,17 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code gc()} */
     @Function(name = "gc", arity = 0)
     public void gc() {
+    }
+
+    /** shell-function: {@code getDefaultLocale()} */
+    @Function(name = "getDefaultLocale", arity = 0)
+    public String getDefaultLocale() {
+        return IntlAbstractOperations.DefaultLocale(realm);
+    }
+
+    /** shell-function: {@code getDefaultTimeZone()} */
+    @Function(name = "getDefaultTimeZone", arity = 0)
+    public String getDefaultTimeZone() {
+        return IntlAbstractOperations.DefaultTimeZone(realm);
     }
 }
