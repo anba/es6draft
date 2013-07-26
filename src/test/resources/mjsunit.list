@@ -160,6 +160,7 @@ regress/regress-2564.js
 regress/regress-conditional-position.js
 stack-traces.js
 stack-traces-2.js
+stack-traces-custom-lazy.js
 eval-stack-trace.js
 
 
