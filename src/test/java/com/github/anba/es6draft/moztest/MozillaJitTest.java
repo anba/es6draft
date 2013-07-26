@@ -138,19 +138,19 @@ public class MozillaJitTest {
         } catch (ParserException | CompilationException e) {
             // count towards the overall failure count
             String message = e.getMessage();
-            if (moztest.error == null || !(message.contains(moztest.error))) {
+            if (moztest.error == null || !message.contains(moztest.error)) {
                 console.getFailures().add(new AssertionError(message, e));
             }
         } catch (ScriptException e) {
             // count towards the overall failure count
             String message = e.getMessage(cx);
-            if (moztest.error == null || !(message.contains(moztest.error))) {
+            if (moztest.error == null || !message.contains(moztest.error)) {
                 console.getFailures().add(new AssertionError(message, e));
             }
         } catch (StackOverflowError e) {
             // count towards the overall failure count
-            String message = "InternalError";
-            if (moztest.error == null || !(message.contains(moztest.error))) {
+            String message = "InternalError: too much recursion";
+            if (moztest.error == null || !message.contains(moztest.error)) {
                 console.getFailures().add(new AssertionError(message, e));
             }
         } catch (StopExecutionException e) {
