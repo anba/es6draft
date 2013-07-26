@@ -17,7 +17,7 @@ import com.github.anba.es6draft.parser.Parser;
  * <li>14.1 Script
  * </ul>
  */
-public class Script extends AstNode implements ScopedNode {
+public class Script extends AstNode implements TopLevelNode, ScopedNode {
     private String sourceFile;
     private FunctionScope scope;
     private List<StatementListItem> statements;
@@ -42,10 +42,12 @@ public class Script extends AstNode implements ScopedNode {
         return scope;
     }
 
+    @Override
     public List<StatementListItem> getStatements() {
         return statements;
     }
 
+    @Override
     public void setStatements(List<StatementListItem> statements) {
         this.statements = statements;
     }

@@ -6,19 +6,13 @@
  */
 package com.github.anba.es6draft.ast;
 
-import java.util.List;
-
 /**
  * <h1>13 Functions and Generators</h1>
  */
-public interface FunctionNode extends ScopedNode {
+public interface FunctionNode extends TopLevelNode, ScopedNode {
     String getFunctionName();
 
     FormalParameterList getParameters();
-
-    List<StatementListItem> getStatements();
-
-    void setStatements(List<StatementListItem> statements);
 
     enum StrictMode {
         NonStrict, ImplicitStrict, ExplicitStrict
