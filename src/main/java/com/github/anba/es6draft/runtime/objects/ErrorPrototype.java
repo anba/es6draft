@@ -248,8 +248,9 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
 
         private static boolean isInternalStackFrame(StackTraceElement element) {
             // filter stacktrace elements based on the encoding in CodeGenerator/ScriptLoader
-            return (element.getClassName().charAt(0) == '#' && JVMNames.fromBytecodeName(
-                    element.getMethodName()).charAt(0) == '!');
+            return (element.getClassName().charAt(0) == '#'
+                    && JVMNames.fromBytecodeName(element.getMethodName()).charAt(0) == '!' && element
+                    .getLineNumber() > 0);
         }
 
         @Override

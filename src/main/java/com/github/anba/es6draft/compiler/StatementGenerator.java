@@ -655,6 +655,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
     public Void visit(StatementListMethod node, StatementVisitor mv) {
         codegen.compile(node, mv);
 
+        mv.lineInfo(0);
         mv.loadExecutionContext();
         mv.loadCompletionValue();
 
