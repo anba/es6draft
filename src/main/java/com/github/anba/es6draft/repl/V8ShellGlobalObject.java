@@ -49,6 +49,21 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
         return (V8ShellGlobalObject) realm.getGlobalThis();
     }
 
+    private String concat(String... strings) {
+        if (strings.length == 0) {
+            return "";
+        } else if (strings.length == 1) {
+            return strings[0];
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (String string : strings) {
+                sb.append(string).append(' ');
+            }
+            sb.setLength(sb.length() - 1);
+            return sb.toString();
+        }
+    }
+
     /** shell-function: {@code load(filename)} */
     @Function(name = "load", arity = 1)
     public Object load(String filename) {
@@ -69,14 +84,14 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code print(message)} */
     @Function(name = "print", arity = 1)
-    public void print(String message) {
-        console.print(message);
+    public void print(String... messages) {
+        console.print(concat(messages));
     }
 
     /** shell-function: {@code write(message)} */
     @Function(name = "write", arity = 1)
-    public void write(String message) {
-        console.putstr(message);
+    public void write(String... messages) {
+        console.putstr(concat(messages));
     }
 
     /** shell-function: {@code quit()} */
