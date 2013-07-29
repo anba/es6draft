@@ -655,6 +655,7 @@ public final class RegExpParser {
                         } else {
                             // omit forward reference (TODO: check this!) or backward reference into
                             // capturing group from negative lookahead
+                            out.append("(?:)");
                         }
                         break atom;
                     }
@@ -830,10 +831,10 @@ public final class RegExpParser {
                 }
 
                 // output result
-                out.append('{').append(Integer.toString(min));
+                out.append('{').append(min);
                 if (comma) {
                     if (max != -1) {
-                        out.append(',').append(Integer.toString(max));
+                        out.append(',').append(max);
                     } else {
                         out.append(',');
                     }
