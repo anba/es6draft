@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.moztest;
 
 import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobal;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.util.TestInfo.filterTests;
 import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
 import static java.util.Arrays.asList;
@@ -21,10 +22,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -51,6 +54,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestInfo;
@@ -80,11 +84,20 @@ public class MozillaJSTest {
     }
 
     private static class MozTest extends TestInfo {
+        List<Entry<Condition, String>> conditions = new ArrayList<>();
         boolean random = false;
 
         public MozTest(Path script) {
             super(script);
         }
+
+        void addCondition(Condition c, String s) {
+            conditions.add(new SimpleEntry<>(c, s));
+        }
+    }
+
+    private enum Condition {
+        FailsIf, SkipIf, RandomIf
     }
 
     private static Set<CompatibilityOption> options = CompatibilityOption.MozCompatibility();
@@ -113,6 +126,12 @@ public class MozillaJSTest {
         MozTestConsole console = new MozTestConsole();
         MozShellGlobalObject global = newGlobal(console, testDir(), moztest.script,
                 Paths.get("test402/lib"), scriptCache, options);
+
+        // apply scripted conditions
+        scriptConditions(global);
+
+        // filter disabled tests (may have changed after applying scripted conditions)
+        assumeTrue(moztest.enable);
 
         // load legacy.js file
         global.eval(legacyMozilla);
@@ -175,6 +194,42 @@ public class MozillaJSTest {
         return files;
     }
 
+    private void scriptConditions(MozShellGlobalObject global) {
+        for (Entry<Condition, String> entry : moztest.conditions) {
+            String code = condition(entry.getValue());
+            boolean value = ToBoolean(global.evaluate(code, Undefined.UNDEFINED));
+            if (!value) {
+                continue;
+            }
+            switch (entry.getKey()) {
+            case FailsIf:
+                moztest.expect = false;
+                break;
+            case RandomIf:
+                moztest.random = true;
+                break;
+            case SkipIf:
+                moztest.enable = false;
+                break;
+            default:
+                throw new IllegalStateException();
+            }
+        }
+    }
+
+    private static String condition(String c) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("!!(function(){\n");
+        sb.append("var xulRuntime = {OS: 'Linux', XPCOMABI: 'x86_64-gcc3', shell: true};\n");
+        sb.append("var browserIsRemote = false;\n");
+        sb.append("var isDebugBuild = false;\n");
+        sb.append("var Android = false;\n");
+        sb.append("return (").append(c).append(");");
+        sb.append("})();");
+
+        return sb.toString();
+    }
+
     // Any file who's basename matches something in this set is ignored
     private static final Set<String> excludeFiles = new HashSet<>(asList("browser.js", "shell.js",
             "jsref.js", "template.js", "user.js", "js-test-driver-begin.js",
@@ -225,9 +280,17 @@ public class MozillaJSTest {
             } else if (p.equals("slow")) {
                 // don't run slow tests
                 test.enable = false;
-            } else if (p.startsWith("fails-if") || p.startsWith("asserts-if")
-                    || p.startsWith("skip-if") || p.startsWith("random-if")
-                    || p.startsWith("require-or") || p.equals("silentfail")) {
+            } else if (p.equals("silentfail")) {
+                // ignore for now...
+            } else if (p.startsWith("fails-if")) {
+                test.addCondition(Condition.FailsIf, p.substring("fails-if".length()));
+            } else if (p.startsWith("skip-if")) {
+                test.addCondition(Condition.SkipIf, p.substring("skip-if".length()));
+            } else if (p.startsWith("random-if")) {
+                test.addCondition(Condition.RandomIf, p.substring("random-if".length()));
+            } else if (p.startsWith("asserts-if")) {
+                // ignore for now...
+            } else if (p.startsWith("require-or")) {
                 // ignore for now...
             } else {
                 System.err.printf("invalid manifest line: %s\n", p);
