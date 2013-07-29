@@ -427,7 +427,12 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 } else {
                     comparator = new DefaultComparator(cx);
                 }
-                Collections.sort(elements, comparator);
+                try {
+                    Collections.sort(elements, comparator);
+                } catch (IllegalArgumentException e) {
+                    // `IllegalArgumentException: Comparison method violates its general contract!`
+                    // just ignore this exception...
+                }
             }
 
             for (int i = 0, offset = 0; i < count; ++i) {
