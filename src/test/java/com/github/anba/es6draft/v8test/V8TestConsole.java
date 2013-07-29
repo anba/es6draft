@@ -6,12 +6,21 @@
  */
 package com.github.anba.es6draft.v8test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.github.anba.es6draft.repl.ShellConsole;
 
 /**
  *
  */
 class V8TestConsole implements ShellConsole {
+    private List<Throwable> failures = new ArrayList<Throwable>();
+
+    public List<Throwable> getFailures() {
+        return failures;
+    }
+
     @Override
     public String readLine() {
         return "";
@@ -23,6 +32,10 @@ class V8TestConsole implements ShellConsole {
 
     @Override
     public void print(String s) {
+        if (s.startsWith("FAIL ")) {
+            // collect all failures instead of calling fail() directly
+            failures.add(new AssertionError(s));
+        }
     }
 
     @Override

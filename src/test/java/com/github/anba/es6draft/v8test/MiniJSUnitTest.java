@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -100,7 +99,6 @@ public class MiniJSUnitTest {
         assumeTrue(test.enable);
 
         // TODO: collect multiple failures
-        List<Throwable> failures = new ArrayList<Throwable>();
         V8TestConsole console = new V8TestConsole();
         V8ShellGlobalObject global = newGlobal(console, testDir(), test.script, scriptCache,
                 options);
@@ -117,20 +115,20 @@ public class MiniJSUnitTest {
             global.eval(test.script, js);
         } catch (ParserException | CompilationException e) {
             // count towards the overall failure count
-            failures.add(new AssertionError(e.getMessage(), e));
+            console.getFailures().add(new AssertionError(e.getMessage(), e));
         } catch (ScriptException e) {
             // count towards the overall failure count
             ExecutionContext cx = global.getRealm().defaultContext();
-            failures.add(new AssertionError(e.getMessage(cx), e));
+            console.getFailures().add(new AssertionError(e.getMessage(cx), e));
         } catch (StackOverflowError e) {
             // count towards the overall failure count
-            failures.add(new AssertionError(e.getMessage(), e));
+            console.getFailures().add(new AssertionError(e.getMessage(), e));
         } catch (IOException e) {
             fail(e.getMessage());
         }
 
         // fail if any test returns with errors
-        MultipleFailureException.assertEmpty(failures);
+        MultipleFailureException.assertEmpty(console.getFailures());
     }
 
     private static final Set<String> excludeFiles = new HashSet<>(asList("mjsunit.js"));
