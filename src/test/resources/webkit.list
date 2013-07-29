@@ -1,0 +1,196 @@
+#
+# Copyright (c) 2012-2013 André Bargull
+# Alle Rechte vorbehalten / All Rights Reserved.  Use is subject to license terms.
+#
+# <https://github.com/anba/es6draft>
+#
+
+
+# ES5.1/6 spec vs. browser reality
+# - Object.defineProperty(/x/,"lastIndex",{writable:false}).exec("")
+# - browsers return `null`, whereas spec says to throw a TypeError
+fast/regex/lastIndex.js
+
+# invalid tests
+fast/js/JSON-parse-reviver.js
+fast/js/toString-overrides.js
+
+
+###################
+# Misc issues     #
+###################
+
+# RegExp differences Java<->JavaScript (resp. V8)
+regexp-zero-length-alternatives.js
+regexp-non-bmp.js
+fast/js/string-split-conformance.js
+fast/js/regexp-non-capturing-groups.js
+fast/regex/ecma-regex-examples.js
+fast/regex/parentheses.js
+fast/regex/repeat-match-waldemar.js
+fast/regex/unicodeCaseInsensitive.js
+
+
+############################################
+# Implementation specific differences      #
+############################################
+
+# array-holes and sort
+# - Array.prototype[0] = "hole"; [,1].sort()
+# - SpiderMonkey returns [1, "hole"], JSC/V8 return [1,]
+array-holes.js
+ 
+# [[Prototype]] of global object is not %Object.prototype% in V8
+fast/js/Object-defineProperty.js
+
+# RegExp.prototype.toString(): escape single / in character class
+# - SpiderMonkeys escapes it, JSC/V8 don't escape it
+fast/regex/toString.js
+
+# RegExp.prototype.compile
+# - .compile(undefined) vs. .compile()
+# - SpiderMonkey treats both the same, JSC/V8 treat .compile(undefined) as .compile('undefined')
+regexp-compile.js
+
+# RegExp range
+# - var regexp01c = /[1-\s35]+/
+# - Not allowed in SpiderMonkey, allowed in JSC/V8
+fast/js/regexp-ranges-and-escaped-hyphens.js
+
+# different completion result with try-finally
+eval-throw-return.js
+
+# different html-comments parser
+# Function("1/*\n*/-->")
+# Allowed in SpiderMonkey, not allowed in V8/JSC
+parser-xml-close-comment.js
+
+# `'use strict'; delete void 0;` is an early error in JSC
+fast/js/basic-strict-mode.js
+
+# different handling of noctal escapes in strings
+fast/js/numeric-escapes-in-string-literals.js
+
+# different handling of non-present capturing group references
+fast/js/regexp-no-extensions.js
+
+# different handling of invalid class ranges
+fast/regex/invalid-range-in-class.js
+
+# different error message
+fast/js/function-constructor-error.js
+fast/js/reserved-words-strict.js
+fast/regex/overflow.js
+
+# Date.parse incompatibility
+date-constructor.js
+date-parse-comments-test.js
+fast/js/date-toisostring.js
+
+# different function source representation
+dfg-redundant-load-of-captured-variable-proven-constant.js
+dfg-resolve-global-specific-dictionary.js
+fast/js/function-toString-semicolon-insertion.js
+
+# String.prototype.trim() removes \u200B in V8
+string-trim.js
+
+# error objects have non-standard 'line' and 'sourceURL' properties in JSC
+fast/js/exception-properties.js
+
+# cause?
+function-call-register-allocation.js
+fast/js/stack-overflow-arrity-catch.js
+
+# property key enumeration order
+fast/js/array-functions-non-arrays.js
+
+
+###############################################################
+# ES6 (rev14) <Object>.prototype no longer instance of <Type> #
+###############################################################
+
+# (String|Number|Boolean).prototype no longer instanceof (String|Number|Boolean)
+prototypes.js
+
+
+#######################################
+# ES6 related runtime changes         #
+#######################################
+
+# Error.prototype no longer instanceof Error
+fast/js/native-error-prototype.js
+
+# various new built-in properties
+fast/js/Object-getOwnPropertyNames.js
+
+# tail-calls:
+# function foo(){return bar.arguments}
+# function bar(b){b=1; return foo()}
+# function baz(){return bar(0)}
+# baz() === null w/ tail calls...
+dfg-inline-arguments-become-double.js
+dfg-inline-arguments-become-int32.js
+dfg-inline-arguments-int32.js
+dfg-inline-arguments-reset-changetype.js
+dfg-inline-arguments-reset.js
+dfg-inline-arguments-simple.js
+fast/js/caller-property.js
+
+
+#######################################
+# ES6 related syntax changes          #
+#######################################
+
+# for-in with initialiser
+toString-for-var-decl.js
+fast/js/parser-syntax-check.js
+
+# Static Semantics: Early errors invalid LHS
+toString-prefix-postfix-preserve-parens.js
+fast/js/function-toString-parentheses.js
+fast/js/modify-non-references.js
+
+# re-declaration of catch-variable
+vardecl-blocks-init.js
+
+# setter in object literal requires exactly one argument
+for-in-cached.js
+object-literal-direct-put.js
+object-literal-syntax.js
+
+# 'let' and 'yield' are now proper keywords
+keywords-and-reserved_words.js
+
+# function declaration not in block
+function-declaration-statement.js
+
+# function declaration redeclaration at block-level not allowed
+function-declarations-in-switch-statement.js
+
+# const without initialiser
+const-without-initializer.js
+constant-count.js
+fast/js/arguments.js
+
+
+#######################################
+# Compilation or runtime issues       #
+#######################################
+
+# Method code too large
+# too many variables
+fast/js/excessive-comma-usage.js
+ 
+# StackOverflowError in java.util.regex.Pattern
+fast/js/regexp-stack-overflow.js
+
+# Timeout (slow)
+comparison-operators.js
+comparison-operators-less.js
+comparison-operators-greater.js
+dfg-int-overflow-in-loop.js
+sort-with-side-effecting-comparisons.js
+
+# OutOfMemory
+function-apply-aliased.js
