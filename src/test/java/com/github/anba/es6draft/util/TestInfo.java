@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -61,6 +62,16 @@ public class TestInfo {
     public static <T extends TestInfo> List<T> loadTests(Path searchdir, final Path basedir,
             final Set<String> excludeDirs, final Set<String> excludeFiles,
             final BiFunction<Path, BufferedReader, T> create) throws IOException {
+        return loadTests(searchdir, basedir, excludeDirs, excludeFiles, StandardCharsets.UTF_8,
+                create);
+    }
+
+    /**
+     * Recursively searches for js-file test cases in {@code searchdir} and its sub-directories
+     */
+    public static <T extends TestInfo> List<T> loadTests(Path searchdir, final Path basedir,
+            final Set<String> excludeDirs, final Set<String> excludeFiles, final Charset charset,
+            final BiFunction<Path, BufferedReader, T> create) throws IOException {
         final List<T> tests = new ArrayList<>();
         Files.walkFileTree(searchdir, new SimpleFileVisitor<Path>() {
             @Override
@@ -78,8 +89,7 @@ public class TestInfo {
                 if (attrs.isRegularFile() && attrs.size() != 0L) {
                     String name = file.getFileName().toString();
                     if (!excludeFiles.contains(name) && name.endsWith(".js")) {
-                        try (BufferedReader reader = Files.newBufferedReader(file,
-                                StandardCharsets.UTF_8)) {
+                        try (BufferedReader reader = Files.newBufferedReader(file, charset)) {
                             tests.add(create.apply(basedir.relativize(file), reader));
                         } catch (UncheckedIOException e) {
                             throw e.getCause();
