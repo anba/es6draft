@@ -18,9 +18,10 @@ DEP_DIR="${BUILD_DIR}/dependencies"
 DEPENDENCIES=`ls -1 "${DEP_DIR}" | sed 's,^,'"${DEP_DIR}"'/&,' | sed ':a;{N; s/\n/:/; ta}'`
 CLASSPATH="${CLASSES}:${DEPENDENCIES}"
 MAINCLASS="com.github.anba.es6draft.repl.Repl"
+JAVA_OPTS="${JAVA_OPTS:-""}"
 
 if [[ $OSTYPE == "cygwin" ]] ; then
   CLASSPATH=`cygpath -wp "${CLASSPATH}"`
 fi
 
-java -ea -esa -Xbootclasspath/a:"${CLASSPATH}" "${MAINCLASS}" "$@"
+java ${JAVA_OPTS} -ea -esa -Xbootclasspath/a:"${CLASSPATH}" "${MAINCLASS}" "$@"
