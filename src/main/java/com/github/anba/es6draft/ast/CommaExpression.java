@@ -25,6 +25,10 @@ public class CommaExpression extends Expression {
         return operands;
     }
 
+    public void setOperands(List<Expression> operands) {
+        this.operands = operands;
+    }
+
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);

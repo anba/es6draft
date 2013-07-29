@@ -133,6 +133,11 @@ public class CodeSizeAnalysis implements AutoCloseable {
         }
 
         @Override
+        public Integer visit(CommaExpression node, Integer size) {
+            return visit(node, size, new CommaExpressionSubMethod());
+        }
+
+        @Override
         public Integer visit(FunctionDeclaration node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
