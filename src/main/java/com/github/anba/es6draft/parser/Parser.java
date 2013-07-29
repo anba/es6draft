@@ -3820,7 +3820,9 @@ public class Parser {
                 if (LOOKAHEAD(Token.COLON)) {
                     String name = identifier();
                     consume(Token.COLON);
-                    labelSet.add(name);
+                    if (!labelSet.add(name)) {
+                        reportSyntaxError(Messages.Key.DuplicateLabel, name);
+                    }
                     break;
                 }
             case LC:
