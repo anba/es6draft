@@ -1124,12 +1124,15 @@ public final class AbstractOperations {
                 } while (c != '.' && c != 'e' && c != 'E');
             }
             if (c == '.') {
-                do {
-                    if (index >= end) {
+                while (index < end) {
+                    c = s.charAt(index++);
+                    if (c == 'e' || c == 'E') {
                         break;
                     }
-                    c = s.charAt(index++);
-                } while (c >= '0' && c <= '9');
+                    if (!(c >= '0' && c <= '9')) {
+                        return Double.NaN;
+                    }
+                }
             }
             if (c == 'e' || c == 'E') {
                 if (index >= end)
