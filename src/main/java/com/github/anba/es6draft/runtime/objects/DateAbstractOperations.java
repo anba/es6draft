@@ -28,9 +28,14 @@ final class DateAbstractOperations {
     private DateAbstractOperations() {
     }
 
+    /**
+     * 5.2 Algorithm Conventions
+     */
     private static final double modulo(double dividend, double divisor) {
+        assert divisor != 0 && isFinite(divisor);
         double remainder = dividend % divisor;
-        return (remainder >= 0 ? remainder : remainder + divisor);
+        // NB: add +0 to convert -0 to +0
+        return (remainder >= 0 ? remainder + (+0d) : remainder + divisor);
     }
 
     /**
