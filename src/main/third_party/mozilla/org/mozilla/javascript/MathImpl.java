@@ -15,6 +15,9 @@ public class MathImpl {
     private static final double SQUARE_ROOT_EPSILON = Math.sqrt(EPSILON);
     private static final double FOURTH_ROOT_EPSILON = Math.sqrt(SQUARE_ROOT_EPSILON);
 
+    private MathImpl() {
+    }
+
     private static double sqrt1pm1(double x) {
         return Math.sqrt(1 + x) - 1;
     }
