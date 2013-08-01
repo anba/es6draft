@@ -359,7 +359,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
                 return Double.POSITIVE_INFINITY;
             }
             // return Math.log(d + Math.sqrt(d * d - 1.0));
-            return Math.acos(d);
+            return MathImpl.acosh(d);
         }
 
         /**
