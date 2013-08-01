@@ -78,8 +78,13 @@ fast/js/regexp-no-extensions.js
 fast/regex/invalid-range-in-class.js
 
 # different error message
+fast/js/deep-recursion-test.js
 fast/js/function-constructor-error.js
 fast/js/reserved-words-strict.js
+fast/js/string-anchor.js
+fast/js/string-fontcolor.js
+fast/js/string-fontsize.js
+fast/js/string-link.js
 fast/regex/overflow.js
 
 # Date.parse incompatibility
@@ -112,6 +117,7 @@ fast/js/array-functions-non-arrays.js
 
 # (String|Number|Boolean).prototype no longer instanceof (String|Number|Boolean)
 prototypes.js
+fast/js/kde/prototype_length.js
 
 
 #######################################
@@ -120,6 +126,9 @@ prototypes.js
 
 # Error.prototype no longer instanceof Error
 fast/js/native-error-prototype.js
+
+# RegExp.prototype no longer instanceof RegExp
+fast/js/kde/RegExp.js
 
 # various new built-in properties
 fast/js/Object-getOwnPropertyNames.js
@@ -146,6 +155,9 @@ fast/js/caller-property.js
 toString-for-var-decl.js
 fast/js/parser-syntax-check.js
 
+# for-in with invalid assignment
+fast/js/kde/exception_propagation.js
+
 # Static Semantics: Early errors invalid LHS
 toString-prefix-postfix-preserve-parens.js
 fast/js/function-toString-parentheses.js
@@ -162,6 +174,9 @@ object-literal-syntax.js
 # 'let' and 'yield' are now proper keywords
 keywords-and-reserved_words.js
 
+# function declaration are block scoped
+fast/js/kde/func-decl.js
+
 # function declaration not in block
 function-declaration-statement.js
 
@@ -177,6 +192,9 @@ fast/js/arguments.js
 #######################################
 # Compilation or runtime issues       #
 #######################################
+
+# Different maximal stack depth (related to JIT?)
+stack-overflow-catch.js
 
 # Method code too large
 # too many variables
