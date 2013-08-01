@@ -103,7 +103,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
 
     protected static ScriptException throwError(Realm realm, String message) {
         ErrorConstructor ctor = (ErrorConstructor) realm.getIntrinsic(Intrinsics.Error);
-        Object error = ctor.construct(realm.defaultContext(), Objects.toString(message, ""));
+        Object error = ctor.call(realm.defaultContext(), UNDEFINED, Objects.toString(message, ""));
         return _throw(error);
     }
 
