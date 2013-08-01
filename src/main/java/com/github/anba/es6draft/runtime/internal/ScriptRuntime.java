@@ -38,6 +38,7 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
+import com.github.anba.es6draft.runtime.objects.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
@@ -273,8 +274,9 @@ public final class ScriptRuntime {
      */
     public static ScriptObject RegExp(ExecutionContext cx, String re, String flags) {
         // FIXME: spec bug (call abstract operation RegExpCreate?!) (bug 749)
-        Constructor ctor = (Constructor) cx.getIntrinsic(Intrinsics.RegExp);
-        return ctor.construct(cx, re, flags);
+        // Constructor ctor = (Constructor) cx.getIntrinsic(Intrinsics.RegExp);
+        // return ctor.construct(cx, re, flags);
+        return RegExpConstructor.RegExpCreate(cx, re, flags);
     }
 
     /**
