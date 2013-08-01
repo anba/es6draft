@@ -243,11 +243,13 @@ public final class Properties {
         private final MethodHandle ToFlatStringMH;
         private final MethodHandle ToNumberMH;
         private final MethodHandle ToObjectMH;
+        private final MethodHandle ToCallableMH;
         private final MethodHandle ToBooleanArrayMH;
         private final MethodHandle ToStringArrayMH;
         private final MethodHandle ToFlatStringArrayMH;
         private final MethodHandle ToNumberArrayMH;
         private final MethodHandle ToObjectArrayMH;
+        private final MethodHandle ToCallableArrayMH;
         private final MethodHandle ToScriptExceptionMH;
 
         Converter(ExecutionContext cx) {
@@ -256,12 +258,14 @@ public final class Properties {
             ToFlatStringMH = MethodHandles.insertArguments(_ToFlatStringMH, 0, cx);
             ToNumberMH = MethodHandles.insertArguments(_ToNumberMH, 0, cx);
             ToObjectMH = MethodHandles.insertArguments(_ToObjectMH, 0, cx);
+            ToCallableMH = MethodHandles.insertArguments(_ToCallableMH, 0, cx);
 
             ToBooleanArrayMH = _ToBooleanArrayMH;
             ToStringArrayMH = MethodHandles.insertArguments(_ToStringArrayMH, 0, cx);
             ToFlatStringArrayMH = MethodHandles.insertArguments(_ToFlatStringArrayMH, 0, cx);
             ToNumberArrayMH = MethodHandles.insertArguments(_ToNumberArrayMH, 0, cx);
             ToObjectArrayMH = MethodHandles.insertArguments(_ToObjectArrayMH, 0, cx);
+            ToCallableArrayMH = MethodHandles.insertArguments(_ToCallableArrayMH, 0, cx);
 
             ToScriptExceptionMH = MethodHandles.insertArguments(_ToScriptExceptionMH, 0, cx);
         }
@@ -279,6 +283,8 @@ public final class Properties {
                 return ToStringMH;
             } else if (c == ScriptObject.class) {
                 return ToObjectMH;
+            } else if (c == Callable.class) {
+                return ToCallableMH;
             }
             throw new IllegalArgumentException();
         }
@@ -298,6 +304,8 @@ public final class Properties {
                 return ToStringArrayMH;
             } else if (c == ScriptObject.class) {
                 return ToObjectArrayMH;
+            } else if (c == Callable.class) {
+                return ToCallableArrayMH;
             }
             throw new IllegalArgumentException();
         }
@@ -325,11 +333,27 @@ public final class Properties {
             }
         }
 
+        private static final MethodHandle _ToCallableMH;
+        static {
+            Lookup lookup = MethodHandles.publicLookup();
+            try {
+                MethodHandle mh = lookup
+                        .findStatic(ScriptRuntime.class, "CheckCallable", MethodType.methodType(
+                                Callable.class, Object.class, ExecutionContext.class));
+                _ToCallableMH = MethodHandles
+                        .permuteArguments(mh, MethodType.methodType(Callable.class,
+                                ExecutionContext.class, Object.class), 1, 0);
+            } catch (NoSuchMethodException | IllegalAccessException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
         private static final MethodHandle _ToBooleanArrayMH;
         private static final MethodHandle _ToStringArrayMH;
         private static final MethodHandle _ToFlatStringArrayMH;
         private static final MethodHandle _ToNumberArrayMH;
         private static final MethodHandle _ToObjectArrayMH;
+        private static final MethodHandle _ToCallableArrayMH;
         static {
             Lookup lookup = MethodHandles.publicLookup();
             try {
@@ -344,6 +368,8 @@ public final class Properties {
                         MethodType.methodType(boolean[].class, Object[].class));
                 _ToObjectArrayMH = lookup.findStatic(Converter.class, "ToObject", MethodType
                         .methodType(ScriptObject[].class, ExecutionContext.class, Object[].class));
+                _ToCallableArrayMH = lookup.findStatic(Converter.class, "ToCallable", MethodType
+                        .methodType(Callable[].class, ExecutionContext.class, Object[].class));
             } catch (NoSuchMethodException | IllegalAccessException e) {
                 throw new IllegalStateException(e);
             }
@@ -385,6 +411,14 @@ public final class Properties {
             ScriptObject[] target = new ScriptObject[source.length];
             for (int i = 0; i < target.length; i++) {
                 target[i] = AbstractOperations.ToObject(cx, source[i]);
+            }
+            return target;
+        }
+
+        public static Callable[] ToCallable(ExecutionContext cx, Object[] source) {
+            Callable[] target = new Callable[source.length];
+            for (int i = 0; i < target.length; i++) {
+                target[i] = ScriptRuntime.CheckCallable(source[i], cx);
             }
             return target;
         }
