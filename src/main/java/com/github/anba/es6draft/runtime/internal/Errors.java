@@ -7,12 +7,13 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.text.MessageFormat;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -27,7 +28,7 @@ public final class Errors {
         Realm realm = cx.getRealm();
         String message = realm.message(key);
         ScriptObject nativeError = realm.getIntrinsic(constructor);
-        return ((Constructor) nativeError).construct(cx, message);
+        return ((Callable) nativeError).call(cx, UNDEFINED, message);
     }
 
     static Object newError(ExecutionContext cx, Intrinsics constructor, Messages.Key key,
@@ -36,7 +37,7 @@ public final class Errors {
         MessageFormat format = new MessageFormat(realm.message(key), realm.getLocale());
         String message = format.format(args);
         ScriptObject nativeError = realm.getIntrinsic(constructor);
-        return ((Constructor) nativeError).construct(cx, message);
+        return ((Callable) nativeError).call(cx, UNDEFINED, message);
     }
 
     /**
