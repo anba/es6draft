@@ -4468,7 +4468,7 @@ public class Parser {
     }
 
     private void objectLiteral_StaticSemantics(ObjectLiteral object) {
-        final int VALUE = 0, GETTER = 1, SETTER = 2;
+        final int VALUE = 0, GETTER = 1, SETTER = 2, SPECIAL = 4;
         Map<String, Integer> values = new HashMap<>();
         for (PropertyDefinition def : object.getProperties()) {
             PropertyName propertyName = def.getPropertyName();
@@ -4478,8 +4478,10 @@ public class Parser {
                 continue;
             }
             final int kind;
-            if (def instanceof PropertyValueDefinition || def instanceof PropertyNameDefinition) {
+            if (def instanceof PropertyValueDefinition) {
                 kind = VALUE;
+            } else if (def instanceof PropertyNameDefinition) {
+                kind = SPECIAL;
             } else if (def instanceof MethodDefinition) {
                 MethodDefinition method = (MethodDefinition) def;
                 if (method.hasSuperReference()) {
@@ -4487,7 +4489,7 @@ public class Parser {
                 }
                 MethodDefinition.MethodType type = method.getType();
                 kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
-                        : VALUE;
+                        : SPECIAL;
             } else {
                 assert def instanceof CoverInitialisedName;
                 // Always throw a Syntax Error if this production is present
@@ -4507,6 +4509,9 @@ public class Parser {
                     reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def, key);
                 }
                 if (kind == SETTER && prev != GETTER) {
+                    reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def, key);
+                }
+                if (kind == SPECIAL) {
                     reportSyntaxError(Messages.Key.DuplicatePropertyDefinition, def, key);
                 }
                 values.put(key, prev | kind);
