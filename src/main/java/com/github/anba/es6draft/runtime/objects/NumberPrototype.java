@@ -124,8 +124,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
             double x = thisNumberValue(cx, thisValue);
             NumberFormatConstructor constructor = (NumberFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_NumberFormat);
-            NumberFormatObject numberFormat = (NumberFormatObject) constructor.construct(cx,
-                    locales, options);
+            NumberFormatObject numberFormat = constructor.construct(cx, locales, options);
             return FormatNumber(cx, numberFormat, x);
         }
 

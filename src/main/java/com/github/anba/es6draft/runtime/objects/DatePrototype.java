@@ -221,8 +221,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             options = ToDateTimeOptions(cx, options, "any", "all");
             DateTimeFormatConstructor constructor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-            DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) constructor.construct(cx,
-                    locales, options);
+            DateTimeFormatObject dateTimeFormat = constructor.construct(cx, locales, options);
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 
@@ -242,8 +241,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             options = ToDateTimeOptions(cx, options, "date", "date");
             DateTimeFormatConstructor constructor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-            DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) constructor.construct(cx,
-                    locales, options);
+            DateTimeFormatObject dateTimeFormat = constructor.construct(cx, locales, options);
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 
@@ -263,8 +261,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             options = ToDateTimeOptions(cx, options, "time", "time");
             DateTimeFormatConstructor constructor = (DateTimeFormatConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-            DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) constructor.construct(cx,
-                    locales, options);
+            DateTimeFormatObject dateTimeFormat = constructor.construct(cx, locales, options);
             return FormatDateTime(cx, dateTimeFormat, t);
         }
 

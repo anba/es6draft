@@ -209,7 +209,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             // ECMA-402
             CollatorConstructor constructor = (CollatorConstructor) cx
                     .getIntrinsic(Intrinsics.Intl_Collator);
-            CollatorObject collator = (CollatorObject) constructor.construct(cx, locales, options);
+            CollatorObject collator = constructor.construct(cx, locales, options);
             return CompareStrings(cx, collator, s, t);
         }
 
