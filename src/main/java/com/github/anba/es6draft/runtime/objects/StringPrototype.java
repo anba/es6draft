@@ -614,11 +614,16 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                 throw throwRangeError(cx, Messages.Key.InvalidStringRepeat);
             }
             /* step 8 */
-            if (n == 0) {
+            if (n == 0 || s.length() == 0) {
                 return "";
             }
-            int capacity = Math.max(s.length() * (int) n, 0);
-            StringBuilder t = new StringBuilder(capacity);
+            double capacity = s.length() * n;
+            if (capacity > 1 << 27) {
+                // likely to exceed heap space, follow SpiderMonkey and throw RangeError
+                throw throwRangeError(cx, Messages.Key.InvalidStringRepeat);
+            }
+            /* step 8 */
+            StringBuilder t = new StringBuilder((int) capacity);
             for (int c = (int) n; c > 0; --c) {
                 t.append(s);
             }
