@@ -15,13 +15,17 @@ date-format/timezone.js
 # disable v8 specific test which only ensures caching for the default locale
 overrides/caching.js
 
+# v8 native function call syntax without flags
+collator/wellformed-unsupported-locale.js
+date-format/default-locale.js
+date-format/wellformed-unsupported-locale.js
+number-format/default-locale.js
+number-format/wellformed-unsupported-locale.js
+
 # v8-intl restriction tests
 collator/protected-icu-internals.js
 date-format/protected-icu-internals.js
 number-format/protected-icu-internals.js
-
-# unsupported v8-intl extension "v8Intl"
-general/v8Intl-exists.js
 
 # unsupported v8-intl extension "Intl.DateTimeFormat.prototype.v8Parse"
 date-format/parse-invalid-input.js
