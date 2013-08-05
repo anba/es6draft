@@ -9,17 +9,13 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -41,8 +37,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -327,7 +322,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             ScriptObject _target = Type.objectValue(target);
             ScriptObject _source = Type.objectValue(source);
             ScriptException pendingException = null;
-            List<Object> keys = GetOwnEnumerableKeys(cx, _source);
+            List<Object> keys = GetOwnEnumerablePropertyKeys(cx, _source);
             for (Object key : keys) {
                 Object value = Get(cx, _source, key);
                 if (isSuperBoundTo(value, _source)) {
@@ -362,7 +357,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
             ScriptObject _target = Type.objectValue(target);
             ScriptObject _source = Type.objectValue(source);
             ScriptException pendingException = null;
-            List<Object> keys = GetOwnEnumerableKeys(cx, _source);
+            List<Object> keys = GetOwnEnumerablePropertyKeys(cx, _source);
             for (Object key : keys) {
                 Property desc;
                 if (key instanceof String) {
@@ -451,27 +446,6 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
     }
 
     /**
-     * Returns a list of all enumerable, non-private own property keys
-     */
-    private static List<Object> GetOwnEnumerableKeys(ExecutionContext cx, ScriptObject object) {
-        List<Object> ownKeys = new ArrayList<>();
-        Iterator<?> keys = FromListIterator(cx, object.ownPropertyKeys(cx));
-        while (keys.hasNext()) {
-            Object key = ToPropertyKey(cx, keys.next());
-            Property desc;
-            if (key instanceof String) {
-                desc = object.getOwnProperty(cx, (String) key);
-            } else {
-                desc = object.getOwnProperty(cx, (ExoticSymbol) key);
-            }
-            if (desc != null && desc.isEnumerable()) {
-                ownKeys.add(key);
-            }
-        }
-        return ownKeys;
-    }
-
-    /**
      * Returns {@code desc} with [[Value]] resp. [[Get]] and [[Set]] super-rebound from
      * {@code source} to {@code target}
      */
@@ -500,12 +474,8 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      * Returns <code>true</code> if {@code value} is super-bound to {@code source}
      */
     private static boolean isSuperBoundTo(Object value, ScriptObject source) {
-        if (value instanceof OrdinaryFunction) {
-            ScriptObject homeObject = ((OrdinaryFunction) value).getHomeObject();
-            return (homeObject == source);
-        }
-        if (value instanceof OrdinaryGenerator) {
-            ScriptObject homeObject = ((OrdinaryGenerator) value).getHomeObject();
+        if (value instanceof FunctionObject) {
+            ScriptObject homeObject = ((FunctionObject) value).getHomeObject();
             return (homeObject == source);
         }
         return false;
@@ -515,29 +485,6 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      * Super-binds {@code value} to {@code target}
      */
     private static Callable superBindTo(ExecutionContext cx, Object value, ScriptObject target) {
-        if (value instanceof OrdinaryGenerator) {
-            OrdinaryGenerator gen = (OrdinaryGenerator) value;
-            assert gen.isInitialised() : "uninitialised function object";
-            Object methodName = gen.getMethodName();
-            if (methodName instanceof String) {
-                return GeneratorFunctionCreate(cx, gen.getFunctionKind(), gen.getFunction(),
-                        gen.getScope(), gen.getInheritance(cx), target, (String) methodName);
-            }
-            assert methodName instanceof ExoticSymbol;
-            return GeneratorFunctionCreate(cx, gen.getFunctionKind(), gen.getFunction(),
-                    gen.getScope(), gen.getInheritance(cx), target, (ExoticSymbol) methodName);
-        } else {
-            assert value instanceof OrdinaryFunction;
-            OrdinaryFunction fn = (OrdinaryFunction) value;
-            assert fn.isInitialised() : "uninitialised function object";
-            Object methodName = fn.getMethodName();
-            if (methodName instanceof String) {
-                return FunctionCreate(cx, fn.getFunctionKind(), fn.getFunction(), fn.getScope(),
-                        fn.getInheritance(cx), target, (String) methodName);
-            }
-            assert methodName instanceof ExoticSymbol;
-            return FunctionCreate(cx, fn.getFunctionKind(), fn.getFunction(), fn.getScope(),
-                    fn.getInheritance(cx), target, (ExoticSymbol) methodName);
-        }
+        return ((FunctionObject) value).rebind(cx, target);
     }
 }

@@ -59,7 +59,9 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Realm realm = calleeContext.getRealm();
+        /* steps 1-2 */
         int numberOfArgs = args.length;
+        /* steps 3-4 */
         if (numberOfArgs >= 2) {
             // [15.9.2.1]
             if (isUninitialisedDateObject(thisValue)) {
@@ -71,9 +73,8 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
                 double min = (args.length > 4 ? ToNumber(calleeContext, args[4]) : 0);
                 double sec = (args.length > 5 ? ToNumber(calleeContext, args[5]) : 0);
                 double ms = (args.length > 6 ? ToNumber(calleeContext, args[6]) : 0);
-                if (!Double.isNaN(year) && 0 <= ToInteger(calleeContext, year)
-                        && ToInteger(calleeContext, year) <= 99) {
-                    year = 1900 + ToInteger(calleeContext, year);
+                if (!Double.isNaN(year) && 0 <= ToInteger(year) && ToInteger(year) <= 99) {
+                    year = 1900 + ToInteger(year);
                 }
                 double finalDate = MakeDate(MakeDay(year, month, date),
                         MakeTime(hour, min, sec, ms));
@@ -106,6 +107,7 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
                 return obj;
             }
         }
+        /* step 5 */
         long now = System.currentTimeMillis();
         DateObject obj = new DateObject(realm);
         obj.setPrototype(realm.getIntrinsic(Intrinsics.DatePrototype));
@@ -188,18 +190,26 @@ public class DateConstructor extends BuiltinFunction implements Constructor, Ini
                         value = Default.Number, numberValue = 0) Object minutes, @Optional(
                         value = Default.Number, numberValue = 0) Object seconds, @Optional(
                         value = Default.Number, numberValue = 0) Object ms) {
+            /* steps 1-2 */
             double y = ToNumber(cx, year);
+            /* steps 3-4 */
             double m = ToNumber(cx, month);
+            /* steps 5-6 */
             double dt = ToNumber(cx, date);
+            /* steps 7-8 */
             double h = ToNumber(cx, hours);
+            /* steps 9-10 */
             double min = ToNumber(cx, minutes);
+            /* steps 11-12 */
             double sec = ToNumber(cx, seconds);
+            /* steps 13-14 */
             double milli = ToNumber(cx, ms);
-            if (!Double.isNaN(y) && 0 <= ToInteger(cx, y) && ToInteger(cx, y) <= 99) {
-                y = 1900 + ToInteger(cx, y);
+            /* step 15 */
+            if (!Double.isNaN(y) && 0 <= ToInteger(y) && ToInteger(y) <= 99) {
+                y = 1900 + ToInteger(y);
             }
-            double finalDate = MakeDate(MakeDay(y, m, dt), MakeTime(h, min, sec, milli));
-            return TimeClip(finalDate);
+            /* step 16 */
+            return TimeClip(MakeDate(MakeDay(y, m, dt), MakeTime(h, min, sec, milli)));
         }
 
         /**

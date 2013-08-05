@@ -72,9 +72,12 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
+            /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            /* step 5 */
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             entries.clear();
+            /* step 6 */
             return UNDEFINED;
         }
 
@@ -83,11 +86,15 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
+            /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            /* step 5 */
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            /* step 6 */
             if (!Type.isObject(key)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* steps 7-8 */
             return entries.remove(key);
         }
 
@@ -96,11 +103,15 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object key) {
+            /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            /* step 5 */
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            /* step 6 */
             if (!Type.isObject(key)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* steps 7-8 */
             Object value = entries.get(key);
             return (value != null ? value : UNDEFINED);
         }
@@ -110,11 +121,15 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
+            /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            /* step 5 */
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            /* step 6 */
             if (!Type.isObject(key)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* steps 7-8 */
             return entries.containsKey(key);
         }
 
@@ -123,12 +138,17 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
+            /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
+            /* step 5 */
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
+            /* step 6 */
             if (!Type.isObject(key)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* steps 7-9 */
             entries.put(key, value);
+            /* step 7.a.ii, 10 */
             return m;
         }
 

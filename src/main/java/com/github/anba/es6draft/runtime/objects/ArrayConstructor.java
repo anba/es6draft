@@ -65,19 +65,25 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         int numberOfArgs = args.length;
         if (numberOfArgs != 1) {
             // [15.4.1.1]
+            /* steps 1-6 */
             ExoticArray array = initOrCreateArray(calleeContext, thisValue, numberOfArgs);
+            /* steps 7-9 */
             for (int k = 0; k < numberOfArgs; ++k) {
                 String pk = ToString(k);
                 Object itemK = args[k];
                 DefinePropertyOrThrow(calleeContext, array, pk, new PropertyDescriptor(itemK, true,
                         true, true));
             }
+            /* steps 10-11 */
             Put(calleeContext, array, "length", numberOfArgs, true);
+            /* step 12 */
             return array;
         } else {
             // [15.4.1.2]
+            /* steps 1-6 */
             ExoticArray array = initOrCreateArray(calleeContext, thisValue, 0);
             Object len = args[0];
+            /* steps 7-8 */
             long intLen;
             if (!Type.isNumber(len)) {
                 DefinePropertyOrThrow(calleeContext, array, "0", new PropertyDescriptor(len, true,
@@ -89,12 +95,16 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
                     throw throwRangeError(calleeContext, Messages.Key.InvalidArrayLength);
                 }
             }
+            /* steps 9-10 */
             Put(calleeContext, array, "length", intLen, true);
+            /* step 11 */
             return array;
         }
     }
 
     private ExoticArray initOrCreateArray(ExecutionContext cx, Object thisValue, int length) {
+        /* [15.4.1.1] steps 3-6 */
+        /* [15.4.1.2] steps 3-6 */
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
             if (!array.getArrayInitialisationState()) {
@@ -160,17 +170,16 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
          */
         @Function(name = "of", arity = 0)
         public static Object of(ExecutionContext cx, Object thisValue, Object... items) {
-            /* step 1-2 */
+            /* steps 1-2 */
             int len = items.length;
             /* step 3 */
             Object c = thisValue;
+            /* steps 4-6 */
             ScriptObject a;
             if (IsConstructor(c)) {
-                /* step 4, 6 */
-                Object newObj = ((Constructor) c).construct(cx, len);
+                ScriptObject newObj = ((Constructor) c).construct(cx, len);
                 a = ToObject(cx, newObj);
             } else {
-                /* step 5, 6 */
                 a = ArrayCreate(cx, len);
             }
             /* step 7-8 */
@@ -209,14 +218,14 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
             }
             /* step 6-7 */
             boolean usingIterator = HasProperty(cx, items, BuiltinSymbol.iterator.get());
+            /* step 8 */
             if (usingIterator) {
-                /* step 8 */
                 /* steps 8a-8b */
                 ScriptObject iterator = GetIterator(cx, items);
                 /* steps 8c-8e */
                 ScriptObject a;
                 if (IsConstructor(c)) {
-                    Object newObj = ((Constructor) c).construct(cx);
+                    ScriptObject newObj = ((Constructor) c).construct(cx);
                     a = ToObject(cx, newObj);
                 } else {
                     a = ArrayCreate(cx, 0);
@@ -249,7 +258,7 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
             /* step 13-15 */
             ScriptObject a;
             if (IsConstructor(c)) {
-                Object newObj = ((Constructor) c).construct(cx, len);
+                ScriptObject newObj = ((Constructor) c).construct(cx, len);
                 a = ToObject(cx, newObj);
             } else {
                 long arrayLen = ToUint32(len);
@@ -287,8 +296,10 @@ public class ArrayConstructor extends BuiltinFunction implements Constructor, In
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
+            /* steps 1-3 */
             ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
                     Intrinsics.ArrayPrototype);
+            /* steps 4-5 */
             return ArrayCreate(cx, -1, proto);
         }
     }

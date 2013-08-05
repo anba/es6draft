@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -18,10 +17,10 @@ import java.util.Map.Entry;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
-import com.github.anba.es6draft.runtime.internal.LinkedMap;
-import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.*;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
+import com.github.anba.es6draft.runtime.internal.Properties.AliasFunctions;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -30,7 +29,6 @@ import com.github.anba.es6draft.runtime.objects.SetIteratorPrototype.SetIteratio
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -49,14 +47,6 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
-
-        // 15.16.3.8 Set.prototype.keys ( )
-        defineOwnProperty(cx, "keys", new PropertyDescriptor(Get(cx, this, "values"), true, false,
-                true));
-
-        // 15.16.3.11 Set.prototype.@@iterator ( )
-        defineOwnProperty(cx, BuiltinSymbol.iterator.get(),
-                new PropertyDescriptor(Get(cx, this, "values"), true, false, true));
     }
 
     /**
@@ -89,9 +79,13 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "add", arity = 1)
         public static Object add(ExecutionContext cx, Object thisValue, Object value) {
+            /* steps 1-4 */
             SetObject s = thisSetValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Void> entries = s.getSetData();
+            /* steps 6-9 */
             entries.set(value, null);
+            /* step 8.a.i, 10 */
             return s;
         }
 
@@ -100,9 +94,13 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
+            /* steps 1-4 */
             SetObject s = thisSetValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Void> entries = s.getSetData();
+            /* step 6 */
             entries.clear();
+            /* step 7 */
             return UNDEFINED;
         }
 
@@ -111,8 +109,11 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
+            /* steps 1-4 */
             SetObject s = thisSetValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Void> entries = s.getSetData();
+            /* steps 6-9 */
             return entries.delete(value);
         }
 
@@ -121,7 +122,9 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
+            /* steps 1-4 */
             SetObject s = thisSetValue(cx, thisValue);
+            /* step 3 */
             return CreateSetIterator(cx, s, SetIterationKind.KeyValue);
         }
 
@@ -131,17 +134,23 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
+            /* steps 1-4 */
             SetObject s = thisSetValue(cx, thisValue);
-            LinkedMap<Object, Void> entries = s.getSetData();
+            /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
+            /* step 6 (omitted) */
+            /* step 7 */
+            LinkedMap<Object, Void> entries = s.getSetData();
+            /* step 8 */
             for (Iterator<Entry<Object, Void>> itr = entries.iterator(); itr.hasNext();) {
                 Entry<Object, Void> e = itr.next();
                 assert e != null;
                 callback.call(cx, thisArg, e.getKey(), e.getKey(), s);
             }
+            /* step 9 */
             return UNDEFINED;
         }
 
@@ -150,8 +159,11 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
+            /* steps 1-4 */
             SetObject s = thisSetValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Void> entries = s.getSetData();
+            /* steps 6-9 */
             return entries.has(key);
         }
 
@@ -160,17 +172,26 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Accessor(name = "size", type = Accessor.Type.Getter)
         public static Object size(ExecutionContext cx, Object thisValue) {
+            /* steps 1-4 */
             SetObject s = thisSetValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Void> entries = s.getSetData();
+            /* steps 6-8 */
             return entries.size();
         }
 
         /**
-         * 15.16.3.10 Set.prototype.values ( )
+         * 15.16.3.8 Set.prototype.keys ( )<br>
+         * 15.16.3.10 Set.prototype.values ( )<br>
+         * 15.16.3.11 Set.prototype.@@iterator ( )
          */
         @Function(name = "values", arity = 0)
+        @AliasFunctions({ @AliasFunction(name = "keys"),
+                @AliasFunction(name = "@@iterator", symbol = BuiltinSymbol.iterator) })
         public static Object values(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
             SetObject s = thisSetValue(cx, thisValue);
+            /* step 3 */
             return CreateSetIterator(cx, s, SetIterationKind.Value);
         }
 

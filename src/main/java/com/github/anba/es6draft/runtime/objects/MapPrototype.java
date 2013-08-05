@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -22,6 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -30,7 +30,6 @@ import com.github.anba.es6draft.runtime.objects.MapIteratorPrototype.MapIteratio
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -49,10 +48,6 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
-
-        // 15.14.3.12 Map.prototype.@@iterator ( )
-        defineOwnProperty(cx, BuiltinSymbol.iterator.get(),
-                new PropertyDescriptor(Get(cx, this, "entries"), true, false, true));
     }
 
     /**
@@ -85,9 +80,13 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
+            /* steps 1-4 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
+            /* step 6 */
             entries.clear();
+            /* step 7 */
             return UNDEFINED;
         }
 
@@ -96,8 +95,11 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object key) {
+            /* steps 1-4 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 7 */
             LinkedMap<Object, Object> entries = m.getMapData();
+            /* steps 5-6, 8-9 */
             return entries.delete(key);
         }
 
@@ -107,17 +109,23 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
                 Object thisArg) {
+            /* steps 1-4 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 5 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
+            /* step 6 (omitted) */
+            /* step 7 */
             LinkedMap<Object, Object> entries = m.getMapData();
+            /* step 8 */
             for (Iterator<Entry<Object, Object>> itr = entries.iterator(); itr.hasNext();) {
                 Entry<Object, Object> e = itr.next();
                 assert e != null;
                 callback.call(cx, thisArg, e.getValue(), e.getKey(), m);
             }
+            /* step 9 */
             return UNDEFINED;
         }
 
@@ -126,8 +134,11 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "get", arity = 1)
         public static Object get(ExecutionContext cx, Object thisValue, Object key) {
+            /* steps 1-4 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
+            /* steps 6-9 */
             Object value = entries.get(key);
             return (value != null ? value : UNDEFINED);
         }
@@ -137,17 +148,24 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object key) {
+            /* steps 1-4 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
+            /* steps 6-9 */
             return entries.has(key);
         }
 
         /**
-         * 15.14.3.7 Map.prototype.entries ( )
+         * 15.14.3.7 Map.prototype.entries ( )<br>
+         * 15.14.3.12 Map.prototype.@@iterator ( )
          */
         @Function(name = "entries", arity = 0)
+        @AliasFunction(name = "@@iterator", symbol = BuiltinSymbol.iterator)
         public static Object entries(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 3 */
             return CreateMapIterator(cx, m, MapIterationKind.KeyValue);
         }
 
@@ -156,7 +174,9 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 3 */
             return CreateMapIterator(cx, m, MapIterationKind.Key);
         }
 
@@ -165,9 +185,13 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object key, Object value) {
+            /* steps 1-4 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
+            /* steps 6-10 */
             entries.set(key, value);
+            /* step 8.a.ii, 11 */
             return m;
         }
 
@@ -176,8 +200,11 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Accessor(name = "size", type = Accessor.Type.Getter)
         public static Object size(ExecutionContext cx, Object thisValue) {
+            /* steps 1-4 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 5 */
             LinkedMap<Object, Object> entries = m.getMapData();
+            /* steps 6-8 */
             return entries.size();
         }
 
@@ -186,7 +213,9 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "values", arity = 0)
         public static Object values(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
             MapObject m = thisMapValue(cx, thisValue);
+            /* step 3 */
             return CreateMapIterator(cx, m, MapIterationKind.Value);
         }
 

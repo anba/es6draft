@@ -107,14 +107,18 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         @Function(name = "apply", arity = 2)
         public static Object apply(ExecutionContext cx, Object thisValue, Object thisArg,
                 Object argArray) {
+            /* step 1 */
             if (!IsCallable(thisValue)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             Callable func = (Callable) thisValue;
+            /* step 2 */
             if (Type.isUndefinedOrNull(argArray)) {
                 return func.call(cx, thisArg);
             }
+            /* steps 3-4 */
             Object[] argList = CreateListFromArrayLike(cx, argArray);
+            /* step 5 */
             return func.call(cx, thisArg, argList);
         }
 
@@ -124,10 +128,12 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         @Function(name = "call", arity = 1)
         public static Object call(ExecutionContext cx, Object thisValue, Object thisArg,
                 Object... args) {
+            /* step 1 */
             if (!IsCallable(thisValue)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             Callable func = (Callable) thisValue;
+            /* steps 2-4 */
             return func.call(cx, thisArg, args);
         }
 
@@ -137,11 +143,15 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         @Function(name = "bind", arity = 1)
         public static Object bind(ExecutionContext cx, Object thisValue, Object thisArg,
                 Object... args) {
+            /* step 2 */
             if (!IsCallable(thisValue)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
+            /* step 1 */
             Callable target = (Callable) thisValue;
+            /* steps 3-4 */
             ExoticBoundFunction f = BoundFunctionCreate(cx, target, thisArg, args);
+            /* steps 5-6 */
             int l;
             if (target instanceof OrdinaryFunction || target instanceof OrdinaryGenerator
                     || target instanceof BuiltinFunction || target instanceof ExoticBoundFunction) {
@@ -150,8 +160,11 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             } else {
                 l = 0;
             }
+            /* step 7 */
             f.defineOwnProperty(cx, "length", new PropertyDescriptor(l, false, false, false));
+            /* step 8 */
             AddRestrictedFunctionProperties(cx, f);
+            /* step 9 */
             return f;
         }
 

@@ -151,6 +151,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return null;
     }
 
+    /**
+     * Returns a copy of this function object with the [[HomeObject]] property set to
+     * {@code newHomeObject}
+     */
+    public abstract FunctionObject rebind(ExecutionContext cx, ScriptObject newHomeObject);
+
     public final FunctionKind getFunctionKind() {
         return functionKind;
     }

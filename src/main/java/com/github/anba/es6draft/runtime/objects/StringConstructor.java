@@ -55,7 +55,10 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        /* step 1 (omitted) */
+        /* steps 2-4 */
         CharSequence s = (args.length > 0 ? ToString(calleeContext, args[0]) : "");
+        /* step 5 */
         if (thisValue instanceof ExoticString) {
             ExoticString obj = (ExoticString) thisValue;
             if (obj.getStringData() == null) {
@@ -66,6 +69,7 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
                 return obj;
             }
         }
+        /* step 6 */
         return s;
     }
 
@@ -107,13 +111,17 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "fromCharCode", arity = 1)
         public static Object fromCharCode(ExecutionContext cx, Object thisValue,
                 Object... codeUnits) {
+            /* steps 1-2 */
             int length = codeUnits.length;
+            /* step 3 */
             char elements[] = new char[length];
+            /* steps 4-5 */
             for (int nextIndex = 0; nextIndex < length; ++nextIndex) {
                 Object next = codeUnits[nextIndex];
                 char nextCU = ToUint16(cx, next);
                 elements[nextIndex] = nextCU;
             }
+            /* step 5 */
             return new String(elements);
         }
 
@@ -123,12 +131,15 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "fromCodePoint", arity = 0)
         public static Object fromCodePoint(ExecutionContext cx, Object thisValue,
                 Object... codePoints) {
+            /* steps 1-2 */
             int length = codePoints.length;
+            /* step 3 */
             int elements[] = new int[length];
+            /* steps 4-5 */
             for (int nextIndex = 0; nextIndex < length; ++nextIndex) {
                 Object next = codePoints[nextIndex];
                 double nextCP = ToNumber(cx, next);
-                if (!SameValue(nextCP, ToInteger(cx, nextCP))) {
+                if (!SameValue(nextCP, ToInteger(nextCP))) {
                     throw throwRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
                 if (nextCP < 0 || nextCP > 0x10FFFF) {
@@ -145,16 +156,23 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "raw", arity = 1)
         public static Object raw(ExecutionContext cx, Object thisValue, Object callSite,
                 Object... substitutions) {
+            /* steps 1-3 */
             ScriptObject cooked = ToObject(cx, callSite);
+            /* steps 4-6 */
             Object rawValue = Get(cx, cooked, "raw");
             ScriptObject raw = ToObject(cx, rawValue);
+            /* step 7 */
             Object len = Get(cx, raw, "length");
+            /* steps 8-9 */
             long literalSegments = ToUint32(cx, len); // FIXME: spec bug (bug 492)
+            /* step 10 */
             if (literalSegments == 0) {
                 return "";
             }
-            long substlength = substitutions.length;
+            /* step 11 */
             StringBuilder stringElements = new StringBuilder();
+            long substlength = substitutions.length;
+            /* steps 12-13 */
             for (long nextIndex = 0;; ++nextIndex) {
                 String nextKey = ToString(nextIndex);
                 Object next = Get(cx, raw, nextKey);

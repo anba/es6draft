@@ -141,14 +141,19 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "toFixed", arity = 1)
         public static Object toFixed(ExecutionContext cx, Object thisValue, Object fractionDigits) {
+            /* steps 1-2 */
             double x = thisNumberValue(cx, thisValue);
+            /* steps 3-4 */
             double f = ToInteger(cx, fractionDigits);
+            /* step 5 */
             if (f < 0 || f > 20) {
                 throw throwRangeError(cx, Messages.Key.InvalidPrecision);
             }
+            /* step 6 */
             if (x != x) {
                 return "NaN";
             }
+            /* steps 7-11 */
             StringBuilder sb = new StringBuilder();
             DToA.JS_dtostr(sb, DToA.DTOSTR_FIXED, (int) f, x);
             return sb.toString();
@@ -160,9 +165,12 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "toExponential", arity = 1)
         public static Object toExponential(ExecutionContext cx, Object thisValue,
                 Object fractionDigits) {
+            /* steps 1-2 */
             double x = thisNumberValue(cx, thisValue);
+            /* steps 3-5 */
             double f = ToInteger(cx, fractionDigits);
             assert fractionDigits != UNDEFINED || f == 0;
+            /* steps 6-9 */
             if (x != x) {
                 return "NaN";
             } else if (x == Double.POSITIVE_INFINITY) {
@@ -170,9 +178,11 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
             } else if (x == Double.NEGATIVE_INFINITY) {
                 return "-Infinity";
             }
+            /* step 10 */
             if (f < 0 || f > 20) {
                 throw throwRangeError(cx, Messages.Key.InvalidPrecision);
             }
+            /* steps 11-17 */
             StringBuilder sb = new StringBuilder();
             if (fractionDigits == UNDEFINED) {
                 DToA.JS_dtostr(sb, DToA.DTOSTR_STANDARD_EXPONENTIAL, 1 + (int) f, x);
@@ -187,11 +197,15 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "toPrecision", arity = 1)
         public static Object toPrecision(ExecutionContext cx, Object thisValue, Object precision) {
+            /* steps 1-2 */
             double x = thisNumberValue(cx, thisValue);
+            /* steps 3 */
             if (precision == UNDEFINED) {
                 return ToString(x);
             }
+            /* steps 4-5 */
             double p = ToInteger(cx, precision);
+            /* steps 6-9 */
             if (x != x) {
                 return "NaN";
             } else if (x == Double.POSITIVE_INFINITY) {
@@ -199,9 +213,11 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
             } else if (x == Double.NEGATIVE_INFINITY) {
                 return "-Infinity";
             }
+            /* step 10 */
             if (p < 1 || p > 21) {
                 throw throwRangeError(cx, Messages.Key.InvalidPrecision);
             }
+            /* steps 11-16 */
             StringBuilder sb = new StringBuilder();
             DToA.JS_dtostr(sb, DToA.DTOSTR_PRECISION, (int) p, x);
             return sb.toString();
@@ -212,8 +228,11 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "clz", arity = 0)
         public static Object clz(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
             double x = thisNumberValue(cx, thisValue);
+            /* steps 2-3 */
             long n = ToUint32(cx, x);
+            /* steps 4-5 */
             return Integer.numberOfLeadingZeros((int) n);
         }
     }

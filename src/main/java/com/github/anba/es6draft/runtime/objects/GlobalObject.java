@@ -117,17 +117,19 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         @Function(name = "parseInt", arity = 2)
         public static Object parseInt(ExecutionContext cx, Object thisValue, Object string,
                 Object radix) {
+            /* steps 1-2 */
             String inputString = ToFlatString(cx, string);
+            /* step 3 */
             String s = Strings.trimLeft(inputString);
             int len = s.length();
             int index = 0;
-            /* step 5-6 */
+            /* steps 4-6 */
             boolean isPos = true;
             if (index < len && (s.charAt(index) == '+' || s.charAt(index) == '-')) {
                 isPos = (s.charAt(index) == '+');
                 index += 1;
             }
-            /* step 7-8 */
+            /* steps 7-8 */
             int r = ToInt32(cx, radix);
             /* step 9 */
             boolean stripPrefix = true;
@@ -147,8 +149,8 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
                 r = 16;
                 index += 2;
             }
-            /* step 13-16 */
-            double number = StringToNumber.stringToNumber(s.toString(), index, r);
+            /* steps 13-16 */
+            double number = StringToNumber.stringToNumber(s, index, r);
             /* step 17 */
             return (isPos ? number : -number);
         }
@@ -158,11 +160,15 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "parseFloat", arity = 1)
         public static Object parseFloat(ExecutionContext cx, Object thisValue, Object string) {
+            /* steps 1-2 */
             String inputString = ToFlatString(cx, string);
+            /* step 3 */
             String trimmedString = Strings.trimLeft(inputString);
+            /* step 4 */
             if (trimmedString.isEmpty()) {
                 return Double.NaN;
             }
+            /* steps 5-6 */
             return readDecimalLiteralPrefix(trimmedString, 0, trimmedString.length());
         }
 
@@ -171,10 +177,13 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "isNaN", arity = 1)
         public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
+            /* steps 1-2 */
             double num = ToNumber(cx, number);
+            /* steps 3 */
             if (Double.isNaN(num)) {
                 return true;
             }
+            /* steps 4 */
             return false;
         }
 
@@ -183,95 +192,14 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "isFinite", arity = 1)
         public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
+            /* steps 1-2 */
             double num = ToNumber(cx, number);
+            /* step 3 */
             if (Double.isNaN(num) || Double.isInfinite(num)) {
                 return false;
             }
+            /* step 4 */
             return true;
-        }
-    }
-
-    /**
-     * B.2.1 Additional Properties of the Global Object
-     */
-    @CompatibilityExtension(CompatibilityOption.GlobalObject)
-    public enum AdditionalProperties {
-        ;
-
-        private static int fromHexDigit(char c) {
-            if (c >= '0' && c <= '9')
-                return (c - '0');
-            if (c >= 'A' && c <= 'F')
-                return (c - 'A') + 10;
-            if (c >= 'a' && c <= 'f')
-                return (c - 'a') + 10;
-            return -1;
-        }
-
-        private static char toHexDigit(int i, int shift) {
-            i = (i >> shift) & 0b1111;
-            return (char) (i + (i < 0x0A ? '0' : ('A' - 10)));
-        }
-
-        /**
-         * B.2.1.1 escape (string)
-         */
-        @Function(name = "escape", arity = 1)
-        public static Object escape(ExecutionContext cx, Object thisValue, Object string) {
-            String s = ToFlatString(cx, string);
-            int length = s.length();
-            StringBuilder r = new StringBuilder(length);
-            for (int k = 0; k < length; ++k) {
-                char c = s.charAt(k);
-                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
-                        || c == '@' || c == '*' || c == '_' || c == '+' || c == '-' || c == '.'
-                        || c == '/') {
-                    r.append(c);
-                } else if (c < 256) {
-                    r.append('%').append(toHexDigit(c, 4)).append(toHexDigit(c, 0));
-                } else {
-                    r.append("%u").append(toHexDigit(c, 12)).append(toHexDigit(c, 8))
-                            .append(toHexDigit(c, 4)).append(toHexDigit(c, 0));
-                }
-            }
-            return r.toString();
-        }
-
-        /**
-         * B.2.1.2 unescape (string)
-         */
-        @Function(name = "unescape", arity = 1)
-        public static Object unescape(ExecutionContext cx, Object thisValue, Object string) {
-            String s = ToFlatString(cx, string);
-            int length = s.length();
-            StringBuilder r = new StringBuilder(length);
-            for (int k = 0; k < length; ++k) {
-                char c = s.charAt(k);
-                if (c == '%') {
-                    if (k <= length - 6 && s.charAt(k + 1) == 'u') {
-                        char c2 = s.charAt(k + 2);
-                        char c3 = s.charAt(k + 3);
-                        char c4 = s.charAt(k + 4);
-                        char c5 = s.charAt(k + 5);
-                        int h = fromHexDigit(c2) << 12 | fromHexDigit(c3) << 8
-                                | fromHexDigit(c4) << 4 | fromHexDigit(c5);
-                        if (h >= 0) {
-                            k += 5;
-                            c = (char) h;
-                        }
-                    } else if (k <= length - 3) {
-                        char c1 = s.charAt(k + 1);
-                        char c2 = s.charAt(k + 2);
-                        int h = fromHexDigit(c1) << 4 | fromHexDigit(c2);
-                        if (h >= 0) {
-                            k += 2;
-                            c = (char) h;
-                        }
-                    }
-                }
-                r.append(c);
-            }
-            return r.toString();
         }
     }
 
@@ -286,7 +214,9 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "decodeURI", arity = 1)
         public static Object decodeURI(ExecutionContext cx, Object thisValue, Object encodedURI) {
+            /* steps 1-2 */
             String uriString = ToFlatString(cx, encodedURI);
+            /* steps 3-4 */
             String decoded = URIFunctions.decodeURI(uriString);
             if (decoded == null) {
                 throw throwURIError(cx, Messages.Key.MalformedURI);
@@ -300,7 +230,9 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         @Function(name = "decodeURIComponent", arity = 1)
         public static Object decodeURIComponent(ExecutionContext cx, Object thisValue,
                 Object encodedURIComponent) {
+            /* steps 1-2 */
             String componentString = ToFlatString(cx, encodedURIComponent);
+            /* steps 3-4 */
             String decoded = URIFunctions.decodeURIComponent(componentString);
             if (decoded == null) {
                 throw throwURIError(cx, Messages.Key.MalformedURI);
@@ -313,7 +245,9 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "encodeURI", arity = 1)
         public static Object encodeURI(ExecutionContext cx, Object thisValue, Object uri) {
+            /* steps 1-2 */
             String uriString = ToFlatString(cx, uri);
+            /* steps 3-4 */
             String encoded = URIFunctions.encodeURI(uriString);
             if (encoded == null) {
                 throw throwURIError(cx, Messages.Key.MalformedURI);
@@ -327,7 +261,9 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         @Function(name = "encodeURIComponent", arity = 1)
         public static Object encodeURIComponent(ExecutionContext cx, Object thisValue,
                 Object uriComponent) {
+            /* steps 1-2 */
             String componentString = ToFlatString(cx, uriComponent);
+            /* steps 3-4 */
             String encoded = URIFunctions.encodeURIComponent(componentString);
             if (encoded == null) {
                 throw throwURIError(cx, Messages.Key.MalformedURI);
@@ -528,6 +464,100 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         public static final Intrinsics Intl = Intrinsics.Intl;
     }
 
+    /**
+     * B.2.1 Additional Properties of the Global Object
+     */
+    @CompatibilityExtension(CompatibilityOption.GlobalObject)
+    public enum AdditionalProperties {
+        ;
+
+        private static int fromHexDigit(char c) {
+            if (c >= '0' && c <= '9')
+                return (c - '0');
+            if (c >= 'A' && c <= 'F')
+                return (c - 'A') + 10;
+            if (c >= 'a' && c <= 'f')
+                return (c - 'a') + 10;
+            return -1;
+        }
+
+        private static char toHexDigit(int i, int shift) {
+            i = (i >> shift) & 0b1111;
+            return (char) (i + (i < 0x0A ? '0' : ('A' - 10)));
+        }
+
+        /**
+         * B.2.1.1 escape (string)
+         */
+        @Function(name = "escape", arity = 1)
+        public static Object escape(ExecutionContext cx, Object thisValue, Object string) {
+            /* steps 1-2 */
+            String s = ToFlatString(cx, string);
+            /* step 3 */
+            int length = s.length();
+            /* step 4 */
+            StringBuilder r = new StringBuilder(length);
+            /* steps 5-6 */
+            for (int k = 0; k < length; ++k) {
+                char c = s.charAt(k);
+                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
+                        || c == '@' || c == '*' || c == '_' || c == '+' || c == '-' || c == '.'
+                        || c == '/') {
+                    r.append(c);
+                } else if (c < 256) {
+                    r.append('%').append(toHexDigit(c, 4)).append(toHexDigit(c, 0));
+                } else {
+                    r.append("%u").append(toHexDigit(c, 12)).append(toHexDigit(c, 8))
+                            .append(toHexDigit(c, 4)).append(toHexDigit(c, 0));
+                }
+            }
+            /* step 7 */
+            return r.toString();
+        }
+
+        /**
+         * B.2.1.2 unescape (string)
+         */
+        @Function(name = "unescape", arity = 1)
+        public static Object unescape(ExecutionContext cx, Object thisValue, Object string) {
+            /* steps 1-2 */
+            String s = ToFlatString(cx, string);
+            /* step 3 */
+            int length = s.length();
+            /* step 4 */
+            StringBuilder r = new StringBuilder(length);
+            /* steps 5-6 */
+            for (int k = 0; k < length; ++k) {
+                char c = s.charAt(k);
+                if (c == '%') {
+                    if (k <= length - 6 && s.charAt(k + 1) == 'u') {
+                        char c2 = s.charAt(k + 2);
+                        char c3 = s.charAt(k + 3);
+                        char c4 = s.charAt(k + 4);
+                        char c5 = s.charAt(k + 5);
+                        int h = fromHexDigit(c2) << 12 | fromHexDigit(c3) << 8
+                                | fromHexDigit(c4) << 4 | fromHexDigit(c5);
+                        if (h >= 0) {
+                            k += 5;
+                            c = (char) h;
+                        }
+                    } else if (k <= length - 3) {
+                        char c1 = s.charAt(k + 1);
+                        char c2 = s.charAt(k + 2);
+                        int h = fromHexDigit(c1) << 4 | fromHexDigit(c2);
+                        if (h >= 0) {
+                            k += 2;
+                            c = (char) h;
+                        }
+                    }
+                }
+                r.append(c);
+            }
+            /* step 7 */
+            return r.toString();
+        }
+    }
+
     private static double readDecimalLiteralPrefix(String s, int start, int end) {
         final int Infinity_length = "Infinity".length();
 
@@ -673,15 +703,14 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
             assert RESERVED_LO == low(";/?:&=+$,");
             assert RESERVED_HI == high("@");
 
-            assert ALPHA_LO == URIFunctions.low("");
-            assert ALPHA_HI == URIFunctions
-                    .high("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            assert ALPHA_LO == low("");
+            assert ALPHA_HI == high("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-            assert DIGIT_LO == URIFunctions.low("0123456789");
-            assert DIGIT_HI == URIFunctions.high("");
+            assert DIGIT_LO == low("0123456789");
+            assert DIGIT_HI == high("");
 
-            assert MARK_LO == URIFunctions.low("-.!*'()");
-            assert MARK_HI == URIFunctions.high("_~");
+            assert MARK_LO == low("-.!*'()");
+            assert MARK_HI == high("_~");
         }
 
         private static int readNibble(char c) {
@@ -709,6 +738,8 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
+         * Runtime Semantics: Encode Abstract Operation
+         * <p>
          * Returns encoded string or {@code null} on error
          */
         private static String encode(String s, long low, long high) {
@@ -762,6 +793,8 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
+         * Runtime Semantics: Decode Abstract Operation
+         * <p>
          * Returns decoded string or {@code null} on error
          */
         private static String decode(String s, long low, long high) {

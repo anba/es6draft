@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -28,7 +29,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -59,23 +59,26 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
      * 15.4.5.3 Properties of Array Iterator Instances
      */
     private static class ArrayIterator extends OrdinaryObject {
-        /**
-         * [[IteratedObject]]
-         */
+        /** [[IteratedObject]] */
         ScriptObject iteratedObject;
 
-        /**
-         * [[ArrayIteratorNextIndex]]
-         */
+        /** [[ArrayIteratorNextIndex]] */
         long nextIndex;
 
-        /**
-         * [[ArrayIterationKind]]
-         */
+        /** [[ArrayIterationKind]] */
         ArrayIterationKind kind;
 
         ArrayIterator(Realm realm) {
             super(realm);
+        }
+    }
+
+    private static class ArrayIteratorAllocator implements ObjectAllocator<ArrayIterator> {
+        static final ObjectAllocator<ArrayIterator> INSTANCE = new ArrayIteratorAllocator();
+
+        @Override
+        public ArrayIterator newInstance(Realm realm) {
+            return new ArrayIterator(realm);
         }
     }
 
@@ -84,12 +87,14 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
      */
     public static OrdinaryObject CreateArrayIterator(ExecutionContext cx, ScriptObject array,
             ArrayIterationKind kind) {
-        // ObjectCreate()
-        ArrayIterator iterator = new ArrayIterator(cx.getRealm());
-        iterator.setPrototype(cx.getIntrinsic(Intrinsics.ArrayIteratorPrototype));
+        /* steps 1-2 (omitted) */
+        /* steps 3-6 */
+        ArrayIterator iterator = ObjectCreate(cx, Intrinsics.ArrayIteratorPrototype,
+                ArrayIteratorAllocator.INSTANCE);
         iterator.iteratedObject = array;
         iterator.nextIndex = 0;
         iterator.kind = kind;
+        /* step 7 */
         return iterator;
     }
 
@@ -113,24 +118,24 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
             if (!Type.isObject(thisValue)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* step 3 */
             if (!(thisValue instanceof ArrayIterator)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             ArrayIterator itr = (ArrayIterator) thisValue;
+            /* step 4-6 */
             ScriptObject array = itr.iteratedObject;
             long index = itr.nextIndex;
             ArrayIterationKind itemKind = itr.kind;
+            /* step 7 */
             Object lenValue = Get(cx, array, "length");
+            /* step 8-9 */
             long len = ToUint32(cx, lenValue);
-
-            // index == +Infinity => index == -1
-            if (index < 0) {
-                return CreateItrResultObject(cx, Undefined.UNDEFINED, true);
-            }
-
+            /* step 10 */
             if (itemKind == ArrayIterationKind.SparseKey
                     || itemKind == ArrayIterationKind.SparseValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
@@ -143,12 +148,16 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                     }
                 }
             }
+            /* step 11 */
             if (index >= len) {
-                itr.nextIndex = -1; // actually +Infinity!
-                return CreateItrResultObject(cx, Undefined.UNDEFINED, true);
+                itr.nextIndex = Long.MAX_VALUE; // = +Infinity
+                return CreateItrResultObject(cx, UNDEFINED, true);
             }
+            /* step 12 */
             String elementKey = ToString(index);
+            /* step 13 */
             itr.nextIndex = index + 1;
+            /* step 14 */
             Object elementValue = null;
             if (itemKind == ArrayIterationKind.Value || itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseValue
@@ -157,6 +166,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             }
             if (itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
+                /* step 15 */
                 assert elementValue != null;
                 ScriptObject result = ArrayCreate(cx, 2);
                 result.defineOwnProperty(cx, "0", new PropertyDescriptor(elementKey, true, true,
@@ -166,8 +176,10 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                 return CreateItrResultObject(cx, result, false);
             } else if (itemKind == ArrayIterationKind.Key
                     || itemKind == ArrayIterationKind.SparseKey) {
+                /* step 16 */
                 return CreateItrResultObject(cx, elementKey, false);
             } else {
+                /* steps 17-18 */
                 assert itemKind == ArrayIterationKind.Value
                         || itemKind == ArrayIterationKind.SparseValue;
                 assert elementValue != null;

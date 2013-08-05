@@ -59,6 +59,11 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /** [[Prototype]] */
+    public final ScriptObject getPrototype() {
+        return prototype;
+    }
+
+    /** [[Prototype]] */
     public final void setPrototype(ScriptObject prototype) {
         this.prototype = prototype;
     }

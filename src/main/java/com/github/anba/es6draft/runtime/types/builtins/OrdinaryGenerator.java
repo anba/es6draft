@@ -53,6 +53,19 @@ public class OrdinaryGenerator extends FunctionObject {
         }
     }
 
+    @Override
+    public OrdinaryGenerator rebind(ExecutionContext cx, ScriptObject newHomeObject) {
+        assert isInitialised() : "uninitialised function object";
+        Object methodName = getMethodName();
+        if (methodName instanceof String) {
+            return GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
+                    getInheritance(cx), newHomeObject, (String) methodName);
+        }
+        assert methodName instanceof ExoticSymbol;
+        return GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
+                getInheritance(cx), newHomeObject, (ExoticSymbol) methodName);
+    }
+
     /**
      * 8.3.16.1 [[Call]] Internal Method
      */

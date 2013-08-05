@@ -53,7 +53,10 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        /* step 1 (omitted) */
+        /* steps 2-4 */
         double n = (args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0);
+        /* step 5 */
         if (thisValue instanceof NumberObject) {
             NumberObject obj = (NumberObject) thisValue;
             if (!obj.isInitialised()) {
@@ -61,6 +64,7 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
                 return obj;
             }
         }
+        /* step 6 */
         return n;
     }
 
@@ -193,14 +197,15 @@ public class NumberConstructor extends BuiltinFunction implements Constructor, I
             if (!Type.isNumber(number)) {
                 return false;
             }
-            return ToInteger(cx, number) == Type.numberValue(number);
+            double num = Type.numberValue(number);
+            return ToInteger(num) == num;
         }
 
         /**
          * 15.7.2.14 Number.toInteger (number)
          */
         @Function(name = "toInteger", arity = 1)
-        public static Object toInt(ExecutionContext cx, Object thisValue, Object number) {
+        public static Object toInteger(ExecutionContext cx, Object thisValue, Object number) {
             return ToInteger(cx, number);
         }
 

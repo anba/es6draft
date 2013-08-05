@@ -72,12 +72,17 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "add", arity = 1)
         public static Object set(ExecutionContext cx, Object thisValue, Object value) {
+            /* steps 1-4 */
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
+            /* step 5 */
             WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            /* step ? */
             if (!Type.isObject(value)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* steps 6-7 */
             entries.put(value, Boolean.TRUE);
+            /* step 6.a.i, 8 */
             return s;
         }
 
@@ -86,9 +91,13 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "clear", arity = 0)
         public static Object clear(ExecutionContext cx, Object thisValue) {
+            /* steps 1-4 */
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
+            /* step 5 */
             WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            /* step 6 */
             entries.clear();
+            /* step 7 */
             return UNDEFINED;
         }
 
@@ -97,11 +106,15 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "delete", arity = 1)
         public static Object delete(ExecutionContext cx, Object thisValue, Object value) {
+            /* steps 1-4 */
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
+            /* step 5 */
             WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            /* step ? */
             if (!Type.isObject(value)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* steps 6-7 */
             return entries.remove(value);
         }
 
@@ -110,11 +123,15 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "has", arity = 1)
         public static Object has(ExecutionContext cx, Object thisValue, Object value) {
+            /* steps 1-4 */
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
+            /* step 5 */
             WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            /* step ? */
             if (!Type.isObject(value)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* steps 6-7 */
             return entries.containsKey(value);
         }
 

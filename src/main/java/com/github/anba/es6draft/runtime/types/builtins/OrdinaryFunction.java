@@ -56,6 +56,19 @@ public class OrdinaryFunction extends FunctionObject {
         }
     }
 
+    @Override
+    public OrdinaryFunction rebind(ExecutionContext cx, ScriptObject newHomeObject) {
+        assert isInitialised() : "uninitialised function object";
+        Object methodName = getMethodName();
+        if (methodName instanceof String) {
+            return FunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
+                    getInheritance(cx), newHomeObject, (String) methodName);
+        }
+        assert methodName instanceof ExoticSymbol;
+        return FunctionCreate(cx, getFunctionKind(), getFunction(), getScope(), getInheritance(cx),
+                newHomeObject, (ExoticSymbol) methodName);
+    }
+
     /**
      * 8.3.16.1 [[Call]] Internal Method
      */

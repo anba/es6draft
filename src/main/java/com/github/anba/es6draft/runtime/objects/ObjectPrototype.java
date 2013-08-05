@@ -78,16 +78,21 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
             if (Type.isUndefined(thisValue)) {
                 return "[object Undefined]";
             }
+            /* step 2 */
             if (Type.isNull(thisValue)) {
                 return "[object Null]";
             }
+            /* step 3 */
             ScriptObject o = ToObject(cx, thisValue);
+            /* step 4 */
             if (o instanceof ExoticSymbol) {
                 return "[object Symbol]";
             }
+            /* steps 5-16 */
             String builtinTag;
             if (o instanceof ExoticArray) {
                 builtinTag = "Array";
@@ -115,8 +120,10 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 builtinTag = "Object";
             }
-            String tag;
+            /* steps 17-18 */
             boolean hasTag = HasProperty(cx, o, BuiltinSymbol.toStringTag.get());
+            /* steps 19-20 */
+            String tag;
             if (!hasTag) {
                 tag = builtinTag;
             } else {
@@ -135,6 +142,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                     tag = "~" + tag;
                 }
             }
+            /* step 21 */
             return "[object " + tag + "]";
         }
 
@@ -150,6 +158,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
+            /* steps 1-3 */
             return Invoke(cx, thisValue, "toString");
         }
 
@@ -158,7 +167,9 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
             ScriptObject o = ToObject(cx, thisValue);
+            /* step 2 */
             return o;
         }
 
@@ -167,8 +178,11 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "hasOwnProperty", arity = 1)
         public static Object hasOwnProperty(ExecutionContext cx, Object thisValue, Object v) {
+            /* steps 1-2 */
             Object p = ToPropertyKey(cx, v);
+            /* steps 3-4 */
             ScriptObject o = ToObject(cx, thisValue);
+            /* step 5 */
             if (p instanceof String) {
                 return o.hasOwnProperty(cx, (String) p);
             } else {
@@ -181,11 +195,14 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "isPrototypeOf", arity = 1)
         public static Object isPrototypeOf(ExecutionContext cx, Object thisValue, Object v) {
+            /* step 1 */
             if (!Type.isObject(v)) {
                 return false;
             }
             ScriptObject w = Type.objectValue(v);
+            /* steps 2-3 */
             ScriptObject o = ToObject(cx, thisValue);
+            /* step 4 */
             for (;;) {
                 w = w.getInheritance(cx);
                 if (w == null) {
@@ -202,12 +219,17 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "propertyIsEnumerable", arity = 1)
         public static Object propertyIsEnumerable(ExecutionContext cx, Object thisValue, Object v) {
+            /* steps 1-2 */
             String p = ToFlatString(cx, v);
+            /* steps 3-4 */
             ScriptObject o = ToObject(cx, thisValue);
+            /* step 5 */
             Property desc = o.getOwnProperty(cx, p);
+            /* step 6 */
             if (desc == null) {
                 return false;
             }
+            /* step 7 */
             return desc.isEnumerable();
         }
     }
@@ -221,18 +243,20 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
 
         /**
          * B.2.2.1 Object.prototype.__proto__<br>
-         * get Object.prototype.__proto__
+         * B.2.2.1.1 get Object.prototype.__proto__
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Getter)
         public static Object getPrototype(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
             ScriptObject o = ToObject(cx, thisValue);
+            /* step 3 */
             ScriptObject p = o.getInheritance(cx);
             return (p != null ? p : NULL);
         }
 
         /**
          * B.2.2.1 Object.prototype.__proto__<br>
-         * set Object.prototype.__proto__
+         * B.2.2.1.2 set Object.prototype.__proto__
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
         public static Object setPrototype(ExecutionContext cx, Object thisValue, Object p) {

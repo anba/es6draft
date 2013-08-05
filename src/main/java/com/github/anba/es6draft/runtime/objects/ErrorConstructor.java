@@ -57,6 +57,8 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
         ExecutionContext calleeContext = calleeContext();
         Object message = args.length > 0 ? args[0] : UNDEFINED;
 
+        /* step 1 (omitted) */
+        /* steps 2-4 */
         ErrorObject obj;
         if (!Type.isObject(thisValue) || !(thisValue instanceof ErrorObject)
                 || ((ErrorObject) thisValue).isInitialised()) {
@@ -66,13 +68,17 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
             obj = (ErrorObject) thisValue;
         }
 
+        /* step 5 */
         obj.initialise();
 
+        /* step 6 */
         if (!Type.isUndefined(message)) {
             CharSequence msg = ToString(calleeContext, message);
             PropertyDescriptor msgDesc = new PropertyDescriptor(msg, true, false, true);
             DefinePropertyOrThrow(calleeContext, obj, "message", msgDesc);
         }
+
+        /* extension: fileName and lineNumber arguments */
         if (args.length > 1) {
             CharSequence fileName = ToString(calleeContext, args[1]);
             CreateOwnDataProperty(calleeContext, obj, "fileName", fileName);
@@ -82,6 +88,7 @@ public class ErrorConstructor extends BuiltinFunction implements Constructor, In
             CreateOwnDataProperty(calleeContext, obj, "lineNumber", lineNumber);
         }
 
+        /* step 7 */
         return obj;
     }
 

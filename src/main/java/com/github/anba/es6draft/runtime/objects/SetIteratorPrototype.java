@@ -57,7 +57,6 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
      */
     private static class SetIterator extends OrdinaryObject {
         /** [[IteratedSet]] */
-        @SuppressWarnings("unused")
         SetObject set;
 
         /** [[SetNextIndex]] */
@@ -88,12 +87,17 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
      */
     public static OrdinaryObject CreateSetIterator(ExecutionContext cx, SetObject set,
             SetIterationKind kind) {
+        /* steps 1-3 (not applicable) */
+        /* step 4 */
         LinkedMap<Object, Void> entries = set.getSetData();
+        /* step 6 */
         SetIterator iterator = ObjectCreate(cx, Intrinsics.SetIteratorPrototype,
                 SetIteratorAllocator.INSTANCE);
+        /* steps 6-9 */
         iterator.set = set;
         iterator.nextIndex = 0;
         iterator.iterator = entries.iterator();
+        /* step 10 */
         return iterator;
     }
 
@@ -118,17 +122,27 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
+            /* step 2 */
             if (!Type.isObject(thisValue)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* step 3 */
             if (!(thisValue instanceof SetIterator)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
+            /* step 1 */
             SetIterator o = (SetIterator) thisValue;
-            // ScriptObject m = o.set;
+            /* step 4 */
+            SetObject s = o.set;
+            /* step 5 */
             // int index = o.nextIndex;
+            /* step 6 */
             SetIterationKind itemKind = o.iterationKind;
+            /* step 7 */
+            assert s.getSetData() != null;
+            /* step 8 */
             Iterator<Entry<Object, Void>> itr = o.iterator;
+            /* step 9 */
             if (itr.hasNext()) {
                 Entry<Object, Void> e = itr.next();
                 assert e != null;
@@ -140,6 +154,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
                 }
                 return CreateItrResultObject(cx, e.getKey(), false);
             }
+            /* step 10 */
             return CreateItrResultObject(cx, UNDEFINED, true);
         }
 

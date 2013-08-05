@@ -66,7 +66,9 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         @Function(name = "parse", arity = 2)
         public static Object parse(ExecutionContext cx, Object thisValue, Object text,
                 Object reviver) {
+            /* steps 1-2 */
             CharSequence jtext = ToString(cx, text);
+            /* steps 3-6 */
             Object unfiltered;
             try {
                 JSONParser parser = new JSONParser(cx, jtext);
@@ -74,11 +76,13 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             } catch (ParserException e) {
                 throw throwSyntaxError(cx, Messages.Key.InvalidJSONLiteral);
             }
+            /* step 7 */
             if (IsCallable(reviver)) {
                 ScriptObject root = ObjectCreate(cx, Intrinsics.ObjectPrototype);
                 CreateOwnDataProperty(cx, root, "", unfiltered);
                 return Walk(cx, (Callable) reviver, root, "");
             }
+            /* step 8 */
             return unfiltered;
         }
 
@@ -88,10 +92,14 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         @Function(name = "stringify", arity = 3)
         public static Object stringify(ExecutionContext cx, Object thisValue, Object value,
                 Object replacer, Object space) {
+            /* step 1 */
             HashSet<ScriptObject> stack = new HashSet<>();
+            /* step 2 */
             String indent = "";
+            /* step 3 */
             LinkedHashSet<String> propertyList = null;
             Callable replacerFunction = null;
+            /* step 4 */
             if (Type.isObject(replacer)) {
                 if (IsCallable(replacer)) {
                     replacerFunction = (Callable) replacer;
@@ -106,7 +114,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                         if (Type.isString(v)) {
                             item = Type.stringValue(v).toString();
                         } else if (Type.isNumber(v)) {
-                            item = ToFlatString(cx, v);
+                            item = ToString(Type.numberValue(v));
                         } else if (Type.isObject(v)) {
                             ScriptObject o = Type.objectValue(v);
                             if (o instanceof ExoticString || o instanceof NumberObject) {
@@ -119,6 +127,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                     }
                 }
             }
+            /* step 5 */
             if (Type.isObject(space)) {
                 ScriptObject o = Type.objectValue(space);
                 if (o instanceof NumberObject) {
@@ -127,10 +136,10 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                     space = ToString(cx, space);
                 }
             }
+            /* steps 6-8 */
             String gap;
             if (Type.isNumber(space)) {
-                int nspace = (int) Math
-                        .max(0, Math.min(10, ToInteger(cx, Type.numberValue(space))));
+                int nspace = (int) Math.max(0, Math.min(10, ToInteger(Type.numberValue(space))));
                 char[] a = new char[nspace];
                 Arrays.fill(a, ' ');
                 gap = new String(a);
@@ -140,8 +149,11 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             } else {
                 gap = "";
             }
+            /* step 9 */
             ScriptObject wrapper = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+            /* step 10 */
             CreateOwnDataProperty(cx, wrapper, "", value);
+            /* step 11 */
             String result = Str(cx, stack, propertyList, replacerFunction, indent, gap, "", wrapper);
             if (result == null) {
                 return UNDEFINED;
@@ -155,10 +167,13 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
      */
     public static Object Walk(ExecutionContext cx, Callable reviver, ScriptObject holder,
             String name) {
+        /* steps 1-2 */
         Object val = Get(cx, holder, name);
+        /* step 3 */
         if (Type.isObject(val)) {
             ScriptObject objVal = Type.objectValue(val);
             if (objVal instanceof ExoticArray) {
+                /* step 3.a */
                 long len = ToUint32(cx, Get(cx, objVal, "length"));
                 for (long i = 0; i < len; ++i) {
                     Object newElement = Walk(cx, reviver, objVal, ToString(i));
@@ -170,6 +185,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                     }
                 }
             } else {
+                /* step 3.b */
                 Iterable<String> keys = GetOwnEnumerablePropertyNames(cx, objVal);
                 for (String p : keys) {
                     Object newElement = Walk(cx, reviver, objVal, p);
@@ -182,6 +198,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 }
             }
         }
+        /* step 4 */
         return reviver.call(cx, holder, name, val);
     }
 
@@ -191,7 +208,9 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
     public static String Str(ExecutionContext cx, Set<ScriptObject> stack,
             Set<String> propertyList, Callable replacerFunction, String indent, String gap,
             String key, ScriptObject holder) {
+        /* steps 1-2 */
         Object value = Get(cx, holder, key);
+        /* step 3 */
         if (Type.isObject(value)) {
             ScriptObject objValue = Type.objectValue(value);
             Object toJSON = Get(cx, objValue, "toJSON");
@@ -199,9 +218,11 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 value = ((Callable) toJSON).call(cx, value, key);
             }
         }
+        /* step 4 */
         if (replacerFunction != null) {
             value = replacerFunction.call(cx, holder, key, value);
         }
+        /* step 5 */
         if (Type.isObject(value)) {
             ScriptObject o = Type.objectValue(value);
             if (o instanceof NumberObject) {
@@ -212,6 +233,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 value = ((BooleanObject) value).getBooleanData();
             }
         }
+        /* steps 6-12 */
         switch (Type.of(value)) {
         case Null:
             return "null";
@@ -251,7 +273,9 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
      */
     public static String Quote(CharSequence value) {
         StringBuilder product = new StringBuilder(value.length() + 2);
+        /* step 1 */
         product.append('"');
+        /* step 2 */
         for (int i = 0, len = value.length(); i < len; ++i) {
             char c = value.charAt(i);
             switch (c) {
@@ -286,7 +310,9 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 }
             }
         }
+        /* step 3 */
         product.append('"');
+        /* step 4 */
         return product.toString();
     }
 
@@ -295,19 +321,26 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
      */
     public static String JO(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
+        /* step 1 */
         if (stack.contains(value)) {
             throw throwTypeError(cx, Messages.Key.CyclicValue);
         }
+        /* step 2 */
         stack.add(value);
+        /* step 3 */
         String stepback = indent;
+        /* step 4 */
         indent = indent + gap;
+        /* steps 5-6 */
         Iterable<String> k;
         if (propertyList != null) {
             k = propertyList;
         } else {
             k = GetOwnEnumerablePropertyNames(cx, value);
         }
+        /* step 7 */
         List<String> partial = new ArrayList<>();
+        /* step 8 */
         for (String p : k) {
             String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap, p, value);
             if (strP != null) {
@@ -320,6 +353,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 partial.add(member.toString());
             }
         }
+        /* steps 9-10 */
         String _final;
         if (partial.isEmpty()) {
             _final = "{}";
@@ -341,7 +375,10 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 _final = properties.toString();
             }
         }
+        /* step 11 */
         stack.remove(value);
+        /* step 12 (not applicable) */
+        /* step 13 */
         return _final;
     }
 
@@ -350,14 +387,21 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
      */
     public static String JA(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
+        /* step 1 */
         if (stack.contains(value)) {
             throw throwTypeError(cx, Messages.Key.CyclicValue);
         }
+        /* step 2 */
         stack.add(value);
+        /* step 3 */
         String stepback = indent;
+        /* step 4 */
         indent = indent + gap;
+        /* step 5 */
         List<String> partial = new ArrayList<>();
+        /* steps 6-7 */
         long len = ToUint32(cx, Get(cx, value, "length"));
+        /* steps 8-9 */
         for (long index = 0; index < len; ++index) {
             String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap,
                     ToString(index), value);
@@ -367,6 +411,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 partial.add(strP);
             }
         }
+        /* steps 10-11 */
         String _final;
         if (partial.isEmpty()) {
             _final = "[]";
@@ -388,7 +433,10 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 _final = properties.toString();
             }
         }
+        /* step 12 */
         stack.remove(value);
+        /* step 13 (not applicable) */
+        /* step 14 */
         return _final;
     }
 }

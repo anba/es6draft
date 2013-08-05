@@ -56,21 +56,14 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
      * 15.14.5.3 Properties of Map Iterator Instances
      */
     private static class MapIterator extends OrdinaryObject {
-        /**
-         * [[Map]]
-         */
-        @SuppressWarnings("unused")
+        /** [[Map]] */
         MapObject map;
 
-        /**
-         * [[MapNextIndex]]
-         */
+        /** [[MapNextIndex]] */
         @SuppressWarnings("unused")
         int nextIndex;
 
-        /**
-         * [[MapIterationKind]]
-         */
+        /** [[MapIterationKind]] */
         MapIterationKind iterationKind;
 
         Iterator<Entry<Object, Object>> iterator;
@@ -94,13 +87,18 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
      */
     public static OrdinaryObject CreateMapIterator(ExecutionContext cx, MapObject m,
             MapIterationKind kind) {
+        /* steps 1-3 (not applicable) */
+        /* step 4 */
         LinkedMap<Object, Object> entries = m.getMapData();
+        /* step 5 */
         MapIterator iterator = ObjectCreate(cx, Intrinsics.MapIteratorPrototype,
                 MapIteratorAllocator.INSTANCE);
+        /* steps 6-8 */
         iterator.map = m;
         iterator.nextIndex = 0;
         iterator.iterationKind = kind;
         iterator.iterator = entries.iterator();
+        /* step 9 */
         return iterator;
     }
 
@@ -125,17 +123,27 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
+            /* step 2 */
             if (!Type.isObject(thisValue)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* step 3 */
             if (!(thisValue instanceof MapIterator)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
+            /* step 1 */
             MapIterator o = (MapIterator) thisValue;
-            // ScriptObject m = o.map;
+            /* step 4 */
+            MapObject m = o.map;
+            /* step 5 */
             // int index = o.nextIndex;
+            /* step 6 */
             MapIterationKind itemKind = o.iterationKind;
+            /* step 7 */
+            assert m.getMapData() != null;
+            /* step 8 */
             Iterator<Entry<Object, Object>> itr = o.iterator;
+            /* step 9 */
             if (itr.hasNext()) {
                 Entry<Object, Object> e = itr.next();
                 assert e != null;
@@ -153,6 +161,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
                 }
                 return CreateItrResultObject(cx, result, false);
             }
+            /* step 10 */
             return CreateItrResultObject(cx, UNDEFINED, true);
         }
 

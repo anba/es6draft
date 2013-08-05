@@ -50,7 +50,10 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        /* step 1 (omitted) */
+        /* step 2 */
         boolean b = (args.length > 0 ? ToBoolean(args[0]) : false);
+        /* step 3 */
         if (thisValue instanceof BooleanObject) {
             BooleanObject obj = (BooleanObject) thisValue;
             if (!obj.isInitialised()) {
@@ -58,6 +61,7 @@ public class BooleanConstructor extends BuiltinFunction implements Constructor, 
                 return obj;
             }
         }
+        /* step 4 */
         return b;
     }
 
