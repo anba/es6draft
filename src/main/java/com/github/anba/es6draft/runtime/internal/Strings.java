@@ -44,9 +44,8 @@ public final class Strings {
      * Remove leading whitespace
      */
     public static String trimLeft(String s) {
-        int length = s.length();
-        int start = 0, end = length;
-        for (; start < length; ++start) {
+        int start = 0, end = s.length();
+        for (; start < end; ++start) {
             char c = s.charAt(start);
             if (!(isWhitespace(c) || isLineTerminator(c))) {
                 break;
@@ -64,9 +63,8 @@ public final class Strings {
      * Remove leading and trailing whitespace
      */
     public static String trim(String s) {
-        int length = s.length();
-        int start = 0, end = length;
-        for (; start < length; ++start) {
+        int start = 0, end = s.length();
+        for (; start < end; ++start) {
             char c = s.charAt(start);
             if (!(isWhitespace(c) || isLineTerminator(c))) {
                 break;
