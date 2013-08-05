@@ -22,9 +22,12 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Map.Entry;
@@ -32,10 +35,10 @@ import java.util.Map.Entry;
 import com.github.anba.es6draft.repl.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
@@ -143,6 +146,9 @@ public final class Properties {
             Getter, Setter
         }
 
+        /**
+         * Accessor type
+         */
         Type type();
 
         /**
@@ -151,6 +157,41 @@ public final class Properties {
          */
         Attributes attributes() default @Attributes(writable = false /*unused*/,
                 enumerable = false, configurable = true);
+    }
+
+    /**
+     * Built-in function property as an alias function
+     */
+    @Documented
+    @Target({ ElementType.METHOD })
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface AliasFunction {
+        /**
+         * Function name
+         */
+        String name();
+
+        /**
+         * Function symbol
+         */
+        BuiltinSymbol symbol() default BuiltinSymbol.NONE;
+
+        /**
+         * Function attributes, default to <code>{[[Writable]]: true, [[Enumerable]]:
+         * false, [[Configurable]]: true}</code>
+         */
+        Attributes attributes() default @Attributes(writable = true, enumerable = false,
+                configurable = true);
+    }
+
+    /**
+     * Built-in function property as an alias function
+     */
+    @Documented
+    @Target({ ElementType.METHOD })
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface AliasFunctions {
+        AliasFunction[] value();
     }
 
     @Documented
@@ -168,12 +209,24 @@ public final class Properties {
     @Target(ElementType.PARAMETER)
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface Optional {
+        /**
+         * Default runtime type
+         */
         Default value() default Default.Undefined;
 
+        /**
+         * Default boolean value, only applicable if {@code value()} is {@link Default#Boolean}
+         */
         boolean booleanValue() default false;
 
+        /**
+         * Default string value, only applicable if {@code value()} is {@link Default#String}
+         */
         String stringValue() default "";
 
+        /**
+         * Default number value, only applicable if {@code value()} is {@link Default#Number}
+         */
         double numberValue() default Double.NaN;
 
         enum Default {
@@ -220,6 +273,7 @@ public final class Properties {
         Map<Value, Object> values = null;
         Map<Function, MethodHandle> functions = null;
         Map<Accessor, MethodHandle> accessors = null;
+        List<Entry<AliasFunction, Function>> aliases = null;
     }
 
     /**
@@ -229,9 +283,9 @@ public final class Properties {
     public static void createProperties(ScriptObject owner, ExecutionContext cx, Class<?> holder) {
         if (holder.getName().startsWith(INTERNAL_PACKAGE)) {
             assert owner instanceof OrdinaryObject;
-            createInternalProperties((OrdinaryObject) owner, cx.getRealm(), holder);
+            createInternalProperties((OrdinaryObject) owner, cx, holder);
         } else {
-            createExternalProperties(owner, cx.getRealm(), holder);
+            createExternalProperties(owner, cx, holder);
         }
     }
 
@@ -445,10 +499,10 @@ public final class Properties {
         }
     }
 
-    private static void createExternalProperties(ScriptObject owner, Realm realm, Class<?> holder) {
+    private static void createExternalProperties(ScriptObject owner, ExecutionContext cx,
+            Class<?> holder) {
         ObjectLayout layout = externalLayouts.get(holder);
         if (layout.functions != null) {
-            ExecutionContext cx = realm.defaultContext();
             Converter converter = new Converter(cx);
             for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
                 Function function = entry.getKey();
@@ -458,39 +512,44 @@ public final class Properties {
                 String name = function.name();
                 int arity = function.arity();
                 Attributes attrs = function.attributes();
-                NativeFunction fun = new NativeFunction(realm, name, arity, handle);
+                NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, handle);
                 owner.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
             }
         }
     }
 
-    private static void createInternalProperties(OrdinaryObject owner, Realm realm, Class<?> holder) {
+    private static void createInternalProperties(OrdinaryObject owner, ExecutionContext cx,
+            Class<?> holder) {
         ObjectLayout layout = internalLayouts.get(holder);
-        if (layout.extension != null && !realm.isEnabled(layout.extension.value())) {
+        if (layout.extension != null && !cx.getRealm().isEnabled(layout.extension.value())) {
             // return if extension is not enabled
             return;
         }
         if (layout.proto != null) {
-            createPrototype(owner, realm, layout.proto, layout.protoValue);
+            createPrototype(owner, cx, layout.proto, layout.protoValue);
         }
         if (layout.values != null) {
             for (Entry<Value, Object> entry : layout.values.entrySet()) {
-                createValue(owner, realm, entry.getKey(), entry.getValue());
+                createValue(owner, cx, entry.getKey(), entry.getValue());
             }
         }
         if (layout.functions != null) {
             for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
-                createFunction(owner, realm, entry.getKey(), entry.getValue());
+                createFunction(owner, cx, entry.getKey(), entry.getValue());
             }
         }
         if (layout.accessors != null) {
             Map<String, PropertyDescriptor> accessors1 = new LinkedHashMap<>();
             Map<BuiltinSymbol, PropertyDescriptor> accessors2 = new EnumMap<>(BuiltinSymbol.class);
             for (Entry<Accessor, MethodHandle> entry : layout.accessors.entrySet()) {
-                createAccessor(owner, realm, entry.getKey(), entry.getValue(), accessors1,
-                        accessors2);
+                createAccessor(owner, cx, entry.getKey(), entry.getValue(), accessors1, accessors2);
             }
-            completeAccessors(owner, realm, accessors1, accessors2);
+            completeAccessors(owner, cx, accessors1, accessors2);
+        }
+        if (layout.aliases != null) {
+            for (Entry<AliasFunction, Function> entry : layout.aliases) {
+                createAliasFunction(owner, cx, entry.getKey(), entry.getValue());
+            }
         }
     }
 
@@ -525,37 +584,59 @@ public final class Properties {
                 if (!Modifier.isStatic(field.getModifiers()))
                     continue;
                 Value value = field.getAnnotation(Value.class);
+                Prototype prototype = field.getAnnotation(Prototype.class);
+                assert value == null || prototype == null;
+
                 if (value != null) {
+                    assert Modifier.isFinal(field.getModifiers());
                     if (layout.values == null) {
                         layout.values = new LinkedHashMap<>();
                     }
                     layout.values.put(value, getRawValue(field));
-                } else {
-                    Prototype prototype = field.getAnnotation(Prototype.class);
-                    if (prototype != null) {
-                        assert !hasProto;
-                        hasProto = true;
-                        layout.proto = prototype;
-                        layout.protoValue = getRawValue(field);
-                    }
+                }
+                if (prototype != null) {
+                    assert Modifier.isFinal(field.getModifiers());
+                    assert !hasProto;
+                    hasProto = true;
+                    layout.proto = prototype;
+                    layout.protoValue = getRawValue(field);
                 }
             }
             for (Method method : holder.getDeclaredMethods()) {
                 if (!Modifier.isStatic(method.getModifiers()))
                     continue;
                 Function function = method.getAnnotation(Function.class);
+                Accessor accessor = method.getAnnotation(Accessor.class);
+                AliasFunction alias = method.getAnnotation(AliasFunction.class);
+                AliasFunctions aliases = method.getAnnotation(AliasFunctions.class);
+                assert function == null || accessor == null;
+                assert alias == null || function != null;
+                assert aliases == null || function != null;
+
                 if (function != null) {
                     if (layout.functions == null) {
                         layout.functions = new LinkedHashMap<>();
                     }
                     layout.functions.put(function, getStaticMethodHandle(lookup, method));
-                } else {
-                    Accessor accessor = method.getAnnotation(Accessor.class);
-                    if (accessor != null) {
-                        if (layout.accessors == null) {
-                            layout.accessors = new LinkedHashMap<>();
-                        }
-                        layout.accessors.put(accessor, getStaticMethodHandle(lookup, method));
+                }
+                if (accessor != null) {
+                    if (layout.accessors == null) {
+                        layout.accessors = new LinkedHashMap<>();
+                    }
+                    layout.accessors.put(accessor, getStaticMethodHandle(lookup, method));
+                }
+                if (alias != null) {
+                    if (layout.aliases == null) {
+                        layout.aliases = new ArrayList<>();
+                    }
+                    layout.aliases.add(new SimpleImmutableEntry<>(alias, function));
+                }
+                if (aliases != null) {
+                    if (layout.aliases == null) {
+                        layout.aliases = new ArrayList<>();
+                    }
+                    for (AliasFunction a : aliases.value()) {
+                        layout.aliases.add(new SimpleImmutableEntry<>(a, function));
                     }
                 }
             }
@@ -762,47 +843,46 @@ public final class Properties {
         }
     }
 
-    private static void createPrototype(OrdinaryObject owner, Realm realm, Prototype proto,
+    private static void createPrototype(OrdinaryObject owner, ExecutionContext cx, Prototype proto,
             Object rawValue) {
-        Object value = resolveValue(realm, rawValue);
+        Object value = resolveValue(cx, rawValue);
         assert value == null || value instanceof ScriptObject;
         ScriptObject prototype = (ScriptObject) value;
         owner.setPrototype(prototype);
     }
 
-    private static void createValue(OrdinaryObject owner, Realm realm, Value val, Object rawValue) {
+    private static void createValue(OrdinaryObject owner, ExecutionContext cx, Value val,
+            Object rawValue) {
         String name = val.name();
         BuiltinSymbol sym = val.symbol();
         Attributes attrs = val.attributes();
-        Object value = resolveValue(realm, rawValue);
+        Object value = resolveValue(cx, rawValue);
         if (sym == BuiltinSymbol.NONE) {
-            owner.defineOwnProperty(realm.defaultContext(), name, propertyDescriptor(value, attrs));
+            owner.defineOwnProperty(cx, name, propertyDescriptor(value, attrs));
         } else {
-            owner.defineOwnProperty(realm.defaultContext(), sym.get(),
-                    propertyDescriptor(value, attrs));
+            owner.defineOwnProperty(cx, sym.get(), propertyDescriptor(value, attrs));
         }
     }
 
-    private static void createFunction(OrdinaryObject owner, Realm realm, Function function,
-            MethodHandle mh) {
+    private static void createFunction(OrdinaryObject owner, ExecutionContext cx,
+            Function function, MethodHandle mh) {
         String name = function.name();
         BuiltinSymbol sym = function.symbol();
         int arity = function.arity();
         Attributes attrs = function.attributes();
 
-        mh = MethodHandles.insertArguments(mh, 0, realm.defaultContext());
+        mh = MethodHandles.insertArguments(mh, 0, cx);
 
-        NativeFunction fun = new NativeFunction(realm, name, arity, mh);
+        NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, mh);
         if (sym == BuiltinSymbol.NONE) {
-            owner.defineOwnProperty(realm.defaultContext(), name, propertyDescriptor(fun, attrs));
+            owner.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
         } else {
-            owner.defineOwnProperty(realm.defaultContext(), sym.get(),
-                    propertyDescriptor(fun, attrs));
+            owner.defineOwnProperty(cx, sym.get(), propertyDescriptor(fun, attrs));
         }
     }
 
-    private static void createAccessor(OrdinaryObject owner, Realm realm, Accessor accessor,
-            MethodHandle mh, Map<String, PropertyDescriptor> accessors1,
+    private static void createAccessor(OrdinaryObject owner, ExecutionContext cx,
+            Accessor accessor, MethodHandle mh, Map<String, PropertyDescriptor> accessors1,
             Map<BuiltinSymbol, PropertyDescriptor> accessors2) {
         String name = accessor.name();
         BuiltinSymbol sym = accessor.symbol();
@@ -810,9 +890,9 @@ public final class Properties {
         int arity = (type == Accessor.Type.Getter ? 0 : 1);
         Attributes attrs = accessor.attributes();
 
-        mh = MethodHandles.insertArguments(mh, 0, realm.defaultContext());
+        mh = MethodHandles.insertArguments(mh, 0, cx);
 
-        NativeFunction fun = new NativeFunction(realm, name, arity, mh);
+        NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, mh);
         PropertyDescriptor desc;
         if (sym == BuiltinSymbol.NONE) {
             if ((desc = accessors1.get(name)) == null) {
@@ -834,26 +914,45 @@ public final class Properties {
         }
     }
 
-    private static void completeAccessors(OrdinaryObject owner, Realm realm,
+    private static void completeAccessors(OrdinaryObject owner, ExecutionContext cx,
             Map<String, PropertyDescriptor> accessors1,
             Map<BuiltinSymbol, PropertyDescriptor> accessors2) {
         if (accessors1 != null) {
-            ExecutionContext cx = realm.defaultContext();
             for (Entry<String, PropertyDescriptor> entry : accessors1.entrySet()) {
                 owner.defineOwnProperty(cx, entry.getKey(), entry.getValue());
             }
         }
         if (accessors2 != null) {
-            ExecutionContext cx = realm.defaultContext();
             for (Entry<BuiltinSymbol, PropertyDescriptor> entry : accessors2.entrySet()) {
                 owner.defineOwnProperty(cx, entry.getKey().get(), entry.getValue());
             }
         }
     }
 
-    private static Object resolveValue(Realm realm, Object value) {
+    private static void createAliasFunction(OrdinaryObject owner, ExecutionContext cx,
+            AliasFunction alias, Function function) {
+        String name = alias.name();
+        BuiltinSymbol sym = alias.symbol();
+        Attributes attrs = alias.attributes();
+
+        Property fun;
+        if (function.symbol() == BuiltinSymbol.NONE) {
+            fun = owner.getOwnProperty(cx, function.name());
+        } else {
+            fun = owner.getOwnProperty(cx, function.symbol().get());
+        }
+        assert fun != null;
+
+        if (sym == BuiltinSymbol.NONE) {
+            owner.defineOwnProperty(cx, name, propertyDescriptor(fun.getValue(), attrs));
+        } else {
+            owner.defineOwnProperty(cx, sym.get(), propertyDescriptor(fun.getValue(), attrs));
+        }
+    }
+
+    private static Object resolveValue(ExecutionContext cx, Object value) {
         if (value instanceof Intrinsics) {
-            value = realm.getIntrinsic((Intrinsics) value);
+            value = cx.getIntrinsic((Intrinsics) value);
         }
         return value;
     }
