@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecutionContext;
 
 import java.text.Collator;
+import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -230,6 +231,14 @@ public class Realm {
         // `"\u0001".localeCompare("\u0002") == -1` should yield true
         collator.setStrength(Collator.IDENTICAL);
         return collator;
+    }
+
+    /**
+     * Returns the locale specific list separator
+     */
+    public String getListSeparator() {
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
+        return symbols.getDecimalSeparator() == ',' ? ";" : ",";
     }
 
     private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
