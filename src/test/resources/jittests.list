@@ -146,6 +146,7 @@ tests/collections/bug-743101.js
 tests/basic/testStaticsInRegExp.js
 
 # Different maximal stack depth
+tests/auto-regress/bug743094.js
 tests/basic/bug522136.js
 
 # destructuring difference
