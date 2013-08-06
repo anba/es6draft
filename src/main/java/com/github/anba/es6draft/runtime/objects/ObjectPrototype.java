@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -251,7 +250,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             /* step 3 */
             ScriptObject p = o.getInheritance(cx);
-            return (p != null ? p : NULL);
+            return p != null ? p : NULL;
         }
 
         /**
@@ -259,21 +258,26 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
          * B.2.2.1.2 set Object.prototype.__proto__
          */
         @Accessor(name = "__proto__", type = Accessor.Type.Setter)
-        public static Object setPrototype(ExecutionContext cx, Object thisValue, Object p) {
-            ScriptObject o = ToObject(cx, thisValue);
-            if (!IsExtensible(cx, o)) {
-                throwTypeError(cx, Messages.Key.NotExtensible);
+        public static Object setPrototype(ExecutionContext cx, Object thisValue, Object proto) {
+            /* steps 1-2 */
+            Object o = CheckObjectCoercible(cx, thisValue);
+            /* step 3 */
+            if (!(Type.isNull(proto) || Type.isObject(proto))) {
+                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            boolean status = true;
-            if (Type.isNull(p)) {
-                status = o.setInheritance(cx, null);
-            } else if (Type.isObject(p)) {
-                status = o.setInheritance(cx, Type.objectValue(p));
+            /* step 4 */
+            if (!Type.isObject(o)) {
+                return proto;
             }
+            /* steps 5-6 */
+            ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
+            boolean status = Type.objectValue(o).setInheritance(cx, p);
+            /* step 7 */
             if (!status) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            return UNDEFINED;
+            /* step 8 */
+            return proto;
         }
     }
 }

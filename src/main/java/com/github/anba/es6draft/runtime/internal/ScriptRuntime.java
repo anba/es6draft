@@ -1185,7 +1185,6 @@ public final class ScriptRuntime {
         desc.setGetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        // FIXME: spec bug (not updated to use DefinePropertyOrThrow) (Bug 1417)
         DefinePropertyOrThrow(cx, object, propName, desc);
     }
 
@@ -1210,7 +1209,6 @@ public final class ScriptRuntime {
         desc.setGetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
-        // FIXME: spec bug (not updated to use DefinePropertyOrThrow) (Bug 1417)
         DefinePropertyOrThrow(cx, object, propName, desc);
     }
 
@@ -1607,9 +1605,10 @@ public final class ScriptRuntime {
      */
     public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
         if (cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
-            // TODO: check next draft update
-            // use Put() to comply with current SpiderMonkey/JSC behaviour
-            Put(cx, object, "__proto__", value, true);
+            if (!(Type.isNull(value) || Type.isObject(value))) {
+                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
+            }
+            object.setInheritance(cx, Type.isNull(value) ? null : Type.objectValue(value));
         } else {
             defineProperty(object, "__proto__", value, cx);
         }

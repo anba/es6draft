@@ -126,12 +126,11 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object o) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, o);
+            /* step 3 */
             ScriptObject proto = obj.getInheritance(cx);
-            if (proto != null) {
-                return proto;
-            }
-            return NULL;
+            return proto != null ? proto : NULL;
         }
 
         /**
@@ -140,14 +139,18 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
         public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
                 Object o, Object p) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, o);
+            /* steps 3-4 */
             Object key = ToPropertyKey(cx, p);
+            /* steps 5-6 */
             Property desc;
             if (key instanceof String) {
                 desc = obj.getOwnProperty(cx, (String) key);
             } else {
                 desc = obj.getOwnProperty(cx, (ExoticSymbol) key);
             }
+            /* step 7 */
             return FromPropertyDescriptor(cx, desc);
         }
 
@@ -156,8 +159,11 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "getOwnPropertyNames", arity = 1)
         public static Object getOwnPropertyNames(ExecutionContext cx, Object thisValue, Object o) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, o);
+            /* steps 3-7 */
             List<String> nameList = GetOwnPropertyNames(cx, obj);
+            /* step 8 */
             return CreateArrayFromList(cx, nameList);
         }
 
@@ -167,14 +173,18 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "create", arity = 2)
         public static Object create(ExecutionContext cx, Object thisValue, Object o,
                 Object properties) {
+            /* step 1 */
             if (!(Type.isObject(o) || Type.isNull(o))) {
                 throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             ScriptObject proto = Type.isObject(o) ? Type.objectValue(o) : null;
+            /* step 2 */
             ScriptObject obj = ObjectCreate(cx, proto);
+            /* step 3 */
             if (!Type.isUndefined(properties)) {
                 return ObjectDefineProperties(cx, obj, properties);
             }
+            /* step 4 */
             return obj;
         }
 
@@ -184,12 +194,17 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "defineProperty", arity = 3)
         public static Object defineProperty(ExecutionContext cx, Object thisValue, Object o,
                 Object p, Object attributes) {
+            /* step 1 */
             if (!Type.isObject(o)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* steps 2-3 */
             Object key = ToPropertyKey(cx, p);
+            /* steps 4-5 */
             PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
+            /* steps 6-7 */
             DefinePropertyOrThrow(cx, Type.objectValue(o), key, desc);
+            /* step 8 */
             return o;
         }
 
@@ -199,6 +214,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "defineProperties", arity = 2)
         public static Object defineProperties(ExecutionContext cx, Object thisValue, Object o,
                 Object properties) {
+            /* step 1 */
             return ObjectDefineProperties(cx, o, properties);
         }
 
@@ -207,13 +223,17 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "seal", arity = 1)
         public static Object seal(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
             if (!Type.isObject(o)) {
                 return o;
             }
+            /* steps 2-3 */
             boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Sealed);
+            /* step 4 */
             if (!status) {
                 throw throwTypeError(cx, Messages.Key.ObjectSealFailed);
             }
+            /* step 5 */
             return o;
         }
 
@@ -222,13 +242,17 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "freeze", arity = 1)
         public static Object freeze(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
             if (!Type.isObject(o)) {
                 return o;
             }
+            /* steps 2-3 */
             boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Frozen);
+            /* step 4 */
             if (!status) {
                 throw throwTypeError(cx, Messages.Key.ObjectFreezeFailed);
             }
+            /* step 5 */
             return o;
         }
 
@@ -237,13 +261,17 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
             if (!Type.isObject(o)) {
                 return o;
             }
+            /* steps 2-3 */
             boolean status = Type.objectValue(o).preventExtensions(cx);
+            /* step 4 */
             if (!status) {
                 throw throwTypeError(cx, Messages.Key.ObjectPreventExtensionsFailed);
             }
+            /* step 5 */
             return o;
         }
 
@@ -252,9 +280,11 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "isSealed", arity = 1)
         public static Object isSealed(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
             if (!Type.isObject(o)) {
                 return true;
             }
+            /* step 2 */
             return TestIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Sealed);
         }
 
@@ -263,9 +293,11 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "isFrozen", arity = 1)
         public static Object isFrozen(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
             if (!Type.isObject(o)) {
                 return true;
             }
+            /* step 2 */
             return TestIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Frozen);
         }
 
@@ -274,9 +306,11 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
             if (!Type.isObject(o)) {
                 return false;
             }
+            /* step 2 */
             return IsExtensible(cx, Type.objectValue(o));
         }
 
@@ -285,8 +319,11 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "keys", arity = 1)
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, o);
+            /* steps 3-7 */
             List<String> nameList = GetOwnEnumerablePropertyNames(cx, obj);
+            /* step 8 */
             return CreateArrayFromList(cx, nameList);
         }
 
@@ -295,7 +332,9 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "getOwnPropertyKeys", arity = 1)
         public static Object getOwnPropertyKeys(ExecutionContext cx, Object thisValue, Object o) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, o);
+            /* steps 3-4 */
             return obj.ownPropertyKeys(cx);
         }
 
@@ -304,6 +343,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
          */
         @Function(name = "is", arity = 2)
         public static Object is(ExecutionContext cx, Object thisValue, Object value1, Object value2) {
+            /* step 1 */
             return SameValue(value1, value2);
         }
 
@@ -389,21 +429,24 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
                 Object proto) {
-            if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
+            /* steps 1-2 */
+            CheckObjectCoercible(cx, o);
+            /* step 3 */
             if (!(Type.isNull(proto) || Type.isObject(proto))) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            boolean status;
-            if (Type.isNull(proto)) {
-                status = Type.objectValue(o).setInheritance(cx, null);
-            } else {
-                status = Type.objectValue(o).setInheritance(cx, Type.objectValue(proto));
+            /* step 4 */
+            if (!Type.isObject(o)) {
+                return o;
             }
+            /* steps 5-6 */
+            ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
+            boolean status = Type.objectValue(o).setInheritance(cx, p);
+            /* step 7 */
             if (!status) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
+            /* step 8 */
             return o;
         }
     }
@@ -475,8 +518,7 @@ public class ObjectConstructor extends BuiltinFunction implements Constructor, I
      */
     private static boolean isSuperBoundTo(Object value, ScriptObject source) {
         if (value instanceof FunctionObject) {
-            ScriptObject homeObject = ((FunctionObject) value).getHomeObject();
-            return (homeObject == source);
+            return ((FunctionObject) value).getHomeObject() == source;
         }
         return false;
     }
