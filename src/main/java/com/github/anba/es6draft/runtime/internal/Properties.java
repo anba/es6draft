@@ -29,8 +29,8 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import com.github.anba.es6draft.repl.StopExecutionException;
 import com.github.anba.es6draft.runtime.AbstractOperations;
@@ -505,17 +505,21 @@ public final class Properties {
         if (layout.functions != null) {
             Converter converter = new Converter(cx);
             for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
-                Function function = entry.getKey();
-                MethodHandle unreflect = entry.getValue();
-
-                MethodHandle handle = getInstanceMethodHandle(converter, unreflect, owner);
-                String name = function.name();
-                int arity = function.arity();
-                Attributes attrs = function.attributes();
-                NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, handle);
-                owner.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
+                createExternalFunction(owner, cx, converter, entry.getKey(), entry.getValue());
             }
         }
+    }
+
+    private static void createExternalFunction(ScriptObject owner, ExecutionContext cx,
+            Converter converter, Function function, MethodHandle unreflect) {
+        MethodHandle handle = getInstanceMethodHandle(cx, converter, unreflect, owner);
+        String name = function.name();
+        int arity = function.arity();
+        Attributes attrs = function.attributes();
+        assert function.symbol() == BuiltinSymbol.NONE;
+
+        NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, handle);
+        owner.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
     }
 
     private static void createInternalProperties(OrdinaryObject owner, ExecutionContext cx,
@@ -647,12 +651,11 @@ public final class Properties {
     }
 
     private static Object getRawValue(Field field) throws IllegalAccessException {
-        Object rawValue = field.get(null);
-        return rawValue;
+        return field.get(null);
     }
 
-    private static <T> MethodHandle getInstanceMethodHandle(Converter converter,
-            MethodHandle unreflect, T owner) {
+    private static <T> MethodHandle getInstanceMethodHandle(ExecutionContext cx,
+            Converter converter, MethodHandle unreflect, T owner) {
         MethodHandle handle = unreflect;
         handle = handle.bindTo(owner);
         boolean varargs = unreflect.isVarargsCollector();
@@ -666,11 +669,13 @@ public final class Properties {
 
         MethodType type = handle.type();
         int pcount = type.parameterCount();
-        int actual = type.parameterCount() - (varargs ? 1 : 0);
         Class<?>[] params = type.parameterArray();
+        boolean needsContext = pcount > 0 && ExecutionContext.class.equals(params[0]);
+        int fixedArguments = needsContext ? 1 : 0;
+        int actual = pcount - fixedArguments - (varargs ? 1 : 0);
         MethodHandle[] filters = new MethodHandle[pcount];
         for (int p = 0; p < actual; ++p) {
-            filters[p] = converter.filterFor(params[p]);
+            filters[fixedArguments + p] = converter.filterFor(params[fixedArguments + p]);
         }
         if (varargs) {
             filters[pcount - 1] = converter.arrayfilterFor(params[pcount - 1]);
@@ -697,15 +702,23 @@ public final class Properties {
             filter = filter(actual);
         }
 
-        MethodHandle spreader = MethodHandles.spreadInvoker(handle.type(), 0);
+        MethodHandle spreader = MethodHandles.spreadInvoker(handle.type(), fixedArguments);
         handle = MethodHandles.insertArguments(spreader, 0, handle);
-        handle = MethodHandles.filterArguments(handle, 0, filter);
-        handle = MethodHandles.dropArguments(handle, 0, Object.class);
+        handle = MethodHandles.filterArguments(handle, fixedArguments, filter);
+        handle = MethodHandles.dropArguments(handle, fixedArguments, Object.class);
+        if (needsContext) {
+            handle = MethodHandles.insertArguments(handle, 0, cx);
+        }
 
         MethodHandle thrower = MethodHandles.throwException(handle.type().returnType(),
                 ScriptException.class);
         thrower = MethodHandles.filterArguments(thrower, 0, converter.ToScriptExceptionMH);
         handle = MethodHandles.catchException(handle, Exception.class, thrower);
+
+        assert handle.type().parameterCount() == 2;
+        assert handle.type().parameterType(0) == Object.class;
+        assert handle.type().parameterType(1) == Object[].class;
+        assert handle.type().returnType() == Object.class;
 
         return handle;
     }
