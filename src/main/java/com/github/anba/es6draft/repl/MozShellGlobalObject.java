@@ -85,6 +85,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             Script script = scriptCache.script(sourceName, sourceLine, new StringReader(source));
             return ScriptLoader.ScriptEvaluation(script, realm, false);
         } catch (ParserException | CompilationException e) {
+            // create a script exception from the requested code realm, not from the caller's realm!
             throw e.toScriptException(realm.defaultContext());
         }
     }
@@ -93,14 +94,14 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
      * {@code $INCLUDE} function to load scripts from library directory
      */
     @Function(name = "__$INCLUDE", arity = 1)
-    public void $INCLUDE(String file) {
+    public void $INCLUDE(ExecutionContext cx, String file) {
         try {
             // resolve the input file against the lib-path
             include(libdir.resolve(file));
         } catch (IOException e) {
-            throw throwError(realm, e.getMessage());
+            throw throwError(cx, e.getMessage());
         } catch (ParserException | CompilationException e) {
-            throw e.toScriptException(realm.defaultContext());
+            throw e.toScriptException(cx);
         }
     }
 
@@ -118,21 +119,21 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code load(filename)} */
     @Function(name = "load", arity = 1)
-    public Object load(String filename) {
-        return load(Paths.get(filename), absolutePath(Paths.get(filename)));
+    public Object load(ExecutionContext cx, String filename) {
+        return load(cx, Paths.get(filename), absolutePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code loadRelativeToScript(filename)} */
     @Function(name = "loadRelativeToScript", arity = 1)
-    public Object loadRelativeToScript(String filename) {
-        return load(Paths.get(filename), relativePath(Paths.get(filename)));
+    public Object loadRelativeToScript(ExecutionContext cx, String filename) {
+        return load(cx, Paths.get(filename), relativePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code evaluate(code, [options])} */
     @Function(name = "evaluate", arity = 2)
-    public Object evaluate(Object code, Object options) {
+    public Object evaluate(ExecutionContext cx, Object code, Object options) {
         if (!(Type.isString(code) && (Type.isUndefined(options) || Type.isObject(options)))) {
-            throwError(realm, "invalid arguments");
+            throwError(cx, "invalid arguments");
         }
 
         String source = Type.stringValue(code).toString();
@@ -140,9 +141,8 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         int sourceLine = 1;
         boolean noScriptRval = false;
         boolean catchTermination = false;
-        GlobalObject global = realm.getGlobalThis();
+        GlobalObject global = getRealm().getGlobalThis();
         if (Type.isObject(options)) {
-            ExecutionContext cx = realm.defaultContext();
             ScriptObject opts = Type.objectValue(options);
 
             Object fileName = opts.get(cx, "fileName", opts);
@@ -157,7 +157,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             if (!Type.isUndefined(g)) {
                 ScriptObject obj = ToObject(cx, g);
                 if (!(obj instanceof GlobalObject)) {
-                    throwError(realm, "invalid global argument");
+                    throwError(cx, "invalid global argument");
                 }
                 global = (GlobalObject) obj;
             }
@@ -172,15 +172,15 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             if (catchTermination) {
                 return "terminated";
             }
-            throw throwError(realm, e.getMessage());
+            throw throwError(cx, e.getMessage());
         }
     }
 
     /** shell-function: {@code run(file)} */
     @Function(name = "run", arity = 1)
-    public double run(String file) {
+    public double run(ExecutionContext cx, String file) {
         long start = System.nanoTime();
-        load(file);
+        load(cx, file);
         long end = System.nanoTime();
         return (double) TimeUnit.NANOSECONDS.toMillis(end - start);
     }
@@ -226,85 +226,84 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code assertEq()} */
     @Function(name = "assertEq", arity = 2)
-    public void assertEq(Object actual, Object expected, Object message) {
+    public void assertEq(ExecutionContext cx, Object actual, Object expected, Object message) {
         if (!SameValue(actual, expected)) {
-            ExecutionContext cx = realm.defaultContext();
             StringBuilder msg = new StringBuilder();
             msg.append(String.format("Assertion failed: got %s, expected %s", ToSource(cx, actual),
                     ToSource(cx, expected)));
             if (!Type.isUndefined(message)) {
                 msg.append(": ").append(ToFlatString(cx, message));
             }
-            throwError(realm, msg.toString());
+            throwError(cx, msg.toString());
         }
     }
 
     /** shell-function: {@code throwError()} */
     @Function(name = "throwError", arity = 0)
-    public void throwError() {
-        throwError(realm, "This is an error");
+    public void throwError(ExecutionContext cx) {
+        throwError(cx, "This is an error");
     }
 
     /** shell-function: {@code build()} */
     @Function(name = "build", arity = 0)
-    public String build() {
+    public String build(ExecutionContext cx) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 MozShellGlobalObject.class.getResourceAsStream("/build-date"),
                 StandardCharsets.UTF_8))) {
             return reader.readLine();
         } catch (IOException e) {
-            throw throwError(realm, "could not read build-date file");
+            throw throwError(cx, "could not read build-date file");
         }
     }
 
     /** shell-function: {@code evalcx(s, [o])} */
     @Function(name = "evalcx", arity = 1)
-    public Object evalcx(String s, Object o) {
+    public Object evalcx(ExecutionContext cx, String s, Object o) {
         ScriptObject global;
         if (Type.isUndefinedOrNull(o)) {
-            global = newGlobal();
+            global = newGlobal(cx);
         } else {
-            global = ToObject(realm.defaultContext(), o);
+            global = ToObject(cx, o);
         }
         if (s.isEmpty() || "lazy".equals(s)) {
             return global;
         }
         if (!(global instanceof GlobalObject)) {
-            throwError(realm, "invalid global argument");
+            throwError(cx, "invalid global argument");
         }
         try {
             return evaluate(((GlobalObject) global).getRealm(), s, "evalcx", 1);
         } catch (IOException e) {
-            throw throwError(realm, e.getMessage());
+            throw throwError(cx, e.getMessage());
         }
     }
 
     /** shell-function: {@code sleep(dt)} */
     @Function(name = "sleep", arity = 1)
-    public void sleep(double dt) {
+    public void sleep(ExecutionContext cx, double dt) {
         try {
             TimeUnit.SECONDS.sleep(ToUint32(dt));
         } catch (InterruptedException e) {
-            throwError(realm, e.getMessage());
+            throwError(cx, e.getMessage());
         }
     }
 
     /** shell-function: {@code snarf(filename)} */
     @Function(name = "snarf", arity = 1)
-    public Object snarf(String filename) {
-        return read(filename);
+    public Object snarf(ExecutionContext cx, String filename) {
+        return read(cx, filename);
     }
 
     /** shell-function: {@code read(filename)} */
     @Function(name = "read", arity = 1)
-    public Object read(String filename) {
-        return read(absolutePath(Paths.get(filename)));
+    public Object read(ExecutionContext cx, String filename) {
+        return read(cx, absolutePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code readRelativeToScript(filename)} */
     @Function(name = "readRelativeToScript", arity = 1)
-    public Object readRelativeToScript(String filename) {
-        return read(relativePath(Paths.get(filename)));
+    public Object readRelativeToScript(ExecutionContext cx, String filename) {
+        return read(cx, relativePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code elapsed()} */
@@ -339,28 +338,28 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code wrap(obj)} */
     @Function(name = "wrap", arity = 1)
-    public Object wrap(Object obj) {
+    public Object wrap(ExecutionContext cx, Object obj) {
         if (!Type.isObject(obj)) {
             return obj;
         }
-        return CreateWrapProxy(realm.defaultContext(), obj);
+        return CreateWrapProxy(cx, obj);
     }
 
     /** shell-function: {@code wrapWithProto(obj, proto)} */
     @Function(name = "wrapWithProto", arity = 2)
-    public Object wrapWithProto(Object obj, Object proto) {
-        return CreateWrapProxy(realm.defaultContext(), obj, proto);
+    public Object wrapWithProto(ExecutionContext cx, Object obj, Object proto) {
+        return CreateWrapProxy(cx, obj, proto);
     }
 
     /** shell-function: {@code newGlobal()} */
     @Function(name = "newGlobal", arity = 0)
-    public GlobalObject newGlobal() {
+    public GlobalObject newGlobal(ExecutionContext cx) {
         MozShellGlobalObject global = newGlobal(console, baseDir, script, libdir, scriptCache,
                 getRealm().getOptions());
         try {
             global.eval(compileScript(scriptCache, "mozlegacy.js"));
         } catch (ParserException | CompilationException | IOException e) {
-            throwError(realm, e.getMessage());
+            throwError(cx, e.getMessage());
         }
         return global;
     }

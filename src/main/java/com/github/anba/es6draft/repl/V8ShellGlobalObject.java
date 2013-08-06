@@ -66,14 +66,14 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code load(filename)} */
     @Function(name = "load", arity = 1)
-    public Object load(String filename) {
-        return load(Paths.get(filename), absolutePath(Paths.get(filename)));
+    public Object load(ExecutionContext cx, String filename) {
+        return load(cx, Paths.get(filename), absolutePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code read(filename)} */
     @Function(name = "read", arity = 1)
-    public Object read(String filename) {
-        return read(absolutePath(Paths.get(filename)));
+    public Object read(ExecutionContext cx, String filename) {
+        return read(cx, absolutePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code readline()} */
@@ -108,12 +108,12 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code getDefaultLocale()} */
     @Function(name = "getDefaultLocale", arity = 0)
     public String getDefaultLocale() {
-        return IntlAbstractOperations.DefaultLocale(realm);
+        return IntlAbstractOperations.DefaultLocale(getRealm());
     }
 
     /** shell-function: {@code getDefaultTimeZone()} */
     @Function(name = "getDefaultTimeZone", arity = 0)
     public String getDefaultTimeZone() {
-        return IntlAbstractOperations.DefaultTimeZone(realm);
+        return IntlAbstractOperations.DefaultTimeZone(getRealm());
     }
 }

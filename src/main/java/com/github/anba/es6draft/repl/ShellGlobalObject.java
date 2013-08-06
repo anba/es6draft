@@ -37,7 +37,6 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
  */
 public abstract class ShellGlobalObject extends GlobalObject {
     protected final ShellConsole console;
-    protected final Realm realm;
     protected final Path baseDir;
     protected final Path script;
     protected final ScriptCache scriptCache;
@@ -45,7 +44,6 @@ public abstract class ShellGlobalObject extends GlobalObject {
     public ShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
             ScriptCache scriptCache) {
         super(realm);
-        this.realm = realm;
         this.console = console;
         this.baseDir = baseDir;
         this.script = script;
@@ -83,14 +81,14 @@ public abstract class ShellGlobalObject extends GlobalObject {
     public void eval(Path fileName, Path file) throws IOException, ParserException,
             CompilationException {
         Script script = scriptCache.script(fileName.toString(), 1, file);
-        ScriptLoader.ScriptEvaluation(script, realm, false);
+        ScriptLoader.ScriptEvaluation(script, getRealm(), false);
     }
 
     /**
      * Executes the given script
      */
     public void eval(Script script) {
-        ScriptLoader.ScriptEvaluation(script, realm, false);
+        ScriptLoader.ScriptEvaluation(script, getRealm(), false);
     }
 
     /**
@@ -98,16 +96,16 @@ public abstract class ShellGlobalObject extends GlobalObject {
      */
     public void include(Path file) throws IOException, ParserException, CompilationException {
         Script script = scriptCache.get(absolutePath(file));
-        ScriptLoader.ScriptEvaluation(script, realm, false);
+        ScriptLoader.ScriptEvaluation(script, getRealm(), false);
     }
 
-    protected static ScriptException throwError(Realm realm, String message) {
-        ErrorConstructor ctor = (ErrorConstructor) realm.getIntrinsic(Intrinsics.Error);
-        Object error = ctor.call(realm.defaultContext(), UNDEFINED, Objects.toString(message, ""));
+    protected static ScriptException throwError(ExecutionContext cx, String message) {
+        ErrorConstructor ctor = (ErrorConstructor) cx.getIntrinsic(Intrinsics.Error);
+        Object error = ctor.call(cx, UNDEFINED, Objects.toString(message, ""));
         return _throw(error);
     }
 
-    protected String read(Path path) {
+    protected String read(ExecutionContext cx, Path path) {
         if (!Files.exists(path)) {
             _throw(String.format("can't open '%s'", path.toString()));
         }
@@ -115,11 +113,11 @@ public abstract class ShellGlobalObject extends GlobalObject {
             byte[] bytes = Files.readAllBytes(path);
             return new String(bytes, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw throwError(realm, e.getMessage());
+            throw throwError(cx, e.getMessage());
         }
     }
 
-    protected Object load(Path fileName, Path path) {
+    protected Object load(ExecutionContext cx, Path fileName, Path path) {
         if (!Files.exists(path)) {
             _throw(String.format("can't open '%s'", path.toString()));
         }
@@ -127,9 +125,9 @@ public abstract class ShellGlobalObject extends GlobalObject {
             eval(fileName, path);
             return UNDEFINED;
         } catch (IOException e) {
-            throw throwError(realm, e.getMessage());
+            throw throwError(cx, e.getMessage());
         } catch (ParserException | CompilationException e) {
-            throw e.toScriptException(realm.defaultContext());
+            throw e.toScriptException(cx);
         }
     }
 

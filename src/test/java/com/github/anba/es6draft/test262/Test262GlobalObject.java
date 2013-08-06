@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -102,9 +103,9 @@ public class Test262GlobalObject extends GlobalObject {
      */
     @Function(name = "runTestCase", arity = 1, attributes = @Attributes(writable = false,
             enumerable = true, configurable = false))
-    public void runTestCase(Object testcase) {
+    public void runTestCase(ExecutionContext cx, Object testcase) {
         Callable fn = (Callable) testcase;
-        Object value = fn.call(realm.defaultContext(), UNDEFINED);
+        Object value = fn.call(cx, UNDEFINED);
         if (!ToBoolean(value)) {
             failure(info.getDescription());
         }

@@ -119,16 +119,17 @@ public class MozillaJSTest {
     };
 
     @Test
-    public void runMozillaTest() throws Throwable {
+    public void runTest() throws Throwable {
         // filter disabled tests
         assumeTrue(moztest.enable);
 
         MozTestConsole console = new MozTestConsole();
         MozShellGlobalObject global = newGlobal(console, testDir(), moztest.script,
                 Paths.get("test402/lib"), scriptCache, options);
+        ExecutionContext cx = global.getRealm().defaultContext();
 
         // apply scripted conditions
-        scriptConditions(global);
+        scriptConditions(cx, global);
 
         // filter disabled tests (may have changed after applying scripted conditions)
         assumeTrue(moztest.enable);
@@ -142,7 +143,6 @@ public class MozillaJSTest {
         }
 
         // patch $INCLUDE
-        ExecutionContext cx = global.getRealm().defaultContext();
         global.set(cx, "$INCLUDE", global.get(cx, "__$INCLUDE", global), global);
 
         // evaluate actual test-script
@@ -194,10 +194,10 @@ public class MozillaJSTest {
         return files;
     }
 
-    private void scriptConditions(MozShellGlobalObject global) {
+    private void scriptConditions(ExecutionContext cx, MozShellGlobalObject global) {
         for (Entry<Condition, String> entry : moztest.conditions) {
             String code = condition(entry.getValue());
-            boolean value = ToBoolean(global.evaluate(code, Undefined.UNDEFINED));
+            boolean value = ToBoolean(global.evaluate(cx, code, Undefined.UNDEFINED));
             if (!value) {
                 continue;
             }

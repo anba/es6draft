@@ -81,7 +81,7 @@ public final class Test262Strict extends BaseTest262 {
     };
 
     @Test
-    public void test() throws Throwable {
+    public void runTest() throws Throwable {
         final Path libpath = Paths.get(configuration.get().getString("lib_path"));
         Path testfile = Paths.get(path);
         final Test262Info info = Test262Info.from(testfile);

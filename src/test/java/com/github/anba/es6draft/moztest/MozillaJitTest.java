@@ -108,7 +108,7 @@ public class MozillaJitTest {
     };
 
     @Test
-    public void runMozillaTest() throws Throwable {
+    public void runTest() throws Throwable {
         // filter disabled tests
         assumeTrue(moztest.enable);
 
