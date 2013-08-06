@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -24,7 +23,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.ibm.icu.text.NumberFormat;
@@ -138,11 +136,7 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
     private static class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm);
-            ExecutionContext cx = realm.defaultContext();
-            setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-            defineOwnProperty(cx, "name", new PropertyDescriptor("format", false, false, false));
-            defineOwnProperty(cx, "length", new PropertyDescriptor(1, false, false, false));
-            AddRestrictedFunctionProperties(cx, this);
+            setupDefaultFunctionProperties("format", 1);
         }
 
         /**

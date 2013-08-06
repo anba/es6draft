@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import java.util.Date;
 
@@ -31,7 +30,6 @@ import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.FieldW
 import com.github.anba.es6draft.runtime.objects.intl.DateFieldSymbolTable.Skeleton;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -143,11 +141,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
     private static class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm);
-            ExecutionContext cx = realm.defaultContext();
-            setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-            defineOwnProperty(cx, "name", new PropertyDescriptor("format", false, false, false));
-            defineOwnProperty(cx, "length", new PropertyDescriptor(0, false, false, false));
-            AddRestrictedFunctionProperties(cx, this);
+            setupDefaultFunctionProperties("format", 0);
         }
 
         /**

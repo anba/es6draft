@@ -6,14 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-
 import java.lang.invoke.MethodHandle;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 
 /**
  * <h1>8 Types</h1><br>
@@ -29,11 +25,7 @@ public class NativeFunction extends BuiltinFunction {
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
         super(realm);
         this.mh = mh;
-        ExecutionContext cx = realm.defaultContext();
-        setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-        defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
-        defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, false));
-        AddRestrictedFunctionProperties(cx, this);
+        setupDefaultFunctionProperties(name, arity);
     }
 
     /**

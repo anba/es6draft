@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -24,7 +23,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -115,11 +113,7 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
     private static class CompareFunction extends BuiltinFunction {
         public CompareFunction(Realm realm) {
             super(realm);
-            ExecutionContext cx = realm.defaultContext();
-            setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-            defineOwnProperty(cx, "name", new PropertyDescriptor("compare", false, false, false));
-            defineOwnProperty(cx, "length", new PropertyDescriptor(2, false, false, false));
-            AddRestrictedFunctionProperties(cx, this);
+            setupDefaultFunctionProperties("compare", 2);
         }
 
         /**
