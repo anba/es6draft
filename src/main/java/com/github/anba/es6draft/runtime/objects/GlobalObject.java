@@ -65,7 +65,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
     /**
      * Returns the {@link Realm} of this global object
      */
-    public Realm getRealm() {
+    public final Realm getRealm() {
         return realm;
     }
 
