@@ -284,6 +284,11 @@ tests/proxy/testDirectProxyConstruct2.js
 # ES6-change: <this> within generator is always a generator object
 tests/auto-regress/bug678090.js
 
+# __proto__ must be either object or null
+tests/auto-regress/bug652177.js
+tests/basic/testInitProtoPrimitive.js
+tests/basic/testSetPropNeitherMissNorHit.js
+
 
 #######################################
 # ES6 related syntax changes          #

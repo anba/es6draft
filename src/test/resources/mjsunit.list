@@ -197,6 +197,9 @@ get-prototype-of.js
 # Object.keys() wraps/ignores primitives
 third_party/object-keys.js
 
+# __proto__ must be either object or null
+regress/regress-646.js
+
 
 #######################################
 # ES6 related syntax changes          #

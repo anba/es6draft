@@ -280,6 +280,9 @@ js1_8_5/extensions/censor-strict-caller.js
 # [[Set]] on non-existant property key triggers [[Set]] on prototype
 js1_8_5/extensions/correct-this-for-nonnatives-on-array-proto-chain.js
 
+# __proto__ must be either object or null
+js1_5/extensions/regress-455408.js
+
 
 #######################################
 # ES6 related syntax changes          #
