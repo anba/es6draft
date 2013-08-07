@@ -270,10 +270,18 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                 return proto;
             }
             /* steps 5-6 */
+            ScriptObject obj = Type.objectValue(o);
             ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
-            boolean status = Type.objectValue(o).setInheritance(cx, p);
+            boolean status = obj.setInheritance(cx, p);
             /* step 7 */
             if (!status) {
+                // provide better error messages for ordinary objects
+                if (obj instanceof OrdinaryObject) {
+                    if (!obj.isExtensible(cx)) {
+                        throw throwTypeError(cx, Messages.Key.NotExtensible);
+                    }
+                    throw throwTypeError(cx, Messages.Key.CyclicProto);
+                }
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 8 */

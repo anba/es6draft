@@ -142,6 +142,7 @@ public class Messages {
         NotExtensible("type.not_extensible"),
         IncompatibleObject("type.incompatible_object"),
         SymbolObject("type.symbol_object"),
+        CyclicProto("type.cyclic_proto"),
 
         // 8.2.5 Property Descriptor
         InvalidGetter("propertydescriptor.invalid_getter"),
