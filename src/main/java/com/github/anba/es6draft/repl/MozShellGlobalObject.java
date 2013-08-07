@@ -42,6 +42,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Global object class with support for some moz-shell functions
@@ -380,6 +381,12 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     @Function(name = "gczeal", arity = 0)
     public String gczeal() {
         return "";
+    }
+
+    /** shell-function: {@code getBuildConfiguration()} */
+    @Function(name = "getBuildConfiguration", arity = 0)
+    public ScriptObject getBuildConfiguration(ExecutionContext cx) {
+        return OrdinaryObject.ObjectCreate(cx);
     }
 
     /** shell-function: {@code isProxy(p)} */
