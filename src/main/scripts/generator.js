@@ -9,14 +9,43 @@
 "use strict";
 
 const Object = global.Object,
-      Function = global.Function;
+      Function = global.Function,
+      TypeError = global.TypeError;
 
 const Object_defineProperty = Object.defineProperty,
+      Object_getPrototypeOf = Object.getPrototypeOf,
       Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
-const GeneratorPrototype = Object.getPrototypeOf(function*(){}).prototype;
+const Generator = Object.getPrototypeOf(function*(){});
+const hasInstanceSym = global.getSym("@@hasInstance");
+
+Object.defineProperty(Generator, hasInstanceSym, {
+  value(O) {
+    // OrdinaryHasInstance() without steps 1-2
+    let C = this;
+    if (Object(O) !== O) {
+      return false;
+    }
+    let P = C.prototype;
+    if (Object(P) !== P) {
+      throw new TypeError();
+    }
+    for (;;) {
+      O = Object_getPrototypeOf(O);
+      if (O === null) {
+        return false;
+      }
+      if (P === O) {
+        return true;
+      }
+    }
+  },
+  writable: false, enumerable: false, configurable: true
+});
+
+const GeneratorPrototype = Generator.prototype;
 const GeneratorPrototype_next = GeneratorPrototype.next;
 const genState = global.newSym("genState");
 

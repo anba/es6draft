@@ -30,9 +30,6 @@ harmony/block-let-declaration.js
 # yield statement/expression syntax not yet settled
 harmony/generators-parsing.js
 
-# V8 generators: (function*(){}).prototype instanceof Object.getPrototypeOf(function*(){}) is true
-harmony/generators-runtime.js
-
 # V8 generators: missing type checks in v8-implementation
 harmony/generators-iteration.js
 
