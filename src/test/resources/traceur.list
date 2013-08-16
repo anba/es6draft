@@ -5,6 +5,9 @@
 # <https://github.com/anba/es6draft>
 #
 
+# test case relies on global variable "done" with value `true` (traceur issue #325)
+feature/Yield/ReturnYield.js
+
 # ES6 spec bug? 'extends null' and default constructor
 feature/Classes/DefaultConstructor.js
 feature/Classes/ExtendStrange.js
@@ -65,6 +68,7 @@ feature/Classes/Error_Disabled.js
 feature/Destructuring/Error_Disabled.js
 feature/GeneratorComprehension/Error_Disabled.js
 feature/GeneratorComprehension/Error_Disabled.js
+feature/NumericLiteral/Error_Disabled.js
 feature/ObjectInitialiserShorthand/Error_Disabled.js
 feature/Scope/Error_Disabled.js
 feature/Spread/Error_Disabled.js
@@ -95,3 +99,5 @@ feature/Yield/Tree.js
 # generators without *
 feature/Yield/UnstarredGenerators.js
 
+# yield without assignment expression
+feature/Yield/YieldUndefinedGenerator.js
