@@ -8,8 +8,8 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -28,7 +28,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     private final ScriptObject globalObject;
     private final ObjectEnvironmentRecord objectEnv;
     private final DeclarativeEnvironmentRecord declEnv;
-    private List<String> varNames = new ArrayList<>();
+    private Set<String> varNames = new HashSet<>();
 
     public GlobalEnvironmentRecord(ExecutionContext cx, ScriptObject globalObject) {
         this.cx = cx;
@@ -48,9 +48,13 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasBinding(String name) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         if (declEnv.hasBinding(name)) {
             return true;
         }
+        /* step 4 (omitted) */
+        /* step 5 */
         return objectEnv.hasBinding(name);
     }
 
@@ -59,6 +63,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void createMutableBinding(String name, boolean deletable) {
+        /* steps 1-2 (omitted) */
+        /* steps 3-5 */
         declEnv.createMutableBinding(name, deletable);
     }
 
@@ -67,6 +73,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void createImmutableBinding(String name) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         declEnv.createImmutableBinding(name);
     }
 
@@ -75,10 +83,14 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void initialiseBinding(String name, Object value) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         if (declEnv.hasBinding(name)) {
             declEnv.initialiseBinding(name, value);
             return;
         }
+        /* step 4 (omitted) */
+        /* step 5 */
         // TODO: if-check necessary?
         if (objectEnv.hasBinding(name)) {
             objectEnv.initialiseBinding(name, value);
@@ -90,10 +102,14 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void setMutableBinding(String name, Object value, boolean strict) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         if (declEnv.hasBinding(name)) {
             declEnv.setMutableBinding(name, value, strict);
             return;
         }
+        /* step 4 (omitted) */
+        /* step 5 */
         objectEnv.setMutableBinding(name, value, strict);
     }
 
@@ -102,9 +118,13 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public Object getBindingValue(String name, boolean strict) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         if (declEnv.hasBinding(name)) {
             return declEnv.getBindingValue(name, strict);
         }
+        /* step 4 (omitted) */
+        /* step 5 */
         return objectEnv.getBindingValue(name, strict);
     }
 
@@ -113,9 +133,13 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean deleteBinding(String name) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         if (declEnv.hasBinding(name)) {
             return declEnv.deleteBinding(name);
         }
+        /* step 4 (omitted) */
+        /* step 5 */
         if (objectEnv.hasBinding(name)) {
             boolean status = objectEnv.deleteBinding(name);
             if (status) {
@@ -123,6 +147,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
             }
             return status;
         }
+        /* step 6 */
         return true;
     }
 
@@ -131,6 +156,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasThisBinding() {
+        /* step 1 */
         return true;
     }
 
@@ -139,6 +165,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasSuperBinding() {
+        /* step 1 */
         return false;
     }
 
@@ -147,6 +174,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public ScriptObject withBaseObject() {
+        /* step 1 */
         return null;
     }
 
@@ -155,6 +183,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public Object getThisBinding() {
+        /* steps 1-3 (omitted) */
+        /* step 4 */
         return globalObject;
     }
 
@@ -162,6 +192,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * 10.2.1.4.12 HasVarDeclaration (N)
      */
     public boolean hasVarDeclaration(String name) {
+        /* steps 1-2 (omitted) */
+        /* steps 3-4 */
         return varNames.contains(name);
     }
 
@@ -169,6 +201,8 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * 10.2.1.4.13 HasLexicalDeclaration (N)
      */
     public boolean hasLexicalDeclaration(String name) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         return declEnv.hasBinding(name);
     }
 
@@ -176,9 +210,13 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * 10.2.1.4.14 CanDeclareGlobalVar (N)
      */
     public boolean canDeclareGlobalVar(String name) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         if (objectEnv.hasBinding(name)) {
             return true;
         }
+        /* step 4 (omitted) */
+        /* steps 5-6 */
         return IsExtensible(cx, globalObject);
     }
 
@@ -186,21 +224,29 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * 10.2.1.4.15 CanDeclareGlobalFunction (N)
      */
     public boolean canDeclareGlobalFunction(String name) {
+        /* steps 1-3 (omitted) */
+        /* steps 4-5 */
         boolean extensible = IsExtensible(cx, globalObject);
+        /* step 6 */
         if (!objectEnv.hasBinding(name)) {
             return extensible;
         }
+        /* step 7 */
         Property existingProp = globalObject.getOwnProperty(cx, name);
+        /* step 8 */
         if (existingProp == null) {
             return extensible;
         }
+        /* step 9 */
         if (existingProp.isConfigurable()) {
             return true;
         }
+        /* step 10 */
         if (existingProp.isDataDescriptor() && existingProp.isWritable()
                 && existingProp.isEnumerable()) {
             return true;
         }
+        /* step 11 */
         return false;
     }
 
@@ -208,25 +254,33 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
      * 10.2.1.4.16 CreateGlobalVarBinding (N, D)
      */
     public void createGlobalVarBinding(String name, boolean deletable) {
-        if (!canDeclareGlobalVar(name)) {
-            throw new IllegalStateException();
-        }
+        /* steps 1-2 (omitted) */
+        /* step 3 */
+        assert canDeclareGlobalVar(name); // FIXME: spec bug (bug 1786)
+        /* step 4 */
         if (!objectEnv.hasBinding(name)) {
             objectEnv.createMutableBinding(name, deletable);
         }
+        /* step 5 (omitted) */
+        /* step 6 */
         if (!varNames.contains(name)) {
             varNames.add(name);
         }
+        /* step 7 */
+        return;
     }
 
     /**
      * 10.2.1.4.17 CreateGlobalFunctionBinding (N, V, D)
      */
     public void createGlobalFunctionBinding(String name, Object value, boolean deletable) {
-        if (!canDeclareGlobalFunction(name)) {
-            throw new IllegalStateException();
-        }
+        /* steps 1-2 (omitted) */
+        /* step 3 */
+        assert canDeclareGlobalFunction(name); // FIXME: spec bug (bug 1786)
+        /* step 4  (omitted) */
+        /* step 5 */
         Property existingProp = globalObject.getOwnProperty(cx, name);
+        /* steps 6-7 */
         if (existingProp == null || existingProp.isConfigurable()) {
             PropertyDescriptor desc = new PropertyDescriptor(value, true, true, deletable);
             globalObject.defineOwnProperty(cx, name, desc);
@@ -234,8 +288,12 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
             PropertyDescriptor desc = new PropertyDescriptor(value);
             globalObject.defineOwnProperty(cx, name, desc);
         }
+        /* steps 8-9 (omitted) */
+        /* step 10 */
         if (!varNames.contains(name)) {
             varNames.add(name);
         }
+        /* step 11 */
+        return;
     }
 }

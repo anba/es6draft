@@ -47,6 +47,8 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasBinding(String name) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         return HasProperty(cx, bindings, name);
     }
 
@@ -55,9 +57,10 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void createMutableBinding(String name, boolean deletable) {
-        if (HasProperty(cx, bindings, name)) {
-            throw new IllegalStateException();
-        }
+        /* steps 1-2 (omitted) */
+        /* step 3 */
+        assert HasProperty(cx, bindings, name) == false; // FIXME: spec bug (bug 1786)
+        /* steps 4-5 */
         PropertyDescriptor desc = new PropertyDescriptor(UNDEFINED, true, true, deletable);
         DefinePropertyOrThrow(cx, bindings, name, desc);
     }
@@ -76,8 +79,12 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     @Override
     public void initialiseBinding(String name, Object value) {
         assert value != null;
+        /* step 1 (omitted) */
+        /* step 2 */
         // TODO: uninitialised binding in an object environment record?!
+        /* step 3 */
         // TODO: record the binding has been initialised
+        /* step 4 */
         setMutableBinding(name, value, false);
     }
 
@@ -86,6 +93,8 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void setMutableBinding(String name, Object value, boolean strict) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         Put(cx, bindings, name, value, strict);
     }
 
@@ -94,13 +103,17 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public Object getBindingValue(String name, boolean strict) {
+        /* steps 1-2 (omitted) */
+        /* steps 3-4 */
         boolean value = HasProperty(cx, bindings, name);
+        /* step 5 */
         if (!value) {
             if (!strict) {
                 return UNDEFINED;
             }
             throw throwReferenceError(cx, Messages.Key.UnresolvableReference, name);
         }
+        /* step 6 */
         return Get(cx, bindings, name);
     }
 
@@ -109,6 +122,8 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean deleteBinding(String name) {
+        /* steps 1-2 (omitted) */
+        /* step 3 */
         return bindings.delete(cx, name);
     }
 
@@ -117,6 +132,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasThisBinding() {
+        /* step 1 */
         return false;
     }
 
@@ -133,6 +149,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasSuperBinding() {
+        /* step 1 */
         return false;
     }
 
@@ -141,9 +158,12 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public ScriptObject withBaseObject() {
+        /* step 1 (omitted) */
+        /* step 2 */
         if (withEnvironment) {
             return bindings;
         }
+        /* step 3 */
         return null;
     }
 }

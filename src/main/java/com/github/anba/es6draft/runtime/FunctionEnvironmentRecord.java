@@ -34,6 +34,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      */
     @Override
     public boolean hasThisBinding() {
+        /* step 1 */
         return true;
     }
 
@@ -42,6 +43,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      */
     @Override
     public boolean hasSuperBinding() {
+        /* step 1 */
         return homeObject != null;
     }
 
@@ -50,6 +52,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      */
     @Override
     public Object getThisBinding() {
+        /* step 1 */
         return thisValue;
     }
 
@@ -57,10 +60,14 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      * 10.2.1.3.4 GetSuperBase ()
      */
     public ScriptObject getSuperBase() {
+        /* step 1 */
         ScriptObject home = homeObject;
+        /* step 2 */
         if (home == null) {
             return null;
         }
+        /* step 3 (not applicable) */
+        /* step 4 */
         return home.getInheritance(cx);
     }
 
@@ -68,6 +75,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
      * 10.2.1.3.5 GetMethodName ()
      */
     public Object getMethodName() {
+        /* step 1 */
         return methodName;
     }
 }

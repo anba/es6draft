@@ -85,9 +85,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void createMutableBinding(String name, boolean deletable) {
-        if (bindings.containsKey(name)) {
-            throw new IllegalStateException();
-        }
+        assert !bindings.containsKey(name);
         bindings.put(name, new Binding(true, deletable));
     }
 
@@ -96,9 +94,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void createImmutableBinding(String name) {
-        if (bindings.containsKey(name)) {
-            throw new IllegalStateException();
-        }
+        assert !bindings.containsKey(name);
         bindings.put(name, new Binding(false, false));
     }
 
@@ -109,9 +105,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public void initialiseBinding(String name, Object value) {
         assert value != null;
         Binding b = bindings.get(name);
-        if (b == null || b.value != null) {
-            throw new IllegalStateException();
-        }
+        assert b != null && b.value == null;
         b.value = value;
     }
 
@@ -122,10 +116,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public void setMutableBinding(String name, Object value, boolean strict) {
         assert value != null;
         Binding b = bindings.get(name);
-        if (b == null) {
-            throw new IllegalStateException();
-        }
-
+        assert b != null;
         if (b.value == null) {
             throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         } else if (b.mutable) {
@@ -141,9 +132,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     @Override
     public Object getBindingValue(String name, boolean strict) {
         Binding b = bindings.get(name);
-        if (b == null) {
-            throw new IllegalStateException();
-        }
+        assert b != null;
         if (b.value == null) {
             if (!strict) {
                 return UNDEFINED;
