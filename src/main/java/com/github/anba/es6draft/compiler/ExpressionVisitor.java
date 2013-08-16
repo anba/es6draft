@@ -17,6 +17,7 @@ import com.github.anba.es6draft.ast.CallExpression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.Scope;
 import com.github.anba.es6draft.ast.ScopedNode;
+import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
  * 
@@ -24,6 +25,7 @@ import com.github.anba.es6draft.ast.ScopedNode;
 abstract class ExpressionVisitor extends InstructionVisitor {
     private final boolean strict;
     private final boolean globalCode;
+    private final Variable<ExecutionContext> executionContext;
     private Scope scope;
     // tail-call support
     private Set<CallExpression> tail = emptySet();
@@ -33,11 +35,11 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         super(mv, methodName, methodDescriptor);
         this.strict = strict;
         this.globalCode = globalCode;
-        reserveFixedSlot(0, Types.ExecutionContext);
+        this.executionContext = reserveFixedSlot(0, ExecutionContext.class);
     }
 
     void loadExecutionContext() {
-        load(0, Types.ExecutionContext);
+        load(executionContext);
     }
 
     boolean isStrict() {

@@ -37,11 +37,13 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.Parser.Option;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * 
@@ -458,7 +460,7 @@ class CodeGenerator implements AutoCloseable {
             // emit return-label if nested in function
             if (body.getCodeType() == StatementVisitor.CodeType.Function) {
                 body.mark(body.returnLabel());
-                body.load(2, Types.boolean_);
+                body.loadParameter(2, boolean[].class);
                 body.iconst(0);
                 body.iconst(true);
                 body.astore(Type.BOOLEAN_TYPE);
@@ -492,9 +494,9 @@ class CodeGenerator implements AutoCloseable {
             body.begin();
 
             body.setScope(mv.getScope());
-            List<PropertyDefinition> properties = node.getProperties();
-            for (PropertyDefinition property : properties) {
-                body.load(1, Types.ScriptObject);
+            Variable<ScriptObject> object = body.getParameter(1, ScriptObject.class);
+            for (PropertyDefinition property : node.getProperties()) {
+                body.load(object);
                 propertyDefinition(property, body);
             }
 
@@ -548,9 +550,9 @@ class CodeGenerator implements AutoCloseable {
 
     private abstract static class StatementVisitorImpl extends StatementVisitor {
         private static final int COMPLETION_SLOT = 1;
-        private static final Type COMPLETION_TYPE = Types.Object;
 
         private final boolean initCompletionValue;
+        private final Variable<Object> completionValue;
 
         protected StatementVisitorImpl(CodeGenerator codegen, String methodName,
                 Type methodDescriptor, boolean strict, TopLevelNode topLevelNode,
@@ -558,17 +560,17 @@ class CodeGenerator implements AutoCloseable {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
                     methodName, methodDescriptor, strict, topLevelNode, codeType, completionValue);
             this.initCompletionValue = initCompletionValue;
-            reserveFixedSlot(COMPLETION_SLOT, COMPLETION_TYPE);
+            this.completionValue = reserveFixedSlot(COMPLETION_SLOT, Object.class);
         }
 
         @Override
         void storeCompletionValue() {
-            store(COMPLETION_SLOT, COMPLETION_TYPE);
+            store(completionValue);
         }
 
         @Override
         void loadCompletionValue() {
-            load(COMPLETION_SLOT, COMPLETION_TYPE);
+            load(completionValue);
         }
 
         @Override

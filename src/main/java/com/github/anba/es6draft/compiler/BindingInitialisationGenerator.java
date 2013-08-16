@@ -17,6 +17,7 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
  * <h1>13 Functions and Generators</h1><br>
@@ -250,7 +251,7 @@ class BindingInitialisationGenerator {
                 // stack: [value] -> [value, envRec, id]
                 assert false : "unused";
 
-                mv.load(2, Types.LexicalEnvironment);
+                mv.loadParameter(2, LexicalEnvironment.class);
                 mv.invoke(Methods.LexicalEnvironment_getEnvRec);
                 mv.aconst(node.getName());
 

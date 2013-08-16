@@ -146,21 +146,33 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
-    final String methodName;
-    final Type methodDescriptor;
-    final Variables variables = new Variables();
-    final ClassValue<Type> typeCache = new ClassValue<Type>() {
+    private final String methodName;
+    private final Type methodDescriptor;
+    private final Variables variables = new Variables();
+    private final ClassValue<Type> typeCache = new ClassValue<Type>() {
         @Override
-        protected Type computeValue(Class<?> type) {
-            return Type.getType(type);
+        protected Type computeValue(Class<?> c) {
+            return Type.getType(c);
         }
     };
+
+    private Type getType(Class<?> c) {
+        return typeCache.get(c);
+    }
 
     protected InstructionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor) {
         super(Opcodes.ASM4, mv);
         this.methodName = methodName;
         this.methodDescriptor = methodDescriptor;
         initParams(methodDescriptor);
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public Type getMethodDescriptor() {
+        return methodDescriptor;
     }
 
     private void initParams(Type methodType) {
@@ -171,8 +183,14 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
-    protected final void reserveFixedSlot(int var, Type type) {
+    private void reserveFixedSlot(int var, Type type) {
         variables.reserveFixedSlot(var, type);
+    }
+
+    protected final <T> Variable<T> reserveFixedSlot(int var, Class<T> clazz) {
+        Type type = getType(clazz);
+        reserveFixedSlot(var, type);
+        return new Variable<>("(fixed-slot)", type, var);
     }
 
     private static int parameterSlot(int index, Type[] argumentTypes) {
@@ -183,25 +201,20 @@ class InstructionVisitor extends InstructionAdapter {
         return slot;
     }
 
-    public Variable<?> getParameter(int index) {
-        Type[] argTypes = methodDescriptor.getArgumentTypes();
-        return new Variable<>("(parameter)", argTypes[index], parameterSlot(index, argTypes));
-    }
-
     public <T> Variable<T> getParameter(int index, Class<T> clazz) {
         Type[] argTypes = methodDescriptor.getArgumentTypes();
-        if (!argTypes[index].equals(typeCache.get(clazz))) {
+        if (!argTypes[index].equals(getType(clazz))) {
             throw new IllegalArgumentException();
         }
         return new Variable<>("(parameter)", argTypes[index], parameterSlot(index, argTypes));
     }
 
-    public Variable<?> newVariable(String name, Type type) {
-        return new Variable<>(name, type, variables.newVariable(type));
+    public <T> void loadParameter(int index, Class<T> clazz) {
+        load(getParameter(index, clazz));
     }
 
     public <T> Variable<T> newVariable(String name, Class<T> clazz) {
-        Type type = typeCache.get(clazz);
+        Type type = getType(clazz);
         return new Variable<>(name, type, variables.newVariable(type));
     }
 
@@ -210,12 +223,24 @@ class InstructionVisitor extends InstructionAdapter {
         variables.freeVariable(var.var);
     }
 
+    @Override
+    @Deprecated
+    public void load(int var, Type type) {
+        super.load(var, type);
+    }
+
     public void load(Variable<?> var) {
-        load(var.var, var.type);
+        super.load(var.var, var.type);
+    }
+
+    @Override
+    @Deprecated
+    public void store(int var, Type type) {
+        super.store(var, type);
     }
 
     public void store(Variable<?> var) {
-        store(var.var, var.type);
+        super.store(var.var, var.type);
     }
 
     public void begin() {

@@ -26,6 +26,7 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>10 Executable Code and Execution Contexts</h1><br>
@@ -239,7 +240,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
 
     private void InstantiateArgumentsObject(ExpressionVisitor mv) {
         mv.loadExecutionContext();
-        mv.load(ARGUMENTS, Types.Object_);
+        mv.loadParameter(ARGUMENTS, Object[].class);
         mv.invoke(Methods.ExoticArguments_InstantiateArgumentsObject);
     }
 
@@ -263,7 +264,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.dup();
         mv.loadExecutionContext();
         mv.swap();
-        mv.load(FUNCTION, Types.FunctionObject);
+        mv.loadParameter(FUNCTION, FunctionObject.class);
         astore_string(mv, mappedNames(formals));
         mv.load(env);
         mv.invoke(Methods.ExoticArguments_CompleteMappedArgumentsObject);

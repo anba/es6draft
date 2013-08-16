@@ -33,6 +33,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.internal.SimpleBootstrap;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  *
@@ -821,8 +822,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     @Override
     public ValType visit(SpreadArrayLiteral node, ExpressionVisitor mv) {
         // stack: [] -> [array, nextIndex]
-        mv.load(1, Types.ExoticArray);
-        mv.load(2, Type.INT_TYPE);
+        mv.loadParameter(1, ExoticArray.class);
+        mv.loadParameter(2, int.class);
 
         arrayLiteralWithSpread(node, mv);
 
