@@ -192,7 +192,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          * 15.18.1.10 Reflect.invoke (target, propertyKey, argumentsList, receiver=target)
          */
         @Function(name = "invoke", arity = 4)
-        public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target,
+        public static Object invoke(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey, Object argumentsList,
                 @Optional(Optional.Default.NONE) Object receiver) {
             ScriptObject obj = ToObject(cx, target);

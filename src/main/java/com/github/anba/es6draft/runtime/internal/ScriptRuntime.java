@@ -991,11 +991,7 @@ public final class ScriptRuntime {
         protected Object tryNext() {
             if (keysIterator.hasNext()) {
                 Object pk = ToPropertyKey(cx, keysIterator.next());
-                if (pk instanceof String) {
-                    return Get(cx, object, (String) pk);
-                } else {
-                    return Get(cx, object, (ExoticSymbol) pk);
-                }
+                return Get(cx, object, pk);
             }
             return null;
         }

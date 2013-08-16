@@ -200,6 +200,9 @@ public class Realm {
         return options;
     }
 
+    /**
+     * Tests whether the requested compatibility option is enabled in this code realm
+     */
     public boolean isEnabled(CompatibilityOption option) {
         return options.contains(option);
     }
@@ -248,10 +251,16 @@ public class Realm {
         }
     };
 
+    /**
+     * Creates a new {@link Realm} object with the default settings
+     */
     public static Realm newRealm() {
         return newRealm(DEFAULT_GLOBAL_OBJECT, CompatibilityOption.WebCompatibility());
     }
 
+    /**
+     * Creates a new {@link Realm} object
+     */
     public static Realm newRealm(ObjectAllocator<? extends GlobalObject> allocator,
             Set<CompatibilityOption> options) {
         Realm realm = new Realm();
