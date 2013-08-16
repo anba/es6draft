@@ -82,26 +82,30 @@ public class OrdinaryFunction extends FunctionObject {
         Object oldCaller = caller.getValue();
         Object oldArguments = arguments.getValue();
         try {
-            FunctionObject caller = callerContext.getCurrentFunction();
-            /* steps 4-12 */
-            ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
-                    thisValue);
-            /* step 13-14 */
-            ExoticArguments arguments = getFunction().functionDeclarationInstantiation(
-                    calleeContext, this, args);
-            if (isLegacy()) {
-                updateLegacyProperties(calleeContext, caller, arguments);
-            }
+            /* steps 4-14 */
+            ExecutionContext calleeContext = EvaluateArguments(callerContext, this, thisValue, args);
             /* step 15-16 */
             Object result = EvaluateBody(calleeContext, getCode());
             /* step 17 */
             return result;
         } finally {
             if (isLegacy()) {
-                caller.apply(new PropertyDescriptor(oldCaller));
-                arguments.apply(new PropertyDescriptor(oldArguments));
+                restoreLegacyProperties(oldCaller, oldArguments);
             }
         }
+    }
+
+    private static ExecutionContext EvaluateArguments(ExecutionContext callerContext,
+            OrdinaryFunction f, Object thisValue, Object[] args) {
+        /* step 4-12 */
+        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(f, thisValue);
+        /* step 13-14 */
+        ExoticArguments arguments = f.getFunction().functionDeclarationInstantiation(calleeContext,
+                f, args);
+        if (f.isLegacy()) {
+            f.updateLegacyProperties(calleeContext, callerContext.getCurrentFunction(), arguments);
+        }
+        return calleeContext;
     }
 
     public static Object EvaluateBody(ExecutionContext calleeContext, Code code) {
@@ -123,21 +127,13 @@ public class OrdinaryFunction extends FunctionObject {
                 Object oldCaller = f.caller.getValue();
                 Object oldArguments = f.arguments.getValue();
                 try {
-                    FunctionObject caller = calleeContext.getCurrentFunction();
-                    /* step 4-12 */
-                    calleeContext = ExecutionContext.newFunctionExecutionContext(f, thisValue);
-                    /* step 13-14 */
-                    ExoticArguments arguments = f.getFunction().functionDeclarationInstantiation(
-                            calleeContext, f, args);
-                    if (f.isLegacy()) {
-                        f.updateLegacyProperties(calleeContext, caller, arguments);
-                    }
+                    /* step 4-14 */
+                    calleeContext = EvaluateArguments(calleeContext, f, thisValue, args);
                     /* step 15-17 */
                     result = f.getCode().handle().invokeExact(calleeContext);
                 } finally {
                     if (f.isLegacy()) {
-                        f.caller.apply(new PropertyDescriptor(oldCaller));
-                        f.arguments.apply(new PropertyDescriptor(oldArguments));
+                        f.restoreLegacyProperties(oldCaller, oldArguments);
                     }
                 }
             }
@@ -158,6 +154,11 @@ public class OrdinaryFunction extends FunctionObject {
         }
         ExoticArguments args = CreateLegacyArguments(cx, arguments, this);
         this.arguments.apply(new PropertyDescriptor(args));
+    }
+
+    private void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
+        this.caller.apply(new PropertyDescriptor(oldCaller));
+        this.arguments.apply(new PropertyDescriptor(oldArguments));
     }
 
     /* ***************************************************************************************** */
