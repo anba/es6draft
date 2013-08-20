@@ -27,9 +27,6 @@ harmony/block-const-assign.js
 harmony/block-early-errors.js
 harmony/block-let-declaration.js
 
-# yield statement/expression syntax not yet settled
-harmony/generators-parsing.js
-
 # V8 generators: missing type checks in v8-implementation
 harmony/generators-iteration.js
 
