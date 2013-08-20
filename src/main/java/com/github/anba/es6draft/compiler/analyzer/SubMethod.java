@@ -121,6 +121,7 @@ abstract class SubMethod<NODE extends Node> {
 
         @Override
         public void submit(Node node, List<? extends Node> children) {
+            // empty
         }
     }
 
@@ -140,6 +141,7 @@ abstract class SubMethod<NODE extends Node> {
 
         @Override
         public void submit(Node node, List<? extends Node> children) {
+            // empty
         }
     }
 }

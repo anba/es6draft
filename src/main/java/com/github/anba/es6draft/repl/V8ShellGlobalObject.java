@@ -103,6 +103,7 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code gc()} */
     @Function(name = "gc", arity = 0)
     public void gc() {
+        // empty
     }
 
     /** shell-function: {@code getDefaultLocale()} */

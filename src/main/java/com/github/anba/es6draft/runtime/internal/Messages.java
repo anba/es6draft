@@ -14,7 +14,7 @@ import java.util.ResourceBundle;
 /**
  *
  */
-public class Messages {
+public final class Messages {
     private static final PropertiesReaderControl UTF8_RESOURCE_CONTROL = new PropertiesReaderControl(
             StandardCharsets.UTF_8);
     private static final String BUNDLE_NAME = "com.github.anba.es6draft.runtime.internal.messages";

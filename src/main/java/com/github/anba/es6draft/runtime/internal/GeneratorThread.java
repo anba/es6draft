@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * {@link Thread} subclass used for Generators and Generator Comprehensions
  */
-public class GeneratorThread extends Thread {
+public final class GeneratorThread extends Thread {
     private static final int MAX_STACK_DEPTH = 1000;
     private final Thread parent;
     private final int stackDepth;

@@ -36,7 +36,6 @@ public class StringTokenStreamInput implements TokenStreamInput {
 
     @Override
     public boolean match(char c) {
-        assert c != EOF;
         if (cursor >= length || source.charAt(cursor) != c)
             return false;
         cursor += 1;

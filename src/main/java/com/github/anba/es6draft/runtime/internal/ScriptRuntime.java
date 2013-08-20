@@ -1024,6 +1024,7 @@ public final class ScriptRuntime {
      * 12.15 The debugger statement
      */
     public static void debugger() {
+        // breakpoint
     }
 
     /* ***************************************************************************************** */

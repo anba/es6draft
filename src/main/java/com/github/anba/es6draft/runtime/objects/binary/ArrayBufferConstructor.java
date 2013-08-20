@@ -171,7 +171,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         /* steps 3-4 */
         ByteBuffer block = arrayBuffer.getData();
         if (block == null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* steps 7-8 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
@@ -231,7 +231,7 @@ public class ArrayBufferConstructor extends BuiltinFunction implements Construct
         /* steps 3-4 */
         ByteBuffer block = arrayBuffer.getData();
         if (block == null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* step 7-10 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {

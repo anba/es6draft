@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * 
@@ -28,11 +29,10 @@ public class ScriptException extends RuntimeException {
 
     @Override
     public String getMessage() {
-        try {
+        if (!Type.isObject(value)) {
             return AbstractOperations.ToFlatString(null, value);
-        } catch (ScriptException | NullPointerException t) {
-            return Objects.toString(value);
         }
+        return Objects.toString(value);
     }
 
     public String getMessage(ExecutionContext cx) {

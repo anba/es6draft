@@ -115,7 +115,7 @@ public class Parser {
             return superReference;
         }
 
-        boolean isFunction() {
+        final boolean isFunction() {
             switch (kind) {
             case ArrowFunction:
             case Function:

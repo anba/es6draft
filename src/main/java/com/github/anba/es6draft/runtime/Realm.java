@@ -58,7 +58,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
  * <li>10.3 Code Realms
  * </ul>
  */
-public class Realm {
+public final class Realm {
     /**
      * [[intrinsics]]
      */

@@ -102,7 +102,7 @@ public class Repl {
                     System.exit(0);
                     break;
                 default:
-                    if (arg.startsWith("-") && arg.length() > 1) {
+                    if (arg.length() > 1 && arg.charAt(0) == '-') {
                         System.err.printf("invalid option '%s'\n\n", arg);
                         System.out.print(getHelp());
                         System.exit(0);
@@ -144,7 +144,7 @@ public class Repl {
             StartScript startScript = new StartScript();
             boolean inOptions = true;
             for (String arg : args) {
-                if (inOptions && arg.startsWith("-") && arg.length() > 1) {
+                if (inOptions && arg.length() > 1 && arg.charAt(0) == '-') {
                     // skip options
                     continue;
                 }
