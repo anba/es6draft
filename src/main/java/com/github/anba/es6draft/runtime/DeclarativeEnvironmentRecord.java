@@ -116,7 +116,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public void setMutableBinding(String name, Object value, boolean strict) {
         assert value != null;
         Binding b = bindings.get(name);
-        assert b != null;
+        assert b != null; // FIXME: spec bug (bug 159)
         if (b.value == null) {
             throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         } else if (b.mutable) {
