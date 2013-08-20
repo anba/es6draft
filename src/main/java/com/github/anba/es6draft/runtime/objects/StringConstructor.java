@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -181,7 +180,12 @@ public class StringConstructor extends BuiltinFunction implements Constructor, I
                 if (nextIndex + 1 == literalSegments) {
                     return stringElements.toString();
                 }
-                next = (nextIndex < substlength ? substitutions[(int) nextIndex] : UNDEFINED);
+                if (nextIndex < substlength) {
+                    next = substitutions[(int) nextIndex];
+                } else {
+                    // rest parameter objects are arrays, out of bounds access delegates to proto
+                    next = Get(cx, cx.getIntrinsic(Intrinsics.ArrayPrototype), nextKey);
+                }
                 CharSequence nextSub = ToString(cx, next);
                 stringElements.append(nextSub);
             }
