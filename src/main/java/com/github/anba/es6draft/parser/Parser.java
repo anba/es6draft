@@ -1410,6 +1410,25 @@ public class Parser {
     }
 
     /**
+     * Special case for {@link Token#YIELD} as {@link BindingIdentifier} in functions and generators
+     */
+    private BindingIdentifier bindingIdentifierFunctionName() {
+        // FIXME: Preliminary solution to provide SpiderMonkey/V8 compatibility
+        // 'yield' is always a keyword in strict-mode and in generators, but parse function name
+        // in the context of the surrounding environment
+        if (token() == Token.YIELD) {
+            if (isYieldName(context.parent)) {
+                consume(Token.YIELD);
+                return new BindingIdentifier(getName(Token.YIELD));
+            }
+            reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier,
+                    getName(Token.YIELD));
+            reportTokenMismatch("<identifier>", Token.YIELD);
+        }
+        return bindingIdentifier();
+    }
+
+    /**
      * <strong>[13.1] Function Definitions</strong>
      * 
      * <pre>
@@ -1423,7 +1442,7 @@ public class Parser {
             int line = ts.getLine();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
-            BindingIdentifier identifier = bindingIdentifier();
+            BindingIdentifier identifier = bindingIdentifierFunctionName();
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
@@ -1484,7 +1503,7 @@ public class Parser {
             int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifier();
+                identifier = bindingIdentifierFunctionName();
             }
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -1868,7 +1887,7 @@ public class Parser {
     private MethodDefinition getterMethod(boolean alwaysStrict) {
         int line = ts.getLine();
 
-        consume(Token.NAME);
+        consume(Token.NAME); // "get"
         PropertyName propertyName = propertyName();
 
         newContext(ContextKind.Method);
@@ -1932,7 +1951,7 @@ public class Parser {
     private MethodDefinition setterMethod(boolean alwaysStrict) {
         int line = ts.getLine();
 
-        consume(Token.NAME);
+        consume(Token.NAME); // "set"
         PropertyName propertyName = propertyName();
 
         newContext(ContextKind.Method);
@@ -2136,7 +2155,7 @@ public class Parser {
             if (!starless) {
                 consume(Token.MUL);
             }
-            BindingIdentifier identifier = bindingIdentifier();
+            BindingIdentifier identifier = bindingIdentifierFunctionName();
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
@@ -2184,7 +2203,7 @@ public class Parser {
             }
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifier();
+                identifier = bindingIdentifierFunctionName();
             }
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -2252,16 +2271,16 @@ public class Parser {
             consume(Token.MUL);
             delegatedYield = true;
         }
-        // TODO: NoLineTerminator() restriction or context dependent?
         Expression expr;
-        if (delegatedYield) {
-            expr = assignmentExpression(true);
-        } else if (assignmentExpressionForYield()) {
-            // TODO: make this an option
+        if (delegatedYield || !isEnabled(Option.LegacyGenerator)) {
             expr = assignmentExpression(true);
         } else {
-            // extension: allow Spidermonkey syntax
-            expr = null;
+            // legacy generators allow to omit AssignmentExpression after 'yield'
+            if (assignmentExpressionForYield()) {
+                expr = assignmentExpression(true);
+            } else {
+                expr = null;
+            }
         }
         return new YieldExpression(delegatedYield, expr);
     }
@@ -2492,6 +2511,11 @@ public class Parser {
                 return letStatement();
             }
             break;
+        case YIELD:
+            if (!isYieldName()) {
+                break;
+            }
+            // fall-through
         case NAME:
             if (LOOKAHEAD(Token.COLON)) {
                 return labelledStatement();
@@ -3816,6 +3840,11 @@ public class Parser {
                 return doWhileStatement(labelSet);
             case SWITCH:
                 return switchStatement(labelSet);
+            case YIELD:
+                if (!isYieldName()) {
+                    break labels;
+                }
+                // fall-through
             case NAME:
                 if (LOOKAHEAD(Token.COLON)) {
                     String name = identifier();
@@ -5239,9 +5268,12 @@ public class Parser {
     }
 
     private Expression assignmentExpression(boolean allowIn, int oldCount) {
-        // TODO: this may need to be changed...
         if (token() == Token.YIELD) {
-            return yieldExpression();
+            if (context.kind == ContextKind.Generator) {
+                return yieldExpression();
+            } else if (context.kind == ContextKind.Function && isEnabled(Option.LegacyGenerator)) {
+                throw new RetryGenerator();
+            }
         }
         long position = ts.position(), lineinfo = ts.lineinfo();
         Expression left = binaryExpression(allowIn);
@@ -5398,6 +5430,31 @@ public class Parser {
         return !ts.hasCurrentLineTerminator();
     }
 
+    /**
+     * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
+     * the current context
+     */
+    private boolean isYieldName() {
+        return isYieldName(context);
+    }
+
+    /**
+     * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
+     * the supplied context
+     */
+    private boolean isYieldName(ParseContext context) {
+        // 'yield' is always a keyword in strict-mode and in generators
+        if (context.strictMode == StrictMode.Strict || context.kind == ContextKind.Generator) {
+            return false;
+        }
+        // proactively flag as syntax error if current strict mode is unknown
+        reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(Token.YIELD));
+        return true;
+    }
+
+    /**
+     * Returns true if the current token is of type {@link Token#NAME} and its name is {@code name}
+     */
     private boolean isName(String name) {
         Token tok = token();
         return (tok == Token.NAME && name.equals(getName(tok)));
@@ -5440,16 +5497,11 @@ public class Parser {
      * <strong>[7.6] Identifier Names and Identifiers</strong>
      */
     private boolean isIdentifier(Token tok) {
-        return isIdentifier(tok, context.strictMode);
-    }
-
-    /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
-     */
-    private boolean isIdentifier(Token tok, StrictMode strictMode) {
         switch (tok) {
         case NAME:
             return true;
+        case YIELD:
+            return isYieldName();
         case IMPLEMENTS:
         case INTERFACE:
         case PACKAGE:
@@ -5457,12 +5509,10 @@ public class Parser {
         case PROTECTED:
         case PUBLIC:
         case STATIC:
-            // TODO: otherwise cannot parse YieldExpression, context dependent syntax restriction?
-            // case YIELD:
-            if (strictMode != StrictMode.NonStrict) {
+            if (context.strictMode != StrictMode.NonStrict) {
                 reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
             }
-            return (strictMode != StrictMode.Strict);
+            return (context.strictMode != StrictMode.Strict);
         default:
             return false;
         }
