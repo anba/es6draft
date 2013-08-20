@@ -400,4 +400,10 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     public void terminate() {
         throw new StopExecutionException(StopExecutionException.Reason.Terminate);
     }
+
+    /** shell-function: {@code enableOsiPointRegisterChecks()} */
+    @Function(name = "enableOsiPointRegisterChecks", arity = 0)
+    public void enableOsiPointRegisterChecks() {
+        // empty
+    }
 }
