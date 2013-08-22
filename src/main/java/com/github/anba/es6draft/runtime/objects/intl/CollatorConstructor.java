@@ -36,11 +36,10 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Loca
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.ibm.icu.text.Collator;
 import com.ibm.icu.util.ULocale;
 
@@ -51,7 +50,7 @@ import com.ibm.icu.util.ULocale;
  * <li>10.2 Properties of the Intl.Collator Constructor
  * </ul>
  */
-public class CollatorConstructor extends BuiltinFunction implements Constructor, Initialisable {
+public class CollatorConstructor extends BuiltinConstructor implements Initialisable {
     /** [[availableLocales]] */
     private Set<String> availableLocales;
 

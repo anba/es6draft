@@ -20,10 +20,9 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -34,7 +33,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>15.13.6.5 Properties of the TypedArray Constructors
  * </ul>
  */
-public class TypedArrayConstructor extends BuiltinFunction implements Constructor, Initialisable {
+public class TypedArrayConstructor extends BuiltinConstructor implements Initialisable {
     /** [[ElementType]] */
     private final ElementType elementType;
 

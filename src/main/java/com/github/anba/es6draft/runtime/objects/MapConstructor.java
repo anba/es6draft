@@ -29,11 +29,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -43,7 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>15.14.2 Properties of the Map Constructor
  * </ul>
  */
-public class MapConstructor extends BuiltinFunction implements Constructor, Initialisable {
+public class MapConstructor extends BuiltinConstructor implements Initialisable {
     public MapConstructor(Realm realm) {
         super(realm);
     }

@@ -22,11 +22,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 
 /**
@@ -37,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
  * <li>15.5.2 Properties of the String Constructor
  * </ul>
  */
-public class StringConstructor extends BuiltinFunction implements Constructor, Initialisable {
+public class StringConstructor extends BuiltinConstructor implements Initialisable {
     public StringConstructor(Realm realm) {
         super(realm);
     }

@@ -47,6 +47,11 @@ public class OrdinaryFunction extends FunctionObject {
             super(realm);
         }
 
+        @Override
+        public final boolean isConstructor() {
+            return isConstructor;
+        }
+
         /**
          * 8.3.16.2 [[Construct]] (argumentsList)
          */
@@ -447,7 +452,8 @@ public class OrdinaryFunction extends FunctionObject {
     private static void MakeConstructor(ExecutionContext cx, FunctionObject f,
             boolean writablePrototype, ScriptObject prototype, boolean installNeeded) {
         assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
-        /* step 4 (implicit) */
+        /* step 4 */
+        f.isConstructor = true;
         /* step 5 */
         if (installNeeded) {
             prototype.defineOwnProperty(cx, "constructor", new PropertyDescriptor(f,

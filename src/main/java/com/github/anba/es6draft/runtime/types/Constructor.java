@@ -23,4 +23,11 @@ public interface Constructor extends ScriptObject {
      * [[Construct]]
      */
     ScriptObject construct(ExecutionContext callerContext, Object... args);
+
+    /**
+     * [[Construct]] internal method is added dynamically to objects, but interfaces cannot be added
+     * dynamically, therefore add an extra predicate to test whether the [[Construct]] method is
+     * already attached to the object
+     */
+    boolean isConstructor();
 }

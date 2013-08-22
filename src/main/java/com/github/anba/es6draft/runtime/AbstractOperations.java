@@ -394,7 +394,7 @@ public final class AbstractOperations {
      * 9.2.2 IsCallable
      */
     public static boolean IsCallable(Object val) {
-        return Type.isObject(val) && (val instanceof Callable);
+        return (val instanceof Callable);
     }
 
     /**
@@ -502,7 +502,7 @@ public final class AbstractOperations {
      */
     public static boolean IsConstructor(Object val) {
         /* steps 1-4 */
-        return Type.isObject(val) && (val instanceof Constructor);
+        return (val instanceof Constructor && ((Constructor) val).isConstructor());
     }
 
     /**

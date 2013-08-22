@@ -34,11 +34,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
@@ -52,8 +51,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
  * <li>15.19.3.2 Properties of the GeneratorFunction Constructor
  * </ul>
  */
-public class GeneratorFunctionConstructor extends BuiltinFunction implements Constructor,
-        Initialisable {
+public class GeneratorFunctionConstructor extends BuiltinConstructor implements Initialisable {
     public GeneratorFunctionConstructor(Realm realm) {
         super(realm);
     }

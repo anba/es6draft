@@ -31,12 +31,11 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -46,7 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>15.10.4 Properties of the RegExp Constructor
  * </ul>
  */
-public class RegExpConstructor extends BuiltinFunction implements Constructor, Initialisable {
+public class RegExpConstructor extends BuiltinConstructor implements Initialisable {
     public RegExpConstructor(Realm realm) {
         super(realm);
     }

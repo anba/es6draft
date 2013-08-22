@@ -30,11 +30,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -46,7 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>15.13.5.3 Properties of the ArrayBuffer Constructor
  * </ul>
  */
-public class ArrayBufferConstructor extends BuiltinFunction implements Constructor, Initialisable {
+public class ArrayBufferConstructor extends BuiltinConstructor implements Initialisable {
     private static final boolean IS_LITTLE_ENDIAN = true;
 
     public ArrayBufferConstructor(Realm realm) {

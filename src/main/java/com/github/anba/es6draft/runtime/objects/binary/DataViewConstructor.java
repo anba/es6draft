@@ -26,11 +26,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -42,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>15.13.7.3 Properties of the DataView Constructor
  * </ul>
  */
-public class DataViewConstructor extends BuiltinFunction implements Constructor, Initialisable {
+public class DataViewConstructor extends BuiltinConstructor implements Initialisable {
     public DataViewConstructor(Realm realm) {
         super(realm);
     }

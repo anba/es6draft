@@ -47,6 +47,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /** [[MethodName]] */
     protected Object /* String|ExoticSymbol */methodName;
 
+    protected boolean isConstructor = false;
     protected boolean legacy;
     protected String source = null;
 

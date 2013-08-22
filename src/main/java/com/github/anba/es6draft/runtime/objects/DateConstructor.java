@@ -25,11 +25,10 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional.Default;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
@@ -39,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>15.9.3 Properties of the Date Constructor
  * </ul>
  */
-public class DateConstructor extends BuiltinFunction implements Constructor, Initialisable {
+public class DateConstructor extends BuiltinConstructor implements Initialisable {
     public DateConstructor(Realm realm) {
         super(realm);
     }

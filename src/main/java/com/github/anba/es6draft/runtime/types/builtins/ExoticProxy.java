@@ -78,6 +78,12 @@ public class ExoticProxy implements ScriptObject {
             super(realm, target, handler);
         }
 
+        @Override
+        public boolean isConstructor() {
+            // ConstructorExoticProxy is only created if [[ProxyTarget]] already has [[Construct]]
+            return true;
+        }
+
         /**
          * 8.5.15 [[Construct]] Internal Method
          */

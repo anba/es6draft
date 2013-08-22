@@ -37,11 +37,10 @@ import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.Loca
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.ResolvedLocale;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.ibm.icu.text.NumberFormat;
 import com.ibm.icu.text.NumberingSystem;
 import com.ibm.icu.util.ULocale;
@@ -53,7 +52,7 @@ import com.ibm.icu.util.ULocale;
  * <li>11.2 Properties of the Intl.NumberFormat Constructor
  * </ul>
  */
-public class NumberFormatConstructor extends BuiltinFunction implements Constructor, Initialisable {
+public class NumberFormatConstructor extends BuiltinConstructor implements Initialisable {
 
     /** [[availableLocales]] */
     private Set<String> availableLocales;

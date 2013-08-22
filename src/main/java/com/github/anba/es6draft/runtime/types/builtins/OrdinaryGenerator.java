@@ -44,6 +44,11 @@ public class OrdinaryGenerator extends FunctionObject {
             super(realm);
         }
 
+        @Override
+        public final boolean isConstructor() {
+            return isConstructor;
+        }
+
         /**
          * 8.3.16.2 [[Construct]] (argumentsList)
          */
