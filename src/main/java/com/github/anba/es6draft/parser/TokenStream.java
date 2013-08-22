@@ -765,6 +765,10 @@ public class TokenStream {
         if (c <= 127)
             return false;
         // cf. http://www.unicode.org/reports/tr31/ for definition of "UnicodeIDStart"
+        if (c == '\u2E2F') {
+            // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
+            return false;
+        }
         switch (Character.getType(c)) {
         case Character.UPPERCASE_LETTER:
         case Character.LOWERCASE_LETTER:
@@ -801,6 +805,10 @@ public class TokenStream {
         if (c == '\u200C' || c == '\u200D')
             return true;
         // cf. http://www.unicode.org/reports/tr31/ for definition of "UnicodeIDContinue"
+        if (c == '\u2E2F') {
+            // VERTICAL TILDE is in 'Lm' and [:Pattern_Syntax:]
+            return false;
+        }
         switch (Character.getType(c)) {
         case Character.UPPERCASE_LETTER:
         case Character.LOWERCASE_LETTER:
