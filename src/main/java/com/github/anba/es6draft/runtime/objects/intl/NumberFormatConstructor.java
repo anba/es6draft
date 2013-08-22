@@ -231,7 +231,7 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
      * Abstract Operation: CurrencyDigits
      */
     private static int CurrencyDigits(String c) {
-        // http://www.currency-iso.org/dam/downloads/dl_iso_table_a1.xml
+        // http://www.currency-iso.org/dam/downloads/table_a1.xml
         switch (c) {
         case "BYR":
         case "XOF":

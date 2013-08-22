@@ -336,11 +336,14 @@ class IntlDataTools {
         try (Reader reader = Files.newBufferedReader(currencyFile, StandardCharsets.UTF_8)) {
             LinkedHashMap<String, Integer> map = new LinkedHashMap<>();
             Document xml = xml(reader);
-            NodeList list = xml.getDocumentElement().getElementsByTagName("ISO_CURRENCY");
+            NodeList list = xml.getDocumentElement().getElementsByTagName("CcyNtry");
             for (int i = 0, len = list.getLength(); i < len; ++i) {
                 Element item = (Element) list.item(i);
-                Element code = getElementByTagName(item, "ALPHABETIC_CODE");
-                Element minor = getElementByTagName(item, "MINOR_UNIT");
+                Element code = getElementByTagName(item, "Ccy");
+                Element minor = getElementByTagName(item, "CcyMnrUnts");
+                if (code == null) {
+                    continue;
+                }
                 String scode = code.getTextContent();
                 int iminor = 2;
                 try {
