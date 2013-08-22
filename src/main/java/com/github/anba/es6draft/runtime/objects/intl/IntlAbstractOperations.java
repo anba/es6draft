@@ -742,15 +742,17 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.10 GetNumberOption (options, property, minimum, maximum, fallback)
      */
-    public static double GetNumberOption(ExecutionContext cx, ScriptObject options,
-            String property, double minimum, double maximum, double fallback) {
+    public static int GetNumberOption(ExecutionContext cx, ScriptObject options, String property,
+            int minimum, int maximum, int fallback) {
+        assert minimum <= maximum;
+        assert minimum <= fallback && fallback <= maximum;
         Object value = Get(cx, options, property);
         if (!Type.isUndefined(value)) {
             double val = ToNumber(cx, value);
             if (Double.isNaN(val) || val < minimum || val > maximum) {
                 throwRangeError(cx, Messages.Key.IntlInvalidOption, Double.toString(val));
             }
-            return Math.floor(val);
+            return (int) Math.floor(val);
         }
         return fallback;
     }

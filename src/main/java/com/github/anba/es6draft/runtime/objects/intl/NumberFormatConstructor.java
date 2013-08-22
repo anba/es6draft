@@ -193,28 +193,28 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
             numberFormat.setCurrencyDisplay(cd);
         }
         /* steps 23-24 */
-        double mnid = GetNumberOption(cx, options, "minimumIntegerDigits", 1, 21, 1);
-        numberFormat.setMinimumIntegerDigits((int) mnid); // TODO: double?!
+        int mnid = GetNumberOption(cx, options, "minimumIntegerDigits", 1, 21, 1);
+        numberFormat.setMinimumIntegerDigits(mnid);
         /* step 25 */
         int mnfdDefault = "currency".equals(s) ? cDigits : 0;
         /* steps 26-27 */
-        double mnfd = GetNumberOption(cx, options, "minimumFractionDigits", 0, 20, mnfdDefault);
-        numberFormat.setMinimumFractionDigits((int) mnfd);// TODO: double?!
+        int mnfd = GetNumberOption(cx, options, "minimumFractionDigits", 0, 20, mnfdDefault);
+        numberFormat.setMinimumFractionDigits(mnfd);
         /* step 28 */
-        double mxfdDefault = "currency".equals(s) ? Math.max(mnfd, cDigits)
+        int mxfdDefault = "currency".equals(s) ? Math.max(mnfd, cDigits)
                 : "percent".equals(s) ? Math.max(mnfd, 0) : Math.max(mnfd, 3);
         /* steps 29-30 */
-        double mxfd = GetNumberOption(cx, options, "maximumFractionDigits", mnfd, 20, mxfdDefault);
-        numberFormat.setMaximumFractionDigits((int) mxfd);// TODO: double?!
+        int mxfd = GetNumberOption(cx, options, "maximumFractionDigits", mnfd, 20, mxfdDefault);
+        numberFormat.setMaximumFractionDigits(mxfd);
         /* steps 31-32 */
         Object mnsd = Get(cx, options, "minimumSignificantDigits");
         Object mxsd = Get(cx, options, "maximumSignificantDigits");
         /* step 33 */
         if (!Type.isUndefined(mnsd) || !Type.isUndefined(mxsd)) {
-            double _mnsd = GetNumberOption(cx, options, "minimumSignificantDigits", 1, 21, 1);
-            double _mxsd = GetNumberOption(cx, options, "maximumSignificantDigits", _mnsd, 21, 21);
-            numberFormat.setMinimumSignificantDigits((int) _mnsd);// TODO: double?!
-            numberFormat.setMaximumSignificantDigits((int) _mxsd);// TODO: double?!
+            int _mnsd = GetNumberOption(cx, options, "minimumSignificantDigits", 1, 21, 1);
+            int _mxsd = GetNumberOption(cx, options, "maximumSignificantDigits", _mnsd, 21, 21);
+            numberFormat.setMinimumSignificantDigits(_mnsd);
+            numberFormat.setMaximumSignificantDigits(_mxsd);
         }
         /* steps 34-35 */
         boolean g = GetBooleanOption(cx, options, "useGrouping", true);
