@@ -424,7 +424,7 @@ public final class ScriptRuntime {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 5/7 */
-        if (!(constructor instanceof Constructor)) {
+        if (!IsConstructor(constructor)) {
             throw throwTypeError(cx, Messages.Key.NotConstructor);
         }
         /* step 6/8 */
