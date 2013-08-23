@@ -57,7 +57,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         ExecutionContext cx = realm.defaultContext();
         setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
         defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
-        defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, false));
+        defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, true));
         AddRestrictedFunctionProperties(cx, this);
     }
 

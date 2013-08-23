@@ -340,7 +340,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,

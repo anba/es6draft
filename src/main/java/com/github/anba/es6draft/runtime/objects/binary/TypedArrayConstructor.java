@@ -122,7 +122,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
@@ -147,7 +147,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
@@ -172,7 +172,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
@@ -197,7 +197,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
@@ -222,7 +222,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
@@ -247,7 +247,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
@@ -272,7 +272,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
@@ -297,7 +297,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
@@ -322,7 +322,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final Intrinsics __proto__ = Intrinsics.TypedArray;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,

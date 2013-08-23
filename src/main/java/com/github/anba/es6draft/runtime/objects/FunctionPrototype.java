@@ -77,7 +77,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,

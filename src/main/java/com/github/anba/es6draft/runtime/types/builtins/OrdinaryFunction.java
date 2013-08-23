@@ -249,7 +249,7 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 */
-        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, false));
+        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
         String name = function.functionName() != null ? function.functionName() : "";
         DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor(name, false, false, false));
         /* step 3 */
@@ -291,7 +291,7 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 */
-        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, false));
+        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
         String name = function.functionName() != null ? function.functionName() : "";
         DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor(name, false, false, false));
         /* step 3 */
@@ -412,7 +412,7 @@ public class OrdinaryFunction extends FunctionObject {
         TypeErrorThrower f = new TypeErrorThrower(cx.getRealm());
         f.setPrototype(functionPrototype);
         // inlined FunctionInitialise()
-        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(0, false, false, false));
+        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(0, false, false, true));
         DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor("ThrowTypeError", false, false,
                 false));
         // inlined AddRestrictedFunctionProperties()

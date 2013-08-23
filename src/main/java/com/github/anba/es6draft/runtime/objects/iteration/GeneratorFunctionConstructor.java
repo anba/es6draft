@@ -156,7 +156,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
          * 15.19.3.2.2 GeneratorFunction.length
          */
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,

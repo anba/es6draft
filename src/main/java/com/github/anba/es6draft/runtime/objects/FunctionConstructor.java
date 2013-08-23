@@ -149,7 +149,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
          * 15.3.2.2 Function.length
          */
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,

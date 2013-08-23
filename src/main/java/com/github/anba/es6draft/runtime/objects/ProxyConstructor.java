@@ -57,7 +57,7 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 2;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,

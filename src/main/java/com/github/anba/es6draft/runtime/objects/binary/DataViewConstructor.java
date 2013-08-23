@@ -213,7 +213,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         public static final String name = "DataView";
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final int length = 3;
 
         /**
