@@ -381,6 +381,19 @@ public final class AbstractOperations {
     }
 
     /**
+     * 9.1.11 ToLength
+     */
+    public static long ToLength(ExecutionContext cx, Object val) {
+        /* steps 1-2 */
+        double len = ToInteger(cx, val);
+        /* step 3 */
+        if (len <= 0) {
+            return 0;
+        }
+        return (long) Math.min(len, 0x1FFFFFFFFFFFFFL);
+    }
+
+    /**
      * 9.2.1 CheckObjectCoercible
      */
     public static Object CheckObjectCoercible(ExecutionContext cx, Object val) {
