@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.objectweb.asm.Type;
 
@@ -73,6 +74,7 @@ final class Types {
     static final Type Iterator = Type.getType(Iterator.class);
     static final Type List = Type.getType(List.class);
     static final Type Map = Type.getType(Map.class);
+    static final Type Set = Type.getType(Set.class);
 
     // es6draft.compiler
     static final Type CompiledFunction = Type.getType(CompiledFunction.class);

@@ -82,6 +82,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 MethodType.Static, Types.ScriptRuntime, "enumerateValues",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_GetUnscopables = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "GetUnscopables",
+                Type.getMethodType(Types.Set, Types.ScriptObject, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "iterate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
@@ -1108,6 +1112,11 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
 
         // ToObject(<Expression>)
         ToObject(type, mv);
+
+        // retrieve object's @@unscopables list
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_GetUnscopables);
 
         // create new object lexical environment (withEnvironment-flag = true)
         mv.enterScope(node);

@@ -13,6 +13,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.util.Set;
+
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -29,12 +31,14 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     private final ExecutionContext cx;
     private final ScriptObject bindings;
     private final boolean withEnvironment;
+    private final Set<String> unscopables;
 
     public ObjectEnvironmentRecord(ExecutionContext cx, ScriptObject bindings,
-            boolean withEnvironment) {
+            boolean withEnvironment, Set<String> unscopables) {
         this.cx = cx;
         this.bindings = bindings;
         this.withEnvironment = withEnvironment;
+        this.unscopables = unscopables;
     }
 
     @Override
@@ -47,8 +51,12 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasBinding(String name) {
-        /* steps 1-2 (omitted) */
-        /* step 3 */
+        /* step 1 (omitted) */
+        /* step 2 */
+        if (unscopables.contains(name)) {
+            return false;
+        }
+        /* steps 3-4 */
         return HasProperty(cx, bindings, name);
     }
 
@@ -58,9 +66,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     @Override
     public void createMutableBinding(String name, boolean deletable) {
         /* steps 1-2 (omitted) */
-        /* step 3 */
-        assert HasProperty(cx, bindings, name) == false; // FIXME: spec bug (bug 1786)
-        /* steps 4-5 */
+        /* step 3-4 */
         PropertyDescriptor desc = new PropertyDescriptor(UNDEFINED, true, true, deletable);
         DefinePropertyOrThrow(cx, bindings, name, desc);
     }

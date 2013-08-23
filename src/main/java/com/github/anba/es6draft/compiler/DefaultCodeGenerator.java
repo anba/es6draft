@@ -147,7 +147,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         static final MethodDesc LexicalEnvironment_newObjectEnvironment = MethodDesc.create(
                 MethodType.Static, Types.LexicalEnvironment, "newObjectEnvironment", Type
                         .getMethodType(Types.LexicalEnvironment, Types.ScriptObject,
-                                Types.LexicalEnvironment, Type.BOOLEAN_TYPE));
+                                Types.LexicalEnvironment, Type.BOOLEAN_TYPE, Types.Set));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_CreateDefaultConstructor = MethodDesc.create(
@@ -260,12 +260,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     }
 
     /**
-     * stack: [obj] -> [lexEnv]
+     * stack: [obj, blacklist] -> [lexEnv]
      */
     protected final void newObjectEnvironment(ExpressionVisitor mv, boolean withEnvironment) {
         mv.loadExecutionContext();
         mv.invoke(Methods.ExecutionContext_getLexicalEnvironment);
+        mv.swap();
         mv.iconst(withEnvironment);
+        mv.swap();
         mv.invoke(Methods.LexicalEnvironment_newObjectEnvironment);
     }
 

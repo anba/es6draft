@@ -27,10 +27,14 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.mozilla.javascript.ConsString;
 
+import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
@@ -995,6 +999,43 @@ public final class ScriptRuntime {
             }
             return null;
         }
+    }
+
+    /**
+     * 12.10 The with Statement
+     */
+    public static Set<String> GetUnscopables(ScriptObject o, ExecutionContext cx) {
+        Object blackListArray = Get(cx, o, BuiltinSymbol.unscopables.get());
+        if (Type.isObject(blackListArray)) {
+            Set<String> blacklist = CreateListFromArray(cx, Type.objectValue(blackListArray));
+            return blacklist;
+        }
+        return Collections.emptySet();
+    }
+
+    /**
+     * @see AbstractOperations#CreateListFromArrayLike(ExecutionContext, Object)
+     */
+    private static Set<String> CreateListFromArray(ExecutionContext cx, ScriptObject object) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        Object len = Get(cx, object, "length");
+        /* steps 3-4 */
+        long n = ToLength(cx, len);
+        /* step 5 */
+        Set<String> list = new HashSet<>((int) Math.min(n, 1024));
+        /* steps 6-7 */
+        for (long index = 0; index < n; ++index) {
+            String indexName = ToString(index);
+            Object next = Get(cx, object, indexName);
+            // only need to collect string valued entries for @@unscopables feature, spec does not
+            // require any coercion (FIXME: spec bug?)
+            if (Type.isString(next)) {
+                list.add(Type.stringValue(next).toString());
+            }
+        }
+        /* step 8 */
+        return list;
     }
 
     /**

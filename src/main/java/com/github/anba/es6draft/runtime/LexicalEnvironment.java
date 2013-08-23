@@ -8,6 +8,9 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -91,7 +94,8 @@ public final class LexicalEnvironment {
      * 10.2.2.3 NewObjectEnvironment (O, E)
      */
     public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e) {
-        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, false);
+        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, false,
+                Collections.<String> emptySet());
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);
         return env;
     }
@@ -100,8 +104,9 @@ public final class LexicalEnvironment {
      * 10.2.2.3 NewObjectEnvironment (O, E)
      */
     public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e,
-            boolean withEnvironment) {
-        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, withEnvironment);
+            boolean withEnvironment, Set<String> unscopables) {
+        EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, withEnvironment,
+                unscopables);
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);
         return env;
     }
