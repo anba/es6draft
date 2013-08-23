@@ -77,6 +77,8 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasBinding(String name) {
+        /* step 1 (omitted) */
+        /* steps 2-3 */
         return bindings.containsKey(name);
     }
 
@@ -85,7 +87,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void createMutableBinding(String name, boolean deletable) {
+        /* step 1 (omitted) */
+        /* step 2 */
         assert !bindings.containsKey(name);
+        /* steps 3-4 */
         bindings.put(name, new Binding(true, deletable));
     }
 
@@ -94,7 +99,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public void createImmutableBinding(String name) {
+        /* step 1 (omitted) */
+        /* step 2 */
         assert !bindings.containsKey(name);
+        /* step 3 */
         bindings.put(name, new Binding(false, false));
     }
 
@@ -105,7 +113,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public void initialiseBinding(String name, Object value) {
         assert value != null;
         Binding b = bindings.get(name);
+        /* step 1 (omitted) */
+        /* step 2 */
         assert b != null && b.value == null;
+        /* steps 3-4 */
         b.value = value;
     }
 
@@ -116,7 +127,10 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     public void setMutableBinding(String name, Object value, boolean strict) {
         assert value != null;
         Binding b = bindings.get(name);
+        /* step 1 (omitted) */
+        /* step 2 */
         assert b != null; // FIXME: spec bug (bug 159)
+        /* steps 3-6 */
         if (b.value == null) {
             throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         } else if (b.mutable) {
@@ -132,13 +146,17 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     @Override
     public Object getBindingValue(String name, boolean strict) {
         Binding b = bindings.get(name);
+        /* step 1 (omitted) */
+        /* step 2 */
         assert b != null;
+        /* step 3 */
         if (b.value == null) {
             if (!strict) {
                 return UNDEFINED;
             }
             throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         }
+        /* step 4 */
         return b.value;
     }
 
@@ -148,13 +166,18 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     @Override
     public boolean deleteBinding(String name) {
         Binding b = bindings.get(name);
+        /* step 1 (omitted) */
+        /* step 2 */
         if (b == null) {
             return true;
         }
+        /* step 3 */
         if (!b.deletable) {
             return false;
         }
+        /* step 4 */
         bindings.remove(name);
+        /* step 5 */
         return true;
     }
 
@@ -163,6 +186,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasThisBinding() {
+        /* step 1 */
         return false;
     }
 
@@ -179,6 +203,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasSuperBinding() {
+        /* step 1 */
         return false;
     }
 
@@ -187,6 +212,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public ScriptObject withBaseObject() {
+        /* step 1 */
         return null;
     }
 }
