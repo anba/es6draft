@@ -56,6 +56,11 @@ public enum BuiltinSymbol {
      */
     isConcatSpreadable,
 
+    /**
+     * &#64;&#64;unscopables
+     */
+    unscopables,
+
     ;
 
     /**
