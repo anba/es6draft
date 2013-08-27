@@ -104,7 +104,7 @@ public final class Properties {
      * Built-in value property
      */
     @Documented
-    @Target({ ElementType.FIELD })
+    @Target({ ElementType.FIELD, ElementType.METHOD })
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface Value {
         /**
@@ -613,7 +613,10 @@ public final class Properties {
                 Accessor accessor = method.getAnnotation(Accessor.class);
                 AliasFunction alias = method.getAnnotation(AliasFunction.class);
                 AliasFunctions aliases = method.getAnnotation(AliasFunctions.class);
-                assert function == null || accessor == null;
+                Value value = method.getAnnotation(Value.class);
+                assert function == null || (accessor == null && value == null);
+                assert accessor == null || (function == null && value == null);
+                assert value == null || (function == null && accessor == null);
                 assert alias == null || function != null;
                 assert aliases == null || function != null;
 
@@ -628,6 +631,12 @@ public final class Properties {
                         layout.accessors = new LinkedHashMap<>();
                     }
                     layout.accessors.put(accessor, getStaticMethodHandle(lookup, method));
+                }
+                if (value != null) {
+                    if (layout.values == null) {
+                        layout.values = new LinkedHashMap<>();
+                    }
+                    layout.values.put(value, getComputedValueMethodHandle(lookup, method));
                 }
                 if (alias != null) {
                     if (layout.aliases == null) {
@@ -753,6 +762,20 @@ public final class Properties {
             spreader = MethodHandles.insertArguments(spreader, 0, handle);
             spreader = MethodHandles.filterArguments(spreader, fixedArguments, filter);
             handle = spreader;
+        }
+        return handle;
+    }
+
+    private static MethodHandle getComputedValueMethodHandle(Lookup lookup, Method method)
+            throws IllegalAccessException {
+        // check: (ExecutionContext) -> Object
+        MethodHandle handle = lookup.unreflect(method);
+        MethodType type = handle.type();
+        if (type.parameterCount() != 1 || !ExecutionContext.class.equals(type.parameterType(0))) {
+            throw new IllegalArgumentException(handle.toString());
+        }
+        if (!Object.class.equals(type.returnType())) {
+            throw new IllegalArgumentException(handle.toString());
         }
         return handle;
     }
@@ -966,6 +989,14 @@ public final class Properties {
     private static Object resolveValue(ExecutionContext cx, Object value) {
         if (value instanceof Intrinsics) {
             value = cx.getIntrinsic((Intrinsics) value);
+        } else if (value instanceof MethodHandle) {
+            try {
+                value = (Object) ((MethodHandle) value).invokeExact(cx);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
         }
         return value;
     }
