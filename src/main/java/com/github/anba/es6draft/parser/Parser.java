@@ -27,6 +27,7 @@ import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.SmallArrayList;
+import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 
 /**
  * Parser for ECMAScript6 source code
@@ -41,6 +42,7 @@ public class Parser {
     private static final boolean MODULES_ENABLED = false;
     private static final boolean DEBUG = false;
 
+    private static final int MAX_ARGUMENTS = FunctionPrototype.getMaxArguments();
     private static final List<Binding> NO_INHERITED_BINDING = Collections.emptyList();
     private static final Set<String> EMPTY_LABEL_SET = Collections.emptySet();
 
@@ -2938,7 +2940,7 @@ public class Parser {
      * </pre>
      */
     private BindingProperty bindingProperty() {
-        if (LOOKAHEAD(Token.COLON)) {
+        if (token() == Token.LB || LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = propertyName();
             consume(Token.COLON);
             Binding binding;
@@ -4748,6 +4750,10 @@ public class Parser {
         }
         consume(Token.TEMPLATE);
 
+        if ((elements.size() / 2) + 1 > MAX_ARGUMENTS) {
+            reportSyntaxError(Messages.Key.FunctionTooManyArguments);
+        }
+
         return new TemplateLiteral(tagged, elements);
     }
 
@@ -4952,6 +4958,10 @@ public class Parser {
                 } else {
                     break;
                 }
+            }
+
+            if (args.size() > MAX_ARGUMENTS) {
+                reportSyntaxError(Messages.Key.FunctionTooManyArguments);
             }
         }
         consume(Token.RP);
