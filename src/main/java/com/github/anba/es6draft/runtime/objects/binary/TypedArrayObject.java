@@ -78,18 +78,28 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject {
      */
     @Override
     protected Object elementGet(ExecutionContext cx, double index) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         ArrayBufferObject buffer = getBuffer();
+        /* step 4 */
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
+        /* step 5 */
         long length = getArrayLength();
+        /* step 6 */
         if (index < 0 || index >= length) {
             return UNDEFINED;
         }
+        /* step 7 */
         long offset = getByteOffset();
+        /* steps 8, 11 */
         ElementType elementType = getElementType();
+        /* step 9 */
         int elementSize = elementType.size();
+        /* step 10 */
         long indexedPosition = (long) ((index * elementSize) + offset);
+        /* step 12 */
         return GetValueFromBuffer(cx, buffer, indexedPosition, elementType);
     }
 
@@ -98,24 +108,32 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject {
      */
     @Override
     protected boolean elementSet(ExecutionContext cx, double index, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         ArrayBufferObject buffer = getBuffer();
+        /* step 4 */
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
+        /* step 5 */
         long length = getArrayLength();
+        /* steps 6-7 */
         double numValue = ToNumber(cx, value);
+        /* step 8 */
         if (index < 0 || index >= length) {
-            // FIXME: spec bug (elementSet) should return true/false
-            // return numValue;
             return false;
         }
+        /* step 9 */
         long offset = getByteOffset();
+        /* steps 10, 13 */
         ElementType elementType = getElementType();
+        /* step 11 */
         int elementSize = elementType.size();
+        /* step 12 */
         long indexedPosition = (long) ((index * elementSize) + offset);
+        /* steps 14-15 */
         SetValueInBuffer(cx, buffer, indexedPosition, elementType, numValue);
-        // FIXME: spec bug (elementSet) should return true/false
-        // return numValue;
+        /* step 16 */
         return true;
     }
 

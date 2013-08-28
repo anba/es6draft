@@ -6,8 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -15,7 +13,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -89,26 +86,20 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.4 TypedArray (...args)
+     * 15.13.6.4.1 TypedArray (...args)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        // FIXME: spec incomplete [[Call]] not defined
         ExecutionContext calleeContext = calleeContext();
-        // let's assume this should work like super() in class constructors
-        ScriptObject superBase = getInheritance(calleeContext);
-        if (!IsCallable(superBase)) {
-            throwTypeError(calleeContext, Messages.Key.NotCallable);
-        }
-        return ((Callable) superBase).call(calleeContext, thisValue, args);
+        ScriptObject super_ = realm().getIntrinsic(Intrinsics.TypedArray);
+        return ((Callable) super_).call(calleeContext, thisValue, args);
     }
 
     /**
-     * 15.13.6.4 new TypedArray (...args)
+     * 15.13.6.4.2 new TypedArray (...args)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        // FIXME: spec incomplete [[Construct]] not defined
         return OrdinaryConstruct(callerContext, this, args);
     }
 
@@ -135,6 +126,13 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Int8ArrayPrototype;
+
+        /**
+         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.Int8.size();
     }
 
     /**
@@ -160,6 +158,13 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint8ArrayPrototype;
+
+        /**
+         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.Uint8.size();
     }
 
     /**
@@ -185,6 +190,13 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint8ClampedArrayPrototype;
+
+        /**
+         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.Uint8C.size();
     }
 
     /**
@@ -210,6 +222,13 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Int16ArrayPrototype;
+
+        /**
+         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.Int16.size();
     }
 
     /**
@@ -235,6 +254,13 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint16ArrayPrototype;
+
+        /**
+         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.Uint16.size();
     }
 
     /**
@@ -260,6 +286,13 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Int32ArrayPrototype;
+
+        /**
+         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.Int32.size();
     }
 
     /**
@@ -285,6 +318,13 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint32ArrayPrototype;
+
+        /**
+         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.Uint32.size();
     }
 
     /**
@@ -310,6 +350,13 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Float32ArrayPrototype;
+
+        /**
+         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.Float32.size();
     }
 
     /**
@@ -335,5 +382,12 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Float64ArrayPrototype;
+
+        /**
+         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         */
+        @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final int BYTES_PER_ELEMENT = ElementType.Float64.size();
     }
 }

@@ -14,9 +14,16 @@ import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstru
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CloneArrayBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetArrayBufferData;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GetIterator;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorNext;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -65,7 +72,6 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object arg0 = args.length > 0 ? args[0] : UNDEFINED;
-        // FIXME: spec bug - constructor selection is unclear
         if (!Type.isObject(arg0)) {
             return callWithLength(calleeContext, thisValue, arg0);
         }
@@ -132,11 +138,6 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
      */
     private Object callWithTypedArray(ExecutionContext cx, Object thisValue,
             TypedArrayObject typedArray) {
-        /* FIXME: missing check in spec */
-        if (typedArray.getBuffer() == null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-
         /* step 1 (implicit) */
         /* step 2 */
         TypedArrayObject srcArray = typedArray;
@@ -147,39 +148,38 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         TypedArrayObject array = (TypedArrayObject) obj;
+        /* step 5 */
         if (array.getBuffer() != null) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        /* steps 5-7 */
+        /* step 7 */
+        if (srcArray.getBuffer() == null) {
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        /* steps 6, 8-9 */
         ElementType elementType = array.getElementType();
-        /* step 8 */
+        /* step 10 */
         long elementLength = srcArray.getArrayLength();
-        /* FIXME: incomplete spec */
-        long srcByteOffset = srcArray.getByteOffset();
-        /* step 9-10 */
+        /* step 11-12 */
         ElementType srcType = srcArray.getElementType();
-        /* step 11 */
+        /* step 13 */
         ArrayBufferObject srcData = srcArray.getBuffer();
-        /* steps 12-13 */
-        ArrayBufferObject data = CloneArrayBuffer(cx, srcData, srcType, elementType, srcByteOffset,
-                elementLength);
         /* step 14 */
+        long srcByteOffset = srcArray.getByteOffset();
+        /* steps 15-16 */
+        ArrayBufferObject data = CloneArrayBuffer(cx, srcData, srcByteOffset, srcType, elementType,
+                elementLength);
+        /* step 17 */
         int elementSize = elementType.size();
-        /* step 15 */
-        long byteLength = elementSize * elementLength;
-        // FIXME: spec bug (remove this call <-> CloneArrayBuffer?)
-        /* steps 16-17 */
-        // data = SetArrayBufferData(realm, data, byteLength);
         /* step 18 */
-        if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        /* steps 19-22 */
+        long byteLength = elementSize * elementLength;
+        /* step 19 (empty) */
+        /* steps 20-23 */
         array.setBuffer(data);
         array.setByteLength(byteLength);
         array.setByteOffset(0);
         array.setArrayLength(elementLength);
-        /* step 23 */
+        /* step 24 */
         return array;
     }
 
@@ -191,33 +191,24 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         assert !(_array instanceof TypedArrayObject || _array instanceof ArrayBufferObject);
         /* step 2 */
         Object obj = thisValue;
-        if (!(Type.isObject(obj) || Type.isUndefined(obj))) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        // FIXME: spec bug (variable srcArray unused)
         /* step 3 */
-        @SuppressWarnings("unused")
         ScriptObject srcArray = _array;
         /* step 4 */
         if (!(obj instanceof TypedArrayObject)) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         TypedArrayObject array = (TypedArrayObject) obj;
+        /* step 5 */
         if (array.getBuffer() != null) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        /* steps 5-7 */
+        /* steps 6-8 */
         ElementType elementType = array.getElementType();
-        /* step 8 */
-        Object arrayLength = Get(cx, _array, "length");
-        // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
-        if (Type.isUndefined(arrayLength)) {
-            arrayLength = 0;
-        }
-        /* steps 9-12 */
-        double numberLength = ToNumber(cx, arrayLength);
-        double elementLength = ToInteger(numberLength);
-        if (numberLength != elementLength || elementLength < 0) {
+        /* step 9 */
+        Object arrayLength = Get(cx, srcArray, "length");
+        /* steps 10-12 */
+        long elementLength = ToLength(cx, arrayLength);
+        if (elementLength < 0) {
             throwRangeError(cx, Messages.Key.InvalidBufferSize);
         }
         /* steps 13-14 */
@@ -225,27 +216,26 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         /* step 15 */
         int elementSize = elementType.size();
         /* step 16 */
-        long byteLength = (long) (elementSize * elementLength);
-        /* step 17 */
+        long byteLength = elementSize * elementLength;
+        /* steps 17-18 */
         SetArrayBufferData(cx, data, byteLength);
-        /* steps 18-19 */
+        /* steps 19-20 */
         for (long k = 0; k < elementLength; ++k) {
             String pk = ToString(k);
-            // FIXME: spec bug (`Get(array, Pk)` instead of `Get(O, Pk)`)
-            Object kValue = Get(cx, _array, pk);
+            Object kValue = Get(cx, srcArray, pk);
             double kNumber = ToNumber(cx, kValue);
             SetValueInBuffer(cx, data, k * elementSize, elementType, kNumber);
         }
-        /* step 20 */
+        /* step 21 */
         if (array.getBuffer() != null) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        /* steps 21-24 */
+        /* steps 22-25 */
         array.setBuffer(data);
         array.setByteLength(byteLength);
         array.setByteOffset(0);
-        array.setArrayLength((long) elementLength);
-        /* step 25 */
+        array.setArrayLength(elementLength);
+        /* step 26 */
         return array;
     }
 
@@ -254,44 +244,46 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
      */
     private Object callWithArrayBuffer(ExecutionContext cx, Object thisValue,
             ArrayBufferObject buffer, Object byteOffset, Object length) {
-        /* FIXME: missing check in spec (?) */
-        if (buffer.getData() == null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-
         /* step 1 (implicit) */
         /* step 2 */
         Object obj = thisValue;
         /* step 3 */
+        if (buffer.getData() == null) {
+            throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        /* step 4 */
         if (!(obj instanceof TypedArrayObject)) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
         TypedArrayObject array = (TypedArrayObject) obj;
+        /* step 5 */
         if (array.getBuffer() != null) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        /* steps 4-6 */
+        /* steps 6-8 */
         ElementType elementType = array.getElementType();
-        /* step 7 */
+        /* step 9 */
         int elementSize = elementType.size();
-        /* step 8 */
-        assert array.getBuffer() == null;
-        /* steps 9-10 */
+        /* steps 10-11 */
         double offset = ToInteger(cx, byteOffset);
-        /* step 11 */
+        /* step 12 */
         if (offset < 0) {
             throwRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* step 12 */
+        /* step 13 */
         if (offset % elementSize != 0) {
             throwRangeError(cx, Messages.Key.InvalidByteOffset);
         }
-        /* step 13 */
+        /* step 14 */
         long bufferByteLength = buffer.getByteLength();
-        /* steps 15-16 */
+        /* step 15 */
+        // if (offset + elementSize > bufferByteLength) {
+        // throwRangeError(cx, Messages.Key.InvalidBufferSize);
+        // }
+        /* steps 16-17 */
         long newByteLength;
         if (Type.isUndefined(length)) {
-            /* step 15 */
+            /* step 16 */
             if (bufferByteLength % elementSize != 0) {
                 throwRangeError(cx, Messages.Key.InvalidBufferSize);
             }
@@ -299,28 +291,28 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
             if (newByteLength < 0) {
                 throwRangeError(cx, Messages.Key.InvalidBufferSize);
             }
+            assert newByteLength >= 0;
         } else {
-            /* step 16 */
-            double numberLength = ToNumber(cx, length);
-            double newLength = ToInteger(numberLength);
-            if (numberLength != newLength || newLength < 0) {
+            /* step 17 */
+            long newLength = ToLength(cx, length);
+            if (newLength < 0) {
                 throwRangeError(cx, Messages.Key.InvalidBufferSize);
             }
-            newByteLength = (long) (newLength * elementSize);
+            newByteLength = newLength * elementSize;
             if (offset + newByteLength > bufferByteLength) {
                 throwRangeError(cx, Messages.Key.InvalidBufferSize);
             }
         }
-        /* step 17 */
+        /* step 18 */
         if (array.getBuffer() != null) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        /* steps 18-21 */
+        /* steps 19-22 */
         array.setBuffer(buffer);
         array.setByteLength(newByteLength);
         array.setByteOffset((long) offset);
         array.setArrayLength(newByteLength / elementSize);
-        /* step 22 */
+        /* step 23 */
         return array;
     }
 
@@ -363,13 +355,92 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
             if (!IsConstructor(thisValue) || !IsCallable(thisValue)) {
                 throwTypeError(cx, Messages.Key.NotConstructor);
             }
-            ScriptObject array = OrdinaryConstruct(cx, toFunction(thisValue), new Object[] { len });
+            ScriptObject newObj = OrdinaryConstruct(cx, toFunction(thisValue), new Object[] { len });
             for (int k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 Object value = items[k];
-                Put(cx, array, pk, value, true);
+                Put(cx, newObj, pk, value, true);
             }
-            return array;
+            return newObj;
+        }
+
+        /**
+         * 15.13.6.2.3 %TypedArray%.from ( source, mapfn=undefined, thisArg=undefined )
+         */
+        @Function(name = "from", arity = 1)
+        public static Object from(ExecutionContext cx, Object thisValue, Object source,
+                Object mapfn, Object thisArg) {
+            /* step 1 */
+            Object c = thisValue;
+            /* step 2 */
+            if (!IsConstructor(c) || !IsCallable(thisValue)) {
+                throwTypeError(cx, Messages.Key.NotConstructor);
+            }
+            /* steps 3-4 */
+            ScriptObject items = ToObject(cx, source);
+            /* steps 5-6 */
+            Callable mapper = null;
+            boolean mapping;
+            if (Type.isUndefined(mapfn)) {
+                mapping = false;
+            } else {
+                if (!IsCallable(mapfn)) {
+                    throwTypeError(cx, Messages.Key.NotCallable);
+                }
+                mapping = true;
+                mapper = (Callable) mapfn;
+            }
+            /* steps 7-8 */
+            boolean usingIterator = HasProperty(cx, items, BuiltinSymbol.iterator.get());
+            /* step 9 */
+            if (usingIterator) {
+                ScriptObject iterator = GetIterator(cx, items);
+                List<Object> values = new ArrayList<>();
+                boolean done = false;
+                while (!done) {
+                    ScriptObject next = IteratorNext(cx, iterator);
+                    done = IteratorComplete(cx, next);
+                    if (!done) {
+                        Object nextValue = IteratorValue(cx, next);
+                        values.add(nextValue);
+                    }
+                }
+                int len = values.size();
+                ScriptObject newObj = OrdinaryConstruct(cx, toFunction(c), new Object[] { len });
+                for (int k = 0; k < len; ++k) {
+                    String pk = ToString(k);
+                    Object kValue = values.get(k);
+                    Object mappedValue;
+                    if (mapping) {
+                        mappedValue = mapper.call(cx, thisArg, kValue);
+                    } else {
+                        mappedValue = kValue;
+                    }
+                    Put(cx, newObj, pk, mappedValue, true);
+                }
+                return newObj;
+            }
+            /* step 10 (?) */
+            /* step 11 */
+            Object lenValue = Get(cx, items, "length");
+            /* steps 12-13 */
+            long len = ToLength(cx, lenValue);
+            /* steps 14-15 */
+            ScriptObject newObj = OrdinaryConstruct(cx, toFunction(c), new Object[] { len });
+            /* steps 16-17 */
+            for (long k = 0; k < len; ++k) {
+                String pk = ToString(k);
+                Object kValue = Get(cx, items, pk);
+                Object mappedValue;
+                if (mapping) {
+                    mappedValue = mapper.call(cx, thisArg, kValue, k, items);
+                } else {
+                    mappedValue = kValue;
+                }
+                Put(cx, newObj, pk, mappedValue, true);
+            }
+            /* step 18 */
+            return newObj;
         }
 
         /**
@@ -400,6 +471,8 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
             obj.setByteOffset(0);
             obj.setArrayLength(0);
             /* step 12 */
+            obj.preventExtensions(cx);
+            /* step 13 */
             return obj;
         }
     }

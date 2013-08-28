@@ -99,30 +99,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * FIXME: spec bug (not defined in spec)
-     */
-    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
-            ArrayBufferObject srcData, ElementType srcType, ElementType destType,
-            long startByteIndex, long length) {
-        assert startByteIndex >= 0 && (startByteIndex <= length * srcType.size() || length == 0) : "startByteIndex="
-                + startByteIndex + ", length=" + length + ", srcType.size=" + srcType.size();
-        assert startByteIndex % srcType.size() == 0;
-
-        ArrayBufferObject destData = AllocateArrayBuffer(cx,
-                cx.getIntrinsic(Intrinsics.ArrayBuffer));
-        SetArrayBufferData(cx, destData, length * destType.size());
-
-        for (long index = 0; index < length; ++index) {
-            double value = GetValueFromBuffer(cx, srcData, startByteIndex + index * srcType.size(),
-                    srcType);
-            SetValueInBuffer(cx, destData, index * destType.size(), destType, value);
-        }
-
-        return destData;
-    }
-
-    /**
-     * 15.13.5.1.1 AllocateArrayBuffer(constructor)
+     * 15.13.5.1.1 AllocateArrayBuffer (constructor)
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Object constructor) {
         /* step 1-2 */
@@ -135,7 +112,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.2 (arrayBuffer, bytes)
+     * 15.13.5.1.2 SetArrayBufferData (arrayBuffer, bytes)
      */
     public static ArrayBufferObject SetArrayBufferData(ExecutionContext cx,
             ArrayBufferObject arrayBuffer, double bytes) {
@@ -153,7 +130,31 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.3 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 15.13.5.1.3 CloneArrayBuffer (srcBuffer, srcByteOffset, srcType, cloneElementType, srcLength)
+     */
+    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
+            ArrayBufferObject srcData, long srcByteOffset, ElementType srcType,
+            ElementType cloneElementType, long srcLength) {
+        assert srcByteOffset >= 0
+                && (srcByteOffset <= srcLength * srcType.size() || srcLength == 0) : "startByteIndex="
+                + srcByteOffset + ", length=" + srcLength + ", srcType.size=" + srcType.size();
+        assert srcByteOffset % srcType.size() == 0;
+
+        ArrayBufferObject destData = AllocateArrayBuffer(cx,
+                cx.getIntrinsic(Intrinsics.ArrayBuffer));
+        SetArrayBufferData(cx, destData, srcLength * cloneElementType.size());
+
+        for (long index = 0; index < srcLength; ++index) {
+            double value = GetValueFromBuffer(cx, srcData, srcByteOffset + index * srcType.size(),
+                    srcType);
+            SetValueInBuffer(cx, destData, index * cloneElementType.size(), cloneElementType, value);
+        }
+
+        return destData;
+    }
+
+    /**
+     * 15.13.5.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      */
     public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type) {
@@ -161,7 +162,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.3 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 15.13.5.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      */
     public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, boolean isLittleEndian) {
@@ -213,7 +214,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.4 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 15.13.5.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      */
     public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, double value) {
@@ -221,7 +222,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.4 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 15.13.5.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      */
     public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, double value, boolean isLittleEndian) {
@@ -344,8 +345,10 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
             if (!Type.isObject(arg)) {
                 return false;
             }
-            // FIXME: TypedArrayObject or/and DataViewObject
-            if (arg instanceof TypedArrayObject || arg instanceof DataViewObject) {
+            if (arg instanceof TypedArrayObject) {
+                return true;
+            }
+            if (arg instanceof DataViewObject) {
                 return true;
             }
             return false;
