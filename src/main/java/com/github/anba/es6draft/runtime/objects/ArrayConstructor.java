@@ -177,8 +177,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             /* steps 4-6 */
             ScriptObject a;
             if (IsConstructor(c)) {
-                ScriptObject newObj = ((Constructor) c).construct(cx, len);
-                a = ToObject(cx, newObj);
+                a = ((Constructor) c).construct(cx, len);
             } else {
                 a = ArrayCreate(cx, len);
             }
@@ -225,12 +224,11 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
                 /* steps 8c-8e */
                 ScriptObject a;
                 if (IsConstructor(c)) {
-                    ScriptObject newObj = ((Constructor) c).construct(cx);
-                    a = ToObject(cx, newObj);
+                    a = ((Constructor) c).construct(cx);
                 } else {
                     a = ArrayCreate(cx, 0);
                 }
-                /* steps 8f-8h */
+                /* steps 8f-8g */
                 for (int k = 0;; ++k) {
                     String pk = ToString(k);
                     ScriptObject next = IteratorNext(cx, iterator);
@@ -254,22 +252,17 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             /* step 10 */
             Object lenValue = Get(cx, items, "length");
             /* step 11-12 */
-            double len = ToInteger(cx, lenValue);
+            long len = ToLength(cx, lenValue);
             /* step 13-15 */
             ScriptObject a;
             if (IsConstructor(c)) {
                 ScriptObject newObj = ((Constructor) c).construct(cx, len);
                 a = ToObject(cx, newObj);
             } else {
-                long arrayLen = ToUint32(len);
-                if (arrayLen != len) {
-                    throw throwRangeError(cx, Messages.Key.InvalidArrayLength);
-                }
-                a = ArrayCreate(cx, arrayLen);
+                a = ArrayCreate(cx, len);
             }
             /* step 16-17 */
-            long llen = (long) len;
-            for (long k = 0; k < llen; ++k) {
+            for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 boolean kPresent = HasProperty(cx, items, pk);
                 if (kPresent) {

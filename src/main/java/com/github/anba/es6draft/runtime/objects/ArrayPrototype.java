@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.AliasFunction;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -94,28 +95,28 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
+            /* steps 1-2 */
             ScriptObject array = ToObject(cx, thisValue);
-            /* step 2 */
-            Object arrayLen = Get(cx, array, "length");
             /* step 3 */
-            long len = ToUint32(cx, arrayLen);
-            /* step 4 */
+            Object arrayLen = Get(cx, array, "length");
+            /* steps 4-5 */
+            long len = ToLength(cx, arrayLen);
+            /* step 6 */
             String separator = cx.getRealm().getListSeparator();
-            /* step 5 */
+            /* step 7 */
             if (len == 0) {
                 return "";
             }
-            /* step 8, 10 (step 9 not applicable) */
+            /* steps 8-9 */
             Object firstElement = Get(cx, array, "0");
-            /* step 11-12 */
+            /* steps 10-11 */
             StringBuilder r = new StringBuilder();
             if (Type.isUndefinedOrNull(firstElement)) {
                 r.append("");
             } else {
                 r.append(ToString(cx, Invoke(cx, firstElement, "toLocaleString")));
             }
-            /* step 13-14 */
+            /* step 12-13 */
             for (long k = 1; k < len; ++k) {
                 Object nextElement = Get(cx, array, ToString(k));
                 if (Type.isUndefinedOrNull(nextElement)) {
@@ -125,7 +126,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                             ToString(cx, Invoke(cx, nextElement, "toLocaleString")));
                 }
             }
-            /* step 15 */
+            /* step 14 */
             return r.toString();
         }
 
@@ -134,34 +135,34 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... items) {
-            /* step 1 */
+            /* steps 1-2 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 2 */
-            ScriptObject a = null;
             /* step 3 */
+            ScriptObject a = null;
+            /* step 4 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
                 if (IsConstructor(c)) {
-                    ScriptObject newObj = ((Constructor) c).construct(cx, 0);
-                    a = ToObject(cx, newObj);
+                    a = ((Constructor) c).construct(cx, 0); // OrdinaryConstruct
                 }
             }
-            /* steps 4-5 */
+            /* steps 5-6 */
             if (a == null) {
                 a = ArrayCreate(cx, 0);
             }
-            /* step 6 */
-            long n = 0;
             /* step 7 */
+            long n = 0;
+            /* step 8 */
             Object[] allItems = new Object[items.length + 1];
             allItems[0] = o;
             System.arraycopy(items, 0, allItems, 1, items.length);
-            /* step 8 */
+            /* step 9 */
             for (Object item : allItems) {
                 boolean spreadable = IsConcatSpreadable(cx, item);
                 if (spreadable) {
                     ScriptObject e = (ScriptObject) item;
-                    long len = ToUint32(cx, Get(cx, e, "length"));
+                    Object lenVal = Get(cx, e, "length");
+                    long len = ToLength(cx, lenVal);
                     for (long k = 0; k < len; ++k, ++n) {
                         String p = ToString(k);
                         boolean exists = HasProperty(cx, e, p);
@@ -176,9 +177,9 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                             true));
                 }
             }
-            /* steps 9-10 */
+            /* steps 10-11 */
             Put(cx, a, "length", n, true);
-            /* step 11 */
+            /* step 12 */
             return a;
         }
 
@@ -186,21 +187,21 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
          * 15.4.3.4.1 IsConcatSpreadable (O) Abstract Operation
          */
         public static boolean IsConcatSpreadable(ExecutionContext cx, Object o) {
-            /* step 1 */
+            /* steps 1-2 */
             if (!Type.isObject(o)) {
                 return false;
             }
-            /* steps 2-3 */
+            /* steps 3-4 */
             Object spreadable = Get(cx, Type.objectValue(o), BuiltinSymbol.isConcatSpreadable.get());
-            /* step 4 */
+            /* step 5 */
             if (!Type.isUndefined(spreadable)) {
                 return ToBoolean(spreadable);
             }
-            /* step 5 */
+            /* step 6 */
             if (o instanceof ExoticArray) {
                 return true;
             }
-            /* step 6 */
+            /* step 7 */
             return false;
         }
 
@@ -214,7 +215,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (Type.isUndefined(separator)) {
                 separator = ",";
@@ -257,7 +258,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             if (len == 0) {
                 /* step 6 */
                 Put(cx, o, "length", 0, true);
@@ -284,7 +285,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long n = ToUint32(cx, lenVal);
+            long n = ToLength(cx, lenVal);
             /* steps 6-7 */
             for (Object e : items) {
                 Put(cx, o, ToString(n), e, true);
@@ -306,7 +307,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* step 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             long middle = len / 2L;
             /* steps 7-8 */
@@ -345,7 +346,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* step 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (len == 0) {
                 Put(cx, o, "length", 0, true);
@@ -381,11 +382,11 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-2 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 3 */
-            ScriptObject a = ArrayCreate(cx, 0);
+            // ScriptObject a = ArrayCreate(cx, 0);
             /* step 4 */
             Object lenVal = Get(cx, o, "length");
             /* step 5-6 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 7-8 */
             double relativeStart = ToInteger(cx, start);
             /* step 9 */
@@ -409,7 +410,22 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 finall = (long) Math.min(relativeEnd, len);
             }
-            /* steps 13-14 */
+            /* step 13 */
+            long count = Math.max(finall - k, 0);
+            /* step 14 */
+            ScriptObject a = null;
+            /* step 15 */
+            if (o instanceof ExoticArray) {
+                Object c = Get(cx, o, "constructor");
+                if (IsConstructor(c)) {
+                    a = ((Constructor) c).construct(cx, count); // OrdinaryConstruct
+                }
+            }
+            /* step 16-17 */
+            if (a == null) {
+                a = ArrayCreate(cx, count);
+            }
+            /* steps 18-19 */
             long n = 0;
             for (; k < finall; ++k, ++n) {
                 String pk = ToString(k);
@@ -423,9 +439,9 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     }
                 }
             }
-            /* steps 15-16 */
+            /* steps 20-21 */
             Put(cx, a, "length", n, true);
-            /* step 17 */
+            /* step 22 */
             return a;
         }
 
@@ -529,30 +545,48 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-2 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 3 */
-            ScriptObject a = ArrayCreate(cx, 0);
-            /* step 4 */
             Object lenVal = Get(cx, o, "length");
-            /* steps 5-6 */
-            long len = ToUint32(cx, lenVal);
-            /* steps 7-8 */
+            /* steps 4-5 */
+            long len = ToLength(cx, lenVal);
+            /* steps 6-7 */
             double relativeStart = (start != null ? ToInteger(cx, start) : 0);
-            /* step 9 */
+            /* step 8 */
             long actualStart;
             if (relativeStart < 0) {
                 actualStart = (long) Math.max(len + relativeStart, 0);
             } else {
                 actualStart = (long) Math.min(relativeStart, len);
             }
-            /* step 10 */
-            // TODO: track spec, https://bugs.ecmascript.org/show_bug.cgi?id=429
+            /* steps 9-10 */
             long actualDeleteCount;
+            // if (deleteCount == null) {
+            // actualDeleteCount = len - actualStart;
+            // } else {
+            // double dc = ToInteger(cx, deleteCount);
+            // actualDeleteCount = (long) Math.min(Math.max(dc, 0), len - actualStart);
+            // }
             if (start != null && deleteCount == null) {
                 actualDeleteCount = (len - actualStart);
             } else {
                 double del = (deleteCount != null ? Math.max(ToInteger(cx, deleteCount), 0) : 0);
                 actualDeleteCount = (long) Math.min(del, len - actualStart);
             }
-            /* steps 11-12 */
+            /* step 11 */
+            // long count = finall - k;
+            /* step 12 */
+            ScriptObject a = null;
+            /* step 13 */
+            if (o instanceof ExoticArray) {
+                Object c = Get(cx, o, "constructor");
+                if (IsConstructor(c)) {
+                    a = ((Constructor) c).construct(cx, actualDeleteCount); // OrdinaryConstruct
+                }
+            }
+            /* steps 14-15 */
+            if (a == null) {
+                a = ArrayCreate(cx, actualDeleteCount);
+            }
+            /* steps 16-17 */
             for (long k = 0; k < actualDeleteCount; ++k) {
                 String from = ToString(actualStart + k);
                 boolean fromPresent = HasProperty(cx, o, from);
@@ -562,13 +596,12 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                             true, true));
                 }
             }
-            /* steps 13-14 */
+            /* steps 18-19 */
             Put(cx, a, "length", actualDeleteCount, true);
-
-            /* steps 15-16 */
+            /* steps 20-21 */
             int itemCount = items.length;
             if (itemCount < actualDeleteCount) {
-                /* step 17 */
+                /* step 22 */
                 for (long k = actualStart; k < (len - actualDeleteCount); ++k) {
                     String from = ToString(k + actualDeleteCount);
                     String to = ToString(k + itemCount);
@@ -584,7 +617,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     DeletePropertyOrThrow(cx, o, ToString(k - 1));
                 }
             } else if (itemCount > actualDeleteCount) {
-                /* step 18 */
+                /* step 23 */
                 for (long k = (len - actualDeleteCount); k > actualStart; --k) {
                     String from = ToString(k + actualDeleteCount - 1);
                     String to = ToString(k + itemCount - 1);
@@ -597,16 +630,16 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     }
                 }
             }
-            /* step 19 */
+            /* step 24 */
             long k = actualStart;
-            /* step 20 */
+            /* step 25 */
             for (int i = 0; i < itemCount; ++k, ++i) {
                 Object e = items[i];
                 Put(cx, o, ToString(k), e, true);
             }
-            /* steps 21-22 */
+            /* steps 26-27 */
             Put(cx, o, "length", len - actualDeleteCount + itemCount, true);
-            /* step 23 */
+            /* step 28 */
             return a;
         }
 
@@ -620,7 +653,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             int argCount = items.length;
             /* steps 7-8 */
@@ -657,7 +690,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (len == 0) {
                 return -1;
@@ -710,7 +743,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (len == 0) {
                 return -1;
@@ -756,7 +789,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -790,7 +823,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -824,7 +857,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -855,7 +888,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -863,8 +896,19 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Callable callback = (Callable) callbackfn;
             /* step 7 (omitted) */
             /* step 8 */
-            ScriptObject a = ArrayCreate(cx, len);
-            /* steps 9-10 */
+            ScriptObject a = null;
+            /* step 9 */
+            if (o instanceof ExoticArray) {
+                Object c = Get(cx, o, "constructor");
+                if (IsConstructor(c)) {
+                    a = ((Constructor) c).construct(cx, len);
+                }
+            }
+            /* steps 10-11 */
+            if (a == null) {
+                a = ArrayCreate(cx, len);
+            }
+            /* steps 12-13 */
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 boolean kpresent = HasProperty(cx, o, pk);
@@ -875,7 +919,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                             true));
                 }
             }
-            /* step 11 */
+            /* step 14 */
             return a;
         }
 
@@ -890,7 +934,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -898,8 +942,19 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Callable callback = (Callable) callbackfn;
             /* step 7 (omitted) */
             /* step 8 */
-            ScriptObject a = ArrayCreate(cx, 0);
-            /* steps 9-11 */
+            ScriptObject a = null;
+            /* step 9 */
+            if (o instanceof ExoticArray) {
+                Object c = Get(cx, o, "constructor");
+                if (IsConstructor(c)) {
+                    a = ((Constructor) c).construct(cx, 0);
+                }
+            }
+            /* steps 10-11 */
+            if (a == null) {
+                a = ArrayCreate(cx, 0);
+            }
+            /* steps 12-14 */
             for (long k = 0, to = 0; k < len; ++k) {
                 String pk = ToString(k);
                 boolean kpresent = HasProperty(cx, o, pk);
@@ -913,7 +968,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     }
                 }
             }
-            /* step 12 */
+            /* step 15 */
             return a;
         }
 
@@ -928,7 +983,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -981,7 +1036,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -1034,7 +1089,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(predicate)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -1068,7 +1123,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
-            long len = ToUint32(cx, lenVal);
+            long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(predicate)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -1124,6 +1179,137 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             /* step 3 */
             return CreateArrayIterator(cx, o, ArrayIterationKind.Value);
+        }
+
+        /**
+         * 15.4.3.29 Array.prototype [ @@unscopables ]
+         */
+        @Value(name = "@@unscopables", symbol = BuiltinSymbol.unscopables,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object unscopables(ExecutionContext cx) {
+            /* step 1 */
+            ScriptObject blackList = ArrayCreate(cx, 5, Intrinsics.ArrayPrototype);
+            /* steps 2-8 */
+            CreateOwnDataProperty(cx, blackList, "0", "find");
+            CreateOwnDataProperty(cx, blackList, "1", "findIndex");
+            CreateOwnDataProperty(cx, blackList, "2", "fill");
+            CreateOwnDataProperty(cx, blackList, "3", "copyWithin");
+            CreateOwnDataProperty(cx, blackList, "4", "entries");
+            CreateOwnDataProperty(cx, blackList, "5", "keys");
+            CreateOwnDataProperty(cx, blackList, "6", "values");
+            /* step 9 */
+            return blackList;
+        }
+
+        /**
+         * 15.4.3.30 Array.prototype.fill (value, start = 0, end = this.length)
+         */
+        @Function(name = "fill", arity = 1)
+        public static Object fill(ExecutionContext cx, Object thisValue, Object value,
+                Object start, Object end) {
+            /* steps 1-2 */
+            ScriptObject o = ToObject(cx, thisValue);
+            /* step 3 */
+            Object lenVal = Get(cx, o, "length");
+            /* steps 4-5 */
+            long len = ToLength(cx, lenVal);
+            /* step 6 */
+            len = Math.max(len, 0);
+            /* steps 7-8 */
+            double relativeStart = ToInteger(cx, start);
+            /* step 9 */
+            long k;
+            if (relativeStart < 0) {
+                k = (long) Math.max((len + relativeStart), 0);
+            } else {
+                k = (long) Math.min(relativeStart, len);
+            }
+            /* steps 10-11 */
+            double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
+            /* step 12 */
+            long finall;
+            if (relativeEnd < 0) {
+                finall = (long) Math.max((len + relativeEnd), 0);
+            } else {
+                finall = (long) Math.min(relativeEnd, len);
+            }
+            /* step 13 */
+            for (; k < finall; ++k) {
+                String pk = ToString(k);
+                Put(cx, o, pk, value, true);
+            }
+            /* step 14 */
+            return o;
+        }
+
+        /**
+         * 15.4.3.31 Array.prototype.copyWithin (target, start, end = this.length)
+         */
+        @Function(name = "copyWithin", arity = 2)
+        public static Object copyWithin(ExecutionContext cx, Object thisValue, Object target,
+                Object start, Object end) {
+            /* steps 1-2 */
+            ScriptObject o = ToObject(cx, thisValue);
+            /* step 3 */
+            Object lenVal = Get(cx, o, "length");
+            /* steps 4-5 */
+            long len = ToLength(cx, lenVal);
+            /* step 6 */
+            len = Math.max(len, 0);
+            /* steps 7-8 */
+            double relativeTarget = ToInteger(cx, target);
+            /* step 9 */
+            long to;
+            if (relativeTarget < 0) {
+                to = (long) Math.max((len + relativeTarget), 0);
+            } else {
+                to = (long) Math.min(relativeTarget, len);
+            }
+            /* steps 10-11 */
+            double relativeStart = ToInteger(cx, start);
+            /* step 12 */
+            long from;
+            if (relativeStart < 0) {
+                from = (long) Math.max((len + relativeStart), 0);
+            } else {
+                from = (long) Math.min(relativeStart, len);
+            }
+            /* steps 13-14 */
+            double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
+            /* step 15 */
+            long finall;
+            if (relativeEnd < 0) {
+                finall = (long) Math.max((len + relativeEnd), 0);
+            } else {
+                finall = (long) Math.min(relativeEnd, len);
+            }
+            /* step 16 */
+            long count = Math.min(finall - from, len - to);
+            /* steps 17-18 */
+            long direction;
+            if (from < to && to < from + count) {
+                direction = -1;
+                from = from + count - 1;
+                to = to + count - 1;
+            } else {
+                direction = 1;
+            }
+            /* step 19 */
+            for (; count > 0; --count) {
+                String fromKey = ToString(from);
+                String toKey = ToString(to);
+                boolean fromPresent = HasProperty(cx, o, fromKey);
+                if (fromPresent) {
+                    Object fromVal = Get(cx, o, fromKey);
+                    Put(cx, o, toKey, fromVal, true);
+                } else {
+                    DeletePropertyOrThrow(cx, o, toKey);
+                }
+                from += direction;
+                to += direction;
+            }
+            /* step 20 */
+            return o;
         }
     }
 }

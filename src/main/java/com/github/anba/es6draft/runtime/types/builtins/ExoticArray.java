@@ -90,8 +90,15 @@ public class ExoticArray extends OrdinaryObject {
     /**
      * 8.4.2.2 ArrayCreate Abstract Operation
      */
+    public static ExoticArray ArrayCreate(ExecutionContext cx, long length, Intrinsics proto) {
+        return ArrayCreate(cx, length, cx.getIntrinsic(proto));
+    }
+
+    /**
+     * 8.4.2.2 ArrayCreate Abstract Operation
+     */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
-        assert length <= 4294967295L && proto != null;
+        assert proto != null;
         /* step 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(cx.getRealm());
         /* step 5 */
@@ -103,6 +110,8 @@ public class ExoticArray extends OrdinaryObject {
             array.arrayInitialisationState = false;
             length = 0;
         }
+        // enfore array index invariant
+        length = ToUint32(length);
         /* step 8 */
         array.ordinaryDefineOwnProperty("length",
                 new PropertyDescriptor(length, true, false, false));

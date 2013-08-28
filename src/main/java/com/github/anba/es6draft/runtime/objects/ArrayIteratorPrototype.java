@@ -8,8 +8,8 @@ package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
@@ -127,14 +127,16 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             ArrayIterator itr = (ArrayIterator) thisValue;
-            /* step 4-6 */
+            /* step 4 */
             ScriptObject array = itr.iteratedObject;
+            /* step 5 */
             long index = itr.nextIndex;
+            /* step 6 */
             ArrayIterationKind itemKind = itr.kind;
             /* step 7 */
             Object lenValue = Get(cx, array, "length");
             /* step 8-9 */
-            long len = ToUint32(cx, lenValue);
+            long len = ToLength(cx, lenValue);
             /* step 10 */
             if (itemKind == ArrayIterationKind.SparseKey
                     || itemKind == ArrayIterationKind.SparseValue
@@ -154,32 +156,30 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                 return CreateItrResultObject(cx, UNDEFINED, true);
             }
             /* step 12 */
-            String elementKey = ToString(index);
-            /* step 13 */
             itr.nextIndex = index + 1;
-            /* step 14 */
+            /* step 13 */
             Object elementValue = null;
             if (itemKind == ArrayIterationKind.Value || itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
+                String elementKey = ToString(index);
                 elementValue = Get(cx, array, elementKey);
             }
             if (itemKind == ArrayIterationKind.KeyValue
                     || itemKind == ArrayIterationKind.SparseKeyValue) {
-                /* step 15 */
+                /* step 14 */
                 assert elementValue != null;
                 ScriptObject result = ArrayCreate(cx, 2);
-                result.defineOwnProperty(cx, "0", new PropertyDescriptor(elementKey, true, true,
-                        true));
+                result.defineOwnProperty(cx, "0", new PropertyDescriptor(index, true, true, true));
                 result.defineOwnProperty(cx, "1", new PropertyDescriptor(elementValue, true, true,
                         true));
                 return CreateItrResultObject(cx, result, false);
             } else if (itemKind == ArrayIterationKind.Key
                     || itemKind == ArrayIterationKind.SparseKey) {
-                /* step 16 */
-                return CreateItrResultObject(cx, elementKey, false);
+                /* step 15 */
+                return CreateItrResultObject(cx, index, false);
             } else {
-                /* steps 17-18 */
+                /* steps 16-17 */
                 assert itemKind == ArrayIterationKind.Value
                         || itemKind == ArrayIterationKind.SparseValue;
                 assert elementValue != null;
