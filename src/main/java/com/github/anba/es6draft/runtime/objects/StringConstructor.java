@@ -162,9 +162,9 @@ public class StringConstructor extends BuiltinConstructor implements Initialisab
             /* step 7 */
             Object len = Get(cx, raw, "length");
             /* steps 8-9 */
-            long literalSegments = ToUint32(cx, len); // FIXME: spec bug (bug 492)
+            long literalSegments = ToLength(cx, len);
             /* step 10 */
-            if (literalSegments == 0) {
+            if (literalSegments <= 0) {
                 return "";
             }
             /* step 11 */
