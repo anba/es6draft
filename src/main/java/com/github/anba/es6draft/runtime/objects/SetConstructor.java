@@ -67,7 +67,6 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
-            // FIXME: spec bug ? `Set()` no longer allowed (Bug 1406)
             throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof SetObject)) {
@@ -79,15 +78,17 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
         }
 
         /* steps 5-7 */
-        Object iter, adder = null;
+        ScriptObject iter;
+        Callable adder = null;
         if (Type.isUndefinedOrNull(iterable)) {
-            iter = UNDEFINED;
+            iter = null;
         } else {
             iter = GetIterator(calleeContext, iterable);
-            adder = Get(calleeContext, set, "add");
-            if (!IsCallable(adder)) {
+            Object _adder = Get(calleeContext, set, "add");
+            if (!IsCallable(_adder)) {
                 throw throwTypeError(calleeContext, Messages.Key.NotCallable);
             }
+            adder = (Callable) _adder;
         }
 
         /* steps 8-9 */
@@ -102,21 +103,19 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
         /* steps 10-11 */
         set.initialise(_comparator);
 
-        /* step 11 */
-        if (Type.isUndefined(iter)) {
+        /* step 12 */
+        if (iter == null) {
             return set;
         }
-        /* step 12 */
-        assert iter instanceof ScriptObject;
-        ScriptObject iterator = (ScriptObject) iter;
+        /* step 13 */
         for (;;) {
-            ScriptObject next = IteratorNext(calleeContext, iterator);
+            ScriptObject next = IteratorNext(calleeContext, iter);
             boolean done = IteratorComplete(calleeContext, next);
             if (done) {
                 return set;
             }
             Object nextValue = IteratorValue(calleeContext, next);
-            ((Callable) adder).call(calleeContext, set, nextValue);
+            adder.call(calleeContext, set, nextValue);
         }
     }
 

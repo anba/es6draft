@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -64,7 +67,6 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
-            // FIXME: spec bug ? `Map()` no longer allowed (Bug 1406)
             throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof MapObject)) {
@@ -76,21 +78,17 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
         }
 
         /* steps 5-7 */
-        Object iter, adder = null;
+        ScriptObject iter;
+        Callable adder = null;
         if (Type.isUndefinedOrNull(iterable)) {
-            iter = UNDEFINED;
+            iter = null;
         } else {
-            ScriptObject _iterable = ToObject(calleeContext, iterable);
-            boolean hasValues = HasProperty(calleeContext, _iterable, "entries");
-            if (hasValues) {
-                iter = Invoke(calleeContext, _iterable, "entries");
-            } else {
-                iter = GetIterator(calleeContext, _iterable);
-            }
-            adder = Get(calleeContext, map, "set");
-            if (!IsCallable(adder)) {
+            iter = GetIterator(calleeContext, iterable);
+            Object _adder = Get(calleeContext, map, "set");
+            if (!IsCallable(_adder)) {
                 throw throwTypeError(calleeContext, Messages.Key.NotCallable);
             }
+            adder = (Callable) _adder;
         }
 
         /* step 8 */
@@ -106,23 +104,24 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
         map.initialise(_comparator);
 
         /* step 11 */
-        if (Type.isUndefined(iter)) {
+        if (iter == null) {
             return map;
         }
         /* step 12 */
-        // explicit ToObject() call instead of implicit call through IteratorNext() -> Invoke()
-        ScriptObject iterator = ToObject(calleeContext, iter);
         for (;;) {
-            ScriptObject next = IteratorNext(calleeContext, iterator);
+            ScriptObject next = IteratorNext(calleeContext, iter);
             boolean done = IteratorComplete(calleeContext, next);
             if (done) {
                 return map;
             }
             Object nextItem = IteratorValue(calleeContext, next);
-            ScriptObject entry = ToObject(calleeContext, nextItem);
+            if (!Type.isObject(nextItem)) {
+                throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+            }
+            ScriptObject entry = Type.objectValue(nextItem);
             Object k = Get(calleeContext, entry, "0");
             Object v = Get(calleeContext, entry, "1");
-            ((Callable) adder).call(calleeContext, map, k, v);
+            adder.call(calleeContext, map, k, v);
         }
     }
 

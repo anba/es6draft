@@ -75,14 +75,14 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-4 */
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
             /* step 5 */
-            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
-            /* step ? */
             if (!Type.isObject(value)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* steps 6-7 */
+            /* step 6 */
+            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            /* steps 7-8 */
             entries.put(value, Boolean.TRUE);
-            /* step 6.a.i, 8 */
+            /* step 7.a.i, 9 */
             return s;
         }
 
@@ -109,12 +109,12 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-4 */
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
             /* step 5 */
-            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
-            /* step ? */
             if (!Type.isObject(value)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
-            /* steps 6-7 */
+            /* step 6 */
+            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            /* steps 7-8 */
             return entries.remove(value);
         }
 
@@ -125,12 +125,12 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
         public static Object has(ExecutionContext cx, Object thisValue, Object value) {
             /* steps 1-4 */
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
-            /* step 5 */
-            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
             /* step ? */
             if (!Type.isObject(value)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* step 5 */
+            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
             /* steps 6-7 */
             return entries.containsKey(value);
         }

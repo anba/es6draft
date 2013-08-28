@@ -64,7 +64,6 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
-            // FIXME: spec bug ? `WeakSet()` no longer allowed (Bug 1406)
             throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof WeakSetObject)) {
@@ -76,35 +75,35 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
         }
 
         /* steps 5-7 */
-        Object iter, adder = null;
+        ScriptObject iter;
+        Callable adder = null;
         if (Type.isUndefinedOrNull(iterable)) {
-            iter = UNDEFINED;
+            iter = null;
         } else {
             iter = GetIterator(calleeContext, iterable);
-            adder = Get(calleeContext, set, "add");
-            if (!IsCallable(adder)) {
+            Object _adder = Get(calleeContext, set, "add");
+            if (!IsCallable(_adder)) {
                 throw throwTypeError(calleeContext, Messages.Key.NotCallable);
             }
+            adder = (Callable) _adder;
         }
 
         /* step 8 */
         set.initialise();
 
         /* step 9 */
-        if (Type.isUndefined(iter)) {
+        if (iter == null) {
             return set;
         }
         /* step 10 */
-        assert iter instanceof ScriptObject;
-        ScriptObject iterator = (ScriptObject) iter;
         for (;;) {
-            ScriptObject next = IteratorNext(calleeContext, iterator);
+            ScriptObject next = IteratorNext(calleeContext, iter);
             boolean done = IteratorComplete(calleeContext, next);
             if (done) {
                 return set;
             }
             Object nextValue = IteratorValue(calleeContext, next);
-            ((Callable) adder).call(calleeContext, set, nextValue);
+            adder.call(calleeContext, set, nextValue);
         }
     }
 
