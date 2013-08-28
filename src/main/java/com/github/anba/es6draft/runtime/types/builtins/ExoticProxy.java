@@ -450,6 +450,7 @@ public class ExoticProxy implements ScriptObject {
             targetDesc = targetDesc.clone();
         }
         boolean extensibleTarget = IsExtensible(cx, target);
+        boolean settingConfigFalse = desc.hasConfigurable() && !desc.isConfigurable();
         if (targetDesc == null) {
             if (!extensibleTarget) {
                 throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
@@ -461,8 +462,7 @@ public class ExoticProxy implements ScriptObject {
             if (!IsCompatiblePropertyDescriptor(extensibleTarget, desc, targetDesc)) {
                 throw throwTypeError(cx, Messages.Key.ProxyIncompatibleDescriptor);
             }
-            // FIXME: spec bug - need to test whether desc contains [[Configurable]]
-            if (desc.hasConfigurable() && !desc.isConfigurable() && targetDesc.isConfigurable()) {
+            if (settingConfigFalse && targetDesc.isConfigurable()) {
                 throw throwTypeError(cx, Messages.Key.ProxyNotConfigurable);
             }
         }
