@@ -171,7 +171,8 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         /**
          * 15.3.4.6 Function.prototype[ @@create ] ( )
          */
-        @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create)
+        @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ObjectPrototype);
         }
