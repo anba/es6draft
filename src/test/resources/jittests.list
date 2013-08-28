@@ -40,6 +40,12 @@ tests/basic/number-isinteger.js
 tests/basic/bug719750.js
 tests/basic/testDestructuringFormalError.js
 
+# spec bug - web compat issue?
+tests/basic/bug683140.js
+
+# ES6 spec incomplete for [[OwnPropertyKeys]] on indexed exotic objects
+tests/basic/typed-array-sealed-frozen.js
+
 
 ###################
 # Misc issues     #
@@ -288,6 +294,18 @@ tests/auto-regress/bug678090.js
 tests/auto-regress/bug652177.js
 tests/basic/testInitProtoPrimitive.js
 tests/basic/testSetPropNeitherMissNorHit.js
+
+# ToLength() moved array length restriction to 2^53-1
+tests/for-of/array-iterator-generic.js
+
+# Missing properties in destructuring throw TypeError
+tests/auto-regress/bug785776.js
+tests/basic/bug641229.js
+tests/collections/Map-constructor-3.js
+
+# No implicit ToObject() in destructuring
+tests/basic/bug685321-1.js
+tests/basic/bug685321-2.js
 
 
 #######################################

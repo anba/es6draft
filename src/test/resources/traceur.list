@@ -89,6 +89,21 @@ feature/Scope/LetForInInitializers1.js
 
 
 #######################################
+# ES6 related runtime changes         #
+#######################################
+
+# No implicit ToObject() in destructuring
+feature/Destructuring/Catch.js
+feature/Destructuring/Class.js
+feature/Destructuring/Method.js
+feature/Destructuring/SetAccessor.js
+
+# Missing properties in destructuring throw TypeError
+feature/Destructuring/Array.js
+feature/Destructuring/Object.js
+
+
+#######################################
 # Test for syntax extensions          #
 #######################################
 

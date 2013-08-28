@@ -194,6 +194,14 @@ third_party/object-keys.js
 # __proto__ must be either object or null
 regress/regress-646.js
 
+# Function.length is configurable
+regress/regress-function-length-strict.js
+regress/regress-1530.js
+
+# ToLength() moved array length restriction to 2^53-1
+array-indexing.js
+array-length.js
+
 
 #######################################
 # ES6 related syntax changes          #

@@ -28,8 +28,8 @@ ecma_5/RegExp/exec.js
 # - no special [[Class]] for TypedArray/DataView prototypes
 js1_8_5/extensions/dataview.js
 
-# ES6 Array.prototype.find/findIndex: ToInteger or ToUint32
-ecma_6/Array/find_findindex.js
+# lexical declarations must be not duplicated in same scope
+ecma_6/Generators/syntax.js
 
 
 ####################################
@@ -261,6 +261,12 @@ js1_7/geniter/regress-366941.js
 # Iterator + for-each returns [key,value] pairs
 js1_7/iterable/regress-568056.js
 
+# Proxy implementation in SpiderMonkey is incomplete
+ecma_5/extensions/proxy-array-target-length-definition.js
+
+# legacy generator support requires adding non-standard properties to GeneratorPrototype
+ecma_6/Generators/runtime.js
+
 
 #######################################
 # ES6 related runtime changes         #
@@ -282,6 +288,32 @@ js1_8_5/extensions/correct-this-for-nonnatives-on-array-proto-chain.js
 
 # __proto__ must be either object or null
 js1_5/extensions/regress-455408.js
+
+# Function.length is configurable
+ecma/Array/15.4.4.3-1.js
+ecma/Array/15.4.4.4-1.js
+ecma/Array/15.4.4.4-2.js
+ecma/extensions/15.1.2.1-1.js
+ecma/GlobalObject/15.1.2.2-1.js
+ecma/GlobalObject/15.1.2.3-1.js
+ecma/GlobalObject/15.1.2.4.js
+ecma/GlobalObject/15.1.2.5-1.js
+ecma/GlobalObject/15.1.2.6.js
+ecma/GlobalObject/15.1.2.7.js
+ecma/String/15.5.4.6-2.js
+ecma/String/15.5.4.7-2.js
+ecma/String/15.5.4.8-1.js
+ecma/String/15.5.4.9-1.js
+ecma/String/15.5.4.10-1.js
+ecma/String/15.5.4.11-1.js
+ecma_5/Object/15.2.3.6-function-length.js
+ecma_5/strict/15.3.5.1.js
+
+# Missing properties in destructuring throw TypeError
+js1_7/geniter/regress-345736.js
+
+# No implicit ToObject() in destructuring
+js1_5/extensions/regress-469625.js
 
 
 #######################################
@@ -536,7 +568,6 @@ ecma_3/extensions/regress-368516.js
 
 # keywords and reserved words allowed as Identifier in Spidermonkey
 js1_8_1/regress/regress-452498-117.js
-js1_5/LexicalConventions/regress-343675.js
 js1_7/lexical/regress-351515.js
 
 # any parenthesised expression can degenerate into a generator comprehension
