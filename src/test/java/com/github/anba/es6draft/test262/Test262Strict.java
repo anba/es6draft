@@ -17,12 +17,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matcher;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
@@ -68,6 +70,9 @@ public final class Test262Strict extends BaseTest262 {
 
     @Parameter(1)
     public String path;
+
+    @Rule
+    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
 
     @Rule
     public ExpectedException expected = ExpectedException.none().handleAssertionErrors();
