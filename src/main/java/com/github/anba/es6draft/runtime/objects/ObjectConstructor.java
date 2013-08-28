@@ -431,19 +431,20 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 Object proto) {
             /* steps 1-2 */
             CheckObjectCoercible(cx, o);
-            /* step 3 */
+            /* step 3 (empty) */
+            /* step 4 */
             if (!(Type.isNull(proto) || Type.isObject(proto))) {
                 throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            /* step 4 */
+            /* step 5 */
             if (!Type.isObject(o)) {
                 return o;
             }
-            /* steps 5-6 */
+            /* steps 6-7 */
             ScriptObject obj = Type.objectValue(o);
             ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
             boolean status = obj.setInheritance(cx, p);
-            /* step 7 */
+            /* step 8 */
             if (!status) {
                 // provide better error messages for ordinary objects
                 if (obj instanceof OrdinaryObject) {
@@ -454,7 +455,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 }
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            /* step 8 */
+            /* step 9 */
             return obj;
         }
     }
@@ -466,19 +467,26 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
      */
     public static ScriptObject ObjectDefineProperties(ExecutionContext cx, Object o,
             Object properties) {
+        /* step 1 */
         if (!Type.isObject(o)) {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject obj = Type.objectValue(o);
+        /* step 2 */
         ScriptObject props = ToObject(cx, properties);
+        /* step 3 */
         List<Object> names = GetOwnEnumerablePropertyKeys(cx, props);
+        /* step 4 */
         List<PropertyDescriptor> descriptors = new ArrayList<>();
+        /* step 5 */
         for (Object p : names) {
             Object descObj = Get(cx, props, p);
             PropertyDescriptor desc = ToPropertyDescriptor(cx, descObj);
             descriptors.add(desc);
         }
+        /* step 6 */
         ScriptException pendingException = null;
+        /* step 7 */
         for (int i = 0, size = names.size(); i < size; ++i) {
             Object p = names.get(i);
             PropertyDescriptor desc = descriptors.get(i);
@@ -490,9 +498,11 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 }
             }
         }
+        /* step 8 */
         if (pendingException != null) {
             throw pendingException;
         }
+        /* step 9 */
         return obj;
     }
 

@@ -36,6 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -97,6 +98,8 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                 builtinTag = "Array";
             } else if (o instanceof ExoticString) {
                 builtinTag = "String";
+            } else if (o instanceof ExoticProxy) {
+                builtinTag = "Proxy";
             } else if (o instanceof ExoticArguments) {
                 builtinTag = "Arguments";
             } else if (o instanceof FunctionObject || o instanceof BuiltinFunction
@@ -119,9 +122,9 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 builtinTag = "Object";
             }
-            /* steps 17-18 */
+            /* steps 18-19 */
             boolean hasTag = HasProperty(cx, o, BuiltinSymbol.toStringTag.get());
-            /* steps 19-20 */
+            /* steps 20-21 */
             String tag;
             if (!hasTag) {
                 tag = builtinTag;
@@ -141,7 +144,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                     tag = "~" + tag;
                 }
             }
-            /* step 21 */
+            /* step 22 */
             return "[object " + tag + "]";
         }
 
@@ -198,16 +201,16 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             if (!Type.isObject(v)) {
                 return false;
             }
-            ScriptObject w = Type.objectValue(v);
+            ScriptObject _v = Type.objectValue(v);
             /* steps 2-3 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 4 */
             for (;;) {
-                w = w.getInheritance(cx);
-                if (w == null) {
+                _v = _v.getInheritance(cx);
+                if (_v == null) {
                     return false;
                 }
-                if (o == w) {
+                if (SameValue(o, _v)) {
                     return true;
                 }
             }
@@ -263,7 +266,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             Object o = CheckObjectCoercible(cx, thisValue);
             /* step 3 */
             if (!(Type.isNull(proto) || Type.isObject(proto))) {
-                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
+                return proto;
             }
             /* step 4 */
             if (!Type.isObject(o)) {
