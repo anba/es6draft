@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
@@ -941,11 +942,14 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         /**
          * 15.9.4.45 Date.prototype.@@ToPrimitive ( hint )
          */
-        @Function(name = "@@ToPrimitive", arity = 1, symbol = BuiltinSymbol.ToPrimitive)
+        @Function(name = "@@ToPrimitive", arity = 1, symbol = BuiltinSymbol.ToPrimitive,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object ToPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             // just to trigger type and initialisation test
             /* steps 1-2 */
-            thisTimeValue(cx, thisValue);
+            if (!Type.isObject(thisValue)) {
+                throw throwTypeError(cx, Messages.Key.NotObjectType);
+            }
             Type tryFirst;
             /* step 5 */
             if (!Type.isString(hint)) {
