@@ -89,7 +89,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
             bodyText = ToString(calleeContext, args[k - 1]);
         }
 
-        /* steps 8-12 */
+        /* steps 8-13 */
         RuntimeInfo.Function function;
         try {
             EnumSet<Parser.Option> options = Parser.Option.from(calleeContext.getRealm()
@@ -102,29 +102,29 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
             throw e.toScriptException(calleeContext);
         }
 
-        /* step 13 */
-        LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
         /* step 14 */
-        Object f = thisValue;
+        LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
         /* step 15 */
+        Object f = thisValue;
+        /* step 16 */
         if (!Type.isObject(f) || !(f instanceof FunctionObject)
                 || ((FunctionObject) f).getCode() != null) {
             ScriptObject proto = calleeContext.getIntrinsic(Intrinsics.Generator);
             f = FunctionAllocate(calleeContext, proto, FunctionKind.Normal);
         }
-        /* step 16 */
+        /* step 17 */
         if (!(f instanceof OrdinaryGenerator)) {
             throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
 
-        /* step 17-18 */
+        /* step 18-19 */
         FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
-        /* step 19 */
-        ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
         /* step 20 */
-        MakeConstructor(calleeContext, fn, true, prototype);
+        ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
         /* step 21 */
+        MakeConstructor(calleeContext, fn, true, prototype);
+        /* step 22 */
         return fn;
     }
 

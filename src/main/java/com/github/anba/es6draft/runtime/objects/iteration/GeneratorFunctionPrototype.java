@@ -65,7 +65,8 @@ public class GeneratorFunctionPrototype extends OrdinaryObject implements Initia
         /**
          * 15.19.3.3.3 GeneratorFunction.prototype [ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "GeneratorFunction";
 
         /**

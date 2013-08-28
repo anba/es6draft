@@ -139,7 +139,7 @@ public final class IterationAbstractOperations {
      * 15.19.4.3.9 CreateEmptyIterator ( )
      */
     public static ScriptObject CreateEmptyIterator(ExecutionContext cx) {
-        OrdinaryObject obj = ObjectCreate(cx);
+        OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         BuiltinFunction emptyNextMethod = new EmptyIteratorNextMethod(cx.getRealm());
         CreateOwnDataProperty(cx, obj, "next", emptyNextMethod);
         return obj;
