@@ -142,11 +142,11 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         public static final Double EPSILON = Math.ulp(1.0);
 
         /**
-         * 15.7.2.8 Number.MAX_INTEGER
+         * 15.7.2.8 Number.MAX_SAFE_INTEGER
          */
-        @Value(name = "MAX_INTEGER", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
-        public static final Double MAX_INTEGER = (double) 0x1FFFFFFFFFFFFFL;
+        @Value(name = "MAX_SAFE_INTEGER", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final Double MAX_SAFE_INTEGER = (double) 0x1FFFFFFFFFFFFFL;
 
         /**
          * 15.7.2.9 Number.parseInt (string, radix)
@@ -197,15 +197,30 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
                 return false;
             }
             double num = Type.numberValue(number);
-            return ToInteger(num) == num;
+            if (Double.isNaN(num) || Double.isInfinite(num)) {
+                return false;
+            }
+            double integer = ToInteger(num);
+            return integer == num;
         }
 
         /**
-         * 15.7.2.14 Number.toInteger (number)
+         * 15.7.2.14 Number.isSafeInteger (number)
          */
-        @Function(name = "toInteger", arity = 1)
-        public static Object toInteger(ExecutionContext cx, Object thisValue, Object number) {
-            return ToInteger(cx, number);
+        @Function(name = "isSafeInteger", arity = 1)
+        public static Object isSafeInteger(ExecutionContext cx, Object thisValue, Object number) {
+            if (!Type.isNumber(number)) {
+                return false;
+            }
+            double num = Type.numberValue(number);
+            if (Double.isNaN(num) || Double.isInfinite(num)) {
+                return false;
+            }
+            double integer = ToInteger(num);
+            if (integer != num) {
+                return false;
+            }
+            return (Math.abs(integer) <= 0x1FFFFFFFFFFFFFL);
         }
 
         /**
