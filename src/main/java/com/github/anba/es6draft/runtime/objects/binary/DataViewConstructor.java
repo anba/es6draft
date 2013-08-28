@@ -68,8 +68,6 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
     public static double GetViewValue(ExecutionContext cx, Object view, Object requestIndex,
             Object isLittleEndian, ElementType type) {
         ScriptObject v = ToObject(cx, view);
-        // FIXME: DataView update in bug 1568 tests for [[ViewedArrayBuffer]] which applies to
-        // DataView objects as well as TypedArray objects
         if (!(v instanceof DataViewObject)) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -101,8 +99,6 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
     public static void SetViewValue(ExecutionContext cx, Object view, Object requestIndex,
             Object isLittleEndian, ElementType type, Object value) {
         ScriptObject v = ToObject(cx, view);
-        // FIXME: DataView update in bug 1568 tests for [[ViewedArrayBuffer]] which applies to
-        // DataView objects as well as TypedArray objects
         if (!(v instanceof DataViewObject)) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -138,8 +134,6 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         Object byteLength = args.length > 2 ? args[2] : UNDEFINED;
         /* step 1 (implicit) */
         /* step 2 */
-        // FIXME: DataView update in bug 1568 tests for [[ViewedArrayBuffer]] which applies to
-        // DataView objects as well as TypedArray objects
         if (!(thisValue instanceof DataViewObject)
                 || ((DataViewObject) thisValue).getBuffer() != null) {
             return OrdinaryConstruct(calleeContext, this, args);

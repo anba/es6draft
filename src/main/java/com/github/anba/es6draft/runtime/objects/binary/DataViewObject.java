@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class DataViewObject extends OrdinaryObject {
-    /** [[ViewedArrayBuffer]] */
+    /** [[DataArrayBuffer]] */
     private ArrayBufferObject buffer;
 
     /** [[ByteLength]] */
@@ -32,14 +32,14 @@ public class DataViewObject extends OrdinaryObject {
     }
 
     /**
-     * [[ViewedArrayBuffer]]
+     * [[DataArrayBuffer]]
      */
     public ArrayBufferObject getBuffer() {
         return buffer;
     }
 
     /**
-     * [[ViewedArrayBuffer]]
+     * [[DataArrayBuffer]]
      */
     public void setBuffer(ArrayBufferObject data) {
         this.buffer = data;
