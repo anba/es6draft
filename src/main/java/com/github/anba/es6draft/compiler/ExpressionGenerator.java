@@ -166,6 +166,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         Type.VOID_TYPE, Types.ScriptObject, Type.INT_TYPE, Types.Object,
                         Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "ensureObject",
+                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_EvaluateArrowFunction = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateArrowFunction", Type
                         .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
@@ -245,7 +249,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         static final MethodDesc ScriptRuntime_toFlatArray = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "toFlatArray",
-                Type.getMethodType(Types.Object_, Types.Object_));
+                Type.getMethodType(Types.Object_, Types.Object_, Types.ExecutionContext));
 
         // class: StringBuilder
         static final MethodDesc StringBuilder_append_Charsequence = MethodDesc.create(
@@ -599,7 +603,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
             // this is an EvaluateMethodCall operation with an ordinary object as the base object,
             // revert to the standard EvaluateCall operation to:
-            // (1) support direct-eval calls (specification issue) (TODO: bug 1590)
+            // (1) support direct-eval calls (specification issue)
             // (2) support tail calls (implementation specific)
 
             // Note: base == thisValue (!)
@@ -739,6 +743,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 mv.astore(Types.Object);
             }
             if (hasSpread) {
+                mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_toFlatArray);
             }
         }
@@ -931,9 +936,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             if (left instanceof AssignmentPattern) {
                 ValType rtype = evalAndGetValue(right, mv);
 
-                // FIXME: spec bug(?) return GetValue(rref) instead of ToObject(GetValue(rref))
-                // rval rval
-                ToObject(rtype, mv);
+                if (rtype != ValType.Object) {
+                    mv.toBoxed(rtype);
+                    mv.loadExecutionContext();
+                    mv.invoke(Methods.ScriptRuntime_ensureObject);
+                }
 
                 mv.dup();
                 DestructuringAssignment((AssignmentPattern) left, mv);

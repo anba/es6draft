@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
@@ -14,6 +15,8 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -25,20 +28,30 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * </ul>
  */
 class DestructuringAssignmentGenerator {
+    private static class Fields {
+        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
+                Types.Undefined, "UNDEFINED", Types.Undefined);
+    }
+
     private static class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
-                        Types.ExecutionContext, Types.ScriptObject, Types.String));
+                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
-        static final MethodDesc AbstractOperations_Get_Symbol = MethodDesc.create(
+        static final MethodDesc AbstractOperations_Get_String = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.ScriptObject,
-                        Types.ExoticSymbol));
+                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
 
-        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
+        static final MethodDesc AbstractOperations_HasProperty = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
+                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
+                                Types.ScriptObject, Types.Object));
+
+        static final MethodDesc AbstractOperations_HasProperty_String = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
+                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
+                                Types.ScriptObject, Types.String));
 
         // class: Reference
         static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
@@ -51,9 +64,13 @@ class DestructuringAssignmentGenerator {
                         Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
                         Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_ensureExoticSymbol = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "ensureExoticSymbol",
-                Type.getMethodType(Types.ExoticSymbol, Types.Object, Types.ExecutionContext));
+        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "ensureObject",
+                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_throwTypeErrorKeyNotPresent = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "throwTypeErrorKeyNotPresent",
+                Type.getMethodType(Types.ScriptException, Types.Object, Types.ExecutionContext));
 
         // class: Type
         static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
@@ -243,14 +260,42 @@ class DestructuringAssignmentGenerator {
 
         private void generate(LeftHandSideExpression target, Expression initialiser,
                 String propertyName) {
-            // step 1-2:
-            // stack: [obj] -> [v]
+            // stack: [obj] -> [obj, obj]
+            mv.dup();
+
+            // steps 1-2
+            // stack: [obj, obj] -> [obj, exists]
             mv.loadExecutionContext();
             mv.swap();
             mv.aconst(propertyName);
-            mv.invoke(Methods.AbstractOperations_Get);
+            mv.invoke(Methods.AbstractOperations_HasProperty_String);
 
-            // step 3:
+            // steps 3-4
+            // stack: [obj, exists] -> [v]
+            Label exists = new Label(), valueLoaded = new Label();
+            mv.ifne(exists);
+            {
+                mv.pop();
+                if (initialiser == null) {
+                    mv.aconst(propertyName);
+                    mv.loadExecutionContext();
+                    mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
+                    mv.athrow();
+                } else {
+                    mv.get(Fields.Undefined_UNDEFINED);
+                    mv.goTo(valueLoaded);
+                }
+            }
+            mv.mark(exists);
+            {
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.aconst(propertyName);
+                mv.invoke(Methods.AbstractOperations_Get_String);
+            }
+            mv.mark(valueLoaded);
+
+            // step 5
             // stack: [v] -> [v']
             if (initialiser != null) {
                 Label undef = new Label();
@@ -265,14 +310,13 @@ class DestructuringAssignmentGenerator {
                 mv.mark(undef);
             }
 
-            // step 4:
+            // steps 6-9
             if (target instanceof AssignmentPattern) {
-                // stack: [v'] -> [vObj]
+                // stack: [v'] -> [v']
                 mv.loadExecutionContext();
-                mv.swap();
-                mv.invoke(Methods.AbstractOperations_ToObject);
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
 
-                // stack: [vObj] -> []
+                // stack: [v'] -> []
                 DestructuringAssignmentEvaluation(target);
             } else {
                 // stack: [v'] -> [lref, 'v]
@@ -300,20 +344,49 @@ class DestructuringAssignmentGenerator {
 
         private void generate(LeftHandSideExpression target, Expression initialiser,
                 ComputedPropertyName propertyName) {
-            // step 1-2:
-            // stack: [obj] -> [v]
-            mv.loadExecutionContext();
-            mv.swap();
+            // stack: [obj] -> [obj, propertyName]
             // Runtime Semantics: Evaluation
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expressionValue(propertyName.getExpression(), mv);
-            mv.toBoxed(propType);
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_ensureExoticSymbol);
-            //
-            mv.invoke(Methods.AbstractOperations_Get_Symbol);
+            ToPropertyKey(propType, mv);
 
-            // step 3:
+            // stack: [obj, propertyName] -> [obj, propertyName, obj, propertyName]
+            mv.dup2();
+
+            // step 1-2
+            // stack: [obj, propertyName, obj, propertyName] -> [obj, propertyName, exists]
+            mv.loadExecutionContext();
+            mv.dupX2();
+            mv.pop();
+            mv.invoke(Methods.AbstractOperations_HasProperty);
+
+            // steps 3-4
+            // stack: [obj, propertyName, exists] -> [v]
+            Label exists = new Label(), valueLoaded = new Label();
+            mv.ifne(exists);
+            {
+                if (initialiser == null) {
+                    mv.swap();
+                    mv.pop();
+                    mv.loadExecutionContext();
+                    mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
+                    mv.athrow();
+                } else {
+                    mv.pop2();
+                    mv.get(Fields.Undefined_UNDEFINED);
+                    mv.goTo(valueLoaded);
+                }
+            }
+            mv.mark(exists);
+            {
+                mv.loadExecutionContext();
+                mv.dupX2();
+                mv.pop();
+                mv.invoke(Methods.AbstractOperations_Get);
+            }
+            mv.mark(valueLoaded);
+
+            // step 5
             // stack: [v] -> [v']
             if (initialiser != null) {
                 Label undef = new Label();
@@ -328,14 +401,13 @@ class DestructuringAssignmentGenerator {
                 mv.mark(undef);
             }
 
-            // step 4:
+            // steps 6-9
             if (target instanceof AssignmentPattern) {
-                // stack: [v'] -> [vObj]
+                // stack: [v'] -> [v']
                 mv.loadExecutionContext();
-                mv.swap();
-                mv.invoke(Methods.AbstractOperations_ToObject);
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
 
-                // stack: [vObj] -> []
+                // stack: [v'] -> []
                 DestructuringAssignmentEvaluation(target);
             } else {
                 // stack: [v'] -> [lref, 'v]

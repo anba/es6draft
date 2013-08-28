@@ -31,62 +31,63 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_EvaluatePropertyDefinition = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinition", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.String,
+                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.Object,
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinition_Symbol = MethodDesc
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinition_String = MethodDesc
                 .create(MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinition", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.ExoticSymbol,
+                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.String,
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGenerator = MethodDesc
                 .create(MethodType.Static, Types.ScriptRuntime,
                         "EvaluatePropertyDefinitionGenerator", Type.getMethodType(Type.VOID_TYPE,
-                                Types.ScriptObject, Types.String, Types.RuntimeInfo$Function,
+                                Types.ScriptObject, Types.Object, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGenerator_Symbol = MethodDesc
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGenerator_String = MethodDesc
                 .create(MethodType.Static, Types.ScriptRuntime,
                         "EvaluatePropertyDefinitionGenerator", Type.getMethodType(Type.VOID_TYPE,
-                                Types.ScriptObject, Types.ExoticSymbol, Types.RuntimeInfo$Function,
+                                Types.ScriptObject, Types.String, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGetter = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionGetter", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.String,
+                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.Object,
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGetter_Symbol = MethodDesc
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionGetter_String = MethodDesc
                 .create(MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionGetter",
-                        Type.getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.ExoticSymbol,
+                        Type.getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.String,
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionSetter = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionSetter", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.String,
+                        .getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.Object,
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionSetter_Symbol = MethodDesc
+        static final MethodDesc ScriptRuntime_EvaluatePropertyDefinitionSetter_String = MethodDesc
                 .create(MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinitionSetter",
-                        Type.getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.ExoticSymbol,
+                        Type.getMethodType(Type.VOID_TYPE, Types.ScriptObject, Types.String,
                                 Types.RuntimeInfo$Function, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_ensureExoticSymbol = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "ensureExoticSymbol",
-                Type.getMethodType(Types.ExoticSymbol, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_defineProperty = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "defineProperty", Type.getMethodType(Type.VOID_TYPE,
-                        Types.ScriptObject, Types.String, Types.Object, Types.ExecutionContext));
+                        Types.ScriptObject, Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_defineProperty_Symbol = MethodDesc.create(
+        static final MethodDesc ScriptRuntime_defineProperty_String = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "defineProperty", Type.getMethodType(
-                        Type.VOID_TYPE, Types.ScriptObject, Types.ExoticSymbol, Types.Object,
+                        Type.VOID_TYPE, Types.ScriptObject, Types.String, Types.Object,
                         Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_defineProtoProperty = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "defineProtoProperty", Type.getMethodType(
                         Type.VOID_TYPE, Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_ensureNewProperty = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "ensureNewProperty", Type.getMethodType(
+                        Type.VOID_TYPE, Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
     }
 
     public PropertyGenerator(CodeGenerator codegen) {
@@ -101,9 +102,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     @Override
     public Void visit(ComputedPropertyName node, ExpressionVisitor mv) {
         ValType type = expressionValue(node.getExpression(), mv);
-        mv.toBoxed(type);
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_ensureExoticSymbol);
+        ToPropertyKey(type, mv);
 
         return null;
     }
@@ -135,29 +134,14 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         if (propName == null) {
             assert node.getPropertyName() instanceof ComputedPropertyName;
             node.getPropertyName().accept(this, mv);
-            mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                    Type.getMethodDescriptor(Types.RuntimeInfo$Function));
-            mv.loadExecutionContext();
 
-            switch (node.getType()) {
-            case Function:
-                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition_Symbol);
-                break;
-            case Generator:
-                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionGenerator_Symbol);
-                break;
-            case Getter:
-                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionGetter_Symbol);
-                break;
-            case Setter:
-                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionSetter_Symbol);
-                break;
-            default:
-                assert false : "invalid method type";
-                throw new IllegalStateException();
-            }
-        } else {
-            mv.aconst(propName);
+            // stack: [<object>, pk] -> [<object>, pk, <object>, pk]
+            mv.dup2();
+
+            // stack: [<object>, pk, <object>, pk] -> [<object>, pk]
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_ensureNewProperty);
+
             mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
                     Type.getMethodDescriptor(Types.RuntimeInfo$Function));
             mv.loadExecutionContext();
@@ -179,6 +163,29 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
                 assert false : "invalid method type";
                 throw new IllegalStateException();
             }
+        } else {
+            mv.aconst(propName);
+            mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
+                    Type.getMethodDescriptor(Types.RuntimeInfo$Function));
+            mv.loadExecutionContext();
+
+            switch (node.getType()) {
+            case Function:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinition_String);
+                break;
+            case Generator:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionGenerator_String);
+                break;
+            case Getter:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionGetter_String);
+                break;
+            case Setter:
+                mv.invoke(Methods.ScriptRuntime_EvaluatePropertyDefinitionSetter_String);
+                break;
+            default:
+                assert false : "invalid method type";
+                throw new IllegalStateException();
+            }
         }
 
         return null;
@@ -194,13 +201,16 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         ValType type = expressionValue(propertyName, mv);
         mv.toBoxed(type);
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_defineProperty);
+        mv.invoke(Methods.ScriptRuntime_defineProperty_String);
 
         return null;
     }
 
     @Override
     public Void visit(PropertyValueDefinition node, ExpressionVisitor mv) {
+        // Runtime Semantics: Evaluation -> Property Definition Evaluation
+        // stack: [<object>]
+
         PropertyName propertyName = node.getPropertyName();
         Expression propertyValue = node.getPropertyValue();
 
@@ -208,10 +218,23 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         if (propName == null) {
             assert propertyName instanceof ComputedPropertyName;
             propertyName.accept(this, mv);
+            if (mv.isStrict()) {
+                // stack: [<object>, pk] -> [<object>, pk, <object>, pk]
+                mv.dup2();
+            }
             ValType type = expressionValue(propertyValue, mv);
             mv.toBoxed(type);
+            if (mv.isStrict()) {
+                // stack: [<object>, pk, <object>, pk, value] -> [<object>, pk, value, <object>, pk]
+                mv.dupX2();
+                mv.pop();
+                // stack: [<object>, pk, value, <object>, pk] -> [<object>, pk, value]
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureNewProperty);
+            }
+            // stack: [<object>, pk, value]
             mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_defineProperty_Symbol);
+            mv.invoke(Methods.ScriptRuntime_defineProperty);
         } else if ("__proto__".equals(propName)) {
             ValType type = expressionValue(propertyValue, mv);
             mv.toBoxed(type);
@@ -222,7 +245,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
             ValType type = expressionValue(propertyValue, mv);
             mv.toBoxed(type);
             mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_defineProperty);
+            mv.invoke(Methods.ScriptRuntime_defineProperty_String);
         }
 
         return null;

@@ -143,6 +143,7 @@ public final class Messages {
         IncompatibleObject("type.incompatible_object"),
         SymbolObject("type.symbol_object"),
         CyclicProto("type.cyclic_proto"),
+        PropertyNotFound("type.property_not_found"),
 
         // 8.2.5 Property Descriptor
         InvalidGetter("propertydescriptor.invalid_getter"),

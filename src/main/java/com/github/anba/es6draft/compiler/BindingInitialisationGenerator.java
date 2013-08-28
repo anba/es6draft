@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
@@ -15,6 +16,8 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
+import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -27,25 +30,40 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
  * </ul>
  */
 class BindingInitialisationGenerator {
+    private static class Fields {
+        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
+                Types.Undefined, "UNDEFINED", Types.Undefined);
+    }
+
     private static class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
-                        Types.ExecutionContext, Types.ScriptObject, Types.String));
+                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
 
-        static final MethodDesc AbstractOperations_Get_Symbol = MethodDesc.create(
+        static final MethodDesc AbstractOperations_Get_String = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.ScriptObject,
-                        Types.ExoticSymbol));
+                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
 
-        static final MethodDesc AbstractOperations_ToObject = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "ToObject",
-                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
+        static final MethodDesc AbstractOperations_HasProperty = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
+                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
+                                Types.ScriptObject, Types.Object));
+
+        static final MethodDesc AbstractOperations_HasProperty_String = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
+                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
+                                Types.ScriptObject, Types.String));
 
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
+
+        // class: ExoticArguments
+        static final MethodDesc ExoticArguments_getArgument = MethodDesc.create(MethodType.Virtual,
+                Types.ExoticArguments, "getArgument",
+                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.String));
 
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
@@ -63,13 +81,17 @@ class BindingInitialisationGenerator {
                         Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
                         Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_ensureExoticSymbol = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "ensureExoticSymbol",
-                Type.getMethodType(Types.ExoticSymbol, Types.Object, Types.ExecutionContext));
+        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "ensureObject",
+                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_throw = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "_throw",
                 Type.getMethodType(Types.ScriptException, Types.Object));
+
+        static final MethodDesc ScriptRuntime_throwTypeErrorKeyNotPresent = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "throwTypeErrorKeyNotPresent",
+                Type.getMethodType(Types.ScriptException, Types.Object, Types.ExecutionContext));
 
         // class: Type
         static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
@@ -84,20 +106,20 @@ class BindingInitialisationGenerator {
 
     void generate(FunctionNode node, ExpressionVisitor mv) {
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
-                EnvironmentType.NoEnvironment);
+                EnvironmentType.NoEnvironment, true);
 
         node.getParameters().accept(init, null);
     }
 
     void generate(Binding node, ExpressionVisitor mv) {
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
-                EnvironmentType.NoEnvironment);
+                EnvironmentType.NoEnvironment, false);
         node.accept(init, null);
     }
 
     void generateWithEnvironment(Binding node, ExpressionVisitor mv) {
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
-                EnvironmentType.EnvironmentFromStack);
+                EnvironmentType.EnvironmentFromStack, false);
         node.accept(init, null);
     }
 
@@ -109,34 +131,49 @@ class BindingInitialisationGenerator {
         protected final CodeGenerator codegen;
         protected final ExpressionVisitor mv;
         protected final EnvironmentType environment;
+        protected final boolean parameterInitialisation;
 
         protected RuntimeSemantics(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
+                EnvironmentType environment, boolean parameterInitialisation) {
             this.codegen = codegen;
             this.mv = mv;
             this.environment = environment;
+            this.parameterInitialisation = parameterInitialisation;
         }
 
         protected final void BindingInitialisation(Node node) {
-            BindingInitialisation init = new BindingInitialisation(codegen, mv, environment);
+            BindingInitialisation init = new BindingInitialisation(codegen, mv, environment, false);
             node.accept(init, null);
         }
 
         protected final void IndexedBindingInitialisation(Node node, int index) {
             IndexedBindingInitialisation init = new IndexedBindingInitialisation(codegen, mv,
-                    environment);
+                    environment, false);
+            node.accept(init, index);
+        }
+
+        protected final void IndexedBindingInitialisation(FormalParameterList node, int index) {
+            IndexedBindingInitialisation init = new IndexedBindingInitialisation(codegen, mv,
+                    environment, true);
             node.accept(init, index);
         }
 
         protected final void KeyedBindingInitialisation(Node node, String key) {
             KeyedBindingInitialisation init = new KeyedBindingInitialisation(codegen, mv,
-                    environment);
+                    environment, false);
+            node.accept(init, key);
+        }
+
+        protected final void KeyedBindingInitialisation(Node node, String key,
+                boolean parameterInitialisation) {
+            KeyedBindingInitialisation init = new KeyedBindingInitialisation(codegen, mv,
+                    environment, parameterInitialisation);
             node.accept(init, key);
         }
 
         protected final void ComputedKeyedBindingInitialisation(Node node, ComputedPropertyName key) {
             ComputedKeyedBindingInitialisation init = new ComputedKeyedBindingInitialisation(
-                    codegen, mv, environment);
+                    codegen, mv, environment, false);
             node.accept(init, key);
         }
 
@@ -170,8 +207,8 @@ class BindingInitialisationGenerator {
         private static IdentifierResolution identifierResolution = new IdentifierResolution();
 
         protected BindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
-            super(codegen, mv, environment);
+                EnvironmentType environment, boolean parameterInitialisation) {
+            super(codegen, mv, environment, parameterInitialisation);
         }
 
         @Override
@@ -284,8 +321,8 @@ class BindingInitialisationGenerator {
 
     private static final class IndexedBindingInitialisation extends RuntimeSemantics<Void, Integer> {
         protected IndexedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
-            super(codegen, mv, environment);
+                EnvironmentType environment, boolean parameterInitialisation) {
+            super(codegen, mv, environment, parameterInitialisation);
         }
 
         @Override
@@ -310,22 +347,58 @@ class BindingInitialisationGenerator {
         public Void visit(BindingElement node, Integer index) {
             Binding binding = node.getBinding();
             if (binding instanceof BindingIdentifier) {
-                // step 1:
-                // stack: [(env), value] -> []
-                KeyedBindingInitialisation(node, ToString(index));
+                // step 1
+                // stack: [(env), array] -> []
+                KeyedBindingInitialisation(node, ToString(index), parameterInitialisation);
             } else {
                 assert binding instanceof BindingPattern;
                 Expression initialiser = node.getInitialiser();
 
-                // step 1-3:
-                // stack: [(env), value] -> [(env), v]
-                String name = ToString(index);
-                mv.loadExecutionContext();
-                mv.swap();
-                mv.aconst(name);
-                mv.invoke(Methods.AbstractOperations_Get);
+                // stack: [(env), array] -> [(env), array, array]
+                mv.dup();
 
-                // step 4-5:
+                // step 1
+                String name = ToString(index);
+
+                if (parameterInitialisation) {
+                    mv.loadExecutionContext();
+                    mv.aconst(name);
+                    mv.invoke(Methods.ExoticArguments_getArgument);
+                } else {
+                    // steps 2-3
+                    // stack: [(env), array, array] -> [(env), array, exists]
+                    mv.loadExecutionContext();
+                    mv.swap();
+                    mv.aconst(name);
+                    mv.invoke(Methods.AbstractOperations_HasProperty_String);
+
+                    // steps 4-5
+                    // stack: [(env), array, exists] -> [v]
+                    Label exists = new Label(), valueLoaded = new Label();
+                    mv.ifne(exists);
+                    {
+                        mv.pop();
+                        if (initialiser == null) {
+                            mv.aconst(name);
+                            mv.loadExecutionContext();
+                            mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
+                            mv.athrow();
+                        } else {
+                            mv.get(Fields.Undefined_UNDEFINED);
+                            mv.goTo(valueLoaded);
+                        }
+                    }
+                    mv.mark(exists);
+                    {
+                        mv.loadExecutionContext();
+                        mv.swap();
+                        mv.aconst(name);
+                        mv.invoke(Methods.AbstractOperations_Get_String);
+                    }
+                    mv.mark(valueLoaded);
+                }
+
+                // step 6
                 // stack: [(env), v] -> [(env), v']
                 if (initialiser != null) {
                     Label undef = new Label();
@@ -336,14 +409,15 @@ class BindingInitialisationGenerator {
                         mv.pop();
                         ValType type = expressionValue(initialiser, mv);
                         mv.toBoxed(type);
-                        mv.loadExecutionContext();
-                        mv.swap();
-                        mv.invoke(Methods.AbstractOperations_ToObject);
                     }
                     mv.mark(undef);
                 }
 
-                // step 6:
+                // stack: [(env), v'] -> [(env), v']
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
+
+                // step 7
                 // stack: [(env), v'] -> []
                 BindingInitialisation(binding);
             }
@@ -354,7 +428,7 @@ class BindingInitialisationGenerator {
         public Void visit(BindingRestElement node, Integer index) {
             mv.iconst(index);
             mv.loadExecutionContext();
-            // stack: [(env), value, index, cx] -> [(env), rest]
+            // stack: [(env), array, index, cx] -> [(env), rest]
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
             // stack: [(env), rest] -> []
@@ -385,8 +459,8 @@ class BindingInitialisationGenerator {
 
     private static final class KeyedBindingInitialisation extends RuntimeSemantics<Void, String> {
         protected KeyedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
-            super(codegen, mv, environment);
+                EnvironmentType environment, boolean parameterInitialisation) {
+            super(codegen, mv, environment, parameterInitialisation);
         }
 
         @Override
@@ -402,15 +476,49 @@ class BindingInitialisationGenerator {
         }
 
         private void generate(Binding binding, Expression initialiser, String propertyName) {
-            // step 1-2:
-            // stack: [(env), value] -> [(env), v]
-            mv.loadExecutionContext();
-            mv.swap();
-            mv.aconst(propertyName);
-            mv.invoke(Methods.AbstractOperations_Get);
+            // stack: [(env), obj] -> [(env), obj, obj]
+            mv.dup();
 
-            // step 3-4:
-            // stack: [(env), value] -> [(env), v']
+            if (parameterInitialisation) {
+                mv.loadExecutionContext();
+                mv.aconst(propertyName);
+                mv.invoke(Methods.ExoticArguments_getArgument);
+            } else {
+                // steps 1-2
+                // stack: [(env), obj, obj] -> [(env), obj, exists]
+                mv.loadExecutionContext();
+                mv.swap();
+                mv.aconst(propertyName);
+                mv.invoke(Methods.AbstractOperations_HasProperty_String);
+
+                // steps 3-4
+                // stack: [(env), obj, exists] -> [v]
+                Label exists = new Label(), valueLoaded = new Label();
+                mv.ifne(exists);
+                {
+                    mv.pop();
+                    if (initialiser == null) {
+                        mv.aconst(propertyName);
+                        mv.loadExecutionContext();
+                        mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
+                        mv.athrow();
+                    } else {
+                        mv.get(Fields.Undefined_UNDEFINED);
+                        mv.goTo(valueLoaded);
+                    }
+                }
+                mv.mark(exists);
+                {
+                    mv.loadExecutionContext();
+                    mv.swap();
+                    mv.aconst(propertyName);
+                    mv.invoke(Methods.AbstractOperations_Get_String);
+                }
+                mv.mark(valueLoaded);
+            }
+
+            // step 5
+            // stack: [(env), v] -> [(env), v']
             if (initialiser != null) {
                 Label undef = new Label();
                 mv.dup();
@@ -420,22 +528,18 @@ class BindingInitialisationGenerator {
                     mv.pop();
                     ValType type = expressionValue(initialiser, mv);
                     mv.toBoxed(type);
-                    if (binding instanceof BindingPattern) {
-                        mv.loadExecutionContext();
-                        mv.swap();
-                        mv.invoke(Methods.AbstractOperations_ToObject);
-                    }
                 }
                 mv.mark(undef);
             }
-            // FIXME: spec bug missing ToObject call
+
             if (binding instanceof BindingPattern) {
+                // step 6
+                // stack: [(env), v'] -> [(env), v']
                 mv.loadExecutionContext();
-                mv.swap();
-                mv.invoke(Methods.AbstractOperations_ToObject);
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
 
-            // step 5:
+            // step 7
             // stack: [(env), v'] -> []
             BindingInitialisation(binding);
         }
@@ -444,8 +548,8 @@ class BindingInitialisationGenerator {
     private static final class ComputedKeyedBindingInitialisation extends
             RuntimeSemantics<Void, ComputedPropertyName> {
         protected ComputedKeyedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment) {
-            super(codegen, mv, environment);
+                EnvironmentType environment, boolean parameterInitialisation) {
+            super(codegen, mv, environment, parameterInitialisation);
         }
 
         @Override
@@ -456,21 +560,51 @@ class BindingInitialisationGenerator {
 
         private void generate(Binding binding, Expression initialiser,
                 ComputedPropertyName propertyName) {
-            // step 1-2:
-            // stack: [(env), value] -> [(env), v]
-            mv.loadExecutionContext();
-            mv.swap();
+            // stack: [(env), obj] -> [(env), obj, propertyName]
             // Runtime Semantics: Evaluation
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expressionValue(propertyName.getExpression(), mv);
-            mv.toBoxed(propType);
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_ensureExoticSymbol);
-            //
-            mv.invoke(Methods.AbstractOperations_Get_Symbol);
+            ToPropertyKey(propType, mv);
 
-            // step 3-4:
-            // stack: [(env), value] -> [(env), v']
+            // stack: [(env), obj, propertyName] -> [(env), obj, propertyName, obj, propertyName]
+            mv.dup2();
+
+            // step 1-2
+            // stack: [(env), obj, propertyName, obj, propertyName] -> [(env), obj, propertyName,
+            // exists]
+            mv.loadExecutionContext();
+            mv.dupX2();
+            mv.pop();
+            mv.invoke(Methods.AbstractOperations_HasProperty);
+
+            // steps 3-4
+            // stack: [(env), obj, propertyName, exists] -> [(env), v]
+            Label exists = new Label(), valueLoaded = new Label();
+            mv.ifne(exists);
+            {
+                if (initialiser == null) {
+                    mv.swap();
+                    mv.pop();
+                    mv.loadExecutionContext();
+                    mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
+                    mv.athrow();
+                } else {
+                    mv.pop2();
+                    mv.get(Fields.Undefined_UNDEFINED);
+                    mv.goTo(valueLoaded);
+                }
+            }
+            mv.mark(exists);
+            {
+                mv.loadExecutionContext();
+                mv.dupX2();
+                mv.pop();
+                mv.invoke(Methods.AbstractOperations_Get);
+            }
+            mv.mark(valueLoaded);
+
+            // step 5
+            // stack: [(env), v] -> [(env), v']
             if (initialiser != null) {
                 Label undef = new Label();
                 mv.dup();
@@ -480,22 +614,18 @@ class BindingInitialisationGenerator {
                     mv.pop();
                     ValType type = expressionValue(initialiser, mv);
                     mv.toBoxed(type);
-                    if (binding instanceof BindingPattern) {
-                        mv.loadExecutionContext();
-                        mv.swap();
-                        mv.invoke(Methods.AbstractOperations_ToObject);
-                    }
                 }
                 mv.mark(undef);
             }
-            // FIXME: spec bug missing ToObject call
+
             if (binding instanceof BindingPattern) {
+                // step 6
+                // stack: [(env), v'] -> [(env), v']
                 mv.loadExecutionContext();
-                mv.swap();
-                mv.invoke(Methods.AbstractOperations_ToObject);
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
 
-            // step 5:
+            // step 7
             // stack: [(env), v'] -> []
             BindingInitialisation(binding);
         }

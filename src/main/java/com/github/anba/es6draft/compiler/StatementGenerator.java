@@ -74,6 +74,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         static final MethodDesc ScriptRuntime_debugger = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "debugger", Type.getMethodType(Type.VOID_TYPE));
 
+        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "ensureObject",
+                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "enumerate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
@@ -617,11 +621,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
             ValType type = expressionValue(initialiser, mv);
+            mv.toBoxed(type);
             if (binding instanceof BindingPattern) {
-                // ToObject(...)
-                ToObject(type, mv);
-            } else {
-                mv.toBoxed(type);
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
         } else {
             assert binding instanceof BindingIdentifier;
@@ -1055,11 +1058,10 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
             ValType type = expressionValue(initialiser, mv);
+            mv.toBoxed(type);
             if (binding instanceof BindingPattern) {
-                // ToObject(...)
-                ToObject(type, mv);
-            } else {
-                mv.toBoxed(type);
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
             BindingInitialisation(binding, mv);
         } else {

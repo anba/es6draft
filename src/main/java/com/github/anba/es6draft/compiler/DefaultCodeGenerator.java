@@ -698,7 +698,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [Object] -> [String|ExoticSymbol]
      */
-    protected final void ToPropertyKey(ValType from, ExpressionVisitor mv) {
+    protected static final void ToPropertyKey(ValType from, ExpressionVisitor mv) {
         switch (from) {
         case Number:
             mv.invoke(Methods.AbstractOperations_ToString_double);

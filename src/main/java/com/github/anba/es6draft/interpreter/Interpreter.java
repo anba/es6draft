@@ -524,7 +524,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     public Object visit(ComputedPropertyName node, ExecutionContext cx) {
         Object exprValue = node.getExpression().accept(this, cx);
         Object propName = GetValue(exprValue, cx);
-        return ScriptRuntime.ensureExoticSymbol(propName, cx);
+        return ToPropertyKey(cx, propName);
     }
 
     @Override
@@ -578,21 +578,24 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
             if (propName == null) {
                 assert propertyName instanceof ComputedPropertyName;
                 Object pk = propertyName.accept(this, cx);
-                assert pk instanceof ExoticSymbol;
 
                 Object value = propertyValue.accept(this, cx);
                 value = GetValue(value, cx);
 
-                ScriptRuntime.defineProperty(obj, (ExoticSymbol) pk, value, cx);
-            }
+                if (strict) {
+                    ScriptRuntime.ensureNewProperty(obj, pk, cx);
+                }
 
-            Object value = propertyValue.accept(this, cx);
-            value = GetValue(value, cx);
-
-            if ("__proto__".equals(propName)) {
-                ScriptRuntime.defineProtoProperty(obj, value, cx);
+                ScriptRuntime.defineProperty(obj, pk, value, cx);
             } else {
-                ScriptRuntime.defineProperty(obj, propName, value, cx);
+                Object value = propertyValue.accept(this, cx);
+                value = GetValue(value, cx);
+
+                if ("__proto__".equals(propName)) {
+                    ScriptRuntime.defineProtoProperty(obj, value, cx);
+                } else {
+                    ScriptRuntime.defineProperty(obj, propName, value, cx);
+                }
             }
         }
         return obj;
@@ -636,7 +639,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
                 Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) rref;
                 ScriptObject thisValue = idref.getBase().withBaseObject();
                 // don't call EvaluateMethodCall if currently in direct-eval position and the
-                // base-object is an ordinary object (TODO: bug 1590)
+                // base-object is an ordinary object
                 if (thisValue != null && !(directEval && thisValue instanceof OrdinaryObject)) {
                     Reference<Object, String> newRef = new Reference.PropertyNameReference(
                             thisValue, idref.getReferencedName(), rref.isStrictReference());
@@ -654,7 +657,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
         if (directEval && ref instanceof Reference) {
             // adjust thisValue if in with-statement, counterpart to the special direct-eval logic
-            // from above (TODO: bug 1590)
+            // from above
             assert ref instanceof Reference.IdentifierReference;
             Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) ref;
             ScriptObject newThisValue = idref.getBase().withBaseObject();
@@ -672,14 +675,12 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     private Object EvaluateMethodCall(Reference<?, ?> ref, List<Expression> arguments,
             ExecutionContext cx) {
         assert ref.isPropertyReference();
-        // step 2 is bogus
-        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=1593
-        Object[] argList = ArgumentListEvaluation(arguments, cx);
         Object base = ref.getBase();
         if (ref.hasPrimitiveBase()) {
             base = ToObject(cx, base);
         }
         assert base instanceof ScriptObject;
+        Object[] argList = ArgumentListEvaluation(arguments, cx);
         Object thisValue = ref.GetThisValue(cx);
         Object key = ref.getReferencedName();
         if (key instanceof String) {
