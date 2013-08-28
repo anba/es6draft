@@ -445,13 +445,30 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.44 Math.imul(x, y)
+         * 15.8.2.33 Math.imul(x, y)
          */
         @Function(name = "imul", arity = 2)
         public static Object imul(ExecutionContext cx, Object thisValue, Object x, Object y) {
             long a = ToUint32(cx, x);
             long b = ToUint32(cx, y);
             return (int) (a * b);
+        }
+
+        /**
+         * 15.8.2.34 Math.roundFloat32(x)
+         */
+        @Function(name = "roundFloat32", arity = 1)
+        public static Object roundFloat32(ExecutionContext cx, Object thisValue, Object x) {
+            double d = ToNumber(cx, x);
+            if (Double.isNaN(d)) {
+                return Double.NaN;
+            }
+            if (d == 0 || Double.isInfinite(d)) {
+                return d;
+            }
+            float x32 = (float) d;
+            double x64 = (double) x32;
+            return x64;
         }
     }
 }
