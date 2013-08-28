@@ -30,10 +30,10 @@ const iteratorSym = getSym("@@iterator");
 const generatorStateSym = newSym("generatorState");
 
 function GeneratorState(g) {
-  // no proper way to test for generators in scripts 
+  // no proper way to test for generators in scripts
   if (Object_toString(g) == "[object Generator]") {
-    if (Object_getPrototypeOf(g) === GeneratorPrototype) {
-      return "closed";
+    if (g === GeneratorPrototype || Object_getPrototypeOf(g) === GeneratorPrototype) {
+      return;
     }
     if (!Object_hasOwnProperty(g, generatorStateSym)) {
       Object_defineProperty(g, generatorStateSym, {__proto__: null, value: "newborn", writable: true});

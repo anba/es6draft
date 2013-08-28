@@ -406,4 +406,10 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     public void enableOsiPointRegisterChecks() {
         // empty
     }
+
+    /** shell-function: {@code isAsmJSCompilationAvailable()} */
+    @Function(name = "isAsmJSCompilationAvailable", arity = 0)
+    public boolean isAsmJSCompilationAvailable() {
+        return false;
+    }
 }
