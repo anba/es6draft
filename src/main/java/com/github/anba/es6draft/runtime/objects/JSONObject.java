@@ -107,7 +107,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                     // https://bugs.ecmascript.org/show_bug.cgi?id=170
                     propertyList = new LinkedHashSet<>();
                     ScriptObject objReplacer = Type.objectValue(replacer);
-                    long len = ToUint32(cx, Get(cx, objReplacer, "length"));
+                    long len = ToLength(cx, Get(cx, objReplacer, "length"));
                     for (long i = 0; i < len; ++i) {
                         String item = null;
                         Object v = Get(cx, objReplacer, ToString(i));
@@ -174,7 +174,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             ScriptObject objVal = Type.objectValue(val);
             if (objVal instanceof ExoticArray) {
                 /* step 3.a */
-                long len = ToUint32(cx, Get(cx, objVal, "length"));
+                long len = ToLength(cx, Get(cx, objVal, "length"));
                 for (long i = 0; i < len; ++i) {
                     Object newElement = Walk(cx, reviver, objVal, ToString(i));
                     if (Type.isUndefined(newElement)) {
@@ -400,8 +400,10 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         /* step 5 */
         List<String> partial = new ArrayList<>();
         /* steps 6-7 */
-        long len = ToUint32(cx, Get(cx, value, "length"));
+        Object lenVal = Get(cx, value, "length");
         /* steps 8-9 */
+        long len = ToLength(cx, lenVal);
+        /* steps 10-11 */
         for (long index = 0; index < len; ++index) {
             String strP = Str(cx, stack, propertyList, replacerFunction, indent, gap,
                     ToString(index), value);
@@ -411,7 +413,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 partial.add(strP);
             }
         }
-        /* steps 10-11 */
+        /* steps 12-13 */
         String _final;
         if (partial.isEmpty()) {
             _final = "[]";
@@ -433,10 +435,10 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 _final = properties.toString();
             }
         }
-        /* step 12 */
-        stack.remove(value);
-        /* step 13 (not applicable) */
         /* step 14 */
+        stack.remove(value);
+        /* step 15 (not applicable) */
+        /* step 16 */
         return _final;
     }
 }
