@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -472,7 +473,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             /* step 10 */
             int lengthA = 0;
             /* step 11 */
-            long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(cx, limit);
+            long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToLength(cx, limit);
             /* step 12 */
             int size = s.length();
             /* step 13 */
@@ -540,7 +541,8 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 15.10.4.15 RegExp.prototype.@@isRegExp
          */
-        @Value(name = "@@isRegExp", symbol = BuiltinSymbol.isRegExp)
+        @Value(name = "@@isRegExp", symbol = BuiltinSymbol.isRegExp, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = true))
         public static final boolean isRegExp = true;
 
     }
@@ -596,13 +598,13 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
      * Runtime Semantics: RegExpExec Abstract Operation
      */
     public static Object RegExpExec(ExecutionContext cx, RegExpObject r, CharSequence s) {
-        /* steps 1-13 */
+        /* steps 1-14 */
         Matcher m = getMatcherOrNull(cx, r, s);
         if (m == null) {
             return NULL;
         }
         RegExpConstructor.storeLastMatchResult(cx, r, s, m);
-        /* steps 14-24 */
+        /* steps 15-25 */
         return toMatchResult(cx, r, s, m);
     }
 
@@ -612,8 +614,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     private static Matcher getMatcherOrNull(ExecutionContext cx, RegExpObject r, CharSequence s) {
         /* step 1 */
         assert r.isInitialised();
-        /* step 2 */
-        Pattern matcher = r.getRegExpMatcher();
+
         /* step 3 */
         int length = s.length();
         /* step 4 */
@@ -627,12 +628,14 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         if (!global && !sticky) {
             i = 0;
         }
-        /* step 11.a */
+        /* step 12.a */
         if (i < 0 || i > length) {
             Put(cx, r, "lastIndex", 0, true);
             return null;
         }
-        /* steps 10-11 */
+        /* step 10 */
+        Pattern matcher = r.getRegExpMatcher();
+        /* steps 11-12 */
         Matcher m = matcher.matcher(s);
         if (!sticky) {
             boolean matchSucceeded = m.find((int) i);
@@ -640,9 +643,9 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 Put(cx, r, "lastIndex", 0, true);
                 return null;
             }
-            /* step 12 */
-            int e = m.end();
             /* step 13 */
+            int e = m.end();
+            /* step 14 */
             if (global) {
                 Put(cx, r, "lastIndex", e, true);
             }
@@ -668,32 +671,32 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     private static ScriptObject toMatchResult(ExecutionContext cx, RegExpObject r, CharSequence s,
             Matcher m) {
         assert r.isInitialised();
-        /* step 12 */
+        /* step 13 */
         int e = m.end();
-        /* step 14 */
+        /* step 15 */
         int n = m.groupCount();
-        /* step 16 */
+        /* step 17 */
         int matchIndex = m.start();
 
-        /* step 15 */
+        /* step 16 */
         ScriptObject array = ArrayCreate(cx, 0);
-        /* steps 17-20 */
+        /* steps 18-21 */
         array.defineOwnProperty(cx, "index", new PropertyDescriptor(matchIndex, true, true, true));
         array.defineOwnProperty(cx, "input", new PropertyDescriptor(s, true, true, true));
         array.defineOwnProperty(cx, "length", new PropertyDescriptor(n + 1));
 
-        /* step 21 */
-        CharSequence matchedSubstr = s.subSequence(matchIndex, e);
         /* step 22 */
-        array.defineOwnProperty(cx, "0", new PropertyDescriptor(matchedSubstr, true, true, true));
+        CharSequence matchedSubstr = s.subSequence(matchIndex, e);
         /* step 23 */
+        array.defineOwnProperty(cx, "0", new PropertyDescriptor(matchedSubstr, true, true, true));
+        /* step 24 */
         GroupIterator iterator = newGroupIterator(r, m);
         for (int i = 1; iterator.hasNext(); ++i) {
             String capture = iterator.next();
             array.defineOwnProperty(cx, ToString(i), new PropertyDescriptor(
                     (capture != null ? capture : UNDEFINED), true, true, true));
         }
-        /* step 24 */
+        /* step 25 */
         return array;
     }
 
