@@ -40,8 +40,11 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return Double.NaN;
     }
 
+    /** 8.4.6.1 [[HasOwnProperty]] (P) */
     @Override
     public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         double intIndex = toIntegerIndex(propertyKey);
         if (!Double.isNaN(intIndex)) {
             if (intIndex < 0) {
@@ -53,11 +56,15 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
             }
             return true;
         }
+        /* step 4 */
         return super.hasOwnProperty(cx, propertyKey);
     }
 
+    /** 8.4.6.2 [[GetOwnProperty]] (P) */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         double intIndex = toIntegerIndex(propertyKey);
         if (!Double.isNaN(intIndex)) {
             Object value = elementGet(cx, intIndex);
@@ -67,12 +74,16 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
             boolean writable = getWritable();
             return new PropertyDescriptor(value, writable, true, false).toProperty();
         }
+        /* step 4 */
         return ordinaryGetOwnProperty(propertyKey);
     }
 
+    /** 8.4.6.3 [[DefineOwnProperty]] (P, Desc) */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         double intIndex = toIntegerIndex(propertyKey);
         if (!Double.isNaN(intIndex)) {
             if (intIndex < 0) {
@@ -120,49 +131,48 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
             }
             return true;
         }
+        /* step 4 */
         return super.defineOwnProperty(cx, propertyKey, desc);
     }
 
-    /**
-     * 8.4.6.1 [[Get]] (P, Receiver)
-     */
+    /** 8.4.6.4 [[Get]] (P, Receiver) */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
             double intIndex = toIntegerIndex(propertyKey);
             if (!Double.isNaN(intIndex)) {
                 return elementGet(cx, intIndex);
             }
         }
+        /* step 3 */
         return super.get(cx, propertyKey, receiver);
     }
 
-    /**
-     * 8.4.6.5 [[Set]] ( P, V, Receiver)
-     */
+    /** 8.4.6.5 [[Set]] (P, V, Receiver) */
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         if (this == receiver) { // SameValue(this, receiver)
             double intIndex = toIntegerIndex(propertyKey);
             if (!Double.isNaN(intIndex)) {
                 return elementSet(cx, intIndex, value);
             }
         }
+        /* step 3 */
         return super.set(cx, propertyKey, value, receiver);
     }
 
-    /**
-     * 8.4.6.6 [[Enumerate]] ()
-     */
+    /** 8.4.6.6 [[Enumerate]] () */
     @Override
     protected Collection<String> enumerateKeys() {
         // FIXME: spec incomplete
         return super.enumerateKeys();
     }
 
-    /**
-     * 8.4.6.7 [[OwnPropertyKeys]] ()
-     */
+    /** 8.4.6.7 [[OwnPropertyKeys]] () */
     @Override
     protected Collection<Object> enumerateOwnKeys() {
         // FIXME: spec incomplete
