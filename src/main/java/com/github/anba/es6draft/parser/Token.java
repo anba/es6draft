@@ -14,7 +14,12 @@ public enum Token {
     BREAK("break"), CASE("case"), CATCH("catch"), CLASS("class"), CONTINUE("continue"), CONST(
             "const"), DEBUGGER("debugger"), DEFAULT("default"), DELETE("delete"), DO("do"), ELSE(
             "else"), EXPORT("export"), FINALLY("finally"), FOR("for"), FUNCTION("function"), IF(
-            "if"), IMPORT("import"), IN("in"), INSTANCEOF("instanceof"), LET("let"), NEW("new"),
+            "if"),
+    IMPORT("import"),
+    IN("in"),
+    INSTANCEOF("instanceof"),
+    LET("let"),
+    NEW("new"),
     RETURN("return"),
     SUPER("super"),
     SWITCH("switch"),
@@ -30,12 +35,25 @@ public enum Token {
     ENUM("enum"),
     EXTENDS("extends"),
     // FutureReservedWord (strict) -> 7.6.1.2
-    IMPLEMENTS("implements"), INTERFACE("interface"), PACKAGE("package"),
+    IMPLEMENTS("implements"),
+    INTERFACE("interface"),
+    PACKAGE("package"),
     PRIVATE("private"),
     PROTECTED("protected"),
     PUBLIC("public"),
     STATIC("static"),
     YIELD("yield"),
+    // Identifier
+    NAME("<name>"),
+    // Literal
+    NULL("null"),
+    TRUE("true"),
+    FALSE("false"),
+    NUMBER("<number>"),
+    STRING("<string>"),
+    REGEXP("<regexp>"),
+    // Template
+    TEMPLATE("`"),
     // Punctuator -> 7.7
     LC("{"), RC("}"), LP("("), RP(")"), LB("["), RB("]"), DOT("."), SEMI(";"), COMMA(","), LT("<"),
     GT(">"), LE("<="), GE(">="), EQ("=="), NE("!="), SHEQ("==="), SHNE("!=="), ADD("+"), SUB("-"),
@@ -48,15 +66,8 @@ public enum Token {
     TRIPLE_DOT("..."),
     // DivPunctuator -> 7.7
     DIV("/"), ASSIGN_DIV("/="),
-    // Literal
-    NULL("null"), TRUE("true"), FALSE("false"), NUMBER("<number>"), STRING("<string>"), REGEXP(
-            "<regexp>"),
-    // Template
-    TEMPLATE("`"),
     // Comment
     COMMENT("<comment>"),
-    // Identifier
-    NAME("<name>"),
     // EOF, Error
     EOF("<eof>"), ERROR("<error>");
 
