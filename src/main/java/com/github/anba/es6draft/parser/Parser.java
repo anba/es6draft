@@ -1252,8 +1252,9 @@ public class Parser {
      * </pre>
      */
     private ImportSpecifier importSpecifier() {
+        assert context.strictMode != StrictMode.Unknown : "undefined strict-mode in import specifier";
         String externalName, localName;
-        if (isIdentifier(token())) {
+        if (!isReservedWord(token())) {
             externalName = identifier();
             if (isName("as")) {
                 consume("as");
@@ -2316,7 +2317,7 @@ public class Parser {
      */
     private ClassDeclaration classDeclaration() {
         consume(Token.CLASS);
-        BindingIdentifier name = bindingIdentifierStrict();
+        BindingIdentifier name = bindingIdentifierPureStrict();
         Expression heritage = null;
         if (token() == Token.EXTENDS) {
             consume(Token.EXTENDS);
@@ -2351,7 +2352,7 @@ public class Parser {
         consume(Token.CLASS);
         BindingIdentifier name = null;
         if (token() != Token.EXTENDS && token() != Token.LC) {
-            name = bindingIdentifierStrict();
+            name = bindingIdentifierPureStrict();
         }
         Expression heritage = null;
         if (token() == Token.EXTENDS) {
@@ -2764,6 +2765,22 @@ public class Parser {
      */
     private BindingIdentifier bindingIdentifierStrict() {
         String identifier = identifier();
+        if ("arguments".equals(identifier) || "eval".equals(identifier)) {
+            reportSyntaxError(Messages.Key.StrictModeRestrictedIdentifier);
+        }
+        return new BindingIdentifier(identifier);
+    }
+
+    /**
+     * <strong>[12.2.1] Let and Const Declarations</strong>
+     * 
+     * <pre>
+     * BindingIdentifier :
+     *     Identifier
+     * </pre>
+     */
+    private BindingIdentifier bindingIdentifierPureStrict() {
+        String identifier = strictIdentifier();
         if ("arguments".equals(identifier) || "eval".equals(identifier)) {
             reportSyntaxError(Messages.Key.StrictModeRestrictedIdentifier);
         }
@@ -5505,6 +5522,29 @@ public class Parser {
 
     /**
      * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * 
+     * <pre>
+     * Identifier ::
+     *     IdentifierName but not ReservedWord
+     * ReservedWord ::
+     *     Keyword
+     *     FutureReservedWord
+     *     NullLiteral
+     *     BooleanLiteral
+     * </pre>
+     */
+    private String strictIdentifier() {
+        Token tok = token();
+        if (!isStrictIdentifier(tok)) {
+            reportTokenMismatch("<identifier>", tok);
+        }
+        String name = getName(tok);
+        consume(tok);
+        return name;
+    }
+
+    /**
+     * <strong>[7.6] Identifier Names and Identifiers</strong>
      */
     private boolean isIdentifier(Token tok) {
         switch (tok) {
@@ -5531,6 +5571,27 @@ public class Parser {
     /**
      * <strong>[7.6] Identifier Names and Identifiers</strong>
      */
+    private boolean isStrictIdentifier(Token tok) {
+        switch (tok) {
+        case NAME:
+            return true;
+        case YIELD:
+        case IMPLEMENTS:
+        case INTERFACE:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
+            throw reportSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     */
     private String identifierName() {
         Token tok = token();
         if (!isIdentifierName(tok)) {
@@ -5546,6 +5607,12 @@ public class Parser {
      */
     private static boolean isIdentifierName(Token tok) {
         switch (tok) {
+        case NAME:
+            // Literals
+        case NULL:
+        case FALSE:
+        case TRUE:
+            // Keywords
         case BREAK:
         case CASE:
         case CATCH:
@@ -5557,42 +5624,118 @@ public class Parser {
         case DELETE:
         case DO:
         case ELSE:
-        case ENUM:
         case EXPORT:
-        case EXTENDS:
-        case FALSE:
         case FINALLY:
         case FOR:
         case FUNCTION:
         case IF:
-        case IMPLEMENTS:
         case IMPORT:
         case IN:
         case INSTANCEOF:
-        case INTERFACE:
         case LET:
-        case NAME:
         case NEW:
-        case NULL:
-        case PACKAGE:
-        case PRIVATE:
-        case PROTECTED:
-        case PUBLIC:
         case RETURN:
-        case STATIC:
         case SUPER:
         case SWITCH:
         case THIS:
         case THROW:
-        case TRUE:
         case TRY:
         case TYPEOF:
         case VAR:
         case VOID:
         case WHILE:
         case WITH:
+            // Future Reserved Words
+        case ENUM:
+        case EXTENDS:
+        case IMPLEMENTS:
+        case INTERFACE:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
         case YIELD:
             return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * <strong>[7.6.1] Reserved Words</strong>
+     */
+    private boolean isReservedWord(Token tok) {
+        switch (tok) {
+        case FALSE:
+        case NULL:
+        case TRUE:
+            return true;
+        default:
+            return isKeyword(tok) || isFutureReservedWord(tok);
+        }
+    }
+
+    /**
+     * <strong>[7.6.1.1] Keywords</strong>
+     */
+    private boolean isKeyword(Token tok) {
+        switch (tok) {
+        case BREAK:
+        case CASE:
+        case CATCH:
+        case CLASS:
+        case CONST:
+        case CONTINUE:
+        case DEBUGGER:
+        case DEFAULT:
+        case DELETE:
+        case DO:
+        case ELSE:
+        case EXPORT:
+        case FINALLY:
+        case FOR:
+        case FUNCTION:
+        case IF:
+        case IMPORT:
+        case IN:
+        case INSTANCEOF:
+        case LET:
+        case NEW:
+        case RETURN:
+        case SUPER:
+        case SWITCH:
+        case THIS:
+        case THROW:
+        case TRY:
+        case TYPEOF:
+        case VAR:
+        case VOID:
+        case WHILE:
+        case WITH:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * <strong>[7.6.1.2] Future Reserved Words</strong>
+     */
+    private boolean isFutureReservedWord(Token tok) {
+        switch (tok) {
+        case ENUM:
+        case EXTENDS:
+            return true;
+        case IMPLEMENTS:
+        case INTERFACE:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
+        case YIELD:
+            return (context.strictMode != StrictMode.Strict);
         default:
             return false;
         }

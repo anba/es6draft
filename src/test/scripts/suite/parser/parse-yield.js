@@ -24,10 +24,10 @@ assertSyntaxError(`function f(){"use strict"; (function yield(){}); }`);
 function f(){ (function* yield(){}); }
 assertSyntaxError(`function f(){"use strict"; (function* yield(){}); }`);
 // -> class declaration
-function f(){ class yield{} }
+assertSyntaxError(`function f(){ class yield{} }`);
 assertSyntaxError(`function f(){"use strict"; class yield{} }`);
 // -> class expression
-function f(){ (class yield{}); }
+assertSyntaxError(`function f(){ (class yield{}); }`);
 assertSyntaxError(`function f(){"use strict"; (class yield{}); }`);
 
 // function expression
@@ -44,10 +44,10 @@ assertSyntaxError(`(function f(){"use strict"; (function yield(){}); });`);
 (function f(){ (function* yield(){}); });
 assertSyntaxError(`(function f(){"use strict"; (function* yield(){}); });`);
 // -> class declaration
-(function f(){ class yield{} });
+assertSyntaxError(`(function f(){ class yield{} });`);
 assertSyntaxError(`(function f(){"use strict"; class yield{} });`);
 // -> class expression
-(function f(){ (class yield{}); });
+assertSyntaxError(`(function f(){ (class yield{}); });`);
 assertSyntaxError(`(function f(){"use strict"; (class yield{}); });`);
 
 // generator declaration
