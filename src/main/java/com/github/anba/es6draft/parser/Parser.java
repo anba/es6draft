@@ -447,7 +447,7 @@ public class Parser {
         return context.scopeContext = parent;
     }
 
-    private void addFunctionDecl(FunctionDeclaration decl) {
+    private void addFunctionDeclaration(FunctionDeclaration decl) {
         String name = BoundName(decl.getIdentifier());
         ScopeContext parentScope = context.parent.scopeContext;
         if (parentScope.isTopLevel()) {
@@ -465,7 +465,7 @@ public class Parser {
         }
     }
 
-    private void addGeneratorDecl(GeneratorDeclaration decl) {
+    private void addGeneratorDeclaration(GeneratorDeclaration decl) {
         String name = BoundName(decl.getIdentifier());
         ScopeContext parentScope = context.parent.scopeContext;
         parentScope.addLexScopedDeclaration(decl);
@@ -1482,7 +1482,7 @@ public class Parser {
 
             function_StaticSemantics(function);
 
-            addFunctionDecl(function);
+            addFunctionDeclaration(function);
 
             return inheritStrictness(function);
         } finally {
@@ -2179,7 +2179,7 @@ public class Parser {
 
             generator_StaticSemantics(generator);
 
-            addGeneratorDecl(generator);
+            addGeneratorDeclaration(generator);
 
             return inheritStrictness(generator);
         } finally {
