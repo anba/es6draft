@@ -6,12 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
+
+import org.mozilla.javascript.StringToNumber;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -21,6 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -154,7 +155,42 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         @Function(name = "parseInt", arity = 2)
         public static Object parseInt(ExecutionContext cx, Object thisValue, Object string,
                 Object radix) {
-            return GlobalObject.FunctionProperties.parseInt(cx, thisValue, string, radix);
+            /* steps 1-2 */
+            String inputString = ToFlatString(cx, string);
+            /* step 3 */
+            String s = Strings.trimLeft(inputString);
+            int len = s.length();
+            int index = 0;
+            /* steps 4-6 */
+            boolean isPos = true;
+            if (index < len && (s.charAt(index) == '+' || s.charAt(index) == '-')) {
+                isPos = (s.charAt(index) == '+');
+                index += 1;
+            }
+            /* steps 7-8 */
+            int r = ToInt32(cx, radix);
+            /* step 9 */
+            boolean stripPrefix = true;
+            if (r != 0) {
+                /* step 10 */
+                if (r < 2 || r > 36) {
+                    return Double.NaN;
+                }
+                stripPrefix = (r == 16);
+            } else {
+                /* step 11 */
+                r = 10;
+            }
+            /* step 12 */
+            if (stripPrefix && index + 1 < len && s.charAt(index) == '0'
+                    && (s.charAt(index + 1) == 'x' || s.charAt(index + 1) == 'X')) {
+                r = 16;
+                index += 2;
+            }
+            /* steps 13-16 */
+            double number = StringToNumber.stringToNumber(s, index, r);
+            /* step 17 */
+            return (isPos ? number : -number);
         }
 
         /**
@@ -162,7 +198,16 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
          */
         @Function(name = "parseFloat", arity = 1)
         public static Object parseFloat(ExecutionContext cx, Object thisValue, Object string) {
-            return GlobalObject.FunctionProperties.parseFloat(cx, thisValue, string);
+            /* steps 1-2 */
+            String inputString = ToFlatString(cx, string);
+            /* step 3 */
+            String trimmedString = Strings.trimLeft(inputString);
+            /* step 4 */
+            if (trimmedString.isEmpty()) {
+                return Double.NaN;
+            }
+            /* steps 5-6 */
+            return readDecimalLiteralPrefix(trimmedString, 0, trimmedString.length());
         }
 
         /**
@@ -241,5 +286,91 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         public NumberObject newInstance(Realm realm) {
             return new NumberObject(realm);
         }
+    }
+
+    private static double readDecimalLiteralPrefix(String s, int start, int end) {
+        final int Infinity_length = "Infinity".length();
+
+        int index = start;
+        int c = s.charAt(index++);
+        boolean isPos = true;
+        if (c == '+' || c == '-') {
+            if (index >= end)
+                return Double.NaN;
+            isPos = (c == '+');
+            c = s.charAt(index++);
+        }
+        if (c == 'I') {
+            // Infinity
+            if (index - 1 + Infinity_length <= end
+                    && s.regionMatches(index - 1, "Infinity", 0, Infinity_length)) {
+                return isPos ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+            }
+            return Double.NaN;
+        }
+        prefix: {
+            if (c == '.') {
+                if (index >= end)
+                    return Double.NaN;
+                char d = s.charAt(index);
+                if (!(d >= '0' && d <= '9')) {
+                    return Double.NaN;
+                }
+            } else {
+                if (!(c >= '0' && c <= '9')) {
+                    return Double.NaN;
+                }
+                do {
+                    if (!(c >= '0' && c <= '9')) {
+                        break prefix;
+                    }
+                    if (index >= end) {
+                        break;
+                    }
+                    c = s.charAt(index++);
+                } while (c != '.' && c != 'e' && c != 'E');
+            }
+            if (c == '.') {
+                while (index < end) {
+                    c = s.charAt(index++);
+                    if (c == 'e' || c == 'E') {
+                        break;
+                    }
+                    if (!(c >= '0' && c <= '9')) {
+                        break prefix;
+                    }
+                }
+            }
+            if (c == 'e' || c == 'E') {
+                if (index >= end)
+                    break prefix;
+                int exp = index;
+                c = s.charAt(index++);
+                if (c == '+' || c == '-') {
+                    if (index >= end) {
+                        index = exp;
+                        break prefix;
+                    }
+                    c = s.charAt(index++);
+                }
+                if (!(c >= '0' && c <= '9')) {
+                    index = exp;
+                    break prefix;
+                }
+                do {
+                    if (!(c >= '0' && c <= '9')) {
+                        break prefix;
+                    }
+                    if (index >= end) {
+                        break;
+                    }
+                    c = s.charAt(index++);
+                } while (true);
+            }
+            if (index >= end) {
+                return Double.parseDouble(s.substring(start, end));
+            }
+        } // prefix
+        return Double.parseDouble(s.substring(start, index - 1));
     }
 }
