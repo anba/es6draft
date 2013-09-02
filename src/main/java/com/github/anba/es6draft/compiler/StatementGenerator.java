@@ -352,7 +352,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         } else if (lhs instanceof VariableStatement) {
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             Binding binding = varDecl.getBinding();
-            // FIXME: spec bug (missing ToObject() call?)
+            // Binding Instantiation: ForBinding
             if (binding instanceof BindingPattern) {
                 ToObject(ValType.Any, mv);
             }
@@ -388,7 +388,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 }
                 mv.swap();
 
-                // FIXME: spec bug (missing ToObject() call?)
+                // Binding Instantiation: ForBinding
                 if (lexicalBinding.getBinding() instanceof BindingPattern) {
                     ToObject(ValType.Any, mv);
                 }
@@ -622,7 +622,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         if (initialiser != null) {
             ValType type = expressionValue(initialiser, mv);
             mv.toBoxed(type);
-            if (binding instanceof BindingPattern) {
+            if (binding instanceof BindingPattern && type != ValType.Object) {
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
@@ -1059,7 +1059,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         if (initialiser != null) {
             ValType type = expressionValue(initialiser, mv);
             mv.toBoxed(type);
-            if (binding instanceof BindingPattern) {
+            if (binding instanceof BindingPattern && type != ValType.Object) {
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
             }

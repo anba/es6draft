@@ -16,8 +16,6 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -30,31 +28,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
  * </ul>
  */
 class BindingInitialisationGenerator {
-    private static class Fields {
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
-                Types.Undefined, "UNDEFINED", Types.Undefined);
-    }
-
     private static class Methods {
-        // class: AbstractOperations
-        static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
-                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
-
-        static final MethodDesc AbstractOperations_Get_String = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
-
-        static final MethodDesc AbstractOperations_HasProperty = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
-                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
-                                Types.ScriptObject, Types.Object));
-
-        static final MethodDesc AbstractOperations_HasProperty_String = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
-                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
-                                Types.ScriptObject, Types.String));
-
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
@@ -81,17 +55,27 @@ class BindingInitialisationGenerator {
                         Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
                         Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_GetIfPresentOrThrow = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrThrow", Type.getMethodType(
+                        Types.Object, Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_GetIfPresentOrThrow_String = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrThrow", Type.getMethodType(
+                        Types.Object, Types.ScriptObject, Types.String, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_GetIfPresentOrUndefined = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrUndefined", Type
+                        .getMethodType(Types.Object, Types.ScriptObject, Types.Object,
+                                Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_GetIfPresentOrUndefined_String = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrUndefined", Type
+                        .getMethodType(Types.Object, Types.ScriptObject, Types.String,
+                                Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "ensureObject",
                 Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_throw = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "_throw",
-                Type.getMethodType(Types.ScriptException, Types.Object));
-
-        static final MethodDesc ScriptRuntime_throwTypeErrorKeyNotPresent = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "throwTypeErrorKeyNotPresent",
-                Type.getMethodType(Types.ScriptException, Types.Object, Types.ExecutionContext));
 
         // class: Type
         static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
@@ -222,16 +206,6 @@ class BindingInitialisationGenerator {
         public Void visit(ArrayBindingPattern node, Void _) {
             // step 1: Assert: Type(value) is Object
 
-            // FIXME: spec bug -> internal `Assert` should never occur
-            Label assertion = new Label();
-            mv.dup();
-            mv.instanceOf(Types.ScriptObject);
-            mv.ifne(assertion);
-            mv.aconst("Type(value) is Object");
-            mv.invoke(Methods.ScriptRuntime_throw);
-            mv.pop(); // explicit pop required
-            mv.mark(assertion);
-
             // step 2:
             // stack: [(env), value] -> []
             IndexedBindingInitialisation(node, 0);
@@ -242,16 +216,6 @@ class BindingInitialisationGenerator {
         @Override
         public Void visit(ObjectBindingPattern node, Void _) {
             // step 1: Assert: Type(value) is Object
-
-            // FIXME: spec bug -> internal `Assert` should never occur
-            Label assertion = new Label();
-            mv.dup();
-            mv.instanceOf(Types.ScriptObject);
-            mv.ifne(assertion);
-            mv.aconst("Type(value) is Object");
-            mv.invoke(Methods.ScriptRuntime_throw);
-            mv.pop(); // explicit pop required
-            mv.mark(assertion);
 
             // step 2: [...]
             for (BindingProperty property : node.getProperties()) {
@@ -354,9 +318,6 @@ class BindingInitialisationGenerator {
                 assert binding instanceof BindingPattern;
                 Expression initialiser = node.getInitialiser();
 
-                // stack: [(env), array] -> [(env), array, array]
-                mv.dup();
-
                 // step 1
                 String name = ToString(index);
 
@@ -365,37 +326,15 @@ class BindingInitialisationGenerator {
                     mv.aconst(name);
                     mv.invoke(Methods.ExoticArguments_getArgument);
                 } else {
-                    // steps 2-3
-                    // stack: [(env), array, array] -> [(env), array, exists]
-                    mv.loadExecutionContext();
-                    mv.swap();
+                    // steps 2-5
+                    // stack: [(env), array] -> [(env), v]
                     mv.aconst(name);
-                    mv.invoke(Methods.AbstractOperations_HasProperty_String);
-
-                    // steps 4-5
-                    // stack: [(env), array, exists] -> [v]
-                    Label exists = new Label(), valueLoaded = new Label();
-                    mv.ifne(exists);
-                    {
-                        mv.pop();
-                        if (initialiser == null) {
-                            mv.aconst(name);
-                            mv.loadExecutionContext();
-                            mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
-                            mv.athrow();
-                        } else {
-                            mv.get(Fields.Undefined_UNDEFINED);
-                            mv.goTo(valueLoaded);
-                        }
+                    mv.loadExecutionContext();
+                    if (initialiser == null) {
+                        mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow_String);
+                    } else {
+                        mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined_String);
                     }
-                    mv.mark(exists);
-                    {
-                        mv.loadExecutionContext();
-                        mv.swap();
-                        mv.aconst(name);
-                        mv.invoke(Methods.AbstractOperations_Get_String);
-                    }
-                    mv.mark(valueLoaded);
                 }
 
                 // step 6
@@ -476,45 +415,20 @@ class BindingInitialisationGenerator {
         }
 
         private void generate(Binding binding, Expression initialiser, String propertyName) {
-            // stack: [(env), obj] -> [(env), obj, obj]
-            mv.dup();
-
             if (parameterInitialisation) {
                 mv.loadExecutionContext();
                 mv.aconst(propertyName);
                 mv.invoke(Methods.ExoticArguments_getArgument);
             } else {
-                // steps 1-2
-                // stack: [(env), obj, obj] -> [(env), obj, exists]
-                mv.loadExecutionContext();
-                mv.swap();
+                // steps 1-4
+                // stack: [(env), obj] -> [(env), v]
                 mv.aconst(propertyName);
-                mv.invoke(Methods.AbstractOperations_HasProperty_String);
-
-                // steps 3-4
-                // stack: [(env), obj, exists] -> [v]
-                Label exists = new Label(), valueLoaded = new Label();
-                mv.ifne(exists);
-                {
-                    mv.pop();
-                    if (initialiser == null) {
-                        mv.aconst(propertyName);
-                        mv.loadExecutionContext();
-                        mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
-                        mv.athrow();
-                    } else {
-                        mv.get(Fields.Undefined_UNDEFINED);
-                        mv.goTo(valueLoaded);
-                    }
+                mv.loadExecutionContext();
+                if (initialiser == null) {
+                    mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow_String);
+                } else {
+                    mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined_String);
                 }
-                mv.mark(exists);
-                {
-                    mv.loadExecutionContext();
-                    mv.swap();
-                    mv.aconst(propertyName);
-                    mv.invoke(Methods.AbstractOperations_Get_String);
-                }
-                mv.mark(valueLoaded);
             }
 
             // step 5
@@ -566,42 +480,14 @@ class BindingInitialisationGenerator {
             ValType propType = expressionValue(propertyName.getExpression(), mv);
             ToPropertyKey(propType, mv);
 
-            // stack: [(env), obj, propertyName] -> [(env), obj, propertyName, obj, propertyName]
-            mv.dup2();
-
-            // step 1-2
-            // stack: [(env), obj, propertyName, obj, propertyName] -> [(env), obj, propertyName,
-            // exists]
+            // steps 1-4
+            // stack: [(env), obj, propertyName] -> [(env), v]
             mv.loadExecutionContext();
-            mv.dupX2();
-            mv.pop();
-            mv.invoke(Methods.AbstractOperations_HasProperty);
-
-            // steps 3-4
-            // stack: [(env), obj, propertyName, exists] -> [(env), v]
-            Label exists = new Label(), valueLoaded = new Label();
-            mv.ifne(exists);
-            {
-                if (initialiser == null) {
-                    mv.swap();
-                    mv.pop();
-                    mv.loadExecutionContext();
-                    mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
-                    mv.athrow();
-                } else {
-                    mv.pop2();
-                    mv.get(Fields.Undefined_UNDEFINED);
-                    mv.goTo(valueLoaded);
-                }
+            if (initialiser == null) {
+                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow);
+            } else {
+                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined);
             }
-            mv.mark(exists);
-            {
-                mv.loadExecutionContext();
-                mv.dupX2();
-                mv.pop();
-                mv.invoke(Methods.AbstractOperations_Get);
-            }
-            mv.mark(valueLoaded);
 
             // step 5
             // stack: [(env), v] -> [(env), v']

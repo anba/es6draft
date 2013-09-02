@@ -924,6 +924,12 @@ public final class ScriptRuntime {
     /**
      * 11.13.2 Runtime Semantics<br>
      * Runtime Semantics: Evaluation
+     * <p>
+     * 12.2.1.2 Runtime Semantics<br>
+     * Runtime Semantics: Evaluation
+     * <p>
+     * 12.2.2.2 Runtime Semantics<br>
+     * Runtime Semantics: Evaluation
      */
     public static ScriptObject ensureObject(Object val, ExecutionContext cx) {
         if (!Type.isObject(val)) {
@@ -934,10 +940,70 @@ public final class ScriptRuntime {
 
     /**
      * 11.13.3.2 Runtime Semantics<br>
+     * Runtime Semantics: Destructuring Assignment Evaluation<br>
      * Runtime Semantics: Keyed Destructuring Assignment Evaluation
+     * <p>
+     * 12.2.3.2 Runtime Semantics<br>
+     * Runtime Semantics: Indexed Binding Initialisation<br>
+     * Runtime Semantics: Keyed Binding Initialisation
      */
-    public static ScriptException throwTypeErrorKeyNotPresent(Object pk, ExecutionContext cx) {
-        throw throwTypeError(cx, Messages.Key.PropertyNotFound, pk.toString());
+    public static Object GetIfPresentOrThrow(ScriptObject object, Object propertyKey,
+            ExecutionContext cx) {
+        if (HasProperty(cx, object, propertyKey)) {
+            return Get(cx, object, propertyKey);
+        }
+        throw throwTypeError(cx, Messages.Key.PropertyNotFound, propertyKey.toString());
+    }
+
+    /**
+     * 11.13.3.2 Runtime Semantics<br>
+     * Runtime Semantics: Destructuring Assignment Evaluation<br>
+     * Runtime Semantics: Keyed Destructuring Assignment Evaluation
+     * <p>
+     * 12.2.3.2 Runtime Semantics<br>
+     * Runtime Semantics: Indexed Binding Initialisation<br>
+     * Runtime Semantics: Keyed Binding Initialisation
+     */
+    public static Object GetIfPresentOrThrow(ScriptObject object, String propertyKey,
+            ExecutionContext cx) {
+        if (HasProperty(cx, object, propertyKey)) {
+            return Get(cx, object, propertyKey);
+        }
+        throw throwTypeError(cx, Messages.Key.PropertyNotFound, propertyKey);
+    }
+
+    /**
+     * 11.13.3.2 Runtime Semantics<br>
+     * Runtime Semantics: Destructuring Assignment Evaluation<br>
+     * Runtime Semantics: Keyed Destructuring Assignment Evaluation
+     * <p>
+     * 12.2.3.2 Runtime Semantics<br>
+     * Runtime Semantics: Indexed Binding Initialisation<br>
+     * Runtime Semantics: Keyed Binding Initialisation
+     */
+    public static Object GetIfPresentOrUndefined(ScriptObject object, Object propertyKey,
+            ExecutionContext cx) {
+        if (HasProperty(cx, object, propertyKey)) {
+            return Get(cx, object, propertyKey);
+        }
+        return UNDEFINED;
+    }
+
+    /**
+     * 11.13.3.2 Runtime Semantics<br>
+     * Runtime Semantics: Destructuring Assignment Evaluation<br>
+     * Runtime Semantics: Keyed Destructuring Assignment Evaluation
+     * <p>
+     * 12.2.3.2 Runtime Semantics<br>
+     * Runtime Semantics: Indexed Binding Initialisation<br>
+     * Runtime Semantics: Keyed Binding Initialisation
+     */
+    public static Object GetIfPresentOrUndefined(ScriptObject object, String propertyKey,
+            ExecutionContext cx) {
+        if (HasProperty(cx, object, propertyKey)) {
+            return Get(cx, object, propertyKey);
+        }
+        return UNDEFINED;
     }
 
     /* ***************************************************************************************** */

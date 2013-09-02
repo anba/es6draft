@@ -220,7 +220,10 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             }
             mv.swap();
 
-            // FIXME: spec bug (missing ToObject() call?)
+            // Binding Instantiation: ForBinding
+            if (node.getBinding() instanceof BindingPattern) {
+                ToObject(ValType.Any, mv);
+            }
 
             // stack: [forEnv, envRec, nextValue] -> [forEnv]
             BindingInitialisationWithEnvironment(node.getBinding(), mv);

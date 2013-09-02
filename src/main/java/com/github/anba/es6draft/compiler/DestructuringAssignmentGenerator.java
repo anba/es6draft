@@ -15,8 +15,6 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
@@ -28,31 +26,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * </ul>
  */
 class DestructuringAssignmentGenerator {
-    private static class Fields {
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
-                Types.Undefined, "UNDEFINED", Types.Undefined);
-    }
-
     private static class Methods {
-        // class: AbstractOperations
-        static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
-                Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
-                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
-
-        static final MethodDesc AbstractOperations_Get_String = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
-                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
-
-        static final MethodDesc AbstractOperations_HasProperty = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
-                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
-                                Types.ScriptObject, Types.Object));
-
-        static final MethodDesc AbstractOperations_HasProperty_String = MethodDesc.create(
-                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
-                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
-                                Types.ScriptObject, Types.String));
-
         // class: Reference
         static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "PutValue",
@@ -64,13 +38,27 @@ class DestructuringAssignmentGenerator {
                         Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
                         Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_GetIfPresentOrThrow = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrThrow", Type.getMethodType(
+                        Types.Object, Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_GetIfPresentOrThrow_String = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrThrow", Type.getMethodType(
+                        Types.Object, Types.ScriptObject, Types.String, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_GetIfPresentOrUndefined = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrUndefined", Type
+                        .getMethodType(Types.Object, Types.ScriptObject, Types.Object,
+                                Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_GetIfPresentOrUndefined_String = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrUndefined", Type
+                        .getMethodType(Types.Object, Types.ScriptObject, Types.String,
+                                Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "ensureObject",
                 Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_throwTypeErrorKeyNotPresent = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "throwTypeErrorKeyNotPresent",
-                Type.getMethodType(Types.ScriptException, Types.Object, Types.ExecutionContext));
 
         // class: Type
         static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
@@ -260,40 +248,15 @@ class DestructuringAssignmentGenerator {
 
         private void generate(LeftHandSideExpression target, Expression initialiser,
                 String propertyName) {
-            // stack: [obj] -> [obj, obj]
-            mv.dup();
-
-            // steps 1-2
-            // stack: [obj, obj] -> [obj, exists]
-            mv.loadExecutionContext();
-            mv.swap();
+            // steps 1-4
+            // stack: [obj] -> [v]
             mv.aconst(propertyName);
-            mv.invoke(Methods.AbstractOperations_HasProperty_String);
-
-            // steps 3-4
-            // stack: [obj, exists] -> [v]
-            Label exists = new Label(), valueLoaded = new Label();
-            mv.ifne(exists);
-            {
-                mv.pop();
-                if (initialiser == null) {
-                    mv.aconst(propertyName);
-                    mv.loadExecutionContext();
-                    mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
-                    mv.athrow();
-                } else {
-                    mv.get(Fields.Undefined_UNDEFINED);
-                    mv.goTo(valueLoaded);
-                }
+            mv.loadExecutionContext();
+            if (initialiser == null) {
+                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow_String);
+            } else {
+                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined_String);
             }
-            mv.mark(exists);
-            {
-                mv.loadExecutionContext();
-                mv.swap();
-                mv.aconst(propertyName);
-                mv.invoke(Methods.AbstractOperations_Get_String);
-            }
-            mv.mark(valueLoaded);
 
             // step 5
             // stack: [v] -> [v']
@@ -350,41 +313,14 @@ class DestructuringAssignmentGenerator {
             ValType propType = expressionValue(propertyName.getExpression(), mv);
             ToPropertyKey(propType, mv);
 
-            // stack: [obj, propertyName] -> [obj, propertyName, obj, propertyName]
-            mv.dup2();
-
-            // step 1-2
-            // stack: [obj, propertyName, obj, propertyName] -> [obj, propertyName, exists]
+            // steps 1-4
+            // stack: [obj, propertyName] -> [v]
             mv.loadExecutionContext();
-            mv.dupX2();
-            mv.pop();
-            mv.invoke(Methods.AbstractOperations_HasProperty);
-
-            // steps 3-4
-            // stack: [obj, propertyName, exists] -> [v]
-            Label exists = new Label(), valueLoaded = new Label();
-            mv.ifne(exists);
-            {
-                if (initialiser == null) {
-                    mv.swap();
-                    mv.pop();
-                    mv.loadExecutionContext();
-                    mv.invoke(Methods.ScriptRuntime_throwTypeErrorKeyNotPresent);
-                    mv.athrow();
-                } else {
-                    mv.pop2();
-                    mv.get(Fields.Undefined_UNDEFINED);
-                    mv.goTo(valueLoaded);
-                }
+            if (initialiser == null) {
+                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow);
+            } else {
+                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined);
             }
-            mv.mark(exists);
-            {
-                mv.loadExecutionContext();
-                mv.dupX2();
-                mv.pop();
-                mv.invoke(Methods.AbstractOperations_Get);
-            }
-            mv.mark(valueLoaded);
 
             // step 5
             // stack: [v] -> [v']
