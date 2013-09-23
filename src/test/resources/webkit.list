@@ -210,6 +210,7 @@ fast/js/regexp-stack-overflow.js
 comparison-operators.js
 comparison-operators-less.js
 comparison-operators-greater.js
+dfg-double-vote-fuzz.js
 dfg-int-overflow-in-loop.js
 sort-with-side-effecting-comparisons.js
 
