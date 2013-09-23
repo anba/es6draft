@@ -36,7 +36,6 @@ import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -57,12 +56,6 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
         createProperties(this, cx, AdditionalProperties.class);
-
-        // B.2.4.3 Date.prototype.toGMTString ( )
-        if (cx.getRealm().isEnabled(CompatibilityOption.DatePrototype)) {
-            defineOwnProperty(cx, "toGMTString", new PropertyDescriptor(
-                    Get(cx, this, "toUTCString"), true, false, true));
-        }
     }
 
     private static final String ISO_FORMAT = "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ";
@@ -945,7 +938,6 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "@@ToPrimitive", arity = 1, symbol = BuiltinSymbol.ToPrimitive,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object ToPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
-            // just to trigger type and initialisation test
             /* steps 1-2 */
             if (!Type.isObject(thisValue)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
@@ -1033,6 +1025,14 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             ((DateObject) thisValue).setDateValue(TimeClip(date));
             /* step 8 */
             return ((DateObject) thisValue).getDateValue();
+        }
+
+        /**
+         * B.2.4.3 Date.prototype.toGMTString ( )
+         */
+        @Value(name = "toGMTString")
+        public static Object toGMTString(ExecutionContext cx) {
+            return Get(cx, cx.getIntrinsic(Intrinsics.DatePrototype), "toUTCString");
         }
     }
 }
