@@ -10,5 +10,5 @@ package com.github.anba.es6draft.runtime.types;
  *
  */
 public enum IntegrityLevel {
-    NonExtensible, Sealed, Frozen
+    Sealed, Frozen
 }
