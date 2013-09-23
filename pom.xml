@@ -434,6 +434,7 @@
                     <include name="it_object.js" />
                     <include name="iterator.js" />
                     <include name="legacy-generator.js" />
+                    <include name="math.js" />
                     <include name="number.js" />
                     <include name="proxy.js" />
                     <include name="source.js" />
