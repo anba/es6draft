@@ -78,7 +78,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         // FIXME: spec issue? (should possibly call %Object%[[Call]], execution-context/realm!)
-        ExecutionContext calleeContext = realm().defaultContext();
+        ExecutionContext calleeContext = calleeContext();
         if (args.length > 0) {
             Object value = args[0];
             switch (Type.of(value)) {
