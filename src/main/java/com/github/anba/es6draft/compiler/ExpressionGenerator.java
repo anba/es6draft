@@ -40,12 +40,6 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
  */
 class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisitor> {
     private static class Fields {
-        static final FieldDesc Null_NULL = FieldDesc.create(FieldType.Static, Types.Null, "NULL",
-                Types.Null);
-
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
-                Types.Undefined, "UNDEFINED", Types.Undefined);
-
         static final FieldDesc Intrinsics_ObjectPrototype = FieldDesc.create(FieldType.Static,
                 Types.Intrinsics, "ObjectPrototype", Types.Intrinsics);
 
@@ -263,9 +257,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         static final MethodDesc StringBuilder_init = MethodDesc.create(MethodType.Special,
                 Types.StringBuilder, "<init>", Type.getMethodType(Type.VOID_TYPE));
 
-        static final MethodDesc StringBuilder_init_int = MethodDesc.create(MethodType.Special,
-                Types.StringBuilder, "<init>", Type.getMethodType(Type.VOID_TYPE, Type.INT_TYPE));
-
         static final MethodDesc StringBuilder_toString = MethodDesc.create(MethodType.Virtual,
                 Types.StringBuilder, "toString", Type.getMethodType(Types.String));
     }
@@ -470,7 +461,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         /* step 2 */
         // stack: [args, func(Callable)] -> [args, thisValue, func(Callable)]
-        mv.get(Fields.Undefined_UNDEFINED);
+        mv.loadUndefined();
         mv.swap();
 
         /* steps 10-14 */
@@ -511,7 +502,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         /* step 1 */
         // stack: [args, func(Callable)] -> [args, thisValue, func(Callable)]
-        mv.get(Fields.Undefined_UNDEFINED);
+        mv.loadUndefined();
         mv.swap();
 
         if (directEval) {
@@ -622,7 +613,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         mv.mark(stdCall);
 
         // stack: [args, func] -> [args, thisValue, func]
-        mv.get(Fields.Undefined_UNDEFINED);
+        mv.loadUndefined();
         mv.swap();
 
         mv.mark(stdCallCheck);
@@ -671,11 +662,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.goTo(after);
             mv.mark(isEmpty);
             mv.pop();
-            mv.get(Fields.Undefined_UNDEFINED);
+            mv.loadUndefined();
             mv.mark(after);
         } else if (arguments.isEmpty()) {
             mv.pop();
-            mv.get(Fields.Undefined_UNDEFINED);
+            mv.loadUndefined();
         } else {
             mv.iconst(0);
             mv.aload(Types.Object);
@@ -1789,7 +1780,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                     }
                 } else {
                     assert binding.getBinding() instanceof BindingIdentifier;
-                    mv.get(Fields.Undefined_UNDEFINED);
+                    mv.loadUndefined();
                 }
 
                 // stack: [env, envRec, envRec, value] -> [env, envRec]
@@ -1823,7 +1814,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
     @Override
     public ValType visit(NullLiteral node, ExpressionVisitor mv) {
-        mv.get(Fields.Null_NULL);
+        mv.loadNull();
 
         return ValType.Null;
     }
@@ -1887,28 +1878,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         return ValType.Object;
     }
 
-    private static final int MAX_STRING_SIZE = 32768;
-
     @Override
     public ValType visit(StringLiteral node, ExpressionVisitor mv) {
-        String s = node.getValue();
-        if (s.length() <= MAX_STRING_SIZE) {
-            mv.aconst(s);
-        } else {
-            // string literal too large, split to avoid bytecode error
-            mv.anew(Types.StringBuilder);
-            mv.dup();
-            mv.iconst(s.length());
-            mv.invoke(Methods.StringBuilder_init_int);
-
-            for (int i = 0, len = s.length(); i < len; i += MAX_STRING_SIZE) {
-                String chunk = s.substring(i, Math.min(i + MAX_STRING_SIZE, len));
-                mv.aconst(chunk);
-                mv.invoke(Methods.StringBuilder_append_String);
-            }
-
-            mv.invoke(Methods.StringBuilder_toString);
-        }
+        mv.aconst(node.getValue());
 
         return ValType.String;
     }
@@ -2093,7 +2065,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             mv.pop(type);
-            mv.get(Fields.Undefined_UNDEFINED);
+            mv.loadUndefined();
             return ValType.Undefined;
         }
         case TYPEOF: {
@@ -2178,7 +2150,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             ValType type = evalAndGetValue(expr, mv);
             mv.toBoxed(type);
         } else {
-            mv.get(Fields.Undefined_UNDEFINED);
+            mv.loadUndefined();
         }
 
         mv.loadExecutionContext();
