@@ -6,6 +6,14 @@
 #
 
 
+# Pending update: https://bugs.ecmascript.org/show_bug.cgi?id=1113
+tests/basic/spread-call-eval.js
+tests/basic/spread-call-funapply.js
+tests/basic/spread-call-not-iterable.js
+
+# invalid test, missing TypeError in SpiderMonkey
+tests/proxy/bug897403.js
+
 # ES6-bug: declaration binding
 tests/arguments/defaults-bound-to-function.js
 tests/arguments/defaults-scoping.js
@@ -20,6 +28,9 @@ tests/basic/bug623859.js
 tests/basic/bug648773.js
 tests/basic/bug652054.js
 tests/basic/bug836601.js
+tests/basic/spread-array.js
+tests/basic/spread-call.js
+tests/basic/spread-call-length.js
 tests/basic/testBug606138.js
 tests/basic/testDoubleZeroInSwitch2.js
 tests/basic/testOverRecursed5.js
@@ -45,6 +56,10 @@ tests/basic/bug683140.js
 
 # ES6 spec incomplete for [[OwnPropertyKeys]] on indexed exotic objects
 tests/basic/typed-array-sealed-frozen.js
+
+# ES6-change: assignment to function call is early error
+# ES6: invalid destructuring is SyntaxError
+tests/basic/spread-call-setcall.js
 
 
 ###################
@@ -132,6 +147,7 @@ tests/basic/bug827104.js
 tests/basic/bug839420.js
 tests/basic/bug882416.js
 tests/basic/expression-autopsy.js
+tests/basic/spread-call-maxarg.js
 tests/basic/testBug566556.js
 tests/basic/testBug579647.js
 tests/basic/testBug593559.js
@@ -426,7 +442,6 @@ tests/auto-regress/bug677977.js
 tests/auto-regress/bug720396.js
 tests/basic/bug713226.js
 tests/basic/bug821340.js
-tests/basic/bug839313.js
 tests/basic/testBug895774.js
 tests/basic/testGeneratorDieButScopeAlive.js
 
