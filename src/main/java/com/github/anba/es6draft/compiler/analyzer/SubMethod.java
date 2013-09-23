@@ -15,7 +15,7 @@ import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.StatementListItem;
 
 /**
- * Base class for node re-writing classesF
+ * Base class for node re-writing classes
  */
 abstract class SubMethod<NODE extends Node> {
     protected static final int MAX_SIZE = 32768;
