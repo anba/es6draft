@@ -21,8 +21,6 @@ import org.objectweb.asm.Type;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
@@ -33,10 +31,26 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 /**
  *
  */
-class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
-    private static class Fields {
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
-                Types.Undefined, "UNDEFINED", Types.Undefined);
+class StatementGenerator extends
+        DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
+    enum Completion {
+        Normal, Return, Throw, Break, Continue, Abrupt;
+
+        boolean isAbrupt() {
+            return this != Normal;
+        }
+
+        Completion then(Completion next) {
+            return this != Normal ? this : next;
+        }
+
+        Completion select(Completion other) {
+            return this == Normal || other == Normal ? Normal : this == other ? this : Abrupt;
+        }
+
+        Completion normal(boolean b) {
+            return b ? Normal : this;
+        }
     }
 
     private static class Methods {
@@ -139,16 +153,16 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
     }
 
     @Override
-    protected Void visit(Node node, StatementVisitor mv) {
+    protected Completion visit(Node node, StatementVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     @Override
-    public Void visit(BlockStatement node, StatementVisitor mv) {
+    public Completion visit(BlockStatement node, StatementVisitor mv) {
         if (node.getStatements().isEmpty()) {
             // Block : { }
             // -> Return NormalCompletion(empty)
-            return null;
+            return Completion.Normal;
         }
 
         mv.enterScope(node);
@@ -159,27 +173,29 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             pushLexicalEnvironment(mv);
         }
 
-        List<StatementListItem> statements = node.getStatements();
-        for (StatementListItem statement : statements) {
-            statement.accept(this, mv);
+        Completion result = Completion.Normal;
+        for (StatementListItem statement : node.getStatements()) {
+            if ((result = result.then(statement.accept(this, mv))).isAbrupt()) {
+                break;
+            }
         }
 
-        if (!declarations.isEmpty()) {
+        if (!declarations.isEmpty() && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
         mv.exitScope();
 
-        return null;
+        return result;
     }
 
     @Override
-    public Void visit(BreakStatement node, StatementVisitor mv) {
+    public Completion visit(BreakStatement node, StatementVisitor mv) {
         mv.goTo(mv.breakLabel(node));
-        return null;
+        return Completion.Break;
     }
 
     @Override
-    public Void visit(ClassDeclaration node, StatementVisitor mv) {
+    public Completion visit(ClassDeclaration node, StatementVisitor mv) {
         ClassDefinitionEvaluation(node, null, mv);
 
         // stack: [lexEnv, value] -> []
@@ -187,69 +203,71 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         mv.swap();
         BindingInitialisationWithEnvironment(node.getName(), mv);
 
-        return null;
+        return Completion.Normal;
     }
 
     @Override
-    public Void visit(ContinueStatement node, StatementVisitor mv) {
+    public Completion visit(ContinueStatement node, StatementVisitor mv) {
         mv.goTo(mv.continueLabel(node));
-        return null;
+        return Completion.Continue;
     }
 
     @Override
-    public Void visit(DebuggerStatement node, StatementVisitor mv) {
+    public Completion visit(DebuggerStatement node, StatementVisitor mv) {
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_debugger);
-        return null;
+        return Completion.Normal;
     }
 
     @Override
-    public Void visit(DoWhileStatement node, StatementVisitor mv) {
+    public Completion visit(DoWhileStatement node, StatementVisitor mv) {
         Label lblNext = new Label();
-        Label lblContinue = new Label(), lblBreak = new Label();
+        JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
 
         // L1: <statement>
         // IFNE ToBoolean(<expr>) L1
 
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
+        Completion result;
         mv.mark(lblNext);
         {
             mv.enterIteration(node, lblBreak, lblContinue);
-            node.getStatement().accept(this, mv);
+            result = node.getStatement().accept(this, mv);
             mv.exitIteration(node);
         }
         mv.mark(lblContinue);
-        restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+        if (lblContinue.isUsed()) {
+            restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+        }
 
-        ValType type = expressionValue(node.getTest(), mv);
-        ToBoolean(type, mv);
-        mv.ifne(lblNext);
+        if (!result.isAbrupt() || lblContinue.isUsed()) {
+            ValType type = expressionValue(node.getTest(), mv);
+            ToBoolean(type, mv);
+            mv.ifne(lblNext);
+        }
 
         mv.mark(lblBreak);
-        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        if (lblBreak.isUsed()) {
+            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        }
 
         freeVariable(savedEnv, mv);
 
-        return null;
+        return result.normal(lblContinue.isUsed() || lblBreak.isUsed());
     }
 
     @Override
-    public Void visit(EmptyStatement node, StatementVisitor mv) {
+    public Completion visit(EmptyStatement node, StatementVisitor mv) {
         // nothing to do!
-        return null;
+        return Completion.Normal;
     }
 
     @Override
-    public Void visit(ExpressionStatement node, StatementVisitor mv) {
+    public Completion visit(ExpressionStatement node, StatementVisitor mv) {
         ValType type = expressionValue(node.getExpression(), mv);
-        if (mv.isCompletionValue()) {
-            mv.toBoxed(type);
-            mv.storeCompletionValue();
-        } else {
-            mv.pop(type);
-        }
-        return null;
+        mv.storeCompletionValueForScript(type);
+        return Completion.Normal;
     }
 
     private enum IterationKind {
@@ -257,31 +275,28 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
     }
 
     @Override
-    public Void visit(ForEachStatement node, StatementVisitor mv) {
-        visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
+    public Completion visit(ForEachStatement node, StatementVisitor mv) {
+        return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
                 IterationKind.EnumerateValues, mv);
-        return null;
     }
 
     @Override
-    public Void visit(ForInStatement node, StatementVisitor mv) {
-        visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
+    public Completion visit(ForInStatement node, StatementVisitor mv) {
+        return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
                 IterationKind.Enumerate, mv);
-        return null;
     }
 
     @Override
-    public Void visit(ForOfStatement node, StatementVisitor mv) {
-        visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
+    public Completion visit(ForOfStatement node, StatementVisitor mv) {
+        return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
                 IterationKind.Iterate, mv);
-        return null;
     }
 
-    private <FORSTATEMENT extends IterationStatement & ScopedNode> void visitForInOfLoop(
+    private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion visitForInOfLoop(
             FORSTATEMENT node, Expression expr, Node lhs, Statement stmt,
             IterationKind iterationKind, StatementVisitor mv) {
-        Label lblContinue = new Label(), lblBreak = new Label();
-        Label loopstart = new Label();
+        JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
+        Label loopstart = new Label(), loopbody = new Label();
 
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
@@ -330,12 +345,9 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
         mv.store(iter);
 
-        mv.mark(lblContinue);
-        restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+        mv.goTo(lblContinue);
 
-        mv.load(iter);
-        mv.invoke(Methods.Iterator_hasNext);
-        mv.ifeq(lblBreak);
+        mv.mark(loopbody);
         mv.load(iter);
         mv.invoke(Methods.Iterator_next);
 
@@ -384,7 +396,6 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                         // FIXME: spec bug (CreateMutableBinding concrete method of `env`)
                         createMutableBinding(name, false, mv);
                     }
-
                 }
                 mv.swap();
 
@@ -400,28 +411,43 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             pushLexicalEnvironment(mv);
         }
 
+        Completion result;
         {
             mv.enterIteration(node, lblBreak, lblContinue);
-            stmt.accept(this, mv);
+            result = stmt.accept(this, mv);
             mv.exitIteration(node);
         }
 
         if (lhs instanceof LexicalDeclaration) {
             // restore previous lexical environment
-            popLexicalEnvironment(mv);
+            if (!result.isAbrupt()) {
+                popLexicalEnvironment(mv);
+            }
             mv.exitScope();
         }
 
-        mv.goTo(lblContinue);
+        mv.mark(lblContinue);
+        if (lblContinue.isUsed()) {
+            restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+        }
+
+        mv.load(iter);
+        mv.invoke(Methods.Iterator_hasNext);
+        mv.ifne(loopbody);
+
         mv.mark(lblBreak);
-        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        if (lblBreak.isUsed()) {
+            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        }
 
         mv.freeVariable(iter);
         freeVariable(savedEnv, mv);
+
+        return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
     }
 
     @Override
-    public Void visit(ForStatement node, StatementVisitor mv) {
+    public Completion visit(ForStatement node, StatementVisitor mv) {
         Node head = node.getHead();
         if (head == null) {
             // empty
@@ -461,19 +487,22 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Label lblTest = new Label(), lblStmt = new Label();
-        Label lblContinue = new Label(), lblBreak = new Label();
+        JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
 
+        Completion result;
         mv.goTo(lblTest);
         mv.mark(lblStmt);
         {
             mv.enterIteration(node, lblBreak, lblContinue);
-            node.getStatement().accept(this, mv);
+            result = node.getStatement().accept(this, mv);
             mv.exitIteration(node);
         }
         mv.mark(lblContinue);
-        restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+        if (lblContinue.isUsed()) {
+            restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+        }
 
-        if (node.getStep() != null) {
+        if (node.getStep() != null && (!result.isAbrupt() || lblContinue.isUsed())) {
             ValType type = expressionValue(node.getStep(), mv);
             mv.pop(type);
         }
@@ -488,84 +517,99 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         }
 
         mv.mark(lblBreak);
-        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        if (lblBreak.isUsed()) {
+            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        }
 
         freeVariable(savedEnv, mv);
 
         if (head instanceof LexicalDeclaration) {
-            popLexicalEnvironment(mv);
+            if (node.getTest() != null || lblBreak.isUsed()) {
+                popLexicalEnvironment(mv);
+            }
             mv.exitScope();
         }
 
-        return null;
+        if (node.getTest() == null) {
+            if (!result.isAbrupt() && !lblBreak.isUsed()) {
+                return Completion.Abrupt; // infinite loop
+            }
+            return result.normal(lblBreak.isUsed());
+        }
+        return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
     }
 
     @Override
-    public Void visit(FunctionDeclaration node, StatementVisitor mv) {
+    public Completion visit(FunctionDeclaration node, StatementVisitor mv) {
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> FunctionDeclaration
         /* return NormalCompletion(empty) */
 
-        return null;
+        return Completion.Normal;
     }
 
     @Override
-    public Void visit(GeneratorDeclaration node, StatementVisitor mv) {
+    public Completion visit(GeneratorDeclaration node, StatementVisitor mv) {
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> GeneratorDeclaration
         /* return NormalCompletion(empty) */
 
-        return null;
+        return Completion.Normal;
     }
 
     @Override
-    public Void visit(IfStatement node, StatementVisitor mv) {
+    public Completion visit(IfStatement node, StatementVisitor mv) {
         Label l0 = new Label(), l1 = new Label();
 
         ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
         mv.ifeq(l0);
-        node.getThen().accept(this, mv);
+        Completion resultThen = node.getThen().accept(this, mv);
         if (node.getOtherwise() != null) {
-            mv.goTo(l1);
+            if (!resultThen.isAbrupt()) {
+                mv.goTo(l1);
+            }
             mv.mark(l0);
-            node.getOtherwise().accept(this, mv);
+            Completion resultOtherwise = node.getOtherwise().accept(this, mv);
             mv.mark(l1);
+            return resultThen.select(resultOtherwise);
         } else {
             mv.mark(l0);
+            return resultThen.select(Completion.Normal);
         }
-        return null;
     }
 
     @Override
-    public Void visit(LabelledStatement node, StatementVisitor mv) {
+    public Completion visit(LabelledStatement node, StatementVisitor mv) {
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
-        Label label = new Label();
+        JumpLabel label = new JumpLabel();
         mv.enterLabelled(node, label);
-        node.getStatement().accept(this, mv);
+        Completion result = node.getStatement().accept(this, mv);
         mv.exitLabelled(node);
         mv.mark(label);
 
-        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        if (label.isUsed()) {
+            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        }
         freeVariable(savedEnv, mv);
 
-        return null;
+        return result.normal(label.isUsed());
     }
 
     @Override
-    public Void visit(LexicalDeclaration node, StatementVisitor mv) {
+    public Completion visit(LexicalDeclaration node, StatementVisitor mv) {
         for (LexicalBinding binding : node.getElements()) {
             binding.accept(this, mv);
         }
 
-        return null;
+        return Completion.Normal;
     }
 
     @Override
-    public Void visit(LetStatement node, StatementVisitor mv) {
+    public Completion visit(LetStatement node, StatementVisitor mv) {
         // create new declarative lexical environment
         // stack: [] -> [env]
         mv.enterScope(node);
@@ -595,7 +639,7 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                     }
                 } else {
                     assert binding.getBinding() instanceof BindingIdentifier;
-                    mv.get(Fields.Undefined_UNDEFINED);
+                    mv.loadUndefined();
                 }
 
                 // stack: [env, envRec, envRec, value] -> [env, envRec]
@@ -606,17 +650,19 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         // stack: [env] -> []
         pushLexicalEnvironment(mv);
 
-        node.getStatement().accept(this, mv);
+        Completion result = node.getStatement().accept(this, mv);
 
         // restore previous lexical environment
-        popLexicalEnvironment(mv);
+        if (!result.isAbrupt()) {
+            popLexicalEnvironment(mv);
+        }
         mv.exitScope();
 
-        return null;
+        return result;
     }
 
     @Override
-    public Void visit(LexicalBinding node, StatementVisitor mv) {
+    public Completion visit(LexicalBinding node, StatementVisitor mv) {
         Binding binding = node.getBinding();
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
@@ -628,18 +674,18 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             }
         } else {
             assert binding instanceof BindingIdentifier;
-            mv.get(Fields.Undefined_UNDEFINED);
+            mv.loadUndefined();
         }
 
         getEnvironmentRecord(mv);
         mv.swap();
         BindingInitialisationWithEnvironment(binding, mv);
 
-        return null;
+        return Completion.Normal;
     }
 
     @Override
-    public Void visit(ReturnStatement node, StatementVisitor mv) {
+    public Completion visit(ReturnStatement node, StatementVisitor mv) {
         Expression expr = node.getExpression();
         if (expr != null) {
             if (!mv.isWrapped()) {
@@ -651,74 +697,58 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 mv.setTailCall(TailCallNodes(null));
             }
         } else {
-            mv.get(Fields.Undefined_UNDEFINED);
+            mv.loadUndefined();
         }
         mv.storeCompletionValue();
         mv.goTo(mv.returnLabel());
-        return null;
+
+        return Completion.Return;
     }
 
     @Override
-    public Void visit(StatementListMethod node, StatementVisitor mv) {
+    public Completion visit(StatementListMethod node, StatementVisitor mv) {
         codegen.compile(node, mv);
 
         mv.lineInfo(0);
         mv.loadExecutionContext();
         mv.loadCompletionValue();
 
-        Variable<boolean[]> ref = null;
-        if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
-            ref = mv.newVariable("ref", boolean[].class);
-            mv.newarray(1, Type.BOOLEAN_TYPE);
-            mv.dup();
-            mv.store(ref);
-        } else {
-            mv.aconst(null);
-        }
-
-        String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext, Types.Object,
-                Types.boolean_);
+        String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext, Types.Object);
         mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
 
         if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
-            mv.load(ref);
-            mv.freeVariable(ref);
-            mv.aload(0, Type.BOOLEAN_TYPE);
-
+            // TODO: only emit when `return` used in StmtListMethod
             Label noReturn = new Label();
-            mv.ifeq(noReturn);
+            mv.dup();
+            mv.ifnull(noReturn);
             mv.storeCompletionValue();
             mv.goTo(mv.returnLabel());
             mv.mark(noReturn);
-        }
-
-        if (mv.isCompletionValue()) {
-            mv.storeCompletionValue();
-        } else {
             mv.pop();
+        } else {
+            mv.storeCompletionValueForScript(ValType.Any);
         }
 
-        return null;
+        return Completion.Normal; // TODO: return correct result
     }
 
     @Override
-    public Void visit(SwitchStatement node, StatementVisitor mv) {
-        node.accept(new SwitchStatementGenerator(codegen), mv);
-
-        return null;
+    public Completion visit(SwitchStatement node, StatementVisitor mv) {
+        return node.accept(new SwitchStatementGenerator(codegen), mv);
     }
 
     @Override
-    public Void visit(ThrowStatement node, StatementVisitor mv) {
+    public Completion visit(ThrowStatement node, StatementVisitor mv) {
         ValType type = expressionValue(node.getExpression(), mv);
         mv.toBoxed(type);
         mv.invoke(Methods.ScriptRuntime_throw);
-        mv.pop(); // explicit pop required
-        return null;
+        mv.athrow();
+
+        return Completion.Throw;
     }
 
     @Override
-    public Void visit(TryStatement node, StatementVisitor mv) {
+    public Completion visit(TryStatement node, StatementVisitor mv) {
         // NB: nop() instruction are inserted to ensure no empty blocks will be generated
 
         BlockStatement tryBlock = node.getTryBlock();
@@ -740,17 +770,20 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
             mv.mark(startCatchFinally);
             mv.enterWrapped();
-            tryBlock.accept(this, mv);
+            Completion tryResult = tryBlock.accept(this, mv);
+            if (!tryResult.isAbrupt()) {
+                mv.nop();
+                mv.goTo(noException);
+            }
             mv.exitWrapped();
-            mv.nop();
             mv.mark(endCatch);
-            mv.goTo(noException);
 
             // StackOverflowError -> ScriptException
             mv.mark(handlerCatchStackOverflow);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_toInternalError);
 
+            Completion catchResult;
             mv.mark(handlerCatch);
             restoreEnvironment(mv, savedEnv);
             mv.enterWrapped();
@@ -760,35 +793,45 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 Variable<ScriptException> exception = mv.newVariable("exception",
                         ScriptException.class);
                 mv.store(exception);
+                Completion result = null;
                 for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
                     mv.load(exception);
-                    guardedCatchNode.accept(this, mv);
+                    Completion guardedResult = guardedCatchNode.accept(this, mv);
+                    result = result != null ? result.select(guardedResult) : guardedResult;
                 }
+                assert result != null;
                 if (catchNode != null) {
                     mv.load(exception);
-                    catchNode.accept(this, mv);
+                    catchResult = catchNode.accept(this, mv);
                 } else {
                     mv.load(exception);
                     mv.athrow();
+                    catchResult = Completion.Throw;
                 }
 
                 mv.freeVariable(exception);
                 mv.mark(mv.catchWithGuardedLabel());
                 mv.exitCatchWithGuarded(node);
+
+                catchResult = catchResult.select(result);
             } else {
-                catchNode.accept(this, mv);
+                catchResult = catchNode.accept(this, mv);
             }
             mv.exitWrapped();
             mv.mark(endFinally);
 
             // restore temp abrupt targets
-            List<Label> tempLabels = mv.exitFinallyScoped();
+            List<TempLabel> tempLabels = mv.exitFinallyScoped();
 
             // various finally blocks
-            mv.enterFinally();
-            finallyBlock.accept(this, mv);
-            mv.exitFinally();
-            mv.goTo(exceptionHandled);
+            if (!catchResult.isAbrupt()) {
+                mv.enterFinally();
+                Completion finallyResult = finallyBlock.accept(this, mv);
+                mv.exitFinally();
+                if (!finallyResult.isAbrupt()) {
+                    mv.goTo(exceptionHandled);
+                }
+            }
 
             mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
@@ -796,31 +839,33 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.store(throwable);
             restoreEnvironment(mv, savedEnv);
             mv.enterFinally();
-            finallyBlock.accept(this, mv);
+            Completion finallyResult = finallyBlock.accept(this, mv);
             mv.exitFinally();
-            mv.load(throwable);
-            mv.athrow();
+            if (!finallyResult.isAbrupt()) {
+                mv.load(throwable);
+                mv.athrow();
+            }
             mv.freeVariable(throwable);
 
-            mv.mark(noException);
-            mv.enterFinally();
-            finallyBlock.accept(this, mv);
-            mv.exitFinally();
-            mv.goTo(exceptionHandled);
+            if (!tryResult.isAbrupt()) {
+                mv.mark(noException);
+                mv.enterFinally();
+                finallyBlock.accept(this, mv);
+                mv.exitFinally();
+                if (!finallyResult.isAbrupt()) {
+                    mv.goTo(exceptionHandled);
+                }
+            }
 
             // abrupt completion (return, break, continue) finally blocks
-            if (tempLabels != null) {
-                assert tempLabels.size() % 2 == 0;
-                for (int i = 0, size = tempLabels.size(); i < size; i += 2) {
-                    Label actual = tempLabels.get(i);
-                    Label temp = tempLabels.get(i + 1);
-
-                    mv.mark(temp);
-                    restoreEnvironment(mv, savedEnv);
-                    mv.enterFinally();
-                    finallyBlock.accept(this, mv);
-                    mv.exitFinally();
-                    mv.goTo(actual);
+            for (TempLabel temp : tempLabels) {
+                mv.mark(temp);
+                restoreEnvironment(mv, savedEnv);
+                mv.enterFinally();
+                finallyBlock.accept(this, mv);
+                mv.exitFinally();
+                if (!finallyResult.isAbrupt()) {
+                    mv.goTo(temp.getActual().mark());
                 }
             }
 
@@ -835,6 +880,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                     Types.ScriptException.getInternalName());
             mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinallyStackOverflow,
                     Types.StackOverflowError.getInternalName());
+
+            return finallyResult.then(tryResult.select(catchResult));
         } else if (catchNode != null || !guardedCatchNodes.isEmpty()) {
             Label startCatch = new Label(), endCatch = new Label(), handlerCatch = new Label();
             Label handlerCatchStackOverflow = new Label();
@@ -843,17 +890,20 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
             mv.mark(startCatch);
             mv.enterWrapped();
-            tryBlock.accept(this, mv);
+            Completion tryResult = tryBlock.accept(this, mv);
+            if (!tryResult.isAbrupt()) {
+                mv.nop();
+                mv.goTo(exceptionHandled);
+            }
             mv.exitWrapped();
-            mv.nop();
             mv.mark(endCatch);
-            mv.goTo(exceptionHandled);
 
             // StackOverflowError -> ScriptException
             mv.mark(handlerCatchStackOverflow);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_toInternalError);
 
+            Completion catchResult;
             mv.mark(handlerCatch);
             restoreEnvironment(mv, savedEnv);
             if (!guardedCatchNodes.isEmpty()) {
@@ -862,23 +912,29 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                 Variable<ScriptException> exception = mv.newVariable("exception",
                         ScriptException.class);
                 mv.store(exception);
+                Completion result = null;
                 for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
                     mv.load(exception);
-                    guardedCatchNode.accept(this, mv);
+                    Completion guardedResult = guardedCatchNode.accept(this, mv);
+                    result = result != null ? result.select(guardedResult) : guardedResult;
                 }
+                assert result != null;
                 if (catchNode != null) {
                     mv.load(exception);
-                    catchNode.accept(this, mv);
+                    catchResult = catchNode.accept(this, mv);
                 } else {
                     mv.load(exception);
                     mv.athrow();
+                    catchResult = Completion.Throw;
                 }
 
                 mv.freeVariable(exception);
                 mv.mark(mv.catchWithGuardedLabel());
                 mv.exitCatchWithGuarded(node);
+
+                catchResult = catchResult.select(result);
             } else {
-                catchNode.accept(this, mv);
+                catchResult = catchNode.accept(this, mv);
             }
             mv.mark(exceptionHandled);
 
@@ -887,6 +943,8 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                     Types.ScriptException.getInternalName());
             mv.visitTryCatchBlock(startCatch, endCatch, handlerCatchStackOverflow,
                     Types.StackOverflowError.getInternalName());
+
+            return tryResult.select(catchResult);
         } else {
             assert finallyBlock != null;
             Label startFinally = new Label(), endFinally = new Label(), handlerFinally = new Label();
@@ -899,14 +957,16 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
             mv.mark(startFinally);
             mv.enterWrapped();
-            tryBlock.accept(this, mv);
+            Completion tryResult = tryBlock.accept(this, mv);
+            if (!tryResult.isAbrupt()) {
+                mv.nop();
+                mv.goTo(noException);
+            }
             mv.exitWrapped();
-            mv.nop();
             mv.mark(endFinally);
-            mv.goTo(noException);
 
             // restore temp abrupt targets
-            List<Label> tempLabels = mv.exitFinallyScoped();
+            List<TempLabel> tempLabels = mv.exitFinallyScoped();
 
             mv.mark(handlerFinallyStackOverflow);
             mv.mark(handlerFinally);
@@ -914,31 +974,33 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
             mv.store(throwable);
             restoreEnvironment(mv, savedEnv);
             mv.enterFinally();
-            finallyBlock.accept(this, mv);
+            Completion finallyResult = finallyBlock.accept(this, mv);
             mv.exitFinally();
-            mv.load(throwable);
-            mv.athrow();
+            if (!finallyResult.isAbrupt()) {
+                mv.load(throwable);
+                mv.athrow();
+            }
             mv.freeVariable(throwable);
 
-            mv.mark(noException);
-            mv.enterFinally();
-            finallyBlock.accept(this, mv);
-            mv.exitFinally();
-            mv.goTo(exceptionHandled);
+            if (!tryResult.isAbrupt()) {
+                mv.mark(noException);
+                mv.enterFinally();
+                finallyBlock.accept(this, mv);
+                mv.exitFinally();
+                if (!finallyResult.isAbrupt()) {
+                    mv.goTo(exceptionHandled);
+                }
+            }
 
             // abrupt completion (return, break, continue) finally blocks
-            if (tempLabels != null) {
-                assert tempLabels.size() % 2 == 0;
-                for (int i = 0, size = tempLabels.size(); i < size; i += 2) {
-                    Label actual = tempLabels.get(i);
-                    Label temp = tempLabels.get(i + 1);
-
-                    mv.mark(temp);
-                    restoreEnvironment(mv, savedEnv);
-                    mv.enterFinally();
-                    finallyBlock.accept(this, mv);
-                    mv.exitFinally();
-                    mv.goTo(actual);
+            for (TempLabel temp : tempLabels) {
+                mv.mark(temp);
+                restoreEnvironment(mv, savedEnv);
+                mv.enterFinally();
+                finallyBlock.accept(this, mv);
+                mv.exitFinally();
+                if (!finallyResult.isAbrupt()) {
+                    mv.goTo(temp.getActual().mark());
                 }
             }
 
@@ -949,13 +1011,13 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
                     Types.ScriptException.getInternalName());
             mv.visitTryCatchBlock(startFinally, endFinally, handlerFinallyStackOverflow,
                     Types.StackOverflowError.getInternalName());
-        }
 
-        return null;
+            return finallyResult.then(tryResult);
+        }
     }
 
     @Override
-    public Void visit(CatchNode node, StatementVisitor mv) {
+    public Completion visit(CatchNode node, StatementVisitor mv) {
         Binding catchParameter = node.getCatchParameter();
         BlockStatement catchBlock = node.getCatchBlock();
 
@@ -989,17 +1051,19 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         // stack: [catchEnv] -> []
         pushLexicalEnvironment(mv);
 
-        catchBlock.accept(this, mv);
+        Completion result = catchBlock.accept(this, mv);
 
         // restore previous lexical environment
-        popLexicalEnvironment(mv);
+        if (!result.isAbrupt()) {
+            popLexicalEnvironment(mv);
+        }
         mv.exitScope();
 
-        return null;
+        return result;
     }
 
     @Override
-    public Void visit(GuardedCatchNode node, StatementVisitor mv) {
+    public Completion visit(GuardedCatchNode node, StatementVisitor mv) {
         Binding catchParameter = node.getCatchParameter();
         BlockStatement catchBlock = node.getCatchBlock();
 
@@ -1033,15 +1097,18 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         // stack: [catchEnv] -> []
         pushLexicalEnvironment(mv);
 
+        Completion result;
         Label l0 = new Label();
         ToBoolean(expressionValue(node.getGuard(), mv), mv);
         mv.ifeq(l0);
         {
-            catchBlock.accept(this, mv);
+            result = catchBlock.accept(this, mv);
 
             // restore previous lexical environment and go to end of catch block
-            popLexicalEnvironment(mv);
-            mv.goTo(mv.catchWithGuardedLabel());
+            if (!result.isAbrupt()) {
+                popLexicalEnvironment(mv);
+                mv.goTo(mv.catchWithGuardedLabel());
+            }
         }
         mv.mark(l0);
 
@@ -1049,11 +1116,11 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         popLexicalEnvironment(mv);
         mv.exitScope();
 
-        return null;
+        return result;
     }
 
     @Override
-    public Void visit(VariableDeclaration node, StatementVisitor mv) {
+    public Completion visit(VariableDeclaration node, StatementVisitor mv) {
         Binding binding = node.getBinding();
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
@@ -1067,48 +1134,53 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         } else {
             assert binding instanceof BindingIdentifier;
         }
-        return null;
+        return Completion.Normal;
     }
 
     @Override
-    public Void visit(VariableStatement node, StatementVisitor mv) {
+    public Completion visit(VariableStatement node, StatementVisitor mv) {
         for (VariableDeclaration decl : node.getElements()) {
             decl.accept(this, mv);
         }
-        return null;
+        return Completion.Normal;
     }
 
     @Override
-    public Void visit(WhileStatement node, StatementVisitor mv) {
+    public Completion visit(WhileStatement node, StatementVisitor mv) {
         Label lblNext = new Label();
-        Label lblContinue = new Label(), lblBreak = new Label();
+        JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
 
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
+        Completion result;
         mv.goTo(lblContinue);
         mv.mark(lblNext);
         {
             mv.enterIteration(node, lblBreak, lblContinue);
-            node.getStatement().accept(this, mv);
+            result = node.getStatement().accept(this, mv);
             mv.exitIteration(node);
         }
         mv.mark(lblContinue);
-        restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+        if (lblContinue.isUsed()) {
+            restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
+        }
 
         ValType type = expressionValue(node.getTest(), mv);
         ToBoolean(type, mv);
         mv.ifne(lblNext);
 
         mv.mark(lblBreak);
-        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        if (lblBreak.isUsed()) {
+            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        }
 
         freeVariable(savedEnv, mv);
 
-        return null;
+        return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
     }
 
     @Override
-    public Void visit(WithStatement node, StatementVisitor mv) {
+    public Completion visit(WithStatement node, StatementVisitor mv) {
         // with(<Expression>)
         ValType type = expressionValue(node.getExpression(), mv);
 
@@ -1125,12 +1197,14 @@ class StatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
         newObjectEnvironment(mv, true); // withEnvironment-flag = true
         pushLexicalEnvironment(mv);
 
-        node.getStatement().accept(this, mv);
+        Completion result = node.getStatement().accept(this, mv);
 
         // restore previous lexical environment
-        popLexicalEnvironment(mv);
+        if (!result.isAbrupt()) {
+            popLexicalEnvironment(mv);
+        }
         mv.exitScope();
 
-        return null;
+        return result;
     }
 }

@@ -31,6 +31,10 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.types.Null;
+import com.github.anba.es6draft.runtime.types.Reference;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Undefined;
 
 /**
  *
@@ -220,10 +224,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected final void restoreEnvironment(AbruptNode node, Abrupt abrupt,
             Variable<LexicalEnvironment> savedEnv, StatementVisitor mv) {
-        if (node.getAbrupt().contains(abrupt)) {
-            assert savedEnv != null;
-            restoreEnvironment(mv, savedEnv);
-        }
+        assert node.getAbrupt().contains(abrupt);
+        assert savedEnv != null;
+        restoreEnvironment(mv, savedEnv);
     }
 
     /**
@@ -358,6 +361,32 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             case Any:
             default:
                 return false;
+            }
+        }
+
+        public Class<?> toClass() {
+            switch (this) {
+            case Boolean:
+                return boolean.class;
+            case String:
+                return CharSequence.class;
+            case Number:
+                return double.class;
+            case Number_int:
+                return int.class;
+            case Number_uint:
+                return long.class;
+            case Object:
+                return ScriptObject.class;
+            case Reference:
+                return Reference.class;
+            case Null:
+                return Null.class;
+            case Undefined:
+                return Undefined.class;
+            case Any:
+            default:
+                return Object.class;
             }
         }
 

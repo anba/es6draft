@@ -33,11 +33,10 @@ import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.Parser.Option;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
@@ -49,11 +48,6 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * 
  */
 class CodeGenerator implements AutoCloseable {
-    private static class Fields {
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
-                Types.Undefined, "UNDEFINED", Types.Undefined);
-    }
-
     private static class Methods {
         // class: Reference
         static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Virtual,
@@ -70,6 +64,7 @@ class CodeGenerator implements AutoCloseable {
     private static final boolean EVALUATE_SIZE = false;
     private static final boolean INCLUDE_SOURCE = true;
     private static final Future<String> NO_SOURCE = new ImmediateFuture<>(null);
+    private static final int MAX_FNAME_LENGTH = 0x4000;
 
     private final ClassWriter cw;
     private final String className;
@@ -280,6 +275,8 @@ class CodeGenerator implements AutoCloseable {
                 fname = "<...>";
             } else if (fname.isEmpty()) {
                 fname = "anonymous";
+            } else if (fname.length() > MAX_FNAME_LENGTH) {
+                fname = fname.substring(0, MAX_FNAME_LENGTH);
             }
             n = addMethodName(node, fname);
         }
@@ -333,8 +330,8 @@ class CodeGenerator implements AutoCloseable {
             for (int i = 0, size = strings.size(); i < size; ++i) {
                 TemplateCharacters e = strings.get(i);
                 int index = i << 1;
-                body.astore(index, e.getValue(), Types.String);
-                body.astore(index + 1, e.getRawValue(), Types.String);
+                body.astore(index, e.getValue());
+                body.astore(index + 1, e.getRawValue());
             }
 
             body.areturn();
@@ -353,13 +350,18 @@ class CodeGenerator implements AutoCloseable {
         mv.begin();
 
         mv.enterScope(node);
+        Completion result = Completion.Normal;
         for (StatementListItem stmt : node.getStatements()) {
-            statement(stmt, mv);
+            if ((result = result.then(statement(stmt, mv))).isAbrupt()) {
+                break;
+            }
         }
         mv.exitScope();
 
-        mv.loadCompletionValue();
-        mv.areturn();
+        if (!result.isAbrupt()) {
+            mv.loadCompletionValue();
+            mv.areturn();
+        }
         mv.end();
 
         // runtime-info method
@@ -375,7 +377,7 @@ class CodeGenerator implements AutoCloseable {
             body.setScope(mv.getScope());
             node.accept(new GeneratorComprehensionGenerator(this), body);
 
-            body.get(Fields.Undefined_UNDEFINED);
+            body.loadUndefined();
             body.areturn();
             body.end();
         }
@@ -431,14 +433,25 @@ class CodeGenerator implements AutoCloseable {
         body.begin();
 
         body.enterScope(node);
+        Completion result = Completion.Normal;
         for (StatementListItem stmt : node.getStatements()) {
-            statement(stmt, body);
+            if ((result = result.then(statement(stmt, body))).isAbrupt()) {
+                break;
+            }
         }
         body.exitScope();
 
-        body.mark(body.returnLabel());
-        body.loadCompletionValue();
-        body.areturn();
+        if (!result.isAbrupt()) {
+            // fall-thru, clear any previously stored entry in completion-value
+            body.loadUndefined();
+            body.areturn();
+        }
+
+        if (body.hasReturn()) {
+            body.mark(body.returnLabelImmediate());
+            body.loadCompletionValue();
+            body.areturn();
+        }
         body.end();
     }
 
@@ -450,23 +463,32 @@ class CodeGenerator implements AutoCloseable {
             body.begin();
 
             body.setScope(mv.getScope());
+            Completion result = Completion.Normal;
             for (StatementListItem stmt : node.getStatements()) {
-                statement(stmt, body);
+                if ((result = result.then(statement(stmt, body))).isAbrupt()) {
+                    break;
+                }
             }
 
-            body.loadCompletionValue();
-            body.areturn();
-
-            // emit return-label if nested in function
             if (body.getCodeType() == StatementVisitor.CodeType.Function) {
-                body.mark(body.returnLabel());
-                body.loadParameter(2, boolean[].class);
-                body.iconst(0);
-                body.iconst(true);
-                body.astore(Type.BOOLEAN_TYPE);
+                // function case
+                if (!result.isAbrupt()) {
+                    body.aconst(null);
+                    body.areturn();
+                }
 
-                body.loadCompletionValue();
-                body.areturn();
+                // emit return-label if nested in function
+                if (body.hasReturn()) {
+                    body.mark(body.returnLabelImmediate());
+                    body.loadCompletionValue();
+                    body.areturn();
+                }
+            } else {
+                // script case
+                if (!result.isAbrupt()) {
+                    body.loadCompletionValue();
+                    body.areturn();
+                }
             }
 
             body.end();
@@ -535,15 +557,15 @@ class CodeGenerator implements AutoCloseable {
             mv.invoke(Methods.Reference_GetValue);
         }
 
-        return type;
+        return (type != ValType.Reference ? type : ValType.Any);
     }
 
     void propertyDefinition(PropertyDefinition node, ExpressionVisitor mv) {
         node.accept(propgen, mv);
     }
 
-    void statement(StatementListItem node, StatementVisitor mv) {
-        node.accept(stmtgen, mv);
+    Completion statement(StatementListItem node, StatementVisitor mv) {
+        return node.accept(stmtgen, mv);
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -556,9 +578,9 @@ class CodeGenerator implements AutoCloseable {
 
         protected StatementVisitorImpl(CodeGenerator codegen, String methodName,
                 Type methodDescriptor, boolean strict, TopLevelNode topLevelNode,
-                CodeType codeType, boolean completionValue, boolean initCompletionValue) {
+                CodeType codeType, boolean initCompletionValue) {
             super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, topLevelNode, codeType, completionValue);
+                    methodName, methodDescriptor, strict, topLevelNode, codeType);
             this.initCompletionValue = initCompletionValue;
             this.completionValue = reserveFixedSlot(COMPLETION_SLOT, Object.class);
         }
@@ -577,7 +599,7 @@ class CodeGenerator implements AutoCloseable {
         public void begin() {
             super.begin();
             if (initCompletionValue) {
-                get(Fields.Undefined_UNDEFINED);
+                loadUndefined();
                 storeCompletionValue();
             }
         }
@@ -588,9 +610,9 @@ class CodeGenerator implements AutoCloseable {
                 Types.ExecutionContext);
 
         ScriptStatementVisitor(CodeGenerator codegen, Script node) {
-            super(codegen, codegen.methodName(node, ScriptName.Code), methodDescriptor, node
-                    .isStrict(), node, node.isGlobalCode() ? CodeType.GlobalScript
-                    : CodeType.NonGlobalScript, true, true);
+            super(codegen, codegen.methodName(node, ScriptName.Code), methodDescriptor,
+                    IsStrict(node), node, node.isGlobalCode() ? CodeType.GlobalScript
+                            : CodeType.NonGlobalScript, true);
         }
     }
 
@@ -600,19 +622,18 @@ class CodeGenerator implements AutoCloseable {
 
         FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
             super(codegen, codegen.methodName(node, FunctionName.Code), methodDescriptor,
-                    IsStrict(node), node, CodeType.Function, false, true);
+                    IsStrict(node), node, CodeType.Function, true);
         }
     }
 
     private static class StatementListMethodStatementVisitor extends StatementVisitorImpl {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
-                Types.ExecutionContext, Types.Object, Types.boolean_);
+                Types.ExecutionContext, Types.Object);
 
         StatementListMethodStatementVisitor(CodeGenerator codegen, StatementListMethod node,
                 StatementVisitor parent) {
             super(codegen, codegen.methodName(parent.getTopLevelNode(), node), methodDescriptor,
-                    parent.isStrict(), parent.getTopLevelNode(), parent.getCodeType(), parent
-                            .isCompletionValue(), false);
+                    parent.isStrict(), parent.getTopLevelNode(), parent.getCodeType(), false);
         }
     }
 

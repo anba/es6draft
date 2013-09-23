@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarat
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.objectweb.asm.Label;
@@ -27,12 +28,14 @@ import com.github.anba.es6draft.ast.SwitchStatement;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
  *
  */
-class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisitor> {
+class SwitchStatementGenerator extends
+        DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
     private static class Methods {
         // class: CharSequence
         static final MethodDesc CharSequence_charAt = MethodDesc.create(MethodType.Interface,
@@ -63,24 +66,17 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
     }
 
     @Override
-    protected Void visit(Node node, StatementVisitor mv) {
+    protected Completion visit(Node node, StatementVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
     @Override
-    protected Void visit(StatementListItem node, StatementVisitor mv) {
-        codegen.statement(node, mv);
-        return null;
-    }
-
-    @Override
-    public Void visit(SwitchClause node, StatementVisitor mv) {
-        // see SwitchStatement
-        throw new IllegalStateException();
+    protected Completion visit(StatementListItem node, StatementVisitor mv) {
+        return codegen.statement(node, mv);
     }
 
     private enum SwitchType {
-        Int, Char, String, Generic;
+        Int, Char, String, Generic, Default;
 
         private static boolean isIntSwitch(SwitchStatement node) {
             for (SwitchClause switchClause : node.getClauses()) {
@@ -128,8 +124,8 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
             List<SwitchClause> clauses = node.getClauses();
             if (clauses.size() == 0 || clauses.size() == 1
                     && clauses.get(0).getExpression() == null) {
-                // empty or only default clause -> use generic switch
-                return Generic;
+                // empty or only default clause
+                return Default;
             }
             Expression testExpr = clauses.get(0).getExpression();
             if (testExpr == null) {
@@ -154,15 +150,60 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
     }
 
     @Override
-    public Void visit(SwitchStatement node, StatementVisitor mv) {
+    public Completion visit(SwitchClause node, StatementVisitor mv) {
+        Completion result = Completion.Normal;
+        for (StatementListItem stmt : node.getStatements()) {
+            if ((result = result.then(stmt.accept(this, mv))).isAbrupt()) {
+                break;
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public Completion visit(SwitchStatement node, StatementVisitor mv) {
+        SwitchType type = SwitchType.of(node);
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         // stack -> switchValue
         ValType expressionValueType = expressionValue(node.getExpression(), mv);
-        mv.toBoxed(expressionValueType);
 
-        Variable<Object> switchValue = mv.newVariable("switchValue", Object.class);
-        mv.store(switchValue);
+        boolean defaultOrReturn = false;
+        if (type == SwitchType.Int) {
+            if (!expressionValueType.isNumeric() && expressionValueType != ValType.Any) {
+                defaultOrReturn = true;
+            }
+        } else if (type == SwitchType.Char) {
+            if (expressionValueType != ValType.String && expressionValueType != ValType.Any) {
+                defaultOrReturn = true;
+            }
+        } else if (type == SwitchType.String) {
+            if (expressionValueType != ValType.String && expressionValueType != ValType.Any) {
+                defaultOrReturn = true;
+            }
+        } else if (type == SwitchType.Generic) {
+            mv.toBoxed(expressionValueType);
+            expressionValueType = ValType.Any;
+        } else {
+            assert type == SwitchType.Default;
+            defaultOrReturn = true;
+        }
+
+        if (defaultOrReturn) {
+            // never true -> emit default switch or return
+            mv.pop(expressionValueType);
+            if (hasDefaultClause(node)) {
+                type = SwitchType.Default;
+            } else {
+                return Completion.Normal;
+            }
+        }
+
+        Variable<?> switchValue = null;
+        if (type != SwitchType.Default) {
+            switchValue = mv.newVariable("switchValue", expressionValueType.toClass());
+            mv.store(switchValue);
+        }
 
         mv.enterScope(node);
         Collection<Declaration> declarations = LexicalDeclarations(node);
@@ -173,7 +214,8 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         }
 
         List<SwitchClause> clauses = node.getClauses();
-        Label lblBreak = new Label(), lblDefault = null;
+        JumpLabel lblBreak = new JumpLabel();
+        Label lblDefault = null;
         Label[] labels = new Label[clauses.size()];
         for (int i = 0, size = clauses.size(); i < size; ++i) {
             labels[i] = new Label();
@@ -183,37 +225,91 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
             }
         }
 
-        SwitchType type = SwitchType.of(node);
         if (type == SwitchType.Int) {
-            emitIntSwitch(node.getClauses(), labels, lblDefault, lblBreak, switchValue, mv);
+            emitIntSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
         } else if (type == SwitchType.Char) {
-            emitCharSwitch(node.getClauses(), labels, lblDefault, lblBreak, switchValue, mv);
+            emitCharSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
         } else if (type == SwitchType.String) {
-            emitStringSwitch(node.getClauses(), labels, lblDefault, lblBreak, switchValue, mv);
+            emitStringSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
+        } else if (type == SwitchType.Generic) {
+            emitGenericSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
         } else {
-            emitGenericSwitch(node.getClauses(), labels, lblDefault, lblBreak, switchValue, mv);
+            assert type == SwitchType.Default;
+            emitDefaultSwitch(clauses, labels, lblDefault, lblBreak, switchValue, mv);
         }
 
+        Completion result = Completion.Normal, lastResult = Completion.Normal;
         mv.enterBreakable(node, lblBreak);
-        int index = 0;
-        for (SwitchClause switchClause : node.getClauses()) {
-            mv.mark(labels[index++]);
-            for (StatementListItem stmt : switchClause.getStatements()) {
-                stmt.accept(this, mv);
+        if (type == SwitchType.Default) {
+            Iterator<SwitchClause> iter = clauses.iterator();
+            // skip leading clauses until default clause found
+            while (iter.hasNext()) {
+                SwitchClause switchClause = iter.next();
+                if (switchClause.getExpression() == null) {
+                    lastResult = switchClause.accept(this, mv);
+                    break;
+                }
+            }
+            // handle clauses following default clause until abrupt completion
+            while (iter.hasNext() && !lastResult.isAbrupt()) {
+                lastResult = iter.next().accept(this, mv);
+            }
+            result = lastResult;
+        } else {
+            int index = 0;
+            for (SwitchClause switchClause : clauses) {
+                mv.mark(labels[index++]);
+                Completion innerResult = switchClause.accept(this, mv);
+                if (innerResult.isAbrupt()) {
+                    // not fall-thru
+                    result = result.isAbrupt() ? result.select(innerResult) : innerResult;
+                }
+                lastResult = innerResult;
             }
         }
         mv.exitBreakable(node);
 
-        if (!declarations.isEmpty()) {
+        result = result.normal(lblBreak.isUsed() || lblDefault == null || !lastResult.isAbrupt());
+
+        if (!declarations.isEmpty() && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
         mv.exitScope();
 
         mv.mark(lblBreak);
-        restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        if (lblBreak.isUsed()) {
+            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        }
         freeVariable(savedEnv, mv);
 
-        return null;
+        return result;
+    }
+
+    private static boolean hasDefaultClause(SwitchStatement node) {
+        for (SwitchClause switchClause : node.getClauses()) {
+            if (switchClause.getExpression() == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * <h3>default-switch</h3>
+     * 
+     * <pre>
+     * switch (v) {
+     * case key1: ...
+     * case key2: ...
+     * default: ...
+     * }
+     * 
+     * goto :default
+     * </pre>
+     */
+    private void emitDefaultSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
+            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
+        assert switchValue == null;
     }
 
     /**
@@ -233,7 +329,9 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * </pre>
      */
     private void emitGenericSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
-            Label lblBreak, Variable<Object> switchValue, StatementVisitor mv) {
+            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
+        assert switchValue.getType().equals(Types.Object);
+
         int index = 0;
         for (SwitchClause switchClause : clauses) {
             Label caseLabel = labels[index++];
@@ -277,7 +375,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * </pre>
      */
     private void emitStringSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
-            Label lblBreak, Variable<Object> switchValue, StatementVisitor mv) {
+            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
         long[] entries = new long[clauses.size()];
         for (int i = 0, j = 0, size = clauses.size(); i < size; ++i) {
             Expression expr = clauses.get(i).getExpression();
@@ -289,19 +387,28 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         int entriesLength = entries.length - (defaultClause != null ? 1 : 0);
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
-        // test for string-ness: type is java.lang.CharSequence
-        mv.load(switchValue);
-        mv.instanceOf(Types.CharSequence);
-        mv.ifeq(switchDefault);
-
         Variable<String> switchValueString = mv.newVariable("switchValueString", String.class);
-        mv.load(switchValue);
-        mv.checkcast(Types.CharSequence);
-        mv.invoke(Methods.CharSequence_toString);
-        mv.dup();
-        mv.store(switchValueString);
-        mv.invoke(Methods.String_hashCode);
+        if (switchValue.getType().equals(Types.CharSequence)) {
+            mv.load(switchValue);
+            mv.invoke(Methods.CharSequence_toString);
+            mv.dup();
+            mv.store(switchValueString);
+            mv.invoke(Methods.String_hashCode);
+        } else {
+            assert switchValue.getType().equals(Types.Object);
 
+            // test for string-ness: type is java.lang.CharSequence
+            mv.load(switchValue);
+            mv.instanceOf(Types.CharSequence);
+            mv.ifeq(switchDefault);
+
+            mv.load(switchValue);
+            mv.checkcast(Types.CharSequence);
+            mv.invoke(Methods.CharSequence_toString);
+            mv.dup();
+            mv.store(switchValueString);
+            mv.invoke(Methods.String_hashCode);
+        }
         mv.freeVariable(switchValue);
 
         int distinctValues = distinctValues(entries, entriesLength);
@@ -363,7 +470,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * </pre>
      */
     private void emitCharSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
-            Label lblBreak, Variable<Object> switchValue, StatementVisitor mv) {
+            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
         long[] entries = new long[clauses.size()];
         for (int i = 0, j = 0, size = clauses.size(); i < size; ++i) {
             Expression expr = clauses.get(i).getExpression();
@@ -375,28 +482,43 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         int entriesLength = entries.length - (defaultClause != null ? 1 : 0);
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
-        // test for char-ness: type is java.lang.CharSequence
-        mv.load(switchValue);
-        mv.instanceOf(Types.CharSequence);
-        mv.ifeq(switchDefault);
+        if (switchValue.getType().equals(Types.CharSequence)) {
+            // test for char-ness: value is char (string with only one character)
+            mv.load(switchValue);
+            mv.invoke(Methods.CharSequence_length);
+            mv.iconst(1);
+            mv.ificmpne(switchDefault);
 
-        // test for char-ness: value is char (string with only one character)
-        Variable<CharSequence> switchValueChar = mv.newVariable("switchValueChar",
-                CharSequence.class);
-        mv.load(switchValue);
-        mv.checkcast(Types.CharSequence);
-        mv.dup();
-        mv.store(switchValueChar);
-        mv.invoke(Methods.CharSequence_length);
-        mv.iconst(1);
-        mv.ificmpne(switchDefault);
+            mv.load(switchValue);
+            mv.iconst(0);
+            mv.invoke(Methods.CharSequence_charAt);
+            mv.cast(Type.CHAR_TYPE, Type.INT_TYPE);
+        } else {
+            assert switchValue.getType().equals(Types.Object);
 
-        mv.load(switchValueChar);
-        mv.iconst(0);
-        mv.invoke(Methods.CharSequence_charAt);
-        mv.cast(Type.CHAR_TYPE, Type.INT_TYPE);
+            // test for char-ness: type is java.lang.CharSequence
+            mv.load(switchValue);
+            mv.instanceOf(Types.CharSequence);
+            mv.ifeq(switchDefault);
 
-        mv.freeVariable(switchValueChar);
+            // test for char-ness: value is char (string with only one character)
+            Variable<CharSequence> switchValueChar = mv.newVariable("switchValueChar",
+                    CharSequence.class);
+            mv.load(switchValue);
+            mv.checkcast(Types.CharSequence);
+            mv.dup();
+            mv.store(switchValueChar);
+            mv.invoke(Methods.CharSequence_length);
+            mv.iconst(1);
+            mv.ificmpne(switchDefault);
+
+            mv.load(switchValueChar);
+            mv.iconst(0);
+            mv.invoke(Methods.CharSequence_charAt);
+            mv.cast(Type.CHAR_TYPE, Type.INT_TYPE);
+
+            mv.freeVariable(switchValueChar);
+        }
         mv.freeVariable(switchValue);
 
         // emit tableswitch or lookupswitch
@@ -424,7 +546,7 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
      * </pre>
      */
     private void emitIntSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
-            Label lblBreak, Variable<Object> switchValue, StatementVisitor mv) {
+            Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
         long[] entries = new long[clauses.size()];
         for (int i = 0, j = 0, size = clauses.size(); i < size; ++i) {
             Expression expr = clauses.get(i).getExpression();
@@ -436,28 +558,56 @@ class SwitchStatementGenerator extends DefaultCodeGenerator<Void, StatementVisit
         int entriesLength = entries.length - (defaultClause != null ? 1 : 0);
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
 
-        // test for int-ness: type is java.lang.Number
-        mv.load(switchValue);
-        mv.instanceOf(Types.Number);
-        mv.ifeq(switchDefault);
+        if (switchValue.getType().equals(Type.INT_TYPE)) {
+            mv.load(switchValue);
+        } else if (switchValue.getType().equals(Type.LONG_TYPE)) {
+            // test for int-ness: value is integer
+            mv.load(switchValue);
+            mv.dup2();
+            mv.cast(Type.LONG_TYPE, Type.INT_TYPE);
+            mv.cast(Type.INT_TYPE, Type.LONG_TYPE);
+            mv.lcmp();
+            mv.ifne(switchDefault);
 
-        // test for int-ness: value is integer
-        Variable<Double> switchValueNum = mv.newVariable("switchValueNum", double.class);
-        mv.load(switchValue);
-        mv.checkcast(Types.Number);
-        mv.invoke(Methods.Number_doubleValue);
-        mv.dup2();
-        mv.dup2();
-        mv.store(switchValueNum);
-        mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
-        mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
-        mv.cmpl(Type.DOUBLE_TYPE);
-        mv.ifne(switchDefault);
+            mv.load(switchValue);
+            mv.cast(Type.LONG_TYPE, Type.INT_TYPE);
+        } else if (switchValue.getType().equals(Type.DOUBLE_TYPE)) {
+            // test for int-ness: value is integer
+            mv.load(switchValue);
+            mv.dup2();
+            mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
+            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
+            mv.cmpl(Type.DOUBLE_TYPE);
+            mv.ifne(switchDefault);
 
-        mv.load(switchValueNum);
-        mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
+            mv.load(switchValue);
+            mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
+        } else {
+            assert switchValue.getType().equals(Types.Object);
 
-        mv.freeVariable(switchValueNum);
+            // test for int-ness: type is java.lang.Number
+            mv.load(switchValue);
+            mv.instanceOf(Types.Number);
+            mv.ifeq(switchDefault);
+
+            // test for int-ness: value is integer
+            Variable<Double> switchValueNum = mv.newVariable("switchValueNum", double.class);
+            mv.load(switchValue);
+            mv.checkcast(Types.Number);
+            mv.invoke(Methods.Number_doubleValue);
+            mv.dup2();
+            mv.dup2();
+            mv.store(switchValueNum);
+            mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
+            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
+            mv.cmpl(Type.DOUBLE_TYPE);
+            mv.ifne(switchDefault);
+
+            mv.load(switchValueNum);
+            mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
+
+            mv.freeVariable(switchValueNum);
+        }
         mv.freeVariable(switchValue);
 
         // emit tableswitch or lookupswitch

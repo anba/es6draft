@@ -8,6 +8,7 @@ package com.github.anba.es6draft.compiler;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import com.github.anba.es6draft.ast.IterationStatement;
 import com.github.anba.es6draft.ast.LabelledStatement;
 import com.github.anba.es6draft.ast.TopLevelNode;
 import com.github.anba.es6draft.ast.TryStatement;
+import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 
 /**
  * 
@@ -32,20 +34,20 @@ import com.github.anba.es6draft.ast.TryStatement;
 abstract class StatementVisitor extends ExpressionVisitor {
     private static class Labels {
         // unlabelled breaks and continues
-        final Deque<Label> breakTargets = new ArrayDeque<>(4);
-        final Deque<Label> continueTargets = new ArrayDeque<>(4);
+        final Deque<JumpLabel> breakTargets = new ArrayDeque<>(4);
+        final Deque<JumpLabel> continueTargets = new ArrayDeque<>(4);
 
         // labelled breaks and continues
-        final Map<String, Label> namedBreakLabels = new HashMap<>(4);
-        final Map<String, Label> namedContinueLabels = new HashMap<>(4);
+        final Map<String, JumpLabel> namedBreakLabels = new HashMap<>(4);
+        final Map<String, JumpLabel> namedContinueLabels = new HashMap<>(4);
 
-        Label returnLabel = null;
+        JumpLabel returnLabel = null;
 
         // label after last catch node
         final Deque<Label> catchLabels = new ArrayDeque<>(4);
 
         // temporary labels in try-catch-finally blocks
-        List<Label> tempLabels = null;
+        List<TempLabel> tempLabels = null;
 
         final Labels parent;
 
@@ -53,19 +55,18 @@ abstract class StatementVisitor extends ExpressionVisitor {
             this.parent = parent;
         }
 
-        Label newTemp(Label actual) {
+        TempLabel newTemp(JumpLabel actual) {
             assert actual != null;
-            Label temp = new Label();
+            TempLabel temp = new TempLabel(actual);
             if (tempLabels == null) {
-                tempLabels = new ArrayList<>(8);
+                tempLabels = new ArrayList<>(4);
             }
-            tempLabels.add(actual);
             tempLabels.add(temp);
             return temp;
         }
 
-        Label returnLabel() {
-            Label lbl = returnLabel;
+        JumpLabel returnLabel() {
+            JumpLabel lbl = returnLabel;
             if (lbl == null) {
                 assert parent != null;
                 lbl = newTemp(parent.returnLabel());
@@ -74,8 +75,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
             return lbl;
         }
 
-        Label breakLabel(String name) {
-            Label label;
+        JumpLabel breakLabel(String name) {
+            JumpLabel label;
             if (name == null) {
                 label = breakTargets.peek();
             } else {
@@ -94,8 +95,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
             return label;
         }
 
-        Label continueLabel(String name) {
-            Label label;
+        JumpLabel continueLabel(String name) {
+            JumpLabel label;
             if (name == null) {
                 label = continueTargets.peek();
             } else {
@@ -129,13 +130,13 @@ abstract class StatementVisitor extends ExpressionVisitor {
     private int wrapped = 0;
 
     protected StatementVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
-            boolean strict, TopLevelNode topLevelNode, CodeType codeType, boolean completionValue) {
+            boolean strict, TopLevelNode topLevelNode, CodeType codeType) {
         super(mv, methodName, methodDescriptor, strict, codeType == CodeType.GlobalScript);
         this.topLevelNode = topLevelNode;
         this.codeType = codeType;
-        this.completionValue = completionValue;
+        this.completionValue = codeType != CodeType.Function;
         // no return in script code
-        this.labels.returnLabel = codeType == CodeType.Function ? new Label() : null;
+        this.labels.returnLabel = codeType == CodeType.Function ? new JumpLabel() : null;
     }
 
     abstract void storeCompletionValue();
@@ -150,6 +151,15 @@ abstract class StatementVisitor extends ExpressionVisitor {
         return codeType;
     }
 
+    void storeCompletionValueForScript(ValType type) {
+        if (isCompletionValue()) {
+            toBoxed(type);
+            storeCompletionValue();
+        } else {
+            pop(type);
+        }
+    }
+
     boolean isCompletionValue() {
         return completionValue && finallyDepth == 0;
     }
@@ -159,11 +169,11 @@ abstract class StatementVisitor extends ExpressionVisitor {
         labels = new Labels(labels);
     }
 
-    List<Label> exitFinallyScoped() {
-        List<Label> tempLabels = labels.tempLabels;
+    List<TempLabel> exitFinallyScoped() {
+        List<TempLabel> tempLabels = labels.tempLabels;
         labels = labels.parent;
         assert labels != null;
-        return tempLabels;
+        return tempLabels != null ? tempLabels : Collections.<TempLabel> emptyList();
     }
 
     boolean isWrapped() {
@@ -186,7 +196,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         --finallyDepth;
     }
 
-    void enterIteration(IterationStatement node, Label lblBreak, Label lblContinue) {
+    void enterIteration(IterationStatement node, JumpLabel lblBreak, JumpLabel lblContinue) {
         boolean hasBreak = node.getAbrupt().contains(Abrupt.Break);
         boolean hasContinue = node.getAbrupt().contains(Abrupt.Continue);
         if (!(hasBreak || hasContinue))
@@ -222,7 +232,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
-    void enterBreakable(BreakableStatement node, Label lblBreak) {
+    void enterBreakable(BreakableStatement node, JumpLabel lblBreak) {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
         Labels labels = this.labels;
@@ -242,7 +252,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
-    void enterLabelled(LabelledStatement node, Label lblBreak) {
+    void enterLabelled(LabelledStatement node, JumpLabel lblBreak) {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
         Labels labels = this.labels;
@@ -269,17 +279,25 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     Label returnLabel() {
+        return labels.returnLabel().mark();
+    }
+
+    Label returnLabelImmediate() {
         return labels.returnLabel();
+    }
+
+    boolean hasReturn() {
+        return labels.returnLabel().isUsed();
     }
 
     Label breakLabel(BreakStatement node) {
         String name = node.getLabel();
-        return labels.breakLabel(name);
+        return labels.breakLabel(name).mark();
     }
 
     Label continueLabel(ContinueStatement node) {
         String name = node.getLabel();
-        return labels.continueLabel(name);
+        return labels.continueLabel(name).mark();
     }
 
     Label catchWithGuardedLabel() {
