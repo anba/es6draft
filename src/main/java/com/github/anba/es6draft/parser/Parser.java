@@ -696,11 +696,6 @@ public class Parser {
         throw reportError(ExceptionType.SyntaxError, ts.getLine(), ts.getColumn(), messageKey, args);
     }
 
-    private ParserException reportReferenceError(Messages.Key messageKey, String... args) {
-        throw reportError(ExceptionType.ReferenceError, ts.getLine(), ts.getColumn(), messageKey,
-                args);
-    }
-
     private void reportStrictModeError(ExceptionType type, int line, int column,
             Messages.Key messageKey, String... args) {
         if (context.strictMode == StrictMode.Unknown) {
@@ -2268,6 +2263,7 @@ public class Parser {
             reportSyntaxError(Messages.Key.InvalidYieldStatement);
         }
 
+        int line = ts.getLine();
         consume(Token.YIELD);
         boolean delegatedYield = false;
         if (token() == Token.MUL) {
@@ -2285,7 +2281,9 @@ public class Parser {
                 expr = null;
             }
         }
-        return new YieldExpression(delegatedYield, expr);
+        YieldExpression expression = new YieldExpression(delegatedYield, expr);
+        expression.setLine(line);
+        return expression;
     }
 
     private boolean assignmentExpressionForYield() {
@@ -3463,11 +3461,8 @@ public class Parser {
             }
         } else if (head instanceof Expression) {
             // expected: left-hand side expression
-            LeftHandSideExpression lhs = validateAssignment((Expression) head);
-            if (lhs == null) {
-                reportSyntaxError(Messages.Key.InvalidAssignmentTarget);
-            }
-            return lhs;
+            return validateAssignment((Expression) head, ExceptionType.SyntaxError,
+                    Messages.Key.InvalidAssignmentTarget);
         }
         throw reportSyntaxError(Messages.Key.InvalidForInOfHead);
     }
@@ -3475,7 +3470,8 @@ public class Parser {
     /**
      * Static Semantics: IsValidSimpleAssignmentTarget
      */
-    private LeftHandSideExpression validateSimpleAssignment(Expression lhs) {
+    private LeftHandSideExpression validateSimpleAssignment(Expression lhs, ExceptionType type,
+            Messages.Key messageKey) {
         if (lhs instanceof Identifier) {
             if (context.strictMode != StrictMode.NonStrict) {
                 String name = ((Identifier) lhs).getName();
@@ -3495,28 +3491,21 @@ public class Parser {
             }
         }
         // everything else => invalid lhs
-        return null;
+        throw reportError(type, lhs.getLine(), -1, messageKey);
     }
 
     /**
      * Static Semantics: IsValidSimpleAssignmentTarget
      */
-    private LeftHandSideExpression validateAssignment(Expression lhs) {
+    private LeftHandSideExpression validateAssignment(Expression lhs, ExceptionType type,
+            Messages.Key messageKey) {
         // rewrite object/array literal to destructuring form
         if (lhs instanceof ObjectLiteral) {
-            ObjectAssignmentPattern pattern = toDestructuring((ObjectLiteral) lhs);
-            if (lhs.isParenthesised()) {
-                pattern.addParentheses();
-            }
-            return pattern;
+            return toDestructuring((ObjectLiteral) lhs);
         } else if (lhs instanceof ArrayLiteral) {
-            ArrayAssignmentPattern pattern = toDestructuring((ArrayLiteral) lhs);
-            if (lhs.isParenthesised()) {
-                pattern.addParentheses();
-            }
-            return pattern;
+            return toDestructuring((ArrayLiteral) lhs);
         }
-        return validateSimpleAssignment(lhs);
+        return validateSimpleAssignment(lhs, type, messageKey);
     }
 
     private ObjectAssignmentPattern toDestructuring(ObjectLiteral object) {
@@ -3559,7 +3548,11 @@ public class Parser {
             list.add(property);
         }
         context.removeLiteral(object);
-        return new ObjectAssignmentPattern(list);
+        ObjectAssignmentPattern pattern = new ObjectAssignmentPattern(list);
+        if (object.isParenthesised()) {
+            pattern.addParentheses();
+        }
+        return pattern;
     }
 
     private ArrayAssignmentPattern toDestructuring(ArrayLiteral array) {
@@ -3595,7 +3588,11 @@ public class Parser {
             }
             list.add(element);
         }
-        return new ArrayAssignmentPattern(list);
+        ArrayAssignmentPattern pattern = new ArrayAssignmentPattern(list);
+        if (array.isParenthesised()) {
+            pattern.addParentheses();
+        }
+        return pattern;
     }
 
     private LeftHandSideExpression destructuringAssignmentTarget(Expression lhs) {
@@ -3622,17 +3619,9 @@ public class Parser {
         } else if (extended && lhs instanceof ArrayAssignmentPattern) {
             return (ArrayAssignmentPattern) lhs;
         } else if (extended && lhs instanceof ObjectLiteral) {
-            ObjectAssignmentPattern pattern = toDestructuring((ObjectLiteral) lhs);
-            if (lhs.isParenthesised()) {
-                pattern.addParentheses();
-            }
-            return pattern;
+            return toDestructuring((ObjectLiteral) lhs);
         } else if (extended && lhs instanceof ArrayLiteral) {
-            ArrayAssignmentPattern pattern = toDestructuring((ArrayLiteral) lhs);
-            if (lhs.isParenthesised()) {
-                pattern.addParentheses();
-            }
-            return pattern;
+            return toDestructuring((ArrayLiteral) lhs);
         } else if (lhs instanceof SuperExpression) {
             SuperExpression superExpr = (SuperExpression) lhs;
             if (superExpr.getExpression() != null || superExpr.getName() != null) {
@@ -5025,9 +5014,8 @@ public class Parser {
             UnaryExpression unary = new UnaryExpression(unaryOp(tok, false), unaryExpression());
             unary.setLine(line);
             if (tok == Token.INC || tok == Token.DEC) {
-                if (validateSimpleAssignment(unary.getOperand()) == null) {
-                    reportReferenceError(Messages.Key.InvalidIncDecTarget);
-                }
+                validateSimpleAssignment(unary.getOperand(), ExceptionType.ReferenceError,
+                        Messages.Key.InvalidIncDecTarget);
             }
             if (tok == Token.DELETE) {
                 Expression operand = unary.getOperand();
@@ -5042,9 +5030,8 @@ public class Parser {
             if (noLineTerminator()) {
                 tok = token();
                 if (tok == Token.INC || tok == Token.DEC) {
-                    if (validateSimpleAssignment(lhs) == null) {
-                        reportReferenceError(Messages.Key.InvalidIncDecTarget);
-                    }
+                    validateSimpleAssignment(lhs, ExceptionType.ReferenceError,
+                            Messages.Key.InvalidIncDecTarget);
                     int line = ts.getLine();
                     consume(tok);
                     UnaryExpression unary = new UnaryExpression(unaryOp(tok, true), lhs);
@@ -5078,7 +5065,7 @@ public class Parser {
         case NOT:
             return UnaryExpression.Operator.NOT;
         default:
-            return null;
+            throw new IllegalStateException();
         }
     }
 
@@ -5322,18 +5309,14 @@ public class Parser {
             ts.reset(position, lineinfo);
             return arrowFunction();
         } else if (tok == Token.ASSIGN) {
-            LeftHandSideExpression lhs = validateAssignment(left);
-            if (lhs == null) {
-                reportReferenceError(Messages.Key.InvalidAssignmentTarget);
-            }
+            LeftHandSideExpression lhs = validateAssignment(left, ExceptionType.ReferenceError,
+                    Messages.Key.InvalidAssignmentTarget);
             consume(Token.ASSIGN);
             Expression right = assignmentExpression(allowIn);
             return new AssignmentExpression(assignmentOp(tok), lhs, right);
         } else if (isAssignmentOperator(tok)) {
-            LeftHandSideExpression lhs = validateSimpleAssignment(left);
-            if (lhs == null) {
-                reportReferenceError(Messages.Key.InvalidAssignmentTarget);
-            }
+            LeftHandSideExpression lhs = validateSimpleAssignment(left,
+                    ExceptionType.ReferenceError, Messages.Key.InvalidAssignmentTarget);
             consume(tok);
             Expression right = assignmentExpression(allowIn);
             return new AssignmentExpression(assignmentOp(tok), lhs, right);
@@ -5369,7 +5352,7 @@ public class Parser {
         case ASSIGN_BITXOR:
             return AssignmentExpression.Operator.ASSIGN_BITXOR;
         default:
-            return null;
+            throw new IllegalStateException();
         }
     }
 
