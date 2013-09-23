@@ -169,6 +169,8 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         try {
             Object result = evaluate(global.getRealm(), source, sourceName, sourceLine);
             return (!noScriptRval ? result : UNDEFINED);
+        } catch (StackOverflowError e) {
+            throw e;
         } catch (IOException | Error e) {
             if (catchTermination) {
                 return "terminated";
