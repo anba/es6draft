@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- *
+ * Object to iterate over an internal list.
  */
 public class ListIterator<T> extends OrdinaryObject {
     private Iterator<T> iterator;
@@ -34,6 +34,9 @@ public class ListIterator<T> extends OrdinaryObject {
         return iterator;
     }
 
+    /**
+     * Returns a new {@link ListIterator} object for the internal list {@code iterator}
+     */
     public static <T> ListIterator<T> MakeListIterator(ExecutionContext cx, Iterator<T> iterator) {
         ListIterator<T> itr = new ListIterator<>(cx.getRealm(), iterator);
         itr.setPrototype(cx.getIntrinsic(Intrinsics.ListIteratorPrototype));
@@ -41,9 +44,13 @@ public class ListIterator<T> extends OrdinaryObject {
         return itr;
     }
 
+    /**
+     * Returns an iterator for {@code obj} which is expected to comply to the
+     * <code>"25.1.2 The Iterator Interface"</code>
+     */
     public static Iterator<?> FromListIterator(ExecutionContext cx, ScriptObject obj) {
         if (obj instanceof ListIterator) {
-            return ((ListIterator<?>) obj).iterator;
+            return ((ListIterator<?>) obj).getIterator();
         }
         return new IteratorWrapper(cx, obj);
     }
