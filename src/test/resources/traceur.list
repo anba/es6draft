@@ -20,10 +20,6 @@ feature/Scope/BlockBinding4.js
 feature/Scope/BlockBinding5.js
 feature/Scope/BlockBinding11.js
 
-# 'yield' as identifier-name
-feature/Syntax/StrictKeywords.js
-feature/Syntax/StrictKeywordsInPattern.js
-
 
 ############################################
 # Implementation specific differences      #
@@ -65,6 +61,7 @@ feature/StringExtras/ToArray.js
 # unsupported option 'disabled'
 feature/ArrayComprehension/Error_Disabled.js
 feature/Classes/Error_Disabled.js
+feature/ComputedPropertyNames/Error_Disabled.js
 feature/Destructuring/Error_Disabled.js
 feature/GeneratorComprehension/Error_Disabled.js
 feature/GeneratorComprehension/Error_Disabled.js
@@ -93,6 +90,7 @@ feature/Scope/LetForInInitializers1.js
 #######################################
 
 # No implicit ToObject() in destructuring
+feature/Destructuring/ArrowFunction.js
 feature/Destructuring/Catch.js
 feature/Destructuring/Class.js
 feature/Destructuring/Method.js
@@ -108,8 +106,10 @@ feature/Destructuring/Object.js
 #######################################
 
 # module syntax
+feature/ComputedPropertyNames/PrivateName.js
 feature/TemplateLiterals/InModule.js
 feature/Yield/Tree.js
+feature/Yield/TreeUsingPrivateNameSyntax.js
 
 # generators without *
 feature/Yield/UnstarredGenerators.js
