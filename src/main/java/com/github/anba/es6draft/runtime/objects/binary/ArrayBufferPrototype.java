@@ -78,8 +78,11 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
+            /* steps 1-4 */
             ArrayBufferObject obj = thisArrayBufferObject(cx, thisValue);
+            /* step 5 */
             long length = obj.getByteLength();
+            /* step 6 */
             return length;
         }
 
@@ -88,24 +91,38 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
+            /* steps 1-4 */
             ArrayBufferObject obj = thisArrayBufferObject(cx, thisValue);
+            /* step 5 */
             long len = obj.getByteLength();
+            /* steps 6-7 */
             double relativeStart = ToInteger(cx, start);
+            /* step 8 */
             double first = relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(
                     relativeStart, len);
-            double relativeEnd = (Type.isUndefined(end) ? len : ToInteger(cx, end));
+            /* steps 9-10 */
+            double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
+            /* step 11 */
             double _final = relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(
                     relativeEnd, len);
+            /* step 12 */
             double newLen = Math.max(_final - first, 0);
+            /* steps 13-14 */
             Callable ctor = GetMethod(cx, obj, "constructor");
+            /* step 15 */
             if (ctor == null || !IsConstructor(ctor)) {
                 throw throwTypeError(cx, Messages.Key.NotConstructor);
             }
+            /* steps 16-19 */
             ArrayBufferObject _new = thisArrayBufferObject(cx,
                     ((Constructor) ctor).construct(cx, newLen));
+            /* step 20 */
             ByteBuffer fromBuf = obj.getData();
+            /* step 21 */
             ByteBuffer toBuf = _new.getData();
+            /* steps 22-23 */
             CopyBlockElements(fromBuf, first, toBuf, 0, newLen);
+            /* step 24 */
             return _new;
         }
 

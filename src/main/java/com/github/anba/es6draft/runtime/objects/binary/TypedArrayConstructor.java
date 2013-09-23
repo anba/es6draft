@@ -91,7 +91,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        ScriptObject super_ = realm().getIntrinsic(Intrinsics.TypedArray);
+        ScriptObject super_ = calleeContext.getIntrinsic(Intrinsics.TypedArray);
         return ((Callable) super_).call(calleeContext, thisValue, args);
     }
 

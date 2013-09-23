@@ -101,6 +101,13 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     /**
      * 15.13.5.1.1 AllocateArrayBuffer (constructor)
      */
+    public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Intrinsics constructor) {
+        return AllocateArrayBuffer(cx, cx.getIntrinsic(constructor));
+    }
+
+    /**
+     * 15.13.5.1.1 AllocateArrayBuffer (constructor)
+     */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Object constructor) {
         /* step 1-2 */
         ArrayBufferObject obj = OrdinaryCreateFromConstructor(cx, constructor,
@@ -140,8 +147,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
                 + srcByteOffset + ", length=" + srcLength + ", srcType.size=" + srcType.size();
         assert srcByteOffset % srcType.size() == 0;
 
-        ArrayBufferObject destData = AllocateArrayBuffer(cx,
-                cx.getIntrinsic(Intrinsics.ArrayBuffer));
+        ArrayBufferObject destData = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
         SetArrayBufferData(cx, destData, srcLength * cloneElementType.size());
 
         for (long index = 0; index < srcLength; ++index) {
@@ -286,6 +292,8 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object length = args.length > 0 ? args[0] : UNDEFINED;
+        /* step 1 (omitted) */
+        /* step 2 */
         if (!(thisValue instanceof ArrayBufferObject)) {
             throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
@@ -297,11 +305,15 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         if (Type.isUndefined(length)) {
             length = 0;
         }
+        /* step 3 */
         double numberLength = ToNumber(calleeContext, length);
+        /* steps 4-5 */
         double byteLength = ToInteger(numberLength);
+        /* step 6 */
         if (numberLength != byteLength || byteLength < 0) {
             throwRangeError(calleeContext, Messages.Key.InvalidBufferSize);
         }
+        /* step 7 */
         return SetArrayBufferData(calleeContext, buf, (long) byteLength);
     }
 
@@ -342,15 +354,19 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
          */
         @Function(name = "isView", arity = 1)
         public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {
+            /* step 1 */
             if (!Type.isObject(arg)) {
                 return false;
             }
+            /* step 2 */
             if (arg instanceof TypedArrayObject) {
                 return true;
             }
+            /* step 3 */
             if (arg instanceof DataViewObject) {
                 return true;
             }
+            /* step 4 */
             return false;
         }
 
