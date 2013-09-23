@@ -61,8 +61,10 @@ public class Repl {
     private static void printStackTrace(Throwable e) {
         StackTraceElement[] stackTrace = e.getStackTrace();
         if (stackTrace.length > STACKTRACE_DEPTH) {
+            int omitted = stackTrace.length - STACKTRACE_DEPTH;
             stackTrace = Arrays.copyOf(stackTrace, STACKTRACE_DEPTH + 1);
-            stackTrace[STACKTRACE_DEPTH] = new StackTraceElement("..", "", null, 0);
+            stackTrace[STACKTRACE_DEPTH] = new StackTraceElement("..", "", "Frames omitted",
+                    omitted);
             e.setStackTrace(stackTrace);
         }
         e.printStackTrace();
@@ -254,6 +256,8 @@ public class Repl {
                 handleException(e);
             } catch (ParserException | CompilationException | StackOverflowError e) {
                 handleException(e);
+            } catch (BootstrapMethodError e) {
+                handleException(e.getCause());
             }
         }
     }
