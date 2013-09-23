@@ -86,11 +86,55 @@ function ToSource(o) {
       return symName(o);
     case 'function':
     case 'object':
-      if (o !== null && typeof o.toSource == 'function') {
-        return o.toSource();
+      if (o !== null) {
+        return typeof o.toSource == 'function' ? o.toSource() : ObjectToSource(o);
       }
     default:
       return "null";
+  }
+}
+
+const weakset = new WeakSet();
+var depth = 0;
+
+function ObjectToSource(o) {
+  if (o == null) throw new TypeError();
+  var obj = Object(o);
+  if (weakset.has(obj)) {
+    return "{}";
+  }
+  weakset.add(obj);
+  depth += 1;
+  try {
+    var s = "";
+    var names = Object_keys(obj);
+    for (var i = 0, len = names.length; i < len; ++i) {
+      var name = names[i];
+      var desc = Object_getOwnPropertyDescriptor(obj, name);
+      if (desc == null) {
+        // ignore removed properties
+      } else if ('value' in desc) {
+        s += ToPropertyName(name) + ":" + ToSource(desc.value);
+      } else {
+        if (desc.get !== void 0) {
+          var fsrc = ToSource(desc.get);
+          s += "get " + ToPropertyName(name) + fsrc.substr(fsrc.indexOf('('));
+          if (desc.set !== void 0) s += ", ";
+        }
+        if (desc.set !== void 0) {
+          var fsrc = ToSource(desc.set);
+          s += "set " + ToPropertyName(name) + fsrc.substr(fsrc.indexOf('('));
+        }
+      }
+      if (i + 1 < len) s += ", ";
+    }
+    if (depth > 1) {
+      return "{" + s + "}";
+    }
+    return "({" + s + "})";
+  } finally {
+    weakset.delete(obj);
+    depth -= 1;
   }
 }
 
@@ -100,10 +144,7 @@ Object.defineProperty(Object.assign(global, {
   }
 }), "uneval", {enumerable: false});
 
-const weakset = new WeakSet();
-var depth = 0;
-
-// duplicated definition from array-join.js to access shared 'weakset' WeakSet
+// duplicated definition from array-join.js to access shared 'weakset'
 Object.defineProperty(Object.assign(Array.prototype, {
   join(separator) {
     if (typeof this == 'function' || typeof this == 'object' && this !== null) {
@@ -130,49 +171,15 @@ Object.defineProperty(Object.assign(String.prototype, {
 
 Object.defineProperty(Object.assign(Object.prototype, {
   toSource() {
-    if (this == null) throw new TypeError();
-    var obj = Object(this);
-    if (weakset.has(obj)) {
-      return "{}";
-    }
-    weakset.add(obj);
-    depth += 1;
-    try {
-      var s = "";
-      var names = Object_keys(obj);
-      for (var i = 0, len = names.length; i < len; ++i) {
-        var name = names[i];
-        var desc = Object_getOwnPropertyDescriptor(obj, name);
-        if (desc == null) {
-          // ignore removed properties
-        } else if ('value' in desc) {
-          s += ToPropertyName(name) + ":" + ToSource(desc.value);
-        } else {
-          if (desc.get !== void 0) {
-            var fsrc = ToSource(desc.get);
-            s += "get " + ToPropertyName(name) + fsrc.substr(fsrc.indexOf('('));
-            if (desc.set !== void 0) s += ", ";
-          }
-          if (desc.set !== void 0) {
-            var fsrc = ToSource(desc.set);
-            s += "set " + ToPropertyName(name) + fsrc.substr(fsrc.indexOf('('));
-          }
-        }
-        if (i + 1 < len) s += ", ";
-      }
-      if (depth > 1) {
-        return "{" + s + "}";
-      }
-      return "({" + s + "})";
-    } finally {
-      weakset.delete(obj);
-      depth -= 1;
-    }
+    return ObjectToSource(this);
   }
 }), "toSource", {enumerable: false});
 
 Object.defineProperty(Object.assign(Function.prototype, {
   toSource() {
+    if (typeof this != 'function') {
+      return ObjectToSource(this);
+    }
     if (this.name == "") {
       return "(" + Function.prototype.toString.call(this) + ")";
     }
