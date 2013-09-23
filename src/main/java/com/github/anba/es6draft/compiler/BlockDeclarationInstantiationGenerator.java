@@ -91,10 +91,11 @@ class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantia
                 initialiseBinding(fn, mv);
             }
 
-            // stack: [envRec, env] -> [env]
+            // stack: [envRec, env] -> [env, envRec]
             mv.swap();
         }
 
+        // stack: [env, envRec] -> [env]
         mv.pop();
     }
 }

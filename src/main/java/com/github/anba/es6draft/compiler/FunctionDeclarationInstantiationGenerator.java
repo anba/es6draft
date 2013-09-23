@@ -17,8 +17,6 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
@@ -36,11 +34,6 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * </ul>
  */
 class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
-    private static class Fields {
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
-                Types.Undefined, "UNDEFINED", Types.Undefined);
-    }
-
     private static class Methods {
         // class: ExecutionContext
         static final MethodDesc ExecutionContext_getVariableEnvironment = MethodDesc.create(
@@ -114,7 +107,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.store(envRec);
 
         Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
-        mv.get(Fields.Undefined_UNDEFINED);
+        mv.loadUndefined();
         mv.store(undef);
 
         Set<String> bindings = new HashSet<>();
@@ -295,7 +288,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.newarray(strings.length, Types.String);
         int index = 0;
         for (String string : strings) {
-            mv.astore(index++, string, Types.String);
+            mv.astore(index++, string);
         }
     }
 }

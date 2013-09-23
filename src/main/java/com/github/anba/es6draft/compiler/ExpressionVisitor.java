@@ -23,6 +23,14 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
  * 
  */
 abstract class ExpressionVisitor extends InstructionVisitor {
+    private static class Fields {
+        static final FieldDesc Null_NULL = FieldDesc.create(FieldType.Static, Types.Null, "NULL",
+                Types.Null);
+
+        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
+                Types.Undefined, "UNDEFINED", Types.Undefined);
+    }
+
     private final boolean strict;
     private final boolean globalCode;
     private final Variable<ExecutionContext> executionContext;
@@ -38,8 +46,25 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         this.executionContext = reserveFixedSlot(0, ExecutionContext.class);
     }
 
+    /**
+     * &#x2205; → cx
+     */
     void loadExecutionContext() {
         load(executionContext);
+    }
+
+    /**
+     * &#x2205; → undefined
+     */
+    void loadUndefined() {
+        get(Fields.Undefined_UNDEFINED);
+    }
+
+    /**
+     * &#x2205; → null
+     */
+    void loadNull() {
+        get(Fields.Null_NULL);
     }
 
     boolean isStrict() {

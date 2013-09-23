@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyDeclaredNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
-import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.List;
 
@@ -23,8 +20,6 @@ import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
@@ -40,11 +35,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
  * </ul>
  */
 class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
-    private static class Fields {
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
-                Types.Undefined, "UNDEFINED", Types.Undefined);
-    }
-
     private static class Methods {
         // class: IllegalStateException
         static final MethodDesc IllegalStateException_init = MethodDesc.create(MethodType.Special,
@@ -62,6 +52,17 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
                                 Types.EnvironmentRecord, Types.String));
     }
 
+    private static class EvalDeclInitMethodGenerator extends ExpressionVisitor {
+        static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
+                Type.BOOLEAN_TYPE);
+
+        EvalDeclInitMethodGenerator(CodeGenerator codegen, String methodName, boolean strict) {
+            super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
+                    methodName, methodDescriptor, strict, false);
+        }
+    }
+
     EvalDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);
     }
@@ -71,13 +72,11 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
     private static final int VAR_ENV = 2;
     private static final int DELETABLE_BINDINGS = 3;
 
-    private static final Type methodType = Type.getMethodType(Type.VOID_TYPE,
-            Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
-            Type.BOOLEAN_TYPE);
-
     void generate(Script evalScript) {
         String methodName = codegen.methodName(evalScript, ScriptName.EvalInit);
-        InstructionVisitor mv = codegen.publicStaticMethod(methodName, methodType);
+        ExpressionVisitor mv = new EvalDeclInitMethodGenerator(codegen, methodName,
+                IsStrict(evalScript));
+
         mv.lineInfo(evalScript.getLine());
         mv.begin();
         // only generate eval-script-init when requested
@@ -89,14 +88,14 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         mv.end();
     }
 
-    private void generateExceptionThrower(InstructionVisitor mv) {
+    private void generateExceptionThrower(ExpressionVisitor mv) {
         mv.anew(Types.IllegalStateException);
         mv.dup();
         mv.invoke(Methods.IllegalStateException_init);
         mv.athrow();
     }
 
-    private void generate(Script evalScript, InstructionVisitor mv) {
+    private void generate(Script evalScript, ExpressionVisitor mv) {
         // FIXME: spec incomplete (using modified ES5.1 algorithm for now...)
 
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
@@ -162,7 +161,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
                     Label varAlreadyDeclared = new Label();
                     mv.ifne(varAlreadyDeclared);
                     createMutableBinding(envRec, dn, deletableBindings, mv);
-                    mv.get(Fields.Undefined_UNDEFINED);
+                    mv.loadUndefined();
                     // setMutableBinding(envRec, dn, strict, mv);
                     initialiseBinding(envRec, dn, mv);
                     mv.mark(varAlreadyDeclared);

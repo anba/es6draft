@@ -25,8 +25,6 @@ import com.github.anba.es6draft.ast.LegacyComprehension;
 import com.github.anba.es6draft.ast.LegacyComprehensionFor;
 import com.github.anba.es6draft.ast.LegacyComprehensionFor.IterationKind;
 import com.github.anba.es6draft.ast.Node;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
@@ -35,11 +33,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
  * 11.1.4.2 Array Comprehension
  */
 abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
-    private static class Fields {
-        static final FieldDesc Undefined_UNDEFINED = FieldDesc.create(FieldType.Static,
-                Types.Undefined, "UNDEFINED", Types.Undefined);
-    }
-
     private static class Methods {
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
@@ -136,7 +129,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
                 mv.dup();
                 mv.aconst(name);
-                mv.get(Fields.Undefined_UNDEFINED);
+                mv.loadUndefined();
                 mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
             }
             mv.pop();
