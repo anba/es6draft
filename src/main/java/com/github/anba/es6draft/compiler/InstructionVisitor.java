@@ -23,7 +23,7 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
  */
 class InstructionVisitor extends InstructionAdapter {
     private static class Variables {
-        private static final Type INVALID = Type.getType("Invalid");
+        private static final Type INVALID = Type.getType("invalid");
         private static final int INITIAL_SIZE = 8;
         private final BitSet variables = new BitSet();
         private Type[] types = new Type[INITIAL_SIZE];
@@ -76,7 +76,7 @@ class InstructionVisitor extends InstructionAdapter {
         void freeVariable(int var) {
             assert variables.get(var);
             Type type = types[var];
-            assert type != null && type != INVALID;
+            assert type != null && type != INVALID : type;
             variables.clear(var);
         }
     }
@@ -145,6 +145,21 @@ class InstructionVisitor extends InstructionAdapter {
             return new FieldDesc(type, owner.getInternalName(), name, desc.getDescriptor());
         }
     }
+
+    private static final class Methods {
+        // class: StringBuilder
+        static final MethodDesc StringBuilder_append_String = MethodDesc.create(MethodType.Virtual,
+                Types.StringBuilder, "append",
+                Type.getMethodType(Types.StringBuilder, Types.String));
+
+        static final MethodDesc StringBuilder_init_int = MethodDesc.create(MethodType.Special,
+                Types.StringBuilder, "<init>", Type.getMethodType(Type.VOID_TYPE, Type.INT_TYPE));
+
+        static final MethodDesc StringBuilder_toString = MethodDesc.create(MethodType.Virtual,
+                Types.StringBuilder, "toString", Type.getMethodType(Types.String));
+    }
+
+    private static final int MAX_STRING_SIZE = 16384;
 
     private final String methodName;
     private final Type methodDescriptor;
@@ -282,6 +297,29 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
+     * [] → value
+     */
+    public void aconst(String cst) {
+        if (cst == null || cst.length() <= MAX_STRING_SIZE) {
+            super.aconst(cst);
+        } else {
+            // string literal too large, split to avoid bytecode error
+            anew(Types.StringBuilder);
+            dup();
+            iconst(cst.length());
+            invoke(Methods.StringBuilder_init_int);
+
+            for (int i = 0, len = cst.length(); i < len; i += MAX_STRING_SIZE) {
+                String chunk = cst.substring(i, Math.min(i + MAX_STRING_SIZE, len));
+                super.aconst(chunk);
+                invoke(Methods.StringBuilder_append_String);
+            }
+
+            invoke(Methods.StringBuilder_toString);
+        }
+    }
+
+    /**
      * value → &#x2205;
      */
     public void areturn() {
@@ -311,6 +349,16 @@ class InstructionVisitor extends InstructionAdapter {
         iconst(index);
         aconst(element);
         astore(type);
+    }
+
+    /**
+     * array → array
+     */
+    public void astore(int index, String element) {
+        dup();
+        iconst(index);
+        aconst(element);
+        astore(Types.String);
     }
 
     /**
