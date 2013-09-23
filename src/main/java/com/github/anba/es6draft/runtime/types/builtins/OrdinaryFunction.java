@@ -374,12 +374,12 @@ public class OrdinaryFunction extends FunctionObject {
      * 8.3.16.9 AddRestrictedFunctionProperties Abstract Operation
      */
     public static void AddRestrictedFunctionProperties(ExecutionContext cx, ScriptObject obj) {
-        /*  step 1  */
+        /* step 1 */
         Callable thrower = cx.getRealm().getThrowTypeError();
-        /*  step 2  */
+        /* step 2 */
         DefinePropertyOrThrow(cx, obj, "caller", new PropertyDescriptor(thrower, thrower, false,
                 false));
-        /*  step 3  */
+        /* step 3 */
         DefinePropertyOrThrow(cx, obj, "arguments", new PropertyDescriptor(thrower, thrower, false,
                 false));
     }
@@ -428,10 +428,10 @@ public class OrdinaryFunction extends FunctionObject {
      * 8.3.16.10 MakeConstructor Abstract Operation
      */
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f) {
-        /*  step 2 */
+        /* step 2 */
         boolean installNeeded = true;
         ScriptObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /*  step 3 */
+        /* step 3 */
         boolean writablePrototype = true;
         MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
     }

@@ -133,11 +133,11 @@ public class ExoticArguments extends OrdinaryObject {
      * [13.6 Creating Function Objects and Constructors] AddRestrictedFunctionProperties
      */
     private static void AddRestrictedFunctionProperties(ExecutionContext cx, ExoticArguments obj) {
-        /*  step 1  */
+        /* step 1 */
         Callable thrower = cx.getRealm().getThrowTypeError();
-        /*  step 2  */
+        /* step 2 */
         obj.defineOwnProperty(cx, "caller", new PropertyDescriptor(thrower, thrower, false, false));
-        /*  step 3  */
+        /* step 3 */
         // FIXME: spec bug ("arguments" per spec!) (Bug 1158)
         obj.defineOwnProperty(cx, "callee", new PropertyDescriptor(thrower, thrower, false, false));
     }
@@ -163,7 +163,7 @@ public class ExoticArguments extends OrdinaryObject {
         if (hasMapped) {
             obj.parameterMap = map;
         }
-        /*  step 9  */
+        /* step 9 */
         obj.defineOwnProperty(cx, "callee", new PropertyDescriptor(func, true, false, true));
     }
 
@@ -235,17 +235,17 @@ public class ExoticArguments extends OrdinaryObject {
      */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object accessorThisValue) {
-        /*  step 1-2  */
+        /* step 1-2 */
         ParameterMap map = this.parameterMap;
-        /*  [[ParameterMap]] not present  */
+        /* [[ParameterMap]] not present */
         if (map == null) {
             return super.get(cx, propertyKey, accessorThisValue);
         }
-        /*  step 3  */
+        /* step 3 */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
-        /*  step 4  */
+        /* step 4 */
         if (!isMapped) {
             // FIXME: spec bug (does not work as intended) (Bug 1413)
             Object v = super.get(cx, propertyKey, accessorThisValue);
@@ -254,7 +254,7 @@ public class ExoticArguments extends OrdinaryObject {
             }
             return v;
         }
-        /*  step 5  */
+        /* step 5 */
         // return Get(map, propertyKey);
         return map.get(propertyKey);
     }
@@ -264,30 +264,30 @@ public class ExoticArguments extends OrdinaryObject {
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
-        /*  step 1  */
+        /* step 1 */
         Property desc = super.getOwnProperty(cx, propertyKey);
-        /*  step 3  */
+        /* step 3 */
         if (desc == null) {
             return desc;
         }
-        /*  step 3  */
+        /* step 3 */
         ParameterMap map = this.parameterMap;
-        /*  [[ParameterMap]] not present  */
+        /* [[ParameterMap]] not present */
         if (map == null) {
             return desc;
         }
-        /*  step 4  */
+        /* step 4 */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
-        /*  step 5  */
+        /* step 5 */
         if (isMapped) {
             // desc.setValue(Get(map, propertyKey));
             PropertyDescriptor d = desc.toPropertyDescriptor();
             d.setValue(map.get(propertyKey));
             desc = d.toProperty();
         }
-        /*  step 6  */
+        /* step 6 */
         return desc;
     }
 
@@ -297,23 +297,23 @@ public class ExoticArguments extends OrdinaryObject {
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
-        /*  step 1  */
+        /* step 1 */
         ParameterMap map = this.parameterMap;
-        /*  [[ParameterMap]] not present  */
+        /* [[ParameterMap]] not present */
         if (map == null) {
             return super.defineOwnProperty(cx, propertyKey, desc);
         }
-        /*  step 2  */
+        /* step 2 */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
-        /*  step 3-4  */
+        /* step 3-4 */
         boolean allowed = super.defineOwnProperty(cx, propertyKey, desc);
-        /*  step 5  */
+        /* step 5 */
         if (!allowed) {
             return false;
         }
-        /*  step 6  */
+        /* step 6 */
         if (isMapped) {
             if (desc.isAccessorDescriptor()) {
                 map.delete(propertyKey);
@@ -335,17 +335,17 @@ public class ExoticArguments extends OrdinaryObject {
      */
     @Override
     public boolean delete(ExecutionContext cx, String propertyKey) {
-        /*  step 1  */
+        /* step 1 */
         ParameterMap map = this.parameterMap;
-        /*  [[ParameterMap]] not present  */
+        /* [[ParameterMap]] not present */
         if (map == null) {
             return super.delete(cx, propertyKey);
         }
-        /*  step 2  */
+        /* step 2 */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
-        /*  step 3  */
+        /* step 3 */
         boolean result = super.delete(cx, propertyKey);
         if (result && isMapped) {
             map.delete(propertyKey);
