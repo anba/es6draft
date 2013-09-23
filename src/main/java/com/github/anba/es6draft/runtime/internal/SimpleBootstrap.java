@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import java.lang.invoke.CallSite;
+import java.lang.invoke.ConstantCallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -337,45 +338,108 @@ public final class SimpleBootstrap {
         return (boolean) target.invokeExact(arg1, arg2);
     }
 
+    private static final ConstantCallSite stackOverFlow_Add;
+    private static final ConstantCallSite stackOverFlow_Cmp;
+    private static final ConstantCallSite stackOverFlow_Eq;
+    private static final ConstantCallSite stackOverFlow_StrictEq;
+    static {
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        Class<?> thisClass = lookup.lookupClass();
+        try {
+            stackOverFlow_Add = new ConstantCallSite(lookup.findStatic(thisClass,
+                    "stackOverFlow_Add", MethodType.methodType(Object.class, Object.class,
+                            Object.class, ExecutionContext.class)));
+            stackOverFlow_Cmp = new ConstantCallSite(lookup.findStatic(thisClass,
+                    "stackOverFlow_Cmp", MethodType.methodType(int.class, Object.class,
+                            Object.class, ExecutionContext.class)));
+            stackOverFlow_Eq = new ConstantCallSite(lookup.findStatic(thisClass,
+                    "stackOverFlow_Eq", MethodType.methodType(boolean.class, Object.class,
+                            Object.class, ExecutionContext.class)));
+            stackOverFlow_StrictEq = new ConstantCallSite(lookup.findStatic(thisClass,
+                    "stackOverFlow_StrictEq",
+                    MethodType.methodType(boolean.class, Object.class, Object.class)));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new Error(e);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static Object stackOverFlow_Add(Object arg1, Object arg2, ExecutionContext cx) {
+        throw new StackOverflowError("bootstrap stack overflow");
+    }
+
+    @SuppressWarnings("unused")
+    private static int stackOverFlow_Cmp(Object arg1, Object arg2, ExecutionContext cx) {
+        throw new StackOverflowError("bootstrap stack overflow");
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean stackOverFlow_Eq(Object arg1, Object arg2, ExecutionContext cx) {
+        throw new StackOverflowError("bootstrap stack overflow");
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean stackOverFlow_StrictEq(Object arg1, Object arg2) {
+        throw new StackOverflowError("bootstrap stack overflow");
+    }
+
     public static CallSite bootstrapDynamic(MethodHandles.Lookup caller, String name,
             MethodType type) {
         // System.out.printf("caller: %s\n", caller);
         // System.out.printf("name: %s\n", name);
         // System.out.printf("type: %s\n", type);
-        MutableCallSite callsite = new MutableCallSite(type);
+        try {
+            MutableCallSite callsite = new MutableCallSite(type);
 
-        MethodHandle target;
-        switch (name) {
-        case "expression::add":
-            target = MethodHandles.insertArguments(addSetupMH, 0, callsite);
-            break;
-        case "expression::equals":
-            target = MethodHandles.insertArguments(eqCmpSetupMH, 0, callsite);
-            break;
-        case "expression::strictEquals":
-            target = MethodHandles.insertArguments(strictEqCmpSetupMH, 0, callsite);
-            break;
-        case "expression::lessThan":
-            target = MethodHandles
-                    .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
-            break;
-        case "expression::greaterThan":
-            target = MethodHandles
-                    .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
-            break;
-        case "expression::lessThanEquals":
-            target = MethodHandles
-                    .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
-            break;
-        case "expression::greaterThanEquals":
-            target = MethodHandles
-                    .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
-            break;
-        default:
-            throw new IllegalArgumentException(name);
+            MethodHandle target;
+            switch (name) {
+            case "expression::add":
+                target = MethodHandles.insertArguments(addSetupMH, 0, callsite);
+                break;
+            case "expression::equals":
+                target = MethodHandles.insertArguments(eqCmpSetupMH, 0, callsite);
+                break;
+            case "expression::strictEquals":
+                target = MethodHandles.insertArguments(strictEqCmpSetupMH, 0, callsite);
+                break;
+            case "expression::lessThan":
+                target = MethodHandles
+                        .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
+                break;
+            case "expression::greaterThan":
+                target = MethodHandles
+                        .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
+                break;
+            case "expression::lessThanEquals":
+                target = MethodHandles
+                        .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
+                break;
+            case "expression::greaterThanEquals":
+                target = MethodHandles
+                        .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
+                break;
+            default:
+                throw new IllegalArgumentException(name);
+            }
+
+            callsite.setTarget(target);
+            return callsite;
+        } catch (StackOverflowError e) {
+            switch (name) {
+            case "expression::add":
+                return stackOverFlow_Add;
+            case "expression::equals":
+                return stackOverFlow_Eq;
+            case "expression::strictEquals":
+                return stackOverFlow_StrictEq;
+            case "expression::lessThan":
+            case "expression::greaterThan":
+            case "expression::lessThanEquals":
+            case "expression::greaterThanEquals":
+                return stackOverFlow_Cmp;
+            default:
+                throw new IllegalArgumentException(name);
+            }
         }
-
-        callsite.setTarget(target);
-        return callsite;
     }
 }
