@@ -216,13 +216,15 @@ final class LanguageTagParser {
     }
 
     public LanguageTag parse() {
-        if (input == null || length == 0 || input.charAt(length - 1) == '-') {
+        if (input == null) {
             // input contains invalid characters
             return null;
         }
         tag = new LanguageTag(input);
         rollback(0);
-        if (languageTag() && pos >= length) {
+        if (languageTag() && pos >= length && token == NONE) {
+            // successfully parsed the language tag, no characters left unparsed and the last token
+            // was consumed as well
             return tag;
         }
         return null;
@@ -267,6 +269,10 @@ final class LanguageTagParser {
 
     private static String toLowerASCIIOrNull(String s) {
         int i = 0, len = s.length();
+        if (len == 0 || s.charAt(len - 1) == '-') {
+            // handle '-' as last character early to reduce additional efforts in next()
+            return null;
+        }
         lower: {
             for (; i < len; ++i) {
                 char c = s.charAt(i);
@@ -351,6 +357,7 @@ final class LanguageTagParser {
         if (grandfathered.contains(input)) {
             tag.grandfathered = true;
             pos = length; // consume complete input
+            token = NONE; // consume complete input
             return true;
         }
         return false;
@@ -499,7 +506,7 @@ final class LanguageTagParser {
     private boolean extension() {
         int saved = tokenStart;
         if (alphanum() && tokenLength == 1 && tokenStartChar() != 'x') {
-            String singleton = tokenString();
+            char singleton = tokenStartChar();
             consume();
             if (alphanum() && tokenLength >= 2 && tokenLength <= 8) {
                 int startExtension = tokenStart;
@@ -558,12 +565,12 @@ final class LanguageTagParser {
         duplicateVariants |= !changed;
     }
 
-    private void storeExtension(String singleton, String value) {
-        assert singleton.length() == 1;
+    private void storeExtension(char singleton, String value) {
+        assert singleton != 'x';
         if (tag.extensions == null) {
             tag.extensions = new TreeMap<>();
         }
-        boolean changed = tag.extensions.put(singleton.charAt(0), value) == null;
+        boolean changed = tag.extensions.put(singleton, value) == null;
         duplicateExtensions |= !changed;
     }
 }
