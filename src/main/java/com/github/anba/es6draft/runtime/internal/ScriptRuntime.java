@@ -769,43 +769,7 @@ public final class ScriptRuntime {
      */
     public static int relationalComparison(Object x, Object y, boolean leftFirst,
             ExecutionContext cx) {
-        // true -> 1
-        // false -> 0
-        // undefined -> -1
-        Object px, py;
-        if (leftFirst) {
-            px = ToPrimitive(cx, x, Type.Number);
-            py = ToPrimitive(cx, y, Type.Number);
-        } else {
-            py = ToPrimitive(cx, y, Type.Number);
-            px = ToPrimitive(cx, x, Type.Number);
-        }
-        if (!(Type.isString(px) && Type.isString(py))) {
-            double nx = ToNumber(cx, px);
-            double ny = ToNumber(cx, py);
-            if (Double.isNaN(nx) || Double.isNaN(ny)) {
-                return -1;
-            }
-            if (nx == ny) {
-                return 0;
-            }
-            if (nx == Double.POSITIVE_INFINITY) {
-                return 0;
-            }
-            if (ny == Double.POSITIVE_INFINITY) {
-                return 1;
-            }
-            if (ny == Double.NEGATIVE_INFINITY) {
-                return 0;
-            }
-            if (nx == Double.NEGATIVE_INFINITY) {
-                return 1;
-            }
-            return (nx < ny ? 1 : 0);
-        } else {
-            int c = Type.stringValue(px).toString().compareTo(Type.stringValue(py).toString());
-            return c < 0 ? 1 : 0;
-        }
+        return RelationalComparison(cx, x, y, leftFirst);
     }
 
     /**
@@ -847,78 +811,14 @@ public final class ScriptRuntime {
      * 11.9.1 Abstract Equality Comparison
      */
     public static boolean equalityComparison(Object x, Object y, ExecutionContext cx) {
-        if (x == y) {
-            if (x instanceof Double) {
-                return !((Double) x).isNaN();
-            }
-            return true;
-        }
-        Type tx = Type.of(x);
-        Type ty = Type.of(y);
-        if (tx == ty) {
-            return strictEqualityComparison(x, y);
-        }
-        if (tx == Type.Null && ty == Type.Undefined) {
-            return true;
-        }
-        if (tx == Type.Undefined && ty == Type.Null) {
-            return true;
-        }
-        if (tx == Type.Number && ty == Type.String) {
-            // return equalityComparison(realm, x, ToNumber(realm, y));
-            return Type.numberValue(x) == ToNumber(cx, y);
-        }
-        if (tx == Type.String && ty == Type.Number) {
-            // return equalityComparison(realm, ToNumber(realm, x), y);
-            return ToNumber(cx, x) == Type.numberValue(y);
-        }
-        if (tx == Type.Boolean) {
-            return equalityComparison(ToNumber(cx, x), y, cx);
-        }
-        if (ty == Type.Boolean) {
-            return equalityComparison(x, ToNumber(cx, y), cx);
-        }
-        if ((tx == Type.String || tx == Type.Number) && ty == Type.Object) {
-            return equalityComparison(x, ToPrimitive(cx, y, null), cx);
-        }
-        if (tx == Type.Object && (ty == Type.String || ty == Type.Number)) {
-            return equalityComparison(ToPrimitive(cx, x, null), y, cx);
-        }
-        return false;
+        return EqualityComparison(cx, x, y);
     }
 
     /**
      * 11.9.1 Strict Equality Comparison
      */
     public static boolean strictEqualityComparison(Object x, Object y) {
-        if (x == y) {
-            if (x instanceof Double) {
-                return !((Double) x).isNaN();
-            }
-            return true;
-        }
-        Type tx = Type.of(x);
-        Type ty = Type.of(y);
-        if (tx != ty) {
-            return false;
-        }
-        if (tx == Type.Undefined) {
-            return true;
-        }
-        if (tx == Type.Null) {
-            return true;
-        }
-        if (tx == Type.Number) {
-            return Type.numberValue(x) == Type.numberValue(y);
-        }
-        if (tx == Type.String) {
-            return Type.stringValue(x).toString().equals(Type.stringValue(y).toString());
-        }
-        if (tx == Type.Boolean) {
-            return Type.booleanValue(x) == Type.booleanValue(y);
-        }
-        assert tx == Type.Object;
-        return (x == y);
+        return StrictEqualityComparison(x, y);
     }
 
     /**
