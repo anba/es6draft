@@ -45,11 +45,11 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.google.doubleconversion.DoubleConversion;
 
 /**
- * <h1>9 Abstract Operations</h1>
+ * <h1>7 Abstract Operations</h1>
  * <ul>
- * <li>9.1 Type Conversion and Testing
- * <li>9.2 Testing and Comparison Operations
- * <li>9.3 Operations on Objects
+ * <li>7.1 Type Conversion and Testing
+ * <li>7.2 Testing and Comparison Operations
+ * <li>7.3 Operations on Objects
  * </ul>
  */
 public final class AbstractOperations {
@@ -57,7 +57,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.1 ToPrimitive
+     * 7.1.1 ToPrimitive
      */
     public static Object ToPrimitive(ExecutionContext cx, Object val) {
         // null == no hint
@@ -65,7 +65,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.1 ToPrimitive
+     * 7.1.1 ToPrimitive
      */
     public static Object ToPrimitive(ExecutionContext cx, Object argument, Type preferredType) {
         if (!Type.isObject(argument)) {
@@ -75,12 +75,12 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.1 ToPrimitive
+     * 7.1.1 ToPrimitive
      * <p>
      * ToPrimitive for the Object type
      */
     private static Object ToPrimitive(ExecutionContext cx, ScriptObject argument, Type preferredType) {
-        /* steps 1-3 (not applicable) */
+        /* steps 1-3 (moved) */
         /* steps 4-5 */
         Object exoticToPrim = Get(cx, argument, BuiltinSymbol.ToPrimitive.get());
         /* step 6 */
@@ -112,7 +112,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.1 ToPrimitive
+     * 7.1.1 ToPrimitive
      * <p>
      * OrdinaryToPrimitive
      */
@@ -149,7 +149,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.2 ToBoolean
+     * 7.1.2 ToBoolean
      */
     public static boolean ToBoolean(Object val) {
         switch (Type.of(val)) {
@@ -171,14 +171,14 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.2 ToBoolean
+     * 7.1.2 ToBoolean
      */
     public static boolean ToBoolean(double d) {
         return !(d == 0 || Double.isNaN(d));
     }
 
     /**
-     * 9.1.3 ToNumber
+     * 7.1.3 ToNumber
      */
     public static double ToNumber(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
@@ -200,14 +200,14 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.3.1 ToNumber Applied to the String Type
+     * 7.1.3.1 ToNumber Applied to the String Type
      */
     public static double ToNumber(CharSequence s) {
         return NumberParser.parse(s.toString());
     }
 
     /**
-     * 9.1.4 ToInteger
+     * 7.1.4 ToInteger
      */
     public static double ToInteger(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -223,7 +223,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.4 ToInteger
+     * 7.1.4 ToInteger
      */
     public static double ToInteger(double number) {
         /* steps 1-2 (not applicable) */
@@ -238,7 +238,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.5 ToInt32: (Signed 32 Bit Integer)
+     * 7.1.5 ToInt32: (Signed 32 Bit Integer)
      */
     public static int ToInt32(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -248,7 +248,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.5 ToInt32: (Signed 32 Bit Integer)
+     * 7.1.5 ToInt32: (Signed 32 Bit Integer)
      */
     public static int ToInt32(double number) {
         /* steps 1-2 (not applicable) */
@@ -257,7 +257,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.6 ToUint32: (Unsigned 32 Bit Integer)
+     * 7.1.6 ToUint32: (Unsigned 32 Bit Integer)
      */
     public static long ToUint32(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -267,7 +267,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.6 ToUint32: (Unsigned 32 Bit Integer)
+     * 7.1.6 ToUint32: (Unsigned 32 Bit Integer)
      */
     public static long ToUint32(double number) {
         /* steps 1-2 (not applicable) */
@@ -276,7 +276,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.7 ToUint16: (Unsigned 16 Bit Integer)
+     * 7.1.7 ToUint16: (Unsigned 16 Bit Integer)
      */
     public static char ToUint16(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -286,7 +286,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.7 ToUint16: (Unsigned 16 Bit Integer)
+     * 7.1.7 ToUint16: (Unsigned 16 Bit Integer)
      */
     public static char ToUint16(double number) {
         /* steps 1-2 (not applicable) */
@@ -295,14 +295,14 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.8 ToString
+     * 7.1.8 ToString
      */
     public static String ToFlatString(ExecutionContext cx, Object val) {
         return ToString(cx, val).toString();
     }
 
     /**
-     * 9.1.8 ToString
+     * 7.1.8 ToString
      */
     public static CharSequence ToString(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
@@ -324,7 +324,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.8.1 ToString Applied to the Number Type
+     * 7.1.8.1 ToString Applied to the Number Type
      */
     public static String ToString(double val) {
         /* steps 1-4 (+ shortcut for integer values) */
@@ -351,7 +351,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.9 ToObject
+     * 7.1.9 ToObject
      */
     public static ScriptObject ToObject(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
@@ -371,7 +371,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.10 ToPropertyKey
+     * 7.1.10 ToPropertyKey
      */
     public static Object ToPropertyKey(ExecutionContext cx, Object val) {
         if (val instanceof ExoticSymbol) {
@@ -381,7 +381,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.1.11 ToLength
+     * 7.1.11 ToLength
      */
     public static long ToLength(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -394,7 +394,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.2.1 CheckObjectCoercible
+     * 7.2.1 CheckObjectCoercible
      */
     public static Object CheckObjectCoercible(ExecutionContext cx, Object val) {
         if (Type.isUndefinedOrNull(val)) {
@@ -404,14 +404,14 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.2.2 IsCallable
+     * 7.2.2 IsCallable
      */
     public static boolean IsCallable(Object val) {
         return (val instanceof Callable);
     }
 
     /**
-     * 9.2.3 SameValue(x, y)
+     * 7.2.3 SameValue(x, y)
      */
     public static boolean SameValue(Object x, Object y) {
         /* same reference shortcuts */
@@ -455,7 +455,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.2.3 SameValue(x, y)
+     * 7.2.3 SameValue(x, y)
      */
     public static boolean SameValue(ScriptObject x, ScriptObject y) {
         /* steps 1-8 (not applicable) */
@@ -464,7 +464,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.2.4 SameValueZero(x, y)
+     * 7.2.4 SameValueZero(x, y)
      */
     public static boolean SameValueZero(Object x, Object y) {
         /* same reference shortcuts */
@@ -511,7 +511,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.2.5 IsConstructor
+     * 7.2.5 IsConstructor
      */
     public static boolean IsConstructor(Object val) {
         /* steps 1-4 */
@@ -519,7 +519,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.2.6 IsPropertyKey
+     * 7.2.6 IsPropertyKey
      */
     public static boolean IsPropertyKey(Object val) {
         /* steps 1-3 */
@@ -531,7 +531,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.2.7 IsExtensible (O)
+     * 7.2.7 IsExtensible (O)
      */
     public static boolean IsExtensible(ExecutionContext cx, ScriptObject object) {
         /* steps 1-2 */
@@ -539,13 +539,15 @@ public final class AbstractOperations {
     }
 
     /**
-     * 11.8.1 Abstract Relational Comparison
+     * 7.2.8 Abstract Relational Comparison
      */
     public static int RelationalComparison(ExecutionContext cx, Object x, Object y,
             boolean leftFirst) {
         // true -> 1
         // false -> 0
         // undefined -> -1
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
         Object px, py;
         if (leftFirst) {
             px = ToPrimitive(cx, x, Type.Number);
@@ -554,6 +556,7 @@ public final class AbstractOperations {
             py = ToPrimitive(cx, y, Type.Number);
             px = ToPrimitive(cx, x, Type.Number);
         }
+        /* steps 5-6 */
         if (!(Type.isString(px) && Type.isString(py))) {
             double nx = ToNumber(cx, px);
             double ny = ToNumber(cx, py);
@@ -583,9 +586,10 @@ public final class AbstractOperations {
     }
 
     /**
-     * 11.9.1 Abstract Equality Comparison
+     * 7.2.9 Abstract Equality Comparison
      */
     public static boolean EqualityComparison(ExecutionContext cx, Object x, Object y) {
+        // fast path for same reference
         if (x == y) {
             if (x instanceof Double) {
                 return !((Double) x).isNaN();
@@ -594,42 +598,53 @@ public final class AbstractOperations {
         }
         Type tx = Type.of(x);
         Type ty = Type.of(y);
+        /* step 1 */
         if (tx == ty) {
             return StrictEqualityComparison(x, y);
         }
+        /* step 2 */
         if (tx == Type.Null && ty == Type.Undefined) {
             return true;
         }
+        /* step 3 */
         if (tx == Type.Undefined && ty == Type.Null) {
             return true;
         }
+        /* step 4 */
         if (tx == Type.Number && ty == Type.String) {
             // return EqualityComparison(cx, x, ToNumber(cx, y));
             return Type.numberValue(x) == ToNumber(cx, y);
         }
+        /* step 5 */
         if (tx == Type.String && ty == Type.Number) {
             // return EqualityComparison(cx, ToNumber(cx, x), y);
             return ToNumber(cx, x) == Type.numberValue(y);
         }
+        /* step 6 */
         if (tx == Type.Boolean) {
             return EqualityComparison(cx, ToNumber(cx, x), y);
         }
+        /* step 7 */
         if (ty == Type.Boolean) {
             return EqualityComparison(cx, x, ToNumber(cx, y));
         }
+        /* step 8 */
         if ((tx == Type.String || tx == Type.Number) && ty == Type.Object) {
             return EqualityComparison(cx, x, ToPrimitive(cx, y, null));
         }
+        /* step 9 */
         if (tx == Type.Object && (ty == Type.String || ty == Type.Number)) {
             return EqualityComparison(cx, ToPrimitive(cx, x, null), y);
         }
+        /* step 10 */
         return false;
     }
 
     /**
-     * 11.9.1 Strict Equality Comparison
+     * 7.2.10 Strict Equality Comparison
      */
     public static boolean StrictEqualityComparison(Object x, Object y) {
+        // fast path for same reference
         if (x == y) {
             if (x instanceof Double) {
                 return !((Double) x).isNaN();
@@ -638,30 +653,37 @@ public final class AbstractOperations {
         }
         Type tx = Type.of(x);
         Type ty = Type.of(y);
+        /* step 1 */
         if (tx != ty) {
             return false;
         }
+        /* step 2 */
         if (tx == Type.Undefined) {
             return true;
         }
+        /* step 3 */
         if (tx == Type.Null) {
             return true;
         }
+        /* step 4 */
         if (tx == Type.Number) {
             return Type.numberValue(x) == Type.numberValue(y);
         }
+        /* step 5 */
         if (tx == Type.String) {
             return Type.stringValue(x).toString().equals(Type.stringValue(y).toString());
         }
+        /* step 6 */
         if (tx == Type.Boolean) {
             return Type.booleanValue(x) == Type.booleanValue(y);
         }
         assert tx == Type.Object;
+        /* steps 8-9 */
         return (x == y);
     }
 
     /**
-     * 9.3.1 Get (O, P)
+     * 7.3.1 Get (O, P)
      */
     public static Object Get(ExecutionContext cx, ScriptObject object, Object propertyKey) {
         if (propertyKey instanceof String) {
@@ -672,7 +694,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.1 Get (O, P)
+     * 7.3.1 Get (O, P)
      */
     public static Object Get(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-3 */
@@ -680,7 +702,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.1 Get (O, P)
+     * 7.3.1 Get (O, P)
      */
     public static Object Get(ExecutionContext cx, ScriptObject object, ExoticSymbol propertyKey) {
         /* steps 1-3 */
@@ -688,7 +710,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.2 Put (O, P, V, Throw)
+     * 7.3.2 Put (O, P, V, Throw)
      */
     public static void Put(ExecutionContext cx, ScriptObject object, Object propertyKey,
             Object value, boolean _throw) {
@@ -700,35 +722,35 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.2 Put (O, P, V, Throw)
+     * 7.3.2 Put (O, P, V, Throw)
      */
     public static void Put(ExecutionContext cx, ScriptObject object, String propertyKey,
             Object value, boolean _throw) {
         /* steps 1-5 */
         boolean success = object.set(cx, propertyKey, value, object);
-        /* steps 6 */
+        /* step 6 */
         if (!success && _throw) {
             throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey);
         }
-        /* steps 7 (not applicable) */
+        /* step 7 (not applicable) */
     }
 
     /**
-     * 9.3.2 Put (O, P, V, Throw)
+     * 7.3.2 Put (O, P, V, Throw)
      */
     public static void Put(ExecutionContext cx, ScriptObject object, ExoticSymbol propertyKey,
             Object value, boolean _throw) {
         /* steps 1-5 */
         boolean success = object.set(cx, propertyKey, value, object);
-        /* steps 6 */
+        /* step 6 */
         if (!success && _throw) {
             throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey.toString());
         }
-        /* steps 7 (not applicable) */
+        /* step 7 (not applicable) */
     }
 
     /**
-     * 9.3.3 CreateOwnDataProperty (O, P, V)
+     * 7.3.3 CreateOwnDataProperty (O, P, V)
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             Object propertyKey, Object value) {
@@ -740,7 +762,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.3 CreateOwnDataProperty (O, P, V)
+     * 7.3.3 CreateOwnDataProperty (O, P, V)
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
@@ -753,7 +775,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.3 CreateOwnDataProperty (O, P, V)
+     * 7.3.3 CreateOwnDataProperty (O, P, V)
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             ExoticSymbol propertyKey, Object value) {
@@ -766,7 +788,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.4 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.4 DefinePropertyOrThrow (O, P, desc)
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Object propertyKey, PropertyDescriptor desc) {
@@ -778,7 +800,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.4 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.4 DefinePropertyOrThrow (O, P, desc)
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             String propertyKey, PropertyDescriptor desc) {
@@ -792,7 +814,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.4 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.4 DefinePropertyOrThrow (O, P, desc)
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             ExoticSymbol propertyKey, PropertyDescriptor desc) {
@@ -806,7 +828,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.5 DeletePropertyOrThrow (O, P)
+     * 7.3.5 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Object propertyKey) {
@@ -818,7 +840,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.5 DeletePropertyOrThrow (O, P)
+     * 7.3.5 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             String propertyKey) {
@@ -832,7 +854,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.5 DeletePropertyOrThrow (O, P)
+     * 7.3.5 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             ExoticSymbol propertyKey) {
@@ -846,7 +868,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.6 HasProperty (O, P)
+     * 7.3.6 HasProperty (O, P)
      */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Object propertyKey) {
         if (propertyKey instanceof String) {
@@ -857,7 +879,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.6 HasProperty (O, P)
+     * 7.3.6 HasProperty (O, P)
      */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-3 */
@@ -865,7 +887,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.6 HasProperty (O, P)
+     * 7.3.6 HasProperty (O, P)
      */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object,
             ExoticSymbol propertyKey) {
@@ -874,7 +896,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.7 GetMethod (O, P)
+     * 7.3.7 GetMethod (O, P)
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, Object propertyKey) {
         if (propertyKey instanceof String) {
@@ -885,7 +907,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.7 GetMethod (O, P)
+     * 7.3.7 GetMethod (O, P)
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-4 */
@@ -903,7 +925,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.7 GetMethod (O, P)
+     * 7.3.7 GetMethod (O, P)
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object,
             ExoticSymbol propertyKey) {
@@ -922,7 +944,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.8 Invoke(O,P [,args])
+     * 7.3.8 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, Object object, Object propertyKey,
             Object... args) {
@@ -934,7 +956,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.8 Invoke(O,P [,args])
+     * 7.3.8 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
             Object... args) {
@@ -950,7 +972,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.8 Invoke(O,P [,args])
+     * 7.3.8 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, String propertyKey,
             Object... args) {
@@ -960,7 +982,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.8 Invoke(O,P [,args])
+     * 7.3.8 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, Object object, ExoticSymbol propertyKey,
             Object... args) {
@@ -976,7 +998,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.8 Invoke(O,P [,args])
+     * 7.3.8 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, ExoticSymbol propertyKey,
             Object... args) {
@@ -986,13 +1008,13 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.9 SetIntegrityLevel (O, level)
+     * 7.3.9 SetIntegrityLevel (O, level)
      */
     public static boolean SetIntegrityLevel(ExecutionContext cx, ScriptObject object,
             IntegrityLevel level) {
-        /* step 1-2 */
+        /* steps 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
-        /* step 3-4 */
+        /* steps 3-4 */
         Iterator<?> keys = FromListIterator(cx, object.ownPropertyKeys(cx));
         /* step 5 */
         ScriptException pendingException = null;
@@ -1064,19 +1086,19 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.10 TestIntegrityLevel (O, level)
+     * 7.3.10 TestIntegrityLevel (O, level)
      */
     public static boolean TestIntegrityLevel(ExecutionContext cx, ScriptObject object,
             IntegrityLevel level) {
-        /* step 1-2 */
+        /* steps 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
-        /* step 3-4 */
+        /* steps 3-4 */
         boolean status = IsExtensible(cx, object);
-        /* step 5-6 */
+        /* steps 5-6 */
         if (status) {
             return false;
         }
-        /* step 7-8 */
+        /* steps 7-8 */
         Iterator<?> keys = FromListIterator(cx, object.ownPropertyKeys(cx));
         /* step 9 */
         ScriptException pendingException = null;
@@ -1126,9 +1148,10 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.11 CreateArrayFromList (elements)
+     * 7.3.11 CreateArrayFromList (elements)
      */
     public static ScriptObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
+        /* step 1 (not applicable) */
         /* step 2 */
         ScriptObject array = ArrayCreate(cx, 0);
         /* step 3 */
@@ -1144,7 +1167,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.12 CreateListFromArrayLike (obj)
+     * 7.3.12 CreateListFromArrayLike (obj)
      */
     public static Object[] CreateListFromArrayLike(ExecutionContext cx, Object obj) {
         /* step 1 */
@@ -1174,7 +1197,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.13 OrdinaryHasInstance (C, O)
+     * 7.3.13 OrdinaryHasInstance (C, O)
      */
     public static boolean OrdinaryHasInstance(ExecutionContext cx, Object c, Object o) {
         /* step 1 */
@@ -1190,7 +1213,7 @@ public final class AbstractOperations {
         if (!Type.isObject(o)) {
             return false;
         }
-        /* step 4-5 */
+        /* steps 4-5 */
         Object p = Get(cx, (ScriptObject) c, "prototype");
         if (!Type.isObject(p)) {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
@@ -1208,7 +1231,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.14 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
+     * 7.3.14 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
      */
     public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx, Object constructor,
             Intrinsics intrinsicDefaultProto) {
@@ -1234,7 +1257,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.15 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
+     * 7.3.15 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
      */
     public static OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
             Object constructor, Intrinsics intrinsicDefaultProto) {
@@ -1246,7 +1269,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 9.3.15 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     * 7.3.15 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
      */
     public static <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
             ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,

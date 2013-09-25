@@ -9,11 +9,11 @@ package com.github.anba.es6draft.runtime;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1><br>
- * <h2>10.2 Lexical Environments</h2><br>
- * <h3>10.2.1 Environment Records</h3>
+ * <h1>8 Executable Code and Execution Contexts</h1><br>
+ * <h2>8.1 Lexical Environments</h2><br>
+ * <h3>8.1.1 Environment Records</h3>
  * <ul>
- * <li>10.2.1.3 Function Environment Records
+ * <li>8.1.1.3 Function Environment Records
  * </ul>
  */
 public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecord {
@@ -30,7 +30,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * 10.2.1.3.1 HasThisBinding ()
+     * 8.1.1.3.1 HasThisBinding ()
      */
     @Override
     public boolean hasThisBinding() {
@@ -39,7 +39,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * 10.2.1.3.2 HasSuperBinding ()
+     * 8.1.1.3.2 HasSuperBinding ()
      */
     @Override
     public boolean hasSuperBinding() {
@@ -48,7 +48,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * 10.2.1.3.3 GetThisBinding ()
+     * 8.1.1.3.3 GetThisBinding ()
      */
     @Override
     public Object getThisBinding() {
@@ -57,7 +57,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * 10.2.1.3.4 GetSuperBase ()
+     * 8.1.1.3.4 GetSuperBase ()
      */
     public ScriptObject getSuperBase() {
         /* step 1 */
@@ -72,7 +72,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
     }
 
     /**
-     * 10.2.1.3.5 GetMethodName ()
+     * 8.1.1.3.5 GetMethodName ()
      */
     public Object getMethodName() {
         /* step 1 */

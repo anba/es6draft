@@ -18,11 +18,11 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1><br>
- * <h2>10.2 Lexical Environments</h2><br>
- * <h3>10.2.1 Environment Records</h3>
+ * <h1>8 Executable Code and Execution Contexts</h1><br>
+ * <h2>8.1 Lexical Environments</h2><br>
+ * <h3>8.1.1 Environment Records</h3>
  * <ul>
- * <li>10.2.1.4 Global Environment Records
+ * <li>8.1.1.4 Global Environment Records
  * </ul>
  */
 public final class GlobalEnvironmentRecord implements EnvironmentRecord {
@@ -47,7 +47,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.1 HasBinding(N)
+     * 8.1.1.4.1 HasBinding(N)
      */
     @Override
     public boolean hasBinding(String name) {
@@ -62,7 +62,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.2 CreateMutableBinding (N, D)
+     * 8.1.1.4.2 CreateMutableBinding (N, D)
      */
     @Override
     public void createMutableBinding(String name, boolean deletable) {
@@ -72,7 +72,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.3 CreateImmutableBinding (N)
+     * 8.1.1.4.3 CreateImmutableBinding (N)
      */
     @Override
     public void createImmutableBinding(String name) {
@@ -82,7 +82,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.4 InitialiseBinding (N,V)
+     * 8.1.1.4.4 InitialiseBinding (N,V)
      */
     @Override
     public void initialiseBinding(String name, Object value) {
@@ -100,7 +100,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.5 SetMutableBinding (N,V,S)
+     * 8.1.1.4.5 SetMutableBinding (N,V,S)
      */
     @Override
     public void setMutableBinding(String name, Object value, boolean strict) {
@@ -116,7 +116,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.6 GetBindingValue(N,S)
+     * 8.1.1.4.6 GetBindingValue(N,S)
      */
     @Override
     public Object getBindingValue(String name, boolean strict) {
@@ -131,7 +131,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.7 DeleteBinding (N)
+     * 8.1.1.4.7 DeleteBinding (N)
      */
     @Override
     public boolean deleteBinding(String name) {
@@ -154,7 +154,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.8 HasThisBinding ()
+     * 8.1.1.4.8 HasThisBinding ()
      */
     @Override
     public boolean hasThisBinding() {
@@ -163,7 +163,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.9 HasSuperBinding ()
+     * 8.1.1.4.9 HasSuperBinding ()
      */
     @Override
     public boolean hasSuperBinding() {
@@ -172,7 +172,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.10 WithBaseObject()
+     * 8.1.1.4.10 WithBaseObject()
      */
     @Override
     public ScriptObject withBaseObject() {
@@ -181,7 +181,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.11 GetThisBinding ()
+     * 8.1.1.4.11 GetThisBinding ()
      */
     @Override
     public Object getThisBinding() {
@@ -191,7 +191,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.12 HasVarDeclaration (N)
+     * 8.1.1.4.12 HasVarDeclaration (N)
      */
     public boolean hasVarDeclaration(String name) {
         /* steps 1-2 (omitted) */
@@ -200,7 +200,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.13 HasLexicalDeclaration (N)
+     * 8.1.1.4.13 HasLexicalDeclaration (N)
      */
     public boolean hasLexicalDeclaration(String name) {
         /* steps 1-2 (omitted) */
@@ -209,7 +209,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.14 CanDeclareGlobalVar (N)
+     * 8.1.1.4.14 CanDeclareGlobalVar (N)
      */
     public boolean canDeclareGlobalVar(String name) {
         /* steps 1-2 (omitted) */
@@ -223,7 +223,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.15 CanDeclareGlobalFunction (N)
+     * 8.1.1.4.15 CanDeclareGlobalFunction (N)
      */
     public boolean canDeclareGlobalFunction(String name) {
         /* steps 1-3 (omitted) */
@@ -253,7 +253,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.16 CreateGlobalVarBinding (N, D)
+     * 8.1.1.4.16 CreateGlobalVarBinding (N, D)
      */
     public void createGlobalVarBinding(String name, boolean deletable) {
         /* steps 1-2 (omitted) */
@@ -271,7 +271,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.4.17 CreateGlobalFunctionBinding (N, V, D)
+     * 8.1.1.4.17 CreateGlobalFunctionBinding (N, V, D)
      */
     public void createGlobalFunctionBinding(String name, Object value, boolean deletable) {
         /* steps 1-3 (omitted) */

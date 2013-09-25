@@ -19,11 +19,11 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1><br>
- * <h2>10.2 Lexical Environments</h2><br>
- * <h3>10.2.1 Environment Records</h3>
+ * <h1>8 Executable Code and Execution Contexts</h1><br>
+ * <h2>8.1 Lexical Environments</h2><br>
+ * <h3>8.1.1 Environment Records</h3>
  * <ul>
- * <li>10.2.1.1 Declarative Environment Records
+ * <li>8.1.1.1 Declarative Environment Records
  * </ul>
  */
 public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
@@ -73,7 +73,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.1 HasBinding(N)
+     * 8.1.1.1.1 HasBinding(N)
      */
     @Override
     public boolean hasBinding(String name) {
@@ -83,7 +83,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.2 CreateMutableBinding (N,D)
+     * 8.1.1.1.2 CreateMutableBinding (N,D)
      */
     @Override
     public void createMutableBinding(String name, boolean deletable) {
@@ -95,7 +95,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.3 CreateImmutableBinding (N)
+     * 8.1.1.1.3 CreateImmutableBinding (N)
      */
     @Override
     public void createImmutableBinding(String name) {
@@ -107,7 +107,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.4 InitialiseBinding (N,V)
+     * 8.1.1.1.4 InitialiseBinding (N,V)
      */
     @Override
     public void initialiseBinding(String name, Object value) {
@@ -121,7 +121,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.5 SetMutableBinding (N,V,S)
+     * 8.1.1.1.5 SetMutableBinding (N,V,S)
      */
     @Override
     public void setMutableBinding(String name, Object value, boolean strict) {
@@ -141,7 +141,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.6 GetBindingValue(N,S)
+     * 8.1.1.1.6 GetBindingValue(N,S)
      */
     @Override
     public Object getBindingValue(String name, boolean strict) {
@@ -161,7 +161,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.7 DeleteBinding (N)
+     * 8.1.1.1.7 DeleteBinding (N)
      */
     @Override
     public boolean deleteBinding(String name) {
@@ -182,7 +182,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.8 HasThisBinding ()
+     * 8.1.1.1.8 HasThisBinding ()
      */
     @Override
     public boolean hasThisBinding() {
@@ -199,7 +199,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.9 HasSuperBinding ()
+     * 8.1.1.1.9 HasSuperBinding ()
      */
     @Override
     public boolean hasSuperBinding() {
@@ -208,7 +208,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
     }
 
     /**
-     * 10.2.1.1.10 WithBaseObject()
+     * 8.1.1.1.10 WithBaseObject()
      */
     @Override
     public ScriptObject withBaseObject() {

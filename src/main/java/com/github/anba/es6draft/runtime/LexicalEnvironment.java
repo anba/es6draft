@@ -18,10 +18,10 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1><br>
- * <h2>10.2 Lexical Environments</h2>
+ * <h1>8 Executable Code and Execution Contexts</h1><br>
+ * <h2>8.1 Lexical Environments</h2>
  * <ul>
- * <li>10.2.2 Lexical Environment Operations
+ * <li>8.1.2 Lexical Environment Operations
  * </ul>
  */
 public final class LexicalEnvironment {
@@ -64,15 +64,6 @@ public final class LexicalEnvironment {
         return null;
     }
 
-    /**
-     * 10.2.2.1 GetIdentifierReference (lex, name, strict)
-     */
-    public static Reference<EnvironmentRecord, String> getIdentifierReference(
-            LexicalEnvironment lex, String name, boolean strict) {
-        EnvironmentRecord envRec = getIdentifierRecord(lex, name);
-        return new Reference.IdentifierReference(envRec, name, strict);
-    }
-
     static Object getIdentifierValueOrThrow(LexicalEnvironment lex, String name, boolean strict) {
         EnvironmentRecord envRec = getIdentifierRecord(lex, name);
         if (envRec != null) {
@@ -82,44 +73,68 @@ public final class LexicalEnvironment {
     }
 
     /**
-     * 10.2.2.2 NewDeclarativeEnvironment (E)
+     * 8.1.2.1 GetIdentifierReference (lex, name, strict)
+     */
+    public static Reference<EnvironmentRecord, String> getIdentifierReference(
+            LexicalEnvironment lex, String name, boolean strict) {
+        /* steps 2-3, 5 */
+        EnvironmentRecord envRec = getIdentifierRecord(lex, name);
+        /* steps 1, 4 */
+        return new Reference.IdentifierReference(envRec, name, strict);
+    }
+
+    /**
+     * 8.1.2.2 NewDeclarativeEnvironment (E)
      */
     public static LexicalEnvironment newDeclarativeEnvironment(LexicalEnvironment e) {
+        /* step 2 */
         EnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx);
+        /* steps 1, 3-4 */
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);
+        /* step 5 */
         return env;
     }
 
     /**
-     * 10.2.2.3 NewObjectEnvironment (O, E)
+     * 8.1.2.3 NewObjectEnvironment (O, E)
      */
     public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e) {
+        /* steps 2-3 */
         EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, false,
                 Collections.<String> emptySet());
+        /* steps 1, 4-5 */
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);
+        /* step 6 */
         return env;
     }
 
     /**
-     * 10.2.2.3 NewObjectEnvironment (O, E)
+     * 8.1.2.3 NewObjectEnvironment (O, E)
      */
     public static LexicalEnvironment newObjectEnvironment(ScriptObject o, LexicalEnvironment e,
             boolean withEnvironment, Set<String> unscopables) {
+        /* steps 2-3 */
         EnvironmentRecord envRec = new ObjectEnvironmentRecord(e.cx, o, withEnvironment,
                 unscopables);
+        /* steps 1, 4-5 */
         LexicalEnvironment env = new LexicalEnvironment(e, envRec);
+        /* step 6 */
         return env;
     }
 
     /**
-     * 10.2.2.4 NewFunctionEnvironment (F, T)
+     * 8.1.2.4 NewFunctionEnvironment (F, T)
      */
     public static LexicalEnvironment newFunctionEnvironment(ExecutionContext cx, FunctionObject f,
             Object t) {
+        /* step 1 */
         assert f.getThisMode() != ThisMode.Lexical;
+        /* steps 3-6 */
         EnvironmentRecord envRec = new FunctionEnvironmentRecord(cx, t, f.getHomeObject(),
                 f.getMethodName());
+        /* steps 2, 7-8 */
         LexicalEnvironment env = new LexicalEnvironment(f.getScope(), envRec);
+        /* step 9 */
         return env;
     }
 }

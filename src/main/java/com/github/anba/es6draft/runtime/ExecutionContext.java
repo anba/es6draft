@@ -21,9 +21,9 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.ThisMode;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1>
+ * <h1>8 Executable Code and Execution Contexts</h1>
  * <ul>
- * <li>10.4 Execution Contexts
+ * <li>8.3 Execution Contexts
  * </ul>
  */
 public final class ExecutionContext {
@@ -49,6 +49,20 @@ public final class ExecutionContext {
         return realm.getIntrinsic(id);
     }
 
+    public FunctionObject getCurrentFunction() {
+        return function;
+    }
+
+    public GeneratorObject getCurrentGenerator() {
+        assert generator != null;
+        return generator;
+    }
+
+    public void setCurrentGenerator(GeneratorObject generator) {
+        assert this.generator == null;
+        this.generator = requireNonNull(generator);
+    }
+
     // Helper
     public void pushLexicalEnvironment(LexicalEnvironment lexEnv) {
         assert lexEnv.getOuter() == this.lexEnv;
@@ -66,7 +80,15 @@ public final class ExecutionContext {
     }
 
     /**
-     * [14] Runtime Semantics: Script Evaluation
+     * <div>
+     * <ul>
+     * <li>15 ECMAScript Language: Scripts and Modules
+     * <ul>
+     * <li>15.1 Script
+     * <ul>
+     * <li>15.1.2 Runtime Semantics</div>
+     * <p>
+     * Runtime Semantics: Script Evaluation
      */
     public static ExecutionContext newScriptExecutionContext(Realm realm) {
         /* step 3-6 */
@@ -78,7 +100,15 @@ public final class ExecutionContext {
     }
 
     /**
-     * [14] Runtime Semantics: Script Evaluation
+     * <div>
+     * <ul>
+     * <li>15 ECMAScript Language: Scripts and Modules
+     * <ul>
+     * <li>15.1 Script
+     * <ul>
+     * <li>15.1.2 Runtime Semantics</div>
+     * <p>
+     * Runtime Semantics: Script Evaluation
      */
     public static ExecutionContext newScriptExecutionContext(ExecutionContext cx) {
         /* step 3-6 */
@@ -91,11 +121,17 @@ public final class ExecutionContext {
     }
 
     /**
-     * 15.1.2.1 eval (x)
+     * <div>
+     * <ul>
+     * <li>18 The Global Object
+     * <ul>
+     * <li>18.2 Function Properties of the Global Object</div>
+     * <p>
+     * 18.2.1 eval (x)
      */
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
             LexicalEnvironment lexEnv, LexicalEnvironment varEnv) {
-        /* step 20-23 */
+        /* step 17-20 */
         ExecutionContext progCxt = new ExecutionContext();
         progCxt.realm = callerContext.realm;
         progCxt.lexEnv = lexEnv;
@@ -105,7 +141,15 @@ public final class ExecutionContext {
     }
 
     /**
-     * 11.1.7 Generator Comprehensions
+     * <div>
+     * <ul>
+     * <li>12 ECMAScript Language: Expressions
+     * <ul>
+     * <li>12.1 Primary Expressions
+     * <ul>
+     * <li>12.1.7 Generator Comprehensions
+     * <ul>
+     * <li>12.1.7.2 Runtime Semantics</div>
      * <p>
      * Runtime Semantics: Evaluation
      */
@@ -119,10 +163,18 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.16.1 [[Call]] Internal Method
+     * <div>
+     * <ul>
+     * <li>9 ECMAScript Ordinary and Exotic Objects Behaviours
+     * <ul>
+     * <li>9.1 Ordinary Object Internal Methods and Internal Data Properties
+     * <ul>
+     * <li>9.1.16 Ordinary Function Objects</div>
+     * <p>
+     * 9.1.16.1 [[Call]] (thisArgument, argumentsList)
      */
     public static ExecutionContext newFunctionExecutionContext(FunctionObject f, Object thisArgument) {
-        /* 8.3.16.1, step 4-12 */
+        /* 9.1.16.1, step 4-12 */
         ExecutionContext calleeContext = new ExecutionContext();
         Realm calleeRealm = f.getRealm();
         calleeContext.realm = calleeRealm;
@@ -161,21 +213,28 @@ public final class ExecutionContext {
     }
 
     /**
-     * 10.4.1 Identifier Resolution
+     * Combined {@link #identifierResolution(String, boolean)} with
+     * {@link Reference#GetValue(Object, ExecutionContext)} internal method
      */
-    public Reference<EnvironmentRecord, String> identifierResolution(String name, boolean strict) {
-        return LexicalEnvironment.getIdentifierReference(lexEnv, name, strict);
-    }
-
     public Object identifierValue(String name, boolean strict) {
         return LexicalEnvironment.getIdentifierValueOrThrow(lexEnv, name, strict);
     }
 
     /**
-     * 10.4.2 GetThisEnvironment
+     * 8.3.1 Identifier Resolution
+     */
+    public Reference<EnvironmentRecord, String> identifierResolution(String name, boolean strict) {
+        /* steps 1-3 */
+        return LexicalEnvironment.getIdentifierReference(lexEnv, name, strict);
+    }
+
+    /**
+     * 8.3.2 GetThisEnvironment
      */
     public EnvironmentRecord getThisEnvironment() {
+        /* step 1 */
         LexicalEnvironment lex = lexEnv;
+        /* step 2 */
         for (;;) {
             EnvironmentRecord envRec = lex.getEnvRec();
             boolean exists = envRec.hasThisBinding();
@@ -187,32 +246,22 @@ public final class ExecutionContext {
     }
 
     /**
-     * 10.4.3 This Resolution
+     * 8.3.3 This Resolution
      */
     public Object thisResolution() {
+        /* step 1 */
         EnvironmentRecord env = getThisEnvironment();
+        /* step 2 */
         return env.getThisBinding();
     }
 
     /**
-     * 10.4.4 GetGlobalObject
+     * 8.3.4 GetGlobalObject
      */
     public GlobalObject getGlobalObject() {
+        /* steps 1-2 */
         Realm currentRealm = realm;
+        /* step 3 */
         return currentRealm.getGlobalThis();
-    }
-
-    public FunctionObject getCurrentFunction() {
-        return function;
-    }
-
-    public GeneratorObject getCurrentGenerator() {
-        assert generator != null;
-        return generator;
-    }
-
-    public void setCurrentGenerator(GeneratorObject generator) {
-        assert this.generator == null;
-        this.generator = requireNonNull(generator);
     }
 }

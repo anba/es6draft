@@ -53,9 +53,9 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1>
+ * <h1>8 Executable Code and Execution Contexts</h1>
  * <ul>
- * <li>10.3 Code Realms
+ * <li>8.2 Code Realms
  * </ul>
  */
 public final class Realm {

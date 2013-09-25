@@ -9,10 +9,10 @@ package com.github.anba.es6draft.runtime;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1><br>
- * <h2>10.2 Lexical Environments</h2>
+ * <h1>8 Executable Code and Execution Contexts</h1><br>
+ * <h2>8.1 Lexical Environments</h2>
  * <ul>
- * <li>10.2.1 Environment Records
+ * <li>8.1.1 Environment Records
  * </ul>
  */
 public interface EnvironmentRecord {
@@ -66,6 +66,9 @@ public interface EnvironmentRecord {
      */
     ScriptObject withBaseObject();
 
+    /**
+     * GetThisBinding ()
+     */
     // assert: FunctionEnvironmentRecord or GlobalEnvironmentRecord
     Object getThisBinding();
 }
