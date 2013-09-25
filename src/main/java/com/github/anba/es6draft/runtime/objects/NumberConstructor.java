@@ -150,6 +150,13 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         public static final Double MAX_SAFE_INTEGER = (double) 0x1FFFFFFFFFFFFFL;
 
         /**
+         * 15.7.2.x Number.MIN_SAFE_INTEGER
+         */
+        @Value(name = "MIN_SAFE_INTEGER", attributes = @Attributes(writable = false,
+                enumerable = false, configurable = false))
+        public static final Double MIN_SAFE_INTEGER = (double) -0x1FFFFFFFFFFFFFL;
+
+        /**
          * 15.7.2.9 Number.parseInt (string, radix)
          */
         @Function(name = "parseInt", arity = 2)
