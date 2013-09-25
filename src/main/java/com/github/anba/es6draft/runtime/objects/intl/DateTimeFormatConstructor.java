@@ -25,6 +25,7 @@ import java.util.Set;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -62,14 +63,20 @@ import com.ibm.icu.util.ULocale;
  */
 public class DateTimeFormatConstructor extends BuiltinConstructor implements Initialisable {
     /** [[availableLocales]] */
-    private Set<String> availableLocales;
+    Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
+        @Override
+        protected Set<String> computeValue() {
+            return GetAvailableLocales(DateFormat.getAvailableULocales());
+        }
+    };
 
     public static Set<String> getAvailableLocales(ExecutionContext cx) {
+        return getAvailableLocalesLazy(cx).get();
+    }
+
+    private static Lazy<Set<String>> getAvailableLocalesLazy(ExecutionContext cx) {
         DateTimeFormatConstructor dateTimeFormat = (DateTimeFormatConstructor) cx
                 .getIntrinsic(Intrinsics.Intl_DateTimeFormat);
-        if (dateTimeFormat.availableLocales == null) {
-            dateTimeFormat.availableLocales = GetAvailableLocales(DateFormat.getAvailableULocales());
-        }
         return dateTimeFormat.availableLocales;
     }
 
@@ -139,6 +146,21 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
 
         public DateTimeFormatLocaleDataInfo(ULocale locale) {
             this.locale = locale;
+        }
+
+        @Override
+        public String defaultValue(ExtensionKey extensionKey) {
+            switch (extensionKey) {
+            case ca:
+                String[] values = Calendar.getKeywordValuesForLocale("calendar", locale, false);
+                CalendarAlgorithm algorithm = CalendarAlgorithm.forName(values[0]);
+                return algorithm.getName();
+            case nu:
+                String localeNumberingSystem = NumberingSystem.getInstance(locale).getName();
+                return localeNumberingSystem;
+            default:
+                throw new IllegalArgumentException(extensionKey.name());
+            }
         }
 
         @Override
@@ -219,7 +241,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         /* step 8-9 */
         DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
         /* step 10 */
-        ResolvedLocale r = ResolveLocale(cx, getAvailableLocales(cx), requestedLocales, opt,
+        ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocales, opt,
                 relevantExtensionKeys, localeData);
         /* step 11 */
         dateTimeFormat.setLocale(r.locale);
@@ -267,11 +289,11 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         Boolean hr12 = GetBooleanOption(cx, options, "hour12", null);
         opt2.hour12 = hr12;
         /* steps 23-24, 27-28 */
-        String pattern;
+        Lazy<String> pattern;
         if ("basic".equals(matcher)) {
-            pattern = BasicFormatMatcher(opt2, dataLocale);
+            pattern = new BasicFormatPattern(opt2, dataLocale);
         } else {
-            pattern = BestFitFormatMatcher(opt2, dataLocale);
+            pattern = new BestFitFormatPattern(opt2, dataLocale);
         }
         /* step 29 */
         dateTimeFormat.setPattern(pattern);
@@ -326,6 +348,36 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         }
         /* step 9 */
         return options;
+    }
+
+    private static final class BasicFormatPattern extends Lazy<String> {
+        private final FormatMatcherRecord record;
+        private final String dataLocale;
+
+        BasicFormatPattern(FormatMatcherRecord record, String dataLocale) {
+            this.record = record;
+            this.dataLocale = dataLocale;
+        }
+
+        @Override
+        protected String computeValue() {
+            return BasicFormatMatcher(record, dataLocale);
+        }
+    }
+
+    private static final class BestFitFormatPattern extends Lazy<String> {
+        private final FormatMatcherRecord record;
+        private final String dataLocale;
+
+        BestFitFormatPattern(FormatMatcherRecord record, String dataLocale) {
+            this.record = record;
+            this.dataLocale = dataLocale;
+        }
+
+        @Override
+        protected String computeValue() {
+            return BestFitFormatMatcher(record, dataLocale);
+        }
     }
 
     private static final class FormatMatcherRecord {

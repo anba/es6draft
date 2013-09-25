@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.OptionsRecord.MatcherType;
 import com.github.anba.es6draft.runtime.objects.intl.LanguageTagParser.LanguageTag;
@@ -139,25 +140,27 @@ public final class IntlAbstractOperations {
             "BET", "BST", "CAT", "CNT", "CST", "CTT", "EAT", "ECT", "IET", "IST", "JST", "MIT",
             "NET", "NST", "PLT", "PNT", "PRT", "PST", "SST", "VST");
 
-    private static final Map<String, String> timezones;
-    static {
-        HashMap<String, String> map = new HashMap<>();
-        Set<String> ids = TimeZone.getAvailableIDs(SystemTimeZoneType.ANY, null, null);
-        for (String id : ids) {
-            if (JDK_TIMEZONE_NAMES.contains(id)) {
-                // ignore non-IANA, JDK-specific timezones
-                continue;
+    private static final Lazy<Map<String, String>> timezones = new Lazy<Map<String, String>>() {
+        @Override
+        protected Map<String, String> computeValue() {
+            HashMap<String, String> map = new HashMap<>();
+            Set<String> ids = TimeZone.getAvailableIDs(SystemTimeZoneType.ANY, null, null);
+            for (String id : ids) {
+                if (JDK_TIMEZONE_NAMES.contains(id)) {
+                    // ignore non-IANA, JDK-specific timezones
+                    continue;
+                }
+                map.put(ToUpperCase(id), id);
             }
-            map.put(ToUpperCase(id), id);
+            return map;
         }
-        timezones = map;
-    }
+    };
 
     /**
      * 6.4.1 IsValidTimeZoneName (timeZone)
      */
     public static boolean IsValidTimeZoneName(String timeZone) {
-        return timezones.containsKey(ToUpperCase(timeZone));
+        return timezones.get().containsKey(ToUpperCase(timeZone));
     }
 
     /**
@@ -165,7 +168,7 @@ public final class IntlAbstractOperations {
      */
     public static String CanonicalizeTimeZoneName(String timeZone) {
         /* step 1 */
-        String ianaTimeZone = timezones.get(ToUpperCase(timeZone));
+        String ianaTimeZone = timezones.get().get(ToUpperCase(timeZone));
         /* step 2 */
         ianaTimeZone = TimeZone.getCanonicalID(ianaTimeZone);
         assert ianaTimeZone != null : "invalid timezone: " + timeZone;
@@ -259,6 +262,14 @@ public final class IntlAbstractOperations {
      * 9.1 Internal Properties of Service Constructors
      */
     public interface LocaleDataInfo {
+        /**
+         * Returns {@link #entries(ExtensionKey)}.get(0)
+         */
+        String defaultValue(ExtensionKey extensionKey);
+
+        /**
+         * Returns [sortLocaleData]], [[searchLocaleData]] or [[localeData]]
+         */
         List<String> entries(ExtensionKey extensionKey);
     }
 
@@ -334,34 +345,44 @@ public final class IntlAbstractOperations {
     /**
      * 9.2.3 LookupMatcher (availableLocales, requestedLocales)
      */
-    public static LocaleMatch LookupMatcher(ExecutionContext cx, Set<String> availableLocales,
-            Set<String> requestedLocales) {
+    public static LocaleMatch LookupMatcher(ExecutionContext cx,
+            Lazy<Set<String>> availableLocales, Set<String> requestedLocales) {
         for (String locale : requestedLocales) {
             String[] unicodeExt = UnicodeLocaleExtSequence(locale);
             String noExtensionsLocale = unicodeExt[0];
-            String availableLocale = BestAvailableLocale(availableLocales, noExtensionsLocale);
+            String availableLocale = BestAvailableLocale(availableLocales.get(), noExtensionsLocale);
             if (availableLocale != null) {
-                LocaleMatch result = new LocaleMatch();
-                result.locale = availableLocale;
-                if (!locale.equals(noExtensionsLocale)) {
-                    result.extension = unicodeExt[1];
-                    result.extensionIndex = locale.indexOf("-u-") + 2;
-                }
-                return result;
+                return LookupMatch(availableLocale, locale, unicodeExt);
             }
         }
+        return LookupMatch(DefaultLocale(cx.getRealm()), null, null);
+    }
+
+    private static LocaleMatch LookupMatch(String availableLocale, String locale,
+            String[] unicodeExt) {
         LocaleMatch result = new LocaleMatch();
-        result.locale = DefaultLocale(cx.getRealm());
+        result.locale = availableLocale;
+        if (locale != null && !locale.equals(unicodeExt[0])) {
+            result.extension = unicodeExt[1];
+            result.extensionIndex = locale.indexOf("-u-") + 2;
+        }
         return result;
     }
 
     /**
      * 9.2.4 BestFitMatcher (availableLocales, requestedLocales)
      */
-    public static LocaleMatch BestFitMatcher(ExecutionContext cx, Set<String> availableLocales,
-            Set<String> requestedLocales) {
+    public static LocaleMatch BestFitMatcher(ExecutionContext cx,
+            Lazy<Set<String>> availableLocales, Set<String> requestedLocales) {
+        // fast path when no specific locale was requested
+        if (requestedLocales.isEmpty()) {
+            final String defaultLocale = DefaultLocale(cx.getRealm());
+            return BestFitMatch(defaultLocale, defaultLocale);
+        }
+
         LocaleMatcher matcher = CreateDefaultMatcher();
-        Map<String, Entry<ULocale, ULocale>> map = GetMaximizedLocales(matcher, availableLocales);
+        Map<String, Entry<ULocale, ULocale>> map = GetMaximizedLocales(matcher,
+                availableLocales.get());
 
         final String defaultLocale = DefaultLocale(cx.getRealm());
         // `BEST_FIT_MIN_MATCH - epsilon` to ensure match is at least BEST_FIT_MIN_MATCH to be
@@ -381,8 +402,12 @@ public final class IntlAbstractOperations {
             }
         }
 
+        return BestFitMatch(bestMatch.getKey(), bestMatchCandidate);
+    }
+
+    private static LocaleMatch BestFitMatch(String locale, String bestMatchCandidate) {
         LocaleMatch result = new LocaleMatch();
-        result.locale = bestMatch.getKey();
+        result.locale = locale;
         String[] unicodeExt = UnicodeLocaleExtSequence(bestMatchCandidate);
         String noExtensionsLocale = unicodeExt[0];
         if (!bestMatchCandidate.equals(noExtensionsLocale)) {
@@ -569,9 +594,9 @@ public final class IntlAbstractOperations {
      * 9.2.5 ResolveLocale (availableLocales, requestedLocales, options, relevantExtensionKeys,
      * localeData)
      */
-    public static ResolvedLocale ResolveLocale(ExecutionContext cx, Set<String> availableLocales,
-            Set<String> requestedLocales, OptionsRecord options,
-            List<ExtensionKey> relevantExtensionKeys, LocaleData localeData) {
+    public static ResolvedLocale ResolveLocale(ExecutionContext cx,
+            Lazy<Set<String>> availableLocales, Set<String> requestedLocales,
+            OptionsRecord options, List<ExtensionKey> relevantExtensionKeys, LocaleData localeData) {
         /* steps 1-3 */
         MatcherType matcher = options.localeMatcher;
         LocaleMatch r;
@@ -592,6 +617,20 @@ public final class IntlAbstractOperations {
         /* steps 6-7 */
         ResolvedLocale result = new ResolvedLocale();
         result.dataLocale = foundLocale;
+        // fast path for steps 8-14
+        if (extensionSubtags == null && options.values.isEmpty()) {
+            /* steps 8-11 */
+            for (int i = 0, len = relevantExtensionKeys.size(); i < len; ++i) {
+                ExtensionKey key = relevantExtensionKeys.get(i);
+                String value = foundLocaleData.defaultValue(key);
+                result.values.put(key, value);
+            }
+            /* step 12 (not applicable) */
+            /* step 13 */
+            result.locale = foundLocale;
+            /* step 14 */
+            return result;
+        }
         /* steps 8-11 */
         String supportedExtension = "-u";
         for (int i = 0, len = relevantExtensionKeys.size(); i < len; ++i) {

@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.intl;
 import java.util.Date;
 
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.ibm.icu.text.DateFormat;
@@ -46,7 +47,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
     /** [[boundFormat]] */
     private Callable boundFormat;
 
-    private String pattern;
+    private Lazy<String> pattern;
 
     private DateFormat dateFormat;
 
@@ -66,7 +67,7 @@ public class DateTimeFormatObject extends OrdinaryObject {
         // calendar and numberingSystem are already handled in language-tag
         // assert locale.getKeywordValue("calendar").equals(calendar);
         // assert locale.getKeywordValue("numbers").equals(numberingSystem);
-        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, locale);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern.get(), locale);
         if (timeZone != null) {
             dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
         }
@@ -150,10 +151,10 @@ public class DateTimeFormatObject extends OrdinaryObject {
     }
 
     public String getPattern() {
-        return pattern;
+        return pattern.get();
     }
 
-    public void setPattern(String pattern) {
+    public void setPattern(Lazy<String> pattern) {
         this.pattern = pattern;
     }
 }

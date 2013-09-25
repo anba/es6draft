@@ -24,6 +24,7 @@ import java.util.Set;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -52,14 +53,20 @@ import com.ibm.icu.util.ULocale;
  */
 public class CollatorConstructor extends BuiltinConstructor implements Initialisable {
     /** [[availableLocales]] */
-    private Set<String> availableLocales;
+    Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
+        @Override
+        protected Set<String> computeValue() {
+            return GetAvailableLocales(Collator.getAvailableULocales());
+        }
+    };
 
     public static Set<String> getAvailableLocales(ExecutionContext cx) {
+        return getAvailableLocalesLazy(cx).get();
+    }
+
+    private static Lazy<Set<String>> getAvailableLocalesLazy(ExecutionContext cx) {
         CollatorConstructor collator = (CollatorConstructor) cx
                 .getIntrinsic(Intrinsics.Intl_Collator);
-        if (collator.availableLocales == null) {
-            collator.availableLocales = GetAvailableLocales(Collator.getAvailableULocales());
-        }
         return collator.availableLocales;
     }
 
@@ -138,6 +145,20 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
         public CollatorLocaleDataInfo(String usage, ULocale locale) {
             this.usage = usage;
             this.locale = locale;
+        }
+
+        @Override
+        public String defaultValue(ExtensionKey extensionKey) {
+            switch (extensionKey) {
+            case co:
+                return null; // null must be first value, cf. 10.2.3
+            case kf:
+                return getCaseFirstInfo().get(0);
+            case kn:
+                return getNumericInfo().get(0);
+            default:
+                throw new IllegalArgumentException(extensionKey.name());
+            }
         }
 
         @Override
@@ -254,7 +275,7 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
             opt.values.put(ExtensionKey.kf, caseFirst);
         }
         /* step 14-15 */
-        ResolvedLocale r = ResolveLocale(cx, getAvailableLocales(cx), requestedLocals, opt,
+        ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocals, opt,
                 relevantExtensionKeys, localeData);
         /* step 16 */
         collator.setLocale(r.locale);

@@ -25,6 +25,7 @@ import java.util.Set;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Lazy;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -53,16 +54,21 @@ import com.ibm.icu.util.ULocale;
  * </ul>
  */
 public class NumberFormatConstructor extends BuiltinConstructor implements Initialisable {
-
     /** [[availableLocales]] */
-    private Set<String> availableLocales;
+    Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
+        @Override
+        protected Set<String> computeValue() {
+            return GetAvailableLocales(NumberFormat.getAvailableULocales());
+        }
+    };
 
     public static Set<String> getAvailableLocales(ExecutionContext cx) {
+        return getAvailableLocalesLazy(cx).get();
+    }
+
+    private static Lazy<Set<String>> getAvailableLocalesLazy(ExecutionContext cx) {
         NumberFormatConstructor numberFormat = (NumberFormatConstructor) cx
                 .getIntrinsic(Intrinsics.Intl_NumberFormat);
-        if (numberFormat.availableLocales == null) {
-            numberFormat.availableLocales = GetAvailableLocales(NumberFormat.getAvailableULocales());
-        }
         return numberFormat.availableLocales;
     }
 
@@ -83,6 +89,16 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
 
         public NumberFormatLocaleDataInfo(ULocale locale) {
             this.locale = locale;
+        }
+
+        @Override
+        public String defaultValue(ExtensionKey extensionKey) {
+            switch (extensionKey) {
+            case nu:
+                return getNumberInfo().get(0);
+            default:
+                throw new IllegalArgumentException(extensionKey.name());
+            }
         }
 
         @Override
@@ -154,7 +170,7 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
         /* step 9-10 */
         NumberFormatLocaleData localeData = new NumberFormatLocaleData();
         /* step 11 */
-        ResolvedLocale r = ResolveLocale(cx, getAvailableLocales(cx), requestedLocales, opt,
+        ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocales, opt,
                 relevantExtensionKeys, localeData);
         /* step 12 */
         numberFormat.setLocale(r.locale);
