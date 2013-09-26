@@ -23,9 +23,9 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
- * <h1>14 Scripts and Modules</h1>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1>
  * <ul>
- * <li>14.1 Script
+ * <li>15.1 Script
  * </ul>
  */
 public class ScriptLoader {
@@ -33,44 +33,44 @@ public class ScriptLoader {
     }
 
     /**
-     * [14.1 ScriptEvaluation]
+     * [15.1.2 ScriptEvaluation]
      */
     public static Object ScriptEvaluation(Script script, Realm realm, boolean deletableBindings) {
-        /* step 1-2 */
+        /* steps 1-2 */
         RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
         if (scriptBody == null)
             return null;
         /* step 3 */
         LexicalEnvironment globalEnv = realm.getGlobalEnv();
-        /* step 4-5 */
+        /* steps 4-5 */
         scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv,
                 deletableBindings);
-        /* step 6-9 */
+        /* steps 6-9 */
         ExecutionContext progCxt = newScriptExecutionContext(realm);
-        /* step 10-14 */
+        /* steps 10-14 */
         Object result = script.evaluate(progCxt);
         /* step 15 */
         return result;
     }
 
     /**
-     * [14.1 ScriptEvaluation]
+     * [15.1.2 ScriptEvaluation]
      */
     public static Object ScriptEvaluation(Script script, ExecutionContext cx,
             boolean deletableBindings) {
         Realm realm = cx.getRealm();
-        /* step 1-2 */
+        /* steps 1-2 */
         RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
         if (scriptBody == null)
             return null;
         /* step 3 */
         LexicalEnvironment globalEnv = realm.getGlobalEnv();
-        /* step 4-5 */
+        /* steps 4-5 */
         scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv,
                 deletableBindings);
-        /* step 6-9 */
+        /* steps 6-9 */
         ExecutionContext progCxt = newScriptExecutionContext(cx);
-        /* step 10-14 */
+        /* steps 10-14 */
         Object result = script.evaluate(progCxt);
         /* step 15 */
         return result;

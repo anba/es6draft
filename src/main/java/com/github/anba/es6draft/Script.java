@@ -10,9 +10,9 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
- * <h1>14 Scripts and Modules</h1>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1>
  * <ul>
- * <li>14.1 Script
+ * <li>15.1 Script
  * </ul>
  */
 public interface Script {
