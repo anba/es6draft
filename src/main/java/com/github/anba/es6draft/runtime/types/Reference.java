@@ -18,10 +18,10 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 
 /**
- * <h1>8 Types</h1><br>
- * <h2>8.2 ECMAScript Specification Types</h2>
+ * <h1>6 ECMAScript Data Types and Values</h1><br>
+ * <h2>6.2 ECMAScript Specification Types</h2>
  * <ul>
- * <li>8.2.4 The Reference Specification Type
+ * <li>6.2.4 The Reference Specification Type
  * </ul>
  */
 public abstract class Reference<BASE, NAME> {
@@ -64,17 +64,17 @@ public abstract class Reference<BASE, NAME> {
     public abstract boolean isSuperReference();
 
     /**
-     * [8.2.4.1] GetValue (V)
+     * [6.2.4.1] GetValue (V)
      */
     public abstract Object GetValue(ExecutionContext cx);
 
     /**
-     * [8.2.4.1] PutValue (V, W)
+     * [6.2.4.1] PutValue (V, W)
      */
     public abstract void PutValue(Object w, ExecutionContext cx);
 
     /**
-     * [8.2.4.3] GetThisValue (V)
+     * [6.2.4.3] GetThisValue (V)
      */
     public abstract Object GetThisValue(ExecutionContext cx);
 
@@ -82,7 +82,7 @@ public abstract class Reference<BASE, NAME> {
     public abstract ScriptObject GetMethodCallThisValue(ExecutionContext cx);
 
     /**
-     * [8.2.4.1] GetValue (V)
+     * [6.2.4.1] GetValue (V)
      */
     public static Object GetValue(Object v, ExecutionContext cx) {
         if (!(v instanceof Reference))
@@ -91,7 +91,7 @@ public abstract class Reference<BASE, NAME> {
     }
 
     /**
-     * [8.2.4.1] PutValue (V, W)
+     * [6.2.4.1] PutValue (V, W)
      */
     public static void PutValue(Object v, Object w, ExecutionContext cx) {
         if (!(v instanceof Reference)) {
@@ -101,7 +101,7 @@ public abstract class Reference<BASE, NAME> {
     }
 
     /**
-     * [8.2.4.3] GetThisValue (V)
+     * [6.2.4.3] GetThisValue (V)
      */
     public static Object GetThisValue(ExecutionContext cx, Object v) {
         if (!(v instanceof Reference))

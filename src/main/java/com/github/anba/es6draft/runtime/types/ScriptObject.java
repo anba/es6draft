@@ -10,11 +10,11 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 
 /**
- * <h1>8 Types</h1><br>
- * <h2>8.1 ECMAScript Language Types</h2><br>
- * <h3>8.1.7 The Object Type</h3>
+ * <h1>6 ECMAScript Data Types and Values</h1><br>
+ * <h2>6.1 ECMAScript Language Types</h2><br>
+ * <h3>6.1.6 The Object Type</h3>
  * <ul>
- * <li>8.1.7.2 Object Internal Methods and Internal Data Properties
+ * <li>6.1.6.2 Object Internal Methods and Internal Data Properties
  * </ul>
  */
 public interface ScriptObject {

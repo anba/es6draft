@@ -7,10 +7,10 @@
 package com.github.anba.es6draft.runtime.types;
 
 /**
- * <h1>8 Types</h1><br>
- * <h2>8.1 ECMAScript Language Types</h2>
+ * <h1>6 ECMAScript Data Types and Values</h1><br>
+ * <h2>6.1 ECMAScript Language Types</h2>
  * <ul>
- * <li>8.1.2 The Null Type
+ * <li>6.1.2 The Null Type
  * </ul>
  */
 public final class Null {

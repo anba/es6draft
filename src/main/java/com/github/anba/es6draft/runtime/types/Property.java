@@ -10,11 +10,11 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 /**
- * <h1>8 Types</h1><br>
- * <h2>8.1 ECMAScript Language Types</h2><br>
- * <h3>8.1.7 The Object Type</h3>
+ * <h1>6 ECMAScript Data Types and Values</h1><br>
+ * <h2>6.1 ECMAScript Language Types</h2><br>
+ * <h3>6.1.6 The Object Type</h3>
  * <ul>
- * <li>8.1.7.1 Property Attributes
+ * <li>6.1.6.1 Property Attributes
  * </ul>
  */
 public final class Property implements Cloneable {
@@ -62,7 +62,7 @@ public final class Property implements Cloneable {
     private void toProperty(Type newType) {
         assert type != newType;
         type = newType;
-        // default attribute values per 8.1.6.1, table 7
+        // default attribute values per 6.1.6.1, table 3
         value = UNDEFINED;
         getter = null;
         setter = null;
@@ -125,7 +125,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * 8.2.5.1 IsAccessorDescriptor ( Desc )<br>
+     * 6.2.5.1 IsAccessorDescriptor ( Desc )<br>
      * Returns {@code true} if this object is an accessor property descriptor
      */
     public final boolean isAccessorDescriptor() {
@@ -133,7 +133,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * 8.2.5.2 IsDataDescriptor ( Desc )<br>
+     * 6.2.5.2 IsDataDescriptor ( Desc )<br>
      * Returns {@code true} if this object is a data property descriptor
      */
     public final boolean isDataDescriptor() {

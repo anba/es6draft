@@ -12,15 +12,15 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import org.mozilla.javascript.ConsString;
 
 /**
- * <h1>8 Types</h1><br>
- * <h2>8.1 ECMAScript Language Types</h2>
+ * <h1>6 ECMAScript Data Types and Values</h1><br>
+ * <h2>6.1 ECMAScript Language Types</h2>
  * <ul>
- * <li>8.1.1 The Undefined Type
- * <li>8.1.2 The Null Type
- * <li>8.1.3 The Boolean Type
- * <li>8.1.4 The String Type
- * <li>8.1.5 The Number Type
- * <li>8.1.6 The Object Type
+ * <li>6.1.1 The Undefined Type
+ * <li>6.1.2 The Null Type
+ * <li>6.1.3 The Boolean Type
+ * <li>6.1.4 The String Type
+ * <li>6.1.5 The Number Type
+ * <li>6.1.6 The Object Type
  * </ul>
  */
 public enum Type {
