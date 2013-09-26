@@ -166,7 +166,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.1 Script
+     * 15.1 Script
      * <p>
      * Static Semantics: LexicallyDeclaredNames
      */
@@ -175,7 +175,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.1 Function Definitions
+     * 14.1 Function Definitions
      * <p>
      * Static Semantics: LexicallyScopedDeclarations (FIXME: missing in spec!)
      */
@@ -184,7 +184,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.1 Script
+     * 15.1 Script
      * <p>
      * Static Semantics: LexicallyScopedDeclarations
      */
@@ -193,7 +193,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.1 Function Definitions
+     * 14.1 Function Definitions
      * <p>
      * Static Semantics: VarDeclaredNames (FunctionBody -> StatementList)
      */
@@ -202,7 +202,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.1 Script
+     * 15.1 Script
      * <p>
      * Static Semantics: VarDeclaredNames
      */
@@ -211,7 +211,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 13.1 Function Definitions
+     * 14.1 Function Definitions
      * <p>
      * Static Semantics: VarScopedDeclarations (FIXME: missing in spec!)
      */
@@ -220,7 +220,7 @@ public final class StaticSemantics {
     }
 
     /**
-     * 14.1 Script
+     * 15.1 Script
      * <p>
      * Static Semantics: VarScopedDeclarations
      */
