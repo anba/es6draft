@@ -26,11 +26,10 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.19 The "std:iteration" Module</h2><br>
- * <h3>15.19.4 Generator Objects</h3>
+ * <h1>25 The "std:iteration" Module</h1><br>
+ * <h2>25.4 Generator Objects</h2>
  * <ul>
- * <li>15.19.4.3 Iteration Related Abstract Operations
+ * <li>25.4.3 Iteration Related Abstract Operations
  * </ul>
  */
 public final class IterationAbstractOperations {
@@ -38,78 +37,98 @@ public final class IterationAbstractOperations {
     }
 
     /**
-     * 15.19.4.3.1 GeneratorStart (generator, generatorBody)
+     * 25.4.3.1 GeneratorStart (generator, generatorBody)
      */
     public static GeneratorObject GeneratorStart(ExecutionContext cx, GeneratorObject generator,
             RuntimeInfo.Code generatorBody) {
+        /* steps 1-6 */
         generator.start(cx, generatorBody);
+        /* step 7 */
         return generator;
     }
 
     /**
-     * 15.19.4.3.2 GeneratorResume (generator, value)
+     * 25.4.3.2 GeneratorResume (generator, value)
      */
     public static Object GeneratorResume(ExecutionContext cx, Object generator, Object value) {
+        /* step 1 */
         if (!Type.isObject(generator)) {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
+        /* step 2 */
         if (!(generator instanceof GeneratorObject)) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
+        /* steps 3-14 */
         return ((GeneratorObject) generator).resume(cx, value);
     }
 
     /**
-     * 15.19.4.3.3 GeneratorYield (itrNextObj)
+     * 25.4.3.3 GeneratorYield (itrNextObj)
      */
     public static Object GeneratorYield(ExecutionContext genContext, ScriptObject itrNextObj) {
+        /* step 1 (?) */
+        /* steps 2-4 */
         GeneratorObject generator = genContext.getCurrentGenerator();
         assert generator != null;
+        /* steps 5-11 */
         return generator.yield(itrNextObj);
     }
 
     /**
-     * 15.19.4.3.4 CreateItrResultObject (value, done)
+     * 25.4.3.4 CreateItrResultObject (value, done)
      */
     public static ScriptObject CreateItrResultObject(ExecutionContext cx, Object value, boolean done) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        /* step 3 */
         CreateOwnDataProperty(cx, obj, "value", value);
+        /* step 4 */
         CreateOwnDataProperty(cx, obj, "done", done);
+        /* step 5 */
         return obj;
     }
 
     /**
-     * 15.19.4.3.5 GetIterator ( obj )
+     * 25.4.3.5 GetIterator ( obj )
      */
     public static ScriptObject GetIterator(ExecutionContext cx, Object obj) {
+        /* steps 1-2 */
         Object iterator = Invoke(cx, obj, BuiltinSymbol.iterator.get());
+        /* step 3 */
         if (!Type.isObject(iterator)) {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
+        /* step 4 */
         return Type.objectValue(iterator);
     }
 
     /**
-     * 15.19.4.3.6 IteratorNext ( iterator, value )
+     * 25.4.3.6 IteratorNext ( iterator, value )
      */
     public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator) {
         return IteratorNext(cx, iterator, UNDEFINED);
     }
 
     /**
-     * 15.19.4.3.6 IteratorNext ( iterator, value )
+     * 25.4.3.6 IteratorNext ( iterator, value )
      */
     public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator, Object value) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         Object result = Invoke(cx, iterator, "next", value);
+        /* step 4 */
         if (!Type.isObject(result)) {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
+        /* step 5 */
         return Type.objectValue(result);
     }
 
     /**
      * FIXME: Not in spec<br>
-     * 15.19.4.3.? IteratorThrow ( iterator, value )
+     * 25.4.3.? IteratorThrow ( iterator, value )
      */
     public static ScriptObject IteratorThrow(ExecutionContext cx, ScriptObject iterator,
             Object value) {
@@ -121,27 +140,36 @@ public final class IterationAbstractOperations {
     }
 
     /**
-     * 15.19.4.3.7 IteratorComplete (itrResult)
+     * 25.4.3.7 IteratorComplete (itrResult)
      */
     public static boolean IteratorComplete(ExecutionContext cx, ScriptObject itrResult) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         Object done = Get(cx, itrResult, "done");
+        /* step 3 */
         return ToBoolean(done);
     }
 
     /**
-     * 15.19.4.3.8 IteratorValue (itrResult)
+     * 25.4.3.8 IteratorValue (itrResult)
      */
     public static Object IteratorValue(ExecutionContext cx, ScriptObject itrResult) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         return Get(cx, itrResult, "value");
     }
 
     /**
-     * 15.19.4.3.9 CreateEmptyIterator ( )
+     * 25.4.3.9 CreateEmptyIterator ( )
      */
     public static ScriptObject CreateEmptyIterator(ExecutionContext cx) {
+        /* step 1 */
         OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        /* step 2 */
         BuiltinFunction emptyNextMethod = new EmptyIteratorNextMethod(cx.getRealm());
+        /* step 3 */
         CreateOwnDataProperty(cx, obj, "next", emptyNextMethod);
+        /* step 4 */
         return obj;
     }
 
@@ -153,8 +181,8 @@ public final class IterationAbstractOperations {
 
         @Override
         public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ScriptObject result = CreateItrResultObject(calleeContext(), UNDEFINED, true);
-            return result;
+            /* steps 1-2 */
+            return CreateItrResultObject(calleeContext(), UNDEFINED, true);
         }
     }
 }

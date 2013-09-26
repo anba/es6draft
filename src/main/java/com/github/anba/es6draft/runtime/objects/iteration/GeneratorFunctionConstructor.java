@@ -43,12 +43,11 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKi
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.19 The "std:iteration" Module</h2><br>
- * <h3>15.19.3 GeneratorFunction Objects</h3>
+ * <h1>25 The "std:iteration" Module</h1><br>
+ * <h2>25.3 GeneratorFunction Objects</h2>
  * <ul>
- * <li>15.19.3.1 The GeneratorFunction Constructor
- * <li>15.19.3.2 Properties of the GeneratorFunction Constructor
+ * <li>25.3.1 The GeneratorFunction Constructor
+ * <li>25.3.2 Properties of the GeneratorFunction Constructor
  * </ul>
  */
 public class GeneratorFunctionConstructor extends BuiltinConstructor implements Initialisable {
@@ -63,7 +62,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 15.19.3.1.1 GeneratorFunction (p1, p2, ... , pn, body)
+     * 25.3.1.1 GeneratorFunction (p1, p2, ... , pn, body)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -118,7 +117,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
 
-        /* step 18-19 */
+        /* steps 18-19 */
         FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 20 */
         ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
@@ -129,7 +128,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 15.19.3.1.2 new GeneratorFunction (...argumentsList)
+     * 25.3.1.2 new GeneratorFunction (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -137,7 +136,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
     }
 
     /**
-     * 15.19.3.2 Properties of the GeneratorFunction Constructor
+     * 25.3.2 Properties of the GeneratorFunction Constructor
      */
     public enum Properties {
         ;
@@ -146,14 +145,14 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         public static final Intrinsics __proto__ = Intrinsics.Function;
 
         /**
-         * 15.19.3.2.1 GeneratorFunction.prototype
+         * 25.3.2.1 GeneratorFunction.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Generator;
 
         /**
-         * 15.19.3.2.2 GeneratorFunction.length
+         * 25.3.2.2 GeneratorFunction.length
          */
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
@@ -164,7 +163,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         public static final String name = "GeneratorFunction";
 
         /**
-         * 15.19.3.2.3 GeneratorFunction[ @@create ] ( )
+         * 25.3.2.3 GeneratorFunction[ @@create ] ( )
          */
         @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

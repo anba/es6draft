@@ -28,11 +28,10 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.19 The "std:iteration" Module</h2><br>
- * <h3>15.19.4 Generator Objects</h3>
+ * <h1>25 The "std:iteration" Module</h1><br>
+ * <h2>25.4 Generator Objects</h2>
  * <ul>
- * <li>15.19.4.2 Properties of Generator Instances
+ * <li>25.4.2 Properties of Generator Instances
  * </ul>
  */
 public class GeneratorObject extends OrdinaryObject {
