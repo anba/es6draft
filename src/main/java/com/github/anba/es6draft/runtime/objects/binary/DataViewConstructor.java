@@ -139,7 +139,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
             return OrdinaryConstruct(calleeContext, this, args);
         }
         DataViewObject dataView = (DataViewObject) thisValue;
-        /* step 3-4 */
+        /* steps 3-4 */
         if (!(buffer instanceof ArrayBufferObject)) {
             throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }

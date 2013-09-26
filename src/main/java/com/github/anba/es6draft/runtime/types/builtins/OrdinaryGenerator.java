@@ -80,12 +80,12 @@ public class OrdinaryGenerator extends FunctionObject {
             throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
 
-        /* step 1-11 */
+        /* steps 1-11 */
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
                 thisValue);
-        /* step 12-13 */
+        /* steps 12-13 */
         getFunction().functionDeclarationInstantiation(calleeContext, this, args);
-        /* step 14-15 */
+        /* steps 14-15 */
         GeneratorObject result;
         if (getFunctionKind() != FunctionKind.Arrow) {
             result = EvaluateBody(calleeContext, this);

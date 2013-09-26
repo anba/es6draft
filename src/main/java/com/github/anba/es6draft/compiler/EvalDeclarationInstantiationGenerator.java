@@ -126,7 +126,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         }
         // end-modification
 
-        /* step 1-2 (not applicable) */
+        /* steps 1-2 (not applicable) */
         /* step 3 */
         boolean strict = evalScript.isStrict();
         /* step 4 (not applicable) */
@@ -152,7 +152,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
                 mv.mark(after);
             }
         }
-        /* step 6-7 (not applicable) */
+        /* steps 6-7 (not applicable) */
         /* step 8 */
         for (StatementListItem d : varDeclarations) {
             if (d instanceof VariableStatement) {

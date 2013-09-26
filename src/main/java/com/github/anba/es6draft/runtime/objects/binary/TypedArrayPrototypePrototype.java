@@ -266,9 +266,9 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             ScriptObject o = ToObject(cx, thisValue);
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
-            /* step 4-5 */
+            /* steps 4-5 */
             long len = ToLength(cx, lenVal);
-            /* step 6-7 */
+            /* steps 6-7 */
             double relativeStart = ToInteger(cx, start);
             /* step 8 */
             long k;

@@ -189,9 +189,9 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             Object obj = CheckObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
-            /* step 4-5 */
+            /* steps 4-5 */
             String searchStr = ToFlatString(cx, searchString);
-            /* step 6-7 */
+            /* steps 6-7 */
             double pos = ToInteger(cx, position);
             /* step 8 */
             int len = s.length();
@@ -213,7 +213,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             String s = ToFlatString(cx, obj);
             /* steps 4-5 */
             String searchStr = ToFlatString(cx, searchString);
-            /* step 6-7 */
+            /* steps 6-7 */
             double numPos = ToNumber(cx, position);
             /* step 8 */
             double pos = Double.isNaN(numPos) ? Double.POSITIVE_INFINITY : ToInteger(numPos);
@@ -701,7 +701,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             String s = ToFlatString(cx, obj);
             /* steps 4-5 */
             String searchStr = ToFlatString(cx, searchString);
-            /* step 6-7 */
+            /* steps 6-7 */
             double pos = ToInteger(cx, position);
             /* step 8 */
             int len = s.length();
@@ -731,7 +731,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                 // FIXME: spec bug undefined /= NaN (Bug 1153)
                 return UNDEFINED;
             }
-            /* step 8-12 */
+            /* steps 8-12 */
             return s.codePointAt((int) position);
         }
 

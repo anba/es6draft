@@ -91,7 +91,7 @@ public final class ExecutionContext {
      * Runtime Semantics: Script Evaluation
      */
     public static ExecutionContext newScriptExecutionContext(Realm realm) {
-        /* step 3-6 */
+        /* steps 3-6 */
         ExecutionContext progCxt = new ExecutionContext();
         progCxt.realm = realm;
         progCxt.lexEnv = realm.getGlobalEnv();
@@ -111,7 +111,7 @@ public final class ExecutionContext {
      * Runtime Semantics: Script Evaluation
      */
     public static ExecutionContext newScriptExecutionContext(ExecutionContext cx) {
-        /* step 3-6 */
+        /* steps 3-6 */
         ExecutionContext progCxt = new ExecutionContext();
         progCxt.realm = cx.realm;
         progCxt.lexEnv = cx.realm.getGlobalEnv();
@@ -131,7 +131,7 @@ public final class ExecutionContext {
      */
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
             LexicalEnvironment lexEnv, LexicalEnvironment varEnv) {
-        /* step 17-20 */
+        /* steps 17-20 */
         ExecutionContext progCxt = new ExecutionContext();
         progCxt.realm = callerContext.realm;
         progCxt.lexEnv = lexEnv;
@@ -174,7 +174,7 @@ public final class ExecutionContext {
      * 9.1.16.1 [[Call]] (thisArgument, argumentsList)
      */
     public static ExecutionContext newFunctionExecutionContext(FunctionObject f, Object thisArgument) {
-        /* 9.1.16.1, step 4-12 */
+        /* 9.1.16.1, steps 4-12 */
         ExecutionContext calleeContext = new ExecutionContext();
         Realm calleeRealm = f.getRealm();
         calleeContext.realm = calleeRealm;

@@ -167,7 +167,7 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
                 "best fit");
         /* step 8 */
         opt.localeMatcher = OptionsRecord.MatcherType.forName(matcher);
-        /* step 9-10 */
+        /* steps 9-10 */
         NumberFormatLocaleData localeData = new NumberFormatLocaleData();
         /* step 11 */
         ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocales, opt,
@@ -235,7 +235,7 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
         /* steps 34-35 */
         boolean g = GetBooleanOption(cx, options, "useGrouping", true);
         numberFormat.setUseGrouping(g);
-        /* step 36-41 */
+        /* steps 36-41 */
         // not applicable
         /* step 42 */
         numberFormat.setBoundFormat(null);

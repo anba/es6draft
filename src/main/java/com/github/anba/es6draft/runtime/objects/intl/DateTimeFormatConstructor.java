@@ -238,7 +238,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
                 "best fit");
         /* step 7 */
         opt.localeMatcher = OptionsRecord.MatcherType.forName(matcher);
-        /* step 8-9 */
+        /* steps 8-9 */
         DateTimeFormatLocaleData localeData = new DateTimeFormatLocaleData();
         /* step 10 */
         ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocales, opt,
@@ -251,7 +251,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         dateTimeFormat.setNumberingSystem(r.values.get(ExtensionKey.nu));
         /* step 14 */
         String dataLocale = r.dataLocale;
-        /* step 15-17 */
+        /* steps 15-17 */
         String timeZone;
         Object tz = Get(cx, options, "timeZone");
         if (!Type.isUndefined(tz)) {

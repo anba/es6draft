@@ -179,7 +179,7 @@ public class OrdinaryObject implements ScriptObject {
         if (desc == null) {
             return null;
         }
-        /* step 3-9 */
+        /* steps 3-9 */
         return desc;
     }
 
@@ -192,7 +192,7 @@ public class OrdinaryObject implements ScriptObject {
         if (desc == null) {
             return null;
         }
-        /* step 3-9 */
+        /* steps 3-9 */
         return desc;
     }
 
@@ -408,7 +408,7 @@ public class OrdinaryObject implements ScriptObject {
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         /* step 1 (implicit) */
-        /* step 2-3 */
+        /* steps 2-3 */
         Property desc = getOwnProperty(cx, propertyKey);
         /* step 4 */
         if (desc == null) {
@@ -437,7 +437,7 @@ public class OrdinaryObject implements ScriptObject {
     @Override
     public Object get(ExecutionContext cx, ExoticSymbol propertyKey, Object receiver) {
         /* step 1 (implicit) */
-        /* step 2-3 */
+        /* steps 2-3 */
         Property desc = getOwnProperty(cx, propertyKey);
         /* step 4 */
         if (desc == null) {
@@ -466,7 +466,7 @@ public class OrdinaryObject implements ScriptObject {
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
-        /* step 2-3 */
+        /* steps 2-3 */
         Property ownDesc = getOwnProperty(cx, propertyKey);
         /* step 4 */
         if (ownDesc == null) {
@@ -508,7 +508,7 @@ public class OrdinaryObject implements ScriptObject {
     @Override
     public boolean set(ExecutionContext cx, ExoticSymbol propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
-        /* step 2-3 */
+        /* steps 2-3 */
         Property ownDesc = getOwnProperty(cx, propertyKey);
         /* step 4 */
         if (ownDesc == null) {
@@ -550,8 +550,8 @@ public class OrdinaryObject implements ScriptObject {
     @Override
     public final Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
             Object receiver) {
-        /* step 1-2 (implicit) */
-        /* step 3-4 */
+        /* steps 1-2 (implicit) */
+        /* steps 3-4 */
         Object method = get(cx, propertyKey, receiver);
         /* step 5 */
         if (!Type.isObject(method)) {
@@ -572,8 +572,8 @@ public class OrdinaryObject implements ScriptObject {
     @Override
     public final Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments,
             Object receiver) {
-        /* step 1-2 (implicit) */
-        /* step 3-4 */
+        /* steps 1-2 (implicit) */
+        /* steps 3-4 */
         Object method = get(cx, propertyKey, receiver);
         /* step 5 */
         if (!Type.isObject(method)) {

@@ -116,7 +116,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 r.append(ToString(cx, Invoke(cx, firstElement, "toLocaleString")));
             }
-            /* step 12-13 */
+            /* steps 12-13 */
             for (long k = 1; k < len; ++k) {
                 Object nextElement = Get(cx, array, ToString(k));
                 if (Type.isUndefinedOrNull(nextElement)) {
@@ -306,7 +306,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
-            /* step 4-5 */
+            /* steps 4-5 */
             long len = ToLength(cx, lenVal);
             /* step 6 */
             long middle = len / 2L;
@@ -345,7 +345,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             /* step 3 */
             Object lenVal = Get(cx, o, "length");
-            /* step 4-5 */
+            /* steps 4-5 */
             long len = ToLength(cx, lenVal);
             /* step 6 */
             if (len == 0) {
@@ -385,9 +385,9 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             // ScriptObject a = ArrayCreate(cx, 0);
             /* step 4 */
             Object lenVal = Get(cx, o, "length");
-            /* step 5-6 */
+            /* steps 5-6 */
             long len = ToLength(cx, lenVal);
-            /* step 7-8 */
+            /* steps 7-8 */
             double relativeStart = ToInteger(cx, start);
             /* step 9 */
             long k;
@@ -421,7 +421,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     a = ((Constructor) c).construct(cx, count); // OrdinaryConstruct
                 }
             }
-            /* step 16-17 */
+            /* steps 16-17 */
             if (a == null) {
                 a = ArrayCreate(cx, count);
             }

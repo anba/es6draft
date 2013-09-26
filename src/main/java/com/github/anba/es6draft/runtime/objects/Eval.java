@@ -68,7 +68,7 @@ public final class Eval {
         }
         /* step 4 */
         boolean strictScript = script.getScriptBody().isStrict();
-        /* step 6-8 (implicit) */
+        /* steps 6-8 (implicit) */
         /* step 9 */
         if (!direct && !strictScript) {
             return ScriptEvaluation(script, ctx, true);
@@ -102,11 +102,11 @@ public final class Eval {
             lexEnv = LexicalEnvironment.newDeclarativeEnvironment(lexEnv);
             // end-modification
         }
-        /* step 15-16 */
+        /* steps 15-16 */
         script.getScriptBody().evalDeclarationInstantiation(ctx, lexEnv, varEnv, true);
-        /* step 17-20 */
+        /* steps 17-20 */
         ExecutionContext evalCxt = ExecutionContext.newEvalExecutionContext(ctx, lexEnv, varEnv);
-        /* step 21-25 */
+        /* steps 21-25 */
         Object result = script.evaluate(evalCxt);
         /* step 26 */
         return result;

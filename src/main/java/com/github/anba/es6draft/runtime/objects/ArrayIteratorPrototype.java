@@ -135,7 +135,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             ArrayIterationKind itemKind = itr.kind;
             /* step 7 */
             Object lenValue = Get(cx, array, "length");
-            /* step 8-9 */
+            /* steps 8-9 */
             long len = ToLength(cx, lenValue);
             /* step 10 */
             if (itemKind == ArrayIterationKind.SparseKey

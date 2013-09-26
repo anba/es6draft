@@ -124,7 +124,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         List<StatementListItem> varDeclarations = VarScopedDeclarations(func);
         /* step 6 */
         List<Declaration> functionsToInitialise = new ArrayList<>();
-        /* step 7-8 */
+        /* steps 7-8 */
         boolean argumentsObjectNeeded;
         if (func instanceof ArrowFunction) { // => [[ThisMode]] of func is lexical
             argumentsObjectNeeded = false;
@@ -161,7 +161,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 initialiseBinding(envRec, paramName, mv);
             }
         }
-        /* step 11-12 */
+        /* steps 11-12 */
         if (argumentsObjectNeeded) {
             bindings.add("arguments");
             if (strict) {
@@ -211,10 +211,10 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             // setMutableBinding(envRec, fn, false, mv);
             initialiseBinding(envRec, fn, mv);
         }
-        /* step 18-20 */
+        /* steps 18-20 */
         // stack: [] -> [ao]
         InstantiateArgumentsObject(mv);
-        /* step 21-22 */
+        /* steps 21-22 */
         BindingInitialisation(func, mv);
         /* step 23 */
         if (argumentsObjectNeeded) {

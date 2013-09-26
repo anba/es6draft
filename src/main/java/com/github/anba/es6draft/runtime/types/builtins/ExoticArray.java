@@ -117,7 +117,7 @@ public class ExoticArray extends OrdinaryObject {
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
         assert proto != null;
-        /* step 2-4, 6 (implicit) */
+        /* steps 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(cx.getRealm());
         /* step 5 */
         array.setPrototype(proto);

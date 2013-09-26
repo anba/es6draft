@@ -833,7 +833,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // stack: [ctor, proto] -> [proto, ctor, proto]
         mv.dupX1();
 
-        // steps 6
+        // step 6
         MethodDefinition constructor = ConstructorMethod(def);
         if (constructor != null) {
             codegen.compile(constructor);
@@ -851,7 +851,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             }
         }
 
-        // step 9-10, step 12-13
+        // steps 9-10, steps 12-13
         // stack: [proto, ctor, proto, <rti>] -> [proto, F]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);

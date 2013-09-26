@@ -115,14 +115,14 @@ public class ExoticArguments extends OrdinaryObject {
      * [9.2.5.1 Arguments Object] InstantiateArgumentsObject
      */
     public static ExoticArguments InstantiateArgumentsObject(ExecutionContext cx, Object[] args) {
-        /* [10.6] step 1 */
+        /* step 1 */
         int len = args.length;
-        /* [10.6] step 2-3 */
+        /* steps 2-3 */
         ExoticArguments obj = new ExoticArguments(cx.getRealm());
         obj.setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
-        /* [10.6] step 4 */
+        /* step 4 */
         obj.defineOwnProperty(cx, "length", new PropertyDescriptor(len, true, false, true));
-        /* [10.6] step 5-6 */
+        /* steps 5-6 */
         for (int index = 0; index < len; ++index) {
             Object val = args[index];
             obj.defineOwnProperty(cx, ToString(index),
@@ -135,7 +135,7 @@ public class ExoticArguments extends OrdinaryObject {
      * [9.2.5.1 Arguments Object] CompleteStrictArgumentsObject
      */
     public static void CompleteStrictArgumentsObject(ExecutionContext cx, ExoticArguments obj) {
-        /* [10.6] step 1-2 */
+        /* steps 1-2 */
         AddRestrictedFunctionProperties(cx, obj);
     }
 
@@ -254,7 +254,7 @@ public class ExoticArguments extends OrdinaryObject {
      */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
-        /* step 1-2 */
+        /* steps 1-2 */
         ParameterMap map = this.parameterMap;
         /* [[ParameterMap]] not present */
         if (map == null) {
@@ -326,7 +326,7 @@ public class ExoticArguments extends OrdinaryObject {
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
         // PropertyDescriptor isMapped = map.getOwnProperty(propertyKey);
         boolean isMapped = map.hasOwnProperty(propertyKey);
-        /* step 3-4 */
+        /* steps 3-4 */
         boolean allowed = super.defineOwnProperty(cx, propertyKey, desc);
         /* step 5 */
         if (!allowed) {

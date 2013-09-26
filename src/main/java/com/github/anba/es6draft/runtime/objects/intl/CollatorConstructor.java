@@ -242,7 +242,7 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
         collator.setInitializedIntlObject(true);
         /* step 3 */
         Set<String> requestedLocals = CanonicalizeLocaleList(cx, locales);
-        /* step 4-5 */
+        /* steps 4-5 */
         ScriptObject options;
         if (Type.isUndefined(opts)) {
             options = ObjectCreate(cx, Intrinsics.ObjectPrototype);
@@ -274,17 +274,17 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
         if (caseFirst != null) {
             opt.values.put(ExtensionKey.kf, caseFirst);
         }
-        /* step 14-15 */
+        /* steps 14-15 */
         ResolvedLocale r = ResolveLocale(cx, getAvailableLocalesLazy(cx), requestedLocals, opt,
                 relevantExtensionKeys, localeData);
         /* step 16 */
         collator.setLocale(r.locale);
-        /* step 17-19 (co-collation) */
+        /* steps 17-19 (co-collation) */
         String collation = r.values.get(ExtensionKey.co);
         collator.setCollation(collation != null ? collation : "default");
-        /* step 17-19 (kn-numeric) */
+        /* steps 17-19 (kn-numeric) */
         collator.setNumeric("true".equals(r.values.get(ExtensionKey.kn)));
-        /* step 17-19 (kf-caseFirst) */
+        /* steps 17-19 (kf-caseFirst) */
         collator.setCaseFirst(r.values.get(ExtensionKey.kf));
         /* step 20 */
         String s = GetStringOption(cx, options, "sensitivity",
@@ -297,7 +297,7 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
         }
         /* step 22 */
         collator.setSensitivity(s);
-        /* step 23-24 */
+        /* steps 23-24 */
         boolean ip = GetBooleanOption(cx, options, "ignorePunctuation", false);
         collator.setIgnorePunctuation(ip);
         /* step 25 */

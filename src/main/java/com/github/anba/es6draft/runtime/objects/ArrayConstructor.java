@@ -181,13 +181,13 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             } else {
                 a = ArrayCreate(cx, len);
             }
-            /* step 7-8 */
+            /* steps 7-8 */
             for (int k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 Object kValue = items[k];
                 DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(kValue, true, true, true));
             }
-            /* step 9-10 */
+            /* steps 9-10 */
             Put(cx, a, "length", len, true);
             /* step 11 */
             return a;
@@ -201,9 +201,9 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
                 Object mapfn, Object thisArg) {
             /* step 1 */
             Object c = thisValue;
-            /* step 2-3 */
+            /* steps 2-3 */
             ScriptObject items = ToObject(cx, arrayLike);
-            /* step 4-5 */
+            /* steps 4-5 */
             Callable mapper = null;
             boolean mapping;
             if (Type.isUndefined(mapfn)) {
@@ -215,7 +215,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
                 mapping = true;
                 mapper = (Callable) mapfn;
             }
-            /* step 6-7 */
+            /* steps 6-7 */
             boolean usingIterator = HasProperty(cx, items, BuiltinSymbol.iterator.get());
             /* step 8 */
             if (usingIterator) {
@@ -251,9 +251,9 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             /* step 9 (?) */
             /* step 10 */
             Object lenValue = Get(cx, items, "length");
-            /* step 11-12 */
+            /* steps 11-12 */
             long len = ToLength(cx, lenValue);
-            /* step 13-15 */
+            /* steps 13-15 */
             ScriptObject a;
             if (IsConstructor(c)) {
                 ScriptObject newObj = ((Constructor) c).construct(cx, len);
@@ -261,7 +261,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             } else {
                 a = ArrayCreate(cx, len);
             }
-            /* step 16-17 */
+            /* steps 16-17 */
             for (long k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 boolean kPresent = HasProperty(cx, items, pk);
@@ -277,7 +277,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
                             true, true));
                 }
             }
-            /* step 18-19 */
+            /* steps 18-19 */
             Put(cx, a, "length", len, true);
             /* step 20 */
             return a;

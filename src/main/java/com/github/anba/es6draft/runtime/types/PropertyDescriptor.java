@@ -142,7 +142,7 @@ public final class PropertyDescriptor implements Cloneable {
         if (desc == null) {
             return false;
         }
-        /* step 2-3 */
+        /* steps 2-3 */
         return desc.isAccessorDescriptor();
     }
 
@@ -162,7 +162,7 @@ public final class PropertyDescriptor implements Cloneable {
         if (desc == null) {
             return false;
         }
-        /* step 2-3 */
+        /* steps 2-3 */
         return desc.isDataDescriptor();
     }
 
@@ -182,7 +182,7 @@ public final class PropertyDescriptor implements Cloneable {
         if (desc == null) {
             return false;
         }
-        /* step 2-3 */
+        /* steps 2-3 */
         return desc.isGenericDescriptor();
     }
 
@@ -206,9 +206,9 @@ public final class PropertyDescriptor implements Cloneable {
         if (desc == null) {
             return UNDEFINED;
         }
-        /* step 3-4 */
+        /* steps 3-4 */
         ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* step 5-10 */
+        /* steps 5-10 */
         if (desc.isDataDescriptor()) {
             obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
             obj.defineOwnProperty(cx, "writable", _p(desc.isWritable()));
@@ -246,9 +246,9 @@ public final class PropertyDescriptor implements Cloneable {
         if (desc.origin != null) {
             return desc.origin;
         }
-        /* step 3-4 */
+        /* steps 3-4 */
         ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* step 5-10 */
+        /* steps 5-10 */
         if (desc.isDataDescriptor()) {
             obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
             obj.defineOwnProperty(cx, "writable", _p(desc.isWritable()));
@@ -277,12 +277,12 @@ public final class PropertyDescriptor implements Cloneable {
      * is not an instance of {@link ScriptObject}, a TypeError is thrown.
      */
     public static PropertyDescriptor ToPropertyDescriptor(ExecutionContext cx, Object object) {
-        /* step 1-2 */
+        /* steps 1-2 */
         if (!Type.isObject(object)) {
             throwTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject obj = Type.objectValue(object);
-        /* step 3-9 */
+        /* steps 3-9 */
         PropertyDescriptor desc = new PropertyDescriptor();
         if (HasProperty(cx, obj, "enumerable")) {
             Object enumerable = Get(cx, obj, "enumerable");
@@ -336,7 +336,7 @@ public final class PropertyDescriptor implements Cloneable {
      */
     public static PropertyDescriptor CompletePropertyDescriptor(PropertyDescriptor desc,
             Property likeDesc) {
-        /* step 1-3 (implicit) */
+        /* steps 1-3 (implicit) */
         /* step 4 */
         if (likeDesc == null) {
             likeDesc = new PropertyDescriptor().toProperty();

@@ -109,7 +109,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
      * 15.13.5.1.1 AllocateArrayBuffer (constructor)
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Object constructor) {
-        /* step 1-2 */
+        /* steps 1-2 */
         ArrayBufferObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.ArrayBufferPrototype, ArrayBufferObjectAllocator.INSTANCE);
         /* step 3 */
@@ -126,7 +126,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         /* step 1 (implicit) */
         /* step 2 */
         assert bytes >= 0;
-        /* step 3-4 */
+        /* steps 3-4 */
         ByteBuffer block = CreateByteArrayBlock(cx, bytes);
         /* step 5 */
         arrayBuffer.setData(block);
@@ -239,7 +239,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         if (block == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        /* step 7-10 */
+        /* steps 7-10 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
             block.order(isLittleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
         }

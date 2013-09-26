@@ -117,7 +117,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         if (numberLength != elementLength || elementLength < 0) {
             throwRangeError(cx, Messages.Key.InvalidBufferSize);
         }
-        /* step 11-12 */
+        /* steps 11-12 */
         ArrayBufferObject data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
         /* step 13 */
         int elementSize = elementType.size();
@@ -161,7 +161,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         ElementType elementType = array.getElementType();
         /* step 10 */
         long elementLength = srcArray.getArrayLength();
-        /* step 11-12 */
+        /* steps 11-12 */
         ElementType srcType = srcArray.getElementType();
         /* step 13 */
         ArrayBufferObject srcData = srcArray.getBuffer();

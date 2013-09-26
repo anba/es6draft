@@ -156,7 +156,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
                 }
             }
         }
-        /* step 12-13 */
+        /* steps 12-13 */
         for (FunctionDeclaration f : functionsToInitialise) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
