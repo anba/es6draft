@@ -4,13 +4,11 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.objects;
+package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GetIterator;
@@ -39,14 +37,14 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.14 Map Objects</h2>
+ * <h2>15.15 WeakMap Objects</h2>
  * <ul>
- * <li>15.14.1 The Map Constructor
- * <li>15.14.2 Properties of the Map Constructor
+ * <li>15.15.1 The WeakMap Constructor
+ * <li>15.15.2 Properties of the WeakMap Constructor
  * </ul>
  */
-public class MapConstructor extends BuiltinConstructor implements Initialisable {
-    public MapConstructor(Realm realm) {
+public class WeakMapConstructor extends BuiltinConstructor implements Initialisable {
+    public WeakMapConstructor(Realm realm) {
         super(realm);
     }
 
@@ -57,22 +55,21 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 15.14.1.1 Map (iterable = undefined, comparator = undefined)
+     * 15.15.1.1 WeakMap (iterable = undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
-        Object comparator = args.length > 1 ? args[1] : UNDEFINED;
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
             throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
         }
-        if (!(thisValue instanceof MapObject)) {
+        if (!(thisValue instanceof WeakMapObject)) {
             throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
-        MapObject map = (MapObject) thisValue;
+        WeakMapObject map = (WeakMapObject) thisValue;
         if (map.isInitialised()) {
             throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
@@ -92,33 +89,24 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
         }
 
         /* step 8 */
-        MapObject.Comparator _comparator = MapObject.Comparator.SameValueZero;
-        if (!Type.isUndefined(comparator)) {
-            if (!SameValue(comparator, "is")) {
-                throw throwRangeError(calleeContext, Messages.Key.MapInvalidComparator);
-            }
-            _comparator = MapObject.Comparator.SameValue;
-        }
+        map.initialise();
 
-        /* steps 9-10 */
-        map.initialise(_comparator);
-
-        /* step 11 */
+        /* step 9 */
         if (iter == null) {
             return map;
         }
-        /* step 12 */
+        /* step 10 */
         for (;;) {
             ScriptObject next = IteratorNext(calleeContext, iter);
             boolean done = IteratorComplete(calleeContext, next);
             if (done) {
                 return map;
             }
-            Object nextItem = IteratorValue(calleeContext, next);
-            if (!Type.isObject(nextItem)) {
+            Object nextValue = IteratorValue(calleeContext, next);
+            if (!Type.isObject(nextValue)) {
                 throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
             }
-            ScriptObject entry = Type.objectValue(nextItem);
+            ScriptObject entry = Type.objectValue(nextValue);
             Object k = Get(calleeContext, entry, "0");
             Object v = Get(calleeContext, entry, "1");
             adder.call(calleeContext, map, k, v);
@@ -126,7 +114,7 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 15.14.1.2 new Map (...argumentsList)
+     * 15.15.1.2 new WeakMap (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -134,7 +122,7 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 15.14.2 Properties of the Map Constructor
+     * 15.15.2 Properties of the WeakMap Constructor
      */
     public enum Properties {
         ;
@@ -148,32 +136,32 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
-        public static final String name = "Map";
+        public static final String name = "WeakMap";
 
         /**
-         * 15.14.2.1 Map.prototype
+         * 15.15.2.1 WeakMap.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
-        public static final Intrinsics prototype = Intrinsics.MapPrototype;
+        public static final Intrinsics prototype = Intrinsics.WeakMapPrototype;
 
         /**
-         * 15.14.2.2 Map[ @@create ] ( )
+         * 15.15.2.2 WeakMap[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.MapPrototype,
-                    MapObjectAllocator.INSTANCE);
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.WeakMapPrototype,
+                    WeakMapObjectAllocator.INSTANCE);
         }
     }
 
-    private static class MapObjectAllocator implements ObjectAllocator<MapObject> {
-        static final ObjectAllocator<MapObject> INSTANCE = new MapObjectAllocator();
+    private static class WeakMapObjectAllocator implements ObjectAllocator<WeakMapObject> {
+        static final ObjectAllocator<WeakMapObject> INSTANCE = new WeakMapObjectAllocator();
 
         @Override
-        public MapObject newInstance(Realm realm) {
-            return new MapObject(realm);
+        public WeakMapObject newInstance(Realm realm) {
+            return new WeakMapObject(realm);
         }
     }
 }

@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.objects;
+package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -27,19 +27,19 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
  * <h2>15.14 Map Objects</h2>
  * <ul>
- * <li>15.14.5 Map Iterator Object Structure
+ * <li>15.16.5 Set Iterator Object Structure
  * </ul>
  */
-public class MapIteratorPrototype extends OrdinaryObject implements Initialisable {
-    public MapIteratorPrototype(Realm realm) {
+public class SetIteratorPrototype extends OrdinaryObject implements Initialisable {
+    public SetIteratorPrototype(Realm realm) {
         super(realm);
     }
 
@@ -48,62 +48,61 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         createProperties(this, cx, Properties.class);
     }
 
-    public enum MapIterationKind {
+    public enum SetIterationKind {
         Key, Value, KeyValue
     }
 
     /**
-     * 15.14.5.3 Properties of Map Iterator Instances
+     * 15.16.5.3 Properties of Set Iterator Instances
      */
-    private static class MapIterator extends OrdinaryObject {
-        /** [[Map]] */
-        MapObject map;
+    private static class SetIterator extends OrdinaryObject {
+        /** [[IteratedSet]] */
+        SetObject set;
 
-        /** [[MapNextIndex]] */
+        /** [[SetNextIndex]] */
         @SuppressWarnings("unused")
         int nextIndex;
 
-        /** [[MapIterationKind]] */
-        MapIterationKind iterationKind;
+        /** [[SetIterationKind]] */
+        SetIterationKind iterationKind;
 
-        Iterator<Entry<Object, Object>> iterator;
+        Iterator<Entry<Object, Void>> iterator;
 
-        MapIterator(Realm realm) {
+        SetIterator(Realm realm) {
             super(realm);
         }
     }
 
-    private static class MapIteratorAllocator implements ObjectAllocator<MapIterator> {
-        static final ObjectAllocator<MapIterator> INSTANCE = new MapIteratorAllocator();
+    private static class SetIteratorAllocator implements ObjectAllocator<SetIterator> {
+        static final ObjectAllocator<SetIterator> INSTANCE = new SetIteratorAllocator();
 
         @Override
-        public MapIterator newInstance(Realm realm) {
-            return new MapIterator(realm);
+        public SetIterator newInstance(Realm realm) {
+            return new SetIterator(realm);
         }
     }
 
     /**
-     * 15.14.5.1 CreateMapIterator Abstract Operation
+     * 15.16.5.1 CreateSetIterator Abstract Operation
      */
-    public static OrdinaryObject CreateMapIterator(ExecutionContext cx, MapObject m,
-            MapIterationKind kind) {
+    public static OrdinaryObject CreateSetIterator(ExecutionContext cx, SetObject set,
+            SetIterationKind kind) {
         /* steps 1-3 (not applicable) */
         /* step 4 */
-        LinkedMap<Object, Object> entries = m.getMapData();
-        /* step 5 */
-        MapIterator iterator = ObjectCreate(cx, Intrinsics.MapIteratorPrototype,
-                MapIteratorAllocator.INSTANCE);
-        /* steps 6-8 */
-        iterator.map = m;
+        LinkedMap<Object, Void> entries = set.getSetData();
+        /* step 6 */
+        SetIterator iterator = ObjectCreate(cx, Intrinsics.SetIteratorPrototype,
+                SetIteratorAllocator.INSTANCE);
+        /* steps 6-9 */
+        iterator.set = set;
         iterator.nextIndex = 0;
-        iterator.iterationKind = kind;
         iterator.iterator = entries.iterator();
-        /* step 9 */
+        /* step 10 */
         return iterator;
     }
 
     /**
-     * 15.14.5.2 The Map Iterator Prototype
+     * 15.16.5.2 The Set Iterator Prototype
      */
     public enum Properties {
         ;
@@ -112,14 +111,14 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.14.5.2.1 MapIterator.prototype.constructor<br>
+         * 15.16.5.2.1 SetIterator.prototype.constructor<br>
          * FIXME: spec bug (no description)
          */
         @Value(name = "constructor")
         public static final Object constructor = UNDEFINED;
 
         /**
-         * 15.14.5.2.2 MapIterator.prototype.next( )
+         * 15.16.5.2.2 SetIterator.prototype.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -128,45 +127,39 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 3 */
-            if (!(thisValue instanceof MapIterator)) {
+            if (!(thisValue instanceof SetIterator)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 1 */
-            MapIterator o = (MapIterator) thisValue;
+            SetIterator o = (SetIterator) thisValue;
             /* step 4 */
-            MapObject m = o.map;
+            SetObject s = o.set;
             /* step 5 */
             // int index = o.nextIndex;
             /* step 6 */
-            MapIterationKind itemKind = o.iterationKind;
+            SetIterationKind itemKind = o.iterationKind;
             /* step 7 */
-            assert m.getMapData() != null;
+            assert s.getSetData() != null;
             /* step 8 */
-            Iterator<Entry<Object, Object>> itr = o.iterator;
+            Iterator<Entry<Object, Void>> itr = o.iterator;
             /* step 9 */
             if (itr.hasNext()) {
-                Entry<Object, Object> e = itr.next();
+                Entry<Object, Void> e = itr.next();
                 assert e != null;
-                Object result;
-                if (itemKind == MapIterationKind.Key) {
-                    result = e.getKey();
-                } else if (itemKind == MapIterationKind.Value) {
-                    result = e.getValue();
-                } else {
-                    assert itemKind == MapIterationKind.KeyValue;
-                    ScriptObject array = ArrayCreate(cx, 2);
-                    CreateOwnDataProperty(cx, array, "0", e.getKey());
-                    CreateOwnDataProperty(cx, array, "1", e.getValue());
-                    result = array;
+                if (itemKind == SetIterationKind.KeyValue) {
+                    ExoticArray result = ArrayCreate(cx, 2);
+                    CreateOwnDataProperty(cx, result, "0", e.getKey());
+                    CreateOwnDataProperty(cx, result, "1", e.getKey());
+                    return CreateItrResultObject(cx, result, false);
                 }
-                return CreateItrResultObject(cx, result, false);
+                return CreateItrResultObject(cx, e.getKey(), false);
             }
             /* step 10 */
             return CreateItrResultObject(cx, UNDEFINED, true);
         }
 
         /**
-         * 15.14.5.2.3 MapIterator.prototype.@@iterator ()
+         * 15.16.5.2.3 SetIterator.prototype.@@iterator()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
@@ -174,9 +167,9 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 15.14.5.2.4 MapIterator.prototype.@@toStringTag
+         * 15.16.5.2.4 SetIterator.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
-        public static final String toStringTag = "Map Iterator";
+        public static final String toStringTag = "Set Iterator";
     }
 }

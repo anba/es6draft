@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.objects;
+package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
@@ -37,14 +37,14 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
  * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.15 WeakMap Objects</h2>
+ * <h2>15.17 WeakSet Objects</h2>
  * <ul>
- * <li>15.15.1 The WeakMap Constructor
- * <li>15.15.2 Properties of the WeakMap Constructor
+ * <li>15.17.1 The WeakSet Constructor
+ * <li>15.17.2 Properties of the WeakSet Constructor
  * </ul>
  */
-public class WeakMapConstructor extends BuiltinConstructor implements Initialisable {
-    public WeakMapConstructor(Realm realm) {
+public class WeakSetConstructor extends BuiltinConstructor implements Initialisable {
+    public WeakSetConstructor(Realm realm) {
         super(realm);
     }
 
@@ -55,7 +55,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.15.1.1 WeakMap (iterable = undefined)
+     * 15.17.1.1 WeakSet (iterable = undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -66,11 +66,11 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
         if (!Type.isObject(thisValue)) {
             throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
         }
-        if (!(thisValue instanceof WeakMapObject)) {
+        if (!(thisValue instanceof WeakSetObject)) {
             throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
-        WeakMapObject map = (WeakMapObject) thisValue;
-        if (map.isInitialised()) {
+        WeakSetObject set = (WeakSetObject) thisValue;
+        if (set.isInitialised()) {
             throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
 
@@ -81,7 +81,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
             iter = null;
         } else {
             iter = GetIterator(calleeContext, iterable);
-            Object _adder = Get(calleeContext, map, "set");
+            Object _adder = Get(calleeContext, set, "add");
             if (!IsCallable(_adder)) {
                 throw throwTypeError(calleeContext, Messages.Key.NotCallable);
             }
@@ -89,32 +89,26 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
         }
 
         /* step 8 */
-        map.initialise();
+        set.initialise();
 
         /* step 9 */
         if (iter == null) {
-            return map;
+            return set;
         }
         /* step 10 */
         for (;;) {
             ScriptObject next = IteratorNext(calleeContext, iter);
             boolean done = IteratorComplete(calleeContext, next);
             if (done) {
-                return map;
+                return set;
             }
             Object nextValue = IteratorValue(calleeContext, next);
-            if (!Type.isObject(nextValue)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
-            }
-            ScriptObject entry = Type.objectValue(nextValue);
-            Object k = Get(calleeContext, entry, "0");
-            Object v = Get(calleeContext, entry, "1");
-            adder.call(calleeContext, map, k, v);
+            adder.call(calleeContext, set, nextValue);
         }
     }
 
     /**
-     * 15.15.1.2 new WeakMap (...argumentsList)
+     * 15.17.1.2 new WeakSet (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -122,7 +116,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.15.2 Properties of the WeakMap Constructor
+     * 15.17.2 Properties of the WeakSet Constructor
      */
     public enum Properties {
         ;
@@ -136,32 +130,32 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
-        public static final String name = "WeakMap";
+        public static final String name = "WeakSet";
 
         /**
-         * 15.15.2.1 WeakMap.prototype
+         * 15.17.2.1 WeakSet.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
-        public static final Intrinsics prototype = Intrinsics.WeakMapPrototype;
+        public static final Intrinsics prototype = Intrinsics.WeakSetPrototype;
 
         /**
-         * 15.15.2.2 WeakMap[ @@create ] ( )
+         * 15.17.2.2 WeakSet[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
-            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.WeakMapPrototype,
-                    WeakMapObjectAllocator.INSTANCE);
+            return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.WeakSetPrototype,
+                    WeakSetObjectAllocator.INSTANCE);
         }
     }
 
-    private static class WeakMapObjectAllocator implements ObjectAllocator<WeakMapObject> {
-        static final ObjectAllocator<WeakMapObject> INSTANCE = new WeakMapObjectAllocator();
+    private static class WeakSetObjectAllocator implements ObjectAllocator<WeakSetObject> {
+        static final ObjectAllocator<WeakSetObject> INSTANCE = new WeakSetObjectAllocator();
 
         @Override
-        public WeakMapObject newInstance(Realm realm) {
-            return new WeakMapObject(realm);
+        public WeakSetObject newInstance(Realm realm) {
+            return new WeakSetObject(realm);
         }
     }
 }
