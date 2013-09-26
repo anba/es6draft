@@ -9,9 +9,9 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>11 Expressions</h1>
+ * <h1>12 ECMAScript Language: Expressions</h1>
  * <ul>
- * <li>11.14 Comma Operator ( , )
+ * <li>12.14 Comma Operator ( , )
  * </ul>
  */
 public class CommaExpression extends Expression {

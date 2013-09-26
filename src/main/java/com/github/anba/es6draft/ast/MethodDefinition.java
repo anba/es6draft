@@ -9,9 +9,9 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>13 Functions and Generators</h1>
+ * <h1>14 ECMAScript Language: Functions and Classes</h1>
  * <ul>
- * <li>13.3 Method Definitions
+ * <li>14.3 Method Definitions
  * </ul>
  */
 public class MethodDefinition extends PropertyDefinition implements FunctionNode {

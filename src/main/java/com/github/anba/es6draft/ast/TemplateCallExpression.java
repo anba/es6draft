@@ -7,10 +7,10 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.2 Left-Hand-Side Expressions</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.2 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>11.2.6 Tagged Templates
+ * <li>12.2.6 Tagged Templates
  * </ul>
  */
 public class TemplateCallExpression extends Expression {

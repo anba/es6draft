@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>11 Expressions</h1>
+ * <h1>12 ECMAScript Language: Expressions</h1>
  */
 public abstract class Expression extends AstNode {
     private int parentheses = 0;

@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * <h1>12 Statements and Declarations</h1>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>12.1 Block
+ * <li>13.1 Block
  * </ul>
  */
 public class BlockStatement extends Statement implements ScopedNode {

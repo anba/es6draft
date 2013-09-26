@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>12 Statements and Declarations</h1>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>12.7 The continue Statement
+ * <li>13.7 The continue Statement
  * </ul>
  */
 public class ContinueStatement extends Statement {

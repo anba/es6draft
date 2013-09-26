@@ -9,8 +9,8 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>14 Scripts and Modules</h1><br>
- * <h2>14.2 Modules</h2>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
+ * <h2>15.3 Modules</h2>
  */
 public class ModuleDeclaration extends StatementListItem implements ScopedNode {
     private String moduleName;

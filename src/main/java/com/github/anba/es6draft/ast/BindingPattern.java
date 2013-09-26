@@ -7,10 +7,10 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>12 Statements and Declarations</h1><br>
- * <h2>12.2 Declarations and the Variable Statement</h2>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
+ * <h2>13.2 Declarations and the Variable Statement</h2>
  * <ul>
- * <li>12.2.4 Destructuring Binding Patterns
+ * <li>13.2.4 Destructuring Binding Patterns
  * </ul>
  */
 public abstract class BindingPattern extends Binding {

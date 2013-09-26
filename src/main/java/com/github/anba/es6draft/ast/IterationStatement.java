@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>12 Statements and Declarations</h1>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>12.6 Iteration Statements
+ * <li>13.6 Iteration Statements
  * </ul>
  */
 public abstract class IterationStatement extends BreakableStatement {

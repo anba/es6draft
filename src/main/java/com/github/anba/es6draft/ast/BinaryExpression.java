@@ -7,23 +7,23 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.5 Multiplicative Operators</h2><br>
- * <h2>11.6 Additive Operators</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.5 Multiplicative Operators</h2><br>
+ * <h2>12.6 Additive Operators</h2>
  * <ul>
- * <li>11.6.1 The Addition operator ( + )
- * <li>11.6.2 The Subtraction Operator ( - )
+ * <li>12.6.1 The Addition operator ( + )
+ * <li>12.6.2 The Subtraction Operator ( - )
  * </ul>
- * <h2>11.7 Bitwise Shift Operators</h2>
+ * <h2>12.7 Bitwise Shift Operators</h2>
  * <ul>
- * <li>11.7.1 The Left Shift Operator ( << )
- * <li>11.7.2 The Signed Right Shift Operator ( >> )
- * <li>11.7.3 The Unsigned Right Shift Operator ( >>> )
+ * <li>12.7.1 The Left Shift Operator ( << )
+ * <li>12.7.2 The Signed Right Shift Operator ( >> )
+ * <li>12.7.3 The Unsigned Right Shift Operator ( >>> )
  * </ul>
- * <h2>11.8 Relational Operators</h2><br>
- * <h2>11.9 Equality Operators</h2><br>
- * <h2>11.10 Binary Bitwise Operators</h2><br>
- * <h2>11.11 Binary Logical Operators</h2><br>
+ * <h2>12.8 Relational Operators</h2><br>
+ * <h2>12.9 Equality Operators</h2><br>
+ * <h2>12.10 Binary Bitwise Operators</h2><br>
+ * <h2>12.11 Binary Logical Operators</h2><br>
  */
 public class BinaryExpression extends Expression {
     public enum Operator {

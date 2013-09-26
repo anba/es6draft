@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>13 Functions and Generators</h1>
+ * <h1>14 ECMAScript Language: Functions and Classes</h1>
  */
 public interface FunctionNode extends TopLevelNode, ScopedNode {
     String getFunctionName();

@@ -12,9 +12,9 @@ import java.util.List;
 import com.github.anba.es6draft.parser.Parser;
 
 /**
- * <h1>14 Scripts and Modules</h1>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1>
  * <ul>
- * <li>14.1 Script
+ * <li>15.1 Script
  * </ul>
  */
 public class Script extends AstNode implements TopLevelNode, ScopedNode {

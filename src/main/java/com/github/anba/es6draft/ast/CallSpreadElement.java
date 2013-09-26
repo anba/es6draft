@@ -7,11 +7,10 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.1 Primary Expressions</h2><br>
- * <h3>11.1.4 Array Initialiser</h3>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.2 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>11.1.4.1 Array Literal
+ * <li>12.2.5 Argument Lists
  * </ul>
  */
 public class CallSpreadElement extends Expression {

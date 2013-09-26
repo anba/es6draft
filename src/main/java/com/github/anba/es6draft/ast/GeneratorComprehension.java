@@ -7,10 +7,10 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.1 Primary Expressions</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.1 Primary Expressions</h2>
  * <ul>
- * <li>11.1.7 Generator Comprehensions
+ * <li>12.1.7 Generator Comprehensions
  * </ul>
  */
 public class GeneratorComprehension extends Expression {

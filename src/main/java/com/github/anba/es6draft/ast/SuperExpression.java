@@ -11,10 +11,10 @@ import java.util.List;
 import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.2 Left-Hand-Side Expressions</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.2 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>11.2.4 The super Keyword
+ * <li>12.2.4 The super Keyword
  * </ul>
  */
 public class SuperExpression extends LeftHandSideExpression {

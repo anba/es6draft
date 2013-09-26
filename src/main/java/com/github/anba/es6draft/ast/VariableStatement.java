@@ -9,10 +9,10 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>12 Statements and Declarations</h1><br>
- * <h2>12.2 Declarations and the Variable Statement</h2>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
+ * <h2>13.2 Declarations and the Variable Statement</h2>
  * <ul>
- * <li>12.2.2 Variable Statement
+ * <li>13.2.2 Variable Statement
  * </ul>
  */
 public class VariableStatement extends Statement {

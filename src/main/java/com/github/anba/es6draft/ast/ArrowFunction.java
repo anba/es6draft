@@ -9,9 +9,9 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>13 Functions and Generators</h1>
+ * <h1>14 ECMAScript Language: Functions and Classes</h1>
  * <ul>
- * <li>13.2 Arrow Function Definitions
+ * <li>14.2 Arrow Function Definitions
  * </ul>
  */
 public class ArrowFunction extends Expression implements FunctionNode {

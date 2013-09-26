@@ -9,11 +9,10 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.13 Assignment Operators</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.13 Assignment Operators</h2>
  * <ul>
- * <li>
- * <li>11.13.1 Destructuring Assignment
+ * <li>12.13.1 Destructuring Assignment
  * </ul>
  */
 public class ObjectAssignmentPattern extends AssignmentPattern {

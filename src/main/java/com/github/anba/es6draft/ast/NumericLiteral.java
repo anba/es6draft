@@ -9,10 +9,10 @@ package com.github.anba.es6draft.ast;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.1 Primary Expressions</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.1 Primary Expressions</h2>
  * <ul>
- * <li>11.1.3 Literals
+ * <li>12.1.3 Literals
  * </ul>
  */
 public class NumericLiteral extends ValueLiteral<Double> implements PropertyName {

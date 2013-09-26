@@ -9,11 +9,11 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.1 Primary Expressions</h2><br>
- * <h3>11.1.4 Array Initialiser</h3>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.1 Primary Expressions</h2><br>
+ * <h3>12.1.4 Array Initialiser</h3>
  * <ul>
- * <li>11.1.4.1 Array Literal
+ * <li>12.1.4.1 Array Literal
  * </ul>
  */
 public class ArrayLiteral extends ArrayInitialiser {

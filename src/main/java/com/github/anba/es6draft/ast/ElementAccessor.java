@@ -9,10 +9,10 @@ package com.github.anba.es6draft.ast;
 import com.github.anba.es6draft.ast.synthetic.ElementAccessorValue;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.2 Left-Hand-Side Expressions</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.2 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>11.2.1 Property Accessors
+ * <li>12.2.1 Property Accessors
  * </ul>
  */
 public class ElementAccessor extends LeftHandSideExpression {

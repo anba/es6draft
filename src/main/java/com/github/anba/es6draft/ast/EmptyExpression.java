@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>13 Functions and Generators</h1><br>
+ * <h1>14 ECMAScript Language: Functions and Classes</h1><br>
  * <ul>
- * <li>13.2 Arrow Function Definitions
+ * <li>14.2 Arrow Function Definitions
  * </ul>
  */
 public class EmptyExpression extends Expression {

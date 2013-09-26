@@ -9,9 +9,9 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>12 Statements and Declarations</h1>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>12.11 The switch Statement
+ * <li>13.11 The switch Statement
  * </ul>
  */
 public class SwitchClause extends AstNode {

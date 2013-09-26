@@ -10,8 +10,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * <h1>12 Statements and Declarations</h1><br>
- * <h2>12.6 Iteration Statements</h2>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
+ * <h2>13.6 Iteration Statements</h2>
  * <ul>
  * <li>Extension: 'for-each' statement
  * </ul>

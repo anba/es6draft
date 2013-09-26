@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>12 Statements and Declarations</h1>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>12.13 The throw Statement
+ * <li>13.13 The throw Statement
  * </ul>
  */
 public class ThrowStatement extends Statement {

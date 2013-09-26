@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>11 Expressions</h1>
+ * <h1>12 ECMAScript Language: Expressions</h1>
  * <ul>
- * <li>11.13 Assignment Operators
+ * <li>12.13 Assignment Operators
  * </ul>
  */
 public class AssignmentExpression extends Expression {

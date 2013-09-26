@@ -7,11 +7,11 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.1 Primary Expressions</h2><br>
- * <h3>11.1.4 Array Initialiser</h3>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.1 Primary Expressions</h2><br>
+ * <h3>12.1.4 Array Initialiser</h3>
  * <ul>
- * <li>11.1.4.2 Array Comprehension
+ * <li>12.1.4.2 Array Comprehension
  * </ul>
  */
 public class LegacyComprehensionFor extends ComprehensionQualifier {

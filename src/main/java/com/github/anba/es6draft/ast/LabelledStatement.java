@@ -10,9 +10,9 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * <h1>12 Statements and Declarations</h1>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  * <ul>
- * <li>12.12 Labelled Statements
+ * <li>13.12 Labelled Statements
  * </ul>
  */
 public class LabelledStatement extends Statement implements AbruptNode {

@@ -9,10 +9,10 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.2 Left-Hand-Side Expressions</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.2 Left-Hand-Side Expressions</h2>
  * <ul>
- * <li>11.2.2 The new Operator
+ * <li>12.2.2 The new Operator
  * </ul>
  */
 public class NewExpression extends Expression {

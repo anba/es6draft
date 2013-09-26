@@ -7,23 +7,23 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.3 Postfix Expressions</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.3 Postfix Expressions</h2>
  * <ul>
- * <li>11.3.1 Postfix Increment Operator
- * <li>11.3.2 Postfix Decrement Operator
+ * <li>12.3.1 Postfix Increment Operator
+ * <li>12.3.2 Postfix Decrement Operator
  * </ul>
- * <h2>11.4 Unary Operators</h2>
+ * <h2>12.4 Unary Operators</h2>
  * <ul>
- * <li>11.4.1 The delete Operator
- * <li>11.4.2 The void Operator
- * <li>11.4.3 The typeof Operator
- * <li>11.4.4 Prefix Increment Operator
- * <li>11.4.5 Prefix Decrement Operator
- * <li>11.4.6 Unary + Operator
- * <li>11.4.7 Unary - Operator
- * <li>11.4.8 Bitwise NOT Operator ( ~ )
- * <li>11.4.9 Logical NOT Operator ( ! )
+ * <li>12.4.1 The delete Operator
+ * <li>12.4.2 The void Operator
+ * <li>12.4.3 The typeof Operator
+ * <li>12.4.4 Prefix Increment Operator
+ * <li>12.4.5 Prefix Decrement Operator
+ * <li>12.4.6 Unary + Operator
+ * <li>12.4.7 Unary - Operator
+ * <li>12.4.8 Bitwise NOT Operator ( ~ )
+ * <li>12.4.9 Logical NOT Operator ( ! )
  * </ul>
  */
 public class UnaryExpression extends Expression {

@@ -9,7 +9,7 @@ package com.github.anba.es6draft.ast;
 import java.util.List;
 
 /**
- * <h1>12 Statements and Declarations</h1><br>
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
  * <ul>
  * <li>Extension: 'let' statement
  * </ul>

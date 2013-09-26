@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>13 Functions and Generators</h1>
+ * <h1>14 ECMAScript Language: Functions and Classes</h1>
  * <ul>
- * <li>13.1 Function Definitions
+ * <li>14.1 Function Definitions
  * </ul>
  */
 public abstract class FormalParameter extends AstNode {
