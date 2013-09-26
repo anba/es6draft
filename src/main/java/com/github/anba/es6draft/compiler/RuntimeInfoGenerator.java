@@ -32,30 +32,33 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo.FunctionFlags;
 class RuntimeInfoGenerator {
     private static class Methods {
         // class: RuntimeInfo
-        static MethodDesc RTI_newScriptBody = MethodDesc.create(MethodType.Static,
+        static final MethodDesc RTI_newScriptBody = MethodDesc.create(MethodType.Static,
                 Types.RuntimeInfo, "newScriptBody", Type.getMethodType(
                         Types.RuntimeInfo$ScriptBody, Type.BOOLEAN_TYPE, Types.MethodHandle,
                         Types.MethodHandle, Types.MethodHandle));
 
-        static MethodDesc RTI_newFunction = MethodDesc.create(MethodType.Static, Types.RuntimeInfo,
-                "newFunction", Type.getMethodType(Types.RuntimeInfo$Function, Types.String,
-                        Type.INT_TYPE, Type.INT_TYPE, Types.MethodHandle, Types.MethodHandle,
-                        Types.String));
+        static final MethodDesc RTI_newFunction = MethodDesc.create(MethodType.Static,
+                Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
+                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.MethodHandle,
+                        Types.MethodHandle, Types.String));
 
         // Method descriptors
 
-        static String functionInit = Type.getMethodDescriptor(Types.ExoticArguments,
+        static final String functionInit = Type.getMethodDescriptor(Types.ExoticArguments,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
-        static String globalInit = Type.getMethodDescriptor(Type.VOID_TYPE, Types.ExecutionContext,
-                Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
-        static String evalInit = Type.getMethodDescriptor(Type.VOID_TYPE, Types.ExecutionContext,
-                Types.LexicalEnvironment, Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
+        static final String globalInit = Type.getMethodDescriptor(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
+        static final String evalInit = Type.getMethodDescriptor(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
+                Type.BOOLEAN_TYPE);
 
-        static String functionCode = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
-        static String scriptCode = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
+        static final String functionCode = Type.getMethodDescriptor(Types.Object,
+                Types.ExecutionContext);
+        static final String scriptCode = Type.getMethodDescriptor(Types.Object,
+                Types.ExecutionContext);
 
-        static Type functionRTI = Type.getMethodType(Types.RuntimeInfo$Function);
-        static Type scriptRTI = Type.getMethodType(Types.RuntimeInfo$ScriptBody);
+        static final Type functionRTI = Type.getMethodType(Types.RuntimeInfo$Function);
+        static final Type scriptRTI = Type.getMethodType(Types.RuntimeInfo$ScriptBody);
     }
 
     private final CodeGenerator codegen;

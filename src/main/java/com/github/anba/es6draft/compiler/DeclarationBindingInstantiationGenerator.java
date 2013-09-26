@@ -26,12 +26,9 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1>
- * <ul>
- * <li>10.5 Declaration Binding Instantiation
- * </ul>
+ * Base class for Binding Instantiation generators
  */
-class DeclarationBindingInstantiationGenerator {
+abstract class DeclarationBindingInstantiationGenerator {
     private static class Methods {
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_hasBinding = MethodDesc.create(

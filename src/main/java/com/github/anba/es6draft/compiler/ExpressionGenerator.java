@@ -346,7 +346,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     /**
-     * [11.2.3 EvaluateCall Abstract Operation]
+     * [12.2.3 EvaluateCall Abstract Operation]
      */
     private void EvaluateCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
@@ -364,7 +364,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     /**
-     * [11.2.3 EvaluateMethodCall Abstract Operation]
+     * [12.2.3 EvaluateMethodCall Abstract Operation]
      */
     private void EvaluateMethodCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, ExpressionVisitor mv) {
@@ -432,7 +432,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     /**
-     * [11.2.3 EvaluateCall Abstract Operation]
+     * [12.2.3 EvaluateCall Abstract Operation]
      */
     private void EvaluateCallWithValue(Expression call, Expression base, ValType type,
             List<Expression> arguments, ExpressionVisitor mv) {
@@ -470,7 +470,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     /**
-     * [11.2.3 EvaluateCall Abstract Operation]
+     * [12.2.3 EvaluateCall Abstract Operation]
      */
     private void EvaluateCallIdentRef(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
@@ -517,7 +517,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     /**
-     * [11.2.3 EvaluateCall Abstract Operation]
+     * [12.2.3 EvaluateCall Abstract Operation]
      */
     private void EvaluateCallWithIdentRef(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
@@ -632,7 +632,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     /**
-     * [15.1.2.1.1] Direct Call to Eval
+     * [18.2.1.1] Direct Call to Eval
      */
     private void directEvalCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean hasSpread, Label afterCall, ExpressionVisitor mv) {
@@ -683,7 +683,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     /**
-     * [11.2.3 EvaluateCall Abstract Operation]
+     * [12.2.3 EvaluateCall Abstract Operation]
      */
     private void stdCall(Expression call, ExpressionVisitor mv) {
         // stack: [args, thisValue, func(Callable)]
@@ -715,7 +715,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     /**
-     * [11.2.5.1 ArgumentListEvaluation]
+     * [12.2.5.1 ArgumentListEvaluation]
      */
     private boolean ArgumentListEvaluation(List<Expression> arguments, ExpressionVisitor mv) {
         boolean hasSpread = false;
@@ -726,7 +726,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             for (int i = 0, size = arguments.size(); i < size; ++i) {
                 mv.dup();
                 mv.iconst(i);
-                /* [11.2.5 Argument Lists] ArgumentListEvaluation */
+                /* [12.2.5 Argument Lists] ArgumentListEvaluation */
                 Expression argument = arguments.get(i);
                 hasSpread |= (argument instanceof CallSpreadElement);
                 ValType argtype = evalAndGetValue(argument, mv);
@@ -952,7 +952,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         } else {
             switch (node.getOperator()) {
             case ASSIGN_MUL: {
-                // 11.5 Multiplicative Operators
+                // 12.5 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -971,7 +971,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Number;
             }
             case ASSIGN_DIV: {
-                // 11.5 Multiplicative Operators
+                // 12.5 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -990,7 +990,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Number;
             }
             case ASSIGN_MOD: {
-                // 11.5 Multiplicative Operators
+                // 12.5 Multiplicative Operators
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -1009,7 +1009,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Number;
             }
             case ASSIGN_ADD: {
-                // 11.6.1 The Addition operator ( + )
+                // 12.6.1 The Addition operator ( + )
                 if (right instanceof StringLiteral) {
                     // x += ""
                     ValType ltype = left.accept(this, mv);
@@ -1044,7 +1044,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Any;
             }
             case ASSIGN_SUB: {
-                // 1.6.2 The Subtraction Operator ( - )
+                // 12.6.2 The Subtraction Operator ( - )
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -1063,7 +1063,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Number;
             }
             case ASSIGN_SHL: {
-                // 11.7.1 The Left Shift Operator ( << )
+                // 12.7.1 The Left Shift Operator ( << )
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -1084,7 +1084,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Number_int;
             }
             case ASSIGN_SHR: {
-                // 11.7.2 The Signed Right Shift Operator ( >> )
+                // 12.7.2 The Signed Right Shift Operator ( >> )
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -1105,7 +1105,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Number_int;
             }
             case ASSIGN_USHR: {
-                // 11.7.3 The Unsigned Right Shift Operator ( >>> )
+                // 12.7.3 The Unsigned Right Shift Operator ( >>> )
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -1126,7 +1126,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Number_uint;
             }
             case ASSIGN_BITAND: {
-                // 11.10 Binary Bitwise Operators ( & )
+                // 12.10 Binary Bitwise Operators ( & )
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -1145,7 +1145,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Number_int;
             }
             case ASSIGN_BITXOR: {
-                // 11.10 Binary Bitwise Operators ( ^ )
+                // 12.10 Binary Bitwise Operators ( ^ )
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -1164,7 +1164,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 return ValType.Number_int;
             }
             case ASSIGN_BITOR: {
-                // 11.10 Binary Bitwise Operators ( | )
+                // 12.10 Binary Bitwise Operators ( | )
                 ValType ltype = left.accept(this, mv);
                 assert ltype == ValType.Reference : "invalid lhs for assignment";
                 mv.dup();
@@ -1196,7 +1196,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         switch (node.getOperator()) {
         case MUL: {
-            // 11.5 Multiplicative Operators
+            // 12.5 Multiplicative Operators
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToNumber(ltype, mv);
@@ -1212,7 +1212,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number;
         }
         case DIV: {
-            // 11.5 Multiplicative Operators
+            // 12.5 Multiplicative Operators
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToNumber(ltype, mv);
@@ -1228,7 +1228,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number;
         }
         case MOD: {
-            // 11.5 Multiplicative Operators
+            // 12.5 Multiplicative Operators
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToNumber(ltype, mv);
@@ -1244,7 +1244,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number;
         }
         case ADD: {
-            // 11.6.1 The Addition operator ( + )
+            // 12.6.1 The Addition operator ( + )
             if (left instanceof StringLiteral) {
                 if (((StringLiteral) left).getValue().isEmpty()) {
                     // "" + x
@@ -1288,7 +1288,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Any;
         }
         case SUB: {
-            // 1.6.2 The Subtraction Operator ( - )
+            // 12.6.2 The Subtraction Operator ( - )
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToNumber(ltype, mv);
@@ -1304,7 +1304,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number;
         }
         case SHL: {
-            // 11.7.1 The Left Shift Operator ( << )
+            // 12.7.1 The Left Shift Operator ( << )
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToInt32(ltype, mv);
@@ -1322,7 +1322,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number_int;
         }
         case SHR: {
-            // 11.7.2 The Signed Right Shift Operator ( >> )
+            // 12.7.2 The Signed Right Shift Operator ( >> )
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToInt32(ltype, mv);
@@ -1340,7 +1340,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number_int;
         }
         case USHR: {
-            // 11.7.3 The Unsigned Right Shift Operator ( >>> )
+            // 12.7.3 The Unsigned Right Shift Operator ( >>> )
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToUint32(ltype, mv);
@@ -1358,7 +1358,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number_uint;
         }
         case LT: {
-            // 11.8 Relational Operators ( < )
+            // 12.8 Relational Operators ( < )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
             ValType rtype = evalAndGetValue(right, mv);
@@ -1380,7 +1380,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case GT: {
-            // 11.8 Relational Operators ( > )
+            // 12.8 Relational Operators ( > )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
             ValType rtype = evalAndGetValue(right, mv);
@@ -1402,7 +1402,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case LE: {
-            // 11.8 Relational Operators ( <= )
+            // 12.8 Relational Operators ( <= )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
             ValType rtype = evalAndGetValue(right, mv);
@@ -1424,7 +1424,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case GE: {
-            // 11.8 Relational Operators ( >= )
+            // 12.8 Relational Operators ( >= )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
             ValType rtype = evalAndGetValue(right, mv);
@@ -1445,7 +1445,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case INSTANCEOF: {
-            // 11.8 Relational Operators ( instanceof )
+            // 12.8 Relational Operators ( instanceof )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
             ValType rtype = evalAndGetValue(right, mv);
@@ -1456,7 +1456,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case IN: {
-            // 11.8 Relational Operators ( in )
+            // 12.8 Relational Operators ( in )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
 
@@ -1468,7 +1468,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case EQ: {
-            // 11.9 Equality Operators ( == )
+            // 12.9 Equality Operators ( == )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
 
@@ -1481,7 +1481,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case NE: {
-            // 11.9 Equality Operators ( != )
+            // 12.9 Equality Operators ( != )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
 
@@ -1495,7 +1495,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case SHEQ: {
-            // 11.9 Equality Operators ( === )
+            // 12.9 Equality Operators ( === )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
 
@@ -1507,7 +1507,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case SHNE: {
-            // 11.9 Equality Operators ( !== )
+            // 12.9 Equality Operators ( !== )
             ValType ltype = evalAndGetValue(left, mv);
             mv.toBoxed(ltype);
 
@@ -1520,7 +1520,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case BITAND: {
-            // 11.10 Binary Bitwise Operators ( & )
+            // 12.10 Binary Bitwise Operators ( & )
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToInt32(ltype, mv);
@@ -1536,7 +1536,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number_int;
         }
         case BITXOR: {
-            // 11.10 Binary Bitwise Operators ( ^ )
+            // 12.10 Binary Bitwise Operators ( ^ )
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToInt32(ltype, mv);
@@ -1552,7 +1552,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number_int;
         }
         case BITOR: {
-            // 11.10 Binary Bitwise Operators ( | )
+            // 12.10 Binary Bitwise Operators ( | )
             ValType ltype = evalAndGetValue(left, mv);
             if (ltype.isPrimitive() || right instanceof ValueLiteral) {
                 ToInt32(ltype, mv);
@@ -1570,7 +1570,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         case AND:
         case OR: {
-            // 11.11 Binary Logical Operators
+            // 12.11 Binary Logical Operators
             Label after = new Label();
 
             ValType ltype = evalAndGetValue(left, mv);
@@ -2022,7 +2022,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     public ValType visit(UnaryExpression node, ExpressionVisitor mv) {
         switch (node.getOperator()) {
         case POST_INC: {
-            // 11.3.1 Postfix Increment Operator
+            // 12.3.1 Postfix Increment Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
             assert type == ValType.Reference : "reference lhs for inc/dec";
@@ -2037,7 +2037,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number;
         }
         case POST_DEC: {
-            // 11.3.2 Postfix Decrement Operator
+            // 12.3.2 Postfix Decrement Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
             assert type == ValType.Reference : "reference lhs for inc/dec";
@@ -2052,7 +2052,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number;
         }
         case DELETE: {
-            // 11.4.1 The delete Operator
+            // 12.4.1 The delete Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.toBoxed(type);
@@ -2061,7 +2061,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Boolean;
         }
         case VOID: {
-            // 11.4.2 The void Operator
+            // 12.4.2 The void Operator
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             mv.pop(type);
@@ -2069,7 +2069,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Undefined;
         }
         case TYPEOF: {
-            // 11.4.3 The typeof Operator
+            // 12.4.3 The typeof Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
             mv.toBoxed(type);
@@ -2078,7 +2078,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.String;
         }
         case PRE_INC: {
-            // 11.4.4 Prefix Increment Operator
+            // 12.4.4 Prefix Increment Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
             assert type == ValType.Reference : "reference lhs for inc/dec";
@@ -2093,7 +2093,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number;
         }
         case PRE_DEC: {
-            // 11.4.5 Prefix Decrement Operator
+            // 12.4.5 Prefix Decrement Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
             assert type == ValType.Reference : "reference lhs for inc/dec";
@@ -2108,14 +2108,14 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number;
         }
         case POS: {
-            // 11.4.6 Unary + Operator
+            // 12.4.6 Unary + Operator
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             ToNumber(type, mv);
             return ValType.Number;
         }
         case NEG: {
-            // 11.4.7 Unary - Operator
+            // 12.4.7 Unary - Operator
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             ToNumber(type, mv);
@@ -2123,7 +2123,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number;
         }
         case BITNOT: {
-            // 11.4.8 Bitwise NOT Operator ( ~ )
+            // 12.4.8 Bitwise NOT Operator ( ~ )
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             ToInt32(type, mv);
@@ -2131,7 +2131,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             return ValType.Number_int;
         }
         case NOT: {
-            // 11.4.9 Logical NOT Operator ( ! )
+            // 12.4.9 Logical NOT Operator ( ! )
             Expression expr = node.getOperand();
             ValType type = evalAndGetValue(expr, mv);
             ToBoolean(type, mv);

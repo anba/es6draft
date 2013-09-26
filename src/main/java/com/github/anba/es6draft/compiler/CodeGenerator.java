@@ -303,7 +303,7 @@ class CodeGenerator implements AutoCloseable {
     }
 
     /**
-     * [11.1.9] Runtime Semantics: GetTemplateCallSite Abstract Operation
+     * [12.1.9] Runtime Semantics: GetTemplateCallSite Abstract Operation
      */
     void GetTemplateCallSite(TemplateLiteral node, ExpressionVisitor mv) {
         assert isCompiled(node);

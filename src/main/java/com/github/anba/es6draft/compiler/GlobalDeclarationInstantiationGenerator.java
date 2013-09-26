@@ -30,10 +30,11 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1><br>
- * <h2>10.5 Declaration Binding Instantiation</h2>
+ * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
+ * <h2>15.1 Script</h2><br>
+ * <h3>15.1.2 Runtime Semantics</h3>
  * <ul>
- * <li>10.5.1 Global Declaration Instantiation
+ * <li>15.1.2.1 Global Declaration Instantiation
  * </ul>
  */
 class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
@@ -107,28 +108,28 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.checkcast(Types.GlobalEnvironmentRecord);
         mv.store(envRec);
 
-        /* [10.5.1] step 1 */
+        /* step 1 */
         @SuppressWarnings("unused")
         boolean strict = script.isStrict();
-        /* [10.5.1] step 2 */
+        /* step 2 */
         Set<String> lexNames = LexicallyDeclaredNames(script);
-        /* [10.5.1] step 3 */
+        /* step 3 */
         Set<String> varNames = VarDeclaredNames(script);
-        /* [10.5.1] step 4 */
+        /* step 4 */
         for (String name : lexNames) {
             canDeclareLexicalScopedOrThrow(context, envRec, name, mv);
         }
-        /* [10.5.1] step 5 */
+        /* step 5 */
         for (String name : varNames) {
             canDeclareVarScopedOrThrow(context, envRec, name, mv);
         }
-        /* [10.5.1] step 6 */
+        /* step 6 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
-        /* [10.5.1] step 7 */
+        /* step 7 */
         List<FunctionDeclaration> functionsToInitialise = new ArrayList<>();
-        /* [10.5.1] step 8 */
+        /* step 8 */
         Set<String> declaredFunctionNames = new HashSet<>();
-        /* [10.5.1] step 9 */
+        /* step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
             if (item instanceof FunctionDeclaration) {
                 FunctionDeclaration d = (FunctionDeclaration) item;
@@ -140,9 +141,9 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
                 }
             }
         }
-        /* [10.5.1] step 10 */
+        /* step 10 */
         Set<String> declaredVarNames = new HashSet<>();
-        /* [10.5.1] step 11 */
+        /* step 11 */
         for (StatementListItem d : varDeclarations) {
             if (d instanceof VariableStatement) {
                 for (String vn : BoundNames(d)) {
@@ -155,20 +156,20 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
                 }
             }
         }
-        /* [10.5.1] step 12-13 */
+        /* step 12-13 */
         for (FunctionDeclaration f : functionsToInitialise) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
             InstantiateFunctionObject(context, env, f, mv);
             createGlobalFunctionBinding(envRec, fn, deletableBindings, mv);
         }
-        /* [10.5.1] step 14 */
+        /* step 14 */
         for (String vn : declaredVarNames) {
             createGlobalVarBinding(envRec, vn, deletableBindings, mv);
         }
-        /* [10.5.1] step 15 */
+        /* step 15 */
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(script);
-        /* [10.5.1] step 16 */
+        /* step 16 */
         for (Declaration d : lexDeclarations) {
             for (String dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
@@ -185,7 +186,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
                 initialiseBinding(envRec, fn, mv);
             }
         }
-        /* [10.5.1] step 17 */
+        /* step 17 */
         mv.areturn();
     }
 

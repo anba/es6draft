@@ -28,10 +28,11 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1><br>
- * <h2>10.5 Declaration Binding Instantiation</h2>
+ * <h1>18 The Global Object</h1><br>
+ * <h2>18.2 Function Properties of the Global Object</h2><br>
+ * <h3>18.2.1 eval (x)</h3>
  * <ul>
- * <li>10.5.5 Eval Declaration Instantiation
+ * <li>18.2.1.2 Eval Declaration Instantiation
  * </ul>
  */
 class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {

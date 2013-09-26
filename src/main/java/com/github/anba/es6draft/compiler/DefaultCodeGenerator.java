@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 
 /**
- *
+ * Abstract base class for specialised generators
  */
 abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         DefaultNodeVisitor<R, V> {
@@ -767,6 +767,9 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         }
     }
 
+    /**
+     * stack: [value] -> []
+     */
     protected void BindingInitialisation(Binding node, ExpressionVisitor mv) {
         new BindingInitialisationGenerator(codegen).generate(node, mv);
     }
@@ -785,6 +788,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         new DestructuringAssignmentGenerator(codegen).generate(node, mv);
     }
 
+    /**
+     * 14.5.1.2 Runtime Semantics<br>
+     * Runtime Semantics: ClassDefinitionEvaluation
+     */
     protected void ClassDefinitionEvaluation(ClassDefinition def, String className,
             ExpressionVisitor mv) {
         // stack: [] -> [<proto,ctor>]

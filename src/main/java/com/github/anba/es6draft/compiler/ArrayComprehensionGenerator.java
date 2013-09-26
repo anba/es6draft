@@ -17,7 +17,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
- * 11.1.4.2 Array Comprehension
+ * 12.1.4.2 Array Comprehension
  */
 class ArrayComprehensionGenerator extends ComprehensionGenerator {
     private static class Methods {
@@ -42,7 +42,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 11.1.4.2 Array Comprehension
+     * 12.1.4.2 Array Comprehension
      * <p>
      * Runtime Semantics: Evaluation
      */
@@ -70,7 +70,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 11.1.4.2 Array Comprehension
+     * 12.1.4.2 Array Comprehension
      * <p>
      * Runtime Semantics: ComprehensionEvaluation
      * <p>

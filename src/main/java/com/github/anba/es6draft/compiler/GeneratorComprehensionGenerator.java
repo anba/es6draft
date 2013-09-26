@@ -14,7 +14,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
- * 11.1.7 Generator Comprehensions
+ * 12.1.7 Generator Comprehensions
  */
 class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     private static class Methods {
@@ -31,13 +31,14 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 11.1.7 Generator Comprehensions
+     * 12.1.7 Generator Comprehensions
      * <p>
      * Runtime Semantics: Evaluation
      */
     @Override
     public Void visit(GeneratorComprehension node, ExpressionVisitor mv) {
         if (initialised) {
+            // nested generator comprehension
             return visit((Expression) node, mv);
         }
         this.initialised = true;
@@ -48,7 +49,7 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 11.1.4.2 Array Comprehension
+     * 12.1.4.2 Array Comprehension
      * <p>
      * Runtime Semantics: ComprehensionEvaluation
      * <p>

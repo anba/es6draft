@@ -30,7 +30,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
- * 11.1.4.2 Array Comprehension
+ * 12.1.4.2 Array Comprehension
  */
 abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     private static class Methods {
@@ -81,7 +81,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 11.1.4.2 Array Comprehension
+     * 12.1.4.2 Array Comprehension
      * <p>
      * Runtime Semantics: ComprehensionEvaluation
      * <p>
@@ -91,7 +91,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     protected abstract Void visit(Expression node, ExpressionVisitor mv);
 
     /**
-     * 11.1.4.2 Array Comprehension
+     * 12.1.4.2 Array Comprehension
      * <p>
      * Runtime Semantics: ComprehensionEvaluation
      * <p>
@@ -147,7 +147,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 11.1.4.2 Array Comprehension
+     * 12.1.4.2 Array Comprehension
      * <p>
      * Runtime Semantics: QualifierEvaluation
      * <p>
@@ -168,7 +168,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 11.1.4.2 Array Comprehension
+     * 12.1.4.2 Array Comprehension
      * <p>
      * Runtime Semantics: QualifierEvaluation
      * <p>

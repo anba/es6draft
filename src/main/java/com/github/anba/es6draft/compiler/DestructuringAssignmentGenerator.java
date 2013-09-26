@@ -19,10 +19,10 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
- * <h1>11 Expressions</h1><br>
- * <h2>11.13 Assignment Operators</h2>
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.13 Assignment Operators</h2>
  * <ul>
- * <li>11.13.1 Destructuring Assignment (Runtime Semantics)
+ * <li>12.13.1 Destructuring Assignment (Runtime Semantics)
  * </ul>
  */
 class DestructuringAssignmentGenerator {

@@ -21,10 +21,12 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
- * <h1>13 Functions and Generators</h1><br>
- * <h2>13.1 Function Definitions</h2>
+ * <h1>14 ECMAScript Language: Functions and Classes</h1><br>
+ * <h2>14.1 Function Definitions</h2>
  * <ul>
  * <li>Runtime Semantics: Binding Initialisation
+ * <li>Runtime Semantics: Indexed Binding Initialisation
+ * <li>Runtime Semantics: Keyed Binding Initialisation
  * </ul>
  */
 class BindingInitialisationGenerator {
