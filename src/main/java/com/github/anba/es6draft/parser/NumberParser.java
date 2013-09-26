@@ -58,7 +58,7 @@ final class NumberParser {
             }
             return num;
         } else {
-            // integer ]777777777777777777777, ...]
+            // integer ]0777777777777777777777, ...]
             String string = new String(cbuf, 0, length);
             return StringToNumber.stringToNumber(string, 0, 8);
         }

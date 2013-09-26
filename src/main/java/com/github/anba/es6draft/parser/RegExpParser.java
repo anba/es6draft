@@ -14,11 +14,11 @@ import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.10 RegExp (Regular Expression) Objects</h2>
+ * <h1>21 Text Processing</h1><br>
+ * <h2>21.2 RegExp (Regular Expression) Objects</h2>
  * <ul>
- * <li>15.10.1 Patterns
- * <li>15.10.2 Pattern Semantics
+ * <li>21.2.1 Patterns
+ * <li>21.2.2 Pattern Semantics
  * </ul>
  */
 public final class RegExpParser {

@@ -32,10 +32,10 @@ import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 /**
  * Parser for ECMAScript6 source code
  * <ul>
- * <li>11 Expressions
- * <li>12 Statements and Declarations
- * <li>13 Functions and Generators
- * <li>14 Scripts and Modules
+ * <li>12 ECMAScript Language: Expressions
+ * <li>13 ECMAScript Language: Statements and Declarations
+ * <li>14 ECMAScript Language: Functions and Classes
+ * <li>15 ECMAScript Language: Scripts and Modules
  * </ul>
  */
 public class Parser {
@@ -495,7 +495,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.1] Block</strong>
+     * <strong>[13.1] Block</strong>
      * <p>
      * Static Semantics: Early Errors<br>
      * <ul>
@@ -525,7 +525,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.1] Block</strong>
+     * <strong>[13.1] Block</strong>
      * <p>
      * Static Semantics: Early Errors<br>
      * <ul>
@@ -935,7 +935,7 @@ public class Parser {
     /* ***************************************************************************************** */
 
     /**
-     * <strong>[14.1] Script</strong>
+     * <strong>[15.1] Script</strong>
      * 
      * <pre>
      * Script :
@@ -964,7 +964,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.1] Script</strong>
+     * <strong>[15.1] Script</strong>
      * 
      * <pre>
      * OuterStatementList :
@@ -997,7 +997,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.2] Modules</strong>
+     * <strong>[15.3] Modules</strong>
      * 
      * <pre>
      * ModuleDeclaration ::= "module" [NoNewline] StringLiteral "{" ModuleBody "}"
@@ -1037,7 +1037,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.2] Modules</strong>
+     * <strong>[15.3] Modules</strong>
      * 
      * <pre>
      * ModuleBody    ::= ModuleElement*
@@ -1062,7 +1062,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.2] Modules</strong>
+     * <strong>[15.3] Modules</strong>
      * 
      * <pre>
      * ExportDeclaration ::= "export" ExportSpecifierSet ";"
@@ -1113,7 +1113,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.2] Modules</strong>
+     * <strong>[15.3] Modules</strong>
      * 
      * <pre>
      * ExportSpecifierSet ::= "{" (ExportSpecifier ("," ExportSpecifier)* ","?)? "}"
@@ -1154,7 +1154,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.2] Modules</strong>
+     * <strong>[15.3] Modules</strong>
      * 
      * <pre>
      * ExportSpecifier ::= Identifier ("as" IdentifierName)?
@@ -1173,7 +1173,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.2] Modules</strong>
+     * <strong>[15.3] Modules</strong>
      * 
      * <pre>
      * ModuleSpecifier ::= StringLiteral
@@ -1184,7 +1184,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.2] Modules</strong>
+     * <strong>[15.3] Modules</strong>
      * 
      * <pre>
      * ImportDeclaration ::= "import" ImportSpecifierSet "from" ModuleSpecifier ";"
@@ -1209,7 +1209,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.2] Modules</strong>
+     * <strong>[15.3] Modules</strong>
      * 
      * <pre>
      * ImportSpecifierSet ::= Identifier
@@ -1239,7 +1239,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.2] Modules</strong>
+     * <strong>[15.3] Modules</strong>
      * 
      * <pre>
      * ImportSpecifier ::= Identifier ("as" Identifier)?
@@ -1266,7 +1266,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[14.1] Directive Prologues and the Use Strict Directive</strong>
+     * <strong>[15.2] Directive Prologues and the Use Strict Directive</strong>
      * 
      * <pre>
      * DirectivePrologue :
@@ -1427,7 +1427,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.1] Function Definitions</strong>
+     * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
      * FunctionDeclaration :
@@ -1486,7 +1486,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.1] Function Definitions</strong>
+     * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
      * FunctionExpression :
@@ -1546,7 +1546,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.1] Function Definitions</strong>
+     * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
      * StrictFormalParameters :
@@ -1558,7 +1558,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.1] Function Definitions</strong>
+     * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
      * FormalParameters :
@@ -1574,7 +1574,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.1] Function Definitions</strong>
+     * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
      * FormalParameterList :
@@ -1682,7 +1682,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.1] Function Definitions</strong>
+     * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
      * FunctionBody :
@@ -1700,7 +1700,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.2] Arrow Function Definitions</strong>
+     * <strong>[14.2] Arrow Function Definitions</strong>
      * 
      * <pre>
      * ArrowFunction :
@@ -1802,7 +1802,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.3] Method Definitions</strong>
+     * <strong>[14.3] Method Definitions</strong>
      * 
      * <pre>
      * MethodDefinition :
@@ -1827,7 +1827,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.3] Method Definitions</strong>
+     * <strong>[14.3] Method Definitions</strong>
      * 
      * <pre>
      * MethodDefinition :
@@ -1875,7 +1875,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.3] Method Definitions</strong>
+     * <strong>[14.3] Method Definitions</strong>
      * 
      * <pre>
      * MethodDefinition :
@@ -1939,7 +1939,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.3] Method Definitions</strong>
+     * <strong>[14.3] Method Definitions</strong>
      * 
      * <pre>
      * MethodDefinition :
@@ -2002,7 +2002,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.3] Method Definitions</strong>
+     * <strong>[14.3] Method Definitions</strong>
      * 
      * <pre>
      * PropertySetParameterList :
@@ -2090,7 +2090,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.4] Generator Function Definitions</strong>
+     * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
      * GeneratorMethod :
@@ -2137,7 +2137,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.4] Generator Function Definitions</strong>
+     * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
      * GeneratorDeclaration :
@@ -2183,7 +2183,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.4] Generator Function Definitions</strong>
+     * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
      * GeneratorExpression :
@@ -2246,7 +2246,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.4] Generator Function Definitions</strong>
+     * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
      * YieldExpression :
@@ -2302,7 +2302,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.5] Class Definitions</strong>
+     * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
      * ClassDeclaration :
@@ -2335,7 +2335,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.5] Class Definitions</strong>
+     * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
      * ClassExpression :
@@ -2374,7 +2374,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[13.5] Class Definitions</strong>
+     * <strong>[14.5] Class Definitions</strong>
      * 
      * <pre>
      * ClassBody :
@@ -2451,7 +2451,7 @@ public class Parser {
     /* ***************************************************************************************** */
 
     /**
-     * <strong>[12] Statements</strong>
+     * <strong>[13] ECMAScript Language: Statements and Declarations</strong>
      * 
      * <pre>
      * Statement :
@@ -2527,7 +2527,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.1] Block</strong>
+     * <strong>[13.1] Block</strong>
      * 
      * <pre>
      * BlockStatement :
@@ -2555,7 +2555,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.1] Block</strong>
+     * <strong>[13.1] Block</strong>
      * 
      * <pre>
      * StatementList :
@@ -2572,7 +2572,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.1] Block</strong>
+     * <strong>[13.1] Block</strong>
      * 
      * <pre>
      * StatementListItem :
@@ -2602,7 +2602,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.1] Block</strong>
+     * <strong>[13.1] Block</strong>
      * 
      * <pre>
      * Declaration :
@@ -2641,7 +2641,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.1] Let and Const Declarations</strong>
+     * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * LexicalDeclaration :
@@ -2673,7 +2673,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.1] Let and Const Declarations</strong>
+     * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * BindingList :
@@ -2696,7 +2696,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.1] Let and Const Declarations</strong>
+     * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * LexicalBinding :
@@ -2736,7 +2736,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.1] Let and Const Declarations</strong>
+     * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * BindingIdentifier :
@@ -2754,7 +2754,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.1] Let and Const Declarations</strong>
+     * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * BindingIdentifier :
@@ -2770,7 +2770,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.1] Let and Const Declarations</strong>
+     * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * BindingIdentifier :
@@ -2786,7 +2786,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.1] Let and Const Declarations</strong>
+     * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
      * Initialiser :
@@ -2801,7 +2801,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.2] Variable Statement</strong>
+     * <strong>[13.2.2] Variable Statement</strong>
      * 
      * <pre>
      * VariableStatement :
@@ -2819,7 +2819,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.2] Variable Statement</strong>
+     * <strong>[13.2.2] Variable Statement</strong>
      * 
      * <pre>
      * VariableDeclarationList :
@@ -2842,7 +2842,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.2] Variable Statement</strong>
+     * <strong>[13.2.2] Variable Statement</strong>
      * 
      * <pre>
      * VariableDeclaration :
@@ -2879,7 +2879,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.4] Destructuring Binding Patterns</strong>
+     * <strong>[13.2.4] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * BindingPattern :
@@ -2896,7 +2896,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.4] Destructuring Binding Patterns</strong>
+     * <strong>[13.2.4] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * ObjectBindingPattern :
@@ -2939,7 +2939,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.4] Destructuring Binding Patterns</strong>
+     * <strong>[13.2.4] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * BindingProperty :
@@ -2982,7 +2982,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.4] Destructuring Binding Patterns</strong>
+     * <strong>[13.2.4] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * ArrayBindingPattern :
@@ -3061,7 +3061,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.4] Destructuring Binding Patterns</strong>
+     * <strong>[13.2.4] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * BindingElement :
@@ -3082,7 +3082,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.2.4] Destructuring Binding Patterns</strong>
+     * <strong>[13.2.4] Destructuring Binding Patterns</strong>
      * 
      * <pre>
      * BindingElement :
@@ -3162,7 +3162,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.3] Empty Statement</strong>
+     * <strong>[13.3] Empty Statement</strong>
      * 
      * <pre>
      * EmptyStatement:
@@ -3176,7 +3176,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.4] Expression Statement</strong>
+     * <strong>[13.4] Expression Statement</strong>
      * 
      * <pre>
      * ExpressionStatement :
@@ -3198,7 +3198,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.5] The <code>if</code> Statement</strong>
+     * <strong>[13.5] The <code>if</code> Statement</strong>
      * 
      * <pre>
      * IfStatement :
@@ -3222,7 +3222,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.6.1] The <code>do-while</code> Statement</strong>
+     * <strong>[13.6.1] The <code>do-while</code> Statement</strong>
      * 
      * <pre>
      * IterationStatement :
@@ -3248,7 +3248,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.6.2] The <code>while</code> Statement</strong>
+     * <strong>[13.6.2] The <code>while</code> Statement</strong>
      * 
      * <pre>
      * IterationStatement :
@@ -3269,8 +3269,8 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.6.3] The <code>for</code> Statement</strong> <br>
-     * <strong>[12.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
+     * <strong>[13.6.3] The <code>for</code> Statement</strong> <br>
+     * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
      * 
      * <pre>
      * IterationStatement :
@@ -3645,7 +3645,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.7] The <code>continue</code> Statement</strong>
+     * <strong>[13.7] The <code>continue</code> Statement</strong>
      * 
      * <pre>
      * ContinueStatement :
@@ -3680,7 +3680,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.8] The <code>break</code> Statement</strong>
+     * <strong>[13.8] The <code>break</code> Statement</strong>
      * 
      * <pre>
      * BreakStatement :
@@ -3712,7 +3712,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.9] The <code>return</code> Statement</strong>
+     * <strong>[13.9] The <code>return</code> Statement</strong>
      * 
      * <pre>
      * ReturnStatement :
@@ -3737,7 +3737,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.10] The <code>with</code> Statement</strong>
+     * <strong>[13.10] The <code>with</code> Statement</strong>
      * 
      * <pre>
      * WithStatement :
@@ -3762,7 +3762,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.11] The <code>switch</code> Statement</strong>
+     * <strong>[13.11] The <code>switch</code> Statement</strong>
      * 
      * <pre>
      * SwitchStatement :
@@ -3829,7 +3829,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.12] Labelled Statements</strong>
+     * <strong>[13.12] Labelled Statements</strong>
      * 
      * <pre>
      * LabelledStatement :
@@ -3888,7 +3888,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.13] The <code>throw</code> Statement</strong>
+     * <strong>[13.13] The <code>throw</code> Statement</strong>
      * 
      * <pre>
      * ThrowStatement :
@@ -3907,7 +3907,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.14] The <code>try</code> Statement</strong>
+     * <strong>[13.14] The <code>try</code> Statement</strong>
      * 
      * <pre>
      * TryStatement :
@@ -3995,7 +3995,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[12.15] The <code>debugger</code> Statement</strong>
+     * <strong>[13.15] The <code>debugger</code> Statement</strong>
      * 
      * <pre>
      * DebuggerStatement :
@@ -4060,7 +4060,7 @@ public class Parser {
     /* ***************************************************************************************** */
 
     /**
-     * <strong>[11.1] Primary Expressions</strong>
+     * <strong>[12.1] Primary Expressions</strong>
      * 
      * <pre>
      * PrimaryExpresion :
@@ -4148,7 +4148,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1] Primary Expressions</strong>
+     * <strong>[12.1] Primary Expressions</strong>
      * 
      * <pre>
      * CoverParenthesisedExpressionAndArrowParameterList :
@@ -4210,7 +4210,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.4] Array Initialiser</strong>
+     * <strong>[12.1.4] Array Initialiser</strong>
      * 
      * <pre>
      * ArrayInitialiser :
@@ -4246,7 +4246,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.4] Array Initialiser</strong>
+     * <strong>[12.1.4] Array Initialiser</strong>
      * 
      * <pre>
      * ArrayLiteral :
@@ -4296,7 +4296,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * ArrayComprehension :
@@ -4312,7 +4312,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * Comprehension :
@@ -4349,7 +4349,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * ComprehensionFor :
@@ -4372,7 +4372,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * ComprehensionIf :
@@ -4388,7 +4388,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * LegacyArrayComprehension :
@@ -4404,7 +4404,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.4.2] Array Comprehension</strong>
+     * <strong>[12.1.4.2] Array Comprehension</strong>
      * 
      * <pre>
      * LegacyComprehension :
@@ -4468,7 +4468,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
      * ObjectLiteral :
@@ -4559,7 +4559,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
      * PropertyDefinition :
@@ -4611,7 +4611,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
      * PropertyName :
@@ -4628,7 +4628,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
      * PropertyName :
@@ -4649,7 +4649,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.5] Object Initialiser</strong>
+     * <strong>[12.1.5] Object Initialiser</strong>
      * 
      * <pre>
      * ComputedPropertyName :
@@ -4665,7 +4665,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.7] Generator Comprehensions</strong>
+     * <strong>[12.1.7] Generator Comprehensions</strong>
      * 
      * <pre>
      * GeneratorComprehension :
@@ -4687,7 +4687,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.7] Generator Comprehensions</strong>
+     * <strong>[12.1.7] Generator Comprehensions</strong>
      * 
      * <pre>
      * LegacyGeneratorComprehension :
@@ -4709,7 +4709,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.8] Regular Expression Literals</strong>
+     * <strong>[12.1.8] Regular Expression Literals</strong>
      * 
      * <pre>
      * RegularExpressionLiteral ::
@@ -4729,7 +4729,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.1.9] Template Literals</strong>
+     * <strong>[12.1.9] Template Literals</strong>
      * 
      * <pre>
      * TemplateLiteral :
@@ -4790,7 +4790,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.2] Left-Hand-Side Expressions</strong>
+     * <strong>[12.2] Left-Hand-Side Expressions</strong>
      * 
      * <pre>
      * MemberExpression :
@@ -4916,7 +4916,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.2] Left-Hand-Side Expressions</strong>
+     * <strong>[12.2] Left-Hand-Side Expressions</strong>
      * 
      * <pre>
      * Arguments :
@@ -4976,8 +4976,8 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.3] Postfix Expressions</strong><br>
-     * <strong>[11.4] Unary Operators</strong>
+     * <strong>[12.3] Postfix Expressions</strong><br>
+     * <strong>[12.4] Unary Operators</strong>
      * 
      * <pre>
      * PostfixExpression :
@@ -5070,13 +5070,13 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.5] Multiplicative Operators</strong><br>
-     * <strong>[11.6] Additive Operators</strong><br>
-     * <strong>[11.7] Bitwise Shift Operators</strong><br>
-     * <strong>[11.8] Relational Operators</strong><br>
-     * <strong>[11.9] Equality Operators</strong><br>
-     * <strong>[11.10] Binary Bitwise Operators</strong><br>
-     * <strong>[11.11] Binary Logical Operators</strong><br>
+     * <strong>[12.5] Multiplicative Operators</strong><br>
+     * <strong>[12.6] Additive Operators</strong><br>
+     * <strong>[12.7] Bitwise Shift Operators</strong><br>
+     * <strong>[12.8] Relational Operators</strong><br>
+     * <strong>[12.9] Equality Operators</strong><br>
+     * <strong>[12.10] Binary Bitwise Operators</strong><br>
+     * <strong>[12.11] Binary Logical Operators</strong><br>
      * 
      * <pre>
      * MultiplicativeExpression :
@@ -5244,8 +5244,8 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.12] Conditional Operator</strong><br>
-     * <strong>[11.13] Assignment Operators</strong>
+     * <strong>[12.12] Conditional Operator</strong><br>
+     * <strong>[12.13] Assignment Operators</strong>
      * 
      * <pre>
      * ConditionalExpression :
@@ -5357,7 +5357,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.13] Assignment Operators</strong>
+     * <strong>[12.13] Assignment Operators</strong>
      * 
      * <pre>
      * AssignmentOperator : <b>one of</b>
@@ -5384,7 +5384,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[11.14] Comma Operator</strong>
+     * <strong>[12.14] Comma Operator</strong>
      * 
      * <pre>
      * Expression :
@@ -5413,7 +5413,7 @@ public class Parser {
     /* ***************************************************************************************** */
 
     /**
-     * <strong>[7.9] Automatic Semicolon Insertion</strong>
+     * <strong>[11.9] Automatic Semicolon Insertion</strong>
      * 
      * <pre>
      * </pre>
@@ -5481,7 +5481,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
      * 
      * <pre>
      * Identifier ::
@@ -5504,7 +5504,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
      * 
      * <pre>
      * Identifier ::
@@ -5527,7 +5527,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
      */
     private boolean isIdentifier(Token tok) {
         switch (tok) {
@@ -5552,7 +5552,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
      */
     private boolean isStrictIdentifier(Token tok) {
         switch (tok) {
@@ -5573,7 +5573,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
      */
     private String identifierName() {
         Token tok = token();
@@ -5586,7 +5586,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
      */
     private static boolean isIdentifierName(Token tok) {
         switch (tok) {
@@ -5646,7 +5646,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.6.1] Reserved Words</strong>
+     * <strong>[11.6.1] Reserved Words</strong>
      */
     private boolean isReservedWord(Token tok) {
         switch (tok) {
@@ -5660,7 +5660,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.6.1.1] Keywords</strong>
+     * <strong>[11.6.1.1] Keywords</strong>
      */
     private boolean isKeyword(Token tok) {
         switch (tok) {
@@ -5703,7 +5703,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.6.1.2] Future Reserved Words</strong>
+     * <strong>[11.6.1.2] Future Reserved Words</strong>
      */
     private boolean isFutureReservedWord(Token tok) {
         switch (tok) {
@@ -5725,7 +5725,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      */
     private double numericLiteral() {
         double number = ts.getNumber();
@@ -5734,7 +5734,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[7.8.4] String Literals</strong>
+     * <strong>[11.8.4] String Literals</strong>
      */
     private String stringLiteral() {
         String string = ts.getString();

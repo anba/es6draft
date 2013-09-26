@@ -17,7 +17,7 @@ import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
- * Lexer for ECMAScript6 source code
+ * Lexer for ECMAScript 6 source code
  */
 public class TokenStream {
     private static final boolean DEBUG = false;
@@ -203,7 +203,7 @@ public class TokenStream {
     //
 
     /**
-     * <strong>[7.8.4] Regular Expression Literals</strong>
+     * <strong>[11.8.5] Regular Expression Literals</strong>
      * 
      * <pre>
      * RegularExpressionLiteral ::
@@ -295,7 +295,7 @@ public class TokenStream {
     //
 
     /**
-     * <strong>[7.8.5] Template Literal Lexical Components</strong>
+     * <strong>[11.8.6] Template Literal Lexical Components</strong>
      * 
      * <pre>
      * Template ::
@@ -441,7 +441,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.5] Token</strong>
+     * <strong>[11.5] Token</strong>
      * 
      * <pre>
      * Token ::
@@ -747,7 +747,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
      * 
      * <pre>
      * IdentifierStart ::
@@ -782,7 +782,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
      * 
      * <pre>
      * IdentifierPart ::
@@ -826,7 +826,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.2] White Space</strong>
+     * <strong>[11.2] White Space</strong>
      * 
      * <pre>
      * WhiteSpace ::
@@ -852,7 +852,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.3] Line Terminators</strong>
+     * <strong>[11.3] Line Terminators</strong>
      * 
      * <pre>
      * LineTerminator ::
@@ -870,7 +870,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.4] Comments</strong>
+     * <strong>[11.4] Comments</strong>
      * 
      * <pre>
      * SingleLineComment ::
@@ -899,7 +899,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.4] Comments</strong>
+     * <strong>[11.4] Comments</strong>
      * 
      * <pre>
      * MultiLineComment ::
@@ -939,7 +939,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.6] Identifier Names and Identifiers</strong>
+     * <strong>[11.6] Identifier Names and Identifiers</strong>
      * 
      * <pre>
      * Identifier ::
@@ -981,7 +981,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.6] String Literals</strong>
+     * <strong>[11.8.4] String Literals</strong>
      * 
      * <pre>
      * UnicodeEscapeSequence ::
@@ -1014,7 +1014,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.6.1] Reserved Words</strong>
+     * <strong>[11.6.1] Reserved Words</strong>
      * 
      * <pre>
      * ReservedWord ::
@@ -1024,7 +1024,7 @@ public class TokenStream {
      *     BooleanLiteral
      * </pre>
      * 
-     * <strong>[7.6.1.1] Keywords</strong>
+     * <strong>[11.6.1.1] Keywords</strong>
      * 
      * <pre>
      * Keyword :: one of
@@ -1038,7 +1038,7 @@ public class TokenStream {
      *     default      if          switch      with
      * </pre>
      * 
-     * <strong>[7.6.1.2] Future Reserved Words</strong>
+     * <strong>[11.6.1.2] Future Reserved Words</strong>
      * 
      * <pre>
      * FutureReservedWord :: one of
@@ -1047,14 +1047,14 @@ public class TokenStream {
      *     interface    package     protected   static
      * </pre>
      * 
-     * <strong>[7.8.1] Null Literals</strong>
+     * <strong>[11.8.1] Null Literals</strong>
      * 
      * <pre>
      * NullLiteral ::
      *     null
      * </pre>
      * 
-     * <strong>[7.8.2] Boolean Literals</strong>
+     * <strong>[11.8.2] Boolean Literals</strong>
      * 
      * <pre>
      * BooleanLiteral ::
@@ -1205,7 +1205,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.6] String Literals</strong>
+     * <strong>[11.8.4] String Literals</strong>
      * 
      * <pre>
      * StringLiteral ::
@@ -1400,7 +1400,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * NumericLiteral ::
@@ -1434,7 +1434,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * HexIntegerLiteral ::
@@ -1463,7 +1463,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * BinaryIntegerLiteral ::
@@ -1490,7 +1490,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * OctalIntegerLiteral ::
@@ -1549,7 +1549,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * DecimalLiteral ::
@@ -1624,7 +1624,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * DecimalDigit :: one of
@@ -1636,7 +1636,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * BinaryDigit :: one of
@@ -1648,7 +1648,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * OctalDigit :: one of
@@ -1660,7 +1660,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * HexDigit :: one of
@@ -1672,7 +1672,7 @@ public class TokenStream {
     }
 
     /**
-     * <strong>[7.8.3] Numeric Literals</strong>
+     * <strong>[11.8.3] Numeric Literals</strong>
      * 
      * <pre>
      * HexDigit :: one of

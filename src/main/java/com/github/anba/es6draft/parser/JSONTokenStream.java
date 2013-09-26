@@ -14,11 +14,11 @@ import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.12 The JSON Object</h2><br>
- * <h3>15.12.1 The JSON Grammar</h3>
+ * <h1>24 Structured Data</h1><br>
+ * <h2>24.3 The JSON Object</h2><br>
+ * <h3>24.3.1 The JSON Grammar</h3>
  * <ul>
- * <li>15.12.1.1 The JSON Lexical Grammar
+ * <li>24.3.1.1 The JSON Lexical Grammar
  * </ul>
  */
 public class JSONTokenStream {

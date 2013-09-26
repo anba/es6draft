@@ -19,11 +19,11 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.12 The JSON Object</h2><br>
- * <h3>15.12.1 The JSON Grammar</h3>
+ * <h1>24 Structured Data</h1><br>
+ * <h2>24.3 The JSON Object</h2><br>
+ * <h3>24.3.1 The JSON Grammar</h3>
  * <ul>
- * <li>15.12.1.2 The JSON Syntactic Grammar
+ * <li>24.3.1.2 The JSON Syntactic Grammar
  * </ul>
  */
 public class JSONParser {
