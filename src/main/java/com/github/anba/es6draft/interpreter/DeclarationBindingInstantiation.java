@@ -27,11 +27,10 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
- * <h1>10 Executable Code and Execution Contexts</h1><br>
- * <h2>10.5 Declaration Binding Instantiation</h2>
+ * <h1>Declaration Binding Instantiation</h1>
  * <ul>
- * <li>10.5.1 Global Declaration Instantiation
- * <li>10.5.5 Eval Declaration Instantiation
+ * <li>15.1.2.1 Global Declaration Instantiation
+ * <li>18.2.1.2 Eval Declaration Instantiation
  * </ul>
  */
 final class DeclarationBindingInstantiation {
@@ -39,7 +38,7 @@ final class DeclarationBindingInstantiation {
     }
 
     /**
-     * [10.5.1 Global Declaration Instantiation]
+     * [15.1.2.1 Global Declaration Instantiation]
      */
     public static void GlobalDeclarationInstantiation(ExecutionContext cx,
             LexicalEnvironment globalEnv, Script script, boolean deletableBindings) {
@@ -71,7 +70,7 @@ final class DeclarationBindingInstantiation {
     }
 
     /**
-     * [10.5.5 Eval Declaration Instantiation]
+     * [18.2.1.2 Eval Declaration Instantiation]
      */
     public static void EvalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment lexEnv,
             LexicalEnvironment varEnv, Script script, boolean deletableBindings) {

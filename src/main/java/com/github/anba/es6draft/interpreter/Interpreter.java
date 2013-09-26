@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.interpreter;
 
+import static com.github.anba.es6draft.interpreter.DeclarationBindingInstantiation.EvalDeclarationInstantiation;
+import static com.github.anba.es6draft.interpreter.DeclarationBindingInstantiation.GlobalDeclarationInstantiation;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.CheckCallable;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.IsBuiltinEval;
@@ -62,7 +64,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /* ----------------------------------------------------------------------------------------- */
 
     /**
-     * 11.3.1 Postfix Increment Operator
+     * 12.3.1 Postfix Increment Operator
      */
     private static Double postIncrement(Object lhs, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(lhs, cx));
@@ -72,7 +74,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.3.2 Postfix Decrement Operator
+     * 12.3.2 Postfix Decrement Operator
      */
     private static Double postDecrement(Object lhs, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(lhs, cx));
@@ -82,14 +84,14 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.4.2 The void Operator
+     * 12.4.2 The void Operator
      */
     private static Undefined _void(Object value, ExecutionContext cx) {
         return UNDEFINED;
     }
 
     /**
-     * 11.4.4 Prefix Increment Operator
+     * 12.4.4 Prefix Increment Operator
      */
     private static Double preIncrement(Object expr, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(expr, cx));
@@ -99,7 +101,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.4.5 Prefix Decrement Operator
+     * 12.4.5 Prefix Decrement Operator
      */
     private static Double preDecrement(Object expr, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(expr, cx));
@@ -109,14 +111,14 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.4.6 Unary + Operator
+     * 12.4.6 Unary + Operator
      */
     private static Double pos(Object value, ExecutionContext cx) {
         return ToNumber(cx, value);
     }
 
     /**
-     * 11.4.7 Unary - Operator
+     * 12.4.7 Unary - Operator
      */
     private static Double neg(Object value, ExecutionContext cx) {
         double oldValue = ToNumber(cx, value);
@@ -124,7 +126,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.4.8 Bitwise NOT Operator ( ~ )
+     * 12.4.8 Bitwise NOT Operator ( ~ )
      */
     private static Integer bitnot(Object value, ExecutionContext cx) {
         int oldValue = ToInt32(cx, value);
@@ -132,7 +134,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.4.9 Logical NOT Operator ( ! )
+     * 12.4.9 Logical NOT Operator ( ! )
      */
     private static Boolean not(Object value, ExecutionContext cx) {
         boolean oldValue = ToBoolean(value);
@@ -140,7 +142,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.5 Multiplicative Operators
+     * 12.5 Multiplicative Operators
      */
     private static Double mul(Object leftValue, Object rightValue, ExecutionContext cx) {
         double lnum = ToNumber(cx, leftValue);
@@ -149,7 +151,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.5 Multiplicative Operators
+     * 12.5 Multiplicative Operators
      */
     private static Double div(Object leftValue, Object rightValue, ExecutionContext cx) {
         double lnum = ToNumber(cx, leftValue);
@@ -158,7 +160,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.5 Multiplicative Operators
+     * 12.5 Multiplicative Operators
      */
     private static Double mod(Object leftValue, Object rightValue, ExecutionContext cx) {
         double lnum = ToNumber(cx, leftValue);
@@ -167,7 +169,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.6.2 The Subtraction Operator ( - )
+     * 12.6.2 The Subtraction Operator ( - )
      */
     private static Double sub(Object lval, Object rval, ExecutionContext cx) {
         double lnum = ToNumber(cx, lval);
@@ -176,7 +178,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.7.1 The Left Shift Operator ( << )
+     * 12.7.1 The Left Shift Operator ( << )
      */
     private static Integer leftShift(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -186,7 +188,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.7.2 The Signed Right Shift Operator ( >> )
+     * 12.7.2 The Signed Right Shift Operator ( >> )
      */
     private static Integer rightShift(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -196,7 +198,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.7.3 The Unsigned Right Shift Operator ( >>> )
+     * 12.7.3 The Unsigned Right Shift Operator ( >>> )
      */
     private static Long unsignedRightShift(Object lval, Object rval, ExecutionContext cx) {
         long lnum = ToUint32(cx, lval);
@@ -206,14 +208,14 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.8 Relational Operators
+     * 12.8 Relational Operators
      */
     private static Boolean _instanceof(Object lval, Object rval, ExecutionContext cx) {
         return ScriptRuntime.instanceOfOperator(lval, rval, cx);
     }
 
     /**
-     * 11.8 Relational Operators
+     * 12.8 Relational Operators
      */
     private static Boolean lessThan(Object lval, Object rval, ExecutionContext cx) {
         int c = ScriptRuntime.relationalComparison(lval, rval, true, cx);
@@ -221,7 +223,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.8 Relational Operators
+     * 12.8 Relational Operators
      */
     private static Boolean lessThanEqual(Object lval, Object rval, ExecutionContext cx) {
         int c = ScriptRuntime.relationalComparison(rval, lval, false, cx);
@@ -229,7 +231,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.8 Relational Operators
+     * 12.8 Relational Operators
      */
     private static Boolean greaterThan(Object lval, Object rval, ExecutionContext cx) {
         int c = ScriptRuntime.relationalComparison(rval, lval, false, cx);
@@ -237,7 +239,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.8 Relational Operators
+     * 12.8 Relational Operators
      */
     private static Boolean greaterThanEqual(Object lval, Object rval, ExecutionContext cx) {
         int c = ScriptRuntime.relationalComparison(lval, rval, true, cx);
@@ -245,35 +247,35 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.9 Equality Operators
+     * 12.9 Equality Operators
      */
     private static Boolean equals(Object lval, Object rval, ExecutionContext cx) {
         return ScriptRuntime.equalityComparison(rval, lval, cx);
     }
 
     /**
-     * 11.9 Equality Operators
+     * 12.9 Equality Operators
      */
     private static Boolean notEquals(Object lval, Object rval, ExecutionContext cx) {
         return !ScriptRuntime.equalityComparison(rval, lval, cx);
     }
 
     /**
-     * 11.9 Equality Operators
+     * 12.9 Equality Operators
      */
     private static Boolean strictEquals(Object lval, Object rval, ExecutionContext cx) {
         return ScriptRuntime.strictEqualityComparison(rval, lval);
     }
 
     /**
-     * 11.9 Equality Operators
+     * 12.9 Equality Operators
      */
     private static Boolean strictNotEquals(Object lval, Object rval, ExecutionContext cx) {
         return !ScriptRuntime.strictEqualityComparison(rval, lval);
     }
 
     /**
-     * 11.10 Binary Bitwise Operators
+     * 12.10 Binary Bitwise Operators
      */
     private static Integer bitand(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -282,7 +284,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.10 Binary Bitwise Operators
+     * 12.10 Binary Bitwise Operators
      */
     private static Integer bitxor(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -291,7 +293,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 11.10 Binary Bitwise Operators
+     * 12.10 Binary Bitwise Operators
      */
     private static Integer bitor(Object lval, Object rval, ExecutionContext cx) {
         int lnum = ToInt32(cx, lval);
@@ -410,7 +412,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
 
         // evaluate lhs/rhs and call GetValue()
-        /* step 1-6 */
+        /* steps 1-6 */
         Object lval = node.getLeft().accept(this, cx);
         lval = GetValue(lval, cx);
         Object rval = node.getRight().accept(this, cx);
@@ -757,15 +759,13 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         @Override
         public void globalDeclarationInstantiation(ExecutionContext cx,
                 LexicalEnvironment globalEnv, boolean deletableBindings) {
-            DeclarationBindingInstantiation.GlobalDeclarationInstantiation(cx, globalEnv,
-                    parsedScript, deletableBindings);
+            GlobalDeclarationInstantiation(cx, globalEnv, parsedScript, deletableBindings);
         }
 
         @Override
         public void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment lexEnv,
                 LexicalEnvironment varEnv, boolean deletableBindings) {
-            DeclarationBindingInstantiation.EvalDeclarationInstantiation(cx, lexEnv, varEnv,
-                    parsedScript, deletableBindings);
+            EvalDeclarationInstantiation(cx, lexEnv, varEnv, parsedScript, deletableBindings);
         }
 
         @Override
