@@ -27,15 +27,10 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>8 Types</h1><br>
- * <h2>8.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
+ * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>8.4.4 Exotic Arguments Objects
- * </ul>
- * 
- * <h1>10 Executable Code and Execution Contexts</h1>
- * <ul>
- * <li>10.6 Arguments Object
+ * <li>9.2.5 Exotic Arguments Objects
  * </ul>
  */
 public class ExoticArguments extends OrdinaryObject {
@@ -63,10 +58,16 @@ public class ExoticArguments extends OrdinaryObject {
             return Strings.toIndex(p);
         }
 
+        /**
+         * Makes {@code arguments[propertyKey]} a mapped argument
+         */
         void defineOwnProperty(int propertyKey, String name) {
             parameters[propertyKey] = name;
         }
 
+        /**
+         * Tests whether {@code propertyKey} is an array index for a mapped argument
+         */
         boolean hasOwnProperty(String propertyKey) {
             int index = toArgumentIndex(propertyKey);
             if (index >= 0 && index < length) {
@@ -75,6 +76,9 @@ public class ExoticArguments extends OrdinaryObject {
             return false;
         }
 
+        /**
+         * See MakeArgGetter abstract operation
+         */
         Object get(String propertyKey) {
             int index = toArgumentIndex(propertyKey);
             assert (index >= 0 && index < length && parameters[index] != null);
@@ -82,6 +86,9 @@ public class ExoticArguments extends OrdinaryObject {
             return env.getEnvRec().getBindingValue(name, true);
         }
 
+        /**
+         * See MakeArgSetter abstract operation
+         */
         void put(String propertyKey, Object value) {
             int index = toArgumentIndex(propertyKey);
             assert (index >= 0 && index < length && parameters[index] != null);
@@ -89,6 +96,9 @@ public class ExoticArguments extends OrdinaryObject {
             env.getEnvRec().setMutableBinding(name, value, true);
         }
 
+        /**
+         * Makes {@code arguments[propertyKey]} no longer a mapped argument
+         */
         boolean delete(String propertyKey) {
             int index = toArgumentIndex(propertyKey);
             assert (index >= 0 && index < length && parameters[index] != null);
@@ -102,7 +112,7 @@ public class ExoticArguments extends OrdinaryObject {
     }
 
     /**
-     * [10.6 Arguments Object] InstantiateArgumentsObject
+     * [9.2.5.1 Arguments Object] InstantiateArgumentsObject
      */
     public static ExoticArguments InstantiateArgumentsObject(ExecutionContext cx, Object[] args) {
         /* [10.6] step 1 */
@@ -122,7 +132,7 @@ public class ExoticArguments extends OrdinaryObject {
     }
 
     /**
-     * [10.6 Arguments Object] CompleteStrictArgumentsObject
+     * [9.2.5.1 Arguments Object] CompleteStrictArgumentsObject
      */
     public static void CompleteStrictArgumentsObject(ExecutionContext cx, ExoticArguments obj) {
         /* [10.6] step 1-2 */
@@ -143,7 +153,7 @@ public class ExoticArguments extends OrdinaryObject {
     }
 
     /**
-     * [10.6 Arguments Object] CompleteMappedArgumentsObject
+     * [9.2.5.1 Arguments Object] CompleteMappedArgumentsObject
      */
     public static void CompleteMappedArgumentsObject(ExecutionContext cx, ExoticArguments obj,
             FunctionObject func, String[] formals, LexicalEnvironment env) {
@@ -167,6 +177,9 @@ public class ExoticArguments extends OrdinaryObject {
         obj.defineOwnProperty(cx, "callee", new PropertyDescriptor(func, true, false, true));
     }
 
+    /**
+     * Creates a legacy {@link ExoticArguments} object
+     */
     public static ExoticArguments CreateLegacyArguments(ExecutionContext cx,
             ExoticArguments arguments, FunctionObject func) {
         int length = ToInt32(cx, Get(cx, arguments, "length"));
@@ -185,6 +198,9 @@ public class ExoticArguments extends OrdinaryObject {
         return obj;
     }
 
+    /**
+     * An {@link ExoticArguments} object with 'special' behaviour for legacy use
+     */
     private static class ExoticLegacyArguments extends ExoticArguments {
         public ExoticLegacyArguments(Realm realm) {
             super(realm);
@@ -223,6 +239,9 @@ public class ExoticArguments extends OrdinaryObject {
         }
     }
 
+    /**
+     * Temporary helper method to work around bug 1866, called from generated code
+     */
     public Object getArgument(ExecutionContext cx, String propertyKey) {
         if (hasOwnProperty(cx, propertyKey)) {
             return get(cx, propertyKey, this);
@@ -234,12 +253,12 @@ public class ExoticArguments extends OrdinaryObject {
      * [[Get]]
      */
     @Override
-    public Object get(ExecutionContext cx, String propertyKey, Object accessorThisValue) {
+    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         /* step 1-2 */
         ParameterMap map = this.parameterMap;
         /* [[ParameterMap]] not present */
         if (map == null) {
-            return super.get(cx, propertyKey, accessorThisValue);
+            return super.get(cx, propertyKey, receiver);
         }
         /* step 3 */
         // FIXME: spec issue ([[HasOwnProperty]] instead of [[GetOwnProperty]]) (Bug 1412)
@@ -248,7 +267,7 @@ public class ExoticArguments extends OrdinaryObject {
         /* step 4 */
         if (!isMapped) {
             // FIXME: spec bug (does not work as intended) (Bug 1413)
-            Object v = super.get(cx, propertyKey, accessorThisValue);
+            Object v = super.get(cx, propertyKey, receiver);
             if ("caller".equals(propertyKey) && isStrictFunction(v)) {
                 throw throwTypeError(cx, Messages.Key.StrictModePoisonPill);
             }
@@ -327,6 +346,7 @@ public class ExoticArguments extends OrdinaryObject {
                 }
             }
         }
+        /* step 7 */
         return true;
     }
 
@@ -347,9 +367,11 @@ public class ExoticArguments extends OrdinaryObject {
         boolean isMapped = map.hasOwnProperty(propertyKey);
         /* step 3 */
         boolean result = super.delete(cx, propertyKey);
+        /* step 4 */
         if (result && isMapped) {
             map.delete(propertyKey);
         }
+        /* step 5 */
         return result;
     }
 }

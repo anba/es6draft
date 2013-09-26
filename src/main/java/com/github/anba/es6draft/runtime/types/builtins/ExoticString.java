@@ -19,10 +19,10 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>8 Types</h1><br>
- * <h2>8.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
+ * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>8.4.3 String Exotic Objects
+ * <li>9.2.3 String Exotic Objects
  * </ul>
  */
 public class ExoticString extends OrdinaryObject {
@@ -61,7 +61,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 8.4.3.1 [[HasOwnProperty]] (P)
+     * 9.2.3.1 [[HasOwnProperty]] (P)
      */
     @Override
     public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
@@ -82,7 +82,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 8.4.3.2 [[GetOwnProperty]] ( P )
+     * 9.2.3.2 [[GetOwnProperty]] ( P )
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
@@ -104,7 +104,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 8.4.3.3 [[DefineOwnProperty]] (P, Desc)
+     * 9.2.3.3 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
@@ -115,7 +115,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 8.4.3.4 [[Enumerate]] ()
+     * 9.2.3.4 [[Enumerate]] ()
      */
     @Override
     protected Collection<String> enumerateKeys() {
@@ -125,7 +125,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 8.4.3.5 [[OwnPropertyKeys]] ()
+     * 9.2.3.5 [[OwnPropertyKeys]] ()
      */
     @Override
     protected Collection<Object> enumerateOwnKeys() {
@@ -144,10 +144,10 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 8.4.3.6 StringCreate Abstract Operation
+     * 9.2.3.6 StringCreate Abstract Operation
      */
     public static ExoticString StringCreate(ExecutionContext cx, ScriptObject prototype) {
-        // step 1, 2-6, 9 (implicit)
+        // steps 1-7, 9 (implicit)
         ExoticString obj = new ExoticString(cx.getRealm());
         // step 8
         obj.setPrototype(prototype);
@@ -183,5 +183,4 @@ public class ExoticString extends OrdinaryObject {
             }
         }
     }
-
 }

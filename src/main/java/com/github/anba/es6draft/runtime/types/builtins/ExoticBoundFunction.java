@@ -18,10 +18,10 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>8 Types</h1><br>
- * <h2>8.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
+ * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>8.4.1 Bound Function Exotic Objects
+ * <li>9.2.1 Bound Function Exotic Objects
  * </ul>
  */
 public class ExoticBoundFunction extends OrdinaryObject implements Callable {
@@ -51,7 +51,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
         }
 
         /**
-         * 8.4.1.2 [[Construct]]
+         * 9.2.1.2 [[Construct]]
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... extraArgs) {
@@ -111,7 +111,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     }
 
     /**
-     * 8.4.1.1 [[Call]]
+     * 9.2.1.1 [[Call]]
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... argumentsList) {
@@ -130,13 +130,13 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     }
 
     /**
-     * 8.4.1.3 BoundFunctionCreate Abstract Operation
+     * 9.2.1.3 BoundFunctionCreate Abstract Operation
      */
     public static ExoticBoundFunction BoundFunctionCreate(ExecutionContext cx,
             Callable targetFunction, Object boundThis, Object[] boundArgs) {
         /* step 1 */
         ScriptObject proto = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        /* step 2-5 (implicit) */
+        /* steps 2-5 (implicit) */
         ExoticBoundFunction obj;
         if (IsConstructor(targetFunction)) {
             obj = new ConstructorExoticBoundFunction(cx.getRealm());
@@ -152,8 +152,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
         obj.boundThis = boundThis;
         /* step 10 */
         obj.boundArguments = boundArgs;
-        /* step 11 (implicit) */
-        /* step 12 */
+        /* step 11 */
         return obj;
     }
 }

@@ -29,9 +29,9 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
- * <h1>8 Types</h1>
+ * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1>
  * <ul>
- * <li>8.5 Proxy Object Internal Methods and Internal Data Properties
+ * <li>9.3 Proxy Object Internal Methods and Internal Data Properties
  * </ul>
  */
 public class ExoticProxy implements ScriptObject {
@@ -53,7 +53,7 @@ public class ExoticProxy implements ScriptObject {
         }
 
         /**
-         * 8.5.14 [[Call]] (thisArgument, argumentsList)
+         * 9.3.15 [[Call]] (thisArgument, argumentsList)
          */
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -85,7 +85,7 @@ public class ExoticProxy implements ScriptObject {
         }
 
         /**
-         * 8.5.15 [[Construct]] Internal Method
+         * 9.3.16 [[Construct]] Internal Method
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -211,7 +211,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.1 [[GetInheritance]] ( )
+     * 9.3.1 [[GetInheritance]] ( )
      */
     @Override
     public ScriptObject getInheritance(ExecutionContext cx) {
@@ -222,6 +222,15 @@ public class ExoticProxy implements ScriptObject {
             return target.getInheritance(cx);
         }
         Object handlerProto = trap.call(cx, handler, target);
+        //
+        // boolean extensibleTarget = IsExtensible(cx, target);
+        // if (extensibleTarget) {
+        // if (Type.isNull(handlerProto) || Type.isObject(handlerProto)) {
+        // return (ScriptObject) unmaskNull(handlerProto);
+        // }
+        // throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
+        // }
+        //
         ScriptObject targetProto = target.getInheritance(cx);
         if (!SameValue(handlerProto, maskNull(targetProto))) {
             throw throwTypeError(cx, Messages.Key.ProxySameValue);
@@ -231,7 +240,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.2 [[SetInheritance]] (V)
+     * 9.3.2 [[SetInheritance]] (V)
      */
     @Override
     public boolean setInheritance(ExecutionContext cx, ScriptObject prototype) {
@@ -248,14 +257,14 @@ public class ExoticProxy implements ScriptObject {
             return trapResult;
         }
         ScriptObject targetProto = target.getInheritance(cx);
-        if (trapResult && !SameValue(maskNull(prototype), maskNull(targetProto))) {
+        if (trapResult && !SameValue(prototype, targetProto)) {
             throw throwTypeError(cx, Messages.Key.ProxySameValue);
         }
         return trapResult;
     }
 
     /**
-     * 8.5.3 [[IsExtensible]] ( )
+     * 9.3.3 [[IsExtensible]] ( )
      */
     @Override
     public boolean isExtensible(ExecutionContext cx) {
@@ -275,7 +284,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.4 [[PreventExtensions]] ( )
+     * 9.3.4 [[PreventExtensions]] ( )
      */
     @Override
     public boolean preventExtensions(ExecutionContext cx) {
@@ -295,7 +304,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.5 [[HasOwnProperty]] (P)
+     * 9.3.5 [[HasOwnProperty]] (P)
      */
     @Override
     public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
@@ -303,7 +312,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.5 [[HasOwnProperty]] (P)
+     * 9.3.5 [[HasOwnProperty]] (P)
      */
     @Override
     public boolean hasOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
@@ -311,7 +320,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.5 [[HasOwnProperty]] (P)
+     * 9.3.5 [[HasOwnProperty]] (P)
      */
     private boolean hasOwnProperty(ExecutionContext cx, Object propertyKey) {
         ScriptObject handler = proxyHandler;
@@ -347,7 +356,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.6 [[GetOwnProperty]] (P)
+     * 9.3.6 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
@@ -355,7 +364,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.6 [[GetOwnProperty]] (P)
+     * 9.3.6 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
@@ -363,7 +372,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.6 [[GetOwnProperty]] (P)
+     * 9.3.6 [[GetOwnProperty]] (P)
      */
     private Property getOwnProperty(ExecutionContext cx, Object propertyKey) {
         ScriptObject handler = proxyHandler;
@@ -411,7 +420,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.7 [[DefineOwnProperty]] (P, Desc)
+     * 9.3.7 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
@@ -420,7 +429,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.7 [[DefineOwnProperty]] (P, Desc)
+     * 9.3.7 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey,
@@ -429,7 +438,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.7 [[DefineOwnProperty]] (P, Desc)
+     * 9.3.7 [[DefineOwnProperty]] (P, Desc)
      */
     private boolean defineOwnProperty(ExecutionContext cx, Object propertyKey,
             PropertyDescriptor desc) {
@@ -470,7 +479,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.8 [[HasProperty]] (P)
+     * 9.3.8 [[HasProperty]] (P)
      */
     @Override
     public boolean hasProperty(ExecutionContext cx, String propertyKey) {
@@ -478,7 +487,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.8 [[HasProperty]] (P)
+     * 9.3.8 [[HasProperty]] (P)
      */
     @Override
     public boolean hasProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
@@ -486,7 +495,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.8 [[HasProperty]] (P)
+     * 9.3.8 [[HasProperty]] (P)
      */
     private boolean hasProperty(ExecutionContext cx, Object propertyKey) {
         ScriptObject handler = proxyHandler;
@@ -513,7 +522,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.9 [[Get]] (P, Receiver)
+     * 9.3.9 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
@@ -521,7 +530,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.9 [[Get]] (P, Receiver)
+     * 9.3.9 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(ExecutionContext cx, ExoticSymbol propertyKey, Object receiver) {
@@ -529,7 +538,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.9 [[Get]] (P, Receiver)
+     * 9.3.9 [[Get]] (P, Receiver)
      */
     private Object get(ExecutionContext cx, Object propertyKey, Object receiver) {
         ScriptObject handler = proxyHandler;
@@ -559,7 +568,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.10 [[Set]] ( P, V, Receiver)
+     * 9.3.10 [[Set]] ( P, V, Receiver)
      */
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
@@ -567,7 +576,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.10 [[Set]] ( P, V, Receiver)
+     * 9.3.10 [[Set]] ( P, V, Receiver)
      */
     @Override
     public boolean set(ExecutionContext cx, ExoticSymbol propertyKey, Object value, Object receiver) {
@@ -575,7 +584,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.10 [[Set]] ( P, V, Receiver)
+     * 9.3.10 [[Set]] ( P, V, Receiver)
      */
     private boolean set(ExecutionContext cx, Object propertyKey, Object value, Object receiver) {
         ScriptObject handler = proxyHandler;
@@ -607,7 +616,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.10 [[Invoke]] (P, ArgumentsList, Receiver)
+     * 9.3.11 [[Invoke]] (P, ArgumentsList, Receiver)
      */
     @Override
     public Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
@@ -623,7 +632,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.10 [[Invoke]] (P, ArgumentsList, Receiver)
+     * 9.3.11 [[Invoke]] (P, ArgumentsList, Receiver)
      */
     @Override
     public Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments,
@@ -639,7 +648,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.11 [[Delete]] (P)
+     * 9.3.12 [[Delete]] (P)
      */
     @Override
     public boolean delete(ExecutionContext cx, String propertyKey) {
@@ -647,7 +656,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.11 [[Delete]] (P)
+     * 9.3.12 [[Delete]] (P)
      */
     @Override
     public boolean delete(ExecutionContext cx, ExoticSymbol propertyKey) {
@@ -655,7 +664,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.11 [[Delete]] (P)
+     * 9.3.12 [[Delete]] (P)
      */
     private boolean delete(ExecutionContext cx, Object propertyKey) {
         ScriptObject handler = proxyHandler;
@@ -679,7 +688,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.12 [[Enumerate]] ()
+     * 9.3.13 [[Enumerate]] ()
      */
     @Override
     public ScriptObject enumerate(ExecutionContext cx) {
@@ -697,7 +706,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 8.5.13 [[OwnPropertyKeys]] ()
+     * 9.3.14 [[OwnPropertyKeys]] ()
      */
     @Override
     public ScriptObject ownPropertyKeys(ExecutionContext cx) {

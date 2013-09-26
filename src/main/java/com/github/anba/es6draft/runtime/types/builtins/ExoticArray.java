@@ -24,10 +24,10 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>8 Types</h1><br>
- * <h2>8.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
+ * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>8.4.2 Array Exotic Objects
+ * <li>9.2.2 Array Exotic Objects
  * </ul>
  */
 public class ExoticArray extends OrdinaryObject {
@@ -51,7 +51,25 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 8.4.2.1 [[DefineOwnProperty]] (P, Desc)
+     * 9.2.2 Array Exotic Objects
+     * <p>
+     * Introductory paragraph
+     */
+    public static boolean isArrayIndex(String p) {
+        return toArrayIndex(p) >= 0;
+    }
+
+    /**
+     * 9.2.2 Array Exotic Objects
+     * <p>
+     * Introductory paragraph
+     */
+    public static long toArrayIndex(String p) {
+        return Strings.toArrayIndex(p);
+    }
+
+    /**
+     * 9.2.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
@@ -81,21 +99,21 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 8.4.2.2 ArrayCreate Abstract Operation
+     * 9.2.2.2 ArrayCreate Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length) {
         return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
     }
 
     /**
-     * 8.4.2.2 ArrayCreate Abstract Operation
+     * 9.2.2.2 ArrayCreate Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, Intrinsics proto) {
         return ArrayCreate(cx, length, cx.getIntrinsic(proto));
     }
 
     /**
-     * 8.4.2.2 ArrayCreate Abstract Operation
+     * 9.2.2.2 ArrayCreate Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
         assert proto != null;
@@ -120,7 +138,7 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 8.4.2.3 ArraySetLength Abstract Operation
+     * 9.2.2.3 ArraySetLength Abstract Operation
      */
     public static boolean ArraySetLength(ExecutionContext cx, ExoticArray array,
             PropertyDescriptor desc) {
@@ -210,23 +228,5 @@ public class ExoticArray extends OrdinaryObject {
         indices = Arrays.copyOf(indices, i);
         Arrays.sort(indices);
         return indices;
-    }
-
-    /**
-     * 8.4.2 Array Exotic Objects
-     * <p>
-     * Introductory paragraph
-     */
-    public static boolean isArrayIndex(String p) {
-        return toArrayIndex(p) >= 0;
-    }
-
-    /**
-     * 8.4.2 Array Exotic Objects
-     * <p>
-     * Introductory paragraph
-     */
-    public static long toArrayIndex(String p) {
-        return Strings.toArrayIndex(p);
     }
 }
