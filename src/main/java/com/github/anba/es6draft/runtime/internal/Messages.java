@@ -145,61 +145,61 @@ public final class Messages {
         CyclicProto("type.cyclic_proto"),
         PropertyNotFound("type.property_not_found"),
 
-        // 8.2.5 Property Descriptor
+        // 6.2.5 The Property Descriptor Specification Type
         InvalidGetter("propertydescriptor.invalid_getter"),
         InvalidSetter("propertydescriptor.invalid_setter"),
         InvalidDescriptor("propertydescriptor.invalid_descriptor"),
         // ToIndex
         InvalidIndex("abstractops.invalid_index"),
-        // 9.1.1 ToPrimitive
+        // 7.1.1 ToPrimitive
         InvalidToPrimitiveHint("abstractops.invalid_to_primitive_hint"),
         NoPrimitiveRepresentation("abstractops.no_primitive_representation"),
 
-        // 15.1 The Global Object
+        // 18 The Global Object
         MalformedURI("globalobject.malformed_uri"),
-        // 15.2 Object Objects
+        // 19.1 Object Objects
         ObjectSealFailed("object.seal_failed"),
         ObjectFreezeFailed("object.freeze_failed"),
         ObjectPreventExtensionsFailed("object.preventextension_failed"),
         ObjectSetProtoCrossRealm("object.set_proto_cross_realm"),
-        // 15.3 Function Objects
+        // 19.2 Function Objects
         FunctionTooManyArguments("function.too_many_arguments"),
         GeneratorExecuting("generator.executing"),
         GeneratorClosed("generator.closed"),
         GeneratorNewbornSend("generator.newborn_send"),
-        // 15.4 Array Objects
+        // 22.1 Array Objects
         InvalidArrayLength("array.invalid_array_length"),
         ReduceInitialValue("array.reduce_initial_value"),
-        // 15.5 String Objects
+        // 21.1 String Objects
         InvalidStringRepeat("string.invalid_string_repeat"),
         InvalidCodePoint("string.invalid_codepoint"),
         InvalidNormalizationForm("string.invalid_normalization_form"),
-        // 15.7 Number Objects
+        // 20.1 Number Objects
         InvalidRadix("number.invalid_radix"),
         InvalidPrecision("number.invalid_precision"),
-        // 15.9 Date Objects
+        // 20.3 Date Objects
         InvalidDateValue("date.invalid_datevalue"),
-        // 15.10 RegExp Objects
+        // 21.2 RegExp Objects
         DuplicateRegExpFlag("regexp.duplicate_flag"),
         InvalidRegExpFlag("regexp.invalid_flag"),
         InvalidRegExpPattern("regexp.invalid_pattern"),
         RegExpAlreadyInitialised("regexp.already_initialised"),
         RegExpNotInitialised("regexp.not_initialised"),
         RegExpHasRestricted("regexp.has_restricted"),
-        // 15.12 The JSON Object
+        // 24.3 The JSON Object
         InvalidJSONLiteral("json.invalid_json_literal"),
         CyclicValue("json.cyclic_value"),
-        // 15.13 Binary Data Objects
+        // 24.1 Binary Data Objects
         OutOfMemory("binary.out_of_memory"),
         OutOfMemoryVM("binary.out_of_memory_vm"),
         ArrayOffsetOutOfRange("binary.array_offset_out_of_range"),
         InvalidByteOffset("binary.invalid_byteoffset"),
         InvalidBufferSize("binary.invalid_buffersize"),
-        // 15.14
+        // 23.1 Map Objects
         MapInvalidComparator("map.invalid_comparator"),
-        // 15.16
+        // 23.2 Set Objects
         SetInvalidComparator("set.invalid_comparator"),
-        // 15.18 Proxy Objects
+        // 26.2 Proxy Objects
         ProxySameValue("proxy.same_value"),
         ProxyIncompatibleDescriptor("proxy.incompatible_descriptor"),
         ProxyNotObject("proxy.not_object"),
