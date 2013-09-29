@@ -231,7 +231,7 @@ public final class Realm {
     @Deprecated
     public Collator getCollator() {
         Collator collator = Collator.getInstance(locale);
-        // Use Normalised Form D for comparison (cf. 15.5.4.9, Note 2)
+        // Use Normalised Form D for comparison (cf. 21.1.3.10, Note 2)
         collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
         // `"\u0001".localeCompare("\u0002") == -1` should yield true
         collator.setStrength(Collator.IDENTICAL);
@@ -277,13 +277,13 @@ public final class Realm {
         realm.defaultContext = defaultContext;
         realm.options = EnumSet.copyOf(options);
 
-        // intrinsics: 15.2 - 15.12
+        // intrinsics: 19, 20, 21, 22.1, 24.3
         initialiseFundamentalObjects(realm);
         initialiseStandardObjects(realm);
         initialiseNativeErrors(realm);
         initialiseInternalObjects(realm);
 
-        // intrinsics: 15.13 - 15.19
+        // intrinsics: 22.2, 23, 24.1, 24.2, 25
         initialiseBinaryModule(realm);
         initialiseCollectionModule(realm);
         initialiseReflectModule(realm);
@@ -302,7 +302,7 @@ public final class Realm {
     }
 
     /**
-     * <h1>15.2 Object Objects - 15.3 Function Objects</h1>
+     * <h1>19.1 Object Objects - 19.2 Function Objects</h1>
      * 
      * Fundamental built-in objects which must be initialised early
      */
@@ -337,7 +337,7 @@ public final class Realm {
     }
 
     /**
-     * <h1>15.4 Array Objects - 15.12 The JSON Object</h1>
+     * <h1>19.3, 19.4, 20, 21, 22.1, 24.3</h1>
      * 
      * Standard built-in objects
      */
@@ -404,7 +404,7 @@ public final class Realm {
     }
 
     /**
-     * <h1>15.11.6 Native Error Types Used in This Standard</h1>
+     * <h1>19.4.5 Native Error Types Used in This Standard</h1>
      * 
      * Native Error built-in objects
      */
@@ -492,7 +492,7 @@ public final class Realm {
     }
 
     /**
-     * <h1>15.14 Map Objects - 15.17 WeakSet Objects</h1>
+     * <h1>23 Keyed Collection</h1>
      */
     private static void initialiseCollectionModule(Realm realm) {
         Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -536,7 +536,7 @@ public final class Realm {
     }
 
     /**
-     * <h1>15.18 The Reflect Module - 15.18.2 Proxy Objects</h1>
+     * <h1>26 The Reflect Module</h1>
      */
     private static void initialiseReflectModule(Realm realm) {
         Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -556,7 +556,7 @@ public final class Realm {
     }
 
     /**
-     * <h1>15.19 The "std:iteration" Module</h1>
+     * <h1>25 The "std:iteration" Module</h1>
      */
     private static void initialiseIterationModule(Realm realm) {
         Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
@@ -580,7 +580,7 @@ public final class Realm {
     }
 
     /**
-     * <h1>15.13 Binary Data Objects</h1>
+     * <h1>22.2 TypedArray Objects, 24.1 ArrayBuffer Objects, 24.2 DataView Objects</h1>
      */
     private static void initialiseBinaryModule(Realm realm) {
         Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
