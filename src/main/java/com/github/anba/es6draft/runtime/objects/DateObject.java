@@ -10,10 +10,10 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.9 Date Objects</h2>
+ * <h1>20 Numbers and Dates</h1><br>
+ * <h2>20.3 Date Objects</h2>
  * <ul>
- * <li>15.9.5 Properties of Date Instances
+ * <li>20.3.5 Properties of Date Instances
  * </ul>
  */
 public class DateObject extends OrdinaryObject {

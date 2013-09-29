@@ -12,10 +12,10 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.7 Number Objects</h2>
+ * <h1>20 Numbers and Dates</h1><br>
+ * <h2>20.1 Number Objects</h2>
  * <ul>
- * <li>15.7.4 Properties of Number Instances
+ * <li>20.1.4 Properties of Number Instances
  * </ul>
  */
 public class NumberObject extends OrdinaryObject {

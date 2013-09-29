@@ -38,11 +38,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.10 RegExp (Regular Expression) Objects</h2>
+ * <h1>21 Text Processing</h1><br>
+ * <h2>21.2 RegExp (Regular Expression) Objects</h2>
  * <ul>
- * <li>15.10.3 The RegExp Constructor
- * <li>15.10.4 Properties of the RegExp Constructor
+ * <li>21.2.3 The RegExp Constructor
+ * <li>21.2.4 Properties of the RegExp Constructor
  * </ul>
  */
 public class RegExpConstructor extends BuiltinConstructor implements Initialisable {
@@ -58,7 +58,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.10.3.1 RegExp(pattern, flags)
+     * 21.2.3.1 RegExp(pattern, flags)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -104,7 +104,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.10.3.2 new RegExp(...argumentsList)
+     * 21.2.3.2 new RegExp(...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -121,11 +121,13 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.10.3.3 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * Runtime Semantics: RegExpAlloc Abstract Operation
      */
     public static RegExpObject RegExpAllocate(ExecutionContext cx, Object constructor) {
-        /* steps 1-2 */
+        /* step 1 */
+        assert IsConstructor(constructor);
+        /* step 2 */
         RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
         /* steps 3-4 */
@@ -136,7 +138,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.10.3.3 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * Runtime Semantics: RegExpInitialise Abstract Operation
      */
     public static RegExpObject RegExpInitialise(ExecutionContext cx, RegExpObject obj,
@@ -174,7 +176,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.10.3.3 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * Runtime Semantics: RegExpCreate Abstract Operation
      */
     public static RegExpObject RegExpCreate(ExecutionContext cx, Object pattern, Object flags) {
@@ -185,7 +187,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.10.3.3 Abstract Operations for the RegExp Constructor<br>
+     * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * Runtime Semantics: EscapeRegExpPattern Abstract Operation
      */
     public static String EscapeRegExpPattern(String p, String f) {
@@ -245,7 +247,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.10.4 Properties of the RegExp Constructor
+     * 21.2.4 Properties of the RegExp Constructor
      */
     public enum Properties {
         ;
@@ -262,14 +264,14 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
         public static final String name = "RegExp";
 
         /**
-         * 15.10.4.1 RegExp.prototype
+         * 21.2.4.1 RegExp.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RegExpPrototype;
 
         /**
-         * 15.9.4.5 RegExp[ @@create ] ( )
+         * 21.2.4.5 RegExp[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

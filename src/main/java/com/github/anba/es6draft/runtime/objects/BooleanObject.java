@@ -12,10 +12,10 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.6 Boolean Objects</h2>
+ * <h1>19 Fundamental Objects</h1><br>
+ * <h2>19.3 Boolean Objects</h2>
  * <ul>
- * <li>15.6.4 Properties of Boolean Instances
+ * <li>19.3.4 Properties of Boolean Instances
  * </ul>
  */
 public class BooleanObject extends OrdinaryObject {
@@ -36,6 +36,7 @@ public class BooleanObject extends OrdinaryObject {
      * [[BooleanData]]
      */
     public boolean getBooleanData() {
+        assert this.initialised : "BooleanObject not initialised";
         return booleanData;
     }
 

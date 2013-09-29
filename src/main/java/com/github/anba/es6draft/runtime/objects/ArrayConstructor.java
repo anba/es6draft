@@ -37,11 +37,11 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.4 Array Objects</h2>
+ * <h1>22 Indexed Collections</h1><br>
+ * <h2>22.1 Array Objects</h2>
  * <ul>
- * <li>15.4.1 The Array Constructor
- * <li>15.4.2 Properties of the Array Constructor
+ * <li>22.1.1 The Array Constructor
+ * <li>22.1.2 Properties of the Array Constructor
  * </ul>
  */
 public class ArrayConstructor extends BuiltinConstructor implements Initialisable {
@@ -56,15 +56,15 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     /**
-     * 15.4.1.1 Array ( [ item1 [ , item2 [ , ... ] ] ] )<br>
-     * 15.4.1.2 Array (len)
+     * 22.1.1.1 Array ( [ item1 [ , item2 [ , ... ] ] ] )<br>
+     * 22.1.1.2 Array (len)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         int numberOfArgs = args.length;
         if (numberOfArgs != 1) {
-            // [15.4.1.1]
+            // [22.1.1.1]
             /* steps 1-6 */
             ExoticArray array = initOrCreateArray(calleeContext, thisValue, numberOfArgs);
             /* steps 7-9 */
@@ -79,7 +79,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             /* step 12 */
             return array;
         } else {
-            // [15.4.1.2]
+            // [22.1.1.2]
             /* steps 1-6 */
             ExoticArray array = initOrCreateArray(calleeContext, thisValue, 0);
             Object len = args[0];
@@ -103,8 +103,8 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     private ExoticArray initOrCreateArray(ExecutionContext cx, Object thisValue, int length) {
-        /* [15.4.1.1] steps 3-6 */
-        /* [15.4.1.2] steps 3-6 */
+        /* [22.1.1.1] steps 3-6 */
+        /* [22.1.1.2] steps 3-6 */
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
             if (!array.getArrayInitialisationState()) {
@@ -117,7 +117,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     /**
-     * 15.4.1.3 new Array ( ... argumentsList)
+     * 22.1.1.3 new Array ( ... argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -125,7 +125,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     /**
-     * 15.4.2 Properties of the Array Constructor
+     * 22.1.2 Properties of the Array Constructor
      */
     public enum Properties {
         ;
@@ -142,14 +142,14 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
         public static final String name = "Array";
 
         /**
-         * 15.4.2.1 Array.prototype
+         * 22.1.2.4 Array.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ArrayPrototype;
 
         /**
-         * 15.4.2.2 Array.isArray ( arg )
+         * 22.1.2.2 Array.isArray ( arg )
          */
         @Function(name = "isArray", arity = 1)
         public static Object isArray(ExecutionContext cx, Object thisValue, Object arg) {
@@ -166,7 +166,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
         }
 
         /**
-         * 15.4.2.3 Array.of ( ...items )
+         * 22.1.2.3 Array.of ( ...items )
          */
         @Function(name = "of", arity = 0)
         public static Object of(ExecutionContext cx, Object thisValue, Object... items) {
@@ -194,7 +194,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
         }
 
         /**
-         * 15.4.2.4 Array.from ( arrayLike, mapfn=undefined, thisArg=undefined )
+         * 22.1.2.1 Array.from ( arrayLike, mapfn=undefined, thisArg=undefined )
          */
         @Function(name = "from", arity = 1)
         public static Object from(ExecutionContext cx, Object thisValue, Object arrayLike,
@@ -284,7 +284,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
         }
 
         /**
-         * 15.4.2.5 Array[ @@create ] ( )
+         * 22.1.2.5 Array[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

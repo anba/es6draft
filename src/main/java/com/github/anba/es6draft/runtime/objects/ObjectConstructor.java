@@ -40,12 +40,12 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.2 Object Objects</h2>
+ * <h1>19 Fundamental Objects</h1><br>
+ * <h2>19.1 Object Objects</h2>
  * <ul>
- * <li>15.2.1 The Object Constructor Called as a Function
- * <li>15.2.2 The Object Constructor
- * <li>15.2.3 Properties of the Object Constructor
+ * <li>19.1.1 The Object Constructor Called as a Function
+ * <li>19.1.2 The Object Constructor
+ * <li>19.1.3 Properties of the Object Constructor
  * </ul>
  */
 public class ObjectConstructor extends BuiltinConstructor implements Initialisable {
@@ -60,7 +60,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.2.1.1 Object ( [ value ] )
+     * 19.1.1.1 Object ( [ value ] )
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -73,7 +73,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.2.2.1 new Object ( [ value ] )
+     * 19.1.2.1 new Object ( [ value ] )
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -98,7 +98,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.2.3 Properties of the Object Constructor
+     * 19.1.3 Properties of the Object Constructor
      */
     public enum Properties {
         ;
@@ -115,14 +115,14 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         public static final String name = "Object";
 
         /**
-         * 15.2.3.1 Object.prototype
+         * 19.1.3.17 Object.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.2.3.2 Object.getPrototypeOf ( O )
+         * 19.1.3.9 Object.getPrototypeOf ( O )
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object o) {
@@ -134,7 +134,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.3 Object.getOwnPropertyDescriptor ( O, P )
+         * 19.1.3.6 Object.getOwnPropertyDescriptor ( O, P )
          */
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
         public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
@@ -155,7 +155,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.4 Object.getOwnPropertyNames ( O )
+         * 19.1.3.8 Object.getOwnPropertyNames ( O )
          */
         @Function(name = "getOwnPropertyNames", arity = 1)
         public static Object getOwnPropertyNames(ExecutionContext cx, Object thisValue, Object o) {
@@ -168,7 +168,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.5 Object.create ( O [, Properties] )
+         * 19.1.3.2 Object.create ( O [, Properties] )
          */
         @Function(name = "create", arity = 2)
         public static Object create(ExecutionContext cx, Object thisValue, Object o,
@@ -189,7 +189,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.6 Object.defineProperty ( O, P, Attributes )
+         * 19.1.3.4 Object.defineProperty ( O, P, Attributes )
          */
         @Function(name = "defineProperty", arity = 3)
         public static Object defineProperty(ExecutionContext cx, Object thisValue, Object o,
@@ -209,7 +209,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.7 Object.defineProperties ( O, Properties )
+         * 19.1.3.3 Object.defineProperties ( O, Properties )
          */
         @Function(name = "defineProperties", arity = 2)
         public static Object defineProperties(ExecutionContext cx, Object thisValue, Object o,
@@ -219,7 +219,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.8 Object.seal ( O )
+         * 19.1.3.18 Object.seal ( O )
          */
         @Function(name = "seal", arity = 1)
         public static Object seal(ExecutionContext cx, Object thisValue, Object o) {
@@ -238,7 +238,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.9 Object.freeze ( O )
+         * 19.1.3.5 Object.freeze ( O )
          */
         @Function(name = "freeze", arity = 1)
         public static Object freeze(ExecutionContext cx, Object thisValue, Object o) {
@@ -257,7 +257,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.10 Object.preventExtensions ( O )
+         * 19.1.3.16 Object.preventExtensions ( O )
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object o) {
@@ -276,7 +276,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.11 Object.isSealed ( O )
+         * 19.1.3.13 Object.isSealed ( O )
          */
         @Function(name = "isSealed", arity = 1)
         public static Object isSealed(ExecutionContext cx, Object thisValue, Object o) {
@@ -289,7 +289,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.12 Object.isFrozen ( O )
+         * 19.1.3.12 Object.isFrozen ( O )
          */
         @Function(name = "isFrozen", arity = 1)
         public static Object isFrozen(ExecutionContext cx, Object thisValue, Object o) {
@@ -302,7 +302,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.13 Object.isExtensible ( O )
+         * 19.1.3.11 Object.isExtensible ( O )
          */
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(ExecutionContext cx, Object thisValue, Object o) {
@@ -315,7 +315,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.14 Object.keys ( O )
+         * 19.1.3.14 Object.keys ( O )
          */
         @Function(name = "keys", arity = 1)
         public static Object keys(ExecutionContext cx, Object thisValue, Object o) {
@@ -328,7 +328,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.15 Object.getOwnPropertyKeys ( O )
+         * 19.1.3.7 Object.getOwnPropertyKeys ( O )
          */
         @Function(name = "getOwnPropertyKeys", arity = 1)
         public static Object getOwnPropertyKeys(ExecutionContext cx, Object thisValue, Object o) {
@@ -339,7 +339,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.16 Object.is ( value1, value2 )
+         * 19.1.3.10 Object.is ( value1, value2 )
          */
         @Function(name = "is", arity = 2)
         public static Object is(ExecutionContext cx, Object thisValue, Object value1, Object value2) {
@@ -348,7 +348,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.17 Object.assign ( target, source )
+         * 19.1.3.1 Object.assign ( target, source )
          */
         @Function(name = "assign", arity = 2)
         public static Object assign(ExecutionContext cx, Object thisValue, Object target,
@@ -383,7 +383,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.18 Object.mixin ( target, source )
+         * 19.1.3.15 Object.mixin ( target, source )
          */
         @Function(name = "mixin", arity = 2)
         public static Object mixin(ExecutionContext cx, Object thisValue, Object target,
@@ -424,7 +424,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.2.3.19 Object.setPrototypeOf ( O, proto )
+         * 19.1.3.19 Object.setPrototypeOf ( O, proto )
          */
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
@@ -461,7 +461,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.2.3.7 Object.defineProperties ( O, Properties )
+     * 19.1.3.3 Object.defineProperties ( O, Properties )
      * <p>
      * Runtime Semantics: ObjectDefineProperties Abstract Operation
      */

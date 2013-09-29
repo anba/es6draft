@@ -26,11 +26,11 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.6 Boolean Objects</h2>
+ * <h1>19 Fundamental Objects</h1><br>
+ * <h2>19.3 Boolean Objects</h2>
  * <ul>
- * <li>15.6.1 The Boolean Constructor
- * <li>15.6.2 Properties of the Boolean Constructor
+ * <li>19.3.1 The Boolean Constructor
+ * <li>19.3.2 Properties of the Boolean Constructor
  * </ul>
  */
 public class BooleanConstructor extends BuiltinConstructor implements Initialisable {
@@ -45,7 +45,7 @@ public class BooleanConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.6.1.1 Boolean (value)
+     * 19.3.1.1 Boolean (value)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -65,7 +65,7 @@ public class BooleanConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.6.1.2 new Boolean (... argumentsList)
+     * 19.3.1.2 new Boolean (... argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -73,7 +73,7 @@ public class BooleanConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.6.2 Properties of the Boolean Constructor
+     * 19.3.2 Properties of the Boolean Constructor
      */
     public enum Properties {
         ;
@@ -90,14 +90,14 @@ public class BooleanConstructor extends BuiltinConstructor implements Initialisa
         public static final String name = "Boolean";
 
         /**
-         * 15.6.2.1 Boolean.prototype
+         * 19.3.2.1 Boolean.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.BooleanPrototype;
 
         /**
-         * 15.6.2.2 Boolean[ @@create ] ( )
+         * 19.3.2.2 Boolean[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

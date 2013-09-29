@@ -41,11 +41,11 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.4 Array Objects</h2>
+ * <h1>22 Indexed Collections</h1><br>
+ * <h2>22.1 Array Objects</h2>
  * <ul>
- * <li>15.4.3 Properties of the Array Prototype Object
- * <li>15.4.4 Properties of Array Instances
+ * <li>22.1.3 Properties of the Array Prototype Object
+ * <li>22.1.4 Properties of Array Instances
  * </ul>
  */
 public class ArrayPrototype extends OrdinaryObject implements Initialisable {
@@ -59,7 +59,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.4.3 Properties of the Array Prototype Object
+     * 22.1.3 Properties of the Array Prototype Object
      */
     public enum Properties {
         ;
@@ -68,13 +68,13 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.4.3.1 Array.prototype.constructor
+         * 22.1.3.2 Array.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Array;
 
         /**
-         * 15.4.3.2 Array.prototype.toString ( )
+         * 22.1.3.27 Array.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -91,7 +91,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.3 Array.prototype.toLocaleString ( )
+         * 22.1.3.26 Array.prototype.toLocaleString ( )
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
@@ -131,7 +131,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.4 Array.prototype.concat ( [ item1 [ , item2 [ , ... ] ] ] )
+         * 22.1.3.1 Array.prototype.concat ( [ item1 [ , item2 [ , ... ] ] ] )
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... items) {
@@ -184,7 +184,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.4.1 IsConcatSpreadable (O) Abstract Operation
+         * 22.1.3.3.1 IsConcatSpreadable (O) Abstract Operation
          */
         public static boolean IsConcatSpreadable(ExecutionContext cx, Object o) {
             /* steps 1-2 */
@@ -206,7 +206,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.5 Array.prototype.join (separator)
+         * 22.1.3.12 Array.prototype.join (separator)
          */
         @Function(name = "join", arity = 1)
         public static Object join(ExecutionContext cx, Object thisValue, Object separator) {
@@ -249,7 +249,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.6 Array.prototype.pop ( )
+         * 22.1.3.16 Array.prototype.pop ( )
          */
         @Function(name = "pop", arity = 0)
         public static Object pop(ExecutionContext cx, Object thisValue) {
@@ -276,7 +276,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.7 Array.prototype.push ( [ item1 [ , item2 [ , ... ] ] ] )
+         * 22.1.3.17 Array.prototype.push ( [ item1 [ , item2 [ , ... ] ] ] )
          */
         @Function(name = "push", arity = 1)
         public static Object push(ExecutionContext cx, Object thisValue, Object... items) {
@@ -298,7 +298,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.8 Array.prototype.reverse ( )
+         * 22.1.3.20 Array.prototype.reverse ( )
          */
         @Function(name = "reverse", arity = 0)
         public static Object reverse(ExecutionContext cx, Object thisValue) {
@@ -337,7 +337,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.9 Array.prototype.shift ( )
+         * 22.1.3.21 Array.prototype.shift ( )
          */
         @Function(name = "shift", arity = 0)
         public static Object shift(ExecutionContext cx, Object thisValue) {
@@ -375,7 +375,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.10 Array.prototype.slice (start, end)
+         * 22.1.3.22 Array.prototype.slice (start, end)
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
@@ -477,7 +477,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.11 Array.prototype.sort (comparefn)
+         * 22.1.3.24 Array.prototype.sort (comparefn)
          */
         @Function(name = "sort", arity = 1)
         public static Object sort(ExecutionContext cx, Object thisValue, Object comparefn) {
@@ -536,7 +536,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.12 Array.prototype.splice (start, deleteCount [ , item1 [ , item2 [ , ... ] ] ] )
+         * 22.1.3.25 Array.prototype.splice (start, deleteCount [ , item1 [ , item2 [ , ... ] ] ] )
          */
         @Function(name = "splice", arity = 2)
         public static Object splice(ExecutionContext cx, Object thisValue,
@@ -644,7 +644,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.13 Array.prototype.unshift ( [ item1 [ , item2 [ , ... ] ] ] )
+         * 22.1.3.28 Array.prototype.unshift ( [ item1 [ , item2 [ , ... ] ] ] )
          */
         @Function(name = "unshift", arity = 1)
         public static Object unshift(ExecutionContext cx, Object thisValue, Object... items) {
@@ -680,7 +680,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.14 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
+         * 22.1.3.11 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
          */
         @Function(name = "indexOf", arity = 1)
         public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchElement,
@@ -733,7 +733,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.15 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
+         * 22.1.3.14 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
          */
         @Function(name = "lastIndexOf", arity = 1)
         public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
@@ -779,7 +779,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.16 Array.prototype.every ( callbackfn [ , thisArg ] )
+         * 22.1.3.5 Array.prototype.every ( callbackfn [ , thisArg ] )
          */
         @Function(name = "every", arity = 1)
         public static Object every(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -813,7 +813,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.17 Array.prototype.some ( callbackfn [ , thisArg ] )
+         * 22.1.3.23 Array.prototype.some ( callbackfn [ , thisArg ] )
          */
         @Function(name = "some", arity = 1)
         public static Object some(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -847,7 +847,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.18 Array.prototype.forEach ( callbackfn [ , thisArg ] )
+         * 22.1.3.10 Array.prototype.forEach ( callbackfn [ , thisArg ] )
          */
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -878,7 +878,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.19 Array.prototype.map ( callbackfn [ , thisArg ] )
+         * 22.1.3.15 Array.prototype.map ( callbackfn [ , thisArg ] )
          */
         @Function(name = "map", arity = 1)
         public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -924,7 +924,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.20 Array.prototype.filter ( callbackfn [ , thisArg ] )
+         * 22.1.3.7 Array.prototype.filter ( callbackfn [ , thisArg ] )
          */
         @Function(name = "filter", arity = 1)
         public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -973,7 +973,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.21 Array.prototype.reduce ( callbackfn [ , initialValue ] )
+         * 22.1.3.18 Array.prototype.reduce ( callbackfn [ , initialValue ] )
          */
         @Function(name = "reduce", arity = 1)
         public static Object reduce(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -1026,7 +1026,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.22 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )
+         * 22.1.3.19 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )
          */
         @Function(name = "reduceRight", arity = 1)
         public static Object reduceRight(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -1079,7 +1079,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.23 Array.prototype.find ( predicate, thisArg = undefined )
+         * 22.1.3.8 Array.prototype.find ( predicate, thisArg = undefined )
          */
         @Function(name = "find", arity = 1)
         public static Object find(ExecutionContext cx, Object thisValue, Object predicate,
@@ -1113,7 +1113,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.24 Array.prototype.findIndex ( predicate [ , thisArg ] )
+         * 22.1.3.9 Array.prototype.findIndex ( predicate [ , thisArg ] )
          */
         @Function(name = "findIndex", arity = 1)
         public static Object findIndex(ExecutionContext cx, Object thisValue, Object predicate,
@@ -1147,7 +1147,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.25 Array.prototype.entries ( )
+         * 22.1.3.4 Array.prototype.entries ( )
          */
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
@@ -1158,7 +1158,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.26 Array.prototype.keys ( )
+         * 22.1.3.13 Array.prototype.keys ( )
          */
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
@@ -1169,8 +1169,8 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.27 Array.prototype.values ( )<br>
-         * 15.4.3.28 Array.prototype [ @@iterator ] ( )
+         * 22.1.3.29 Array.prototype.values ( )<br>
+         * 22.1.3.30 Array.prototype [ @@iterator ] ( )
          */
         @Function(name = "values", arity = 0)
         @AliasFunction(name = "@@iterator", symbol = BuiltinSymbol.iterator)
@@ -1182,7 +1182,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.29 Array.prototype [ @@unscopables ]
+         * 22.1.3.31 Array.prototype [ @@unscopables ]
          */
         @Value(name = "@@unscopables", symbol = BuiltinSymbol.unscopables,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -1202,7 +1202,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.30 Array.prototype.fill (value, start = 0, end = this.length)
+         * 22.1.3.6 Array.prototype.fill (value, start = 0, end = this.length)
          */
         @Function(name = "fill", arity = 1)
         public static Object fill(ExecutionContext cx, Object thisValue, Object value,
@@ -1243,7 +1243,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.4.3.31 Array.prototype.copyWithin (target, start, end = this.length)
+         * 22.1.3.3 Array.prototype.copyWithin (target, start, end = this.length)
          */
         @Function(name = "copyWithin", arity = 2)
         public static Object copyWithin(ExecutionContext cx, Object thisValue, Object target,

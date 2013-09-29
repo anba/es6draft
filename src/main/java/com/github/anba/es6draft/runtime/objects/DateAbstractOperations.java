@@ -18,10 +18,10 @@ import java.util.regex.Pattern;
 import com.github.anba.es6draft.runtime.Realm;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.9 Date Objects</h2>
+ * <h1>20 Numbers and Dates</h1><br>
+ * <h2>20.3 Date Objects</h2>
  * <ul>
- * <li>15.9.1 Overview of Date Objects and Definitions of Abstract Operations
+ * <li>20.3.1 Overview of Date Objects and Definitions of Abstract Operations
  * </ul>
  */
 final class DateAbstractOperations {
@@ -39,26 +39,26 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.2 Day Number and Time within Day
+     * 20.3.1.2 Day Number and Time within Day
      */
     public static final double msPerDay = 86400000;
 
     /**
-     * 15.9.1.2 Day Number and Time within Day
+     * 20.3.1.2 Day Number and Time within Day
      */
     public static double Day(double t) {
         return Math.floor(t / msPerDay);
     }
 
     /**
-     * 15.9.1.2 Day Number and Time within Day
+     * 20.3.1.2 Day Number and Time within Day
      */
     public static double TimeWithinDay(double t) {
         return modulo(t, msPerDay);
     }
 
     /**
-     * 15.9.1.3 Year Number
+     * 20.3.1.3 Year Number
      */
     public static double DaysInYear(double y) {
         if (y % 4 != 0) {
@@ -74,7 +74,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.3 Year Number
+     * 20.3.1.3 Year Number
      */
     public static double DayFromYear(double y) {
         return 365 * (y - 1970) + Math.floor((y - 1969) / 4) - Math.floor((y - 1901) / 100)
@@ -82,14 +82,14 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.3 Year Number
+     * 20.3.1.3 Year Number
      */
     public static double TimeFromYear(double y) {
         return msPerDay * DayFromYear(y);
     }
 
     /**
-     * 15.9.1.3 Year Number
+     * 20.3.1.3 Year Number
      */
     public static double YearFromTime(double t) {
         double y = 1970 + Math.floor(t / (365 * msPerDay));
@@ -106,14 +106,14 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.3 Year Number
+     * 20.3.1.3 Year Number
      */
     public static boolean InLeapYear(double t) {
         return DaysInYear(YearFromTime(t)) == 366;
     }
 
     /**
-     * 15.9.1.4 Month Number
+     * 20.3.1.4 Month Number
      */
     public static double MonthFromTime(double t) {
         double d = DayWithinYear(t);
@@ -159,14 +159,14 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.4 Month Number
+     * 20.3.1.4 Month Number
      */
     public static double DayWithinYear(double t) {
         return Day(t) - DayFromYear(YearFromTime(t));
     }
 
     /**
-     * 15.9.1.5 Date Number
+     * 20.3.1.5 Date Number
      */
     public static double DateFromTime(double t) {
         double m = MonthFromTime(t);
@@ -205,21 +205,21 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.6 Week Day
+     * 20.3.1.6 Week Day
      */
     public static double WeekDay(double t) {
         return modulo(Day(t) + 4, 7);
     }
 
     /**
-     * 15.9.1.7 Local Time Zone Adjustment
+     * 20.3.1.7 Local Time Zone Adjustment
      */
     public static double LocalTZA(Realm realm) {
         return realm.getTimezone().getRawOffset();
     }
 
     /**
-     * 15.9.1.8 Daylight Saving Time Adjustment
+     * 20.3.1.8 Daylight Saving Time Adjustment
      */
     public static double DaylightSavingTA(Realm realm, double t) {
         TimeZone tz = realm.getTimezone();
@@ -230,21 +230,21 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.9 Local Time
+     * 20.3.1.9 Local Time
      */
     public static double LocalTime(Realm realm, double t) {
         return t + LocalTZA(realm) + DaylightSavingTA(realm, t);
     }
 
     /**
-     * 15.9.1.9 Local Time
+     * 20.3.1.9 Local Time
      */
     public static double UTC(Realm realm, double t) {
         return t - LocalTZA(realm) - DaylightSavingTA(realm, t - LocalTZA(realm));
     }
 
     /**
-     * 15.9.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
      */
     public static final double //
             HoursPerDay = 24, //
@@ -255,28 +255,28 @@ final class DateAbstractOperations {
             msPerHour = msPerMinute * MinutesPerHour;
 
     /**
-     * 15.9.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
      */
     public static double HourFromTime(double t) {
         return modulo(Math.floor(t / msPerHour), HoursPerDay);
     }
 
     /**
-     * 15.9.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
      */
     public static double MinFromTime(double t) {
         return modulo(Math.floor(t / msPerMinute), MinutesPerHour);
     }
 
     /**
-     * 15.9.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
      */
     public static double SecFromTime(double t) {
         return modulo(Math.floor(t / msPerSecond), SecondsPerMinute);
     }
 
     /**
-     * 15.9.1.10 Hours, Minutes, Second, and Milliseconds
+     * 20.3.1.10 Hours, Minutes, Second, and Milliseconds
      */
     public static double msFromTime(double t) {
         return modulo(t, msPerSecond);
@@ -287,7 +287,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.11 MakeTime (hour, min, sec, ms)
+     * 20.3.1.11 MakeTime (hour, min, sec, ms)
      */
     public static double MakeTime(double hour, double min, double sec, double ms) {
         if (!isFinite(hour) || !isFinite(min) || !isFinite(sec) || !isFinite(ms)) {
@@ -302,7 +302,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.12 MakeDay (year, month, date)
+     * 20.3.1.12 MakeDay (year, month, date)
      */
     public static double MakeDay(double year, double month, double date) {
         if (!isFinite(year) || !isFinite(month) || !isFinite(date)) {
@@ -324,7 +324,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.13 MakeDate (day, time)
+     * 20.3.1.13 MakeDate (day, time)
      */
     public static double MakeDate(double day, double time) {
         if (!isFinite(day) || !isFinite(time)) {
@@ -334,7 +334,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.14 TimeClip (time)
+     * 20.3.1.14 TimeClip (time)
      */
     public static double TimeClip(double time) {
         if (!isFinite(time)) {
@@ -354,7 +354,7 @@ final class DateAbstractOperations {
     }
 
     /**
-     * 15.9.1.15 Date Time String Format<br>
+     * 20.3.1.15 Date Time String Format<br>
      * Parse input string according to simplified ISO-8601 Extended Format:
      * <ul>
      * <li><code>YYYY-MM-DD'T'HH:mm:ss.sss'Z'</code></li>
@@ -368,14 +368,14 @@ final class DateAbstractOperations {
         final int HOUR = 3, MIN = 4, SEC = 5, MSEC = 6;
         final int TZHOUR = 7, TZMIN = 8;
         int state = YEAR;
-        // default values per [15.9.1.15 Date Time String Format]
+        // default values per [20.3.1.15 Date Time String Format]
         int[] values = { 1970, 1, 1, 0, 0, 0, 0, -1, -1 };
         int yearlen = 4, yearmod = 1, tzmod = 1;
         int i = 0, len = s.length();
         if (len != 0) {
             char c = s.charAt(0);
             if (c == '+' || c == '-') {
-                // 15.9.1.15.1 Extended years
+                // 20.3.1.15.1 Extended years
                 i += 1;
                 yearlen = 6;
                 yearmod = (c == '-') ? -1 : 1;

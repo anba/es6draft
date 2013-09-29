@@ -50,11 +50,11 @@ import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.util.ULocale;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.5 String Objects</h2>
+ * <h1>21 Text Processing</h1><br>
+ * <h2>21.1 String Objects</h2>
  * <ul>
- * <li>15.5.3 Properties of the String Prototype Object
- * <li>15.5.4 Properties of String Instances
+ * <li>21.1.3 Properties of the String Prototype Object
+ * <li>21.1.4 Properties of String Instances
  * </ul>
  */
 public class StringPrototype extends OrdinaryObject implements Initialisable {
@@ -69,7 +69,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.5.3 Properties of the String Prototype Object
+     * 21.1.3 Properties of the String Prototype Object
      */
     public enum Properties {
         ;
@@ -94,13 +94,13 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.5.3.1 String.prototype.constructor
+         * 21.1.3.5 String.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.String;
 
         /**
-         * 15.5.3.2 String.prototype.toString ( )
+         * 21.1.3.23 String.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -108,7 +108,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.3 String.prototype.valueOf ( )
+         * 21.1.3.26 String.prototype.valueOf ( )
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
@@ -116,7 +116,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.4 String.prototype.charAt (pos)
+         * 21.1.3.1 String.prototype.charAt (pos)
          */
         @Function(name = "charAt", arity = 1)
         public static Object charAt(ExecutionContext cx, Object thisValue, Object pos) {
@@ -137,7 +137,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.5 String.prototype.charCodeAt (pos)
+         * 21.1.3.2 String.prototype.charCodeAt (pos)
          */
         @Function(name = "charCodeAt", arity = 1)
         public static Object charCodeAt(ExecutionContext cx, Object thisValue, Object pos) {
@@ -158,7 +158,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.6 String.prototype.concat ( ...args )
+         * 21.1.3.4 String.prototype.concat ( ...args )
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... args) {
@@ -180,7 +180,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.7 String.prototype.indexOf (searchString, position)
+         * 21.1.3.8 String.prototype.indexOf (searchString, position)
          */
         @Function(name = "indexOf", arity = 1)
         public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchString,
@@ -202,7 +202,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.8 String.prototype.lastIndexOf (searchString, position)
+         * 21.1.3.9 String.prototype.lastIndexOf (searchString, position)
          */
         @Function(name = "lastIndexOf", arity = 1)
         public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
@@ -226,7 +226,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.9 String.prototype.localeCompare (that)<br>
+         * 21.1.3.10 String.prototype.localeCompare (that)<br>
          * 13.1.1 String.prototype.localeCompare (that [, locales [, options]])
          */
         @Function(name = "localeCompare", arity = 1)
@@ -247,7 +247,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.10 String.prototype.match (regexp)
+         * 21.1.3.11 String.prototype.match (regexp)
          */
         @Function(name = "match", arity = 1)
         public static Object match(ExecutionContext cx, Object thisValue, Object regexp) {
@@ -268,7 +268,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.11 String.prototype.replace (searchValue, replaceValue)
+         * 21.1.3.14 String.prototype.replace (searchValue, replaceValue)
          */
         @Function(name = "replace", arity = 2)
         public static Object replace(ExecutionContext cx, Object thisValue, Object searchValue,
@@ -352,7 +352,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.12 String.prototype.search (regexp)
+         * 21.1.3.15 String.prototype.search (regexp)
          */
         @Function(name = "search", arity = 1)
         public static Object search(ExecutionContext cx, Object thisValue, Object regexp) {
@@ -373,7 +373,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.13 String.prototype.slice (start, end)
+         * 21.1.3.16 String.prototype.slice (start, end)
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
@@ -398,7 +398,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.14 String.prototype.split (separator, limit)
+         * 21.1.3.17 String.prototype.split (separator, limit)
          */
         @Function(name = "split", arity = 2)
         public static Object split(ExecutionContext cx, Object thisValue, Object separator,
@@ -483,7 +483,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.15 String.prototype.substring (start, end)
+         * 21.1.3.19 String.prototype.substring (start, end)
          */
         @Function(name = "substring", arity = 2)
         public static Object substring(ExecutionContext cx, Object thisValue, Object start,
@@ -511,7 +511,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.16 String.prototype.toLowerCase ( )
+         * 21.1.3.22 String.prototype.toLowerCase ( )
          */
         @Function(name = "toLowerCase", arity = 0)
         public static Object toLowerCase(ExecutionContext cx, Object thisValue) {
@@ -524,7 +524,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.17 String.prototype.toLocaleLowerCase ( )<br>
+         * 21.1.3.20 String.prototype.toLocaleLowerCase ( )<br>
          * 13.1.2 String.prototype.toLocaleLowerCase ([locales])
          */
         @Function(name = "toLocaleLowerCase", arity = 0)
@@ -549,7 +549,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.18 String.prototype.toUpperCase ( )
+         * 21.1.3.24 String.prototype.toUpperCase ( )
          */
         @Function(name = "toUpperCase", arity = 0)
         public static Object toUpperCase(ExecutionContext cx, Object thisValue) {
@@ -562,7 +562,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.19 String.prototype.toLocaleUpperCase ( )
+         * 21.1.3.21 String.prototype.toLocaleUpperCase ( )
          */
         @Function(name = "toLocaleUpperCase", arity = 0)
         public static Object toLocaleUpperCase(ExecutionContext cx, Object thisValue, Object locales) {
@@ -586,7 +586,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.20 String.prototype.trim ( )
+         * 21.1.3.25 String.prototype.trim ( )
          */
         @Function(name = "trim", arity = 0)
         public static Object trim(ExecutionContext cx, Object thisValue) {
@@ -599,7 +599,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.21 String.prototype.repeat (count)
+         * 21.1.3.13 String.prototype.repeat (count)
          */
         @Function(name = "repeat", arity = 1)
         public static Object repeat(ExecutionContext cx, Object thisValue, Object count) {
@@ -632,7 +632,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.22 String.prototype.startsWith (searchString [, position ] )
+         * 21.1.3.18 String.prototype.startsWith (searchString [, position ] )
          */
         @Function(name = "startsWith", arity = 1)
         public static Object startsWith(ExecutionContext cx, Object thisValue, Object searchString,
@@ -660,7 +660,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.23 String.prototype.endsWith (searchString [, endPosition] )
+         * 21.1.3.7 String.prototype.endsWith (searchString [, endPosition] )
          */
         @Function(name = "endsWith", arity = 1)
         public static Object endsWith(ExecutionContext cx, Object thisValue, Object searchString,
@@ -690,7 +690,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.24 String.prototype.contains (searchString, position = 0 )
+         * 21.1.3.6 String.prototype.contains (searchString, position = 0 )
          */
         @Function(name = "contains", arity = 1)
         public static Object contains(ExecutionContext cx, Object thisValue, Object searchString,
@@ -714,7 +714,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.25 String.prototype.codePointAt (pos)
+         * 21.1.3.3 String.prototype.codePointAt (pos)
          */
         @Function(name = "codePointAt", arity = 1)
         public static Object codePointAt(ExecutionContext cx, Object thisValue, Object pos) {
@@ -736,7 +736,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.5.3.26 String.prototype.normalize ( form = "NFC" )
+         * 21.1.3.12 String.prototype.normalize ( form = "NFC" )
          */
         @Function(name = "normalize", arity = 1)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object form) {

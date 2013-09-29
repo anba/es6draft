@@ -37,11 +37,11 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.12 The JSON Object</h2>
+ * <h1>24 Structured Data</h1><br>
+ * <h2>24.3 The JSON Object</h2>
  * <ul>
- * <li>15.12.2 JSON.parse (text [, reviver])
- * <li>15.12.3 JSON.stringify (value [, replacer [, space]])
+ * <li>24.3.2 JSON.parse (text [, reviver])
+ * <li>24.3.3 JSON.stringify (value [, replacer [, space]])
  * </ul>
  */
 public class JSONObject extends OrdinaryObject implements Initialisable {
@@ -61,7 +61,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.12.2 JSON.parse ( text [ , reviver ] )
+         * 24.3.2 JSON.parse ( text [ , reviver ] )
          */
         @Function(name = "parse", arity = 2)
         public static Object parse(ExecutionContext cx, Object thisValue, Object text,
@@ -87,7 +87,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.12.3 JSON.stringify ( value [ , replacer [ , space ] ] )
+         * 24.3.3 JSON.stringify ( value [ , replacer [ , space ] ] )
          */
         @Function(name = "stringify", arity = 3)
         public static Object stringify(ExecutionContext cx, Object thisValue, Object value,

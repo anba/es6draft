@@ -35,10 +35,10 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.11 Error Objects</h2>
+ * <h1>19 Fundamental Objects</h1><br>
+ * <h2>19.4 Error Objects</h2>
  * <ul>
- * <li>15.11.3 Properties of the Error Prototype Object
+ * <li>19.4.3 Properties of the Error Prototype Object
  * </ul>
  */
 public class ErrorPrototype extends OrdinaryObject implements Initialisable {
@@ -52,7 +52,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.11.3 Properties of the Error Prototype Object
+     * 19.4.3 Properties of the Error Prototype Object
      */
     public enum Properties {
         ;
@@ -61,25 +61,25 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.11.3.1 Error.prototype.constructor
+         * 19.4.3.1 Error.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Error;
 
         /**
-         * 15.11.3.2 Error.prototype.name
+         * 19.4.3.3 Error.prototype.name
          */
         @Value(name = "name")
         public static final String name = "Error";
 
         /**
-         * 15.11.3.3 Error.prototype.message
+         * 19.4.3.2 Error.prototype.message
          */
         @Value(name = "message")
         public static final String message = "";
 
         /**
-         * 15.11.3.4 Error.prototype.toString ( )
+         * 19.4.3.4 Error.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {

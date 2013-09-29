@@ -28,14 +28,13 @@ import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.1 The Global Object</h2>
+ * <h1>18 The Global Object</h1>
  * <ul>
- * <li>15.1.1 Value Properties of the Global Object
- * <li>15.1.2 Function Properties of the Global Object
- * <li>15.1.3 URI Handling Function Properties
- * <li>15.1.4 Constructor Properties of the Global Object
- * <li>15.1.5 Other Properties of the Global Object
+ * <li>18.1 Value Properties of the Global Object
+ * <li>18.2 Function Properties of the Global Object
+ * <li>18.3 URI Handling Function Properties
+ * <li>18.4 Constructor Properties of the Global Object
+ * <li>18.5 Other Properties of the Global Object
  * </ul>
  */
 public class GlobalObject extends OrdinaryObject implements Initialisable {
@@ -67,27 +66,27 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.1.1 Value Properties of the Global Object
+     * 18.1 Value Properties of the Global Object
      */
     public enum ValueProperties {
         ;
 
         /**
-         * 15.1.1.1 NaN
+         * 18.1.2 NaN
          */
         @Value(name = "NaN", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double NaN = Double.NaN;
 
         /**
-         * 15.1.1.2 Infinity
+         * 18.1.1 Infinity
          */
         @Value(name = "Infinity", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double Infinity = Double.POSITIVE_INFINITY;
 
         /**
-         * 15.1.1.3 undefined
+         * 18.1.3 undefined
          */
         @Value(name = "undefined", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -95,13 +94,13 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.1.2 Function Properties of the Global Object
+     * 18.2 Function Properties of the Global Object
      */
     public enum FunctionProperties {
         ;
 
         /**
-         * 15.1.2.1 eval (x)
+         * 18.2.1 eval (x)
          */
         @Function(name = "eval", arity = 1)
         public static Object eval(ExecutionContext cx, Object thisValue, Object x) {
@@ -109,7 +108,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.1.2.2 parseInt (string , radix)
+         * 18.2.5 parseInt (string , radix)
          */
         @Value(name = "parseInt")
         public static Object parseInt(ExecutionContext cx) {
@@ -117,7 +116,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.1.2.3 parseFloat (string)
+         * 18.2.4 parseFloat (string)
          */
         @Value(name = "parseFloat")
         public static Object parseFloat(ExecutionContext cx) {
@@ -125,7 +124,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.1.2.4 isNaN (number)
+         * 18.2.3 isNaN (number)
          */
         @Function(name = "isNaN", arity = 1)
         public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
@@ -140,7 +139,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.1.2.5 isFinite (number)
+         * 18.2.2 isFinite (number)
          */
         @Function(name = "isFinite", arity = 1)
         public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
@@ -156,13 +155,13 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.1.3 URI Handling Function Properties
+     * 18.3 URI Handling Function Properties
      */
     public enum URIFunctionProperties {
         ;
 
         /**
-         * 15.1.3.1 decodeURI (encodedURI)
+         * 18.3.1 decodeURI (encodedURI)
          */
         @Function(name = "decodeURI", arity = 1)
         public static Object decodeURI(ExecutionContext cx, Object thisValue, Object encodedURI) {
@@ -177,7 +176,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.1.3.2 decodeURIComponent (encodedURIComponent)
+         * 18.3.2 decodeURIComponent (encodedURIComponent)
          */
         @Function(name = "decodeURIComponent", arity = 1)
         public static Object decodeURIComponent(ExecutionContext cx, Object thisValue,
@@ -193,7 +192,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.1.3.3 encodeURI (uri)
+         * 18.3.3 encodeURI (uri)
          */
         @Function(name = "encodeURI", arity = 1)
         public static Object encodeURI(ExecutionContext cx, Object thisValue, Object uri) {
@@ -208,7 +207,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.1.3.4 encodeURIComponent (uriComponent)
+         * 18.3.4 encodeURIComponent (uriComponent)
          */
         @Function(name = "encodeURIComponent", arity = 1)
         public static Object encodeURIComponent(ExecutionContext cx, Object thisValue,
@@ -225,97 +224,97 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.1.4 Constructor Properties of the Global Object
+     * 18.4 Constructor Properties of the Global Object
      */
     public enum ConstructorProperties {
         ;
 
         /**
-         * 15.1.4.1 Object ( . . . )
+         * 18.4.16 Object ( . . . )
          */
         @Value(name = "Object")
         public static final Intrinsics Object = Intrinsics.Object;
 
         /**
-         * 15.1.4.2 Function ( . . . )
+         * 18.4.10 Function ( . . . )
          */
         @Value(name = "Function")
         public static final Intrinsics Function = Intrinsics.Function;
 
         /**
-         * 15.1.4.3 Array ( . . . )
+         * 18.4.1 Array ( . . . )
          */
         @Value(name = "Array")
         public static final Intrinsics Array = Intrinsics.Array;
 
         /**
-         * 15.1.4.4 String ( . . . )
+         * 18.4.21 String ( . . . )
          */
         @Value(name = "String")
         public static final Intrinsics String = Intrinsics.String;
 
         /**
-         * 15.1.4.5 Boolean ( . . . )
+         * 18.4.3 Boolean ( . . . )
          */
         @Value(name = "Boolean")
         public static final Intrinsics Boolean = Intrinsics.Boolean;
 
         /**
-         * 15.1.4.6 Number ( . . . )
+         * 18.4.15 Number ( . . . )
          */
         @Value(name = "Number")
         public static final Intrinsics Number = Intrinsics.Number;
 
         /**
-         * 15.1.4.7 Date ( . . . )
+         * 18.4.5 Date ( . . . )
          */
         @Value(name = "Date")
         public static final Intrinsics Date = Intrinsics.Date;
 
         /**
-         * 15.1.4.8 RegExp ( . . . )
+         * 18.4.19 RegExp ( . . . )
          */
         @Value(name = "RegExp")
         public static final Intrinsics RegExp = Intrinsics.RegExp;
 
         /**
-         * 15.1.4.9 Error ( . . . )
+         * 18.4.6 Error ( . . . )
          */
         @Value(name = "Error")
         public static final Intrinsics Error = Intrinsics.Error;
 
         /**
-         * 15.1.4.10 EvalError ( . . . )
+         * 18.4.7 EvalError ( . . . )
          */
         @Value(name = "EvalError")
         public static final Intrinsics EvalError = Intrinsics.EvalError;
 
         /**
-         * 15.1.4.11 RangeError ( . . . )
+         * 18.4.17 RangeError ( . . . )
          */
         @Value(name = "RangeError")
         public static final Intrinsics RangeError = Intrinsics.RangeError;
 
         /**
-         * 15.1.4.12 ReferenceError ( . . . )
+         * 18.4.18 ReferenceError ( . . . )
          */
         @Value(name = "ReferenceError")
         public static final Intrinsics ReferenceError = Intrinsics.ReferenceError;
 
         /**
-         * 15.1.4.13 SyntaxError ( . . . )
+         * 18.4.22 SyntaxError ( . . . )
          */
         @Value(name = "SyntaxError")
         public static final Intrinsics SyntaxError = Intrinsics.SyntaxError;
 
         /**
-         * 15.1.4.14 TypeError ( . . . )
+         * 18.4.23 TypeError ( . . . )
          */
         @Value(name = "TypeError")
         public static final Intrinsics TypeError = Intrinsics.TypeError;
 
         /**
-         * 15.1.4.15 URIError ( . . . )
+         * 18.4.28 URIError ( . . . )
          */
         @Value(name = "URIError")
         public static final Intrinsics URIError = Intrinsics.URIError;
@@ -325,25 +324,25 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         public static final Intrinsics InternalError = Intrinsics.InternalError;
 
         /**
-         * 15.1.4.16 Map ( . . . )
+         * 18.4.14 Map ( . . . )
          */
         @Value(name = "Map")
         public static final Intrinsics Map = Intrinsics.Map;
 
         /**
-         * 15.1.4.17 WeakMap ( . . . )
+         * 18.4.29 WeakMap ( . . . )
          */
         @Value(name = "WeakMap")
         public static final Intrinsics WeakMap = Intrinsics.WeakMap;
 
         /**
-         * 15.1.4.18 Set ( . . . )
+         * 18.4.20 Set ( . . . )
          */
         @Value(name = "Set")
         public static final Intrinsics Set = Intrinsics.Set;
 
         /**
-         * 15.1.4.? WeakSet ( . . . )
+         * 18.4.30 WeakSet ( . . . )
          */
         @Value(name = "WeakSet")
         public static final Intrinsics WeakSet = Intrinsics.WeakSet;
@@ -356,56 +355,87 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         @Value(name = "Reflect")
         public static final Intrinsics Reflect = Intrinsics.Reflect;
 
-        // TODO: binary module intrinsics
-
+        /**
+         * 18.4.2 ArrayBuffer ( . . . )
+         */
         @Value(name = "ArrayBuffer")
         public static final Intrinsics ArrayBuffer = Intrinsics.ArrayBuffer;
 
+        /**
+         * 18.4.11 Int8Array ( . . . )
+         */
         @Value(name = "Int8Array")
         public static final Intrinsics Int8Array = Intrinsics.Int8Array;
 
+        /**
+         * 18.4.24 UInt8Array ( . . . )
+         */
         @Value(name = "Uint8Array")
         public static final Intrinsics Uint8Array = Intrinsics.Uint8Array;
 
+        /**
+         * 18.4.25 UInt8ClampedArray ( . . . )
+         */
         @Value(name = "Uint8ClampedArray")
         public static final Intrinsics Uint8ClampedArray = Intrinsics.Uint8ClampedArray;
 
+        /**
+         * 18.4.12 Int16Array ( . . . )
+         */
         @Value(name = "Int16Array")
         public static final Intrinsics Int16Array = Intrinsics.Int16Array;
 
+        /**
+         * 18.4.26 UInt16Array ( . . . )
+         */
         @Value(name = "Uint16Array")
         public static final Intrinsics Uint16Array = Intrinsics.Uint16Array;
 
+        /**
+         * 18.4.13 Int32Array ( . . . )
+         */
         @Value(name = "Int32Array")
         public static final Intrinsics Int32Array = Intrinsics.Int32Array;
 
+        /**
+         * 18.4.27 UInt32Array ( . . . )
+         */
         @Value(name = "Uint32Array")
         public static final Intrinsics Uint32Array = Intrinsics.Uint32Array;
 
+        /**
+         * 18.4.8 Float32Array ( . . . )
+         */
         @Value(name = "Float32Array")
         public static final Intrinsics Float32Array = Intrinsics.Float32Array;
 
+        /**
+         * 18.4.9 Float64Array ( . . . )
+         */
         @Value(name = "Float64Array")
         public static final Intrinsics Float64Array = Intrinsics.Float64Array;
 
+        /**
+         * 18.4.4 DataView ( . . . )
+         */
         @Value(name = "DataView")
         public static final Intrinsics DataView = Intrinsics.DataView;
     }
 
     /**
-     * 15.1.5 Other Properties of the Global Object
+     * 18.5 Other Properties of the Global Object
      */
     public enum OtherProperties {
         ;
 
         /**
-         * 15.1.5.1 Math
+         * 18.5.2 Math
          */
         @Value(name = "Math")
         public static final Intrinsics Math = Intrinsics.Math;
 
         /**
-         * 15.1.5.2 JSON
+         * 18.5.1 JSON
          */
         @Value(name = "JSON")
         public static final Intrinsics JSON = Intrinsics.JSON;
@@ -515,28 +545,28 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.1.3.1 decodeURI (encodedURI)
+         * 18.3.1 decodeURI (encodedURI)
          */
         public static String decodeURI(String encodedURI) {
             return decode(encodedURI, RESERVED_LO | HASH, RESERVED_HI);
         }
 
         /**
-         * 15.1.3.2 decodeURIComponent (encodedURIComponent)
+         * 18.3.2 decodeURIComponent (encodedURIComponent)
          */
         public static String decodeURIComponent(String encodedURIComponent) {
             return decode(encodedURIComponent, 0, 0);
         }
 
         /**
-         * 15.1.3.3 encodeURI (uri)
+         * 18.3.3 encodeURI (uri)
          */
         public static String encodeURI(String uri) {
             return encode(uri, RESERVED_LO | UNESCAPED_LO | HASH, RESERVED_HI | UNESCAPED_HI);
         }
 
         /**
-         * 15.1.3.4 encodeURIComponent (uriComponent)
+         * 18.3.4 encodeURIComponent (uriComponent)
          */
         public static String encodeURIComponent(String uriComponent) {
             return encode(uriComponent, UNESCAPED_LO, UNESCAPED_HI);

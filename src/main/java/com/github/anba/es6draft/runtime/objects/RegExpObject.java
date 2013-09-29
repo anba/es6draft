@@ -13,10 +13,10 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.10 RegExp (Regular Expression) Objects</h2>
+ * <h1>21 Text Processing</h1><br>
+ * <h2>21.2 RegExp (Regular Expression) Objects</h2>
  * <ul>
- * <li>15.10.6 Properties of RegExp Instances
+ * <li>21.2.6 Properties of RegExp Instances
  * </ul>
  */
 public class RegExpObject extends OrdinaryObject {

@@ -18,12 +18,12 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.11 Error Objects</h2>
+ * <h1>19 Fundamental Objects</h1><br>
+ * <h2>19.4 Error Objects</h2>
  * <ul>
- * <li>15.11.7 NativeError Object Structure
+ * <li>19.4.6 NativeError Object Structure
  * <ul>
- * <li>15.11.7.3 Properties of the NativeError Prototype Objects
+ * <li>19.4.6.3 Properties of the NativeError Prototype Objects
  * </ul>
  * </ul>
  */
@@ -65,7 +65,7 @@ public class NativeErrorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Prototype Objects
+     * 19.4.6.3 Properties of the NativeError Prototype Objects
      */
     public enum EvalErrorPrototypeProperties {
         ;
@@ -74,26 +74,26 @@ public class NativeErrorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ErrorPrototype;
 
         /**
-         * 15.11.7.3.1 NativeError.prototype.constructor
+         * 19.4.6.3.1 NativeError.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.EvalError;
 
         /**
-         * 15.11.7.3.2 NativeError.prototype.name
+         * 19.4.6.3.3 NativeError.prototype.name
          */
         @Value(name = "name")
         public static final String name = "EvalError";
 
         /**
-         * 15.11.7.3.3 NativeError.prototype.message
+         * 19.4.6.3.2 NativeError.prototype.message
          */
         @Value(name = "message")
         public static final String message = "";
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Prototype Objects
+     * 19.4.6.3 Properties of the NativeError Prototype Objects
      */
     public enum RangeErrorPrototypeProperties {
         ;
@@ -102,26 +102,26 @@ public class NativeErrorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ErrorPrototype;
 
         /**
-         * 15.11.7.3.1 NativeError.prototype.constructor
+         * 19.4.6.3.1 NativeError.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.RangeError;
 
         /**
-         * 15.11.7.3.2 NativeError.prototype.name
+         * 19.4.6.3.3 NativeError.prototype.name
          */
         @Value(name = "name")
         public static final String name = "RangeError";
 
         /**
-         * 15.11.7.3.3 NativeError.prototype.message
+         * 19.4.6.3.2 NativeError.prototype.message
          */
         @Value(name = "message")
         public static final String message = "";
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Prototype Objects
+     * 19.4.6.3 Properties of the NativeError Prototype Objects
      */
     public enum ReferenceErrorPrototypeProperties {
         ;
@@ -130,26 +130,26 @@ public class NativeErrorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ErrorPrototype;
 
         /**
-         * 15.11.7.3.1 NativeError.prototype.constructor
+         * 19.4.6.3.1 NativeError.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.ReferenceError;
 
         /**
-         * 15.11.7.3.2 NativeError.prototype.name
+         * 19.4.6.3.3 NativeError.prototype.name
          */
         @Value(name = "name")
         public static final String name = "ReferenceError";
 
         /**
-         * 15.11.7.3.3 NativeError.prototype.message
+         * 19.4.6.3.2 NativeError.prototype.message
          */
         @Value(name = "message")
         public static final String message = "";
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Prototype Objects
+     * 19.4.6.3 Properties of the NativeError Prototype Objects
      */
     public enum SyntaxErrorPrototypeProperties {
         ;
@@ -158,26 +158,26 @@ public class NativeErrorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ErrorPrototype;
 
         /**
-         * 15.11.7.3.1 NativeError.prototype.constructor
+         * 19.4.6.3.1 NativeError.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.SyntaxError;
 
         /**
-         * 15.11.7.3.2 NativeError.prototype.name
+         * 19.4.6.3.3 NativeError.prototype.name
          */
         @Value(name = "name")
         public static final String name = "SyntaxError";
 
         /**
-         * 15.11.7.3.3 NativeError.prototype.message
+         * 19.4.6.3.2 NativeError.prototype.message
          */
         @Value(name = "message")
         public static final String message = "";
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Prototype Objects
+     * 19.4.6.3 Properties of the NativeError Prototype Objects
      */
     public enum TypeErrorPrototypeProperties {
         ;
@@ -186,26 +186,26 @@ public class NativeErrorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ErrorPrototype;
 
         /**
-         * 15.11.7.3.1 NativeError.prototype.constructor
+         * 19.4.6.3.1 NativeError.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.TypeError;
 
         /**
-         * 15.11.7.3.2 NativeError.prototype.name
+         * 19.4.6.3.3 NativeError.prototype.name
          */
         @Value(name = "name")
         public static final String name = "TypeError";
 
         /**
-         * 15.11.7.3.3 NativeError.prototype.message
+         * 19.4.6.3.2 NativeError.prototype.message
          */
         @Value(name = "message")
         public static final String message = "";
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Prototype Objects
+     * 19.4.6.3 Properties of the NativeError Prototype Objects
      */
     public enum URIErrorPrototypeProperties {
         ;
@@ -214,26 +214,26 @@ public class NativeErrorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ErrorPrototype;
 
         /**
-         * 15.11.7.3.1 NativeError.prototype.constructor
+         * 19.4.6.3.1 NativeError.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.URIError;
 
         /**
-         * 15.11.7.3.2 NativeError.prototype.name
+         * 19.4.6.3.3 NativeError.prototype.name
          */
         @Value(name = "name")
         public static final String name = "URIError";
 
         /**
-         * 15.11.7.3.3 NativeError.prototype.message
+         * 19.4.6.3.2 NativeError.prototype.message
          */
         @Value(name = "message")
         public static final String message = "";
     }
 
     /**
-     * 15.11.7.3 Properties of the NativeError Prototype Objects
+     * 19.4.6.3 Properties of the NativeError Prototype Objects
      */
     public enum InternalErrorPrototypeProperties {
         ;
@@ -242,19 +242,19 @@ public class NativeErrorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ErrorPrototype;
 
         /**
-         * 15.11.7.3.1 NativeError.prototype.constructor
+         * 19.4.6.3.1 NativeError.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.InternalError;
 
         /**
-         * 15.11.7.3.2 NativeError.prototype.name
+         * 19.4.6.3.3 NativeError.prototype.name
          */
         @Value(name = "name")
         public static final String name = "InternalError";
 
         /**
-         * 15.11.7.3.3 NativeError.prototype.message
+         * 19.4.6.3.2 NativeError.prototype.message
          */
         @Value(name = "message")
         public static final String message = "";

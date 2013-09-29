@@ -28,11 +28,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.11 Error Objects</h2>
+ * <h1>19 Fundamental Objects</h1><br>
+ * <h2>19.4 Error Objects</h2>
  * <ul>
- * <li>15.11.1 The Error Constructor
- * <li>15.11.2 Properties of the Error Constructor
+ * <li>19.4.1 The Error Constructor
+ * <li>19.4.2 Properties of the Error Constructor
  * </ul>
  */
 public class ErrorConstructor extends BuiltinConstructor implements Initialisable {
@@ -47,7 +47,7 @@ public class ErrorConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     /**
-     * 15.11.1.1 Error (message)
+     * 19.4.1.1 Error (message)
      * <p>
      * <strong>Extension</strong>: Error (message, fileName, lineNumber)
      */
@@ -92,7 +92,7 @@ public class ErrorConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     /**
-     * 15.11.1.2 new Error(...argumentsList)
+     * 19.4.1.2 new Error(...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -100,7 +100,7 @@ public class ErrorConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     /**
-     * 15.11.2 Properties of the Error Constructor
+     * 19.4.2 Properties of the Error Constructor
      */
     public enum Properties {
         ;
@@ -117,14 +117,14 @@ public class ErrorConstructor extends BuiltinConstructor implements Initialisabl
         public static final String name = "Error";
 
         /**
-         * 15.11.2.1 Error.prototype
+         * 19.4.2.1 Error.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ErrorPrototype;
 
         /**
-         * 15.11.2.2 Error[ @@create ] ( )
+         * 19.4.2.2 Error[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

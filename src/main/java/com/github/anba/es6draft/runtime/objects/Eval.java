@@ -22,11 +22,10 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.1 The Global Object</h2><br>
- * <h3>15.1.2 Function Properties of the Global Object</h3>
+ * <h1>18 The Global Object</h1><br>
+ * <h2>18.2 Function Properties of the Global Object</h2>
  * <ul>
- * <li>15.1.2.1 eval
+ * <li>18.2.1 eval (x)
  * </ul>
  */
 public final class Eval {
@@ -34,14 +33,14 @@ public final class Eval {
     }
 
     /**
-     * 15.1.2.1 eval (x)
+     * 18.2.1 eval (x)
      */
     public static Object indirectEval(ExecutionContext ctx, Object source) {
         return eval(ctx, false, false, true, source);
     }
 
     /**
-     * 15.1.2.1 eval (x)
+     * 18.2.1 eval (x)
      */
     public static Object directEval(Object source, ExecutionContext ctx, boolean strictCaller,
             boolean globalCode) {

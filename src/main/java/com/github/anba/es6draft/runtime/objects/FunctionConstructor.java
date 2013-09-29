@@ -39,11 +39,11 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKi
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.3 Function Objects</h2>
+ * <h1>19 Fundamental Objects</h1><br>
+ * <h2>19.2 Function Objects</h2>
  * <ul>
- * <li>15.3.1 The Function Constructor
- * <li>15.3.2 Properties of the Function Constructor
+ * <li>19.2.1 The Function Constructor
+ * <li>19.2.2 Properties of the Function Constructor
  * </ul>
  */
 public class FunctionConstructor extends BuiltinConstructor implements Initialisable {
@@ -58,7 +58,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
     }
 
     /**
-     * 15.3.1.1 Function (p1, p2, ... , pn, body)
+     * 19.2.1.1 Function (p1, p2, ... , pn, body)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -122,7 +122,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
     }
 
     /**
-     * 15.3.1.2 new Function ( ... argumentsList)
+     * 19.2.1.2 new Function ( ... argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -130,7 +130,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
     }
 
     /**
-     * 15.3.2 Properties of the Function Constructor
+     * 19.2.2 Properties of the Function Constructor
      */
     public enum Properties {
         ;
@@ -139,14 +139,14 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
         /**
-         * 15.3.2.1 Function.prototype
+         * 19.2.2.2 Function.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.FunctionPrototype;
 
         /**
-         * 15.3.2.2 Function.length
+         * 19.2.2.1 Function.length
          */
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
@@ -157,7 +157,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         public static final String name = "Function";
 
         /**
-         * 15.3.2.3 Function[ @@create ] ( )
+         * 19.2.2.3 Function[ @@create ] ( )
          */
         @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

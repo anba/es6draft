@@ -29,11 +29,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.7 Number Objects</h2>
+ * <h1>20 Numbers and Dates</h1><br>
+ * <h2>20.1 Number Objects</h2>
  * <ul>
- * <li>15.7.1 The Number Constructor
- * <li>15.7.2 Properties of the Number Constructor
+ * <li>20.1.1 The Number Constructor
+ * <li>20.1.2 Properties of the Number Constructor
  * </ul>
  */
 public class NumberConstructor extends BuiltinConstructor implements Initialisable {
@@ -48,7 +48,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.7.1.1 Number ( [ value ] )
+     * 20.1.1.1 Number ( [ value ] )
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -69,7 +69,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.7.1.2 new Number (...argumentsList)
+     * 20.1.1.2 new Number (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -77,7 +77,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 15.7.2 Properties of the Number Constructor
+     * 20.1.2 Properties of the Number Constructor
      */
     public enum Properties {
         ;
@@ -94,70 +94,70 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         public static final String name = "Number";
 
         /**
-         * 15.7.2.1 Number.prototype
+         * 20.1.2.15 Number.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.NumberPrototype;
 
         /**
-         * 15.7.2.2 Number.MAX_VALUE
+         * 20.1.2.7 Number.MAX_VALUE
          */
         @Value(name = "MAX_VALUE", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double MAX_VALUE = Double.MAX_VALUE;
 
         /**
-         * 15.7.2.3 Number.MIN_VALUE
+         * 20.1.2.11 Number.MIN_VALUE
          */
         @Value(name = "MIN_VALUE", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double MIN_VALUE = Double.MIN_VALUE;
 
         /**
-         * 15.7.2.4 Number.NaN
+         * 20.1.2.8 Number.NaN
          */
         @Value(name = "NaN", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double NaN = Double.NaN;
 
         /**
-         * 15.7.2.5 Number.NEGATIVE_INFINITY
+         * 20.1.2.9 Number.NEGATIVE_INFINITY
          */
         @Value(name = "NEGATIVE_INFINITY", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
         public static final Double NEGATIVE_INFINITY = Double.NEGATIVE_INFINITY;
 
         /**
-         * 15.7.2.6 Number.POSITIVE_INFINITY
+         * 20.1.2.14 Number.POSITIVE_INFINITY
          */
         @Value(name = "POSITIVE_INFINITY", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
         public static final Double POSITIVE_INFINITY = Double.POSITIVE_INFINITY;
 
         /**
-         * 15.7.2.7 Number.EPSILON
+         * 20.1.2.1 Number.EPSILON
          */
         @Value(name = "EPSILON", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double EPSILON = Math.ulp(1.0);
 
         /**
-         * 15.7.2.8 Number.MAX_SAFE_INTEGER
+         * 20.1.2.6 Number.MAX_SAFE_INTEGER
          */
         @Value(name = "MAX_SAFE_INTEGER", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
         public static final Double MAX_SAFE_INTEGER = (double) 0x1FFFFFFFFFFFFFL;
 
         /**
-         * 15.7.2.x Number.MIN_SAFE_INTEGER
+         * 20.1.2.10 Number.MIN_SAFE_INTEGER
          */
         @Value(name = "MIN_SAFE_INTEGER", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
         public static final Double MIN_SAFE_INTEGER = (double) -0x1FFFFFFFFFFFFFL;
 
         /**
-         * 15.7.2.9 Number.parseInt (string, radix)
+         * 20.1.2.13 Number.parseInt (string, radix)
          */
         @Function(name = "parseInt", arity = 2)
         public static Object parseInt(ExecutionContext cx, Object thisValue, Object string,
@@ -201,7 +201,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.7.2.10 Number.parseFloat (string)
+         * 20.1.2.12 Number.parseFloat (string)
          */
         @Function(name = "parseFloat", arity = 1)
         public static Object parseFloat(ExecutionContext cx, Object thisValue, Object string) {
@@ -218,7 +218,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.7.2.11 Number.isNaN (number)
+         * 20.1.2.4 Number.isNaN (number)
          */
         @Function(name = "isNaN", arity = 1)
         public static Object isNaN(ExecutionContext cx, Object thisValue, Object number) {
@@ -229,7 +229,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.7.2.12 Number.isFinite (number)
+         * 20.1.2.2 Number.isFinite (number)
          */
         @Function(name = "isFinite", arity = 1)
         public static Object isFinite(ExecutionContext cx, Object thisValue, Object number) {
@@ -241,7 +241,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.7.2.13 Number.isInteger (number)
+         * 20.1.2.3 Number.isInteger (number)
          */
         @Function(name = "isInteger", arity = 1)
         public static Object isInteger(ExecutionContext cx, Object thisValue, Object number) {
@@ -257,7 +257,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.7.2.14 Number.isSafeInteger (number)
+         * 20.1.2.5 Number.isSafeInteger (number)
          */
         @Function(name = "isSafeInteger", arity = 1)
         public static Object isSafeInteger(ExecutionContext cx, Object thisValue, Object number) {
@@ -276,7 +276,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 15.7.2.15 Number[ @@create ] ( )
+         * 20.1.2.16 Number[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

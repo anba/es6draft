@@ -43,11 +43,11 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.2 Object Objects</h2>
+ * <h1>19 Fundamental Objects</h1><br>
+ * <h2>19.1 Object Objects</h2>
  * <ul>
- * <li>15.2.4 Properties of the Object Prototype Object
- * <li>15.2.5 Properties of Object Instances
+ * <li>19.1.4 Properties of the Object Prototype Object
+ * <li>19.1.5 Properties of Object Instances
  * </ul>
  */
 public class ObjectPrototype extends OrdinaryObject implements Initialisable {
@@ -68,13 +68,13 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         public static final ScriptObject __proto__ = null;
 
         /**
-         * 15.2.4.1 Object.prototype.constructor
+         * 19.1.4.1 Object.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Object;
 
         /**
-         * 15.2.4.2 Object.prototype.toString ( )
+         * 19.1.4.6 Object.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -156,7 +156,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.2.4.3 Object.prototype.toLocaleString ( )
+         * 19.1.4.5 Object.prototype.toLocaleString ( )
          */
         @Function(name = "toLocaleString", arity = 0)
         public static Object toLocaleString(ExecutionContext cx, Object thisValue) {
@@ -165,7 +165,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.2.4.4 Object.prototype.valueOf ( )
+         * 19.1.4.7 Object.prototype.valueOf ( )
          */
         @Function(name = "valueOf", arity = 0)
         public static Object valueOf(ExecutionContext cx, Object thisValue) {
@@ -176,7 +176,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.2.4.5 Object.prototype.hasOwnProperty (V)
+         * 19.1.4.2 Object.prototype.hasOwnProperty (V)
          */
         @Function(name = "hasOwnProperty", arity = 1)
         public static Object hasOwnProperty(ExecutionContext cx, Object thisValue, Object v) {
@@ -193,7 +193,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.2.4.6 Object.prototype.isPrototypeOf (V)
+         * 19.1.4.3 Object.prototype.isPrototypeOf (V)
          */
         @Function(name = "isPrototypeOf", arity = 1)
         public static Object isPrototypeOf(ExecutionContext cx, Object thisValue, Object v) {
@@ -217,7 +217,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.2.4.7 Object.prototype.propertyIsEnumerable (V)
+         * 19.1.4.4 Object.prototype.propertyIsEnumerable (V)
          */
         @Function(name = "propertyIsEnumerable", arity = 1)
         public static Object propertyIsEnumerable(ExecutionContext cx, Object thisValue, Object v) {

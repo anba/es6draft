@@ -43,11 +43,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.10 RegExp (Regular Expression) Objects</h2>
+ * <h1>21 Text Processing</h1><br>
+ * <h2>21.2 RegExp (Regular Expression) Objects</h2>
  * <ul>
- * <li>15.10.5 Properties of the RegExp Prototype Object
- * <li>15.10.5 Properties of RegExp Instances
+ * <li>21.2.5 Properties of the RegExp Prototype Object
+ * <li>21.2.5 Properties of RegExp Instances
  * </ul>
  */
 public class RegExpPrototype extends OrdinaryObject implements Initialisable {
@@ -62,7 +62,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.10.5 Properties of the RegExp Prototype Object
+     * 21.2.5 Properties of the RegExp Prototype Object
      */
     public enum Properties {
         ;
@@ -81,13 +81,13 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.10.5.1 RegExp.prototype.constructor
+         * 21.2.5.1 RegExp.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.RegExp;
 
         /**
-         * 15.10.5.2 RegExp.prototype.exec(string)
+         * 21.2.5.2 RegExp.prototype.exec(string)
          */
         @Function(name = "exec", arity = 1)
         public static Object exec(ExecutionContext cx, Object thisValue, Object string) {
@@ -100,7 +100,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.3 get RegExp.prototype.global
+         * 21.2.5.3 get RegExp.prototype.global
          */
         @Accessor(name = "global", type = Accessor.Type.Getter)
         public static Object global(ExecutionContext cx, Object thisValue) {
@@ -111,7 +111,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.4 get RegExp.prototype.ignoreCase
+         * 21.2.5.4 get RegExp.prototype.ignoreCase
          */
         @Accessor(name = "ignoreCase", type = Accessor.Type.Getter)
         public static Object ignoreCase(ExecutionContext cx, Object thisValue) {
@@ -122,7 +122,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.5 get RegExp.prototype.multiline
+         * 21.2.5.6 get RegExp.prototype.multiline
          */
         @Accessor(name = "multiline", type = Accessor.Type.Getter)
         public static Object multiline(ExecutionContext cx, Object thisValue) {
@@ -133,7 +133,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.6 get RegExp.prototype.source
+         * 21.2.5.9 get RegExp.prototype.source
          */
         @Accessor(name = "source", type = Accessor.Type.Getter)
         public static Object source(ExecutionContext cx, Object thisValue) {
@@ -144,7 +144,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.7 get RegExp.prototype.sticky
+         * 21.2.5.11 get RegExp.prototype.sticky
          */
         @Accessor(name = "sticky", type = Accessor.Type.Getter)
         public static Object sticky(ExecutionContext cx, Object thisValue) {
@@ -155,7 +155,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.8 RegExp.prototype.test(string)
+         * 21.2.5.12 RegExp.prototype.test(string)
          */
         @Function(name = "test", arity = 1)
         public static Object test(ExecutionContext cx, Object thisValue, Object string) {
@@ -173,7 +173,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.9 get RegExp.prototype.unicode
+         * 21.2.5.14 get RegExp.prototype.unicode
          */
         @Accessor(name = "unicode", type = Accessor.Type.Getter)
         public static Object unicode(ExecutionContext cx, Object thisValue) {
@@ -184,7 +184,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.10 RegExp.prototype.toString()
+         * 21.2.5.13 RegExp.prototype.toString()
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -222,7 +222,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.11 RegExp.prototype.match (string)
+         * 21.2.5.5 RegExp.prototype.match (string)
          */
         @Function(name = "match", arity = 1)
         public static Object match(ExecutionContext cx, Object thisValue, Object string) {
@@ -270,7 +270,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.5.12 RegExp.prototype.replace (S, replaceValue)
+         * 21.2.5.7 RegExp.prototype.replace (S, replaceValue)
          */
         @Function(name = "replace", arity = 2)
         public static Object replace(ExecutionContext cx, Object thisValue, Object s,
@@ -439,7 +439,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.4.13 RegExp.prototype.search (S)
+         * 21.2.4.8 RegExp.prototype.search (S)
          */
         @Function(name = "search", arity = 1)
         public static Object search(ExecutionContext cx, Object thisValue, Object s) {
@@ -458,7 +458,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.4.14 RegExp.prototype.split (string, limit)
+         * 21.2.4.10 RegExp.prototype.split (string, limit)
          */
         @Function(name = "split", arity = 2)
         public static Object split(ExecutionContext cx, Object thisValue, Object string,
@@ -539,7 +539,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.10.4.15 RegExp.prototype.@@isRegExp
+         * 21.2.4.15 RegExp.prototype.@@isRegExp
          */
         @Value(name = "@@isRegExp", symbol = BuiltinSymbol.isRegExp, attributes = @Attributes(
                 writable = false, enumerable = false, configurable = true))

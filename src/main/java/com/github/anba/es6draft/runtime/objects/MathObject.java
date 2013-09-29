@@ -23,11 +23,11 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.8 The Math Object</h2>
+ * <h1>20 Numbers and Dates</h1><br>
+ * <h2>20.2 The Math Object</h2>
  * <ul>
- * <li>15.8.1 Value Properties of the Math Object
- * <li>15.8.2 Function Properties of the Math Object
+ * <li>20.2.1 Value Properties of the Math Object
+ * <li>20.2.2 Function Properties of the Math Object
  * </ul>
  */
 public class MathObject extends OrdinaryObject implements Initialisable {
@@ -44,62 +44,62 @@ public class MathObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.8.1 Value Properties of the Math Object
+     * 20.2.1 Value Properties of the Math Object
      */
     public enum ValueProperties {
         ;
 
         /**
-         * 15.8.1.1 Math.E
+         * 20.2.1.1 Math.E
          */
         @Value(name = "E", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double E = Math.E;
 
         /**
-         * 15.8.1.2 Math.LN10
+         * 20.2.1.2 Math.LN10
          */
         @Value(name = "LN10", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double LN10 = Math.log(10d);
 
         /**
-         * 15.8.1.3 Math.LN2
+         * 20.2.1.4 Math.LN2
          */
         @Value(name = "LN2", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double LN2 = Math.log(2d);
 
         /**
-         * 15.8.1.4 Math.LOG2E
+         * 20.2.1.5 Math.LOG2E
          */
         @Value(name = "LOG2E", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double LOG2E = 1d / Math.log(2d);
 
         /**
-         * 15.8.1.5 Math.LOG10E
+         * 20.2.1.3 Math.LOG10E
          */
         @Value(name = "LOG10E", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double LOG10E = Math.log10(Math.E);
 
         /**
-         * 15.8.1.6 Math.PI
+         * 20.2.1.6 Math.PI
          */
         @Value(name = "PI", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double PI = Math.PI;
 
         /**
-         * 15.8.1.7 Math.SQRT1_2
+         * 20.2.1.7 Math.SQRT1_2
          */
         @Value(name = "SQRT1_2", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double SQRT1_2 = Math.sqrt(.5d);
 
         /**
-         * 15.8.1.8 Math.SQRT2
+         * 20.2.1.8 Math.SQRT2
          */
         @Value(name = "SQRT2", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -107,13 +107,13 @@ public class MathObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 15.8.2 Function Properties of the Math Object
+     * 20.2.2 Function Properties of the Math Object
      */
     public enum FunctionProperties {
         ;
 
         /**
-         * 15.8.2.1 Math.abs (x)
+         * 20.2.2.1 Math.abs (x)
          */
         @Function(name = "abs", arity = 1)
         public static Object abs(ExecutionContext cx, Object thisValue, Object x) {
@@ -121,7 +121,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.2 Math.acos (x)
+         * 20.2.2.2 Math.acos (x)
          */
         @Function(name = "acos", arity = 1)
         public static Object acos(ExecutionContext cx, Object thisValue, Object x) {
@@ -129,7 +129,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.3 Math.asin (x)
+         * 20.2.2.4 Math.asin (x)
          */
         @Function(name = "asin", arity = 1)
         public static Object asin(ExecutionContext cx, Object thisValue, Object x) {
@@ -137,7 +137,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.4 Math.atan (x)
+         * 20.2.2.6 Math.atan (x)
          */
         @Function(name = "atan", arity = 1)
         public static Object atan(ExecutionContext cx, Object thisValue, Object x) {
@@ -145,7 +145,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.5 Math.atan2 (y, x)
+         * 20.2.2.7 Math.atan2 (y, x)
          */
         @Function(name = "atan2", arity = 2)
         public static Object atan2(ExecutionContext cx, Object thisValue, Object y, Object x) {
@@ -153,7 +153,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.6 Math.ceil (x)
+         * 20.2.2.10 Math.ceil (x)
          */
         @Function(name = "ceil", arity = 1)
         public static Object ceil(ExecutionContext cx, Object thisValue, Object x) {
@@ -161,7 +161,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.7 Math.cos (x)
+         * 20.2.2.11 Math.cos (x)
          */
         @Function(name = "cos", arity = 1)
         public static Object cos(ExecutionContext cx, Object thisValue, Object x) {
@@ -169,7 +169,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.8 Math.exp (x)
+         * 20.2.2.13 Math.exp (x)
          */
         @Function(name = "exp", arity = 1)
         public static Object exp(ExecutionContext cx, Object thisValue, Object x) {
@@ -177,7 +177,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.9 Math.floor (x)
+         * 20.2.2.15 Math.floor (x)
          */
         @Function(name = "floor", arity = 1)
         public static Object floor(ExecutionContext cx, Object thisValue, Object x) {
@@ -185,7 +185,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.10 Math.log (x)
+         * 20.2.2.18 Math.log (x)
          */
         @Function(name = "log", arity = 1)
         public static Object log(ExecutionContext cx, Object thisValue, Object x) {
@@ -193,7 +193,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.11 Math.max ( [ value1 [ , value2 [ , ... ] ] ] )
+         * 20.2.2.22 Math.max ( [ value1 [ , value2 [ , ... ] ] ] )
          */
         @Function(name = "max", arity = 2)
         public static Object max(ExecutionContext cx, Object thisValue, Object... values) {
@@ -211,7 +211,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.12 Math.min ( [ value1 [ , value2 [ , ... ] ] ] )
+         * 20.2.2.23 Math.min ( [ value1 [ , value2 [ , ... ] ] ] )
          */
         @Function(name = "min", arity = 2)
         public static Object min(ExecutionContext cx, Object thisValue, Object... values) {
@@ -229,7 +229,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.13 Math.pow (x, y)
+         * 20.2.2.24 Math.pow (x, y)
          */
         @Function(name = "pow", arity = 2)
         public static Object pow(ExecutionContext cx, Object thisValue, Object x, Object y) {
@@ -237,7 +237,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.14 Math.random ( )
+         * 20.2.2.25 Math.random ( )
          */
         @Function(name = "random", arity = 0)
         public static Object random(ExecutionContext cx, Object thisValue) {
@@ -245,7 +245,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.15 Math.round (x)
+         * 20.2.2.26 Math.round (x)
          */
         @Function(name = "round", arity = 1)
         public static Object round(ExecutionContext cx, Object thisValue, Object x) {
@@ -264,7 +264,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.16 Math.sin (x)
+         * 20.2.2.29 Math.sin (x)
          */
         @Function(name = "sin", arity = 1)
         public static Object sin(ExecutionContext cx, Object thisValue, Object x) {
@@ -272,7 +272,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.17 Math.sqrt (x)
+         * 20.2.2.31 Math.sqrt (x)
          */
         @Function(name = "sqrt", arity = 1)
         public static Object sqrt(ExecutionContext cx, Object thisValue, Object x) {
@@ -280,7 +280,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.18 Math.tan (x)
+         * 20.2.2.32 Math.tan (x)
          */
         @Function(name = "tan", arity = 1)
         public static Object tan(ExecutionContext cx, Object thisValue, Object x) {
@@ -288,7 +288,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.19 Math.log10 (x)
+         * 20.2.2.19 Math.log10 (x)
          */
         @Function(name = "log10", arity = 1)
         public static Object log10(ExecutionContext cx, Object thisValue, Object x) {
@@ -296,7 +296,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.20 Math.log2 (x)
+         * 20.2.2.21 Math.log2 (x)
          */
         @Function(name = "log2", arity = 1)
         public static Object log2(ExecutionContext cx, Object thisValue, Object x) {
@@ -304,7 +304,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.21 Math.log1p (x)
+         * 20.2.2.20 Math.log1p (x)
          */
         @Function(name = "log1p", arity = 1)
         public static Object log1p(ExecutionContext cx, Object thisValue, Object x) {
@@ -312,7 +312,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.22 Math.expm1 (x)
+         * 20.2.2.14 Math.expm1 (x)
          */
         @Function(name = "expm1", arity = 1)
         public static Object expm1(ExecutionContext cx, Object thisValue, Object x) {
@@ -320,7 +320,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.23 Math.cosh(x)
+         * 20.2.2.12 Math.cosh(x)
          */
         @Function(name = "cosh", arity = 1)
         public static Object cosh(ExecutionContext cx, Object thisValue, Object x) {
@@ -328,7 +328,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.24 Math.sinh(x)
+         * 20.2.2.30 Math.sinh(x)
          */
         @Function(name = "sinh", arity = 1)
         public static Object sinh(ExecutionContext cx, Object thisValue, Object x) {
@@ -336,7 +336,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.25 Math.tanh(x)
+         * 20.2.2.33 Math.tanh(x)
          */
         @Function(name = "tanh", arity = 1)
         public static Object tanh(ExecutionContext cx, Object thisValue, Object x) {
@@ -344,7 +344,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.26 Math.acosh(x)
+         * 20.2.2.3 Math.acosh(x)
          */
         @Function(name = "acosh", arity = 1)
         public static Object acosh(ExecutionContext cx, Object thisValue, Object x) {
@@ -363,7 +363,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.27 Math.asinh(x)
+         * 20.2.2.5 Math.asinh(x)
          */
         @Function(name = "asinh", arity = 1)
         public static Object asinh(ExecutionContext cx, Object thisValue, Object x) {
@@ -376,7 +376,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.28 Math.atanh(x)
+         * 20.2.2.8 Math.atanh(x)
          */
         @Function(name = "atanh", arity = 1)
         public static Object atanh(ExecutionContext cx, Object thisValue, Object x) {
@@ -398,7 +398,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.29 Math.hypot( value1 , value2, value3 = 0 )
+         * 20.2.2.16 Math.hypot( value1 , value2, value3 = 0 )
          */
         @Function(name = "hypot", arity = 2)
         public static Object hypot(ExecutionContext cx, Object thisValue, Object value1,
@@ -420,7 +420,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.30 Math.trunc(x)
+         * 20.2.2.34 Math.trunc(x)
          */
         @Function(name = "trunc", arity = 1)
         public static Object trunc(ExecutionContext cx, Object thisValue, Object x) {
@@ -429,7 +429,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.31 Math.sign(x)
+         * 20.2.2.28 Math.sign(x)
          */
         @Function(name = "sign", arity = 1)
         public static Object sign(ExecutionContext cx, Object thisValue, Object x) {
@@ -437,7 +437,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.32 Math.cbrt(x)
+         * 20.2.2.9 Math.cbrt(x)
          */
         @Function(name = "cbrt", arity = 1)
         public static Object cbrt(ExecutionContext cx, Object thisValue, Object x) {
@@ -445,7 +445,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.33 Math.imul(x, y)
+         * 20.2.2.17 Math.imul(x, y)
          */
         @Function(name = "imul", arity = 2)
         public static Object imul(ExecutionContext cx, Object thisValue, Object x, Object y) {
@@ -455,7 +455,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 15.8.2.34 Math.roundFloat32(x)
+         * 20.2.2.27 Math.roundFloat32(x)
          */
         @Function(name = "roundFloat32", arity = 1)
         public static Object roundFloat32(ExecutionContext cx, Object thisValue, Object x) {

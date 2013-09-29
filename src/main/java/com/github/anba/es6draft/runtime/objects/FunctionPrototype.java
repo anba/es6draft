@@ -32,11 +32,11 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.3 Function Objects</h2>
+ * <h1>19 Fundamental Objects</h1><br>
+ * <h2>19.2 Function Objects</h2>
  * <ul>
- * <li>15.3.3 Properties of the Function Prototype Object
- * <li>15.3.4 Properties of Function Instances
+ * <li>19.2.3 Properties of the Function Prototype Object
+ * <li>19.2.4 Properties of Function Instances
  * </ul>
  */
 public class FunctionPrototype extends BuiltinFunction implements Initialisable {
@@ -68,7 +68,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
     }
 
     /**
-     * 15.3.3 Properties of the Function Prototype Object
+     * 19.2.3 Properties of the Function Prototype Object
      */
     public enum Properties {
         ;
@@ -85,13 +85,13 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         public static final String name = "FunctionPrototype";
 
         /**
-         * 15.3.3.1 Function.prototype.constructor
+         * 19.2.3.4 Function.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Function;
 
         /**
-         * 15.3.3.2 Function.prototype.toString ( )
+         * 19.2.3.5 Function.prototype.toString ( )
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
@@ -102,7 +102,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         }
 
         /**
-         * 15.3.3.3 Function.prototype.apply (thisArg, argArray)
+         * 19.2.3.1 Function.prototype.apply (thisArg, argArray)
          */
         @Function(name = "apply", arity = 2)
         public static Object apply(ExecutionContext cx, Object thisValue, Object thisArg,
@@ -123,7 +123,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         }
 
         /**
-         * 15.3.3.4 Function.prototype.call (thisArg [, arg1 [, arg2, ... ]])
+         * 19.2.3.3 Function.prototype.call (thisArg [, arg1 [, arg2, ... ]])
          */
         @Function(name = "call", arity = 1)
         public static Object call(ExecutionContext cx, Object thisValue, Object thisArg,
@@ -138,7 +138,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         }
 
         /**
-         * 15.3.3.5 Function.prototype.bind (thisArg [, arg1 [, arg2, ... ]])
+         * 19.2.3.2 Function.prototype.bind (thisArg [, arg1 [, arg2, ... ]])
          */
         @Function(name = "bind", arity = 1)
         public static Object bind(ExecutionContext cx, Object thisValue, Object thisArg,
@@ -169,7 +169,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         }
 
         /**
-         * 15.3.4.6 Function.prototype[ @@create ] ( )
+         * 19.2.4.6 Function.prototype[ @@create ] ( )
          */
         @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -178,7 +178,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         }
 
         /**
-         * 15.3.4.7 Function.prototype[@@hasInstance] (V)
+         * 19.2.4.7 Function.prototype[@@hasInstance] (V)
          */
         @Function(
                 name = "@@hasInstance",
