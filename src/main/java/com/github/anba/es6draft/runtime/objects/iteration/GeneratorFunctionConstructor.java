@@ -145,14 +145,14 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         public static final Intrinsics __proto__ = Intrinsics.Function;
 
         /**
-         * 25.3.2.1 GeneratorFunction.prototype
+         * 25.3.2.2 GeneratorFunction.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Generator;
 
         /**
-         * 25.3.2.2 GeneratorFunction.length
+         * 25.3.2.1 GeneratorFunction.length
          */
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
