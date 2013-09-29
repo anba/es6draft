@@ -23,8 +23,8 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.18.2 Proxy Objects</h2>
+ * <h1>26 The Reflect Module</h1><br>
+ * <h2>26.2 Proxy Objects</h2>
  */
 public class ProxyConstructor extends BuiltinConstructor implements Initialisable {
     public ProxyConstructor(Realm realm) {
