@@ -12,10 +12,10 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.17 WeakSet Objects</h2>
+ * <h1>23 Keyed Collection</h1><br>
+ * <h2>23.4 WeakSet Objects</h2>
  * <ul>
- * <li>15.17.4 Properties of WeakSet Instances
+ * <li>23.4.4 Properties of WeakSet Instances
  * </ul>
  */
 public class WeakSetObject extends OrdinaryObject {

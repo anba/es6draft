@@ -36,11 +36,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.17 WeakSet Objects</h2>
+ * <h1>23 Keyed Collection</h1><br>
+ * <h2>23.4 WeakSet Objects</h2>
  * <ul>
- * <li>15.17.1 The WeakSet Constructor
- * <li>15.17.2 Properties of the WeakSet Constructor
+ * <li>23.4.1 The WeakSet Constructor
+ * <li>23.4.2 Properties of the WeakSet Constructor
  * </ul>
  */
 public class WeakSetConstructor extends BuiltinConstructor implements Initialisable {
@@ -55,7 +55,7 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.17.1.1 WeakSet (iterable = undefined)
+     * 23.4.1.1 WeakSet (iterable = undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -108,7 +108,7 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.17.1.2 new WeakSet (...argumentsList)
+     * 23.4.1.2 new WeakSet (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -116,7 +116,7 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.17.2 Properties of the WeakSet Constructor
+     * 23.4.2 Properties of the WeakSet Constructor
      */
     public enum Properties {
         ;
@@ -133,14 +133,14 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
         public static final String name = "WeakSet";
 
         /**
-         * 15.17.2.1 WeakSet.prototype
+         * 23.4.2.1 WeakSet.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.WeakSetPrototype;
 
         /**
-         * 15.17.2.2 WeakSet[ @@create ] ( )
+         * 23.4.2.2 WeakSet[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

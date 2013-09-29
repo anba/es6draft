@@ -38,11 +38,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.14 Map Objects</h2>
+ * <h1>23 Keyed Collection</h1><br>
+ * <h2>23.1 Map Objects</h2>
  * <ul>
- * <li>15.14.1 The Map Constructor
- * <li>15.14.2 Properties of the Map Constructor
+ * <li>23.1.1 The Map Constructor
+ * <li>23.1.2 Properties of the Map Constructor
  * </ul>
  */
 public class MapConstructor extends BuiltinConstructor implements Initialisable {
@@ -57,7 +57,7 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 15.14.1.1 Map (iterable = undefined, comparator = undefined)
+     * 23.1.1.1 Map (iterable = undefined, comparator = undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -126,7 +126,7 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 15.14.1.2 new Map (...argumentsList)
+     * 23.1.1.2 new Map (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -134,7 +134,7 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 15.14.2 Properties of the Map Constructor
+     * 23.1.2 Properties of the Map Constructor
      */
     public enum Properties {
         ;
@@ -151,14 +151,14 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
         public static final String name = "Map";
 
         /**
-         * 15.14.2.1 Map.prototype
+         * 23.1.2.1 Map.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.MapPrototype;
 
         /**
-         * 15.14.2.2 Map[ @@create ] ( )
+         * 23.1.2.2 Map[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

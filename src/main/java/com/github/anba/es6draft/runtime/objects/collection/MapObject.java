@@ -12,10 +12,10 @@ import com.github.anba.es6draft.runtime.internal.LinkedMapImpl;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.14 Map Objects</h2>
+ * <h1>23 Keyed Collection</h1><br>
+ * <h2>23.1 Map Objects</h2>
  * <ul>
- * <li>15.14.4 Properties of Map Instances
+ * <li>23.1.4 Properties of Map Instances
  * </ul>
  */
 public class MapObject extends OrdinaryObject {

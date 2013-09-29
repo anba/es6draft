@@ -32,10 +32,10 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.14 Map Objects</h2>
+ * <h1>23 Keyed Collection</h1><br>
+ * <h2>23.1 Map Objects</h2>
  * <ul>
- * <li>15.14.5 Map Iterator Object Structure
+ * <li>23.1.5 Map Iterator Object Structure
  * </ul>
  */
 public class MapIteratorPrototype extends OrdinaryObject implements Initialisable {
@@ -53,7 +53,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 15.14.5.3 Properties of Map Iterator Instances
+     * 23.1.5.3 Properties of Map Iterator Instances
      */
     private static class MapIterator extends OrdinaryObject {
         /** [[Map]] */
@@ -83,7 +83,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 15.14.5.1 CreateMapIterator Abstract Operation
+     * 23.1.5.1 CreateMapIterator Abstract Operation
      */
     public static OrdinaryObject CreateMapIterator(ExecutionContext cx, MapObject m,
             MapIterationKind kind) {
@@ -103,7 +103,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 15.14.5.2 The Map Iterator Prototype
+     * 23.1.5.2 The Map Iterator Prototype
      */
     public enum Properties {
         ;
@@ -112,14 +112,14 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.14.5.2.1 MapIterator.prototype.constructor<br>
+         * 23.1.5.2.1 MapIterator.prototype.constructor<br>
          * FIXME: spec bug (no description)
          */
         @Value(name = "constructor")
         public static final Object constructor = UNDEFINED;
 
         /**
-         * 15.14.5.2.2 MapIterator.prototype.next( )
+         * 23.1.5.2.2 MapIterator.prototype.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -166,7 +166,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 15.14.5.2.3 MapIterator.prototype.@@iterator ()
+         * 23.1.5.2.3 MapIterator.prototype.@@iterator ()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
@@ -174,7 +174,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 15.14.5.2.4 MapIterator.prototype.@@toStringTag
+         * 23.1.5.2.4 MapIterator.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Map Iterator";

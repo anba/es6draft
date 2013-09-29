@@ -32,10 +32,10 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.14 Map Objects</h2>
+ * <h1>23 Keyed Collection</h1><br>
+ * <h2>23.2 Set Objects</h2>
  * <ul>
- * <li>15.16.5 Set Iterator Object Structure
+ * <li>23.2.5 Set Iterator Object Structure
  * </ul>
  */
 public class SetIteratorPrototype extends OrdinaryObject implements Initialisable {
@@ -53,7 +53,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 15.16.5.3 Properties of Set Iterator Instances
+     * 23.2.5.3 Properties of Set Iterator Instances
      */
     private static class SetIterator extends OrdinaryObject {
         /** [[IteratedSet]] */
@@ -83,7 +83,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 15.16.5.1 CreateSetIterator Abstract Operation
+     * 23.2.5.1 CreateSetIterator Abstract Operation
      */
     public static OrdinaryObject CreateSetIterator(ExecutionContext cx, SetObject set,
             SetIterationKind kind) {
@@ -102,7 +102,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 15.16.5.2 The Set Iterator Prototype
+     * 23.2.5.2 The Set Iterator Prototype
      */
     public enum Properties {
         ;
@@ -111,14 +111,14 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.16.5.2.1 SetIterator.prototype.constructor<br>
+         * 23.2.5.2.1 SetIterator.prototype.constructor<br>
          * FIXME: spec bug (no description)
          */
         @Value(name = "constructor")
         public static final Object constructor = UNDEFINED;
 
         /**
-         * 15.16.5.2.2 SetIterator.prototype.next( )
+         * 23.2.5.2.2 SetIterator.prototype.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -159,7 +159,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 15.16.5.2.3 SetIterator.prototype.@@iterator()
+         * 23.2.5.2.3 SetIterator.prototype.@@iterator()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
@@ -167,7 +167,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 15.16.5.2.4 SetIterator.prototype.@@toStringTag
+         * 23.2.5.2.4 SetIterator.prototype.@@toStringTag
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Set Iterator";

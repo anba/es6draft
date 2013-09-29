@@ -38,11 +38,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.16 Set Objects</h2>
+ * <h1>23 Keyed Collection</h1><br>
+ * <h2>23.2 Set Objects</h2>
  * <ul>
- * <li>15.16.1 The Set Constructor
- * <li>15.16.2 Properties of the Set Constructor
+ * <li>23.2.1 The Set Constructor
+ * <li>23.2.2 Properties of the Set Constructor
  * </ul>
  */
 public class SetConstructor extends BuiltinConstructor implements Initialisable {
@@ -57,7 +57,7 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 15.16.1.1 Set (iterable = undefined, comparator = undefined )
+     * 23.2.1.1 Set (iterable = undefined, comparator = undefined )
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -120,7 +120,7 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 15.16.1.2 new Set (...argumentsList)
+     * 23.2.1.2 new Set (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -128,7 +128,7 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 15.16.2 Properties of the Set Constructor
+     * 23.2.2 Properties of the Set Constructor
      */
     public enum Properties {
         ;
@@ -145,14 +145,14 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
         public static final String name = "Set";
 
         /**
-         * 15.16.2.1 Set.prototype
+         * 23.2.2.1 Set.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.SetPrototype;
 
         /**
-         * 15.16.2.2 Set[ @@create ] ( )
+         * 23.2.2.2 Set[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

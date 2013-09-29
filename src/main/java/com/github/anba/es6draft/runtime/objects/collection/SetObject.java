@@ -12,10 +12,10 @@ import com.github.anba.es6draft.runtime.internal.LinkedMapImpl;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.16 Set Objects</h2>
+ * <h1>23 Keyed Collection</h1><br>
+ * <h2>23.2 Set Objects</h2>
  * <ul>
- * <li>15.16.4 Properties of Set Instances
+ * <li>23.2.4 Properties of Set Instances
  * </ul>
  */
 public class SetObject extends OrdinaryObject {

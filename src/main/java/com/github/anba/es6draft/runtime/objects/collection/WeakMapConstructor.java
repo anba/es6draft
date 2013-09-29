@@ -36,11 +36,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.15 WeakMap Objects</h2>
+ * <h1>23 Keyed Collection</h1><br>
+ * <h2>23.3 WeakMap Objects</h2>
  * <ul>
- * <li>15.15.1 The WeakMap Constructor
- * <li>15.15.2 Properties of the WeakMap Constructor
+ * <li>23.3.1 The WeakMap Constructor
+ * <li>23.3.2 Properties of the WeakMap Constructor
  * </ul>
  */
 public class WeakMapConstructor extends BuiltinConstructor implements Initialisable {
@@ -55,7 +55,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.15.1.1 WeakMap (iterable = undefined)
+     * 23.3.1.1 WeakMap (iterable = undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -114,7 +114,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.15.1.2 new WeakMap (...argumentsList)
+     * 23.3.1.2 new WeakMap (...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -122,7 +122,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * 15.15.2 Properties of the WeakMap Constructor
+     * 23.3.2 Properties of the WeakMap Constructor
      */
     public enum Properties {
         ;
@@ -139,14 +139,14 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
         public static final String name = "WeakMap";
 
         /**
-         * 15.15.2.1 WeakMap.prototype
+         * 23.3.2.1 WeakMap.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.WeakMapPrototype;
 
         /**
-         * 15.15.2.2 WeakMap[ @@create ] ( )
+         * 23.3.2.2 WeakMap[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
