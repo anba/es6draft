@@ -18,11 +18,10 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.6 TypedArray Object Structures</h3>
+ * <h1>22 Indexed Collections</h1><br>
+ * <h2>22.2 TypedArray Objects</h2>
  * <ul>
- * <li>15.13.6.6 Properties of the TypedArray Prototype Object
+ * <li>22.2.6 Properties of the TypedArray Prototype Object
  * </ul>
  */
 public class TypedArrayPrototype extends OrdinaryObject implements Initialisable {
@@ -69,7 +68,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
     }
 
     /**
-     * 15.13.6.6 Properties of the TypedArray Prototype Object
+     * 22.2.6 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Int8Array {
         ;
@@ -78,13 +77,13 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.6.1 TypedArray.prototype.constructor
+         * 22.2.6.2 TypedArray.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Int8Array;
 
         /**
-         * 15.13.6.6.2 TypedArray.prototype.BYTES_PER_ELEMENT
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -92,7 +91,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
     }
 
     /**
-     * 15.13.6.6 Properties of the TypedArray Prototype Object
+     * 22.2.6 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Uint8Array {
         ;
@@ -101,13 +100,13 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.6.1 TypedArray.prototype.constructor
+         * 22.2.6.2 TypedArray.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Uint8Array;
 
         /**
-         * 15.13.6.6.2 TypedArray.prototype.BYTES_PER_ELEMENT
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -115,7 +114,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
     }
 
     /**
-     * 15.13.6.6 Properties of the TypedArray Prototype Object
+     * 22.2.6 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Uint8Clamped {
         ;
@@ -124,13 +123,13 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.6.1 TypedArray.prototype.constructor
+         * 22.2.6.2 TypedArray.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Uint8ClampedArray;
 
         /**
-         * 15.13.6.6.2 TypedArray.prototype.BYTES_PER_ELEMENT
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -138,7 +137,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
     }
 
     /**
-     * 15.13.6.6 Properties of the TypedArray Prototype Object
+     * 22.2.6 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Int16Array {
         ;
@@ -147,13 +146,13 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.6.1 TypedArray.prototype.constructor
+         * 22.2.6.2 TypedArray.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Int16Array;
 
         /**
-         * 15.13.6.6.2 TypedArray.prototype.BYTES_PER_ELEMENT
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -161,7 +160,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
     }
 
     /**
-     * 15.13.6.6 Properties of the TypedArray Prototype Object
+     * 22.2.6 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Uint16Array {
         ;
@@ -170,13 +169,13 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.6.1 TypedArray.prototype.constructor
+         * 22.2.6.2 TypedArray.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Uint16Array;
 
         /**
-         * 15.13.6.6.2 TypedArray.prototype.BYTES_PER_ELEMENT
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -184,7 +183,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
     }
 
     /**
-     * 15.13.6.6 Properties of the TypedArray Prototype Object
+     * 22.2.6 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Int32Array {
         ;
@@ -193,13 +192,13 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.6.1 TypedArray.prototype.constructor
+         * 22.2.6.2 TypedArray.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Int32Array;
 
         /**
-         * 15.13.6.6.2 TypedArray.prototype.BYTES_PER_ELEMENT
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -207,7 +206,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
     }
 
     /**
-     * 15.13.6.6 Properties of the TypedArray Prototype Object
+     * 22.2.6 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Uint32Array {
         ;
@@ -216,13 +215,13 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.6.1 TypedArray.prototype.constructor
+         * 22.2.6.2 TypedArray.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Uint32Array;
 
         /**
-         * 15.13.6.6.2 TypedArray.prototype.BYTES_PER_ELEMENT
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -230,7 +229,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
     }
 
     /**
-     * 15.13.6.6 Properties of the TypedArray Prototype Object
+     * 22.2.6 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Float32Array {
         ;
@@ -239,13 +238,13 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.6.1 TypedArray.prototype.constructor
+         * 22.2.6.2 TypedArray.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Float32Array;
 
         /**
-         * 15.13.6.6.2 TypedArray.prototype.BYTES_PER_ELEMENT
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -253,7 +252,7 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
     }
 
     /**
-     * 15.13.6.6 Properties of the TypedArray Prototype Object
+     * 22.2.6 Properties of the TypedArray Prototype Object
      */
     public enum Properties_Float64Array {
         ;
@@ -262,13 +261,13 @@ public class TypedArrayPrototype extends OrdinaryObject implements Initialisable
         public static final Intrinsics __proto__ = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.6.1 TypedArray.prototype.constructor
+         * 22.2.6.2 TypedArray.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Float64Array;
 
         /**
-         * 15.13.6.6.2 TypedArray.prototype.BYTES_PER_ELEMENT
+         * 22.2.6.1 TypedArray.prototype.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))

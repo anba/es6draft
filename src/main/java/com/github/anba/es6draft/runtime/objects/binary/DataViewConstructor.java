@@ -32,13 +32,12 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.7 DataView Objects</h3>
+ * <h1>24 Structured Data</h1><br>
+ * <h2>24.2 DataView Objects</h2>
  * <ul>
- * <li>15.13.7.1 Abstract Operations For DataView Objects
- * <li>15.13.7.2 The DataView Constructor
- * <li>15.13.7.3 Properties of the DataView Constructor
+ * <li>24.2.1 Abstract Operations For DataView Objects
+ * <li>24.2.2 The DataView Constructor
+ * <li>24.2.3 Properties of the DataView Constructor
  * </ul>
  */
 public class DataViewConstructor extends BuiltinConstructor implements Initialisable {
@@ -62,8 +61,8 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
     }
 
     /**
-     * 15.13.7.1 Abstract Operations For DataView Objects <br>
-     * GetViewValue(view, requestIndex, isLittleEndian, type)
+     * 24.2.1 Abstract Operations For DataView Objects <br>
+     * 24.2.1.1 GetViewValue(view, requestIndex, isLittleEndian, type)
      */
     public static double GetViewValue(ExecutionContext cx, Object view, Object requestIndex,
             Object isLittleEndian, ElementType type) {
@@ -93,8 +92,8 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
     }
 
     /**
-     * 15.13.7.1 Abstract Operations For DataView Objects <br>
-     * SetViewValue(view, requestIndex, isLittleEndian, type, value)
+     * 24.2.1 Abstract Operations For DataView Objects <br>
+     * 24.2.1.2 SetViewValue(view, requestIndex, isLittleEndian, type, value)
      */
     public static void SetViewValue(ExecutionContext cx, Object view, Object requestIndex,
             Object isLittleEndian, ElementType type, Object value) {
@@ -124,7 +123,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
     }
 
     /**
-     * 15.13.7.2.1 DataView (buffer, byteOffset=0, byteLength=undefined)
+     * 24.2.2.1 DataView (buffer, byteOffset=0, byteLength=undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -186,7 +185,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
     }
 
     /**
-     * 15.13.7.2.2 new DataView( ... argumentsList)
+     * 24.2.2.2 new DataView( ... argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -194,7 +193,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
     }
 
     /**
-     * 15.13.7.3 Properties of the DataView Constructor
+     * 24.2.3 Properties of the DataView Constructor
      */
     public enum Properties {
         ;
@@ -211,14 +210,14 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         public static final int length = 3;
 
         /**
-         * 15.13.7.3.1 DataView.prototype
+         * 24.2.3.1 DataView.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.DataViewPrototype;
 
         /**
-         * 15.13.7.3.2 DataView [ @@create ] ( )
+         * 24.2.3.2 DataView [ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

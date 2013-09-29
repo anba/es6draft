@@ -22,12 +22,11 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.6 TypedArray Object Structures</h3>
+ * <h1>22 Indexed Collections</h1><br>
+ * <h2>22.2 TypedArray Objects</h2>
  * <ul>
- * <li>15.13.6.4 The TypedArray Constructors
- * <li>15.13.6.5 Properties of the TypedArray Constructors
+ * <li>22.2.4 The TypedArray Constructors
+ * <li>22.2.5 Properties of the TypedArray Constructors
  * </ul>
  */
 public class TypedArrayConstructor extends BuiltinConstructor implements Initialisable {
@@ -86,7 +85,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.4.1 TypedArray (...args)
+     * 22.2.4.1 TypedArray (...args)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -96,7 +95,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.4.2 new TypedArray (...args)
+     * 22.2.4.2 new TypedArray (...args)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -104,7 +103,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.5 Properties of the TypedArray Constructors
+     * 22.2.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Int8Array {
         ;
@@ -121,14 +120,14 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final String name = "Int8Array";
 
         /**
-         * 15.13.6.5.1 TypedArray.prototype
+         * 22.2.5.2 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Int8ArrayPrototype;
 
         /**
-         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         * 22.2.5.1 TypedArray.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -136,7 +135,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.5 Properties of the TypedArray Constructors
+     * 22.2.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Uint8Array {
         ;
@@ -153,14 +152,14 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final String name = "Uint8Array";
 
         /**
-         * 15.13.6.5.1 TypedArray.prototype
+         * 22.2.5.2 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint8ArrayPrototype;
 
         /**
-         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         * 22.2.5.1 TypedArray.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -168,7 +167,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.5 Properties of the TypedArray Constructors
+     * 22.2.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Uint8Clamped {
         ;
@@ -185,14 +184,14 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final String name = "Uint8Clamped";
 
         /**
-         * 15.13.6.5.1 TypedArray.prototype
+         * 22.2.5.2 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint8ClampedArrayPrototype;
 
         /**
-         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         * 22.2.5.1 TypedArray.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -200,7 +199,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.5 Properties of the TypedArray Constructors
+     * 22.2.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Int16Array {
         ;
@@ -217,14 +216,14 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final String name = "Int16Array";
 
         /**
-         * 15.13.6.5.1 TypedArray.prototype
+         * 22.2.5.2 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Int16ArrayPrototype;
 
         /**
-         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         * 22.2.5.1 TypedArray.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -232,7 +231,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.5 Properties of the TypedArray Constructors
+     * 22.2.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Uint16Array {
         ;
@@ -249,14 +248,14 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final String name = "Uint16Array";
 
         /**
-         * 15.13.6.5.1 TypedArray.prototype
+         * 22.2.5.2 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint16ArrayPrototype;
 
         /**
-         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         * 22.2.5.1 TypedArray.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -264,7 +263,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.5 Properties of the TypedArray Constructors
+     * 22.2.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Int32Array {
         ;
@@ -281,14 +280,14 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final String name = "Int32Array";
 
         /**
-         * 15.13.6.5.1 TypedArray.prototype
+         * 22.2.5.2 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Int32ArrayPrototype;
 
         /**
-         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         * 22.2.5.1 TypedArray.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -296,7 +295,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.5 Properties of the TypedArray Constructors
+     * 22.2.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Uint32Array {
         ;
@@ -313,14 +312,14 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final String name = "Uint32Array";
 
         /**
-         * 15.13.6.5.1 TypedArray.prototype
+         * 22.2.5.2 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Uint32ArrayPrototype;
 
         /**
-         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         * 22.2.5.1 TypedArray.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -328,7 +327,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.5 Properties of the TypedArray Constructors
+     * 22.2.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Float32Array {
         ;
@@ -345,14 +344,14 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final String name = "Float32Array";
 
         /**
-         * 15.13.6.5.1 TypedArray.prototype
+         * 22.2.5.2 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Float32ArrayPrototype;
 
         /**
-         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         * 22.2.5.1 TypedArray.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
@@ -360,7 +359,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     }
 
     /**
-     * 15.13.6.5 Properties of the TypedArray Constructors
+     * 22.2.5 Properties of the TypedArray Constructors
      */
     public enum Properties_Float64Array {
         ;
@@ -377,14 +376,14 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final String name = "Float64Array";
 
         /**
-         * 15.13.6.5.1 TypedArray.prototype
+         * 22.2.5.2 TypedArray.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.Float64ArrayPrototype;
 
         /**
-         * 15.13.6.5.2 TypedArray.BYTES_PER_ELEMENT
+         * 22.2.5.1 TypedArray.BYTES_PER_ELEMENT
          */
         @Value(name = "BYTES_PER_ELEMENT", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))

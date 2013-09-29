@@ -40,11 +40,10 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.6 TypedArray Object Structures</h3>
+ * <h1>22 Indexed Collections</h1><br>
+ * <h2>22.2 TypedArray Objects</h2>
  * <ul>
- * <li>15.13.6.3 Properties of the %TypedArrayPrototype% Object
+ * <li>22.2.3 Properties of the %TypedArrayPrototype% Object
  * </ul>
  */
 public class TypedArrayPrototypePrototype extends OrdinaryObject implements Initialisable {
@@ -58,7 +57,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
     }
 
     /**
-     * 15.13.6.3 Properties of the %TypedArrayPrototype% Object
+     * 22.2.3 Properties of the %TypedArrayPrototype% Object
      */
     public enum Properties {
         ;
@@ -77,13 +76,13 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 15.13.6.3.1 %TypedArray%.prototype.constructor
+         * 22.2.3.4 %TypedArray%.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.TypedArray;
 
         /**
-         * 15.13.6.3.2 get %TypedArray%.prototype.buffer
+         * 22.2.3.1 get %TypedArray%.prototype.buffer
          */
         @Accessor(name = "buffer", type = Accessor.Type.Getter)
         public static Object buffer(ExecutionContext cx, Object thisValue) {
@@ -92,7 +91,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.3 get %TypedArray%.prototype.byteLength
+         * 22.2.3.2 get %TypedArray%.prototype.byteLength
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
@@ -101,7 +100,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.4 get %TypedArray%.prototype.byteOffset
+         * 22.2.3.3 get %TypedArray%.prototype.byteOffset
          */
         @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
         public static Object byteOffset(ExecutionContext cx, Object thisValue) {
@@ -110,7 +109,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.5 get %TypedArray%.prototype.length
+         * 22.2.3.17 get %TypedArray%.prototype.length
          */
         @Accessor(name = "length", type = Accessor.Type.Getter)
         public static Object length(ExecutionContext cx, Object thisValue) {
@@ -119,8 +118,8 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.6 %TypedArray%.prototype.set(array, offset = 0 )<br>
-         * 15.13.6.3.7 %TypedArray%.prototype.set(typedArray, offset = 0 )
+         * 22.2.3.22 %TypedArray%.prototype.set(array, offset = 0 )<br>
+         * 22.2.3.23 %TypedArray%.prototype.set(typedArray, offset = 0 )
          */
         @Function(name = "set", arity = 2)
         public static Object set(ExecutionContext cx, Object thisValue, Object array, Object offset) {
@@ -136,7 +135,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             long targetByteOffset = target.getByteOffset();
 
             if (!(array instanceof TypedArrayObject)) {
-                // 15.13.6.3.6
+                // 22.2.3.22
                 ScriptObject src = ToObject(cx, array);
                 Object srcLen = Get(cx, src, "length");
                 double numberLength = ToNumber(cx, srcLen);
@@ -158,7 +157,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 }
                 return UNDEFINED;
             } else {
-                // 15.13.6.3.7
+                // 22.2.3.23
                 TypedArrayObject src = (TypedArrayObject) array;
                 ArrayBufferObject srcBuffer = src.getBuffer();
                 if (srcBuffer == null) {
@@ -192,7 +191,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.8 %TypedArray%.prototype.subarray(begin = 0, end = this.length )
+         * 22.2.3.27 %TypedArray%.prototype.subarray(begin = 0, end = this.length )
          */
         @Function(name = "subarray", arity = 2)
         public static Object subarray(ExecutionContext cx, Object thisValue, Object begin,
@@ -226,7 +225,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.9 %TypedArray%.prototype.toString ( )
+         * 22.2.3.29 %TypedArray%.prototype.toString ( )
          */
         @Value(name = "toString")
         public static Object toString(ExecutionContext cx) {
@@ -234,7 +233,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.10 %TypedArray%.prototype.toLocaleString ( )
+         * 22.2.3.28 %TypedArray%.prototype.toLocaleString ( )
          */
         @Value(name = "toLocaleString")
         public static Object toLocaleString(ExecutionContext cx) {
@@ -242,7 +241,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.11 %TypedArray%.prototype.join ( separator )
+         * 22.2.3.14 %TypedArray%.prototype.join ( separator )
          */
         @Function(name = "join", arity = 1)
         public static Object join(ExecutionContext cx, Object thisValue, Object separator) {
@@ -250,7 +249,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.12 %TypedArray%.prototype.reverse ( )
+         * 22.2.3.21 %TypedArray%.prototype.reverse ( )
          */
         @Function(name = "reverse", arity = 0)
         public static Object reverse(ExecutionContext cx, Object thisValue) {
@@ -258,7 +257,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.13 %TypedArray%.prototype.slice ( start, end )
+         * 22.2.3.24 %TypedArray%.prototype.slice ( start, end )
          */
         @Function(name = "slice", arity = 2)
         public static Object slice(ExecutionContext cx, Object thisValue, Object start, Object end) {
@@ -337,7 +336,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.14 %TypedArray%.prototype.sort ( comparefn )
+         * 22.2.3.26 %TypedArray%.prototype.sort ( comparefn )
          */
         @Function(name = "sort", arity = 1)
         public static Object sort(ExecutionContext cx, Object thisValue, Object comparefn) {
@@ -388,7 +387,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.15 %TypedArray%.prototype.indexOf (searchElement, fromIndex = 0 )
+         * 22.2.3.13 %TypedArray%.prototype.indexOf (searchElement, fromIndex = 0 )
          */
         @Function(name = "indexOf", arity = 1)
         public static Object indexOf(ExecutionContext cx, Object thisValue, Object searchElement,
@@ -397,7 +396,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.16 %TypedArray%.prototype.lastIndexOf (searchElement, fromIndex=this.length-1)
+         * 22.2.3.16 %TypedArray%.prototype.lastIndexOf (searchElement, fromIndex=this.length-1)
          */
         @Function(name = "lastIndexOf", arity = 1)
         public static Object lastIndexOf(ExecutionContext cx, Object thisValue,
@@ -406,7 +405,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.17 %TypedArray%.prototype.every ( callbackfn, thisArg = undefined )
+         * 22.2.3.7 %TypedArray%.prototype.every ( callbackfn, thisArg = undefined )
          */
         @Function(name = "every", arity = 1)
         public static Object every(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -415,7 +414,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.18 %TypedArray%.prototype.some ( callbackfn, thisArg = undefined )
+         * 22.2.3.25 %TypedArray%.prototype.some ( callbackfn, thisArg = undefined )
          */
         @Function(name = "some", arity = 1)
         public static Object some(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -424,7 +423,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.19 %TypedArray%.prototype.forEach ( callbackfn, thisArg = undefined )
+         * 22.2.3.12 %TypedArray%.prototype.forEach ( callbackfn, thisArg = undefined )
          */
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -433,7 +432,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.20 %TypedArray%.prototype.map ( callbackfn, thisArg = undefined )
+         * 22.2.3.18 %TypedArray%.prototype.map ( callbackfn, thisArg = undefined )
          */
         @Function(name = "map", arity = 1)
         public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -471,7 +470,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.21 %TypedArray%.prototype.filter ( callbackfn, thisArg = undefined )
+         * 22.2.3.9 %TypedArray%.prototype.filter ( callbackfn, thisArg = undefined )
          */
         @Function(name = "filter", arity = 1)
         public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -518,7 +517,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.22 %TypedArray%.prototype.reduce ( callbackfn [, initialValue] )
+         * 22.2.3.19 %TypedArray%.prototype.reduce ( callbackfn [, initialValue] )
          */
         @Function(name = "reduce", arity = 1)
         public static Object reduce(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -527,7 +526,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.23 %TypedArray%.prototype.reduceRight ( callbackfn [, initialValue] )
+         * 22.2.3.20 %TypedArray%.prototype.reduceRight ( callbackfn [, initialValue] )
          */
         @Function(name = "reduceRight", arity = 1)
         public static Object reduceRight(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -536,7 +535,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.24 %TypedArray%.prototype.find (predicate, thisArg = undefined)
+         * 22.2.3.10 %TypedArray%.prototype.find (predicate, thisArg = undefined)
          */
         @Function(name = "find", arity = 1)
         public static Object find(ExecutionContext cx, Object thisValue, Object predicate,
@@ -545,7 +544,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.25 %TypedArray%.prototype.findIndex ( predicate, thisArg = undefined )
+         * 22.2.3.11 %TypedArray%.prototype.findIndex ( predicate, thisArg = undefined )
          */
         @Function(name = "findIndex", arity = 1)
         public static Object findIndex(ExecutionContext cx, Object thisValue, Object predicate,
@@ -554,7 +553,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.26 %TypedArray%.prototype.fill (value, start = 0, end = this.length )
+         * 22.2.3.8 %TypedArray%.prototype.fill (value, start = 0, end = this.length )
          */
         @Function(name = "fill", arity = 1)
         public static Object fill(ExecutionContext cx, Object thisValue, Object value,
@@ -563,7 +562,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.27 %TypedArray%.prototype.copyWithin (target, start, end = this.length )
+         * 22.2.3.5 %TypedArray%.prototype.copyWithin (target, start, end = this.length )
          */
         @Function(name = "copyWithin", arity = 2)
         public static Object copyWithin(ExecutionContext cx, Object thisValue, Object target,
@@ -572,7 +571,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.28 %TypedArray%.prototype.entries ( )
+         * 22.2.3.6 %TypedArray%.prototype.entries ( )
          */
         @Value(name = "entries")
         public static Object entries(ExecutionContext cx) {
@@ -580,7 +579,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.29 %TypedArray%.prototype.keys ( )
+         * 22.2.3.15 %TypedArray%.prototype.keys ( )
          */
         @Value(name = "keys")
         public static Object keys(ExecutionContext cx) {
@@ -588,7 +587,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.30 %TypedArray%.prototype.values ( )
+         * 22.2.3.30 %TypedArray%.prototype.values ( )
          */
         @Value(name = "values")
         public static Object values(ExecutionContext cx) {
@@ -596,7 +595,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.31 %TypedArray%.prototype [ @@iterator ] ( )
+         * 22.2.3.31 %TypedArray%.prototype [ @@iterator ] ( )
          */
         @Value(name = "@@iterator", symbol = BuiltinSymbol.iterator)
         public static Object iterator(ExecutionContext cx) {
@@ -605,7 +604,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         }
 
         /**
-         * 15.13.6.3.32 get %TypedArray%.prototype [ @@toStringTag ]
+         * 22.2.3.32 get %TypedArray%.prototype [ @@toStringTag ]
          */
         @Accessor(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
                 type = Accessor.Type.Getter, attributes = @Attributes(writable = false,

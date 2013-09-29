@@ -10,11 +10,10 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.7 DataView Objects</h3>
+ * <h1>24 Structured Data</h1><br>
+ * <h2>24.2 DataView Objects</h2>
  * <ul>
- * <li>15.13.7.5 Properties of DataView Instances
+ * <li>24.2.5 Properties of DataView Instances
  * </ul>
  */
 public class DataViewObject extends OrdinaryObject {

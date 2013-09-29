@@ -18,11 +18,10 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticIntegerIndexedObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.6 TypedArray Object Structures</h3>
+ * <h1>22 Indexed Collections</h1><br>
+ * <h2>22.2 TypedArray Objects</h2>
  * <ul>
- * <li>15.13.6.7 Properties of TypedArray instances
+ * <li>22.2.7 Properties of TypedArray instances
  * </ul>
  */
 public class TypedArrayObject extends ExoticIntegerIndexedObject {

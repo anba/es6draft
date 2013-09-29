@@ -42,12 +42,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.6 TypedArray Objects</h3>
+ * <h1>22 Indexed Collections</h1><br>
+ * <h2>22.2 TypedArray Objects</h2>
  * <ul>
- * <li>15.13.6.1 The %TypedArray% Intrinsic Object
- * <li>15.13.6.2 Properties of the %TypedArray% Intrinsic Object
+ * <li>22.2.1 The %TypedArray% Intrinsic Object
+ * <li>22.2.2 Properties of the %TypedArray% Intrinsic Object
  * </ul>
  */
 public class TypedArrayConstructorPrototype extends BuiltinFunction implements Initialisable {
@@ -62,11 +61,11 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
     }
 
     /**
-     * 15.13.6.1.1 %TypedArray% ( length )<br>
-     * 15.13.6.1.2 %TypedArray% ( typedArray )<br>
-     * 15.13.6.1.3 %TypedArray% ( array )<br>
-     * 15.13.6.1.4 %TypedArray% ( buffer, byteOffset=0, length=undefined )<br>
-     * 15.13.6.1.5 %TypedArray% ( binary data stuff ) [TODO]<br>
+     * 22.2.1.1 %TypedArray% ( length )<br>
+     * 22.2.1.2 %TypedArray% ( typedArray )<br>
+     * 22.2.1.3 %TypedArray% ( array )<br>
+     * 22.2.1.4 %TypedArray% ( buffer, byteOffset=0, length=undefined )<br>
+     * 22.2.1.5 %TypedArray% ( binary data stuff ) [TODO]<br>
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -88,7 +87,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
     }
 
     /**
-     * 15.13.6.1.1 %TypedArray% ( length )
+     * 22.2.1.1 %TypedArray% ( length )
      */
     private Object callWithLength(ExecutionContext cx, Object thisValue, Object length) {
         /* step 1 */
@@ -135,7 +134,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
     }
 
     /**
-     * 15.13.6.1.2 %TypedArray% ( typedArray )
+     * 22.2.1.2 %TypedArray% ( typedArray )
      */
     private Object callWithTypedArray(ExecutionContext cx, Object thisValue,
             TypedArrayObject typedArray) {
@@ -185,7 +184,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
     }
 
     /**
-     * 15.13.6.1.3 %TypedArray% ( array )
+     * 22.2.1.3 %TypedArray% ( array )
      */
     private Object callWithArray(ExecutionContext cx, Object thisValue, ScriptObject _array) {
         /* step 1 */
@@ -241,7 +240,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
     }
 
     /**
-     * 15.13.6.1.4 %TypedArray% ( buffer, byteOffset=0, length=undefined )
+     * 22.2.1.4 %TypedArray% ( buffer, byteOffset=0, length=undefined )
      */
     private Object callWithArrayBuffer(ExecutionContext cx, Object thisValue,
             ArrayBufferObject buffer, Object byteOffset, Object length) {
@@ -324,7 +323,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
     }
 
     /**
-     * 15.13.6.2 Properties of the %TypedArray% Intrinsic Object
+     * 22.2.2 Properties of the %TypedArray% Intrinsic Object
      */
     public enum Properties {
         ;
@@ -341,14 +340,14 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         public static final String name = "TypedArray";
 
         /**
-         * 15.13.6.2.1 %TypedArray%.prototype
+         * 22.2.2.3 %TypedArray%.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.TypedArrayPrototype;
 
         /**
-         * 15.13.6.2.2 %TypedArray%.of ( ...items )
+         * 22.2.2.2 %TypedArray%.of ( ...items )
          */
         @Function(name = "of", arity = 0)
         public static Object of(ExecutionContext cx, Object thisValue, Object... items) {
@@ -367,7 +366,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         }
 
         /**
-         * 15.13.6.2.3 %TypedArray%.from ( source, mapfn=undefined, thisArg=undefined )
+         * 22.2.2.1 %TypedArray%.from ( source, mapfn=undefined, thisArg=undefined )
          */
         @Function(name = "from", arity = 1)
         public static Object from(ExecutionContext cx, Object thisValue, Object source,
@@ -446,7 +445,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         }
 
         /**
-         * 15.13.6.3.4 %TypedArray%[ @@create ] ( )
+         * 22.2.3.4 %TypedArray%[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

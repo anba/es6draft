@@ -9,9 +9,8 @@ package com.github.anba.es6draft.runtime.objects.binary;
 import com.google.doubleconversion.DoubleConversion;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.6 TypedArray Object Structures</h3>
+ * <h1>22 Indexed Collections</h1><br>
+ * <h2>22.2 TypedArray Objects</h2>
  * <ul>
  * <li>Table 36 – The TypedArray Constructors
  * </ul>

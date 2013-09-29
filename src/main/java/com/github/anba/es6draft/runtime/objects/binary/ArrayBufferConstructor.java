@@ -36,13 +36,12 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.5 ArrayBuffer Objects</h3>
+ * <h1>24 Structured Data</h1><br>
+ * <h2>24.1 ArrayBuffer Objects</h2>
  * <ul>
- * <li>15.13.5.1 Abstract Operations For ArrayBuffer Objects
- * <li>15.13.5.2 The ArrayBuffer Constructor
- * <li>15.13.5.3 Properties of the ArrayBuffer Constructor
+ * <li>24.1.1 Abstract Operations For ArrayBuffer Objects
+ * <li>24.1.2 The ArrayBuffer Constructor
+ * <li>24.1.3 Properties of the ArrayBuffer Constructor
  * </ul>
  */
 public class ArrayBufferConstructor extends BuiltinConstructor implements Initialisable {
@@ -99,14 +98,14 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.1 AllocateArrayBuffer (constructor)
+     * 24.1.1.1 AllocateArrayBuffer (constructor)
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Intrinsics constructor) {
         return AllocateArrayBuffer(cx, cx.getIntrinsic(constructor));
     }
 
     /**
-     * 15.13.5.1.1 AllocateArrayBuffer (constructor)
+     * 24.1.1.1 AllocateArrayBuffer (constructor)
      */
     public static ArrayBufferObject AllocateArrayBuffer(ExecutionContext cx, Object constructor) {
         /* steps 1-2 */
@@ -119,7 +118,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.2 SetArrayBufferData (arrayBuffer, bytes)
+     * 24.1.1.2 SetArrayBufferData (arrayBuffer, bytes)
      */
     public static ArrayBufferObject SetArrayBufferData(ExecutionContext cx,
             ArrayBufferObject arrayBuffer, double bytes) {
@@ -137,7 +136,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.3 CloneArrayBuffer (srcBuffer, srcByteOffset, srcType, cloneElementType, srcLength)
+     * 24.1.1.3 CloneArrayBuffer (srcBuffer, srcByteOffset, srcType, cloneElementType, srcLength)
      */
     public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
             ArrayBufferObject srcData, long srcByteOffset, ElementType srcType,
@@ -160,7 +159,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 24.1.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      */
     public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type) {
@@ -168,7 +167,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
+     * 24.1.1.4 GetValueFromBuffer (arrayBuffer, byteIndex, type, isLittleEndian)
      */
     public static double GetValueFromBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, boolean isLittleEndian) {
@@ -220,7 +219,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 24.1.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      */
     public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, double value) {
@@ -228,7 +227,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
+     * 24.1.1.5 SetValueInBuffer (arrayBuffer, byteIndex, type, value, isLittleEndian)
      */
     public static void SetValueInBuffer(ExecutionContext cx, ArrayBufferObject arrayBuffer,
             long byteIndex, ElementType type, double value, boolean isLittleEndian) {
@@ -286,7 +285,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.2.1 ArrayBuffer(length)
+     * 24.1.2.1 ArrayBuffer(length)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -318,7 +317,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.2.2 new ArrayBuffer(...argumentsList)
+     * 24.1.2.2 new ArrayBuffer(...argumentsList)
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -326,7 +325,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * 15.13.5.3 Properties of the ArrayBuffer Constructor
+     * 24.1.3 Properties of the ArrayBuffer Constructor
      */
     public enum Properties {
         ;
@@ -343,14 +342,14 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         public static final String name = "ArrayBuffer";
 
         /**
-         * 15.13.5.3.1 ArrayBuffer.prototype
+         * 24.1.3.2 ArrayBuffer.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.ArrayBufferPrototype;
 
         /**
-         * 15.13.5.3.2 ArrayBuffer.isView ( arg )
+         * 24.1.3.1 ArrayBuffer.isView ( arg )
          */
         @Function(name = "isView", arity = 1)
         public static Object isView(ExecutionContext cx, Object thisValue, Object arg) {
@@ -371,7 +370,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         }
 
         /**
-         * 15.13.5.3.3 @@create ( )
+         * 24.1.3.3 @@create ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

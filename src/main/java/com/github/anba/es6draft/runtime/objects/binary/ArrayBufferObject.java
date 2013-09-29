@@ -12,11 +12,10 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>15 Standard Built-in ECMAScript Objects</h1><br>
- * <h2>15.13 Binary Data Objects</h2><br>
- * <h3>15.13.5 ArrayBuffer Objects</h3>
+ * <h1>24 Structured Data</h1><br>
+ * <h2>24.1 ArrayBuffer Objects</h2>
  * <ul>
- * <li>15.13.5.5 Properties of the ArrayBuffer Instances
+ * <li>24.1.5 Properties of the ArrayBuffer Instances
  * </ul>
  */
 public class ArrayBufferObject extends OrdinaryObject {
