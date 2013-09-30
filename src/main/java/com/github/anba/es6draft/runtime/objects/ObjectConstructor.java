@@ -9,13 +9,17 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.GetSuperBinding;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.RebindSuper;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -155,16 +159,21 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 19.1.3.8 Object.getOwnPropertyNames ( O )
+         * 19.1.3.7 Object.getOwnPropertyNames ( O )
          */
         @Function(name = "getOwnPropertyNames", arity = 1)
         public static Object getOwnPropertyNames(ExecutionContext cx, Object thisValue, Object o) {
-            /* steps 1-2 */
-            ScriptObject obj = ToObject(cx, o);
-            /* steps 3-7 */
-            List<String> nameList = GetOwnPropertyNames(cx, obj);
-            /* step 8 */
-            return CreateArrayFromList(cx, nameList);
+            /* step 1 */
+            return GetOwnPropertyNames(cx, o);
+        }
+
+        /**
+         * 19.1.3.8 Object.getOwnPropertySymbols ( O )
+         */
+        @Function(name = "getOwnPropertySymbols", arity = 1)
+        public static Object getOwnPropertySymbols(ExecutionContext cx, Object thisValue, Object o) {
+            /* step 1 */
+            return GetOwnPropertySymbols(cx, o);
         }
 
         /**
@@ -328,17 +337,6 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 19.1.3.7 Object.getOwnPropertyKeys ( O )
-         */
-        @Function(name = "getOwnPropertyKeys", arity = 1)
-        public static Object getOwnPropertyKeys(ExecutionContext cx, Object thisValue, Object o) {
-            /* steps 1-2 */
-            ScriptObject obj = ToObject(cx, o);
-            /* steps 3-4 */
-            return obj.ownPropertyKeys(cx);
-        }
-
-        /**
          * 19.1.3.10 Object.is ( value1, value2 )
          */
         @Function(name = "is", arity = 2)
@@ -353,33 +351,41 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         @Function(name = "assign", arity = 2)
         public static Object assign(ExecutionContext cx, Object thisValue, Object target,
                 Object source) {
-            if (!Type.isObject(target)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            if (!Type.isObject(source)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            ScriptObject _target = Type.objectValue(target);
-            ScriptObject _source = Type.objectValue(source);
+            /* steps 1-2 */
+            ScriptObject to = ToObject(cx, target);
+            /* steps 3-4 */
+            ScriptObject from = ToObject(cx, source);
+            /* steps 5-6 */
+            Iterator<?> keys = FromListIterator(cx, from.ownPropertyKeys(cx));
+            /* step 7 (omitted) */
+            /* step 8 */
             ScriptException pendingException = null;
-            List<Object> keys = GetOwnEnumerablePropertyKeys(cx, _source);
-            for (Object key : keys) {
-                Object value = Get(cx, _source, key);
-                if (isSuperBoundTo(value, _source)) {
-                    value = superBindTo(cx, value, _target);
-                }
+            /* step 9 */
+            while (keys.hasNext()) {
+                Object nextKey = ToPropertyKey(cx, keys.next());
                 try {
-                    Put(cx, _target, key, value, true);
+                    Property desc;
+                    if (nextKey instanceof String) {
+                        desc = from.getOwnProperty(cx, (String) nextKey);
+                    } else {
+                        desc = from.getOwnProperty(cx, (ExoticSymbol) nextKey);
+                    }
+                    if (desc != null && desc.isEnumerable()) {
+                        Object propValue = Get(cx, from, nextKey);
+                        Put(cx, to, nextKey, propValue, true);
+                    }
                 } catch (ScriptException e) {
                     if (pendingException == null) {
                         pendingException = e;
                     }
                 }
             }
+            /* step 10 */
             if (pendingException != null) {
                 throw pendingException;
             }
-            return _target;
+            /* step 11 */
+            return to;
         }
 
         /**
@@ -388,39 +394,12 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         @Function(name = "mixin", arity = 2)
         public static Object mixin(ExecutionContext cx, Object thisValue, Object target,
                 Object source) {
-            if (!Type.isObject(target)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            if (!Type.isObject(source)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
-            }
-            ScriptObject _target = Type.objectValue(target);
-            ScriptObject _source = Type.objectValue(source);
-            ScriptException pendingException = null;
-            List<Object> keys = GetOwnEnumerablePropertyKeys(cx, _source);
-            for (Object key : keys) {
-                Property desc;
-                if (key instanceof String) {
-                    desc = _source.getOwnProperty(cx, (String) key);
-                } else {
-                    desc = _source.getOwnProperty(cx, (ExoticSymbol) key);
-                }
-                if (desc != null) {
-                    try {
-                        PropertyDescriptor newDesc = fromDescriptor(cx,
-                                desc.toPropertyDescriptor(), _source, _target);
-                        DefinePropertyOrThrow(cx, _target, key, newDesc);
-                    } catch (ScriptException e) {
-                        if (pendingException == null) {
-                            pendingException = e;
-                        }
-                    }
-                }
-            }
-            if (pendingException != null) {
-                throw pendingException;
-            }
-            return _target;
+            /* steps 1-2 */
+            ScriptObject to = Type.objectValue(target);
+            /* steps 3-4 */
+            ScriptObject from = Type.objectValue(source);
+            /* step 5 */
+            return MixinProperties(cx, to, from);
         }
 
         /**
@@ -507,44 +486,132 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * Returns {@code desc} with [[Value]] resp. [[Get]] and [[Set]] super-rebound from
-     * {@code source} to {@code target}
+     * 19.1.3.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = String
      */
-    private static PropertyDescriptor fromDescriptor(ExecutionContext cx, PropertyDescriptor desc,
-            ScriptObject source, ScriptObject target) {
-        if (desc.isDataDescriptor()) {
-            Object value = desc.getValue();
-            if (isSuperBoundTo(value, source)) {
-                desc.setValue(superBindTo(cx, value, target));
-            }
-        } else {
-            assert desc.isAccessorDescriptor();
-            Callable getter = desc.getGetter();
-            if (isSuperBoundTo(getter, source)) {
-                desc.setGetter(superBindTo(cx, getter, target));
-            }
-            Callable setter = desc.getSetter();
-            if (isSuperBoundTo(setter, source)) {
-                desc.setSetter(superBindTo(cx, setter, target));
+    public static ScriptObject GetOwnPropertyNames(ExecutionContext cx, Object o) {
+        /* steps 1-2 */
+        ScriptObject obj = ToObject(cx, o);
+        /* steps 3-4 */
+        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
+        /* step 5 */
+        List<String> nameList = new ArrayList<>();
+        /* step 6 (omitted) */
+        /* step 7 */
+        while (keys.hasNext()) {
+            Object key = ToPropertyKey(cx, keys.next());
+            if (key instanceof String) {
+                nameList.add((String) key);
             }
         }
-        return desc;
+        /* step 8 */
+        return CreateArrayFromList(cx, nameList);
     }
 
     /**
-     * Returns <code>true</code> if {@code value} is super-bound to {@code source}
+     * 19.1.3.8.1 GetOwnPropertyKey ( O, Type ) Abstract Operation, with Type = Symbol
      */
-    private static boolean isSuperBoundTo(Object value, ScriptObject source) {
-        if (value instanceof FunctionObject) {
-            return ((FunctionObject) value).getHomeObject() == source;
+    public static ScriptObject GetOwnPropertySymbols(ExecutionContext cx, Object o) {
+        /* steps 1-2 */
+        ScriptObject obj = ToObject(cx, o);
+        /* steps 3-4 */
+        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
+        /* step 5 */
+        List<ExoticSymbol> nameList = new ArrayList<>();
+        /* step 6 (omitted) */
+        /* step 7 */
+        while (keys.hasNext()) {
+            Object key = ToPropertyKey(cx, keys.next());
+            if (key instanceof ExoticSymbol) {
+                nameList.add((ExoticSymbol) key);
+            }
         }
-        return false;
+        /* step 8 */
+        return CreateArrayFromList(cx, nameList);
     }
 
     /**
-     * Super-binds {@code value} to {@code target}
+     * 19.1.3.15.1 MixinProperties( target, source )
      */
-    private static Callable superBindTo(ExecutionContext cx, Object value, ScriptObject target) {
-        return ((FunctionObject) value).rebind(cx, target);
+    public static <OBJECT extends ScriptObject> OBJECT MixinProperties(ExecutionContext cx,
+            OBJECT target, ScriptObject source) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        Iterator<?> keys = FromListIterator(cx, source.ownPropertyKeys(cx));
+        /* step 5 (omitted) */
+        /* step 6 */
+        ScriptException pendingException = null;
+        /* step 7 */
+        while (keys.hasNext()) {
+            Object nextKey = ToPropertyKey(cx, keys.next());
+            Property prop = null;
+            try {
+                if (nextKey instanceof String) {
+                    prop = source.getOwnProperty(cx, (String) nextKey);
+                } else {
+                    prop = source.getOwnProperty(cx, (ExoticSymbol) nextKey);
+                }
+            } catch (ScriptException e) {
+                if (pendingException == null) {
+                    pendingException = e;
+                }
+            }
+            if (prop == null || !prop.isEnumerable()) {
+                continue;
+            }
+            PropertyDescriptor desc = prop.toPropertyDescriptor();
+            if (desc.isDataDescriptor()) {
+                Object propValue = desc.getValue();
+                if (SameValue(GetSuperBinding(propValue), source)) {
+                    try {
+                        FunctionObject f = (FunctionObject) propValue;
+                        FunctionObject newFunc = MixinProperties(cx, RebindSuper(cx, f, target), f);
+                        desc.setValue(newFunc);
+                    } catch (ScriptException e) {
+                        if (pendingException == null) {
+                            pendingException = e;
+                        }
+                    }
+                }
+            } else {
+                assert desc.isAccessorDescriptor();
+                Callable getter = desc.getGetter();
+                if (SameValue(GetSuperBinding(getter), source)) {
+                    try {
+                        FunctionObject f = (FunctionObject) getter;
+                        FunctionObject newFunc = MixinProperties(cx, RebindSuper(cx, f, target), f);
+                        desc.setGetter(newFunc);
+                    } catch (ScriptException e) {
+                        if (pendingException == null) {
+                            pendingException = e;
+                        }
+                    }
+                }
+                Callable setter = desc.getSetter();
+                if (SameValue(GetSuperBinding(setter), source)) {
+                    try {
+                        FunctionObject f = (FunctionObject) setter;
+                        FunctionObject newFunc = MixinProperties(cx, RebindSuper(cx, f, target), f);
+                        desc.setSetter(newFunc);
+                    } catch (ScriptException e) {
+                        if (pendingException == null) {
+                            pendingException = e;
+                        }
+                    }
+                }
+            }
+            try {
+                DefinePropertyOrThrow(cx, target, nextKey, desc);
+            } catch (ScriptException e) {
+                if (pendingException == null) {
+                    pendingException = e;
+                }
+            }
+        }
+        /* step 10 */
+        if (pendingException != null) {
+            throw pendingException;
+        }
+        /* step 11 */
+        return target;
     }
 }
