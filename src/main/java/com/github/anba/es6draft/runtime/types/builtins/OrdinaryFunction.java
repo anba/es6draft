@@ -243,7 +243,7 @@ public class OrdinaryFunction extends FunctionObject {
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment scope, ScriptObject homeObject, String methodName) {
-        boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
+        boolean strict = function.isStrict();
         // first update 'legacy' flag, otherwise AddRestrictedFunctionProperties() fails
         f.legacy = f.legacy && !strict;
 
@@ -285,7 +285,7 @@ public class OrdinaryFunction extends FunctionObject {
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment scope, ScriptObject homeObject, Symbol methodName) {
-        boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
+        boolean strict = function.isStrict();
         // first update 'legacy' flag, otherwise AddRestrictedFunctionProperties() fails
         f.legacy = f.legacy && !strict;
 
