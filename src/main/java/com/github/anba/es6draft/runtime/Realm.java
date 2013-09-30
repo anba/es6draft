@@ -337,7 +337,7 @@ public final class Realm {
     }
 
     /**
-     * <h1>19.3, 19.4, 20, 21, 22.1, 24.3</h1>
+     * <h1>19.3, 19.4, 19.5, 20, 21, 22.1, 24.3</h1>
      * 
      * Standard built-in objects
      */
@@ -352,6 +352,8 @@ public final class Realm {
         StringConstructor stringConstructor = new StringConstructor(realm);
         StringPrototype stringPrototype = new StringPrototype(realm);
         StringIteratorPrototype stringIteratorPrototype = new StringIteratorPrototype(realm);
+        SymbolConstructor symbolConstructor = new SymbolConstructor(realm);
+        SymbolPrototype symbolPrototype = new SymbolPrototype(realm);
         BooleanConstructor booleanConstructor = new BooleanConstructor(realm);
         BooleanPrototype booleanPrototype = new BooleanPrototype(realm);
         NumberConstructor numberConstructor = new NumberConstructor(realm);
@@ -372,6 +374,8 @@ public final class Realm {
         intrinsics.put(Intrinsics.String, stringConstructor);
         intrinsics.put(Intrinsics.StringPrototype, stringPrototype);
         intrinsics.put(Intrinsics.StringIteratorPrototype, stringIteratorPrototype);
+        intrinsics.put(Intrinsics.Symbol, symbolConstructor);
+        intrinsics.put(Intrinsics.SymbolPrototype, symbolPrototype);
         intrinsics.put(Intrinsics.Boolean, booleanConstructor);
         intrinsics.put(Intrinsics.BooleanPrototype, booleanPrototype);
         intrinsics.put(Intrinsics.Number, numberConstructor);
@@ -392,6 +396,8 @@ public final class Realm {
         stringConstructor.initialise(defaultContext);
         stringPrototype.initialise(defaultContext);
         stringIteratorPrototype.initialise(defaultContext);
+        symbolConstructor.initialise(defaultContext);
+        symbolPrototype.initialise(defaultContext);
         booleanConstructor.initialise(defaultContext);
         booleanPrototype.initialise(defaultContext);
         numberConstructor.initialise(defaultContext);

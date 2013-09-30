@@ -254,6 +254,12 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         public static final Intrinsics String = Intrinsics.String;
 
         /**
+         * 18.4.x Symbol ( . . . )
+         */
+        @Value(name = "Symbol")
+        public static final Intrinsics Symbol = Intrinsics.Symbol;
+
+        /**
          * 18.4.3 Boolean ( . . . )
          */
         @Value(name = "Boolean")

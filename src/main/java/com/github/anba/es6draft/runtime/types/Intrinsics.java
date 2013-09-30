@@ -45,6 +45,8 @@ public enum Intrinsics {/* @formatter:off */
     String,
     StringPrototype,
     StringIteratorPrototype,
+    Symbol,
+    SymbolPrototype,
     Boolean,
     BooleanPrototype,
     Number,

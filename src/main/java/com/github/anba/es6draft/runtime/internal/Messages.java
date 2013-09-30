@@ -143,6 +143,7 @@ public final class Messages {
         IncompatibleObject("type.incompatible_object"),
         SymbolObject("type.symbol_object"),
         SymbolString("type.symbol_string"),
+        SymbolCreate("type.symbol_create"),
         CyclicProto("type.cyclic_proto"),
         PropertyNotFound("type.property_not_found"),
 

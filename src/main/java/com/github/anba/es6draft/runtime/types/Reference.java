@@ -263,6 +263,8 @@ public abstract class Reference<BASE, NAME> {
                 return cx.getIntrinsic(Intrinsics.NumberPrototype);
             case String:
                 return cx.getIntrinsic(Intrinsics.StringPrototype);
+            case Symbol:
+                return cx.getIntrinsic(Intrinsics.SymbolPrototype);
             default:
                 assert false : "invalid type";
                 return null;

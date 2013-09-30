@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.instanceOfOperator;
 import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 import static com.github.anba.es6draft.runtime.objects.NumberObject.NumberCreate;
+import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
@@ -363,8 +364,7 @@ public final class AbstractOperations {
         case String:
             return StringCreate(cx, Type.stringValue(val));
         case Symbol:
-            // FIXME: implement Symbol wrapper
-            throw Errors.throwTypeError(cx, Messages.Key.SymbolObject);
+            return SymbolCreate(cx, Type.symbolValue(val));
         case Object:
         default:
             return Type.objectValue(val);
