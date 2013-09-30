@@ -17,8 +17,8 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
-import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -104,6 +104,13 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         @Value(name = "SQRT2", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Double SQRT2 = Math.sqrt(2d);
+
+        /**
+         * 20.2.1.9 Math[ @@toStringTag ]
+         */
+        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static final String toStringTag = "Math";
     }
 
     /**
@@ -185,7 +192,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.18 Math.log (x)
+         * 20.2.2.19 Math.log (x)
          */
         @Function(name = "log", arity = 1)
         public static Object log(ExecutionContext cx, Object thisValue, Object x) {
@@ -193,7 +200,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.22 Math.max ( [ value1 [ , value2 [ , ... ] ] ] )
+         * 20.2.2.23 Math.max ( [ value1 [ , value2 [ , ... ] ] ] )
          */
         @Function(name = "max", arity = 2)
         public static Object max(ExecutionContext cx, Object thisValue, Object... values) {
@@ -211,7 +218,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.23 Math.min ( [ value1 [ , value2 [ , ... ] ] ] )
+         * 20.2.2.24 Math.min ( [ value1 [ , value2 [ , ... ] ] ] )
          */
         @Function(name = "min", arity = 2)
         public static Object min(ExecutionContext cx, Object thisValue, Object... values) {
@@ -229,7 +236,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.24 Math.pow (x, y)
+         * 20.2.2.25 Math.pow (x, y)
          */
         @Function(name = "pow", arity = 2)
         public static Object pow(ExecutionContext cx, Object thisValue, Object x, Object y) {
@@ -237,7 +244,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.25 Math.random ( )
+         * 20.2.2.26 Math.random ( )
          */
         @Function(name = "random", arity = 0)
         public static Object random(ExecutionContext cx, Object thisValue) {
@@ -245,7 +252,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.26 Math.round (x)
+         * 20.2.2.27 Math.round (x)
          */
         @Function(name = "round", arity = 1)
         public static Object round(ExecutionContext cx, Object thisValue, Object x) {
@@ -288,7 +295,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.19 Math.log10 (x)
+         * 20.2.2.20 Math.log10 (x)
          */
         @Function(name = "log10", arity = 1)
         public static Object log10(ExecutionContext cx, Object thisValue, Object x) {
@@ -296,7 +303,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.21 Math.log2 (x)
+         * 20.2.2.22 Math.log2 (x)
          */
         @Function(name = "log2", arity = 1)
         public static Object log2(ExecutionContext cx, Object thisValue, Object x) {
@@ -304,7 +311,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.20 Math.log1p (x)
+         * 20.2.2.21 Math.log1p (x)
          */
         @Function(name = "log1p", arity = 1)
         public static Object log1p(ExecutionContext cx, Object thisValue, Object x) {
@@ -398,25 +405,39 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.16 Math.hypot( value1 , value2, value3 = 0 )
+         * 20.2.2.17 Math.hypot([ value1 [ , value2 [ , ... ] ] ] )
          */
         @Function(name = "hypot", arity = 2)
-        public static Object hypot(ExecutionContext cx, Object thisValue, Object value1,
-                Object value2, @Optional(Optional.Default.NONE) Object value3) {
-            if (value3 == null) {
-                return Math.hypot(ToNumber(cx, value1), ToNumber(cx, value2));
-            }
-            double v1 = ToNumber(cx, value1), v2 = ToNumber(cx, value2), v3 = ToNumber(cx, value3);
-            if (Double.isInfinite(v1) || Double.isInfinite(v2) || Double.isInfinite(v3)) {
-                return Double.POSITIVE_INFINITY;
-            }
-            if (Double.isNaN(v1) || Double.isNaN(v2) || Double.isNaN(v3)) {
-                return Double.NaN;
-            }
-            if (v1 == 0.0 && v2 == 0.0 && v3 == 0.0) {
+        public static Object hypot(ExecutionContext cx, Object thisValue, Object... values) {
+            if (values.length == 0) {
                 return +0.0;
             }
-            return Math.sqrt(v1 * v1 + v2 * v2 + v3 * v3);
+            boolean hasInfinity = false, hasNaN = false, hasNonZero = false;
+            double[] numbers = new double[values.length];
+            for (int i = 0, len = values.length; i < len; ++i) {
+                double num = ToNumber(cx, values[i]);
+                if (Double.isInfinite(num)) {
+                    hasInfinity = true;
+                } else if (Double.isNaN(num)) {
+                    hasNaN = true;
+                } else if (num != 0.0) {
+                    hasNonZero = true;
+                }
+            }
+            if (hasInfinity) {
+                return Double.POSITIVE_INFINITY;
+            } else if (hasNaN) {
+                return Double.NaN;
+            } else if (!hasNonZero) {
+                return +0.0;
+            } else if (values.length == 1) {
+                return numbers[0];
+            }
+            double result = Math.hypot(numbers[0], numbers[1]);
+            for (int i = 2, len = values.length; i < len; ++i) {
+                result = Math.hypot(result, numbers[i]);
+            }
+            return result;
         }
 
         /**
@@ -445,7 +466,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.17 Math.imul(x, y)
+         * 20.2.2.18 Math.imul(x, y)
          */
         @Function(name = "imul", arity = 2)
         public static Object imul(ExecutionContext cx, Object thisValue, Object x, Object y) {
@@ -455,10 +476,10 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.2.2.27 Math.roundFloat32(x)
+         * 20.2.2.16 Math.fround (x)
          */
-        @Function(name = "roundFloat32", arity = 1)
-        public static Object roundFloat32(ExecutionContext cx, Object thisValue, Object x) {
+        @Function(name = "fround", arity = 1)
+        public static Object fround(ExecutionContext cx, Object thisValue, Object x) {
             double d = ToNumber(cx, x);
             if (Double.isNaN(d)) {
                 return Double.NaN;
