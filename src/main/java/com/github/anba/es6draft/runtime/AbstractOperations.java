@@ -766,11 +766,10 @@ public final class AbstractOperations {
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
-        /* steps 1-3 */
-        assert !HasOwnProperty(cx, object, propertyKey);
-        /* step 4 */
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
-        /* step 5 */
+        /* step 4 */
         return object.defineOwnProperty(cx, propertyKey, newDesc);
     }
 
@@ -779,11 +778,10 @@ public final class AbstractOperations {
      */
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             ExoticSymbol propertyKey, Object value) {
-        /* steps 1-3 */
-        assert !HasOwnProperty(cx, object, propertyKey);
-        /* step 4 */
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
-        /* step 5 */
+        /* step 4 */
         return object.defineOwnProperty(cx, propertyKey, newDesc);
     }
 
