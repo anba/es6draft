@@ -462,4 +462,29 @@ public class OrdinaryFunction extends FunctionObject {
         f.defineOwnProperty(cx, "prototype", new PropertyDescriptor(prototype, writablePrototype,
                 false, false));
     }
+
+    /**
+     * 9.1.15.11 GetSuperBinding(obj) Abstract Operation
+     */
+    public static ScriptObject GetSuperBinding(Object obj) {
+        /* steps 1-2 */
+        if (!(obj instanceof FunctionObject)) {
+            return null;
+        }
+        /* step 3 */
+        return ((FunctionObject) obj).getHomeObject();
+    }
+
+    /**
+     * 9.1.15.12 RebindSuper(function, newHome) Abstract Operation
+     */
+    public static FunctionObject RebindSuper(ExecutionContext cx, FunctionObject function,
+            ScriptObject newHome) {
+        /* step 1 */
+        assert function.getHomeObject() != null;
+        /* step 2 */
+        assert newHome != null;
+        /* steps 3-6 */
+        return function.rebind(cx, newHome);
+    }
 }
