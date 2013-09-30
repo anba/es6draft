@@ -213,15 +213,13 @@ public class ExoticProxy implements ScriptObject {
             return target.getPrototypeOf(cx);
         }
         Object handlerProto = trap.call(cx, handler, target);
-        //
-        // boolean extensibleTarget = IsExtensible(cx, target);
-        // if (extensibleTarget) {
-        // if (Type.isNull(handlerProto) || Type.isObject(handlerProto)) {
-        // return (ScriptObject) unmaskNull(handlerProto);
-        // }
-        // throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
-        // }
-        //
+        boolean extensibleTarget = IsExtensible(cx, target);
+        if (extensibleTarget) {
+            if (Type.isNull(handlerProto) || Type.isObject(handlerProto)) {
+                return (ScriptObject) unmaskNull(handlerProto);
+            }
+            throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
+        }
         ScriptObject targetProto = target.getPrototypeOf(cx);
         if (!SameValue(handlerProto, maskNull(targetProto))) {
             throw throwTypeError(cx, Messages.Key.ProxySameValue);
