@@ -183,7 +183,7 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 23.2.3.8 Set.prototype.keys ( )<br>
          * 23.2.3.10 Set.prototype.values ( )<br>
-         * 23.2.3.11 Set.prototype.@@iterator ( )
+         * 23.2.3.11 Set.prototype[ @@iterator ] ( )
          */
         @Function(name = "values", arity = 0)
         @AliasFunctions({ @AliasFunction(name = "keys"),
@@ -196,7 +196,7 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 23.2.3.12 Set.prototype.@@toStringTag
+         * 23.2.3.12 Set.prototype[ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

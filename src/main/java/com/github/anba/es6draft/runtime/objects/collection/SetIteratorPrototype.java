@@ -90,14 +90,14 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         /* steps 1-3 (not applicable) */
         /* step 4 */
         LinkedMap<Object, Void> entries = set.getSetData();
-        /* step 6 */
+        /* step 5 */
         SetIterator iterator = ObjectCreate(cx, Intrinsics.SetIteratorPrototype,
                 SetIteratorAllocator.INSTANCE);
-        /* steps 6-9 */
+        /* steps 6-8 */
         iterator.set = set;
         iterator.nextIndex = 0;
         iterator.iterator = entries.iterator();
-        /* step 10 */
+        /* step 9 */
         return iterator;
     }
 
@@ -159,7 +159,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 23.2.5.2.3 SetIterator.prototype.@@iterator()
+         * 23.2.5.2.3 SetIterator.prototype[ @@iterator ]()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
@@ -167,7 +167,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 23.2.5.2.4 SetIterator.prototype.@@toStringTag
+         * 23.2.5.2.4 SetIterator.prototype[ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Set Iterator";

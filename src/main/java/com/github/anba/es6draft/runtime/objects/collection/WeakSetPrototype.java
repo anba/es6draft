@@ -127,6 +127,7 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
             /* step ? */
             if (!Type.isObject(value)) {
+                // FIXME: unresolved -> return false or throw TypeError?
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 5 */
@@ -136,7 +137,7 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 23.4.3.6 WeakSet.prototype.@@toStringTag
+         * 23.4.3.6 WeakSet.prototype[ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

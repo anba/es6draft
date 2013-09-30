@@ -87,18 +87,18 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
      */
     public static OrdinaryObject CreateMapIterator(ExecutionContext cx, MapObject m,
             MapIterationKind kind) {
-        /* steps 1-3 (not applicable) */
-        /* step 4 */
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         LinkedMap<Object, Object> entries = m.getMapData();
-        /* step 5 */
+        /* step 4 */
         MapIterator iterator = ObjectCreate(cx, Intrinsics.MapIteratorPrototype,
                 MapIteratorAllocator.INSTANCE);
-        /* steps 6-8 */
+        /* steps 5-7 */
         iterator.map = m;
         iterator.nextIndex = 0;
         iterator.iterationKind = kind;
         iterator.iterator = entries.iterator();
-        /* step 9 */
+        /* step 8 */
         return iterator;
     }
 
@@ -166,7 +166,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 23.1.5.2.3 MapIterator.prototype.@@iterator ()
+         * 23.1.5.2.3 MapIterator.prototype[ @@iterator ]()
          */
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
@@ -174,7 +174,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
 
         /**
-         * 23.1.5.2.4 MapIterator.prototype.@@toStringTag
+         * 23.1.5.2.4 MapIterator.prototype[ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Map Iterator";
