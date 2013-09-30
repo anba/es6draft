@@ -23,7 +23,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
  * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>9.2.7 Built-in Function Objects
+ * <li>9.2.6 Built-in Function Objects
  * </ul>
  */
 public abstract class BuiltinFunction extends OrdinaryObject implements Callable {

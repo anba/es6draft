@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
  * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>9.2.5 Exotic Arguments Objects
+ * <li>9.2.4 Exotic Arguments Objects
  * </ul>
  */
 public class ExoticArguments extends OrdinaryObject {
@@ -113,7 +113,7 @@ public class ExoticArguments extends OrdinaryObject {
     }
 
     /**
-     * [9.2.5.1 Arguments Object] InstantiateArgumentsObject
+     * [9.2.4.1 Arguments Object] InstantiateArgumentsObject
      */
     public static ExoticArguments InstantiateArgumentsObject(ExecutionContext cx, Object[] args) {
         /* step 1 */
@@ -133,7 +133,7 @@ public class ExoticArguments extends OrdinaryObject {
     }
 
     /**
-     * [9.2.5.1 Arguments Object] CompleteStrictArgumentsObject
+     * [9.2.4.1 Arguments Object] CompleteStrictArgumentsObject
      */
     public static void CompleteStrictArgumentsObject(ExecutionContext cx, ExoticArguments obj) {
         /* steps 1-2 */
@@ -154,7 +154,7 @@ public class ExoticArguments extends OrdinaryObject {
     }
 
     /**
-     * [9.2.5.1 Arguments Object] CompleteMappedArgumentsObject
+     * [9.2.4.1 Arguments Object] CompleteMappedArgumentsObject
      */
     public static void CompleteMappedArgumentsObject(ExecutionContext cx, ExoticArguments obj,
             FunctionObject func, String[] formals, LexicalEnvironment env) {

@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
  * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>9.2.6 Integer Indexed Exotic Objects
+ * <li>9.2.5 Integer Indexed Exotic Objects
  * </ul>
  */
 public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
@@ -60,7 +60,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return super.hasOwnProperty(cx, propertyKey);
     }
 
-    /** 9.2.6.1 [[GetOwnProperty]] (P) */
+    /** 9.2.5.1 [[GetOwnProperty]] (P) */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
@@ -78,7 +78,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return ordinaryGetOwnProperty(propertyKey);
     }
 
-    /** 9.2.6.2 [[DefineOwnProperty]] (P, Desc) */
+    /** 9.2.5.2 [[DefineOwnProperty]] (P, Desc) */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
@@ -135,7 +135,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return super.defineOwnProperty(cx, propertyKey, desc);
     }
 
-    /** 9.2.6.3 [[Get]] (P, Receiver) */
+    /** 9.2.5.3 [[Get]] (P, Receiver) */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         /* step 1 (not applicable) */
@@ -150,7 +150,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return super.get(cx, propertyKey, receiver);
     }
 
-    /** 9.2.6.4 [[Set]] (P, V, Receiver) */
+    /** 9.2.5.4 [[Set]] (P, V, Receiver) */
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         /* step 1 (not applicable) */
@@ -165,14 +165,14 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return super.set(cx, propertyKey, value, receiver);
     }
 
-    /** 9.2.6.5 [[Enumerate]] () */
+    /** 9.2.5.5 [[Enumerate]] () */
     @Override
     protected Collection<String> enumerateKeys() {
         // FIXME: spec incomplete
         return super.enumerateKeys();
     }
 
-    /** 9.2.6.6 [[OwnPropertyKeys]] () */
+    /** 9.2.5.6 [[OwnPropertyKeys]] () */
     @Override
     protected Collection<Object> enumerateOwnKeys() {
         // FIXME: spec incomplete
@@ -180,7 +180,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     }
 
     /**
-     * 9.2.6.7 IntegerIndexedObjectCreate Abstract Operation
+     * 9.2.5.7 IntegerIndexedObjectCreate Abstract Operation
      */
     public static ScriptObject IntegerIndexedObjectCreate(ExecutionContext cx,
             ScriptObject prototype) {
@@ -198,12 +198,12 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     protected abstract long getLength();
 
     /**
-     * 9.2.6.8 IntegerIndexedElementGet (O, index) Abstract Operation
+     * 9.2.5.8 IntegerIndexedElementGet (O, index) Abstract Operation
      */
     protected abstract Object elementGet(ExecutionContext cx, double index);
 
     /**
-     * 9.2.6.9 IntegerIndexedElementSet (O, index, value) Abstract Operation
+     * 9.2.5.9 IntegerIndexedElementSet (O, index, value) Abstract Operation
      */
     protected abstract boolean elementSet(ExecutionContext cx, double index, Object value);
 }
