@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticIntegerIndexedObjec
  * <li>22.2.7 Properties of TypedArray instances
  * </ul>
  */
-public class TypedArrayObject extends ExoticIntegerIndexedObject {
+public class TypedArrayObject extends ExoticIntegerIndexedObject implements ArrayBufferView {
     /** [[ViewedArrayBuffer]] */
     private ArrayBufferObject buffer;
 
@@ -139,6 +139,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject {
     /**
      * [[ViewedArrayBuffer]]
      */
+    @Override
     public ArrayBufferObject getBuffer() {
         return buffer;
     }
@@ -174,6 +175,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject {
     /**
      * [[ByteLength]]
      */
+    @Override
     public long getByteLength() {
         return byteLength;
     }
@@ -188,6 +190,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject {
     /**
      * [[ByteOffset]]
      */
+    @Override
     public long getByteOffset() {
         return byteOffset;
     }

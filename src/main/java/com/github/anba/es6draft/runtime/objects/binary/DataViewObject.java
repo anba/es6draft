@@ -16,8 +16,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>24.2.5 Properties of DataView Instances
  * </ul>
  */
-public class DataViewObject extends OrdinaryObject {
-    /** [[DataArrayBuffer]] */
+public class DataViewObject extends OrdinaryObject implements ArrayBufferView {
+    /** [[ViewedArrayBuffer]] */
     private ArrayBufferObject buffer;
 
     /** [[ByteLength]] */
@@ -31,22 +31,24 @@ public class DataViewObject extends OrdinaryObject {
     }
 
     /**
-     * [[DataArrayBuffer]]
+     * [[ViewedArrayBuffer]]
      */
+    @Override
     public ArrayBufferObject getBuffer() {
         return buffer;
     }
 
     /**
-     * [[DataArrayBuffer]]
+     * [[ViewedArrayBuffer]]
      */
-    public void setBuffer(ArrayBufferObject data) {
-        this.buffer = data;
+    public void setBuffer(ArrayBufferObject buffer) {
+        this.buffer = buffer;
     }
 
     /**
      * [[ByteLength]]
      */
+    @Override
     public long getByteLength() {
         return byteLength;
     }
@@ -61,6 +63,7 @@ public class DataViewObject extends OrdinaryObject {
     /**
      * [[ByteOffset]]
      */
+    @Override
     public long getByteOffset() {
         return byteOffset;
     }
