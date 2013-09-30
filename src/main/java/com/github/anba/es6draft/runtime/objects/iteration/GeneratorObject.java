@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.GeneratorThread.newGeneratorThreadFactory;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.concurrent.Callable;
@@ -199,7 +199,7 @@ public class GeneratorObject extends OrdinaryObject {
             if (result instanceof ScriptException) {
                 throw (ScriptException) result;
             }
-            return CreateItrResultObject(cx, result, true);
+            return CreateIterResultObject(cx, result, true);
         } catch (ExecutionException e) {
             throw new RuntimeException(e.getCause());
         } catch (InterruptedException e) {

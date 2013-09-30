@@ -1478,7 +1478,7 @@ public final class ScriptRuntime {
      * </ul>
      */
     public static Object yield(Object value, ExecutionContext cx) {
-        return GeneratorYield(cx, CreateItrResultObject(cx, value, false));
+        return GeneratorYield(cx, CreateIterResultObject(cx, value, false));
     }
 
     /**

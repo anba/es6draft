@@ -64,21 +64,22 @@ public final class IterationAbstractOperations {
     }
 
     /**
-     * 25.4.3.3 GeneratorYield (itrNextObj)
+     * 25.4.3.3 GeneratorYield (iterNextObj)
      */
-    public static Object GeneratorYield(ExecutionContext genContext, ScriptObject itrNextObj) {
+    public static Object GeneratorYield(ExecutionContext genContext, ScriptObject iterNextObj) {
         /* step 1 (?) */
         /* steps 2-4 */
         GeneratorObject generator = genContext.getCurrentGenerator();
         assert generator != null;
         /* steps 5-11 */
-        return generator.yield(itrNextObj);
+        return generator.yield(iterNextObj);
     }
 
     /**
-     * 25.4.3.4 CreateItrResultObject (value, done)
+     * 25.4.3.4 CreateIterResultObject (value, done)
      */
-    public static ScriptObject CreateItrResultObject(ExecutionContext cx, Object value, boolean done) {
+    public static ScriptObject CreateIterResultObject(ExecutionContext cx, Object value,
+            boolean done) {
         /* step 1 (not applicable) */
         /* step 2 */
         OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
@@ -140,27 +141,51 @@ public final class IterationAbstractOperations {
     }
 
     /**
-     * 25.4.3.7 IteratorComplete (itrResult)
+     * 25.4.3.7 IteratorComplete (iterResult)
      */
-    public static boolean IteratorComplete(ExecutionContext cx, ScriptObject itrResult) {
+    public static boolean IteratorComplete(ExecutionContext cx, ScriptObject iterResult) {
         /* step 1 (not applicable) */
         /* step 2 */
-        Object done = Get(cx, itrResult, "done");
+        Object done = Get(cx, iterResult, "done");
         /* step 3 */
         return ToBoolean(done);
     }
 
     /**
-     * 25.4.3.8 IteratorValue (itrResult)
+     * 25.4.3.8 IteratorValue (iterResult)
      */
-    public static Object IteratorValue(ExecutionContext cx, ScriptObject itrResult) {
+    public static Object IteratorValue(ExecutionContext cx, ScriptObject iterResult) {
         /* step 1 (not applicable) */
         /* step 2 */
-        return Get(cx, itrResult, "value");
+        return Get(cx, iterResult, "value");
     }
 
     /**
-     * 25.4.3.9 CreateEmptyIterator ( )
+     * 25.4.3.9 IteratorStep ( iterator, value )
+     */
+    public static ScriptObject IteratorStep(ExecutionContext cx, ScriptObject iterator) {
+        return IteratorStep(cx, iterator, UNDEFINED);
+    }
+
+    /**
+     * 25.4.3.9 IteratorStep ( iterator, value )
+     */
+    public static ScriptObject IteratorStep(ExecutionContext cx, ScriptObject iterator, Object value) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject result = IteratorNext(cx, iterator, value);
+        /* steps 4-5 */
+        boolean done = IteratorComplete(cx, result);
+        /* step 6 */
+        if (done) {
+            return null;
+        }
+        /* step 7 */
+        return result;
+    }
+
+    /**
+     * 25.4.3.10 CreateEmptyIterator ( )
      */
     public static ScriptObject CreateEmptyIterator(ExecutionContext cx) {
         /* step 1 */
@@ -182,7 +207,7 @@ public final class IterationAbstractOperations {
         @Override
         public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
             /* steps 1-2 */
-            return CreateItrResultObject(calleeContext(), UNDEFINED, true);
+            return CreateIterResultObject(calleeContext(), UNDEFINED, true);
         }
     }
 }

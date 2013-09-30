@@ -15,8 +15,7 @@ import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstru
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetArrayBufferData;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GetIterator;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorNext;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorStep;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -397,14 +396,13 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
             if (usingIterator) {
                 ScriptObject iterator = GetIterator(cx, items);
                 List<Object> values = new ArrayList<>();
-                boolean done = false;
-                while (!done) {
-                    ScriptObject next = IteratorNext(cx, iterator);
-                    done = IteratorComplete(cx, next);
-                    if (!done) {
-                        Object nextValue = IteratorValue(cx, next);
-                        values.add(nextValue);
+                for (;;) {
+                    ScriptObject next = IteratorStep(cx, iterator);
+                    if (next == null) {
+                        break;
                     }
+                    Object nextValue = IteratorValue(cx, next);
+                    values.add(nextValue);
                 }
                 int len = values.size();
                 ScriptObject newObj = OrdinaryConstruct(cx, toFunction(c), new Object[] { len });

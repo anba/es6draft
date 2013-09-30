@@ -12,8 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreate
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GetIterator;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorNext;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorStep;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -97,9 +96,8 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
         }
         /* step 10 */
         for (;;) {
-            ScriptObject next = IteratorNext(calleeContext, iter);
-            boolean done = IteratorComplete(calleeContext, next);
-            if (done) {
+            ScriptObject next = IteratorStep(calleeContext, iter);
+            if (next == null) {
                 return set;
             }
             Object nextValue = IteratorValue(calleeContext, next);

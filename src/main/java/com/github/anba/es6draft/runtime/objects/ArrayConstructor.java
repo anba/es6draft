@@ -11,8 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GetIterator;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorNext;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorStep;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -231,9 +230,8 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
                 /* steps 8f-8g */
                 for (int k = 0;; ++k) {
                     String pk = ToString(k);
-                    ScriptObject next = IteratorNext(cx, iterator);
-                    boolean done = IteratorComplete(cx, next);
-                    if (done) {
+                    ScriptObject next = IteratorStep(cx, iterator);
+                    if (next == null) {
                         Put(cx, a, "length", k, true);
                         return a;
                     }

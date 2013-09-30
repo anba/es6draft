@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.internal;
 import static com.github.anba.es6draft.runtime.AbstractOperations.SetIntegrityLevel;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.Iterator;
@@ -56,9 +56,9 @@ public class ListIteratorPrototype extends OrdinaryObject implements Initialisab
         public static Object send(ExecutionContext cx, Object thisValue) {
             Iterator<?> iterator = listIterator(cx, thisValue).getIterator();
             if (!iterator.hasNext()) {
-                return CreateItrResultObject(cx, UNDEFINED, true);
+                return CreateIterResultObject(cx, UNDEFINED, true);
             }
-            return CreateItrResultObject(cx, iterator.next(), false);
+            return CreateIterResultObject(cx, iterator.next(), false);
         }
 
         @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)

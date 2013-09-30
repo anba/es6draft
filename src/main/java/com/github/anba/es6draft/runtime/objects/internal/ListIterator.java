@@ -6,8 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.internal;
 
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorComplete;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorNext;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorStep;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
 
 import java.util.Iterator;
@@ -66,9 +65,8 @@ public class ListIterator<T> extends OrdinaryObject {
 
         @Override
         protected Object tryNext() {
-            ScriptObject next = IteratorNext(cx, object);
-            boolean done = IteratorComplete(cx, next);
-            if (done) {
+            ScriptObject next = IteratorStep(cx, object);
+            if (next == null) {
                 return null;
             }
             return IteratorValue(cx, next);

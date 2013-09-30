@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateItrResultObject;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
@@ -153,7 +153,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             /* step 11 */
             if (index >= len) {
                 itr.nextIndex = Long.MAX_VALUE; // = +Infinity
-                return CreateItrResultObject(cx, UNDEFINED, true);
+                return CreateIterResultObject(cx, UNDEFINED, true);
             }
             /* step 12 */
             itr.nextIndex = index + 1;
@@ -173,17 +173,17 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                 result.defineOwnProperty(cx, "0", new PropertyDescriptor(index, true, true, true));
                 result.defineOwnProperty(cx, "1", new PropertyDescriptor(elementValue, true, true,
                         true));
-                return CreateItrResultObject(cx, result, false);
+                return CreateIterResultObject(cx, result, false);
             } else if (itemKind == ArrayIterationKind.Key
                     || itemKind == ArrayIterationKind.SparseKey) {
                 /* step 15 */
-                return CreateItrResultObject(cx, index, false);
+                return CreateIterResultObject(cx, index, false);
             } else {
                 /* steps 16-17 */
                 assert itemKind == ArrayIterationKind.Value
                         || itemKind == ArrayIterationKind.SparseValue;
                 assert elementValue != null;
-                return CreateItrResultObject(cx, elementValue, false);
+                return CreateIterResultObject(cx, elementValue, false);
             }
         }
 
