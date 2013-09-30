@@ -42,9 +42,9 @@ public enum BuiltinSymbol {
     iterator,
 
     /**
-     * &#64;&#64;ToPrimitive
+     * &#64;&#64;toPrimitive
      */
-    ToPrimitive,
+    toPrimitive,
 
     /**
      * &#64;&#64;toStringTag

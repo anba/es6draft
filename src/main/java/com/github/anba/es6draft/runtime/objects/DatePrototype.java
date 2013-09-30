@@ -933,9 +933,9 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.3.4.45 Date.prototype.@@ToPrimitive ( hint )
+         * 20.3.4.45 Date.prototype[@@toPrimitive] ( hint )
          */
-        @Function(name = "@@ToPrimitive", arity = 1, symbol = BuiltinSymbol.ToPrimitive,
+        @Function(name = "@@toPrimitive", arity = 1, symbol = BuiltinSymbol.toPrimitive,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object ToPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             /* steps 1-2 */

@@ -82,7 +82,7 @@ public final class AbstractOperations {
     private static Object ToPrimitive(ExecutionContext cx, ScriptObject argument, Type preferredType) {
         /* steps 1-3 (moved) */
         /* steps 4-5 */
-        Object exoticToPrim = Get(cx, argument, BuiltinSymbol.ToPrimitive.get());
+        Object exoticToPrim = Get(cx, argument, BuiltinSymbol.toPrimitive.get());
         /* step 6 */
         if (!Type.isUndefined(exoticToPrim)) {
             if (!IsCallable(exoticToPrim))
