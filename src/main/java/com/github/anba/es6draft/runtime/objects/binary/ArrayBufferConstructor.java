@@ -358,14 +358,10 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
                 return false;
             }
             /* step 2 */
-            if (arg instanceof TypedArrayObject) {
+            if (arg instanceof ArrayBufferView) {
                 return true;
             }
             /* step 3 */
-            if (arg instanceof DataViewObject) {
-                return true;
-            }
-            /* step 4 */
             return false;
         }
 

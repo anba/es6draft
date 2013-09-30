@@ -47,6 +47,16 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
     public enum Properties {
         ;
 
+        private static ArrayBufferView thisArrayBufferView(ExecutionContext cx, Object m) {
+            if (m instanceof ArrayBufferView) {
+                ArrayBufferView view = (ArrayBufferView) m;
+                if (view.getBuffer() != null) {
+                    return view;
+                }
+            }
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
@@ -61,11 +71,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
          */
         @Accessor(name = "buffer", type = Accessor.Type.Getter)
         public static Object buffer(ExecutionContext cx, Object thisValue) {
-            if (!(thisValue instanceof DataViewObject)
-                    || ((DataViewObject) thisValue).getBuffer() == null) {
-                throwTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            return ((DataViewObject) thisValue).getBuffer();
+            return thisArrayBufferView(cx, thisValue).getBuffer();
         }
 
         /**
@@ -73,11 +79,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
          */
         @Accessor(name = "byteLength", type = Accessor.Type.Getter)
         public static Object byteLength(ExecutionContext cx, Object thisValue) {
-            if (!(thisValue instanceof DataViewObject)
-                    || ((DataViewObject) thisValue).getBuffer() == null) {
-                throwTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            return ((DataViewObject) thisValue).getByteLength();
+            return thisArrayBufferView(cx, thisValue).getByteLength();
         }
 
         /**
@@ -85,11 +87,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
          */
         @Accessor(name = "byteOffset", type = Accessor.Type.Getter)
         public static Object byteOffset(ExecutionContext cx, Object thisValue) {
-            if (!(thisValue instanceof DataViewObject)
-                    || ((DataViewObject) thisValue).getBuffer() == null) {
-                throwTypeError(cx, Messages.Key.IncompatibleObject);
-            }
-            return ((DataViewObject) thisValue).getByteOffset();
+            return thisArrayBufferView(cx, thisValue).getByteOffset();
         }
 
         /**
