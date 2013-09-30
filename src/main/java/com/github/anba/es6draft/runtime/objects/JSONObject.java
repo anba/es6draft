@@ -25,8 +25,11 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -79,7 +82,8 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             /* step 7 */
             if (IsCallable(reviver)) {
                 ScriptObject root = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-                CreateOwnDataProperty(cx, root, "", unfiltered);
+                boolean status = CreateOwnDataProperty(cx, root, "", unfiltered);
+                assert status;
                 return Walk(cx, (Callable) reviver, root, "");
             }
             /* step 8 */
@@ -151,15 +155,23 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             }
             /* step 9 */
             ScriptObject wrapper = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            /* step 10 */
-            CreateOwnDataProperty(cx, wrapper, "", value);
-            /* step 11 */
+            /* steps 10-11 */
+            boolean status = CreateOwnDataProperty(cx, wrapper, "", value);
+            assert status;
+            /* step 12 */
             String result = Str(cx, stack, propertyList, replacerFunction, indent, gap, "", wrapper);
             if (result == null) {
                 return UNDEFINED;
             }
             return result;
         }
+
+        /**
+         * 24.3.4 JSON [ @@toStringTag ]
+         */
+        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static final String toStringTag = "JSON";
     }
 
     /**
@@ -230,7 +242,11 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             } else if (o instanceof ExoticString) {
                 value = ToString(cx, value);
             } else if (o instanceof BooleanObject) {
-                value = ((BooleanObject) value).getBooleanData();
+                BooleanObject bool = (BooleanObject) o;
+                if (!bool.isInitialised()) {
+                    throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                }
+                value = bool.getBooleanData();
             }
         }
         /* steps 6-12 */
