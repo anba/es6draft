@@ -142,8 +142,8 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 4 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c)) {
-                    a = ((Constructor) c).construct(cx, 0); // OrdinaryConstruct
+                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
+                    a = ((Constructor) c).construct(cx, 0);
                 }
             }
             /* steps 5-6 */
@@ -187,21 +187,21 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
          * 22.1.3.3.1 IsConcatSpreadable (O) Abstract Operation
          */
         public static boolean IsConcatSpreadable(ExecutionContext cx, Object o) {
-            /* steps 1-2 */
+            /* step 1 */
             if (!Type.isObject(o)) {
                 return false;
             }
-            /* steps 3-4 */
+            /* steps 2-3 */
             Object spreadable = Get(cx, Type.objectValue(o), BuiltinSymbol.isConcatSpreadable.get());
-            /* step 5 */
+            /* step 4 */
             if (!Type.isUndefined(spreadable)) {
                 return ToBoolean(spreadable);
             }
-            /* step 6 */
+            /* step 5 */
             if (o instanceof ExoticArray) {
                 return true;
             }
-            /* step 7 */
+            /* step 6 */
             return false;
         }
 
@@ -382,50 +382,48 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-2 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 3 */
-            // ScriptObject a = ArrayCreate(cx, 0);
-            /* step 4 */
             Object lenVal = Get(cx, o, "length");
-            /* steps 5-6 */
+            /* steps 4-5 */
             long len = ToLength(cx, lenVal);
-            /* steps 7-8 */
+            /* steps 6-7 */
             double relativeStart = ToInteger(cx, start);
-            /* step 9 */
+            /* step 8 */
             long k;
             if (relativeStart < 0) {
                 k = (long) Math.max(len + relativeStart, 0);
             } else {
                 k = (long) Math.min(relativeStart, len);
             }
-            /* steps 10-11 */
+            /* steps 9-10 */
             double relativeEnd;
             if (Type.isUndefined(end)) {
                 relativeEnd = len;
             } else {
                 relativeEnd = ToInteger(cx, end);
             }
-            /* step 12 */
+            /* step 11 */
             long finall;
             if (relativeEnd < 0) {
                 finall = (long) Math.max(len + relativeEnd, 0);
             } else {
                 finall = (long) Math.min(relativeEnd, len);
             }
-            /* step 13 */
+            /* step 12 */
             long count = Math.max(finall - k, 0);
-            /* step 14 */
+            /* step 13 */
             ScriptObject a = null;
-            /* step 15 */
+            /* step 14 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c)) {
-                    a = ((Constructor) c).construct(cx, count); // OrdinaryConstruct
+                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
+                    a = ((Constructor) c).construct(cx, count);
                 }
             }
-            /* steps 16-17 */
+            /* steps 15-16 */
             if (a == null) {
                 a = ArrayCreate(cx, count);
             }
-            /* steps 18-19 */
+            /* steps 17-18 */
             long n = 0;
             for (; k < finall; ++k, ++n) {
                 String pk = ToString(k);
@@ -439,9 +437,9 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     }
                 }
             }
-            /* steps 20-21 */
+            /* steps 19-20 */
             Put(cx, a, "length", n, true);
-            /* step 22 */
+            /* step 21 */
             return a;
         }
 
@@ -557,29 +555,23 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 actualStart = (long) Math.min(relativeStart, len);
             }
-            /* steps 9-10 */
+            /* steps 9-11 */
             long actualDeleteCount;
-            // if (deleteCount == null) {
-            // actualDeleteCount = len - actualStart;
-            // } else {
-            // double dc = ToInteger(cx, deleteCount);
-            // actualDeleteCount = (long) Math.min(Math.max(dc, 0), len - actualStart);
-            // }
-            if (start != null && deleteCount == null) {
-                actualDeleteCount = (len - actualStart);
+            if (start == null) {
+                actualDeleteCount = 0;
+            } else if (deleteCount == null) {
+                actualDeleteCount = len - actualStart;
             } else {
-                double del = (deleteCount != null ? Math.max(ToInteger(cx, deleteCount), 0) : 0);
-                actualDeleteCount = (long) Math.min(del, len - actualStart);
+                double dc = ToInteger(cx, deleteCount);
+                actualDeleteCount = (long) Math.min(Math.max(dc, 0), len - actualStart);
             }
-            /* step 11 */
-            // long count = finall - k;
             /* step 12 */
             ScriptObject a = null;
             /* step 13 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c)) {
-                    a = ((Constructor) c).construct(cx, actualDeleteCount); // OrdinaryConstruct
+                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
+                    a = ((Constructor) c).construct(cx, actualDeleteCount);
                 }
             }
             /* steps 14-15 */
@@ -900,7 +892,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 9 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c)) {
+                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx, len);
                 }
             }
@@ -946,7 +938,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 9 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                if (IsConstructor(c)) {
+                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx, 0);
                 }
             }
@@ -1188,16 +1180,19 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object unscopables(ExecutionContext cx) {
             /* step 1 */
-            ScriptObject blackList = ArrayCreate(cx, 5, Intrinsics.ArrayPrototype);
+            ScriptObject blackList = ArrayCreate(cx, 7, Intrinsics.ArrayPrototype);
             /* steps 2-8 */
-            CreateOwnDataProperty(cx, blackList, "0", "find");
-            CreateOwnDataProperty(cx, blackList, "1", "findIndex");
-            CreateOwnDataProperty(cx, blackList, "2", "fill");
-            CreateOwnDataProperty(cx, blackList, "3", "copyWithin");
-            CreateOwnDataProperty(cx, blackList, "4", "entries");
-            CreateOwnDataProperty(cx, blackList, "5", "keys");
-            CreateOwnDataProperty(cx, blackList, "6", "values");
+            boolean status = true;
+            status &= CreateOwnDataProperty(cx, blackList, "0", "find");
+            status &= CreateOwnDataProperty(cx, blackList, "1", "findIndex");
+            status &= CreateOwnDataProperty(cx, blackList, "2", "fill");
+            status &= CreateOwnDataProperty(cx, blackList, "3", "copyWithin");
+            status &= CreateOwnDataProperty(cx, blackList, "4", "entries");
+            status &= CreateOwnDataProperty(cx, blackList, "5", "keys");
+            status &= CreateOwnDataProperty(cx, blackList, "6", "values");
             /* step 9 */
+            assert status;
+            /* step 10 */
             return blackList;
         }
 
