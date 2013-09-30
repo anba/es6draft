@@ -34,7 +34,7 @@ public final class PropertyDescriptor implements Cloneable {
 
     private int present = 0;
 
-    // default attribute values per 6.1.6.1, table 3
+    // default attribute values per 6.1.7.1, table 3
     private Object value = UNDEFINED;
     private Callable getter = null; // = Undefined
     private Callable setter = null; // = Undefined

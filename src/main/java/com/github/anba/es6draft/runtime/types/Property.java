@@ -12,9 +12,9 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
  * <h2>6.1 ECMAScript Language Types</h2><br>
- * <h3>6.1.6 The Object Type</h3>
+ * <h3>6.1.7 The Object Type</h3>
  * <ul>
- * <li>6.1.6.1 Property Attributes
+ * <li>6.1.7.1 Property Attributes
  * </ul>
  */
 public final class Property implements Cloneable {
@@ -62,7 +62,7 @@ public final class Property implements Cloneable {
     private void toProperty(Type newType) {
         assert type != newType;
         type = newType;
-        // default attribute values per 6.1.6.1, table 3
+        // default attribute values per 6.1.7.1, table 3
         value = UNDEFINED;
         getter = null;
         setter = null;
