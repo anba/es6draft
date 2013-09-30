@@ -28,8 +28,8 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -112,8 +112,8 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             if (key instanceof String) {
                 return obj.hasProperty(cx, (String) key);
             } else {
-                assert key instanceof ExoticSymbol;
-                return obj.hasProperty(cx, (ExoticSymbol) key);
+                assert key instanceof Symbol;
+                return obj.hasProperty(cx, (Symbol) key);
             }
         }
 
@@ -128,8 +128,8 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             if (key instanceof String) {
                 return HasOwnProperty(cx, obj, (String) key);
             } else {
-                assert key instanceof ExoticSymbol;
-                return HasOwnProperty(cx, obj, (ExoticSymbol) key);
+                assert key instanceof Symbol;
+                return HasOwnProperty(cx, obj, (Symbol) key);
             }
         }
 
@@ -145,8 +145,8 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             if (key instanceof String) {
                 desc = obj.getOwnProperty(cx, (String) key);
             } else {
-                assert key instanceof ExoticSymbol;
-                desc = obj.getOwnProperty(cx, (ExoticSymbol) key);
+                assert key instanceof Symbol;
+                desc = obj.getOwnProperty(cx, (Symbol) key);
             }
             return FromPropertyDescriptor(cx, desc);
         }
@@ -165,8 +165,8 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             if (key instanceof String) {
                 return obj.get(cx, (String) key, receiver);
             } else {
-                assert key instanceof ExoticSymbol;
-                return obj.get(cx, (ExoticSymbol) key, receiver);
+                assert key instanceof Symbol;
+                return obj.get(cx, (Symbol) key, receiver);
             }
         }
 
@@ -184,8 +184,8 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             if (key instanceof String) {
                 return obj.set(cx, (String) key, value, receiver);
             } else {
-                assert key instanceof ExoticSymbol;
-                return obj.set(cx, (ExoticSymbol) key, value, receiver);
+                assert key instanceof Symbol;
+                return obj.set(cx, (Symbol) key, value, receiver);
             }
         }
 
@@ -205,8 +205,8 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             if (key instanceof String) {
                 return obj.invoke(cx, (String) key, argList, receiver);
             } else {
-                assert key instanceof ExoticSymbol;
-                return obj.invoke(cx, (ExoticSymbol) key, argList, receiver);
+                assert key instanceof Symbol;
+                return obj.invoke(cx, (Symbol) key, argList, receiver);
             }
         }
 
@@ -221,8 +221,8 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             if (key instanceof String) {
                 return obj.delete(cx, (String) key);
             } else {
-                assert key instanceof ExoticSymbol;
-                return obj.delete(cx, (ExoticSymbol) key);
+                assert key instanceof Symbol;
+                return obj.delete(cx, (Symbol) key);
             }
         }
 
@@ -238,8 +238,8 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             if (key instanceof String) {
                 return obj.defineOwnProperty(cx, (String) key, desc);
             } else {
-                assert key instanceof ExoticSymbol;
-                return obj.defineOwnProperty(cx, (ExoticSymbol) key, desc);
+                assert key instanceof Symbol;
+                return obj.defineOwnProperty(cx, (Symbol) key, desc);
             }
         }
 

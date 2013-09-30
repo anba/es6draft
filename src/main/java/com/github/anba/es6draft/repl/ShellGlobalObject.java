@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.objects.ErrorConstructor;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
+import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  *
@@ -150,7 +150,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
      */
     @Function(name = "newSym", arity = 1)
     public Object newSym(String name) {
-        return new ExoticSymbol(name);
+        return new Symbol(name);
     }
 
     /**
@@ -158,8 +158,8 @@ public abstract class ShellGlobalObject extends GlobalObject {
      */
     @Function(name = "symName", arity = 1)
     public Object symName(Object symbol) {
-        if (symbol instanceof ExoticSymbol) {
-            return ((ExoticSymbol) symbol).toString();
+        if (symbol instanceof Symbol) {
+            return ((Symbol) symbol).toString();
         }
         return UNDEFINED;
     }

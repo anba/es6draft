@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
@@ -69,9 +70,9 @@ public class OrdinaryFunction extends FunctionObject {
             return FunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
                     getPrototypeOf(cx), newHomeObject, (String) methodName);
         }
-        assert methodName instanceof ExoticSymbol;
+        assert methodName instanceof Symbol;
         return FunctionCreate(cx, getFunctionKind(), getFunction(), getScope(), getPrototypeOf(cx),
-                newHomeObject, (ExoticSymbol) methodName);
+                newHomeObject, (Symbol) methodName);
     }
 
     /**
@@ -283,7 +284,7 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
-            LexicalEnvironment scope, ScriptObject homeObject, ExoticSymbol methodName) {
+            LexicalEnvironment scope, ScriptObject homeObject, Symbol methodName) {
         boolean strict = (kind != FunctionKind.Arrow ? function.isStrict() : true);
         // first update 'legacy' flag, otherwise AddRestrictedFunctionProperties() fails
         f.legacy = f.legacy && !strict;
@@ -358,7 +359,7 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,
-            ScriptObject functionPrototype, ScriptObject homeObject, ExoticSymbol methodName) {
+            ScriptObject functionPrototype, ScriptObject homeObject, Symbol methodName) {
         assert !function.isGenerator();
         /* step 1 */
         if (functionPrototype == null) {

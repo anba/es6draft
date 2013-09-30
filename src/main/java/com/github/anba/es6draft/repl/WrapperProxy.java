@@ -25,8 +25,8 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 
 /**
  * Wrapper-Proxy for shell tests
@@ -155,7 +155,7 @@ class WrapperProxy implements ScriptObject {
      * [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         return proxyTarget.getOwnProperty(cx, propertyKey);
     }
 
@@ -172,7 +172,7 @@ class WrapperProxy implements ScriptObject {
      * [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey,
+    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
             PropertyDescriptor desc) {
         return proxyTarget.defineOwnProperty(cx, propertyKey, desc);
     }
@@ -197,7 +197,7 @@ class WrapperProxy implements ScriptObject {
      * [[HasProperty]] (P)
      */
     @Override
-    public boolean hasProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
+    public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
         /* modified 8.3.8 [[HasProperty]](P) */
         boolean hasOwn = HasOwnProperty(cx, proxyTarget, propertyKey);
         if (!hasOwn) {
@@ -238,7 +238,7 @@ class WrapperProxy implements ScriptObject {
      * [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(ExecutionContext cx, ExoticSymbol propertyKey, Object receiver) {
+    public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
         /* modified 8.3.9 [[Get]] (P, Receiver) */
         Property desc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (desc == null) {
@@ -306,7 +306,7 @@ class WrapperProxy implements ScriptObject {
      * [[Set]] ( P, V, Receiver)
      */
     @Override
-    public boolean set(ExecutionContext cx, ExoticSymbol propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
         /* modified 8.3.10 [[Set] (P, V, Receiver) */
         Property ownDesc = proxyTarget.getOwnProperty(cx, propertyKey);
         if (ownDesc == null) {
@@ -358,7 +358,7 @@ class WrapperProxy implements ScriptObject {
      * [[Invoke]] (P, ArgumentsList, Receiver)
      */
     @Override
-    public Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments,
+    public Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments,
             Object receiver) {
         return proxyTarget.invoke(cx, propertyKey, arguments, receiver);
     }
@@ -375,7 +375,7 @@ class WrapperProxy implements ScriptObject {
      * [[Delete]] (P)
      */
     @Override
-    public boolean delete(ExecutionContext cx, ExoticSymbol propertyKey) {
+    public boolean delete(ExecutionContext cx, Symbol propertyKey) {
         return proxyTarget.delete(cx, propertyKey);
     }
 

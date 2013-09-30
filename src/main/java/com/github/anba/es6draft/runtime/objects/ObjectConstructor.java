@@ -37,9 +37,9 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -89,6 +89,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             case Object:
                 return Type.objectValue(value);
             case String:
+            case Symbol:
             case Boolean:
             case Number:
                 return ToObject(calleeContext, value);
@@ -152,7 +153,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             if (key instanceof String) {
                 desc = obj.getOwnProperty(cx, (String) key);
             } else {
-                desc = obj.getOwnProperty(cx, (ExoticSymbol) key);
+                desc = obj.getOwnProperty(cx, (Symbol) key);
             }
             /* step 7 */
             return FromPropertyDescriptor(cx, desc);
@@ -368,7 +369,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                     if (nextKey instanceof String) {
                         desc = from.getOwnProperty(cx, (String) nextKey);
                     } else {
-                        desc = from.getOwnProperty(cx, (ExoticSymbol) nextKey);
+                        desc = from.getOwnProperty(cx, (Symbol) nextKey);
                     }
                     if (desc != null && desc.isEnumerable()) {
                         Object propValue = Get(cx, from, nextKey);
@@ -516,13 +517,13 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         /* steps 3-4 */
         Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
         /* step 5 */
-        List<ExoticSymbol> nameList = new ArrayList<>();
+        List<Symbol> nameList = new ArrayList<>();
         /* step 6 (omitted) */
         /* step 7 */
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
-            if (key instanceof ExoticSymbol) {
-                nameList.add((ExoticSymbol) key);
+            if (key instanceof Symbol) {
+                nameList.add((Symbol) key);
             }
         }
         /* step 8 */
@@ -548,7 +549,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 if (nextKey instanceof String) {
                     prop = source.getOwnProperty(cx, (String) nextKey);
                 } else {
-                    prop = source.getOwnProperty(cx, (ExoticSymbol) nextKey);
+                    prop = source.getOwnProperty(cx, (Symbol) nextKey);
                 }
             } catch (ScriptException e) {
                 if (pendingException == null) {

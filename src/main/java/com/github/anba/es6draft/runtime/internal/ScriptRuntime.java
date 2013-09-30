@@ -44,7 +44,6 @@ import com.github.anba.es6draft.runtime.objects.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
@@ -168,7 +167,7 @@ public final class ScriptRuntime {
         if (propertyName instanceof String) {
             duplicateKey = HasOwnProperty(cx, object, (String) propertyName);
         } else {
-            duplicateKey = HasOwnProperty(cx, object, (ExoticSymbol) propertyName);
+            duplicateKey = HasOwnProperty(cx, object, (Symbol) propertyName);
         }
         if (duplicateKey) {
             throwTypeError(cx, Messages.Key.DuplicatePropertyDefinition, propertyName.toString());
@@ -387,7 +386,7 @@ public final class ScriptRuntime {
         if (propertyKey instanceof String) {
             return new Reference.PropertyNameReference(baseValue, (String) propertyKey, strict);
         }
-        return new Reference.PropertySymbolReference(baseValue, (ExoticSymbol) propertyKey, strict);
+        return new Reference.PropertySymbolReference(baseValue, (Symbol) propertyKey, strict);
     }
 
     /**
@@ -409,8 +408,8 @@ public final class ScriptRuntime {
                     (String) propertyKey, strict);
             return ref.GetValue(cx);
         }
-        Reference<Object, ExoticSymbol> ref = new Reference.PropertySymbolReference(baseValue,
-                (ExoticSymbol) propertyKey, strict);
+        Reference<Object, Symbol> ref = new Reference.PropertySymbolReference(baseValue,
+                (Symbol) propertyKey, strict);
         return ref.GetValue(cx);
     }
 
@@ -451,7 +450,7 @@ public final class ScriptRuntime {
         if (propertyKey instanceof String) {
             return base.get(cx, (String) propertyKey, thisValue);
         }
-        return base.get(cx, (ExoticSymbol) propertyKey, thisValue);
+        return base.get(cx, (Symbol) propertyKey, thisValue);
     }
 
     /**
@@ -468,7 +467,7 @@ public final class ScriptRuntime {
         if (key instanceof String) {
             return base.invoke(cx, (String) key, arguments, thisValue);
         }
-        return base.invoke(cx, (ExoticSymbol) key, arguments, thisValue);
+        return base.invoke(cx, (Symbol) key, arguments, thisValue);
     }
 
     /**
@@ -485,7 +484,7 @@ public final class ScriptRuntime {
         if (key instanceof String) {
             return base.invoke(cx, (String) key, arguments, thisValue);
         }
-        return base.invoke(cx, (ExoticSymbol) key, arguments, thisValue);
+        return base.invoke(cx, (Symbol) key, arguments, thisValue);
     }
 
     /**
@@ -568,9 +567,9 @@ public final class ScriptRuntime {
         if (propertyKey == null) {
             propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
         }
-        if (propertyKey instanceof ExoticSymbol) {
-            return new Reference.SuperSymbolReference(baseValue, (ExoticSymbol) propertyKey,
-                    strict, actualThis);
+        if (propertyKey instanceof Symbol) {
+            return new Reference.SuperSymbolReference(baseValue, (Symbol) propertyKey, strict,
+                    actualThis);
         }
         return new Reference.SuperNameReference(baseValue, (String) propertyKey, strict, actualThis);
     }
@@ -680,7 +679,7 @@ public final class ScriptRuntime {
             if (referencedName instanceof String) {
                 deleteStatus = obj.delete(cx, (String) referencedName);
             } else {
-                deleteStatus = obj.delete(cx, (ExoticSymbol) referencedName);
+                deleteStatus = obj.delete(cx, (Symbol) referencedName);
             }
             if (!deleteStatus && ref.isStrictReference()) {
                 throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
@@ -717,11 +716,10 @@ public final class ScriptRuntime {
             return "number";
         case String:
             return "string";
+        case Symbol:
+            return "symbol";
         case Object:
         default:
-            if (val instanceof ExoticSymbol) {
-                return "symbol";
-            }
             if (IsCallable(val)) {
                 return "function";
             }
@@ -783,7 +781,7 @@ public final class ScriptRuntime {
         if (p instanceof String) {
             return HasProperty(cx, Type.objectValue(rval), (String) p);
         } else {
-            return HasProperty(cx, Type.objectValue(rval), (ExoticSymbol) p);
+            return HasProperty(cx, Type.objectValue(rval), (Symbol) p);
         }
     }
 
@@ -1169,7 +1167,7 @@ public final class ScriptRuntime {
         if (propKey instanceof String) {
             EvaluatePropertyDefinition(object, (String) propKey, fd, cx);
         } else {
-            EvaluatePropertyDefinition(object, (ExoticSymbol) propKey, fd, cx);
+            EvaluatePropertyDefinition(object, (Symbol) propKey, fd, cx);
         }
     }
 
@@ -1202,7 +1200,7 @@ public final class ScriptRuntime {
      * <li>PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
      */
-    public static void EvaluatePropertyDefinition(ScriptObject object, ExoticSymbol propKey,
+    public static void EvaluatePropertyDefinition(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction closure;
@@ -1228,7 +1226,7 @@ public final class ScriptRuntime {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionGetter(object, (String) propKey, fd, cx);
         } else {
-            EvaluatePropertyDefinitionGetter(object, (ExoticSymbol) propKey, fd, cx);
+            EvaluatePropertyDefinitionGetter(object, (Symbol) propKey, fd, cx);
         }
     }
 
@@ -1264,7 +1262,7 @@ public final class ScriptRuntime {
      * <li>get PropertyName ( ) { FunctionBody }
      * </ul>
      */
-    public static void EvaluatePropertyDefinitionGetter(ScriptObject object, ExoticSymbol propKey,
+    public static void EvaluatePropertyDefinitionGetter(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction closure;
@@ -1293,7 +1291,7 @@ public final class ScriptRuntime {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionSetter(object, (String) propKey, fd, cx);
         } else {
-            EvaluatePropertyDefinitionSetter(object, (ExoticSymbol) propKey, fd, cx);
+            EvaluatePropertyDefinitionSetter(object, (Symbol) propKey, fd, cx);
         }
     }
 
@@ -1329,7 +1327,7 @@ public final class ScriptRuntime {
      * <li>set PropertyName ( PropertySetParameterList ) { FunctionBody }
      * </ul>
      */
-    public static void EvaluatePropertyDefinitionSetter(ScriptObject object, ExoticSymbol propKey,
+    public static void EvaluatePropertyDefinitionSetter(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction closure;
@@ -1375,7 +1373,7 @@ public final class ScriptRuntime {
         if (propKey instanceof String) {
             EvaluatePropertyDefinitionGenerator(object, (String) propKey, fd, cx);
         } else {
-            EvaluatePropertyDefinitionGenerator(object, (ExoticSymbol) propKey, fd, cx);
+            EvaluatePropertyDefinitionGenerator(object, (Symbol) propKey, fd, cx);
         }
     }
 
@@ -1419,8 +1417,8 @@ public final class ScriptRuntime {
      * <li>GeneratorMethod : * PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
      */
-    public static void EvaluatePropertyDefinitionGenerator(ScriptObject object,
-            ExoticSymbol propKey, RuntimeInfo.Function fd, ExecutionContext cx) {
+    public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, Symbol propKey,
+            RuntimeInfo.Function fd, ExecutionContext cx) {
         /* steps 1-2 (implicit) */
         /* step 3 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();

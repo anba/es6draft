@@ -8,8 +8,6 @@ package com.github.anba.es6draft.runtime.types;
 
 import java.util.EnumMap;
 
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
-
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
  * <h2>6.1 ECMAScript Language Types</h2><br>
@@ -64,20 +62,20 @@ public enum BuiltinSymbol {
     ;
 
     /**
-     * Returns a {@link ExoticSymbol} object for this {@link BuiltinSymbol}
+     * Returns a {@link ExoticSymbol} object for this {@link Symbol}
      */
-    public final ExoticSymbol get() {
+    public final Symbol get() {
         assert this != NONE;
         return symbols.get(this);
     }
 
-    private static final EnumMap<BuiltinSymbol, ExoticSymbol> symbols;
+    private static final EnumMap<BuiltinSymbol, Symbol> symbols;
     static {
-        EnumMap<BuiltinSymbol, ExoticSymbol> map = new EnumMap<>(BuiltinSymbol.class);
+        EnumMap<BuiltinSymbol, Symbol> map = new EnumMap<>(BuiltinSymbol.class);
         for (BuiltinSymbol builtin : values()) {
             if (builtin != NONE) {
                 String name = "@@" + builtin.name();
-                map.put(builtin, new ExoticSymbol(name));
+                map.put(builtin, new Symbol(name));
             }
         }
         symbols = map;

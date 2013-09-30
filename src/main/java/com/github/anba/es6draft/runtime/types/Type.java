@@ -19,12 +19,13 @@ import org.mozilla.javascript.ConsString;
  * <li>6.1.2 The Null Type
  * <li>6.1.3 The Boolean Type
  * <li>6.1.4 The String Type
- * <li>6.1.5 The Number Type
- * <li>6.1.6 The Object Type
+ * <li>6.1.5 The Symbol Type
+ * <li>6.1.6 The Number Type
+ * <li>6.1.7 The Object Type
  * </ul>
  */
 public enum Type {
-    Undefined, Null, Boolean, String, Number, Object;
+    Undefined, Null, Boolean, String, Symbol, Number, Object;
 
     /**
      * Returns the {@link Type} of the input parameter
@@ -41,6 +42,9 @@ public enum Type {
         }
         if (val instanceof String || val instanceof ConsString) {
             return String;
+        }
+        if (val instanceof Symbol) {
+            return Symbol;
         }
         if (val instanceof Double || val instanceof Integer || val instanceof Long) {
             return Number;
@@ -91,6 +95,14 @@ public enum Type {
 
     /**
      * Short cut for:<br>
+     * <code>Type.of(val) == Type.Symbol</code>
+     */
+    public static boolean isSymbol(Object val) {
+        return (val instanceof Symbol);
+    }
+
+    /**
+     * Short cut for:<br>
      * <code>Type.of(val) == Type.Number</code>
      */
     public static boolean isNumber(Object val) {
@@ -119,6 +131,14 @@ public enum Type {
      */
     public static CharSequence stringValue(Object val) {
         return (CharSequence) val;
+    }
+
+    /**
+     * If {@code val} is a Symbol type, its value is returned. Otherwise a
+     * {@link ClassCastException} is thrown.
+     */
+    public static Symbol symbolValue(Object val) {
+        return (Symbol) val;
     }
 
     /**

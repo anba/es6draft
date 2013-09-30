@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
@@ -232,7 +233,7 @@ public class ExoticArguments extends OrdinaryObject {
         }
 
         @Override
-        public boolean defineOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey,
+        public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
                 PropertyDescriptor desc) {
             // this object is effectively unmodifiable
             return true;

@@ -33,9 +33,9 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -688,7 +688,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         if (key instanceof String) {
             return ((ScriptObject) base).invoke(cx, (String) key, argList, thisValue);
         } else {
-            return ((ScriptObject) base).invoke(cx, (ExoticSymbol) key, argList, thisValue);
+            return ((ScriptObject) base).invoke(cx, (Symbol) key, argList, thisValue);
         }
     }
 

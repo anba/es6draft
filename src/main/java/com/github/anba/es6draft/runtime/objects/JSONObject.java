@@ -272,6 +272,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 return null;
             }
         case Undefined:
+        case Symbol:
         default:
             return null;
         }

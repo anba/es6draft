@@ -37,6 +37,7 @@ public final class LinkedMapImpl<VALUE> extends LinkedMap<Object, VALUE> {
         case Undefined:
         case Null:
         case Boolean:
+        case Symbol:
         case Object:
         default:
             return key;

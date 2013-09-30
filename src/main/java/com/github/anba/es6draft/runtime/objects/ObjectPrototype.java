@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
@@ -38,7 +39,6 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -88,11 +88,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             }
             /* step 3 */
             ScriptObject o = ToObject(cx, thisValue);
-            /* step 4 */
-            if (o instanceof ExoticSymbol) {
-                return "[object Symbol]";
-            }
-            /* steps 5-16 */
+            /* steps 4-15 */
             String builtinTag;
             if (o instanceof ExoticArray) {
                 builtinTag = "Array";
@@ -122,9 +118,9 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 builtinTag = "Object";
             }
-            /* steps 18-19 */
+            /* steps 15-16 */
             boolean hasTag = HasProperty(cx, o, BuiltinSymbol.toStringTag.get());
-            /* steps 20-21 */
+            /* steps 17-18 */
             String tag;
             if (!hasTag) {
                 tag = builtinTag;
@@ -144,7 +140,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                     tag = "~" + tag;
                 }
             }
-            /* step 22 */
+            /* step 19 */
             return "[object " + tag + "]";
         }
 
@@ -188,7 +184,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             if (p instanceof String) {
                 return HasOwnProperty(cx, o, (String) p);
             } else {
-                return HasOwnProperty(cx, o, (ExoticSymbol) p);
+                return HasOwnProperty(cx, o, (Symbol) p);
             }
         }
 

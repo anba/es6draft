@@ -142,6 +142,7 @@ public final class Messages {
         NotExtensible("type.not_extensible"),
         IncompatibleObject("type.incompatible_object"),
         SymbolObject("type.symbol_object"),
+        SymbolString("type.symbol_string"),
         CyclicProto("type.cyclic_proto"),
         PropertyNotFound("type.property_not_found"),
 

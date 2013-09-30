@@ -25,6 +25,7 @@ import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
@@ -66,9 +67,9 @@ public class OrdinaryGenerator extends FunctionObject {
             return GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
                     getPrototypeOf(cx), newHomeObject, (String) methodName);
         }
-        assert methodName instanceof ExoticSymbol;
+        assert methodName instanceof Symbol;
         return GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
-                getPrototypeOf(cx), newHomeObject, (ExoticSymbol) methodName);
+                getPrototypeOf(cx), newHomeObject, (Symbol) methodName);
     }
 
     /**
@@ -222,7 +223,7 @@ public class OrdinaryGenerator extends FunctionObject {
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,
-            ScriptObject functionPrototype, ScriptObject homeObject, ExoticSymbol methodName) {
+            ScriptObject functionPrototype, ScriptObject homeObject, Symbol methodName) {
         assert function.isGenerator() && kind != FunctionKind.ConstructorMethod;
         /* step 1 */
         if (functionPrototype == null) {

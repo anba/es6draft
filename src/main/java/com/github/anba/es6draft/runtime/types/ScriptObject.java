@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.types;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
@@ -34,43 +33,43 @@ public interface ScriptObject {
     Property getOwnProperty(ExecutionContext cx, String propertyKey);
 
     /** [[GetOwnProperty]] (P) */
-    Property getOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey);
+    Property getOwnProperty(ExecutionContext cx, Symbol propertyKey);
 
     /** [[HasProperty]](P) */
     boolean hasProperty(ExecutionContext cx, String propertyKey);
 
     /** [[HasProperty]](P) */
-    boolean hasProperty(ExecutionContext cx, ExoticSymbol propertyKey);
+    boolean hasProperty(ExecutionContext cx, Symbol propertyKey);
 
     /** [[Get]] (P, Receiver) */
     Object get(ExecutionContext cx, String propertyKey, Object receiver);
 
     /** [[Get]] (P, Receiver) */
-    Object get(ExecutionContext cx, ExoticSymbol propertyKey, Object receiver);
+    Object get(ExecutionContext cx, Symbol propertyKey, Object receiver);
 
     /** [[Set] (P, V, Receiver) */
     boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver);
 
     /** [[Set] (P, V, Receiver) */
-    boolean set(ExecutionContext cx, ExoticSymbol propertyKey, Object value, Object receiver);
+    boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver);
 
     /** [[Invoke]] (P, ArgumentsList, Receiver) */
     Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments, Object receiver);
 
     /** [[Invoke]] (P, ArgumentsList, Receiver) */
-    Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments, Object receiver);
+    Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments, Object receiver);
 
     /** [[Delete]] (P) */
     boolean delete(ExecutionContext cx, String propertyKey);
 
     /** [[Delete]] (P) */
-    boolean delete(ExecutionContext cx, ExoticSymbol propertyKey);
+    boolean delete(ExecutionContext cx, Symbol propertyKey);
 
     /** [[DefineOwnProperty]] (P, Desc) */
     boolean defineOwnProperty(ExecutionContext cx, String propertyKey, PropertyDescriptor desc);
 
     /** [[DefineOwnProperty]] (P, Desc) */
-    boolean defineOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey, PropertyDescriptor desc);
+    boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey, PropertyDescriptor desc);
 
     /** [[Enumerate]] () */
     ScriptObject enumerate(ExecutionContext cx);

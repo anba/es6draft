@@ -26,6 +26,7 @@ import com.github.anba.es6draft.runtime.types.Null;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
@@ -132,8 +133,8 @@ public class ExoticProxy implements ScriptObject {
         if (propertyKey instanceof String) {
             return target.getOwnProperty(cx, (String) propertyKey);
         } else {
-            assert propertyKey instanceof ExoticSymbol;
-            return target.getOwnProperty(cx, (ExoticSymbol) propertyKey);
+            assert propertyKey instanceof Symbol;
+            return target.getOwnProperty(cx, (Symbol) propertyKey);
         }
     }
 
@@ -142,8 +143,8 @@ public class ExoticProxy implements ScriptObject {
         if (propertyKey instanceof String) {
             return target.defineOwnProperty(cx, (String) propertyKey, desc);
         } else {
-            assert propertyKey instanceof ExoticSymbol;
-            return target.defineOwnProperty(cx, (ExoticSymbol) propertyKey, desc);
+            assert propertyKey instanceof Symbol;
+            return target.defineOwnProperty(cx, (Symbol) propertyKey, desc);
         }
     }
 
@@ -152,8 +153,8 @@ public class ExoticProxy implements ScriptObject {
         if (propertyKey instanceof String) {
             return target.hasProperty(cx, (String) propertyKey);
         } else {
-            assert propertyKey instanceof ExoticSymbol;
-            return target.hasProperty(cx, (ExoticSymbol) propertyKey);
+            assert propertyKey instanceof Symbol;
+            return target.hasProperty(cx, (Symbol) propertyKey);
         }
     }
 
@@ -162,8 +163,8 @@ public class ExoticProxy implements ScriptObject {
         if (propertyKey instanceof String) {
             return target.get(cx, (String) propertyKey, receiver);
         } else {
-            assert propertyKey instanceof ExoticSymbol;
-            return target.get(cx, (ExoticSymbol) propertyKey, receiver);
+            assert propertyKey instanceof Symbol;
+            return target.get(cx, (Symbol) propertyKey, receiver);
         }
     }
 
@@ -172,8 +173,8 @@ public class ExoticProxy implements ScriptObject {
         if (propertyKey instanceof String) {
             return target.set(cx, (String) propertyKey, value, receiver);
         } else {
-            assert propertyKey instanceof ExoticSymbol;
-            return target.set(cx, (ExoticSymbol) propertyKey, value, receiver);
+            assert propertyKey instanceof Symbol;
+            return target.set(cx, (Symbol) propertyKey, value, receiver);
         }
     }
 
@@ -181,8 +182,8 @@ public class ExoticProxy implements ScriptObject {
         if (propertyKey instanceof String) {
             return target.delete(cx, (String) propertyKey);
         } else {
-            assert propertyKey instanceof ExoticSymbol;
-            return target.delete(cx, (ExoticSymbol) propertyKey);
+            assert propertyKey instanceof Symbol;
+            return target.delete(cx, (Symbol) propertyKey);
         }
     }
 
@@ -305,7 +306,7 @@ public class ExoticProxy implements ScriptObject {
      * 9.3.5 [[GetOwnProperty]] (P)
      */
     @Override
-    public Property getOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
+    public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         return getOwnProperty(cx, (Object) propertyKey);
     }
 
@@ -370,7 +371,7 @@ public class ExoticProxy implements ScriptObject {
      * 9.3.6 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
-    public boolean defineOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey,
+    public boolean defineOwnProperty(ExecutionContext cx, Symbol propertyKey,
             PropertyDescriptor desc) {
         return defineOwnProperty(cx, (Object) propertyKey, desc);
     }
@@ -428,7 +429,7 @@ public class ExoticProxy implements ScriptObject {
      * 9.3.7 [[HasProperty]] (P)
      */
     @Override
-    public boolean hasProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
+    public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
         return hasProperty(cx, (Object) propertyKey);
     }
 
@@ -471,7 +472,7 @@ public class ExoticProxy implements ScriptObject {
      * 9.3.8 [[Get]] (P, Receiver)
      */
     @Override
-    public Object get(ExecutionContext cx, ExoticSymbol propertyKey, Object receiver) {
+    public Object get(ExecutionContext cx, Symbol propertyKey, Object receiver) {
         return get(cx, (Object) propertyKey, receiver);
     }
 
@@ -517,7 +518,7 @@ public class ExoticProxy implements ScriptObject {
      * 9.3.9 [[Set]] ( P, V, Receiver)
      */
     @Override
-    public boolean set(ExecutionContext cx, ExoticSymbol propertyKey, Object value, Object receiver) {
+    public boolean set(ExecutionContext cx, Symbol propertyKey, Object value, Object receiver) {
         return set(cx, (Object) propertyKey, value, receiver);
     }
 
@@ -573,7 +574,7 @@ public class ExoticProxy implements ScriptObject {
      * 9.3.10 [[Invoke]] (P, ArgumentsList, Receiver)
      */
     @Override
-    public Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments,
+    public Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments,
             Object receiver) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
@@ -597,7 +598,7 @@ public class ExoticProxy implements ScriptObject {
      * 9.3.11 [[Delete]] (P)
      */
     @Override
-    public boolean delete(ExecutionContext cx, ExoticSymbol propertyKey) {
+    public boolean delete(ExecutionContext cx, Symbol propertyKey) {
         return delete(cx, (Object) propertyKey);
     }
 

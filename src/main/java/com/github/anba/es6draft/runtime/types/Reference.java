@@ -15,7 +15,6 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
@@ -224,7 +223,8 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public boolean hasPrimitiveBase() {
-            return type == Type.Boolean || type == Type.String || type == Type.Number;
+            return type == Type.Boolean || type == Type.String || type == Type.Symbol
+                    || type == Type.Number;
         }
 
         @Override
@@ -323,17 +323,16 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
-    public static final class PropertySymbolReference extends PropertyReference<ExoticSymbol> {
-        private ExoticSymbol referencedName;
+    public static final class PropertySymbolReference extends PropertyReference<Symbol> {
+        private Symbol referencedName;
 
-        public PropertySymbolReference(Object base, ExoticSymbol referencedName,
-                boolean strictReference) {
+        public PropertySymbolReference(Object base, Symbol referencedName, boolean strictReference) {
             super(base, strictReference);
             this.referencedName = referencedName;
         }
 
         @Override
-        public ExoticSymbol getReferencedName() {
+        public Symbol getReferencedName() {
             return referencedName;
         }
 
@@ -447,17 +446,17 @@ public abstract class Reference<BASE, NAME> {
         }
     }
 
-    public static final class SuperSymbolReference extends SuperReference<ExoticSymbol> {
-        private ExoticSymbol referencedName;
+    public static final class SuperSymbolReference extends SuperReference<Symbol> {
+        private Symbol referencedName;
 
-        public SuperSymbolReference(ScriptObject base, ExoticSymbol referencedName,
+        public SuperSymbolReference(ScriptObject base, Symbol referencedName,
                 boolean strictReference, Object thisValue) {
             super(base, strictReference, thisValue);
             this.referencedName = referencedName;
         }
 
         @Override
-        public ExoticSymbol getReferencedName() {
+        public Symbol getReferencedName() {
             return referencedName;
         }
 
