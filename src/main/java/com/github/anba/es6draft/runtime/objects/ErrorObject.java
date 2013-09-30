@@ -21,12 +21,12 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
- * <h2>19.4 Error Objects</h2>
+ * <h2>19.5 Error Objects</h2>
  * <ul>
- * <li>19.4.4 Properties of Error Instances
- * <li>19.4.6 NativeError Object Structure
+ * <li>19.5.4 Properties of Error Instances
+ * <li>19.5.6 NativeError Object Structure
  * <ul>
- * <li>19.4.6.4 Properties of NativeError Instances
+ * <li>19.5.6.4 Properties of NativeError Instances
  * </ul>
  * </ul>
  */
