@@ -186,9 +186,9 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             /* step 5 */
             if (p instanceof String) {
-                return o.hasOwnProperty(cx, (String) p);
+                return HasOwnProperty(cx, o, (String) p);
             } else {
-                return o.hasOwnProperty(cx, (ExoticSymbol) p);
+                return HasOwnProperty(cx, o, (ExoticSymbol) p);
             }
         }
 

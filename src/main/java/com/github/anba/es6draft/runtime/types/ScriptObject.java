@@ -30,12 +30,6 @@ public interface ScriptObject {
     /** [[PreventExtensions]] () */
     boolean preventExtensions(ExecutionContext cx);
 
-    /** [[HasOwnProperty]] (P) */
-    boolean hasOwnProperty(ExecutionContext cx, String propertyKey);
-
-    /** [[HasOwnProperty]] (P) */
-    boolean hasOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey);
-
     /** [[GetOwnProperty]] (P) */
     Property getOwnProperty(ExecutionContext cx, String propertyKey);
 

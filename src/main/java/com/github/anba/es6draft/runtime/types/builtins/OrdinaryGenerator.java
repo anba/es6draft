@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
  * <h2>9.1 Ordinary Object Internal Methods and Internal Data Properties</h2>
  * <ul>
- * <li>9.1.16 Ordinary Function Objects
+ * <li>9.1.15 Ordinary Function Objects
  * </ul>
  */
 public class OrdinaryGenerator extends FunctionObject {
@@ -50,7 +50,7 @@ public class OrdinaryGenerator extends FunctionObject {
         }
 
         /**
-         * 9.1.16.2 [[Construct]] (argumentsList)
+         * 9.1.15.2 [[Construct]] (argumentsList)
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -72,7 +72,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 9.1.16.1 [[Call]] Internal Method
+     * 9.1.15.1 [[Call]] Internal Method
      */
     @Override
     public GeneratorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -159,7 +159,7 @@ public class OrdinaryGenerator extends FunctionObject {
     /* ***************************************************************************************** */
 
     /**
-     * 9.1.16.5 FunctionAllocate Abstract Operation
+     * 9.1.15.5 FunctionAllocate Abstract Operation
      */
     public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, FunctionKind kind) {
@@ -184,7 +184,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 9.1.16.8 GeneratorFunctionCreate Abstract Operation
+     * 9.1.15.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
@@ -192,7 +192,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 9.1.16.8 GeneratorFunctionCreate Abstract Operation
+     * 9.1.15.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
@@ -201,7 +201,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 9.1.16.8 GeneratorFunctionCreate Abstract Operation
+     * 9.1.15.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,
@@ -218,7 +218,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 9.1.16.8 GeneratorFunctionCreate Abstract Operation
+     * 9.1.15.8 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,

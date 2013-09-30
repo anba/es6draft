@@ -767,7 +767,7 @@ public final class AbstractOperations {
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
         /* steps 1-3 */
-        assert !object.hasOwnProperty(cx, propertyKey);
+        assert !HasOwnProperty(cx, object, propertyKey);
         /* step 4 */
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
         /* step 5 */
@@ -780,7 +780,7 @@ public final class AbstractOperations {
     public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
             ExoticSymbol propertyKey, Object value) {
         /* steps 1-3 */
-        assert !object.hasOwnProperty(cx, propertyKey);
+        assert !HasOwnProperty(cx, object, propertyKey);
         /* step 4 */
         PropertyDescriptor newDesc = new PropertyDescriptor(value, true, true, true);
         /* step 5 */
@@ -896,7 +896,43 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 GetMethod (O, P)
+     * 7.3.7 HasOwnProperty (O, P)
+     */
+    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
+            Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return HasOwnProperty(cx, object, (String) propertyKey);
+        } else {
+            return HasOwnProperty(cx, object, (ExoticSymbol) propertyKey);
+        }
+    }
+
+    /**
+     * 7.3.7 HasOwnProperty (O, P)
+     */
+    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
+            String propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        Property desc = object.getOwnProperty(cx, propertyKey);
+        /* steps 5-6 */
+        return desc != null;
+    }
+
+    /**
+     * 7.3.7 HasOwnProperty (O, P)
+     */
+    public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
+            ExoticSymbol propertyKey) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        Property desc = object.getOwnProperty(cx, propertyKey);
+        /* steps 5-6 */
+        return desc != null;
+    }
+
+    /**
+     * 7.3.8 GetMethod (O, P)
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, Object propertyKey) {
         if (propertyKey instanceof String) {
@@ -907,7 +943,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 GetMethod (O, P)
+     * 7.3.8 GetMethod (O, P)
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-4 */
@@ -925,7 +961,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 GetMethod (O, P)
+     * 7.3.8 GetMethod (O, P)
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object,
             ExoticSymbol propertyKey) {
@@ -944,7 +980,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 Invoke(O,P [,args])
+     * 7.3.9 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, Object object, Object propertyKey,
             Object... args) {
@@ -956,7 +992,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 Invoke(O,P [,args])
+     * 7.3.9 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
             Object... args) {
@@ -972,7 +1008,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 Invoke(O,P [,args])
+     * 7.3.9 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, String propertyKey,
             Object... args) {
@@ -982,7 +1018,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 Invoke(O,P [,args])
+     * 7.3.9 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, Object object, ExoticSymbol propertyKey,
             Object... args) {
@@ -998,7 +1034,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 Invoke(O,P [,args])
+     * 7.3.9 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, ExoticSymbol propertyKey,
             Object... args) {
@@ -1008,7 +1044,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 SetIntegrityLevel (O, level)
+     * 7.3.10 SetIntegrityLevel (O, level)
      */
     public static boolean SetIntegrityLevel(ExecutionContext cx, ScriptObject object,
             IntegrityLevel level) {
@@ -1086,7 +1122,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.10 TestIntegrityLevel (O, level)
+     * 7.3.11 TestIntegrityLevel (O, level)
      */
     public static boolean TestIntegrityLevel(ExecutionContext cx, ScriptObject object,
             IntegrityLevel level) {
@@ -1148,7 +1184,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.11 CreateArrayFromList (elements)
+     * 7.3.12 CreateArrayFromList (elements)
      */
     public static ScriptObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
         /* step 1 (not applicable) */
@@ -1167,7 +1203,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.12 CreateListFromArrayLike (obj)
+     * 7.3.13 CreateListFromArrayLike (obj)
      */
     public static Object[] CreateListFromArrayLike(ExecutionContext cx, Object obj) {
         /* step 1 */
@@ -1197,7 +1233,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.13 OrdinaryHasInstance (C, O)
+     * 7.3.14 OrdinaryHasInstance (C, O)
      */
     public static boolean OrdinaryHasInstance(ExecutionContext cx, Object c, Object o) {
         /* step 1 */
@@ -1231,7 +1267,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.14 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
+     * 7.3.15 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
      */
     public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx, Object constructor,
             Intrinsics intrinsicDefaultProto) {
@@ -1257,7 +1293,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.15 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
+     * 7.3.16 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
      */
     public static OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
             Object constructor, Intrinsics intrinsicDefaultProto) {
@@ -1269,7 +1305,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.15 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     * 7.3.16 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
      */
     public static <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
             ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,

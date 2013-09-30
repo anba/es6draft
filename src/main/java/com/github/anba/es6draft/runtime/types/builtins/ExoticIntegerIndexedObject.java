@@ -40,9 +40,9 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return Double.NaN;
     }
 
-    /** 9.2.6.1 [[HasOwnProperty]] (P) */
+    /** [[HasOwnProperty]] (P) */
     @Override
-    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         double intIndex = toIntegerIndex(propertyKey);
@@ -60,7 +60,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return super.hasOwnProperty(cx, propertyKey);
     }
 
-    /** 9.2.6.2 [[GetOwnProperty]] (P) */
+    /** 9.2.6.1 [[GetOwnProperty]] (P) */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         /* steps 1-2 (not applicable) */
@@ -78,7 +78,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return ordinaryGetOwnProperty(propertyKey);
     }
 
-    /** 9.2.6.3 [[DefineOwnProperty]] (P, Desc) */
+    /** 9.2.6.2 [[DefineOwnProperty]] (P, Desc) */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
@@ -135,7 +135,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return super.defineOwnProperty(cx, propertyKey, desc);
     }
 
-    /** 9.2.6.4 [[Get]] (P, Receiver) */
+    /** 9.2.6.3 [[Get]] (P, Receiver) */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         /* step 1 (not applicable) */
@@ -150,7 +150,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return super.get(cx, propertyKey, receiver);
     }
 
-    /** 9.2.6.5 [[Set]] (P, V, Receiver) */
+    /** 9.2.6.4 [[Set]] (P, V, Receiver) */
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         /* step 1 (not applicable) */
@@ -165,14 +165,14 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
         return super.set(cx, propertyKey, value, receiver);
     }
 
-    /** 9.2.6.6 [[Enumerate]] () */
+    /** 9.2.6.5 [[Enumerate]] () */
     @Override
     protected Collection<String> enumerateKeys() {
         // FIXME: spec incomplete
         return super.enumerateKeys();
     }
 
-    /** 9.2.6.7 [[OwnPropertyKeys]] () */
+    /** 9.2.6.6 [[OwnPropertyKeys]] () */
     @Override
     protected Collection<Object> enumerateOwnKeys() {
         // FIXME: spec incomplete
@@ -180,7 +180,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     }
 
     /**
-     * 9.2.6.8 IntegerIndexedObjectCreate Abstract Operation
+     * 9.2.6.7 IntegerIndexedObjectCreate Abstract Operation
      */
     public static ScriptObject IntegerIndexedObjectCreate(ExecutionContext cx,
             ScriptObject prototype) {
@@ -198,12 +198,12 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     protected abstract long getLength();
 
     /**
-     * 9.2.6.9 IntegerIndexedElementGet (O, index) Abstract Operation
+     * 9.2.6.8 IntegerIndexedElementGet (O, index) Abstract Operation
      */
     protected abstract Object elementGet(ExecutionContext cx, double index);
 
     /**
-     * 9.2.6.10 IntegerIndexedElementSet (O, index, value) Abstract Operation
+     * 9.2.6.9 IntegerIndexedElementSet (O, index, value) Abstract Operation
      */
     protected abstract boolean elementSet(ExecutionContext cx, double index, Object value);
 }

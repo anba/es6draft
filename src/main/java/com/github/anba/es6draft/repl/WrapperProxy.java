@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.repl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
@@ -143,22 +144,6 @@ class WrapperProxy implements ScriptObject {
     }
 
     /**
-     * [[HasOwnProperty]] (P)
-     */
-    @Override
-    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        return proxyTarget.hasOwnProperty(cx, propertyKey);
-    }
-
-    /**
-     * [[HasOwnProperty]] (P)
-     */
-    @Override
-    public boolean hasOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
-        return proxyTarget.hasOwnProperty(cx, propertyKey);
-    }
-
-    /**
      * [[GetOwnProperty]] (P)
      */
     @Override
@@ -198,7 +183,7 @@ class WrapperProxy implements ScriptObject {
     @Override
     public boolean hasProperty(ExecutionContext cx, String propertyKey) {
         /* modified 8.3.8 [[HasProperty]](P) */
-        boolean hasOwn = proxyTarget.hasOwnProperty(cx, propertyKey);
+        boolean hasOwn = HasOwnProperty(cx, proxyTarget, propertyKey);
         if (!hasOwn) {
             ScriptObject parent = getProto(cx); // modified
             if (parent != null) {
@@ -214,7 +199,7 @@ class WrapperProxy implements ScriptObject {
     @Override
     public boolean hasProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
         /* modified 8.3.8 [[HasProperty]](P) */
-        boolean hasOwn = proxyTarget.hasOwnProperty(cx, propertyKey);
+        boolean hasOwn = HasOwnProperty(cx, proxyTarget, propertyKey);
         if (!hasOwn) {
             ScriptObject parent = getProto(cx);// modified
             if (parent != null) {

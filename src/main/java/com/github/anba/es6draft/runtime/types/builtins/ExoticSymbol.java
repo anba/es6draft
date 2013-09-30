@@ -60,18 +60,6 @@ public final class ExoticSymbol implements ScriptObject {
         return true;
     }
 
-    /** 9.2.4.5 [[HasOwnProperty]] (P) 8.4.4.5 */
-    @Override
-    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        return false;
-    }
-
-    /** 9.2.4.5 [[HasOwnProperty]] (P) */
-    @Override
-    public boolean hasOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
-        return false;
-    }
-
     /** 9.2.4.6 [[GetOwnProperty]] (P) */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {

@@ -166,9 +166,9 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         boolean duplicateKey;
         if (propertyName instanceof String) {
-            duplicateKey = object.hasOwnProperty(cx, (String) propertyName);
+            duplicateKey = HasOwnProperty(cx, object, (String) propertyName);
         } else {
-            duplicateKey = object.hasOwnProperty(cx, (ExoticSymbol) propertyName);
+            duplicateKey = HasOwnProperty(cx, object, (ExoticSymbol) propertyName);
         }
         if (duplicateKey) {
             throwTypeError(cx, Messages.Key.DuplicatePropertyDefinition, propertyName.toString());
@@ -264,7 +264,7 @@ public final class ScriptRuntime {
     public static ExoticArguments GeneratorComprehensionInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
         // NB: generator comprehensions are defined in terms of generator functions which means they
-        // inherit the function declaration instantiation code from 9.1.16.11, replicate here the
+        // inherit the function declaration instantiation code from 9.1.15.11, replicate here the
         // applicable algorithm steps (that means only steps 19-20, 24).
 
         /* steps 1-18 (not applicable, argumentsObjectNeeded = false) */

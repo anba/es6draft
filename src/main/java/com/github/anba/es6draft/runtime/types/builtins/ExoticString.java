@@ -61,10 +61,10 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.1 [[HasOwnProperty]] (P)
+     * [[HasOwnProperty]] (P)
      */
     @Override
-    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
         boolean has = super.hasOwnProperty(cx, propertyKey);
         if (has) {
             return true;
@@ -82,7 +82,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.2 [[GetOwnProperty]] ( P )
+     * 9.2.3.1 [[GetOwnProperty]] ( P )
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
@@ -104,7 +104,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.3 [[DefineOwnProperty]] (P, Desc)
+     * 9.2.3.2 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
@@ -115,7 +115,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.4 [[Enumerate]] ()
+     * 9.2.3.3 [[Enumerate]] ()
      */
     @Override
     protected Collection<String> enumerateKeys() {
@@ -125,7 +125,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.5 [[OwnPropertyKeys]] ()
+     * 9.2.3.4 [[OwnPropertyKeys]] ()
      */
     @Override
     protected Collection<Object> enumerateOwnKeys() {
@@ -144,7 +144,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.6 StringCreate Abstract Operation
+     * 9.2.3.5 StringCreate Abstract Operation
      */
     public static ExoticString StringCreate(ExecutionContext cx, ScriptObject prototype) {
         // steps 1-7, 9 (implicit)

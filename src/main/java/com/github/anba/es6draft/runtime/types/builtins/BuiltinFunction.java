@@ -72,7 +72,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * 9.1.16.3 [[Get]] (P, Receiver)
+     * 9.1.15.3 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
@@ -89,7 +89,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * 9.1.16.4 [[GetOwnProperty]] (P)
+     * 9.1.15.4 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {

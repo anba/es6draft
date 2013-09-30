@@ -29,9 +29,9 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 /**
  * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
  * <h2>9.1 Ordinary Object Internal Methods and Internal Data Properties</h2><br>
- * <h3>9.1.16 Ordinary Function Objects</h3>
+ * <h3>9.1.15 Ordinary Function Objects</h3>
  * <ul>
- * <li>9.1.16.11 Function Declaration Instantiation
+ * <li>9.1.15.11 Function Declaration Instantiation
  * </ul>
  */
 class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {

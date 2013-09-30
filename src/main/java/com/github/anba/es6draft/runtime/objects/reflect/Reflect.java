@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListFromArrayLike;
+import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -125,10 +126,10 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
             ScriptObject obj = ToObject(cx, target);
             Object key = ToPropertyKey(cx, propertyKey);
             if (key instanceof String) {
-                return obj.hasOwnProperty(cx, (String) key);
+                return HasOwnProperty(cx, obj, (String) key);
             } else {
                 assert key instanceof ExoticSymbol;
-                return obj.hasOwnProperty(cx, (ExoticSymbol) key);
+                return HasOwnProperty(cx, obj, (ExoticSymbol) key);
             }
         }
 

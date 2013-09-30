@@ -169,12 +169,12 @@ public final class ExecutionContext {
      * <ul>
      * <li>9.1 Ordinary Object Internal Methods and Internal Data Properties
      * <ul>
-     * <li>9.1.16 Ordinary Function Objects</div>
+     * <li>9.1.15 Ordinary Function Objects</div>
      * <p>
-     * 9.1.16.1 [[Call]] (thisArgument, argumentsList)
+     * 9.1.15.1 [[Call]] (thisArgument, argumentsList)
      */
     public static ExecutionContext newFunctionExecutionContext(FunctionObject f, Object thisArgument) {
-        /* 9.1.16.1, steps 4-12 */
+        /* 9.1.15.1, steps 4-12 */
         ExecutionContext calleeContext = new ExecutionContext();
         Realm calleeRealm = f.getRealm();
         calleeContext.realm = calleeRealm;

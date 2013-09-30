@@ -73,6 +73,18 @@ public class OrdinaryObject implements ScriptObject {
         return extensible;
     }
 
+    /** [[HasOwnProperty]] (P) */
+    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+        // optimised: HasOwnProperty(cx, this, propertyKey)
+        return __has__(propertyKey);
+    }
+
+    /** [[HasOwnProperty]] (P) */
+    protected boolean hasOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
+        // optimised: HasOwnProperty(cx, this, propertyKey)
+        return __has__(propertyKey);
+    }
+
     private void __put__(Object propertyKey, Property property) {
         assert propertyKey instanceof String || propertyKey instanceof ExoticSymbol;
         properties.put(propertyKey, property);
@@ -146,32 +158,20 @@ public class OrdinaryObject implements ScriptObject {
         return true;
     }
 
-    /** 9.1.5 [[HasOwnProperty]] (P) */
-    @Override
-    public boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        return __has__(propertyKey);
-    }
-
-    /** 9.1.5 [[HasOwnProperty]] (P) */
-    @Override
-    public boolean hasOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
-        return __has__(propertyKey);
-    }
-
-    /** 9.1.6 [[GetOwnProperty]] (P) */
+    /** 9.1.5 [[GetOwnProperty]] (P) */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
         return ordinaryGetOwnProperty(propertyKey);
     }
 
-    /** 9.1.6 [[GetOwnProperty]] (P) */
+    /** 9.1.5 [[GetOwnProperty]] (P) */
     @Override
     public Property getOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
         return ordinaryGetOwnProperty(propertyKey);
     }
 
     /**
-     * 9.1.6.1 OrdinaryGetOwnProperty (O, P)
+     * 9.1.5.1 OrdinaryGetOwnProperty (O, P)
      */
     protected final Property ordinaryGetOwnProperty(String propertyKey) {
         Property desc = __get__(propertyKey);
@@ -184,7 +184,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.6.1 OrdinaryGetOwnProperty (O, P)
+     * 9.1.5.1 OrdinaryGetOwnProperty (O, P)
      */
     protected final Property ordinaryGetOwnProperty(ExoticSymbol propertyKey) {
         Property desc = __get__(propertyKey);
@@ -196,7 +196,7 @@ public class OrdinaryObject implements ScriptObject {
         return desc;
     }
 
-    /** 9.1.7 [[DefineOwnProperty]] (P, Desc) */
+    /** 9.1.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
@@ -204,7 +204,7 @@ public class OrdinaryObject implements ScriptObject {
         return ordinaryDefineOwnProperty(propertyKey, desc);
     }
 
-    /** 9.1.7 [[DefineOwnProperty]] (P, Desc) */
+    /** 9.1.6 [[DefineOwnProperty]] (P, Desc) */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, ExoticSymbol propertyKey,
             PropertyDescriptor desc) {
@@ -213,7 +213,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.7.1 OrdinaryDefineOwnProperty (O, P, Desc)
+     * 9.1.6.1 OrdinaryDefineOwnProperty (O, P, Desc)
      */
     protected final boolean ordinaryDefineOwnProperty(String propertyKey, PropertyDescriptor desc) {
         /* step 1 */
@@ -225,7 +225,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.7.1 OrdinaryDefineOwnProperty (O, P, Desc)
+     * 9.1.6.1 OrdinaryDefineOwnProperty (O, P, Desc)
      */
     protected final boolean ordinaryDefineOwnProperty(ExoticSymbol propertyKey,
             PropertyDescriptor desc) {
@@ -238,7 +238,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.7.2 IsCompatiblePropertyDescriptor (Extensible, Desc, Current)
+     * 9.1.6.2 IsCompatiblePropertyDescriptor (Extensible, Desc, Current)
      */
     protected static final boolean IsCompatiblePropertyDescriptor(boolean extensible,
             PropertyDescriptor desc, Property current) {
@@ -247,7 +247,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.7.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
+     * 9.1.6.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
      */
     protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
             String propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
@@ -255,7 +255,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.7.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
+     * 9.1.6.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
      */
     protected static final boolean ValidateAndApplyPropertyDescriptor(OrdinaryObject object,
             ExoticSymbol propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
@@ -263,7 +263,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.7.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
+     * 9.1.6.3 ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)
      */
     private static final boolean __validateAndApplyPropertyDescriptor(OrdinaryObject object,
             Object propertyKey, boolean extensible, PropertyDescriptor desc, Property current) {
@@ -367,7 +367,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.8 [[HasProperty]](P)
+     * 9.1.7 [[HasProperty]](P)
      */
     @Override
     public boolean hasProperty(ExecutionContext cx, String propertyKey) {
@@ -386,7 +386,7 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /**
-     * 9.1.8 [[HasProperty]](P)
+     * 9.1.7 [[HasProperty]](P)
      */
     @Override
     public boolean hasProperty(ExecutionContext cx, ExoticSymbol propertyKey) {
@@ -404,7 +404,7 @@ public class OrdinaryObject implements ScriptObject {
         return hasOwn;
     }
 
-    /** 9.1.9 [[Get]] (P, Receiver) */
+    /** 9.1.8 [[Get]] (P, Receiver) */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
         /* step 1 (implicit) */
@@ -433,7 +433,7 @@ public class OrdinaryObject implements ScriptObject {
         return getter.call(cx, receiver);
     }
 
-    /** 9.1.9 [[Get]] (P, Receiver) */
+    /** 9.1.8 [[Get]] (P, Receiver) */
     @Override
     public Object get(ExecutionContext cx, ExoticSymbol propertyKey, Object receiver) {
         /* step 1 (implicit) */
@@ -462,7 +462,7 @@ public class OrdinaryObject implements ScriptObject {
         return getter.call(cx, receiver);
     }
 
-    /** 9.1.10 [[Set] (P, V, Receiver) */
+    /** 9.1.9 [[Set] (P, V, Receiver) */
     @Override
     public boolean set(ExecutionContext cx, String propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
@@ -504,7 +504,7 @@ public class OrdinaryObject implements ScriptObject {
         return true;
     }
 
-    /** 9.1.10 [[Set] (P, V, Receiver) */
+    /** 9.1.9 [[Set] (P, V, Receiver) */
     @Override
     public boolean set(ExecutionContext cx, ExoticSymbol propertyKey, Object value, Object receiver) {
         /* step 1 (implicit) */
@@ -546,7 +546,7 @@ public class OrdinaryObject implements ScriptObject {
         return true;
     }
 
-    /** 9.1.11 [[Invoke]] (P, ArgumentsList, Receiver) */
+    /** 9.1.10 [[Invoke]] (P, ArgumentsList, Receiver) */
     @Override
     public final Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
             Object receiver) {
@@ -568,7 +568,7 @@ public class OrdinaryObject implements ScriptObject {
         return ((Callable) method).call(cx, receiver, arguments);
     }
 
-    /** 9.1.11 [[Invoke]] (P, ArgumentsList, Receiver) */
+    /** 9.1.10 [[Invoke]] (P, ArgumentsList, Receiver) */
     @Override
     public final Object invoke(ExecutionContext cx, ExoticSymbol propertyKey, Object[] arguments,
             Object receiver) {
@@ -590,7 +590,7 @@ public class OrdinaryObject implements ScriptObject {
         return ((Callable) method).call(cx, receiver, arguments);
     }
 
-    /** 9.1.12 [[Delete]] (P) */
+    /** 9.1.11 [[Delete]] (P) */
     @Override
     public boolean delete(ExecutionContext cx, String propertyKey) {
         /* step 2 */
@@ -608,7 +608,7 @@ public class OrdinaryObject implements ScriptObject {
         return false;
     }
 
-    /** 9.1.12 [[Delete]] (P) */
+    /** 9.1.11 [[Delete]] (P) */
     @Override
     public boolean delete(ExecutionContext cx, ExoticSymbol propertyKey) {
         /* step 2 */
@@ -626,13 +626,13 @@ public class OrdinaryObject implements ScriptObject {
         return false;
     }
 
-    /** 9.1.13 [[Enumerate]] () */
+    /** 9.1.12 [[Enumerate]] () */
     @Override
     public final ScriptObject enumerate(ExecutionContext cx) {
         return MakeListIterator(cx, new EnumKeysIterator(cx, this));
     }
 
-    /** 9.1.13 [[Enumerate]] () */
+    /** 9.1.12 [[Enumerate]] () */
     protected Collection<String> enumerateKeys() {
         List<String> propList = new ArrayList<>();
         for (Object key : __keys__()) {
@@ -706,13 +706,13 @@ public class OrdinaryObject implements ScriptObject {
         }
     }
 
-    /** 9.1.14 [[OwnPropertyKeys]] ( ) */
+    /** 9.1.13 [[OwnPropertyKeys]] ( ) */
     @Override
     public final ScriptObject ownPropertyKeys(ExecutionContext cx) {
         return MakeListIterator(cx, enumerateOwnKeys().iterator());
     }
 
-    /** 9.1.14 [[OwnPropertyKeys]] ( ) */
+    /** 9.1.13 [[OwnPropertyKeys]] ( ) */
     protected Collection<Object> enumerateOwnKeys() {
         List<Object> keys = new ArrayList<>();
         for (Object key : __keys__()) {
@@ -730,22 +730,22 @@ public class OrdinaryObject implements ScriptObject {
         }
     }
 
-    /** 9.1.15 ObjectCreate Abstract Operation */
+    /** 9.1.14 ObjectCreate Abstract Operation */
     public static OrdinaryObject ObjectCreate(ExecutionContext cx) {
         return ObjectCreate(cx, Intrinsics.ObjectPrototype, DefaultAllocator.INSTANCE);
     }
 
-    /** 9.1.15 ObjectCreate Abstract Operation */
+    /** 9.1.14 ObjectCreate Abstract Operation */
     public static OrdinaryObject ObjectCreate(ExecutionContext cx, ScriptObject proto) {
         return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
     }
 
-    /** 9.1.15 ObjectCreate Abstract Operation */
+    /** 9.1.14 ObjectCreate Abstract Operation */
     public static OrdinaryObject ObjectCreate(ExecutionContext cx, Intrinsics proto) {
         return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
     }
 
-    /** 9.1.15 ObjectCreate Abstract Operation */
+    /** 9.1.14 ObjectCreate Abstract Operation */
     public static <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
@@ -753,7 +753,7 @@ public class OrdinaryObject implements ScriptObject {
         return obj;
     }
 
-    /** 9.1.15 ObjectCreate Abstract Operation */
+    /** 9.1.14 ObjectCreate Abstract Operation */
     public static <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             Intrinsics proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
