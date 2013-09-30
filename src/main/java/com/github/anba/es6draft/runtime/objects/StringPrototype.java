@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
+import static com.github.anba.es6draft.runtime.objects.StringIteratorPrototype.CreateStringIterator;
 import static com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype.CompareStrings;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.CanonicalizeLocaleList;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.DefaultLocale;
@@ -315,12 +316,21 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          */
         private static String GetReplaceSubstitution(String matched, String replValue,
                 String string, int position) {
+            /* step 1 (not applicable) */
+            /* step 2 */
             int matchLength = matched.length();
+            /* step 3 (not applicable) */
+            /* step 4 */
             int stringLength = string.length();
+            /* steps 5-6 */
             assert position >= 0 && position <= stringLength;
+            /* step 7 (not applicable) */
+            /* step 8 */
             int tailPos = position + matchLength;
             assert tailPos >= 0 && tailPos <= stringLength;
+            /* step 9 (not applicable) */
 
+            /* step 10 */
             StringBuilder result = new StringBuilder();
             for (int cursor = 0, len = replValue.length(); cursor < len;) {
                 char c = replValue.charAt(cursor++);
@@ -348,6 +358,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                 }
             }
 
+            /* step 11 */
             return result.toString();
         }
 
@@ -386,7 +397,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* step 5 */
             double intStart = ToInteger(cx, start);
             /* step 6 */
-            double intEnd = (Type.isUndefined(end) ? len : ToInteger(cx, end));
+            double intEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
             /* step 7 */
             int from = (int) (intStart < 0 ? Math.max(len + intStart, 0) : Math.min(intStart, len));
             /* step 8 */
@@ -497,7 +508,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* step 5 */
             double intStart = ToInteger(cx, start);
             /* step 6 */
-            double intEnd = (Type.isUndefined(end) ? len : ToInteger(cx, end));
+            double intEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
             /* step 7 */
             int finalStart = (int) Math.min(Math.max(intStart, 0), len);
             /* step 8 */
@@ -537,13 +548,13 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
 
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
             int len = requestedLocales.size();
-            String requestedLocale = (len > 0 ? requestedLocales.iterator().next()
-                    : DefaultLocale(cx.getRealm()));
+            String requestedLocale = len > 0 ? requestedLocales.iterator().next()
+                    : DefaultLocale(cx.getRealm());
             Set<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
             // FIXME: spec issue? spec should just call LookupSupportedLocales abstract operation..
             List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
                     Collections.singleton(requestedLocale));
-            String supportedLocale = (supportedLocales.isEmpty() ? "und" : supportedLocales.get(0));
+            String supportedLocale = supportedLocales.isEmpty() ? "und" : supportedLocales.get(0);
             ULocale locale = ULocale.forLanguageTag(supportedLocale);
             return UCharacter.toLowerCase(locale, s);
         }
@@ -574,13 +585,13 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
 
             Set<String> requestedLocales = CanonicalizeLocaleList(cx, locales);
             int len = requestedLocales.size();
-            String requestedLocale = (len > 0 ? requestedLocales.iterator().next()
-                    : DefaultLocale(cx.getRealm()));
+            String requestedLocale = len > 0 ? requestedLocales.iterator().next()
+                    : DefaultLocale(cx.getRealm());
             Set<String> availableLocales = new HashSet<>(Arrays.asList("az", "lt", "tr"));
             // FIXME: spec issue? spec should just call LookupSupportedLocales abstract operation..
             List<String> supportedLocales = LookupSupportedLocales(cx, availableLocales,
                     Collections.singleton(requestedLocale));
-            String supportedLocale = (supportedLocales.isEmpty() ? "und" : supportedLocales.get(0));
+            String supportedLocale = supportedLocales.isEmpty() ? "und" : supportedLocales.get(0);
             ULocale locale = ULocale.forLanguageTag(supportedLocale);
             return UCharacter.toUpperCase(locale, s);
         }
@@ -728,7 +739,6 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             int size = s.length();
             /* step 7 */
             if (position < 0 || position >= size) {
-                // FIXME: spec bug undefined /= NaN (Bug 1153)
                 return UNDEFINED;
             }
             /* steps 8-12 */
@@ -738,7 +748,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 21.1.3.12 String.prototype.normalize ( form = "NFC" )
          */
-        @Function(name = "normalize", arity = 1)
+        @Function(name = "normalize", arity = 0)
         public static Object normalize(ExecutionContext cx, Object thisValue, Object form) {
             /* step 1 */
             Object obj = CheckObjectCoercible(cx, thisValue);
@@ -755,6 +765,16 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             }
             /* steps 8-9 */
             return Normalizer.normalize(s, Normalizer.Form.valueOf(f));
+        }
+
+        /**
+         * 21.1.3.27 String.prototype [ @@iterator ]( )
+         */
+        @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
+        public static Object iterator(ExecutionContext cx, Object thisValue) {
+            Object obj = CheckObjectCoercible(cx, thisValue);
+            String s = ToFlatString(cx, obj);
+            return CreateStringIterator(cx, s);
         }
     }
 
@@ -778,8 +798,8 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* steps 3-4 */
             double intStart = ToInteger(cx, start);
             /* steps 5-6 */
-            double end = (Type.isUndefined(length) ? Double.POSITIVE_INFINITY : ToInteger(cx,
-                    length));
+            double end = Type.isUndefined(length) ? Double.POSITIVE_INFINITY
+                    : ToInteger(cx, length);
             /* step 7 */
             int size = s.length();
             /* step 8 */

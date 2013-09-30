@@ -48,7 +48,7 @@ public class StringConstructor extends BuiltinConstructor implements Initialisab
     }
 
     /**
-     * 21.1.1.1 String ( [ value ] )
+     * 21.1.1.1 String ( value = "" )
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -119,7 +119,7 @@ public class StringConstructor extends BuiltinConstructor implements Initialisab
                 char nextCU = ToUint16(cx, next);
                 elements[nextIndex] = nextCU;
             }
-            /* step 5 */
+            /* step 6 */
             return new String(elements);
         }
 
@@ -145,6 +145,7 @@ public class StringConstructor extends BuiltinConstructor implements Initialisab
                 }
                 elements[nextIndex] = (int) nextCP;
             }
+            /* step 6 */
             return new String(elements, 0, length);
         }
 
@@ -154,7 +155,8 @@ public class StringConstructor extends BuiltinConstructor implements Initialisab
         @Function(name = "raw", arity = 1)
         public static Object raw(ExecutionContext cx, Object thisValue, Object callSite,
                 Object... substitutions) {
-            /* steps 1-3 */
+            /* step 1 (not applicable) */
+            /* steps 2-3 */
             ScriptObject cooked = ToObject(cx, callSite);
             /* steps 4-6 */
             Object rawValue = Get(cx, cooked, "raw");

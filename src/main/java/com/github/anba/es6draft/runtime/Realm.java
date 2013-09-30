@@ -351,6 +351,7 @@ public final class Realm {
         ArrayIteratorPrototype arrayIteratorPrototype = new ArrayIteratorPrototype(realm);
         StringConstructor stringConstructor = new StringConstructor(realm);
         StringPrototype stringPrototype = new StringPrototype(realm);
+        StringIteratorPrototype stringIteratorPrototype = new StringIteratorPrototype(realm);
         BooleanConstructor booleanConstructor = new BooleanConstructor(realm);
         BooleanPrototype booleanPrototype = new BooleanPrototype(realm);
         NumberConstructor numberConstructor = new NumberConstructor(realm);
@@ -370,6 +371,7 @@ public final class Realm {
         intrinsics.put(Intrinsics.ArrayIteratorPrototype, arrayIteratorPrototype);
         intrinsics.put(Intrinsics.String, stringConstructor);
         intrinsics.put(Intrinsics.StringPrototype, stringPrototype);
+        intrinsics.put(Intrinsics.StringIteratorPrototype, stringIteratorPrototype);
         intrinsics.put(Intrinsics.Boolean, booleanConstructor);
         intrinsics.put(Intrinsics.BooleanPrototype, booleanPrototype);
         intrinsics.put(Intrinsics.Number, numberConstructor);
@@ -389,6 +391,7 @@ public final class Realm {
         arrayIteratorPrototype.initialise(defaultContext);
         stringConstructor.initialise(defaultContext);
         stringPrototype.initialise(defaultContext);
+        stringIteratorPrototype.initialise(defaultContext);
         booleanConstructor.initialise(defaultContext);
         booleanPrototype.initialise(defaultContext);
         numberConstructor.initialise(defaultContext);

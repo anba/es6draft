@@ -44,6 +44,7 @@ public enum Intrinsics {/* @formatter:off */
     // not yet (?) in spec
     String,
     StringPrototype,
+    StringIteratorPrototype,
     Boolean,
     BooleanPrototype,
     Number,
