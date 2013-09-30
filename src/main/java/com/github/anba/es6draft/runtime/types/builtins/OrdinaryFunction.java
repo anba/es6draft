@@ -67,10 +67,10 @@ public class OrdinaryFunction extends FunctionObject {
         Object methodName = getMethodName();
         if (methodName instanceof String) {
             return FunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
-                    getInheritance(cx), newHomeObject, (String) methodName);
+                    getPrototypeOf(cx), newHomeObject, (String) methodName);
         }
         assert methodName instanceof ExoticSymbol;
-        return FunctionCreate(cx, getFunctionKind(), getFunction(), getScope(), getInheritance(cx),
+        return FunctionCreate(cx, getFunctionKind(), getFunction(), getScope(), getPrototypeOf(cx),
                 newHomeObject, (ExoticSymbol) methodName);
     }
 

@@ -68,7 +68,7 @@ public final class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecor
         }
         /* step 3 (not applicable) */
         /* step 4 */
-        return home.getInheritance(cx);
+        return home.getPrototypeOf(cx);
     }
 
     /**

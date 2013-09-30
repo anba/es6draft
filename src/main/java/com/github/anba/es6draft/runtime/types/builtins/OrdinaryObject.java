@@ -97,15 +97,15 @@ public class OrdinaryObject implements ScriptObject {
         return properties.keySet();
     }
 
-    /** 9.1.1 [[GetInheritance]] ( ) */
+    /** 9.1.1 [[GetPrototypeOf]] ( ) */
     @Override
-    public ScriptObject getInheritance(ExecutionContext cx) {
+    public ScriptObject getPrototypeOf(ExecutionContext cx) {
         return prototype;
     }
 
-    /** 9.1.2 [[SetInheritance]] (V) */
+    /** 9.1.2 [[SetPrototypeOf]] (V) */
     @Override
-    public boolean setInheritance(ExecutionContext cx, ScriptObject prototype) {
+    public boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype) {
         /* steps 1-3 */
         boolean extensible = this.extensible;
         ScriptObject current = this.prototype;
@@ -124,7 +124,7 @@ public class OrdinaryObject implements ScriptObject {
                 if (p == this) { // SameValue(p, O)
                     return false;
                 }
-                p = p.getInheritance(cx);
+                p = p.getPrototypeOf(cx);
             }
         }
         /* step 7 */
@@ -376,7 +376,7 @@ public class OrdinaryObject implements ScriptObject {
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
         /* step 4 */
         if (!hasOwn) {
-            ScriptObject parent = getInheritance(cx);
+            ScriptObject parent = getPrototypeOf(cx);
             if (parent != null) {
                 return parent.hasProperty(cx, propertyKey);
             }
@@ -395,7 +395,7 @@ public class OrdinaryObject implements ScriptObject {
         boolean hasOwn = hasOwnProperty(cx, propertyKey);
         /* step 4 */
         if (!hasOwn) {
-            ScriptObject parent = getInheritance(cx);
+            ScriptObject parent = getPrototypeOf(cx);
             if (parent != null) {
                 return parent.hasProperty(cx, propertyKey);
             }
@@ -412,7 +412,7 @@ public class OrdinaryObject implements ScriptObject {
         Property desc = getOwnProperty(cx, propertyKey);
         /* step 4 */
         if (desc == null) {
-            ScriptObject parent = getInheritance(cx);
+            ScriptObject parent = getPrototypeOf(cx);
             if (parent == null) {
                 return UNDEFINED;
             }
@@ -441,7 +441,7 @@ public class OrdinaryObject implements ScriptObject {
         Property desc = getOwnProperty(cx, propertyKey);
         /* step 4 */
         if (desc == null) {
-            ScriptObject parent = getInheritance(cx);
+            ScriptObject parent = getPrototypeOf(cx);
             if (parent == null) {
                 return UNDEFINED;
             }
@@ -470,7 +470,7 @@ public class OrdinaryObject implements ScriptObject {
         Property ownDesc = getOwnProperty(cx, propertyKey);
         /* step 4 */
         if (ownDesc == null) {
-            ScriptObject parent = getInheritance(cx);
+            ScriptObject parent = getPrototypeOf(cx);
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
@@ -512,7 +512,7 @@ public class OrdinaryObject implements ScriptObject {
         Property ownDesc = getOwnProperty(cx, propertyKey);
         /* step 4 */
         if (ownDesc == null) {
-            ScriptObject parent = getInheritance(cx);
+            ScriptObject parent = getPrototypeOf(cx);
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
@@ -674,7 +674,7 @@ public class OrdinaryObject implements ScriptObject {
                     }
                 }
                 // switch to prototype enumerate
-                ScriptObject proto = this.obj.getInheritance(cx);
+                ScriptObject proto = this.obj.getPrototypeOf(cx);
                 if (proto != null) {
                     if (proto instanceof OrdinaryObject) {
                         this.obj = ((OrdinaryObject) proto);

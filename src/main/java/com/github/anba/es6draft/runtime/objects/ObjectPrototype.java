@@ -206,7 +206,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject o = ToObject(cx, thisValue);
             /* step 4 */
             for (;;) {
-                _v = _v.getInheritance(cx);
+                _v = _v.getPrototypeOf(cx);
                 if (_v == null) {
                     return false;
                 }
@@ -252,7 +252,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-2 */
             ScriptObject o = ToObject(cx, thisValue);
             /* step 3 */
-            ScriptObject p = o.getInheritance(cx);
+            ScriptObject p = o.getPrototypeOf(cx);
             return p != null ? p : NULL;
         }
 
@@ -275,7 +275,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             /* steps 5-6 */
             ScriptObject obj = Type.objectValue(o);
             ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
-            boolean status = obj.setInheritance(cx, p);
+            boolean status = obj.setPrototypeOf(cx, p);
             /* step 7 */
             if (!status) {
                 // provide better error messages for ordinary objects

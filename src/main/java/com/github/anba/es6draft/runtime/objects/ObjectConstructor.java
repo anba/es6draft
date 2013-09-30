@@ -133,7 +133,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             /* steps 1-2 */
             ScriptObject obj = ToObject(cx, o);
             /* step 3 */
-            ScriptObject proto = obj.getInheritance(cx);
+            ScriptObject proto = obj.getPrototypeOf(cx);
             return proto != null ? proto : NULL;
         }
 
@@ -422,7 +422,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             /* steps 6-7 */
             ScriptObject obj = Type.objectValue(o);
             ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
-            boolean status = obj.setInheritance(cx, p);
+            boolean status = obj.setPrototypeOf(cx, p);
             /* step 8 */
             if (!status) {
                 // provide better error messages for ordinary objects

@@ -36,15 +36,15 @@ public final class ExoticSymbol implements ScriptObject {
         return name;
     }
 
-    /** 9.2.4.1 [[GetInheritance]] ( ) */
+    /** 9.2.4.1 [[GetPrototypeOf]] ( ) */
     @Override
-    public ScriptObject getInheritance(ExecutionContext cx) {
+    public ScriptObject getPrototypeOf(ExecutionContext cx) {
         return null;
     }
 
-    /** 9.2.4.2 [[SetInheritance]] (V) */
+    /** 9.2.4.2 [[SetPrototypeOf]] (V) */
     @Override
-    public boolean setInheritance(ExecutionContext cx, ScriptObject prototype) {
+    public boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype) {
         return false;
     }
 

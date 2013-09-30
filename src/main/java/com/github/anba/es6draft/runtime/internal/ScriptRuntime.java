@@ -1703,7 +1703,7 @@ public final class ScriptRuntime {
     public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
         if (cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
             if (Type.isNull(value) || Type.isObject(value)) {
-                object.setInheritance(cx, Type.isNull(value) ? null : Type.objectValue(value));
+                object.setPrototypeOf(cx, Type.isNull(value) ? null : Type.objectValue(value));
             }
         } else {
             defineProperty(object, "__proto__", value, cx);

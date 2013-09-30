@@ -207,7 +207,7 @@ public class ExoticArguments extends OrdinaryObject {
         }
 
         @Override
-        public boolean setInheritance(ExecutionContext cx, ScriptObject prototype) {
+        public boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype) {
             // ignore attempts to change [[Prototype]]
             return true;
         }

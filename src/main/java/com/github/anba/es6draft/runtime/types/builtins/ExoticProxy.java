@@ -211,15 +211,15 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 9.3.1 [[GetInheritance]] ( )
+     * 9.3.1 [[GetPrototypeOf]] ( )
      */
     @Override
-    public ScriptObject getInheritance(ExecutionContext cx) {
+    public ScriptObject getPrototypeOf(ExecutionContext cx) {
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(cx, handler, "getPrototypeOf");
         if (trap == null) {
-            return target.getInheritance(cx);
+            return target.getPrototypeOf(cx);
         }
         Object handlerProto = trap.call(cx, handler, target);
         //
@@ -231,7 +231,7 @@ public class ExoticProxy implements ScriptObject {
         // throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
         // }
         //
-        ScriptObject targetProto = target.getInheritance(cx);
+        ScriptObject targetProto = target.getPrototypeOf(cx);
         if (!SameValue(handlerProto, maskNull(targetProto))) {
             throw throwTypeError(cx, Messages.Key.ProxySameValue);
         }
@@ -240,23 +240,23 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 9.3.2 [[SetInheritance]] (V)
+     * 9.3.2 [[SetPrototypeOf]] (V)
      */
     @Override
-    public boolean setInheritance(ExecutionContext cx, ScriptObject prototype) {
+    public boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype) {
         assert prototype == null || Type.isObject(prototype);
         ScriptObject handler = proxyHandler;
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(cx, handler, "setPrototypeOf");
         if (trap == null) {
-            return target.setInheritance(cx, prototype);
+            return target.setPrototypeOf(cx, prototype);
         }
         boolean trapResult = ToBoolean(trap.call(cx, handler, target, maskNull(prototype)));
         boolean extensibleTarget = IsExtensible(cx, target);
         if (extensibleTarget) {
             return trapResult;
         }
-        ScriptObject targetProto = target.getInheritance(cx);
+        ScriptObject targetProto = target.getPrototypeOf(cx);
         if (trapResult && !SameValue(prototype, targetProto)) {
             throw throwTypeError(cx, Messages.Key.ProxySameValue);
         }

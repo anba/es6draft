@@ -64,11 +64,11 @@ public class OrdinaryGenerator extends FunctionObject {
         Object methodName = getMethodName();
         if (methodName instanceof String) {
             return GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
-                    getInheritance(cx), newHomeObject, (String) methodName);
+                    getPrototypeOf(cx), newHomeObject, (String) methodName);
         }
         assert methodName instanceof ExoticSymbol;
         return GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
-                getInheritance(cx), newHomeObject, (ExoticSymbol) methodName);
+                getPrototypeOf(cx), newHomeObject, (ExoticSymbol) methodName);
     }
 
     /**

@@ -18,11 +18,11 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticSymbol;
  * </ul>
  */
 public interface ScriptObject {
-    /** [[GetInheritance]] ( ) */
-    ScriptObject getInheritance(ExecutionContext cx);
+    /** [[GetPrototypeOf]] ( ) */
+    ScriptObject getPrototypeOf(ExecutionContext cx);
 
-    /** [[SetInheritance]] (V) */
-    boolean setInheritance(ExecutionContext cx, ScriptObject prototype);
+    /** [[SetPrototypeOf]] (V) */
+    boolean setPrototypeOf(ExecutionContext cx, ScriptObject prototype);
 
     /** [[IsExtensible]] () */
     boolean isExtensible(ExecutionContext cx);
