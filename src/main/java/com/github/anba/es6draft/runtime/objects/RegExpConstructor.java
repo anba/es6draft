@@ -122,24 +122,22 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
 
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * Runtime Semantics: RegExpAlloc Abstract Operation
+     * 21.2.3.3.1 Runtime Semantics: RegExpAlloc Abstract Operation
      */
     public static RegExpObject RegExpAllocate(ExecutionContext cx, Object constructor) {
         /* step 1 */
-        assert IsConstructor(constructor);
-        /* step 2 */
         RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
-        /* steps 3-4 */
+        /* steps 2-3 */
         DefinePropertyOrThrow(cx, obj, "lastIndex", new PropertyDescriptor(UNDEFINED, true, false,
                 false));
-        /* step 5 */
+        /* step 4 */
         return obj;
     }
 
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * Runtime Semantics: RegExpInitialise Abstract Operation
+     * 21.2.3.3.2 Runtime Semantics: RegExpInitialise Abstract Operation
      */
     public static RegExpObject RegExpInitialise(ExecutionContext cx, RegExpObject obj,
             Object pattern, Object flags) {
@@ -177,7 +175,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
 
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * Runtime Semantics: RegExpCreate Abstract Operation
+     * 21.2.3.3.3 Runtime Semantics: RegExpCreate Abstract Operation
      */
     public static RegExpObject RegExpCreate(ExecutionContext cx, Object pattern, Object flags) {
         /* steps 1-2 */
@@ -188,7 +186,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
 
     /**
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
-     * Runtime Semantics: EscapeRegExpPattern Abstract Operation
+     * 21.2.3.3.4 Runtime Semantics: EscapeRegExpPattern Abstract Operation
      */
     public static String EscapeRegExpPattern(String p, String f) {
         StringBuilder sb = new StringBuilder(p.length());
