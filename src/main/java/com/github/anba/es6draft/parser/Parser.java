@@ -1720,7 +1720,7 @@ public class Parser {
      *     ( StrictFormalParameters )
      * </pre>
      */
-    private ArrowFunction arrowFunction() {
+    private ArrowFunction arrowFunction(boolean allowIn) {
         newContext(ContextKind.ArrowFunction);
         try {
             int line = ts.getLine();
@@ -1767,7 +1767,7 @@ public class Parser {
                 applyStrictMode(false);
 
                 int startBody = ts.position();
-                Expression expression = assignmentExpression(true);
+                Expression expression = assignmentExpression(allowIn);
                 int endFunction = ts.position();
 
                 String header = source.toString();
@@ -2255,7 +2255,7 @@ public class Parser {
      *     *
      * </pre>
      */
-    private YieldExpression yieldExpression() {
+    private YieldExpression yieldExpression(boolean allowIn) {
         if (!context.yieldAllowed) {
             if (context.kind == ContextKind.Function && isEnabled(Option.LegacyGenerator)) {
                 throw new RetryGenerator();
@@ -2272,11 +2272,11 @@ public class Parser {
         }
         Expression expr;
         if (delegatedYield || !isEnabled(Option.LegacyGenerator)) {
-            expr = assignmentExpression(true);
+            expr = assignmentExpression(allowIn);
         } else {
             // legacy generators allow to omit AssignmentExpression after 'yield'
             if (assignmentExpressionForYield()) {
-                expr = assignmentExpression(true);
+                expr = assignmentExpression(allowIn);
             } else {
                 expr = null;
             }
@@ -5284,7 +5284,7 @@ public class Parser {
     private Expression assignmentExpression(boolean allowIn, int oldCount) {
         if (token() == Token.YIELD) {
             if (context.kind == ContextKind.Generator) {
-                return yieldExpression();
+                return yieldExpression(allowIn);
             } else if (context.kind == ContextKind.Function && isEnabled(Option.LegacyGenerator)) {
                 throw new RetryGenerator();
             }
@@ -5307,7 +5307,7 @@ public class Parser {
                 }
             }
             ts.reset(position, lineinfo);
-            return arrowFunction();
+            return arrowFunction(allowIn);
         } else if (tok == Token.ASSIGN) {
             LeftHandSideExpression lhs = validateAssignment(left, ExceptionType.ReferenceError,
                     Messages.Key.InvalidAssignmentTarget);
