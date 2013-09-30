@@ -66,11 +66,10 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
      */
     public static double GetViewValue(ExecutionContext cx, Object view, Object requestIndex,
             Object isLittleEndian, ElementType type) {
-        ScriptObject v = ToObject(cx, view);
-        if (!(v instanceof DataViewObject)) {
+        if (!(view instanceof DataViewObject)) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        DataViewObject dataView = (DataViewObject) v;
+        DataViewObject dataView = (DataViewObject) view;
         ArrayBufferObject buffer = dataView.getBuffer();
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
@@ -97,11 +96,10 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
      */
     public static void SetViewValue(ExecutionContext cx, Object view, Object requestIndex,
             Object isLittleEndian, ElementType type, Object value) {
-        ScriptObject v = ToObject(cx, view);
-        if (!(v instanceof DataViewObject)) {
+        if (!(view instanceof DataViewObject)) {
             throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        DataViewObject dataView = (DataViewObject) v;
+        DataViewObject dataView = (DataViewObject) view;
         ArrayBufferObject buffer = dataView.getBuffer();
         if (buffer == null) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
@@ -135,7 +133,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         /* step 2 */
         if (!(thisValue instanceof DataViewObject)
                 || ((DataViewObject) thisValue).getBuffer() != null) {
-            return OrdinaryConstruct(calleeContext, this, args);
+            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         DataViewObject dataView = (DataViewObject) thisValue;
         /* steps 3-4 */
