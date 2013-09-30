@@ -786,10 +786,10 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.8.1 Runtime Semantics<br>
-     * Runtime Semantics: Evaluation
+     * 12.8 Relational Operators<br>
+     * 12.8.3 Runtime Semantics: InstanceofOperator(O, C)
      */
-    public static boolean instanceOfOperator(Object obj, Object constructor, ExecutionContext cx) {
+    public static boolean InstanceofOperator(Object obj, Object constructor, ExecutionContext cx) {
         if (!Type.isObject(constructor)) {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }

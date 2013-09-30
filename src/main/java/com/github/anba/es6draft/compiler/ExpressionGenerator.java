@@ -142,8 +142,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Types.ScriptRuntime, "delegatedYield",
                 Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_instanceOfOperator = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "instanceOfOperator", Type.getMethodType(
+        static final MethodDesc ScriptRuntime_InstanceofOperator = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "InstanceofOperator", Type.getMethodType(
                         Type.BOOLEAN_TYPE, Types.Object, Types.Object, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_ArrayAccumulationSpreadElement = MethodDesc.create(
@@ -1452,7 +1452,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.toBoxed(rtype);
 
             mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_instanceOfOperator);
+            mv.invoke(Methods.ScriptRuntime_InstanceofOperator);
             return ValType.Boolean;
         }
         case IN: {

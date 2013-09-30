@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime;
 
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.instanceOfOperator;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.InstanceofOperator;
 import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 import static com.github.anba.es6draft.runtime.objects.NumberObject.NumberCreate;
 import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate;
@@ -1240,7 +1240,7 @@ public final class AbstractOperations {
         /* step 2 */
         if (c instanceof ExoticBoundFunction) {
             Callable bc = ((ExoticBoundFunction) c).getBoundTargetFunction();
-            return instanceOfOperator(o, bc, cx);
+            return InstanceofOperator(o, bc, cx);
         }
         /* step 3 */
         if (!Type.isObject(o)) {

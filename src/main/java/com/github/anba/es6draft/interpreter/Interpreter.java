@@ -211,7 +211,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
      * 12.8 Relational Operators
      */
     private static Boolean _instanceof(Object lval, Object rval, ExecutionContext cx) {
-        return ScriptRuntime.instanceOfOperator(lval, rval, cx);
+        return ScriptRuntime.InstanceofOperator(lval, rval, cx);
     }
 
     /**
