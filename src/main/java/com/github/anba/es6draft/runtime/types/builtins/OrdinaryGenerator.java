@@ -63,13 +63,17 @@ public class OrdinaryGenerator extends FunctionObject {
     public OrdinaryGenerator rebind(ExecutionContext cx, ScriptObject newHomeObject) {
         assert isInitialised() : "uninitialised function object";
         Object methodName = getMethodName();
+        OrdinaryGenerator f;
         if (methodName instanceof String) {
-            return GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
+            f = GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
                     getPrototypeOf(cx), newHomeObject, (String) methodName);
+        } else {
+            assert methodName instanceof Symbol;
+            f = GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
+                    getPrototypeOf(cx), newHomeObject, (Symbol) methodName);
         }
-        assert methodName instanceof Symbol;
-        return GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
-                getPrototypeOf(cx), newHomeObject, (Symbol) methodName);
+        f.isConstructor = this.isConstructor;
+        return f;
     }
 
     /**
