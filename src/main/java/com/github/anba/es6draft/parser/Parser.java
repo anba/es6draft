@@ -2271,11 +2271,17 @@ public class Parser {
             delegatedYield = true;
         }
         Expression expr;
-        if (delegatedYield || !isEnabled(Option.LegacyGenerator)) {
+        if (delegatedYield) {
             expr = assignmentExpression(allowIn);
+        } else if (!isEnabled(Option.LegacyGenerator)) {
+            if (noLineTerminator() && assignmentExpressionFirstSet(token())) {
+                expr = assignmentExpression(allowIn);
+            } else {
+                expr = null;
+            }
         } else {
-            // legacy generators allow to omit AssignmentExpression after 'yield'
-            if (assignmentExpressionForYield()) {
+            // slightly different rules for optional AssignmentExpression in legacy generators
+            if (noLineTerminator() && !assignmentExpressionFollowSet(token())) {
                 expr = assignmentExpression(allowIn);
             } else {
                 expr = null;
@@ -2286,8 +2292,66 @@ public class Parser {
         return expression;
     }
 
-    private boolean assignmentExpressionForYield() {
-        switch (token()) {
+    private boolean assignmentExpressionFirstSet(Token token) {
+        // returns FIRST(AssignmentExpression)
+        switch (token) {
+        case YIELD:
+            // FIRST(YieldExpression)
+            return true;
+        case DELETE:
+        case VOID:
+        case TYPEOF:
+        case INC:
+        case DEC:
+        case ADD:
+        case SUB:
+        case BITNOT:
+        case NOT:
+            // FIRST(UnaryExpression)
+            return true;
+        case SUPER:
+        case NEW:
+            // FIRST(LeftHandSideExpression)
+            return true;
+        case THIS:
+        case NULL:
+        case FALSE:
+        case TRUE:
+        case NUMBER:
+        case STRING:
+        case LB:
+        case LC:
+        case LP:
+        case FUNCTION:
+        case CLASS:
+        case TEMPLATE:
+            // FIRST(PrimaryExpression)
+            return true;
+        case DIV:
+        case ASSIGN_DIV:
+            // FIRST(RegularExpressionLiteral)
+            return true;
+        case LET:
+            return isEnabled(Option.LetExpression);
+        case NAME:
+        case IMPLEMENTS:
+        case INTERFACE:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
+            // FIRST(Identifier)
+            return isIdentifier(token);
+        default:
+            return false;
+        }
+    }
+
+    private boolean assignmentExpressionFollowSet(Token token) {
+        // returns FOLLOW(AssignmentExpression) without { "of", "in", "for", "{" }
+        // NB: not the exact follow set, consider `a = let(x=0)x++ ++`, but not relevant here
+        switch (token) {
         case COLON:
         case COMMA:
         case RB:
@@ -2295,9 +2359,9 @@ public class Parser {
         case RP:
         case SEMI:
         case EOF:
-            return false;
+            return true;
         default:
-            return noLineTerminator();
+            return false;
         }
     }
 
