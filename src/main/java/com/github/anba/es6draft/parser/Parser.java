@@ -4380,13 +4380,11 @@ public class Parser {
      * 
      * <pre>
      * Comprehension :
-     *     ComprehensionFor ComprehensionQualifierTail
-     * ComprehensionQualifierTail :
+     *     ComprehensionFor ComprehensionTail
+     * ComprehensionTail :
      *     AssignmentExpression
-     *     ComprehensionQualifier ComprehensionQualifierTail
-     * ComprehensionQualifier :
-     *     ComprehensionFor
-     *     ComprehensionIf
+     *     ComprehensionFor ComprehensionTail
+     *     ComprehensionIf ComprehensionTail
      * </pre>
      */
     private Comprehension comprehension() {
