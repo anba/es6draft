@@ -467,9 +467,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
             obj.setByteLength(0);
             obj.setByteOffset(0);
             obj.setArrayLength(0);
-            /* step 12 */
-            obj.preventExtensions(cx);
-            /* step 13 */
+            /* step 11 */
             return obj;
         }
     }
