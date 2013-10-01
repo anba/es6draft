@@ -556,7 +556,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                     pendingException = e;
                 }
             }
-            if (prop == null || !prop.isEnumerable()) {
+            if (prop == null) {
                 continue;
             }
             PropertyDescriptor desc = prop.toPropertyDescriptor();
