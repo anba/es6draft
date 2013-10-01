@@ -328,6 +328,7 @@ public class TokenStream {
 
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
+        StringBuilder raw = new StringBuilder();
         StringBuffer buffer = buffer();
         int pos = input.position();
         for (;;) {
@@ -337,24 +338,25 @@ public class TokenStream {
             }
             if (c == '`') {
                 current = Token.TEMPLATE;
-                String raw = input.range(pos, input.position() - 1);
-                return new String[] { buffer.toString(), raw };
+                raw.append(input.range(pos, input.position() - 1));
+                return new String[] { buffer.toString(), raw.toString() };
             }
             if (c == '$' && match('{')) {
                 current = Token.LC;
-                String raw = input.range(pos, input.position() - 2);
-                return new String[] { buffer.toString(), raw };
+                raw.append(input.range(pos, input.position() - 2));
+                return new String[] { buffer.toString(), raw.toString() };
             }
             if (c != '\\') {
                 if (isLineTerminator(c)) {
-                    // line continuation
-                    if (c == '\r' && match('\n')) {
-                        // \r\n sequence
-                        buffer.add('\r');
-                        buffer.add('\n');
-                    } else {
-                        buffer.add(c);
+                    // line terminator sequence
+                    if (c == '\r') {
+                        // normalise \r and \r\n to \n
+                        raw.append(input.range(pos, input.position() - 1)).append('\n');
+                        match('\n');
+                        pos = input.position();
+                        c = '\n';
                     }
+                    buffer.add(c);
                     incrementLine();
                     continue;
                 }
@@ -370,8 +372,11 @@ public class TokenStream {
             // EscapeSequence
             if (isLineTerminator(c)) {
                 // line continuation
-                if (c == '\r' && match('\n')) {
-                    // \r\n sequence
+                if (c == '\r') {
+                    // normalise \r and \r\n to \n
+                    raw.append(input.range(pos, input.position() - 1)).append('\n');
+                    match('\n');
+                    pos = input.position();
                 }
                 incrementLine();
                 continue;
