@@ -27,6 +27,15 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  */
 class DestructuringAssignmentGenerator {
     private static class Methods {
+        // class: AbstractOperations
+        static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
+                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
+
+        static final MethodDesc AbstractOperations_Get_String = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
+                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
+
         // class: Reference
         static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "PutValue",
@@ -37,24 +46,6 @@ class DestructuringAssignmentGenerator {
                 MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
                         Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
                         Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_GetIfPresentOrThrow = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrThrow", Type.getMethodType(
-                        Types.Object, Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_GetIfPresentOrThrow_String = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrThrow", Type.getMethodType(
-                        Types.Object, Types.ScriptObject, Types.String, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_GetIfPresentOrUndefined = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrUndefined", Type
-                        .getMethodType(Types.Object, Types.ScriptObject, Types.Object,
-                                Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_GetIfPresentOrUndefined_String = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrUndefined", Type
-                        .getMethodType(Types.Object, Types.ScriptObject, Types.String,
-                                Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "ensureObject",
@@ -248,17 +239,18 @@ class DestructuringAssignmentGenerator {
 
         private void generate(LeftHandSideExpression target, Expression initialiser,
                 String propertyName) {
-            // steps 1-4
-            // stack: [obj] -> [v]
-            mv.aconst(propertyName);
+            // stack: [obj] -> [cx, obj]
             mv.loadExecutionContext();
-            if (initialiser == null) {
-                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow_String);
-            } else {
-                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined_String);
-            }
+            mv.swap();
 
-            // step 5
+            // stack: [cx, obj] -> [cx, obj, propertyName]
+            mv.aconst(propertyName);
+
+            // steps 1-2
+            // stack: [cx, obj, propertyName] -> [v]
+            mv.invoke(Methods.AbstractOperations_Get_String);
+
+            // step 3
             // stack: [v] -> [v']
             if (initialiser != null) {
                 Label undef = new Label();
@@ -273,7 +265,7 @@ class DestructuringAssignmentGenerator {
                 mv.mark(undef);
             }
 
-            // steps 6-9
+            // steps 4-6
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> [v']
                 mv.loadExecutionContext();
@@ -307,22 +299,21 @@ class DestructuringAssignmentGenerator {
 
         private void generate(LeftHandSideExpression target, Expression initialiser,
                 ComputedPropertyName propertyName) {
-            // stack: [obj] -> [obj, propertyName]
+            // stack: [obj] -> [cx, obj]
+            mv.loadExecutionContext();
+            mv.swap();
+
+            // stack: [cx, obj] -> [cx, obj, propertyName]
             // Runtime Semantics: Evaluation
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expressionValue(propertyName.getExpression(), mv);
             ToPropertyKey(propType, mv);
 
-            // steps 1-4
-            // stack: [obj, propertyName] -> [v]
-            mv.loadExecutionContext();
-            if (initialiser == null) {
-                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow);
-            } else {
-                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined);
-            }
+            // steps 1-2
+            // stack: [cx, obj, propertyName] -> [v]
+            mv.invoke(Methods.AbstractOperations_Get);
 
-            // step 5
+            // step 3
             // stack: [v] -> [v']
             if (initialiser != null) {
                 Label undef = new Label();
@@ -337,7 +328,7 @@ class DestructuringAssignmentGenerator {
                 mv.mark(undef);
             }
 
-            // steps 6-9
+            // steps 4-6
             if (target instanceof AssignmentPattern) {
                 // stack: [v'] -> [v']
                 mv.loadExecutionContext();

@@ -31,6 +31,15 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
  */
 class BindingInitialisationGenerator {
     private static class Methods {
+        // class: AbstractOperations
+        static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
+                Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,
+                        Types.ExecutionContext, Types.ScriptObject, Types.Object));
+
+        static final MethodDesc AbstractOperations_Get_String = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "Get", Type.getMethodType(
+                        Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
+
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
@@ -56,24 +65,6 @@ class BindingInitialisationGenerator {
                 MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
                         Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
                         Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_GetIfPresentOrThrow = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrThrow", Type.getMethodType(
-                        Types.Object, Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_GetIfPresentOrThrow_String = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrThrow", Type.getMethodType(
-                        Types.Object, Types.ScriptObject, Types.String, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_GetIfPresentOrUndefined = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrUndefined", Type
-                        .getMethodType(Types.Object, Types.ScriptObject, Types.Object,
-                                Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_GetIfPresentOrUndefined_String = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "GetIfPresentOrUndefined", Type
-                        .getMethodType(Types.Object, Types.ScriptObject, Types.String,
-                                Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "ensureObject",
@@ -328,18 +319,19 @@ class BindingInitialisationGenerator {
                     mv.aconst(name);
                     mv.invoke(Methods.ExoticArguments_getArgument);
                 } else {
-                    // steps 2-5
-                    // stack: [(env), array] -> [(env), v]
-                    mv.aconst(name);
+                    // stack: [(env), array] -> [(env), cx, array]
                     mv.loadExecutionContext();
-                    if (initialiser == null) {
-                        mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow_String);
-                    } else {
-                        mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined_String);
-                    }
+                    mv.swap();
+
+                    // stack: [(env), cx, array] -> [(env), cx, array, p]
+                    mv.aconst(name);
+
+                    // steps 2-3
+                    // stack: [(env), cx, array, p] -> [(env), v]
+                    mv.invoke(Methods.AbstractOperations_Get_String);
                 }
 
-                // step 6
+                // step 4
                 // stack: [(env), v] -> [(env), v']
                 if (initialiser != null) {
                     Label undef = new Label();
@@ -354,11 +346,12 @@ class BindingInitialisationGenerator {
                     mv.mark(undef);
                 }
 
+                // step 5
                 // stack: [(env), v'] -> [(env), v']
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
-                // step 7
+                // step 6
                 // stack: [(env), v'] -> []
                 BindingInitialisation(binding);
             }
@@ -422,18 +415,19 @@ class BindingInitialisationGenerator {
                 mv.aconst(propertyName);
                 mv.invoke(Methods.ExoticArguments_getArgument);
             } else {
-                // steps 1-4
-                // stack: [(env), obj] -> [(env), v]
-                mv.aconst(propertyName);
+                // stack: [(env), obj] -> [(env), cx, obj]
                 mv.loadExecutionContext();
-                if (initialiser == null) {
-                    mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow_String);
-                } else {
-                    mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined_String);
-                }
+                mv.swap();
+
+                // stack: [(env), cx, obj] -> [(env), cx, obj, propertyName]
+                mv.aconst(propertyName);
+
+                // steps 1-2
+                // stack: [(env), cx, obj, propertyName] -> [(env), v]
+                mv.invoke(Methods.AbstractOperations_Get_String);
             }
 
-            // step 5
+            // step 3
             // stack: [(env), v] -> [(env), v']
             if (initialiser != null) {
                 Label undef = new Label();
@@ -449,13 +443,13 @@ class BindingInitialisationGenerator {
             }
 
             if (binding instanceof BindingPattern) {
-                // step 6
+                // step 4
                 // stack: [(env), v'] -> [(env), v']
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
 
-            // step 7
+            // step 5
             // stack: [(env), v'] -> []
             BindingInitialisation(binding);
         }
@@ -476,22 +470,21 @@ class BindingInitialisationGenerator {
 
         private void generate(Binding binding, Expression initialiser,
                 ComputedPropertyName propertyName) {
-            // stack: [(env), obj] -> [(env), obj, propertyName]
+            // stack: [(env), obj] -> [(env), cx, obj]
+            mv.loadExecutionContext();
+            mv.swap();
+
+            // stack: [(env), cx, obj] -> [(env), cx, obj, propertyName]
             // Runtime Semantics: Evaluation
             // ComputedPropertyName : [ AssignmentExpression ]
             ValType propType = expressionValue(propertyName.getExpression(), mv);
             ToPropertyKey(propType, mv);
 
-            // steps 1-4
-            // stack: [(env), obj, propertyName] -> [(env), v]
-            mv.loadExecutionContext();
-            if (initialiser == null) {
-                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrThrow);
-            } else {
-                mv.invoke(Methods.ScriptRuntime_GetIfPresentOrUndefined);
-            }
+            // steps 1-2
+            // stack: [(env), cx, obj, propertyName] -> [(env), v]
+            mv.invoke(Methods.AbstractOperations_Get);
 
-            // step 5
+            // step 3
             // stack: [(env), v] -> [(env), v']
             if (initialiser != null) {
                 Label undef = new Label();
@@ -507,13 +500,13 @@ class BindingInitialisationGenerator {
             }
 
             if (binding instanceof BindingPattern) {
-                // step 6
+                // step 4
                 // stack: [(env), v'] -> [(env), v']
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
 
-            // step 7
+            // step 5
             // stack: [(env), v'] -> []
             BindingInitialisation(binding);
         }
