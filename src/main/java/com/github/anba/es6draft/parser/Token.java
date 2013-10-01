@@ -31,6 +31,7 @@ public enum Token {
     VOID("void"),
     WHILE("while"),
     WITH("with"),
+    YIELD("yield"),
     // FutureReservedWord -> 11.6.1.2
     ENUM("enum"),
     EXTENDS("extends"),
@@ -42,7 +43,6 @@ public enum Token {
     PROTECTED("protected"),
     PUBLIC("public"),
     STATIC("static"),
-    YIELD("yield"),
     // Identifier
     NAME("<name>"),
     // Literal
