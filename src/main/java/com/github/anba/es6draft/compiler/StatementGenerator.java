@@ -354,6 +354,7 @@ class StatementGenerator extends
         if (lhs instanceof Expression) {
             assert lhs instanceof LeftHandSideExpression;
             if (lhs instanceof AssignmentPattern) {
+                // FIXME: spec bug - only this ToObject() has been removed, but not below!
                 ToObject(ValType.Any, mv);
                 DestructuringAssignment((AssignmentPattern) lhs, mv);
             } else {
@@ -1040,6 +1041,7 @@ class StatementGenerator extends
             }
             mv.swap();
 
+            // FIXME: this ToObject() call has been removed, but not for ForBinding!
             if (catchParameter instanceof BindingPattern) {
                 // ToObject(...)
                 ToObject(ValType.Any, mv);
@@ -1086,6 +1088,7 @@ class StatementGenerator extends
             }
             mv.swap();
 
+            // FIXME: this ToObject() call has been removed, but not for ForBinding!
             if (catchParameter instanceof BindingPattern) {
                 // ToObject(...)
                 ToObject(ValType.Any, mv);
@@ -1187,6 +1190,7 @@ class StatementGenerator extends
         // ToObject(<Expression>)
         ToObject(type, mv);
 
+        // FIXME: Get() for @@unscopables has been removed here, but not from ObjectEnvironment!
         // retrieve object's @@unscopables list
         mv.dup();
         mv.loadExecutionContext();
