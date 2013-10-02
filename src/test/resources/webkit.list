@@ -146,9 +146,6 @@ dfg-inline-arguments-reset.js
 dfg-inline-arguments-simple.js
 fast/js/caller-property.js
 
-# __proto__ must be either object or null
-this-non-object-proto.js
-
 
 #######################################
 # ES6 related syntax changes          #

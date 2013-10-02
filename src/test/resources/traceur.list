@@ -96,10 +96,6 @@ feature/Destructuring/Class.js
 feature/Destructuring/Method.js
 feature/Destructuring/SetAccessor.js
 
-# Missing properties in destructuring throw TypeError
-feature/Destructuring/Array.js
-feature/Destructuring/Object.js
-
 
 #######################################
 # Test for syntax extensions          #
@@ -113,6 +109,3 @@ feature/Yield/TreeUsingPrivateNameSyntax.js
 
 # generators without *
 feature/Yield/UnstarredGenerators.js
-
-# yield without assignment expression
-feature/Yield/YieldUndefinedGenerator.js

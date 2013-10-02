@@ -30,6 +30,9 @@ harmony/block-let-declaration.js
 # V8 generators: missing type checks in v8-implementation
 harmony/generators-iteration.js
 
+# AssignmentExpression optional in YieldStatement
+harmony/generators-parsing.js
+
 # non-strict equality fails when comparing symbols and primitive values against each other
 harmony/iteration-semantics.js
 
@@ -94,6 +97,8 @@ regress/regress-2225.js
 # different error message
 apply.js
 array-reduce.js
+big-array-literal.js
+big-object-literal.js
 error-accessors.js
 function-call.js
 instanceof-2.js
@@ -190,9 +195,6 @@ get-prototype-of.js
 
 # Object.keys() wraps/ignores primitives
 third_party/object-keys.js
-
-# __proto__ must be either object or null
-regress/regress-646.js
 
 # Function.length is configurable
 regress/regress-function-length-strict.js
