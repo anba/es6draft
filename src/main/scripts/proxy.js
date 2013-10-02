@@ -19,7 +19,7 @@ const Object_create = Object.create,
 
 const Function_call = Function.prototype.call.bind(Function.prototype.call);
 
-const iteratorSym = getSym("@@iterator");
+const iteratorSym = Symbol.iterator;
 
 function toProxyHandler(handler) {
   var TypeErrorThrower = () => { throw TypeError() };

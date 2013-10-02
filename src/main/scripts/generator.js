@@ -10,6 +10,7 @@
 
 const Object = global.Object,
       Function = global.Function,
+      Symbol = global.Symbol,
       TypeError = global.TypeError;
 
 const Object_defineProperty = Object.defineProperty,
@@ -19,9 +20,8 @@ const Object_defineProperty = Object.defineProperty,
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 const Generator = Object.getPrototypeOf(function*(){});
-const hasInstanceSym = global.getSym("@@hasInstance");
 
-Object.defineProperty(Generator, hasInstanceSym, {
+Object.defineProperty(Generator, Symbol.hasInstance, {
   value(O) {
     // OrdinaryHasInstance() without steps 1-2
     let C = this;
@@ -47,7 +47,7 @@ Object.defineProperty(Generator, hasInstanceSym, {
 
 const GeneratorPrototype = Generator.prototype;
 const GeneratorPrototype_next = GeneratorPrototype.next;
-const genState = global.newSym("genState");
+const genState = Symbol("genState");
 
 Object.defineProperty(GeneratorPrototype, "next", {
   value(...args) {
@@ -61,9 +61,7 @@ Object.defineProperty(GeneratorPrototype, "next", {
   writable: true, enumerable: false, configurable: true
 });
 
-const iteratorSym = global.getSym("@@iterator");
-
-Object.defineProperty(Object.prototype, iteratorSym, {
+Object.defineProperty(Object.prototype, Symbol.iterator, {
   get() { return () => ({__proto__: null, next: () => Object(this.next())}) },
   enumerable: false, configurable: true
 });

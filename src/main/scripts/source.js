@@ -29,8 +29,6 @@ const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
       Array_isArray = Array.isArray,
       Array_prototype_join = Array.prototype.join;
 
-const symName = global.symName;
-
 function Quote(s, qc = '"') {
   var r = "";
   for (var i = 0, len = s.length; i < len; ++i) {
@@ -83,7 +81,7 @@ function ToSource(o) {
     case 'string':
       return Quote(o);
     case 'symbol':
-      return symName(o);
+      return String(Object(o));
     case 'function':
     case 'object':
       if (o !== null) {

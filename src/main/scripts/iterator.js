@@ -12,6 +12,7 @@ const Object = global.Object,
       Function = global.Function,
       Array = global.Array,
       String = global.String,
+      Symbol = global.Symbol,
       TypeError = global.TypeError,
       Proxy = global.Proxy;
 
@@ -22,10 +23,10 @@ const Object_keys = Object.keys,
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
-const iteratorSym = getSym("@@iterator"),
-      toStringTagSym = getSym("@@toStringTag"),
-      hasInstanceSym = getSym("@@hasInstance"),
-      createSym = getSym("@@create");
+const iteratorSym = Symbol.iterator,
+      toStringTagSym = Symbol.toStringTag,
+      hasInstanceSym = Symbol.hasInstance,
+      createSym = Symbol.create;
 
 
 // StopIteration object
@@ -45,7 +46,7 @@ Object.defineProperty(global, "StopIteration", {
 // Iterator object
 const Iterator = MakeIterator();
 function MakeIterator() {
-  const nextSym = newSym("next");
+  const nextSym = Symbol("next");
 
   function ToIterator(instance, obj, keys) {
     var iter = (
@@ -114,7 +115,7 @@ Object.defineProperty(global, "Iterator", {
 // (internal) IteratorAdapter object
 const IteratorAdapter = MakeIteratorAdapter();
 function MakeIteratorAdapter() {
-  const iterSym = newSym("iter");
+  const iterSym = Symbol("iter");
 
   class IteratorAdapter {
     constructor(iter) {
@@ -158,8 +159,8 @@ Object.defineProperty(Object.prototype, iteratorSym, {
 
 // (internal) MakeBuiltinIterator
 function MakeBuiltinIterator(ctor) {
-  const iterSym = newSym("iter");
-  const drainedSym = newSym("drained");
+  const iterSym = Symbol("iter");
+  const drainedSym = Symbol("drained");
 
   class BuiltinIterator extends Iterator {
     constructor(obj, iterF) {
@@ -333,7 +334,7 @@ function MakeBuiltinIterator(ctor) {
 
 { /* Map */
   const BuiltinMap = global.Map;
-  const isMapSym = newSym("isMap");
+  const isMapSym = Symbol("isMap");
 
   class Map extends BuiltinMap {
     constructor(iterable, comparator = "is") {
@@ -389,7 +390,7 @@ function MakeBuiltinIterator(ctor) {
 
 { /* Set */
   const BuiltinSet = global.Set;
-  const isSetSym = newSym("isSet");
+  const isSetSym = Symbol("isSet");
 
   class Set extends BuiltinSet {
     constructor(iterable, comparator = "is") {
@@ -441,7 +442,7 @@ function MakeBuiltinIterator(ctor) {
 
 { /* WeakMap */
   const BuiltinWeakMap = global.WeakMap;
-  const isWeakMapSym = newSym("isWeakMap");
+  const isWeakMapSym = Symbol("isWeakMap");
 
   class WeakMap extends BuiltinWeakMap {
     constructor(iterable, comparator = undefined) {
@@ -496,7 +497,7 @@ function MakeBuiltinIterator(ctor) {
 
 { /* WeakSet */
   const BuiltinWeakSet = global.WeakSet;
-  const isWeakSetSym = newSym("isWeakSet");
+  const isWeakSetSym = Symbol("isWeakSet");
 
   class WeakSet extends BuiltinWeakSet {
     constructor(iterable, comparator = undefined) {

@@ -11,10 +11,10 @@
 const Object = global.Object,
       Function = global.Function,
       InternalError = global.InternalError,
-      RangeError = global.RangeError;
+      RangeError = global.RangeError,
+      Symbol = global.Symbol;
 
-const hasInstanceSym = global.getSym("@@hasInstance");
-
+const hasInstanceSym = Symbol.hasInstance;
 const instanceOf = Function.prototype.call.bind(Function.prototype[hasInstanceSym]);
 
 Object.defineProperty(RangeError, hasInstanceSym, {

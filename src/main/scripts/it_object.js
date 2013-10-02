@@ -46,7 +46,7 @@ const it_target = Object.create(Object.prototype, {
     set(v) { if (this === it) it_custom = v },
     enumerable: true, configurable: true
   },
-  [global.getSym("@@toStringTag")]: {value: "It"},
+  [global.Symbol.toStringTag]: {value: "It"},
 });
 
 const it = new Proxy(it_target, {

@@ -10,8 +10,9 @@
 
 const Object = global.Object,
       Function = global.Function,
-      String = global.String,
       RegExp = global.RegExp,
+      String = global.String,
+      Symbol = global.Symbol,
       TypeError = global.TypeError;
 
 const Object_defineProperty = Object.defineProperty,
@@ -27,7 +28,7 @@ function ToPropertyKey(pk) {
   return String(pk);
 }
 
-Object.defineProperty(global, global.getSym("@@toStringTag"), {
+Object.defineProperty(global, Symbol.toStringTag, {
   value: "global", writable: true, enumerable: false, configurable: true
 });
 

@@ -24,10 +24,10 @@ const GeneratorPrototype = Object.getPrototypeOf(function*(){}).prototype;
 const GeneratorPrototype_next = GeneratorPrototype.next,
       GeneratorPrototype_throw = GeneratorPrototype.throw;
 
-const iteratorSym = getSym("@@iterator");
+const iteratorSym = Symbol.iterator;
 
 //  “newborn”, “executing”, “suspended”, or “closed”
-const generatorStateSym = newSym("generatorState");
+const generatorStateSym = Symbol("generatorState");
 
 function GeneratorState(g) {
   // no proper way to test for generators in scripts
