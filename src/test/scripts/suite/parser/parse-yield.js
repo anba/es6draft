@@ -462,8 +462,6 @@ assertSyntaxError(`function* g(){let yield}`);
 // const name
 assertSyntaxError(`function* g(){const yield = 0}`);
 // identifier
-assertSyntaxError(`function* g(){yield}`);
-assertSyntaxError(`function* g(){yield(yield)}`);
 assertSyntaxError(`function* g(){yield = 0}`);
 assertSyntaxError(`function* g(){++yield}`);
 assertSyntaxError(`function* g(){yield + yield}`);
@@ -484,6 +482,9 @@ function* g4(){
   yield
   0;
 }
+// AssignmentExpression optional in yield
+function* g5(){yield}
+function* g6(){yield(yield)}
 
 // try some combinations
 assertSyntaxError(`function* yield(yield){var yield}`);
@@ -540,8 +541,6 @@ assertSyntaxError(`(function* (){let yield});`);
 // const name
 assertSyntaxError(`(function* (){const yield = 0});`);
 // identifier
-assertSyntaxError(`(function* (){yield});`);
-assertSyntaxError(`(function* (){yield(yield)});`);
 assertSyntaxError(`(function* (){yield = 0});`);
 assertSyntaxError(`(function* (){++yield});`);
 assertSyntaxError(`(function* (){yield + yield});`);
@@ -562,6 +561,9 @@ assertSyntaxError(`(function* (){yield: do continue yield; while(false)});`);
   yield
   0;
 });
+// AssignmentExpression optional in yield
+(function* (){yield});
+(function* (){yield(yield)});
 
 // try some combinations
 assertSyntaxError(`(function* yield(yield){var yield});`);
@@ -618,8 +620,6 @@ assertSyntaxError(`function* g(){"use strict"; let yield}`);
 // const name
 assertSyntaxError(`function* g(){"use strict"; const yield = 0}`);
 // identifier
-assertSyntaxError(`function* g(){"use strict"; yield}`);
-assertSyntaxError(`function* g(){"use strict"; yield(yield)}`);
 assertSyntaxError(`function* g(){"use strict"; yield = 0}`);
 assertSyntaxError(`function* g(){"use strict"; ++yield}`);
 assertSyntaxError(`function* g(){"use strict"; yield + yield}`);
@@ -641,6 +641,9 @@ function* g4(){
   yield
   0;
 }
+// AssignmentExpression optional in yield
+function* g5(){"use strict"; yield}
+function* g6(){"use strict"; yield(yield)}
 
 // try some combinations
 assertSyntaxError(`function* yield(yield){"use strict"; var yield}`);
@@ -697,8 +700,6 @@ assertSyntaxError(`(function* (){"use strict"; let yield});`);
 // const name
 assertSyntaxError(`(function* (){"use strict"; const yield = 0});`);
 // identifier
-assertSyntaxError(`(function* (){"use strict"; yield});`);
-assertSyntaxError(`(function* (){"use strict"; yield(yield)});`);
 assertSyntaxError(`(function* (){"use strict"; yield = 0});`);
 assertSyntaxError(`(function* (){"use strict"; ++yield});`);
 assertSyntaxError(`(function* (){"use strict"; yield + yield});`);
@@ -720,6 +721,9 @@ assertSyntaxError(`(function* (){"use strict"; yield: do continue yield; while(f
   yield
   0;
 });
+// AssignmentExpression optional in yield
+(function* (){"use strict"; yield});
+(function* (){"use strict"; yield(yield)});
 
 // try some combinations
 assertSyntaxError(`(function* yield(yield){"use strict"; var yield});`);
@@ -949,8 +953,6 @@ assertSyntaxError(`({ * g(){let yield} });`);
 // const name
 assertSyntaxError(`({ * g(){const yield = 0} });`);
 // identifier
-assertSyntaxError(`({ * g(){yield} });`);
-assertSyntaxError(`({ * g(){yield(yield)} });`);
 assertSyntaxError(`({ * g(){yield = 0} });`);
 assertSyntaxError(`({ * g(){++yield} });`);
 assertSyntaxError(`({ * g(){yield + yield} });`);
@@ -971,6 +973,9 @@ assertSyntaxError(`({ * g(){yield: do continue yield; while(false) } });`);
   yield
   0;
 } });
+// AssignmentExpression optional in yield
+({ * g(){yield} });
+({ * g(){yield(yield)} });
 
 // try some combinations
 assertSyntaxError(`({ * yield(yield){var yield} });`);
@@ -1030,8 +1035,6 @@ assertSyntaxError(`({ * g(){"use strict"; let yield} });`);
 // const name
 assertSyntaxError(`({ * g(){"use strict"; const yield = 0} });`);
 // identifier
-assertSyntaxError(`({ * g(){"use strict"; yield} });`);
-assertSyntaxError(`({ * g(){"use strict"; yield(yield)} });`);
 assertSyntaxError(`({ * g(){"use strict"; yield = 0} });`);
 assertSyntaxError(`({ * g(){"use strict"; ++yield} });`);
 assertSyntaxError(`({ * g(){"use strict"; yield + yield} });`);
@@ -1053,6 +1056,9 @@ assertSyntaxError(`({ * g(){"use strict"; yield: do continue yield; while(false)
   yield
   0;
 } });
+// AssignmentExpression optional in yield
+({ * g(){"use strict"; yield} });
+({ * g(){"use strict"; yield(yield)} });
 
 // try some combinations
 assertSyntaxError(`({ * yield(yield){"use strict"; var yield} });`);
@@ -1199,8 +1205,6 @@ assertSyntaxError(`class C{ * g(){let yield} }`);
 // const name
 assertSyntaxError(`class C{ * g(){const yield = 0} }`);
 // identifier
-assertSyntaxError(`class C{ * g(){yield} }`);
-assertSyntaxError(`class C{ * g(){yield(yield)} }`);
 assertSyntaxError(`class C{ * g(){yield = 0} }`);
 assertSyntaxError(`class C{ * g(){++yield} }`);
 assertSyntaxError(`class C{ * g(){yield + yield} }`);
@@ -1221,6 +1225,9 @@ class C4{ * g(){
   yield
   0;
 } }
+// AssignmentExpression optional in yield
+class C5{ * g(){yield} }
+class C6{ * g(){yield(yield)} }
 
 // try some combinations
 assertSyntaxError(`class C{ * yield(yield){var yield} }`);
