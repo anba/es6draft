@@ -8,15 +8,4 @@
 (function MathExtensions(global) {
 "use strict";
 
-const Object = global.Object,
-      Math = global.Math;
-
-Object.defineProperties(Object.assign(Math, {
-  fround(v) {
-    return Math.roundFloat32(v);
-  }
-}), {
-  fround: {enumerable: false}
-});
-
 })(this);
