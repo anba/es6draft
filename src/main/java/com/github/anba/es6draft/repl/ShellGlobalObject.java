@@ -23,14 +23,11 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.ErrorConstructor;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  *
@@ -129,38 +126,5 @@ public abstract class ShellGlobalObject extends GlobalObject {
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }
-    }
-
-    /**
-     * Returns the well-known symbol {@code name} or undefined if there is no such symbol
-     */
-    @Function(name = "getSym", arity = 1)
-    public Object getSym(String name) {
-        try {
-            if (name.startsWith("@@")) {
-                return BuiltinSymbol.valueOf(name.substring(2)).get();
-            }
-        } catch (IllegalArgumentException e) {
-        }
-        return UNDEFINED;
-    }
-
-    /**
-     * Creates a new Symbol object
-     */
-    @Function(name = "newSym", arity = 1)
-    public Object newSym(String name) {
-        return new Symbol(name);
-    }
-
-    /**
-     * Returns the [[Name]] property of the symbol or undefined if the input is not a symbol
-     */
-    @Function(name = "symName", arity = 1)
-    public Object symName(Object symbol) {
-        if (symbol instanceof Symbol) {
-            return ((Symbol) symbol).toString();
-        }
-        return UNDEFINED;
     }
 }
