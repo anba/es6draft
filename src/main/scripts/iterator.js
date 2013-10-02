@@ -324,6 +324,9 @@ function MakeBuiltinIterator(ctor) {
       });
     }
   );
+
+  // delete the original String.prototype[@@iterator]
+  delete String.prototype[iteratorSym];
 }
 
 // create overrides for Map/Set/WeakMap/WeakSet
