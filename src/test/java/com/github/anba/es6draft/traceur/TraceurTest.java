@@ -140,7 +140,7 @@ public class TraceurTest {
 
     private static final Set<String> excludeFiles = new HashSet<>();
     private static final Set<String> excludeDirs = new HashSet<>(asList("Await", "Cascade",
-            "Collection", "Modules", "PrivateNames", "PrivateNameSyntax",
+            "Collection", "LegacyModules", "Modules", "PrivateNames", "PrivateNameSyntax",
             "PropertyMethodAssignment", "PropertyOptionalComma", "Types"));
 
     private static List<TestInfo> loadTests(Path searchdir, final Path basedir) throws IOException {
