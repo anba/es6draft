@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.binary;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyBlockElements;
@@ -97,15 +98,15 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             /* steps 6-7 */
             double relativeStart = ToInteger(cx, start);
             /* step 8 */
-            double first = relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(
-                    relativeStart, len);
+            long first = (long) (relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(
+                    relativeStart, len));
             /* steps 9-10 */
             double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
             /* step 11 */
-            double _final = relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(
-                    relativeEnd, len);
+            long _final = (long) (relativeEnd < 0 ? Math.max((len + relativeEnd), 0) : Math.min(
+                    relativeEnd, len));
             /* step 12 */
-            double newLen = Math.max(_final - first, 0);
+            long newLen = Math.max(_final - first, 0);
             /* steps 13-14 */
             Callable ctor = GetMethod(cx, obj, "constructor");
             /* step 15 */
@@ -115,6 +116,10 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             /* steps 16-19 */
             ArrayBufferObject _new = thisArrayBufferObject(cx,
                     ((Constructor) ctor).construct(cx, newLen));
+            // TODO: missing check in spec - or move to CopyBlockElements?
+            if (_new.getByteLength() < newLen) {
+                throw throwRangeError(cx, Messages.Key.InvalidBufferSize);
+            }
             /* step 20 */
             ByteBuffer fromBuf = obj.getData();
             /* step 21 */
