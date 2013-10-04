@@ -55,7 +55,7 @@ public class StringConstructor extends BuiltinConstructor implements Initialisab
         ExecutionContext calleeContext = calleeContext();
         /* step 1 (omitted) */
         /* steps 2-4 */
-        CharSequence s = (args.length > 0 ? ToString(calleeContext, args[0]) : "");
+        CharSequence s = args.length > 0 ? ToString(calleeContext, args[0]) : "";
         /* step 5 */
         if (thisValue instanceof ExoticString) {
             ExoticString obj = (ExoticString) thisValue;

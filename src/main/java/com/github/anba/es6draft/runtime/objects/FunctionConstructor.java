@@ -112,7 +112,6 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
             throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryFunction fn = (OrdinaryFunction) f;
-
         /* step 18 */
         FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 19 */

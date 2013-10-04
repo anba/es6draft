@@ -51,7 +51,7 @@ public class BooleanConstructor extends BuiltinConstructor implements Initialisa
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         /* step 1 (omitted) */
         /* step 2 */
-        boolean b = (args.length > 0 ? ToBoolean(args[0]) : false);
+        boolean b = args.length > 0 ? ToBoolean(args[0]) : false;
         /* step 3 */
         if (thisValue instanceof BooleanObject) {
             BooleanObject obj = (BooleanObject) thisValue;

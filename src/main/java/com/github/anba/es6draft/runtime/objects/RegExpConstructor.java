@@ -142,9 +142,9 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
     public static RegExpObject RegExpInitialise(ExecutionContext cx, RegExpObject obj,
             Object pattern, Object flags) {
         /* steps 1-3 */
-        String p = (Type.isUndefined(pattern) ? "" : ToFlatString(cx, pattern));
+        String p = Type.isUndefined(pattern) ? "" : ToFlatString(cx, pattern);
         /* steps 4-6 */
-        String f = (Type.isUndefined(flags) ? "" : ToFlatString(cx, flags));
+        String f = Type.isUndefined(flags) ? "" : ToFlatString(cx, flags);
 
         /* RegExp statics extension */
         if (getRegExp(cx).isDefaultMultiline() && f.indexOf('m') == -1) {
@@ -158,17 +158,13 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
             RegExpParser parser = RegExpParser.parse(p, f, -1, -1);
             match = parser.getPattern();
             negativeLAGroups = parser.getNegativeLookaheadGroups();
-            // System.out.printf("pattern = '%s'\n", match.pattern());
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
-
         /* steps 9-11 */
         obj.initialise(p, f, match, negativeLAGroups);
-
         /* steps 12-13 */
         Put(cx, obj, "lastIndex", 0, true);
-
         /* step 14 */
         return obj;
     }
@@ -269,7 +265,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
         public static final Intrinsics prototype = Intrinsics.RegExpPrototype;
 
         /**
-         * 21.2.4.5 RegExp[ @@create ] ( )
+         * 21.2.4.2 RegExp[ @@create ] ( )
          */
         @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))

@@ -937,7 +937,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "@@toPrimitive", arity = 1, symbol = BuiltinSymbol.toPrimitive,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object ToPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
+        public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             /* steps 1-2 */
             if (!Type.isObject(thisValue)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);

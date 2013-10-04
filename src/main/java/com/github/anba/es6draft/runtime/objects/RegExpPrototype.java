@@ -353,7 +353,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             int m = matchResult.groupCount();
             Object[] arguments = new Object[m + 3];
             arguments[0] = matchResult.group();
-            GroupIterator iterator = newGroupIterator(rx, matchResult);
+            GroupIterator iterator = new GroupIterator(rx, matchResult);
             for (int i = 1; iterator.hasNext(); ++i) {
                 String group = iterator.next();
                 arguments[i] = (group != null ? group : UNDEFINED);
@@ -514,7 +514,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                         return a;
                     }
                     p = e;
-                    GroupIterator iterator = newGroupIterator(rx, matcher);
+                    GroupIterator iterator = new GroupIterator(rx, matcher);
                     while (iterator.hasNext()) {
                         String cap = iterator.next();
                         a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(
@@ -598,13 +598,13 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
      * Runtime Semantics: RegExpExec Abstract Operation
      */
     public static Object RegExpExec(ExecutionContext cx, RegExpObject r, CharSequence s) {
-        /* steps 1-14 */
+        /* steps 1-13 */
         Matcher m = getMatcherOrNull(cx, r, s);
         if (m == null) {
             return NULL;
         }
         RegExpConstructor.storeLastMatchResult(cx, r, s, m);
-        /* steps 15-25 */
+        /* steps 14-24 */
         return toMatchResult(cx, r, s, m);
     }
 
@@ -615,27 +615,27 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         /* step 1 */
         assert r.isInitialised();
 
-        /* step 3 */
+        /* step 2 */
         int length = s.length();
-        /* step 4 */
+        /* step 3 */
         Object lastIndex = Get(cx, r, "lastIndex");
-        /* steps 5-6 */
+        /* steps 4-5 */
         double i = ToInteger(cx, lastIndex);
-        /* steps 7-8 */
+        /* steps 6-7 */
         boolean global = ToBoolean(Get(cx, r, "global"));
         boolean sticky = ToBoolean(Get(cx, r, "sticky"));
-        /* step 9 */
+        /* step 8 */
         if (!global && !sticky) {
             i = 0;
         }
-        /* step 12.a */
+        /* step 11.a */
         if (i < 0 || i > length) {
             Put(cx, r, "lastIndex", 0, true);
             return null;
         }
-        /* step 10 */
+        /* step 9 */
         Pattern matcher = r.getRegExpMatcher();
-        /* steps 11-12 */
+        /* steps 10-11 */
         Matcher m = matcher.matcher(s);
         if (!sticky) {
             boolean matchSucceeded = m.find((int) i);
@@ -643,9 +643,9 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 Put(cx, r, "lastIndex", 0, true);
                 return null;
             }
-            /* step 13 */
+            /* step 12 */
             int e = m.end();
-            /* step 14 */
+            /* step 13 */
             if (global) {
                 Put(cx, r, "lastIndex", e, true);
             }
@@ -671,32 +671,32 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     private static ScriptObject toMatchResult(ExecutionContext cx, RegExpObject r, CharSequence s,
             Matcher m) {
         assert r.isInitialised();
-        /* step 13 */
+        /* step 12 */
         int e = m.end();
-        /* step 15 */
+        /* step 14 */
         int n = m.groupCount();
-        /* step 17 */
+        /* step 16 */
         int matchIndex = m.start();
 
-        /* step 16 */
+        /* step 15 */
         ScriptObject array = ArrayCreate(cx, 0);
-        /* steps 18-21 */
+        /* steps 17-20 */
         array.defineOwnProperty(cx, "index", new PropertyDescriptor(matchIndex, true, true, true));
         array.defineOwnProperty(cx, "input", new PropertyDescriptor(s, true, true, true));
         array.defineOwnProperty(cx, "length", new PropertyDescriptor(n + 1));
 
-        /* step 22 */
+        /* step 21 */
         CharSequence matchedSubstr = s.subSequence(matchIndex, e);
-        /* step 23 */
+        /* step 22 */
         array.defineOwnProperty(cx, "0", new PropertyDescriptor(matchedSubstr, true, true, true));
-        /* step 24 */
-        GroupIterator iterator = newGroupIterator(r, m);
+        /* step 23 */
+        GroupIterator iterator = new GroupIterator(r, m);
         for (int i = 1; iterator.hasNext(); ++i) {
             String capture = iterator.next();
             array.defineOwnProperty(cx, ToString(i), new PropertyDescriptor(
                     (capture != null ? capture : UNDEFINED), true, true, true));
         }
-        /* step 25 */
+        /* step 24 */
         return array;
     }
 
@@ -705,7 +705,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
      */
     public static String[] groups(RegExpObject r, MatchResult m) {
         assert r.isInitialised();
-        GroupIterator iterator = newGroupIterator(r, m);
+        GroupIterator iterator = new GroupIterator(r, m);
         int c = m.groupCount();
         String[] groups = new String[c + 1];
         groups[0] = m.group();
@@ -715,11 +715,6 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         return groups;
     }
 
-    private static GroupIterator newGroupIterator(RegExpObject r, MatchResult m) {
-        assert r.isInitialised();
-        return new GroupIterator(m, r.getNegativeLookaheadGroups());
-    }
-
     private static final class GroupIterator implements Iterator<String> {
         private final MatchResult result;
         private final BitSet negativeLAGroups;
@@ -727,9 +722,10 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         // start index of last valid group in matched string
         private int last;
 
-        GroupIterator(MatchResult result, BitSet negativeLAGroups) {
+        GroupIterator(RegExpObject r, MatchResult result) {
+            assert r.isInitialised();
             this.result = result;
-            this.negativeLAGroups = negativeLAGroups;
+            this.negativeLAGroups = r.getNegativeLookaheadGroups();
             this.last = result.start();
         }
 

@@ -55,7 +55,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         ExecutionContext calleeContext = calleeContext();
         /* step 1 (omitted) */
         /* steps 2-4 */
-        double n = (args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0);
+        double n = args.length > 0 ? ToNumber(calleeContext, args[0]) : +0.0;
         /* step 5 */
         if (thisValue instanceof NumberObject) {
             NumberObject obj = (NumberObject) thisValue;
@@ -171,7 +171,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
             /* steps 4-6 */
             boolean isPos = true;
             if (index < len && (s.charAt(index) == '+' || s.charAt(index) == '-')) {
-                isPos = (s.charAt(index) == '+');
+                isPos = s.charAt(index) == '+';
                 index += 1;
             }
             /* steps 7-8 */
@@ -183,7 +183,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
                 if (r < 2 || r > 36) {
                     return Double.NaN;
                 }
-                stripPrefix = (r == 16);
+                stripPrefix = r == 16;
             } else {
                 /* step 11 */
                 r = 10;
@@ -197,7 +197,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
             /* steps 13-16 */
             double number = StringToNumber.stringToNumber(s, index, r);
             /* step 17 */
-            return (isPos ? number : -number);
+            return isPos ? number : -number;
         }
 
         /**
@@ -272,7 +272,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
             if (integer != num) {
                 return false;
             }
-            return (Math.abs(integer) <= 0x1FFFFFFFFFFFFFL);
+            return Math.abs(integer) <= 0x1FFFFFFFFFFFFFL;
         }
 
         /**

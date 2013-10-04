@@ -156,7 +156,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             if (target instanceof OrdinaryFunction || target instanceof OrdinaryGenerator
                     || target instanceof BuiltinFunction || target instanceof ExoticBoundFunction) {
                 Object targetLen = Get(cx, target, "length");
-                l = (int) Math.max(0, ToInteger(cx, targetLen) - args.length);
+                l = (int) Math.max(0, ToLength(cx, targetLen) - args.length);
             } else {
                 l = 0;
             }

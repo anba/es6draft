@@ -92,11 +92,11 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             /* steps 3-4 */
             Object name = Get(cx, o, "name");
             /* step 5 */
-            CharSequence sname = (Type.isUndefined(name) ? "Error" : ToString(cx, name));
+            CharSequence sname = Type.isUndefined(name) ? "Error" : ToString(cx, name);
             /* steps 6-7 */
             Object msg = Get(cx, o, "message");
             /* step 8 */
-            CharSequence smsg = (Type.isUndefined(msg) ? "" : ToString(cx, msg));
+            CharSequence smsg = Type.isUndefined(msg) ? "" : ToString(cx, msg);
             /* step 9 */
             if (sname.length() == 0) {
                 return smsg;
