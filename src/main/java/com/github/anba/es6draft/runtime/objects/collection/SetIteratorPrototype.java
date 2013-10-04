@@ -141,10 +141,10 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
             /* step 7 */
             assert s.getSetData() != null;
             /* step 8 */
-            Iterator<Entry<Object, Void>> itr = o.iterator;
+            Iterator<Entry<Object, Void>> iter = o.iterator;
             /* step 9 */
-            if (itr.hasNext()) {
-                Entry<Object, Void> e = itr.next();
+            if (iter.hasNext()) {
+                Entry<Object, Void> e = iter.next();
                 assert e != null;
                 if (itemKind == SetIterationKind.KeyValue) {
                     ExoticArray result = ArrayCreate(cx, 2);

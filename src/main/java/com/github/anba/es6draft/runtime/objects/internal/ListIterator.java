@@ -37,10 +37,10 @@ public class ListIterator<T> extends OrdinaryObject {
      * Returns a new {@link ListIterator} object for the internal list {@code iterator}
      */
     public static <T> ListIterator<T> MakeListIterator(ExecutionContext cx, Iterator<T> iterator) {
-        ListIterator<T> itr = new ListIterator<>(cx.getRealm(), iterator);
-        itr.setPrototype(cx.getIntrinsic(Intrinsics.ListIteratorPrototype));
-        itr.preventExtensions(cx);
-        return itr;
+        ListIterator<T> iter = new ListIterator<>(cx.getRealm(), iterator);
+        iter.setPrototype(cx.getIntrinsic(Intrinsics.ListIteratorPrototype));
+        iter.preventExtensions(cx);
+        return iter;
     }
 
     /**

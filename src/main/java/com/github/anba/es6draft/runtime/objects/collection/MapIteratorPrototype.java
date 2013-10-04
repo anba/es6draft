@@ -142,10 +142,10 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
             /* step 7 */
             assert m.getMapData() != null;
             /* step 8 */
-            Iterator<Entry<Object, Object>> itr = o.iterator;
+            Iterator<Entry<Object, Object>> iter = o.iterator;
             /* step 9 */
-            if (itr.hasNext()) {
-                Entry<Object, Object> e = itr.next();
+            if (iter.hasNext()) {
+                Entry<Object, Object> e = iter.next();
                 assert e != null;
                 Object result;
                 if (itemKind == MapIterationKind.Key) {

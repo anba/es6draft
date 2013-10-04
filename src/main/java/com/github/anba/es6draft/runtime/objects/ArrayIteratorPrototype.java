@@ -126,13 +126,13 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             if (!(thisValue instanceof ArrayIterator)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            ArrayIterator itr = (ArrayIterator) thisValue;
+            ArrayIterator iter = (ArrayIterator) thisValue;
             /* step 4 */
-            ScriptObject array = itr.iteratedObject;
+            ScriptObject array = iter.iteratedObject;
             /* step 5 */
-            long index = itr.nextIndex;
+            long index = iter.nextIndex;
             /* step 6 */
-            ArrayIterationKind itemKind = itr.kind;
+            ArrayIterationKind itemKind = iter.kind;
             /* step 7 */
             Object lenValue = Get(cx, array, "length");
             /* steps 8-9 */
@@ -152,11 +152,11 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             }
             /* step 11 */
             if (index >= len) {
-                itr.nextIndex = Long.MAX_VALUE; // = +Infinity
+                iter.nextIndex = Long.MAX_VALUE; // = +Infinity
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
             /* step 12 */
-            itr.nextIndex = index + 1;
+            iter.nextIndex = index + 1;
             /* step 13 */
             Object elementValue = null;
             if (itemKind == ArrayIterationKind.Value || itemKind == ArrayIterationKind.KeyValue

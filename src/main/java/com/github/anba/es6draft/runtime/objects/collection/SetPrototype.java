@@ -145,8 +145,8 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
             /* step 7 */
             LinkedMap<Object, Void> entries = s.getSetData();
             /* step 8 */
-            for (Iterator<Entry<Object, Void>> itr = entries.iterator(); itr.hasNext();) {
-                Entry<Object, Void> e = itr.next();
+            for (Iterator<Entry<Object, Void>> iter = entries.iterator(); iter.hasNext();) {
+                Entry<Object, Void> e = iter.next();
                 assert e != null;
                 callback.call(cx, thisArg, e.getKey(), e.getKey(), s);
             }

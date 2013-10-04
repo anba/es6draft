@@ -120,8 +120,8 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
             /* step 7 */
             LinkedMap<Object, Object> entries = m.getMapData();
             /* step 8 */
-            for (Iterator<Entry<Object, Object>> itr = entries.iterator(); itr.hasNext();) {
-                Entry<Object, Object> e = itr.next();
+            for (Iterator<Entry<Object, Object>> iter = entries.iterator(); iter.hasNext();) {
+                Entry<Object, Object> e = iter.next();
                 assert e != null;
                 callback.call(cx, thisArg, e.getValue(), e.getKey(), m);
             }

@@ -293,8 +293,8 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
 
         private boolean findTarget(Statement breakOrContinue, String label, ArrayDeque<Node> stack) {
             neverExport(breakOrContinue);
-            for (Iterator<Node> itr = stack.iterator(); itr.hasNext();) {
-                Node stmt = itr.next();
+            for (Iterator<Node> iter = stack.iterator(); iter.hasNext();) {
+                Node stmt = iter.next();
                 if (stmt instanceof BreakableStatement) {
                     if (label == null || ((BreakableStatement) stmt).getLabelSet().contains(label)) {
                         break;
