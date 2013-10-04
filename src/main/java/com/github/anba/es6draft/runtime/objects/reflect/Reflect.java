@@ -23,7 +23,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
-import com.github.anba.es6draft.runtime.modules.Module;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -33,38 +32,38 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * 26 The Reflect Module
- * <p>
- * 26.1 Exported Function Properties Reflecting the Essentional Internal Methods<br>
- * 
- * TODO: remove representation as ordinary object
+ * <h1>26 The Reflect Module</h1>
+ * <ul>
+ * <li>26.1 The Reflect Object
+ * </ul>
  */
-public class Reflect extends OrdinaryObject implements Initialisable, Module {
+public class Reflect extends OrdinaryObject implements Initialisable {
     public Reflect(Realm realm) {
         super(realm);
     }
 
     @Override
     public void initialise(ExecutionContext cx) {
-        createProperties(this, cx, ReflectedFunctions.class);
-        preventExtensions(cx);
+        createProperties(this, cx, Properties.class);
     }
 
     /**
-     * 26.1 Exported Function Properties Reflecting the Essentional Internal Methods
+     * 26.1 Properties of the Reflect Object
      */
-    public enum ReflectedFunctions {
+    public enum Properties {
         ;
 
         @Prototype
-        public static final Intrinsics __proto__ = null;
+        public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
          * 26.1.6 Reflect.getPrototypeOf (target)
          */
         @Function(name = "getPrototypeOf", arity = 1)
         public static Object getPrototypeOf(ExecutionContext cx, Object thisValue, Object target) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
+            /* step 3 */
             ScriptObject proto = obj.getPrototypeOf(cx);
             return (proto != null ? proto : NULL);
         }
@@ -75,10 +74,13 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object target,
                 Object proto) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
+            /* step 3 */
             if (!(Type.isObject(proto) || Type.isNull(proto))) {
                 throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
+            /* step 4 */
             ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
             return obj.setPrototypeOf(cx, p);
         }
@@ -88,7 +90,9 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          */
         @Function(name = "isExtensible", arity = 1)
         public static Object isExtensible(ExecutionContext cx, Object thisValue, Object target) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
+            /* step 3 */
             return obj.isExtensible(cx);
         }
 
@@ -97,6 +101,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object target) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
             return obj.preventExtensions(cx);
         }
@@ -107,8 +112,11 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "has", arity = 2)
         public static Object has(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
+            /* steps 3-4 */
             Object key = ToPropertyKey(cx, propertyKey);
+            /* step 5 */
             if (key instanceof String) {
                 return obj.hasProperty(cx, (String) key);
             } else {
@@ -123,8 +131,13 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "hasOwn", arity = 2)
         public static Object hasOwn(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey) {
-            ScriptObject obj = ToObject(cx, target);
+            // TODO: unusual parameter evaluation order
+            // TODO function still relevant after [[HasOwn]] removal from MOP?
+            /* steps 1-2 */
             Object key = ToPropertyKey(cx, propertyKey);
+            /* steps 3-4 */
+            ScriptObject obj = ToObject(cx, target);
+            /* step 5 */
             if (key instanceof String) {
                 return HasOwnProperty(cx, obj, (String) key);
             } else {
@@ -139,8 +152,11 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "getOwnPropertyDescriptor", arity = 2)
         public static Object getOwnPropertyDescriptor(ExecutionContext cx, Object thisValue,
                 Object target, Object propertyKey) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
+            /* steps 3-4 */
             Object key = ToPropertyKey(cx, propertyKey);
+            /* step 5 */
             Property desc;
             if (key instanceof String) {
                 desc = obj.getOwnProperty(cx, (String) key);
@@ -148,6 +164,7 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
                 assert key instanceof Symbol;
                 desc = obj.getOwnProperty(cx, (Symbol) key);
             }
+            /* step 6 */
             return FromPropertyDescriptor(cx, desc);
         }
 
@@ -157,11 +174,15 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "get", arity = 3)
         public static Object get(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey, @Optional(Optional.Default.NONE) Object receiver) {
+            /* steps 1-2 */
+            ScriptObject obj = ToObject(cx, target);
+            /* steps 3-4 */
+            Object key = ToPropertyKey(cx, propertyKey);
+            /* step 5 */
             if (receiver == null) {
                 receiver = target;
             }
-            ScriptObject obj = ToObject(cx, target);
-            Object key = ToPropertyKey(cx, propertyKey);
+            /* step 6 */
             if (key instanceof String) {
                 return obj.get(cx, (String) key, receiver);
             } else {
@@ -176,11 +197,15 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "set", arity = 4)
         public static Object set(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey, Object value, @Optional(Optional.Default.NONE) Object receiver) {
+            /* steps 1-2 */
+            ScriptObject obj = ToObject(cx, target);
+            /* steps 3-4 */
+            Object key = ToPropertyKey(cx, propertyKey);
+            /* step 5 */
             if (receiver == null) {
                 receiver = target;
             }
-            ScriptObject obj = ToObject(cx, target);
-            Object key = ToPropertyKey(cx, propertyKey);
+            /* step 6 */
             if (key instanceof String) {
                 return obj.set(cx, (String) key, value, receiver);
             } else {
@@ -196,12 +221,17 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         public static Object invoke(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey, Object argumentsList,
                 @Optional(Optional.Default.NONE) Object receiver) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
+            /* steps 3-4 */
             Object key = ToPropertyKey(cx, propertyKey);
+            /* step 5 */
             if (receiver == null) {
                 receiver = target;
             }
+            /* steps 6-7 */
             Object[] argList = CreateListFromArrayLike(cx, argumentsList);
+            /* step 8 */
             if (key instanceof String) {
                 return obj.invoke(cx, (String) key, argList, receiver);
             } else {
@@ -216,8 +246,11 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         @Function(name = "deleteProperty", arity = 2)
         public static Object deleteProperty(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
+            /* steps 3-4 */
             Object key = ToPropertyKey(cx, propertyKey);
+            /* step 5 */
             if (key instanceof String) {
                 return obj.delete(cx, (String) key);
             } else {
@@ -227,14 +260,18 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
         }
 
         /**
-         * 26.1.1 Reflect.defineProperty(target, propertyKey, Attributes)
+         * 26.1.1 Reflect.defineProperty(target, propertyKey, attributes)
          */
         @Function(name = "defineProperty", arity = 3)
         public static Object defineProperty(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey, Object attributes) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
+            /* steps 3-4 */
             Object key = ToPropertyKey(cx, propertyKey);
+            /* steps 5-6 */
             PropertyDescriptor desc = ToPropertyDescriptor(cx, attributes);
+            /* step 7 */
             if (key instanceof String) {
                 return obj.defineOwnProperty(cx, (String) key, desc);
             } else {
@@ -248,9 +285,10 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          */
         @Function(name = "enumerate", arity = 1)
         public static Object enumerate(ExecutionContext cx, Object thisValue, Object target) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
-            ScriptObject itr = obj.enumerate(cx);
-            return itr;
+            /* steps 3-4 */
+            return obj.enumerate(cx);
         }
 
         /**
@@ -258,10 +296,10 @@ public class Reflect extends OrdinaryObject implements Initialisable, Module {
          */
         @Function(name = "ownKeys", arity = 1)
         public static Object ownKeys(ExecutionContext cx, Object thisValue, Object target) {
+            /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
-            ScriptObject keys = obj.ownPropertyKeys(cx);
-            // FIXME: spec bug (algorithm end at step 4 without return)
-            return keys;
+            /* step 3 */
+            return obj.ownPropertyKeys(cx);
         }
     }
 }
