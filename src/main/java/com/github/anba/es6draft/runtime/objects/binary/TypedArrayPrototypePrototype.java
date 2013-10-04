@@ -74,10 +74,8 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
 
         private static TypedArrayObject thisTypedArrayObject(ExecutionContext cx, Object thisValue) {
             if (thisValue instanceof TypedArrayObject) {
-                TypedArrayObject array = (TypedArrayObject) thisValue;
-                if (array.getBuffer() != null) {
-                    return array;
-                }
+                // initialisation status intentionally not checked here!
+                return (TypedArrayObject) thisValue;
             }
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -120,7 +118,11 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
          */
         @Accessor(name = "length", type = Accessor.Type.Getter)
         public static Object length(ExecutionContext cx, Object thisValue) {
-            return thisTypedArrayObject(cx, thisValue).getArrayLength();
+            TypedArrayObject typedArray = thisTypedArrayObject(cx, thisValue);
+            if (typedArray.getBuffer() == null) {
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            return typedArray.getArrayLength();
         }
 
         /**
@@ -131,10 +133,14 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         public static Object set(ExecutionContext cx, Object thisValue, Object array, Object offset) {
             if (!(array instanceof TypedArrayObject)) {
                 // 22.2.3.22
-                /* steps 1-5, 7 */
+                /* steps 1-5 */
                 TypedArrayObject target = thisTypedArrayObject(cx, thisValue);
                 /* step 6 */
                 ArrayBufferObject targetBuffer = target.getBuffer();
+                /* step 7 */
+                if (targetBuffer == null) {
+                    throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                }
                 /* step 8 */
                 long targetLength = target.getArrayLength();
                 /* steps 9-10 */
@@ -182,10 +188,14 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             } else {
                 // 22.2.3.23
                 TypedArrayObject typedArray = (TypedArrayObject) array;
-                /* steps 1-6, 8 */
+                /* steps 1-6 */
                 TypedArrayObject target = thisTypedArrayObject(cx, thisValue);
                 /* step 7 */
                 ArrayBufferObject targetBuffer = target.getBuffer();
+                /* step 8 */
+                if (targetBuffer == null) {
+                    throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                }
                 /* step 9 */
                 ArrayBufferObject srcBuffer = typedArray.getBuffer();
                 /* step 10 */
@@ -249,10 +259,14 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         @Function(name = "subarray", arity = 2)
         public static Object subarray(ExecutionContext cx, Object thisValue, Object begin,
                 Object end) {
-            /* steps 1-4, 6 */
+            /* steps 1-4 */
             TypedArrayObject array = thisTypedArrayObject(cx, thisValue);
             /* step 5 */
             ArrayBufferObject buffer = array.getBuffer();
+            /* step 6 */
+            if (buffer == null) {
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
             /* step 7 */
             long srcLength = array.getArrayLength();
             /* steps 8-9 */
