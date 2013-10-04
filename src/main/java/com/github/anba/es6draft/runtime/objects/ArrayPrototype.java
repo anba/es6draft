@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.strictEqualityComparison;
@@ -78,15 +79,15 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
+            /* steps 1-2 */
             ScriptObject array = ToObject(cx, thisValue);
-            /* step 2 */
+            /* steps 3-4 */
             Object func = Get(cx, array, "join");
-            /* step 3 */
+            /* step 5 */
             if (!IsCallable(func)) {
                 func = cx.getIntrinsic(Intrinsics.ObjProto_toString);
             }
-            /* step 4 */
+            /* step 6 */
             return ((Callable) func).call(cx, array);
         }
 
@@ -481,11 +482,15 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         public static Object sort(ExecutionContext cx, Object thisValue, Object comparefn) {
             ScriptObject obj = ToObject(cx, thisValue);
             long len = ToUint32(cx, Get(cx, obj, "length"));
+            if (len > Integer.MAX_VALUE) {
+                throwInternalError(cx, Messages.Key.OutOfMemory);
+            }
 
+            int length = (int) len;
             int emptyCount = 0;
             int undefCount = 0;
-            List<Object> elements = new ArrayList<>((int) Math.min(len, 1024));
-            for (int i = 0; i < len; ++i) {
+            List<Object> elements = new ArrayList<>(Math.min(length, 1024));
+            for (int i = 0; i < length; ++i) {
                 String index = ToString(i);
                 if (HasProperty(cx, obj, index)) {
                     Object e = Get(cx, obj, index);
@@ -703,7 +708,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             if (n >= 0) {
                 k = n;
             } else {
-                k = (long) (len - Math.abs(n));
+                k = len - Math.abs(n);
                 if (k < 0) {
                     k = 0;
                 }
@@ -745,14 +750,14 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             if (fromIndex != null) {
                 n = (long) ToInteger(cx, fromIndex);
             } else {
-                n = (long) (len - 1);
+                n = len - 1;
             }
             /* steps 9-10 */
             long k;
             if (n >= 0) {
-                k = (long) Math.min(n, len - 1);
+                k = Math.min(n, len - 1);
             } else {
-                k = (long) (len - Math.abs(n));
+                k = len - Math.abs(n);
             }
             /* step 11 */
             for (; k >= 0; --k) {
@@ -1039,7 +1044,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 throw throwTypeError(cx, Messages.Key.ReduceInitialValue);
             }
             /* step 8 */
-            long k = (len - 1);
+            long k = len - 1;
             /* steps 9-10 */
             Object accumulator = null;
             if (initialValue != null) {
