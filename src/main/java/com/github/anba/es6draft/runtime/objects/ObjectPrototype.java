@@ -111,10 +111,6 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                 builtinTag = "Date";
             } else if (o instanceof RegExpObject) {
                 builtinTag = "RegExp";
-            } else if (o instanceof MathObject) {
-                builtinTag = "Math";
-            } else if (o instanceof JSONObject) {
-                builtinTag = "JSON";
             } else {
                 builtinTag = "Object";
             }
