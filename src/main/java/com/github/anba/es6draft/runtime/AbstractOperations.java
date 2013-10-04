@@ -325,6 +325,25 @@ public final class AbstractOperations {
     /**
      * 7.1.8.1 ToString Applied to the Number Type
      */
+    public static String ToString(int val) {
+        return Integer.toString(val);
+    }
+
+    /**
+     * 7.1.8.1 ToString Applied to the Number Type
+     */
+    public static String ToString(long val) {
+        if ((int) val == val) {
+            return Integer.toString((int) val);
+        } else if (-0x1FFFFFFFFFFFFFL <= val && val <= 0x1FFFFFFFFFFFFFL) {
+            return Long.toString(val);
+        }
+        return ToString((double) val);
+    }
+
+    /**
+     * 7.1.8.1 ToString Applied to the Number Type
+     */
     public static String ToString(double val) {
         /* steps 1-4 (+ shortcut for integer values) */
         if ((int) val == val) {
