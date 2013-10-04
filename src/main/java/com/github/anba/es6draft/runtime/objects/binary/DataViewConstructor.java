@@ -174,6 +174,10 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
             throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
+        // FIXME: spec bug - missing check for initialisation status, cf. TypedArray Constructor
+        if (bufferObj.getData() == null) {
+            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        }
         /* step 7 */
         double numberOffset = ToNumber(calleeContext, byteOffset);
         /* steps 8-9 */
