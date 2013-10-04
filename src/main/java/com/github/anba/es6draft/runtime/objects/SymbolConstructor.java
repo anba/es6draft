@@ -55,8 +55,8 @@ public class SymbolConstructor extends BuiltinConstructor implements Initialisab
         ExecutionContext calleeContext = calleeContext();
         Object description = args.length > 0 ? args[0] : UNDEFINED;
         /* steps 1-3 */
-        String descString = Type.isUndefined(description) ? ToFlatString(calleeContext, description)
-                : null;
+        String descString = Type.isUndefined(description) ? null : ToFlatString(calleeContext,
+                description);
         /* step 4 */
         return new Symbol(descString);
     }
