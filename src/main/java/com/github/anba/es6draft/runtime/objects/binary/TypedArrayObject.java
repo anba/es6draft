@@ -148,6 +148,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
      * [[ViewedArrayBuffer]]
      */
     public void setBuffer(ArrayBufferObject data) {
+        assert data.getData() != null;
         this.buffer = data;
     }
 
@@ -162,6 +163,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
      * [[ElementType]]
      */
     public void setElementType(ElementType elementType) {
+        assert elementType != null;
         this.elementType = elementType;
     }
 
@@ -184,6 +186,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
      * [[ByteLength]]
      */
     public void setByteLength(long byteLength) {
+        assert byteLength >= 0;
         this.byteLength = byteLength;
     }
 
@@ -199,6 +202,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
      * [[ByteOffset]]
      */
     public void setByteOffset(long byteOffset) {
+        assert byteOffset >= 0;
         this.byteOffset = byteOffset;
     }
 
@@ -213,6 +217,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
      * [[ArrayLength]]
      */
     public void setArrayLength(long arrayLength) {
+        assert arrayLength >= 0;
         this.arrayLength = arrayLength;
     }
 }
