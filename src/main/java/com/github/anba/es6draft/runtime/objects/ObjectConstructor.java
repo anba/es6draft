@@ -396,9 +396,9 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         public static Object mixin(ExecutionContext cx, Object thisValue, Object target,
                 Object source) {
             /* steps 1-2 */
-            ScriptObject to = Type.objectValue(target);
+            ScriptObject to = ToObject(cx, target);
             /* steps 3-4 */
-            ScriptObject from = Type.objectValue(source);
+            ScriptObject from = ToObject(cx, source);
             /* step 5 */
             return MixinProperties(cx, to, from);
         }
@@ -411,20 +411,19 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 Object proto) {
             /* steps 1-2 */
             CheckObjectCoercible(cx, o);
-            /* step 3 (empty) */
-            /* step 4 */
+            /* step 3 */
             if (!(Type.isNull(proto) || Type.isObject(proto))) {
                 throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            /* step 5 */
+            /* step 4 */
             if (!Type.isObject(o)) {
                 return o;
             }
-            /* steps 6-7 */
+            /* steps 5-6 */
             ScriptObject obj = Type.objectValue(o);
             ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
             boolean status = obj.setPrototypeOf(cx, p);
-            /* step 8 */
+            /* step 7 */
             if (!status) {
                 // provide better error messages for ordinary objects
                 if (obj instanceof OrdinaryObject) {
@@ -435,7 +434,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 }
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            /* step 9 */
+            /* step 8 */
             return obj;
         }
     }
