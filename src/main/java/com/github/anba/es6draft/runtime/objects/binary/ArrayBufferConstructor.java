@@ -69,7 +69,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     /**
      * FIXME: spec bug (function CreateByteArrayBlock not defined)
      */
-    public static ByteBuffer CreateByteArrayBlock(ExecutionContext cx, double bytes) {
+    public static ByteBuffer CreateByteArrayBlock(ExecutionContext cx, long bytes) {
         if (bytes > Integer.MAX_VALUE) {
             throwInternalError(cx, Messages.Key.OutOfMemory);
         }
@@ -84,17 +84,17 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     /**
      * FIXME: spec bug (function CopyBlockElements not defined)
      */
-    public static void CopyBlockElements(ByteBuffer fromBuf, double fromPos, ByteBuffer toBuf,
-            double toPos, double length) {
+    public static void CopyBlockElements(ByteBuffer fromBuf, long fromPos, ByteBuffer toBuf,
+            long toPos, long length) {
         assert length >= 0;
         assert fromPos >= 0 && fromPos + length <= fromBuf.capacity();
         assert toPos >= 0 && toPos + length <= toBuf.capacity();
 
-        fromBuf.limit((int) (fromPos + length));
-        fromBuf.position((int) fromPos);
-        toBuf.limit((int) (toPos + length));
-        toBuf.position((int) toPos);
+        fromBuf.limit((int) (fromPos + length)).position((int) fromPos);
+        toBuf.limit((int) (toPos + length)).position((int) toPos);
         toBuf.put(fromBuf);
+        toBuf.clear();
+        fromBuf.clear();
     }
 
     /**
@@ -121,7 +121,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
      * 24.1.1.2 SetArrayBufferData (arrayBuffer, bytes)
      */
     public static ArrayBufferObject SetArrayBufferData(ExecutionContext cx,
-            ArrayBufferObject arrayBuffer, double bytes) {
+            ArrayBufferObject arrayBuffer, long bytes) {
         /* step 1 (implicit) */
         /* step 2 */
         assert bytes >= 0;
@@ -130,7 +130,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         /* step 5 */
         arrayBuffer.setData(block);
         /* step 6 */
-        arrayBuffer.setByteLength((long) bytes);
+        arrayBuffer.setByteLength(bytes);
         /* step 7 */
         return arrayBuffer;
     }
@@ -146,10 +146,23 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
                 + srcByteOffset + ", length=" + srcLength + ", srcType.size=" + srcType.size();
         assert srcByteOffset % srcType.size() == 0;
 
+        // not possible right now - maybe later when neuter operation gets added
+        if (srcData.getData() == null) {
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+
         ArrayBufferObject destData = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
         SetArrayBufferData(cx, destData, srcLength * cloneElementType.size());
 
+        // direct copy
+        if (srcType == cloneElementType) {
+            long bytes = srcLength * srcType.size();
+            CopyBlockElements(srcData.getData(), srcByteOffset, destData.getData(), 0, bytes);
+            return destData;
+        }
+
         for (long index = 0; index < srcLength; ++index) {
+            // Float32/64 -> GetValueFromBuffer() performs NaN canonicalization, expected here?
             double value = GetValueFromBuffer(cx, srcData, srcByteOffset + index * srcType.size(),
                     srcType);
             SetValueInBuffer(cx, destData, index * cloneElementType.size(), cloneElementType, value);
