@@ -140,8 +140,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
 
     private static class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
-            super(realm);
-            setupDefaultFunctionProperties("format", 0);
+            super(realm, "format", 0);
         }
 
         /**

@@ -35,6 +35,12 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         this.realm = realm;
     }
 
+    public BuiltinFunction(Realm realm, String name, int arity) {
+        super(realm);
+        this.realm = realm;
+        createDefaultFunctionProperties(name, arity);
+    }
+
     /**
      * [[Realm]]
      */
@@ -54,7 +60,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
      * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject)}
      */
-    protected final void setupDefaultFunctionProperties(String name, int arity) {
+    protected final void createDefaultFunctionProperties(String name, int arity) {
         ExecutionContext cx = realm.defaultContext();
         setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
         defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));

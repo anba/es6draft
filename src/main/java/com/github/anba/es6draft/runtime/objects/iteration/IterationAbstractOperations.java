@@ -200,8 +200,7 @@ public final class IterationAbstractOperations {
 
     private static final class EmptyIteratorNextMethod extends BuiltinFunction {
         public EmptyIteratorNextMethod(Realm realm) {
-            super(realm);
-            setupDefaultFunctionProperties("next", 0);
+            super(realm, "next", 0);
         }
 
         @Override

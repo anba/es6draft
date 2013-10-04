@@ -23,9 +23,8 @@ public class NativeFunction extends BuiltinFunction {
     private final MethodHandle mh;
 
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
-        super(realm);
+        super(realm, name, arity);
         this.mh = mh;
-        setupDefaultFunctionProperties(name, arity);
     }
 
     /**

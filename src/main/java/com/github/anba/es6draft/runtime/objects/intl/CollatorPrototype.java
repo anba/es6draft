@@ -112,8 +112,7 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
 
     private static class CompareFunction extends BuiltinFunction {
         public CompareFunction(Realm realm) {
-            super(realm);
-            setupDefaultFunctionProperties("compare", 2);
+            super(realm, "compare", 2);
         }
 
         /**

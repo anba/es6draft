@@ -135,8 +135,7 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
 
     private static class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
-            super(realm);
-            setupDefaultFunctionProperties("format", 1);
+            super(realm, "format", 1);
         }
 
         /**
