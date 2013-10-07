@@ -142,8 +142,9 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
 
         private static final Set<String> censoredNames;
         static {
+            // FIXME: @@toStringTag overrides in JSON and Math not possible when censored
             List<String> names = Arrays.asList("Arguments", "Array", "Boolean", "Date", "Error",
-                    "Function", "JSON", "Math", "Number", "RegExp", "String");
+                    "Function", /* "JSON", "Math", */"Number", "RegExp", "String");
             censoredNames = new HashSet<>(names);
         }
 
