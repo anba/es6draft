@@ -85,19 +85,19 @@ public class OrdinaryGenerator extends FunctionObject {
             throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
         }
 
-        /* steps 1-11 */
+        /* steps 1-12 */
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
                 thisValue);
-        /* steps 12-13 */
+        /* steps 13-14 */
         getFunction().functionDeclarationInstantiation(calleeContext, this, args);
-        /* steps 14-15 */
+        /* steps 15-16 */
         GeneratorObject result;
         if (getFunctionKind() != FunctionKind.Arrow) {
             result = EvaluateBody(calleeContext, this);
         } else {
             result = EvaluateBodyComprehension(calleeContext, this);
         }
-        /* step 16 */
+        /* step 17 */
         return result;
     }
 
