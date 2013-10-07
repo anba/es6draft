@@ -491,8 +491,6 @@ tests/basic/cross-context-stack-1.js
 tests/basic/bug863084.js
 # decompileThis
 tests/basic/decompile-script.js
-# getSelfHostedValue
-tests/self-hosting/self-hosted-class.js
 
 # Unsupported 'Testing' functions
 # gcparam
@@ -530,9 +528,7 @@ tests/basic/testOOMInAutoEnterCompartment.js
 # Legacy generator issues             #
 #######################################
 
-# for-of does not call GeneratorPrototype#close() finalizer
-tests/for-of/generators-5.js
-tests/for-of/generators-6.js
+# for-in does not call GeneratorPrototype#close() finalizer
 tests/basic/testErrorInFinalizerCalledWhileUnwinding.js
 
 # Function() with legacy generator source code
