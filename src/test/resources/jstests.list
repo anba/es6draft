@@ -5,19 +5,14 @@
 # <https://github.com/anba/es6draft>
 #
 
-# FIXME: generator tests disabled until https://bugzilla.mozilla.org/show_bug.cgi?id=907077 is fixed
+# FIXME: generator tests disabled until https://bugzilla.mozilla.org/show_bug.cgi?id=924040 is fixed
 ecma_6/Generators/delegating-yield-1.js
 ecma_6/Generators/delegating-yield-2.js
 ecma_6/Generators/delegating-yield-3.js
-ecma_6/Generators/delegating-yield-4.js
 ecma_6/Generators/delegating-yield-5.js
 ecma_6/Generators/delegating-yield-6.js
 ecma_6/Generators/delegating-yield-7.js
-ecma_6/Generators/delegating-yield-8.js
-ecma_6/Generators/delegating-yield-9.js
-ecma_6/Generators/delegating-yield-10.js
 ecma_6/Generators/delegating-yield-11.js
-ecma_6/Generators/iteration.js
 
 # ES6 spec bugs
 js1_7/geniter/regress-347593.js
