@@ -28,6 +28,14 @@ const iteratorSym = Symbol.iterator,
       hasInstanceSym = Symbol.hasInstance,
       createSym = Symbol.create;
 
+// pseudo-symbol in SpiderMonkey
+const mozIteratorSym = "@@iterator";
+
+// map from Symbol.iterator to pseudo-symbol "@@iterator"
+Object.defineProperty(Object.prototype, iteratorSym, {
+  get() { return () => this[mozIteratorSym]() },
+  enumerable: false, configurable: true
+});
 
 // StopIteration object
 const StopIteration = Object.freeze(Object.defineProperties({
@@ -48,7 +56,7 @@ const Iterator = MakeIterator();
 function MakeIterator() {
   const nextSym = Symbol("next");
 
-  function ToIterator(instance, obj, keys) {
+  function ToIterator(instance, obj, keys = false) {
     var iter = (
       Array_isArray(obj) && keys ? obj.map((_, k) => k) :
       Array_isArray(obj) ? obj.map((v, k) => [k, v]) :
@@ -71,25 +79,32 @@ function MakeIterator() {
       return new Iterator(obj, keys);
     }
   }
+  Iterator.prototype = ToIterator(Object.create(Object.prototype), []);
 
-  Object.defineProperty(Iterator, createSym, {
-    value: function() {
+  Object.defineProperties(Object.mixin(Iterator, {
+    [createSym]() {
       var o = Object.create(Iterator.prototype);
       Object_defineProperty(o, nextSym, {__proto__: null, value: null, configurable: true});
       return o;
-    }, writable: false, enumerable: false, configurable: true
+    }
+  }), {
+    [createSym]: {writable: false, enumerable: false},
   });
 
-  Iterator.prototype = ToIterator(Object.create(Object.prototype), []);
-  Iterator.prototype.constructor = Iterator;
-
-  Object.defineProperties(Object.assign(Iterator.prototype, {
-    iterator() {
-      return this;
+  Object.defineProperties(Object.mixin(Iterator.prototype, {
+    constructor: Iterator,
+    get [toStringTagSym]() {
+      return "Iterator";
+    },
+    [iteratorSym]() {
+      return this[mozIteratorSym]();
+    },
+    [mozIteratorSym]() {
+      return new LegacyIterator(this);
     },
     next() {
       if (!IsIterator(this)) {
-        throw TypeError();
+        throw new TypeError();
       }
       var next = this[nextSym]();
       if (Object(next) === next) {
@@ -100,31 +115,35 @@ function MakeIterator() {
       }
     }
   }), {
-    iterator: {enumerable: false},
+    constructor: {enumerable: false},
+    [toStringTagSym]: {enumerable: false},
+    [iteratorSym]: {enumerable: false},
+    [mozIteratorSym]: {enumerable: false},
     next: {enumerable: false},
   });
 
   return Iterator;
 }
 
+// export as global constructor
 Object.defineProperty(global, "Iterator", {
   value: Iterator,
   writable: true, enumerable: false, configurable: true
 });
 
-// (internal) IteratorAdapter object
-const IteratorAdapter = MakeIteratorAdapter();
-function MakeIteratorAdapter() {
+// (internal) LegacyIterator object
+const LegacyIterator = MakeLegacyIterator();
+function MakeLegacyIterator() {
   const iterSym = Symbol("iter");
 
-  class IteratorAdapter {
+  class LegacyIterator extends Iterator {
     constructor(iter) {
       Object_defineProperty(this, iterSym, {__proto__: null, value: iter});
     }
 
-    next() {
+    next(v = void 0) {
       try {
-        var value = this[iterSym].next();
+        var value = this[iterSym].next(v);
         return {value, done: false};
       } catch (e) {
         if (e === StopIteration) {
@@ -134,60 +153,60 @@ function MakeIteratorAdapter() {
       }
     }
 
-    iterator() {
-      return this[iterSym];
+    [mozIteratorSym]() {
+      return this;
     }
 
-    [iteratorSym]() {
-      return this;
+    static [createSym]() {
+      return $CallFunction(Function.prototype[createSym], this);
     }
   }
 
-  Object.defineProperties(IteratorAdapter.prototype, {
+  delete LegacyIterator.prototype.constructor;
+
+  Object.defineProperties(LegacyIterator.prototype, {
     next: {enumerable: false},
-    iterator: {enumerable: false},
-    [iteratorSym]: {writable: false, enumerable: false},
+    [mozIteratorSym]: {enumerable: false},
   });
 
-  return IteratorAdapter;
+  Object.defineProperties(LegacyIterator, {
+    [createSym]: {writable: false, enumerable: false},
+  });
+
+  return LegacyIterator;
 }
 
-Object.defineProperty(Object.prototype, iteratorSym, {
-  get() { return () => new IteratorAdapter(this.iterator()) },
-  enumerable: false, configurable: true
-});
-
-// (internal) MakeBuiltinIterator
+// (internal) BuiltinIterator object
 function MakeBuiltinIterator(ctor) {
   const iterSym = Symbol("iter");
-  const drainedSym = Symbol("drained");
+  const closedSym = Symbol("closed");
 
   class BuiltinIterator extends Iterator {
     constructor(obj, iterF) {
       Object_defineProperty(this, iterSym, {__proto__: null, value: $CallFunction(iterF, obj)});
-      Object_defineProperty(this, drainedSym, {__proto__: null, value: false, configurable: true});
+      Object_defineProperty(this, closedSym, {__proto__: null, value: false, configurable: true});
     }
 
     next() {
-      if (!this[drainedSym]) {
+      if (!this[closedSym]) {
         var next = this[iterSym].next();
-        if (Object(next) === next && !next.done) {
-          return next.value;
+        if (Object(next) === next && next.done) {
+          Object_defineProperty(this, closedSym, {__proto__: null, value: true, configurable: false});
         }
-        Object_defineProperty(this, drainedSym, {__proto__: null, value: true, configurable: false});
+        return next;
       }
-      throw StopIteration;
+      return {value: void 0, done: true};
     }
 
     get [toStringTagSym]() {
       return ctor.name + " Iterator";
     }
 
-    [iteratorSym]() {
-      return this[iterSym];
+    [mozIteratorSym]() {
+      return this;
     }
 
-    get [drainedSym]() {
+    get [closedSym]() {
       return true;
     }
 
@@ -201,8 +220,8 @@ function MakeBuiltinIterator(ctor) {
   Object.defineProperties(BuiltinIterator.prototype, {
     next: {enumerable: false},
     [toStringTagSym]: {enumerable: false},
-    [iteratorSym]: {writable: false, enumerable: false},
-    [drainedSym]: {enumerable: false},
+    [mozIteratorSym]: {enumerable: false},
+    [closedSym]: {enumerable: false},
   });
 
   Object.defineProperties(BuiltinIterator, {
@@ -212,7 +231,57 @@ function MakeBuiltinIterator(ctor) {
   return BuiltinIterator;
 }
 
-// make prototype.iterator() an own data property and remove @@iterator hook
+// (internal) MakeBuiltinArrayIterator:: std:iteration:Iterator -> LegacyIterator
+function MakeBuiltinArrayIterator(ctor) {
+  const iterSym = Symbol("iter");
+  const closedSym = Symbol("closed");
+
+  class BuiltinArrayIterator extends Iterator {
+    constructor(obj, iterF) {
+      Object_defineProperty(this, iterSym, {__proto__: null, value: $CallFunction(iterF, obj)});
+      Object_defineProperty(this, closedSym, {__proto__: null, value: false, configurable: true});
+    }
+
+    next() {
+      if (!this[closedSym]) {
+        var next = this[iterSym].next();
+        if (Object(next) === next && !next.done) {
+          return next.value;
+        }
+        Object_defineProperty(this, closedSym, {__proto__: null, value: true, configurable: false});
+      }
+      throw StopIteration;
+    }
+
+    get [toStringTagSym]() {
+      return ctor.name + " Iterator";
+    }
+
+    get [closedSym]() {
+      return true;
+    }
+
+    static [createSym]() {
+      return $CallFunction(Function.prototype[createSym], this);
+    }
+  }
+
+  delete BuiltinArrayIterator.prototype.constructor;
+
+  Object.defineProperties(BuiltinArrayIterator.prototype, {
+    next: {enumerable: false},
+    [toStringTagSym]: {enumerable: false},
+    [closedSym]: {enumerable: false},
+  });
+
+  Object.defineProperties(BuiltinArrayIterator, {
+    [createSym]: {writable: false, enumerable: false},
+  });
+
+  return BuiltinArrayIterator;
+}
+
+// make prototype[mozIteratorSym]() an own data property and remove @@iterator hook
 
 { /* Map.prototype */
   const Map = global.Map;
@@ -233,8 +302,8 @@ function MakeBuiltinIterator(ctor) {
     entries: {enumerable: false},
   });
 
-  // Map.prototype.iterator === Map.prototype.entries
-  Object.defineProperty(Map.prototype, "iterator", {
+  // Map.prototype[mozIteratorSym] === Map.prototype.entries
+  Object.defineProperty(Map.prototype, mozIteratorSym, {
     value: Map.prototype.entries,
     writable: true, enumerable: false, configurable: true
   });
@@ -264,8 +333,8 @@ function MakeBuiltinIterator(ctor) {
     writable: true, enumerable: false, configurable: true
   });
 
-  // Set.prototype.iterator === Set.prototype.values
-  Object.defineProperty(Set.prototype, "iterator", {
+  // Set.prototype[mozIteratorSym] === Set.prototype.values
+  Object.defineProperty(Set.prototype, mozIteratorSym, {
     value: Set.prototype.values,
     writable: true, enumerable: false, configurable: true
   });
@@ -275,35 +344,34 @@ function MakeBuiltinIterator(ctor) {
 
 { /* Array.prototype */
   const BuiltinIterator = MakeBuiltinIterator(Array);
+  const BuiltinArrayIterator = MakeBuiltinArrayIterator(Array);
   const iterF = {
     keys: Array.prototype['keys'],
     values: Array.prototype['values'],
     entries: Array.prototype['entries'],
   };
-  const throwsOnGet = new Proxy({}, {get: () => { throw TypeError() }});
+  const throwsOnGet = new Proxy({}, {get: () => { throw new TypeError() }});
 
+  // legacy iterator for Array.prototype
   Object.defineProperties(Object.assign(Array.prototype, {
-    keys() {
-      return new BuiltinIterator(this != null ? this : throwsOnGet, iterF.keys)
-    },
-    values() {
-      return new BuiltinIterator(this != null ? this : throwsOnGet, iterF.values)
-    },
-    entries() {
-      return new BuiltinIterator(this != null ? this : throwsOnGet, iterF.entries)
+    iterator() {
+      return new BuiltinArrayIterator(this != null ? this : throwsOnGet, iterF.values)
     },
   }), {
-    keys: {enumerable: false},
-    values: {enumerable: false},
-    entries: {enumerable: false},
+    iterator: {enumerable: false},
   });
 
-  // Array.prototype.iterator === Array.prototype.values
-  Object.defineProperty(Array.prototype, "iterator", {
-    value: Array.prototype.values,
-    writable: true, enumerable: false, configurable: true
+  // "@@iterator" based on legacy iterator
+  const ArrayPrototype_iterator = Array.prototype.iterator;
+  Object.defineProperties(Object.assign(Array.prototype, {
+    [mozIteratorSym]() {
+      return new LegacyIterator($CallFunction(ArrayPrototype_iterator, this));
+    },
+  }), {
+    [mozIteratorSym]: {enumerable: false},
   });
 
+  // delete original Array.prototype[@@iterator]
   delete Array.prototype[iteratorSym];
 
   // keys, values and entries currently disabled in SpiderMonkey :(
@@ -319,14 +387,28 @@ function MakeBuiltinIterator(ctor) {
   const TypedArrays = [for (type of types) global[type + "Array"]];
   [String, ...TypedArrays].forEach(
     ctor => {
-      Object.defineProperty(ctor.prototype, "iterator", {
-        value() { return $CallFunction(ArrayPrototype_iterator, this) },
-        writable: true, enumerable: false, configurable: true
+      // legacy iterator based on Array.prototype.iterator
+      Object.defineProperties(Object.assign(ctor.prototype, {
+        iterator() {
+          return $CallFunction(ArrayPrototype_iterator, this);
+        }
+      }), {
+        iterator: {enumerable: false},
+      });
+
+      // "@@iterator" based on legacy iterator
+      const legacyIterator = ctor.prototype.iterator;
+      Object.defineProperties(Object.assign(ctor.prototype, {
+        [mozIteratorSym]() {
+          return new LegacyIterator($CallFunction(legacyIterator, this));
+        }
+      }), {
+        [mozIteratorSym]: {enumerable: false},
       });
     }
   );
 
-  // delete the original String.prototype[@@iterator]
+  // delete original String.prototype[@@iterator]
   delete String.prototype[iteratorSym];
 }
 
@@ -350,9 +432,9 @@ function MakeBuiltinIterator(ctor) {
       Object_defineProperty(this, isMapSym, {__proto__: null, value: true, configurable: false});
       if (iterable !== undefined) {
         if ("entries" in iterable) {
-          iterable = iterable.entries()[iteratorSym]();
+          iterable = iterable.entries();
         } else {
-          iterable = iterable.iterator()[iteratorSym]();
+          iterable = iterable[mozIteratorSym]();
         }
       }
       return super(iterable, comparator);
@@ -405,7 +487,7 @@ function MakeBuiltinIterator(ctor) {
       }
       Object_defineProperty(this, isSetSym, {__proto__: null, value: true, configurable: false});
       if (iterable !== undefined) {
-        iterable = iterable.iterator()[iteratorSym]();
+        iterable = iterable[mozIteratorSym]();
       }
       return super(iterable, comparator);
     }
@@ -458,9 +540,9 @@ function MakeBuiltinIterator(ctor) {
       Object_defineProperty(this, isWeakMapSym, {__proto__: null, value: true, configurable: false});
       if (iterable !== undefined) {
         if ("entries" in iterable) {
-          iterable = iterable.entries()[iteratorSym]();
+          iterable = iterable.entries();
         } else {
-          iterable = iterable.iterator()[iteratorSym]();
+          iterable = iterable[mozIteratorSym]();
         }
       }
       return super(iterable, comparator);
@@ -512,7 +594,7 @@ function MakeBuiltinIterator(ctor) {
       }
       Object_defineProperty(this, isWeakSetSym, {__proto__: null, value: true, configurable: false});
       if (iterable !== undefined) {
-        iterable = iterable.iterator()[iteratorSym]();
+        iterable = iterable[mozIteratorSym]();
       }
       return super(iterable, comparator);
     }

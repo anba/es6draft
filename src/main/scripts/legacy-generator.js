@@ -10,6 +10,7 @@
 
 const Object = global.Object,
       Function = global.Function,
+      Symbol = global.Symbol,
       StopIteration = global.StopIteration;
 
 const Object_defineProperty = Object.defineProperty,
@@ -20,11 +21,32 @@ const Object_defineProperty = Object.defineProperty,
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 const GeneratorFunction = Object.getPrototypeOf(function*(){}).constructor;
-const GeneratorPrototype = Object.getPrototypeOf(function*(){}).prototype;
+const GeneratorPrototype = Object.getPrototypeOf(function*(){}.prototype);
 const GeneratorPrototype_next = GeneratorPrototype.next,
       GeneratorPrototype_throw = GeneratorPrototype.throw;
+const LegacyGeneratorPrototype = Object.getPrototypeOf(function(){yield 0}.prototype);
 
-const iteratorSym = Symbol.iterator;
+const iteratorSym = Symbol.iterator,
+      toStringTagSym = Symbol.toStringTag;
+
+// pseudo-symbol in SpiderMonkey
+const mozIteratorSym = "@@iterator";
+
+Object.defineProperties(Object.assign(Function.prototype, {
+  isGenerator() {
+    return this instanceof GeneratorFunction;
+  }
+}), {
+  isGenerator: {enumerable: false},
+});
+
+Object.defineProperties(Object.assign(GeneratorPrototype, {
+  [mozIteratorSym]() {
+    return this;
+  }
+}), {
+  [mozIteratorSym]: {enumerable: false},
+});
 
 //  “newborn”, “executing”, “suspended”, or “closed”
 const generatorStateSym = Symbol("generatorState");
@@ -32,7 +54,7 @@ const generatorStateSym = Symbol("generatorState");
 function GeneratorState(g) {
   // no proper way to test for generators in scripts
   if (Object_toString(g) == "[object Generator]") {
-    if (g === GeneratorPrototype || Object_getPrototypeOf(g) === GeneratorPrototype) {
+    if (g === LegacyGeneratorPrototype || Object_getPrototypeOf(g) === LegacyGeneratorPrototype) {
       return;
     }
     if (!Object_hasOwnProperty(g, generatorStateSym)) {
@@ -62,18 +84,16 @@ function GeneratorResume(fn, g, v) {
   }
 }
 
-Object.defineProperties(Object.assign(Function.prototype, {
-  isGenerator() {
-    return this instanceof GeneratorFunction;
-  }
-}), {
-  isGenerator: {enumerable: false}
-});
-
-Object.defineProperty(GeneratorPrototype, iteratorSym, {
-  value() {
+Object.defineProperties(Object.mixin(LegacyGeneratorPrototype, {
+  [iteratorSym]() {
+    return this[mozIteratorSym]();
+  },
+  [mozIteratorSym]() {
     return {
       [iteratorSym]() {
+        return this;
+      },
+      [mozIteratorSym]() {
         return this;
       },
       next: v => {
@@ -98,11 +118,8 @@ Object.defineProperty(GeneratorPrototype, iteratorSym, {
           throw e;
         }
       }
-    }
-  }
-});
-
-Object.defineProperties(Object.assign(GeneratorPrototype, {
+    };
+  },
   next() {
     switch(GeneratorState(this)) {
       case "newborn":
@@ -152,15 +169,17 @@ Object.defineProperties(Object.assign(GeneratorPrototype, {
         throw new TypeError();
     }
   },
-  iterator() {
-    return this;
-  },
+  get [toStringTagSym]() {
+    return "Generator";
+  }
 }), {
+  [iteratorSym]: {enumerable: false},
+  [mozIteratorSym]: {enumerable: false},
   next: {enumerable: false},
   send: {enumerable: false},
   close: {enumerable: false},
   throw: {enumerable: false},
-  iterator: {enumerable: false},
+  [toStringTagSym]: {enumerable: false},
 });
 
 })(this);

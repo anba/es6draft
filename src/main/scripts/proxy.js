@@ -21,6 +21,9 @@ const Function_call = Function.prototype.call.bind(Function.prototype.call);
 
 const iteratorSym = Symbol.iterator;
 
+// pseudo-symbol in SpiderMonkey
+const mozIteratorSym = "@@iterator";
+
 function toProxyHandler(handler) {
   var TypeErrorThrower = () => { throw TypeError() };
   /* fundamental traps mapping:
@@ -72,7 +75,7 @@ function toProxyHandler(handler) {
     proxyHandler['get'] = (_, pk, receiver) => {
       // XXX: special case for iteration tests
       if (pk === iteratorSym) {
-        var desc = handler['getPropertyDescriptor']("iterator");
+        var desc = handler['getPropertyDescriptor'](mozIteratorSym);
         if (desc !== undefined && 'value' in desc) {
           // call @@iterator() so we don't end up with a StopIteration based Iterator
           return function() { return desc.value.call(this)[iteratorSym]() };
@@ -116,7 +119,7 @@ function toProxyHandler(handler) {
   } else if ('iterate' in handler) {
     proxyHandler['enumerate'] = () => handler['iterate']()[iteratorSym]();
   } else {
-    proxyHandler['enumerate'] = () => handler['getPropertyNames'].filter(
+    proxyHandler['enumerate'] = () => handler['getPropertyNames']().filter(
       pk => handler['getPropertyDescriptor'](pk).enumerable
     )[iteratorSym]();
   }
