@@ -48,11 +48,6 @@ const TypedArrays = [for (type of types) global[type + "Array"]];
       },
       writable: true, enumerable: false, configurable: true
     });
-
-    Object.defineProperty(ctor, "BYTES_PER_ELEMENT", {
-      value: ctor.prototype.BYTES_PER_ELEMENT,
-      writable: false, enumerable: false, configurable: false
-    });
   }
 );
 
