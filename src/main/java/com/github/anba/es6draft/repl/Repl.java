@@ -179,8 +179,8 @@ public class Repl {
         }
     }
 
-    private void handleException(ScriptException e) {
-        console.printf("uncaught exception: %s%n", e.getMessage());
+    private void handleException(Realm realm, ScriptException e) {
+        console.printf("uncaught exception: %s%n", e.getMessage(realm.defaultContext()));
         if (options.contains(Option.StackTrace)) {
             printStackTrace(e);
         }
@@ -253,7 +253,7 @@ public class Repl {
                     System.exit(0);
                 }
             } catch (ScriptException e) {
-                handleException(e);
+                handleException(realm, e);
             } catch (ParserException | CompilationException | StackOverflowError e) {
                 handleException(e);
             } catch (BootstrapMethodError e) {
