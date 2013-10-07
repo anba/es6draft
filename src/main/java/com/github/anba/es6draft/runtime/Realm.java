@@ -53,6 +53,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1>
@@ -586,6 +587,11 @@ public final class Realm {
         generatorFunctionConstructor.initialise(defaultContext);
         generatorPrototype.initialise(defaultContext);
         generator.initialise(defaultContext);
+
+        if (realm.isEnabled(CompatibilityOption.LegacyGenerator)) {
+            OrdinaryObject legacyGeneratorPrototype = OrdinaryObject.ObjectCreate(defaultContext);
+            intrinsics.put(Intrinsics.LegacyGeneratorPrototype, legacyGeneratorPrototype);
+        }
     }
 
     /**

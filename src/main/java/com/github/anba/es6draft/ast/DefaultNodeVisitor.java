@@ -400,6 +400,16 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
+    public R visit(LegacyGeneratorDeclaration node, V value) {
+        return visit((GeneratorDeclaration) node, value);
+    }
+
+    @Override
+    public R visit(LegacyGeneratorExpression node, V value) {
+        return visit((GeneratorExpression) node, value);
+    }
+
+    @Override
     public R visit(LetExpression node, V value) {
         return visit((Expression) node, value);
     }

@@ -63,7 +63,7 @@ public class CodeSizeAnalysis implements AutoCloseable {
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof RuntimeException) {
-                throw ((RuntimeException) cause);
+                throw (RuntimeException) cause;
             } else if (cause instanceof Error) {
                 throw (Error) cause;
             }
@@ -148,12 +148,27 @@ public class CodeSizeAnalysis implements AutoCloseable {
         }
 
         @Override
+        public Integer visit(Comprehension node, Integer size) {
+            throw new CodeSizeException(size);
+        }
+
+        @Override
         public Integer visit(GeneratorDeclaration node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 
         @Override
         public Integer visit(GeneratorExpression node, Integer size) {
+            return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
+        }
+
+        @Override
+        public Integer visit(LegacyGeneratorDeclaration node, Integer size) {
+            return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
+        }
+
+        @Override
+        public Integer visit(LegacyGeneratorExpression node, Integer size) {
             return visit(node, size, new TopLevelSubMethod.FunctionSubMethod());
         }
 

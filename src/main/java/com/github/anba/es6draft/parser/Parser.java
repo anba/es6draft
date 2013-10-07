@@ -2167,8 +2167,14 @@ public class Parser {
             String body = ts.range(startBody, endFunction);
 
             FunctionContext scope = context.funContext;
-            GeneratorDeclaration generator = new GeneratorDeclaration(scope, identifier,
-                    parameters, statements, header, body);
+            GeneratorDeclaration generator;
+            if (!starless) {
+                generator = new GeneratorDeclaration(scope, identifier, parameters, statements,
+                        header, body);
+            } else {
+                generator = new LegacyGeneratorDeclaration(scope, identifier, parameters,
+                        statements, header, body);
+            }
             generator.setLine(line);
             scope.node = generator;
 
@@ -2216,8 +2222,14 @@ public class Parser {
             String body = ts.range(startBody, endFunction);
 
             FunctionContext scope = context.funContext;
-            GeneratorExpression generator = new GeneratorExpression(scope, identifier, parameters,
-                    statements, header, body);
+            GeneratorExpression generator;
+            if (!starless) {
+                generator = new GeneratorExpression(scope, identifier, parameters, statements,
+                        header, body);
+            } else {
+                generator = new LegacyGeneratorExpression(scope, identifier, parameters,
+                        statements, header, body);
+            }
             generator.setLine(line);
             scope.node = generator;
 

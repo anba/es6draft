@@ -15,6 +15,7 @@ import org.objectweb.asm.Type;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
+import com.github.anba.es6draft.ast.LegacyGeneratorDeclaration;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -59,6 +60,11 @@ abstract class DeclarationBindingInstantiationGenerator {
 
         static final MethodDesc ScriptRuntime_InstantiateGeneratorObject = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "InstantiateGeneratorObject", Type
+                        .getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
+                                Types.ExecutionContext, Types.RuntimeInfo$Function));
+
+        static final MethodDesc ScriptRuntime_InstantiateLegacyGeneratorObject = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "InstantiateLegacyGeneratorObject", Type
                         .getMethodType(Types.OrdinaryGenerator, Types.LexicalEnvironment,
                                 Types.ExecutionContext, Types.RuntimeInfo$Function));
     }
@@ -248,7 +254,11 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
 
-        mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);
+        if (!(f instanceof LegacyGeneratorDeclaration)) {
+            mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);
+        } else {
+            mv.invoke(Methods.ScriptRuntime_InstantiateLegacyGeneratorObject);
+        }
     }
 
     protected static String BoundName(Declaration d) {

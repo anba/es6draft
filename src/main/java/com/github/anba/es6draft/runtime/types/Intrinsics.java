@@ -112,5 +112,8 @@ public enum Intrinsics {/* @formatter:off */
     InternalError,
     InternalErrorPrototype,
 
+    // legacy
+    LegacyGeneratorPrototype,
+
     /* @formatter:on */
 }

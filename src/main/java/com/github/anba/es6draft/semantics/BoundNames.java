@@ -208,6 +208,16 @@ class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>> {
 
     /**
      * <pre>
+     * GeneratorDeclaration : function * BindingIdentifier ( FormalParameterList ) { FunctionBody }
+     * </pre>
+     */
+    @Override
+    public List<String> visit(LegacyGeneratorDeclaration node, List<String> value) {
+        return node.getIdentifier().accept(this, value);
+    }
+
+    /**
+     * <pre>
      * ClassDeclaration: class BindingIdentifier ClassTail
      * </pre>
      */

@@ -183,9 +183,20 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorComprehension",
                 Type.getMethodType(Types.ScriptObject, Types.MethodHandle, Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_EvaluateLegacyGeneratorComprehension = MethodDesc
+                .create(MethodType.Static, Types.ScriptRuntime,
+                        "EvaluateLegacyGeneratorComprehension", Type.getMethodType(
+                                Types.ScriptObject, Types.MethodHandle, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_EvaluateGeneratorExpression = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorExpression", Type
                         .getMethodType(Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_EvaluateLegacyGeneratorExpression = MethodDesc
+                .create(MethodType.Static, Types.ScriptRuntime,
+                        "EvaluateLegacyGeneratorExpression", Type.getMethodType(
+                                Types.OrdinaryGenerator, Types.RuntimeInfo$Function,
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateMethodCall = MethodDesc.create(
@@ -1721,7 +1732,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext);
         mv.invokeStaticMH(codegen.getClassName(), codegen.methodName(node), desc);
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorComprehension);
+        if (!(node.getComprehension() instanceof LegacyComprehension)) {
+            mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorComprehension);
+        } else {
+            mv.invoke(Methods.ScriptRuntime_EvaluateLegacyGeneratorComprehension);
+        }
 
         return ValType.Object;
     }
@@ -1735,6 +1750,19 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Type.getMethodDescriptor(Types.RuntimeInfo$Function));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorExpression);
+
+        return ValType.Object;
+    }
+
+    @Override
+    public ValType visit(LegacyGeneratorExpression node, ExpressionVisitor mv) {
+        codegen.compile(node);
+
+        // Runtime Semantics: Evaluation -> FunctionExpression
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
+                Type.getMethodDescriptor(Types.RuntimeInfo$Function));
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_EvaluateLegacyGeneratorExpression);
 
         return ValType.Object;
     }
@@ -1822,7 +1850,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     @Override
     public ValType visit(NumericLiteral node, ExpressionVisitor mv) {
         double v = node.getValue();
-        if ((int) v == v) {
+        if ((int) v == v && (v != 0 || Double.doubleToRawLongBits(v) == 0L)) {
             mv.iconst((int) v);
             return ValType.Number_int;
         } else {
