@@ -714,11 +714,7 @@ public class OrdinaryObject implements ScriptObject {
 
     /** 9.1.13 [[OwnPropertyKeys]] ( ) */
     protected Collection<Object> enumerateOwnKeys() {
-        List<Object> keys = new ArrayList<>();
-        for (Object key : __keys__()) {
-            keys.add(key);
-        }
-        return keys;
+        return new ArrayList<>(__keys__());
     }
 
     private static class DefaultAllocator implements ObjectAllocator<OrdinaryObject> {
