@@ -7,11 +7,9 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -25,9 +23,6 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public class ExoticBoundFunction extends OrdinaryObject implements Callable {
-    /** [[Realm]] */
-    private final Realm realm;
-
     /** [[BoundTargetFunction]] */
     private Callable boundTargetFunction;
 
@@ -58,9 +53,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
             /* step 1 */
             Callable target = getBoundTargetFunction();
             /* step 2 */
-            if (!(target instanceof Constructor)) {
-                throw throwTypeError(callerContext, Messages.Key.NotConstructor);
-            }
+            assert IsConstructor(target);
             /* step 3 */
             Object[] boundArgs = getBoundArguments();
             /* step 4 */
@@ -74,14 +67,6 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
 
     public ExoticBoundFunction(Realm realm) {
         super(realm);
-        this.realm = realm;
-    }
-
-    /**
-     * [[Realm]]
-     */
-    protected final Realm realm() {
-        return realm;
     }
 
     /**
