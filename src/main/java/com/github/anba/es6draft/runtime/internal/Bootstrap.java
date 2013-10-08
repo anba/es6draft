@@ -23,8 +23,8 @@ import com.github.anba.es6draft.runtime.types.Type;
 /**
  *
  */
-public final class SimpleBootstrap {
-    private SimpleBootstrap() {
+public final class Bootstrap {
+    private Bootstrap() {
     }
 
     private static class Types {
@@ -48,7 +48,7 @@ public final class SimpleBootstrap {
         MethodType mt = MethodType.methodType(CallSite.class, MethodHandles.Lookup.class,
                 String.class, MethodType.class);
         BINARY_BOOTSTRAP = new Handle(Opcodes.H_INVOKESTATIC,
-                org.objectweb.asm.Type.getInternalName(SimpleBootstrap.class), "bootstrapDynamic",
+                org.objectweb.asm.Type.getInternalName(Bootstrap.class), "bootstrapDynamic",
                 mt.toMethodDescriptorString());
     }
 

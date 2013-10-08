@@ -31,7 +31,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
-import com.github.anba.es6draft.runtime.internal.SimpleBootstrap;
+import com.github.anba.es6draft.runtime.internal.Bootstrap;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
@@ -282,9 +282,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     private static final Object[] EMPTY_BSM_ARGS = new Object[] {};
 
     private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
-        mv.invokedynamic(SimpleBootstrap.getName(operator),
-                SimpleBootstrap.getMethodDescriptor(operator),
-                SimpleBootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
+        mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
+                Bootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
     }
 
     /**
