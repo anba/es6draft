@@ -4383,6 +4383,7 @@ public class Parser {
         if (LOOKAHEAD(Token.FOR)) {
             return arrayComprehension();
         } else {
+            long sourcePos = ts.sourcePosition();
             if (isEnabled(Option.LegacyComprehension)) {
                 switch (peek()) {
                 case RB:
@@ -4399,10 +4400,10 @@ public class Parser {
                         ts.reset(position, lineinfo);
                         return legacyArrayComprehension();
                     }
-                    return arrayLiteral(expression);
+                    return arrayLiteral(sourcePos, expression);
                 }
             }
-            return arrayLiteral(null);
+            return arrayLiteral(sourcePos, null);
         }
     }
 
@@ -4426,8 +4427,7 @@ public class Parser {
      *     ... AssignmentExpression
      * </pre>
      */
-    private ArrayLiteral arrayLiteral(Expression expr) {
-        long position = ts.sourcePosition(); // FIXME: -> parameter!
+    private ArrayLiteral arrayLiteral(long sourcePos, Expression expr) {
         List<Expression> list = newList();
         boolean needComma = false;
         if (expr == null) {
@@ -4444,9 +4444,9 @@ public class Parser {
                 consume(Token.COMMA);
                 list.add(new Elision(0));
             } else if (tok == Token.TRIPLE_DOT) {
-                long sourcePos = ts.sourcePosition();
+                long sourcePosSpread = ts.sourcePosition();
                 consume(Token.TRIPLE_DOT);
-                list.add(new SpreadElement(sourcePos, assignmentExpression(true)));
+                list.add(new SpreadElement(sourcePosSpread, assignmentExpression(true)));
                 needComma = true;
             } else {
                 list.add(assignmentExpressionNoValidation(true));
@@ -4455,7 +4455,7 @@ public class Parser {
         }
         consume(Token.RB);
 
-        return new ArrayLiteral(position, list);
+        return new ArrayLiteral(sourcePos, list);
     }
 
     /**
@@ -4467,12 +4467,12 @@ public class Parser {
      * </pre>
      */
     private ArrayComprehension arrayComprehension() {
-        long position = ts.sourcePosition();
+        long sourcePos = ts.sourcePosition();
         consume(Token.LB);
         Comprehension comprehension = comprehension();
         consume(Token.RB);
 
-        return new ArrayComprehension(position, comprehension);
+        return new ArrayComprehension(sourcePos, comprehension);
     }
 
     /**
@@ -4560,12 +4560,12 @@ public class Parser {
      * </pre>
      */
     private ArrayComprehension legacyArrayComprehension() {
-        long position = ts.sourcePosition();
+        long sourcePos = ts.sourcePosition();
         consume(Token.LB);
         LegacyComprehension comprehension = legacyComprehension();
         consume(Token.RB);
 
-        return new ArrayComprehension(position, comprehension);
+        return new ArrayComprehension(sourcePos, comprehension);
     }
 
     /**
