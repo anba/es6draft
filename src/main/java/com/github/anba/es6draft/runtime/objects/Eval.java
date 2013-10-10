@@ -129,7 +129,7 @@ public final class Eval {
                 options.add(Parser.Option.LocalScope);
             }
             Parser parser = new Parser("<eval>", 1, options);
-            com.github.anba.es6draft.ast.Script parsedScript = parser.parse(source);
+            com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
             if (parsedScript.getStatements().isEmpty()) {
                 return null;
             }

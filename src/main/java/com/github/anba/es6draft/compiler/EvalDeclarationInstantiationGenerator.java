@@ -78,7 +78,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         ExpressionVisitor mv = new EvalDeclInitMethodGenerator(codegen, methodName,
                 IsStrict(evalScript));
 
-        mv.lineInfo(evalScript.getLine());
+        mv.lineInfo(evalScript);
         mv.begin();
         // only generate eval-script-init when requested
         if (evalScript.isEvalScript()) {

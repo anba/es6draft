@@ -67,7 +67,7 @@ public class ScriptCache {
             Reader reader) throws ParserException, IOException {
         String source = readFully(reader);
         Parser parser = new Parser(sourceFile, sourceLine, options);
-        com.github.anba.es6draft.ast.Script parsedScript = parser.parse(source);
+        com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
         return parsedScript;
     }
 
