@@ -19,7 +19,7 @@ public class StatementListMethod extends Statement {
     private List<StatementListItem> statements;
 
     public StatementListMethod(List<StatementListItem> statements) {
-        assert !statements.isEmpty();
+        super(first(statements).getSourcePosition());
         this.statements = statements;
     }
 
@@ -28,12 +28,12 @@ public class StatementListMethod extends Statement {
     }
 
     @Override
-    public int getLine() {
-        return statements.get(0).getLine();
-    }
-
-    @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    private static StatementListItem first(List<StatementListItem> elements) {
+        assert !elements.isEmpty();
+        return elements.get(0);
     }
 }

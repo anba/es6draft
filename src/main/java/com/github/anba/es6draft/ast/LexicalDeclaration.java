@@ -23,7 +23,8 @@ public class LexicalDeclaration extends Declaration {
         Let, Const
     }
 
-    public LexicalDeclaration(Type type, List<LexicalBinding> elements) {
+    public LexicalDeclaration(long sourcePosition, Type type, List<LexicalBinding> elements) {
+        super(sourcePosition);
         this.type = type;
         this.elements = elements;
     }

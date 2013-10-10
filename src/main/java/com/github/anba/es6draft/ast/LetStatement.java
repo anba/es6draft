@@ -19,7 +19,9 @@ public class LetStatement extends Statement implements ScopedNode {
     private List<LexicalBinding> bindings;
     private BlockStatement statement;
 
-    public LetStatement(BlockScope scope, List<LexicalBinding> bindings, BlockStatement statement) {
+    public LetStatement(long sourcePosition, BlockScope scope, List<LexicalBinding> bindings,
+            BlockStatement statement) {
+        super(sourcePosition);
         this.scope = scope;
         this.bindings = bindings;
         this.statement = statement;

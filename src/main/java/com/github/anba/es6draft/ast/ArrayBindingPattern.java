@@ -18,7 +18,8 @@ import java.util.List;
 public class ArrayBindingPattern extends BindingPattern {
     private List<BindingElementItem> elements;
 
-    public ArrayBindingPattern(List<BindingElementItem> elements) {
+    public ArrayBindingPattern(long sourcePosition, List<BindingElementItem> elements) {
+        super(sourcePosition);
         this.elements = elements;
     }
 

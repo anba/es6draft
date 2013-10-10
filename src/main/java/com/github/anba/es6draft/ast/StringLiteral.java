@@ -16,7 +16,8 @@ package com.github.anba.es6draft.ast;
 public class StringLiteral extends ValueLiteral<String> implements PropertyName {
     private String value;
 
-    public StringLiteral(String value) {
+    public StringLiteral(long sourcePosition, String value) {
+        super(sourcePosition);
         this.value = value;
     }
 

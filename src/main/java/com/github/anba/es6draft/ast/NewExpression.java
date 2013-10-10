@@ -19,7 +19,8 @@ public class NewExpression extends Expression {
     private Expression expression;
     private List<Expression> arguments;
 
-    public NewExpression(Expression expression, List<Expression> arguments) {
+    public NewExpression(long sourcePosition, Expression expression, List<Expression> arguments) {
+        super(sourcePosition);
         this.expression = expression;
         this.arguments = arguments;
     }

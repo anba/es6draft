@@ -22,22 +22,26 @@ public class SuperExpression extends LeftHandSideExpression {
     private Expression expression;
     private List<Expression> arguments;
 
-    public SuperExpression() {
+    public SuperExpression(long sourcePosition) {
         // new super()
+        super(sourcePosition);
     }
 
-    public SuperExpression(String name) {
+    public SuperExpression(long sourcePosition, String name) {
         // super.<name>
+        super(sourcePosition);
         this.name = name;
     }
 
-    public SuperExpression(Expression expression) {
+    public SuperExpression(long sourcePosition, Expression expression) {
         // super[expression]
+        super(sourcePosition);
         this.expression = expression;
     }
 
-    public SuperExpression(List<Expression> arguments) {
+    public SuperExpression(long sourcePosition, List<Expression> arguments) {
         // super(<arguments>)
+        super(sourcePosition);
         this.arguments = arguments;
     }
 
@@ -55,18 +59,15 @@ public class SuperExpression extends LeftHandSideExpression {
 
     @Override
     public Expression asValue() {
-        SuperExpressionValue value;
         if (name != null) {
-            value = new SuperExpressionValue(name);
+            return new SuperExpressionValue(getSourcePosition(), name);
         } else if (expression != null) {
-            value = new SuperExpressionValue(expression);
+            return new SuperExpressionValue(getSourcePosition(), expression);
         } else if (arguments != null) {
-            value = new SuperExpressionValue(arguments);
+            return new SuperExpressionValue(getSourcePosition(), arguments);
         } else {
-            value = new SuperExpressionValue();
+            return new SuperExpressionValue(getSourcePosition());
         }
-        value.setLine(getLine());
-        return value;
     }
 
     @Override

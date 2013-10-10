@@ -55,7 +55,8 @@ public class UnaryExpression extends Expression {
     private Operator operator;
     private Expression operand;
 
-    public UnaryExpression(Operator operator, Expression operand) {
+    public UnaryExpression(long sourcePosition, Operator operator, Expression operand) {
+        super(sourcePosition);
         this.operator = operator;
         this.operand = operand;
     }

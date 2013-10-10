@@ -13,7 +13,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class Declaration extends StatementListItem {
-    protected Declaration() {
+    protected Declaration(long sourcePosition) {
+        super(sourcePosition);
     }
 
     public abstract boolean isConstDeclaration();

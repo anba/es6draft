@@ -12,7 +12,8 @@ package com.github.anba.es6draft.ast;
 public abstract class Expression extends AstNode {
     private int parentheses = 0;
 
-    protected Expression() {
+    protected Expression(long sourcePosition) {
+        super(sourcePosition);
     }
 
     public boolean isParenthesised() {

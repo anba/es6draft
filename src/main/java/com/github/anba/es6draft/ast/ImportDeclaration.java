@@ -14,11 +14,14 @@ public class ImportDeclaration extends StatementListItem {
     private ImportSpecifierSet importSpecifierSet;
     private String moduleSpecifier;
 
-    public ImportDeclaration(String moduleSpecifier) {
+    public ImportDeclaration(long sourcePosition, String moduleSpecifier) {
+        super(sourcePosition);
         this.moduleSpecifier = moduleSpecifier;
     }
 
-    public ImportDeclaration(ImportSpecifierSet importSpecifierSet, String moduleSpecifier) {
+    public ImportDeclaration(long sourcePosition, ImportSpecifierSet importSpecifierSet,
+            String moduleSpecifier) {
+        super(sourcePosition);
         this.importSpecifierSet = importSpecifierSet;
         this.moduleSpecifier = moduleSpecifier;
     }

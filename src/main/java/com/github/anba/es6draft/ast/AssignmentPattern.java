@@ -14,6 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class AssignmentPattern extends LeftHandSideExpression {
-    protected AssignmentPattern() {
+    protected AssignmentPattern(long sourcePosition) {
+        super(sourcePosition);
     }
 }

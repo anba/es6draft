@@ -17,7 +17,8 @@ package com.github.anba.es6draft.ast;
 public class ComprehensionIf extends ComprehensionQualifier {
     private Expression test;
 
-    public ComprehensionIf(Expression test) {
+    public ComprehensionIf(long sourcePosition, Expression test) {
+        super(sourcePosition);
         this.test = test;
     }
 

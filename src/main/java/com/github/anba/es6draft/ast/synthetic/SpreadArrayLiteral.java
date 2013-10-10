@@ -17,17 +17,16 @@ import com.github.anba.es6draft.ast.NodeVisitor;
  */
 public class SpreadArrayLiteral extends ArrayLiteral {
     public SpreadArrayLiteral(List<Expression> elements) {
-        super(elements);
-        assert !elements.isEmpty();
-    }
-
-    @Override
-    public int getLine() {
-        return getElements().get(0).getLine();
+        super(first(elements).getSourcePosition(), elements);
     }
 
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    private static Expression first(List<Expression> elements) {
+        assert !elements.isEmpty();
+        return elements.get(0);
     }
 }

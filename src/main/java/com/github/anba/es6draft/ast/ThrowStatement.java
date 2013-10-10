@@ -15,7 +15,8 @@ package com.github.anba.es6draft.ast;
 public class ThrowStatement extends Statement {
     private Expression expression;
 
-    public ThrowStatement(Expression expression) {
+    public ThrowStatement(long sourcePosition, Expression expression) {
+        super(sourcePosition);
         this.expression = expression;
     }
 

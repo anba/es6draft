@@ -17,7 +17,9 @@ public class PropertyValueDefinition extends PropertyDefinition {
     private PropertyName propertyName;
     private Expression propertyValue;
 
-    public PropertyValueDefinition(PropertyName propertyName, Expression propertyValue) {
+    public PropertyValueDefinition(long sourcePosition, PropertyName propertyName,
+            Expression propertyValue) {
+        super(sourcePosition);
         this.propertyName = propertyName;
         this.propertyValue = propertyValue;
     }

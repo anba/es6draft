@@ -18,7 +18,8 @@ import java.util.List;
 public class ObjectBindingPattern extends BindingPattern {
     private List<BindingProperty> properties;
 
-    public ObjectBindingPattern(List<BindingProperty> properties) {
+    public ObjectBindingPattern(long sourcePosition, List<BindingProperty> properties) {
+        super(sourcePosition);
         this.properties = properties;
     }
 

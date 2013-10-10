@@ -14,6 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class Binding extends AstNode {
-    protected Binding() {
+    protected Binding(long sourcePosition) {
+        super(sourcePosition);
     }
 }

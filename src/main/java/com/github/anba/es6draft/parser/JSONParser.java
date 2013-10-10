@@ -39,7 +39,7 @@ public class JSONParser {
     }
 
     private void reportParseError(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, -1, -1, messageKey, args);
+        throw new ParserException(ExceptionType.SyntaxError, "", -1, -1, messageKey, args);
     }
 
     /**

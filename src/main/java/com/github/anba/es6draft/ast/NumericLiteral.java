@@ -18,7 +18,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 public class NumericLiteral extends ValueLiteral<Double> implements PropertyName {
     private double value;
 
-    public NumericLiteral(double value) {
+    public NumericLiteral(long sourcePosition, double value) {
+        super(sourcePosition);
         this.value = value;
     }
 

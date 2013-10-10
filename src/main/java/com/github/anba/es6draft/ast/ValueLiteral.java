@@ -14,7 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class ValueLiteral<T> extends Literal {
-    protected ValueLiteral() {
+    protected ValueLiteral(long sourcePosition) {
+        super(sourcePosition);
     }
 
     public abstract T getValue();

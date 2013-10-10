@@ -13,6 +13,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class StatementListItem extends AstNode {
-    protected StatementListItem() {
+    protected StatementListItem(long sourcePosition) {
+        super(sourcePosition);
     }
 }

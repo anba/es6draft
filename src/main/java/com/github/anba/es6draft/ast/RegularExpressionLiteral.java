@@ -17,7 +17,8 @@ public class RegularExpressionLiteral extends Expression {
     private String flags;
     private String regexp;
 
-    public RegularExpressionLiteral(String regexp, String flags) {
+    public RegularExpressionLiteral(long sourcePosition, String regexp, String flags) {
+        super(sourcePosition);
         this.regexp = regexp;
         this.flags = flags;
     }

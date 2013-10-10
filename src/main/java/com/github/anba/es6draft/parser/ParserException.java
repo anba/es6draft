@@ -27,14 +27,16 @@ public class ParserException extends InternalException {
     }
 
     private final Messages.Key messageKey;
+    private final String file;
     private final int line, column;
     private final ExceptionType type;
     private final String[] messageArguments;
 
-    public ParserException(ExceptionType type, int line, int column, Messages.Key messageKey,
-            String... args) {
+    public ParserException(ExceptionType type, String file, int line, int column,
+            Messages.Key messageKey, String... args) {
         super(messageKey.name());
         this.type = type;
+        this.file = file;
         this.line = line;
         this.column = column;
         this.messageKey = messageKey;
@@ -50,6 +52,22 @@ public class ParserException extends InternalException {
             message += " (line " + line + ")";
         }
         return message;
+    }
+
+    public ExceptionType getType() {
+        return type;
+    }
+
+    public String getFile() {
+        return file;
+    }
+
+    public int getLine() {
+        return line;
+    }
+
+    public int getColumn() {
+        return column;
     }
 
     public String getFormattedMessage() {

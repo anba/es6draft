@@ -18,13 +18,17 @@ public class ModuleDeclaration extends StatementListItem implements ScopedNode {
     private String identifier;
     private FunctionScope scope;
 
-    public ModuleDeclaration(String moduleName, List<StatementListItem> body, FunctionScope scope) {
+    public ModuleDeclaration(long sourcePosition, String moduleName, List<StatementListItem> body,
+            FunctionScope scope) {
+        super(sourcePosition);
         this.moduleName = moduleName;
         this.body = body;
         this.scope = scope;
     }
 
-    public ModuleDeclaration(String identifier, String moduleName, FunctionScope scope) {
+    public ModuleDeclaration(long sourcePosition, String identifier, String moduleName,
+            FunctionScope scope) {
+        super(sourcePosition);
         this.identifier = identifier;
         this.moduleName = moduleName;
         this.scope = scope;

@@ -22,9 +22,10 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     private StrictMode strictMode;
     private String headerSource, bodySource;
 
-    public GeneratorDeclaration(FunctionScope scope, BindingIdentifier identifier,
-            FormalParameterList parameters, List<StatementListItem> statements,
-            String headerSource, String bodySource) {
+    public GeneratorDeclaration(long sourcePosition, FunctionScope scope,
+            BindingIdentifier identifier, FormalParameterList parameters,
+            List<StatementListItem> statements, String headerSource, String bodySource) {
+        super(sourcePosition);
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;

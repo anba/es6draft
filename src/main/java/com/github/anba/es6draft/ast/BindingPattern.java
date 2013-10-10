@@ -14,6 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class BindingPattern extends Binding {
-    protected BindingPattern() {
+    protected BindingPattern(long sourcePosition) {
+        super(sourcePosition);
     }
 }

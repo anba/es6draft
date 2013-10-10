@@ -10,16 +10,25 @@ package com.github.anba.es6draft.ast;
  * Base class for all abstract-syntax-tree nodes
  */
 abstract class AstNode implements Node {
-    private int line = 0;
+    private final long sourcePosition;
 
-    @Override
-    public int getLine() {
-        return line;
+    protected AstNode(long sourcePosition) {
+        this.sourcePosition = sourcePosition;
     }
 
     @Override
-    public void setLine(int line) {
-        this.line = line;
+    public int getLine() {
+        return (int) sourcePosition;
+    }
+
+    @Override
+    public int getColumn() {
+        return (int) (sourcePosition >>> 32);
+    }
+
+    @Override
+    public long getSourcePosition() {
+        return sourcePosition;
     }
 
     @Override

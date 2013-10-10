@@ -19,17 +19,12 @@ public class PropertyDefinitionsMethod extends PropertyDefinition {
     private List<PropertyDefinition> properties;
 
     public PropertyDefinitionsMethod(List<PropertyDefinition> properties) {
-        assert !properties.isEmpty();
+        super(first(properties).getSourcePosition());
         this.properties = properties;
     }
 
     public List<PropertyDefinition> getProperties() {
         return properties;
-    }
-
-    @Override
-    public int getLine() {
-        return properties.get(0).getLine();
     }
 
     @Override
@@ -40,5 +35,10 @@ public class PropertyDefinitionsMethod extends PropertyDefinition {
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    private static PropertyDefinition first(List<PropertyDefinition> properties) {
+        assert !properties.isEmpty();
+        return properties.get(0);
     }
 }

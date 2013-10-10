@@ -17,7 +17,9 @@ public class CatchNode extends AstNode implements ScopedNode {
     private Binding catchParameter;
     private BlockStatement catchBlock;
 
-    public CatchNode(BlockScope scope, Binding catchParameter, BlockStatement catchBlock) {
+    public CatchNode(long sourcePosition, BlockScope scope, Binding catchParameter,
+            BlockStatement catchBlock) {
+        super(sourcePosition);
         this.scope = scope;
         this.catchParameter = catchParameter;
         this.catchBlock = catchBlock;

@@ -19,7 +19,8 @@ public class CallExpression extends Expression {
     private Expression base;
     private List<Expression> arguments;
 
-    public CallExpression(Expression base, List<Expression> arguments) {
+    public CallExpression(long sourcePosition, Expression base, List<Expression> arguments) {
+        super(sourcePosition);
         this.base = base;
         this.arguments = arguments;
     }

@@ -16,7 +16,8 @@ package com.github.anba.es6draft.ast;
 public class PropertyNameDefinition extends PropertyDefinition {
     private Identifier propertyName;
 
-    public PropertyNameDefinition(Identifier propertyName) {
+    public PropertyNameDefinition(long sourcePosition, Identifier propertyName) {
+        super(sourcePosition);
         this.propertyName = propertyName;
     }
 

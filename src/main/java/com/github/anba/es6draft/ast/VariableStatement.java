@@ -18,7 +18,8 @@ import java.util.List;
 public class VariableStatement extends Statement {
     private List<VariableDeclaration> elements;
 
-    public VariableStatement(List<VariableDeclaration> elements) {
+    public VariableStatement(long sourcePosition, List<VariableDeclaration> elements) {
+        super(sourcePosition);
         this.elements = elements;
     }
 

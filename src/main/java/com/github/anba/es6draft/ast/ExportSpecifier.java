@@ -14,7 +14,8 @@ public class ExportSpecifier extends AstNode {
     private String localName;
     private String externalName;
 
-    public ExportSpecifier(String localName, String externalName) {
+    public ExportSpecifier(long sourcePosition, String localName, String externalName) {
+        super(sourcePosition);
         this.localName = localName;
         this.externalName = externalName;
     }

@@ -23,9 +23,10 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     private StrictMode strictMode;
     private String headerSource, bodySource;
 
-    public GeneratorExpression(FunctionScope scope, BindingIdentifier identifier,
-            FormalParameterList parameters, List<StatementListItem> statements,
-            String headerSource, String bodySource) {
+    public GeneratorExpression(long sourcePosition, FunctionScope scope,
+            BindingIdentifier identifier, FormalParameterList parameters,
+            List<StatementListItem> statements, String headerSource, String bodySource) {
+        super(sourcePosition);
         this.scope = scope;
         this.identifier = identifier;
         this.functionName = (identifier != null ? identifier.getName() : "");
@@ -35,9 +36,10 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
         this.bodySource = bodySource;
     }
 
-    public GeneratorExpression(FunctionScope scope, String functionName,
+    public GeneratorExpression(long sourcePosition, FunctionScope scope, String functionName,
             FormalParameterList parameters, List<StatementListItem> statements,
             String headerSource, String bodySource) {
+        super(sourcePosition);
         this.scope = scope;
         this.identifier = null;
         this.functionName = functionName;

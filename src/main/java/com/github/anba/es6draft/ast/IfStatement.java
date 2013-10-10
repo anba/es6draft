@@ -17,7 +17,8 @@ public class IfStatement extends Statement {
     private Statement then;
     private Statement otherwise;
 
-    public IfStatement(Expression test, Statement then, Statement otherwise) {
+    public IfStatement(long sourcePosition, Expression test, Statement then, Statement otherwise) {
+        super(sourcePosition);
         this.test = test;
         this.then = then;
         this.otherwise = otherwise;

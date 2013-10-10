@@ -16,7 +16,8 @@ public class YieldExpression extends Expression {
     private boolean delegatedYield;
     private Expression expression;
 
-    public YieldExpression(boolean delegatedYield, Expression expression) {
+    public YieldExpression(long sourcePosition, boolean delegatedYield, Expression expression) {
+        super(sourcePosition);
         this.delegatedYield = delegatedYield;
         this.expression = expression;
     }

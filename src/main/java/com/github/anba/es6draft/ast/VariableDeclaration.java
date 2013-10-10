@@ -18,6 +18,7 @@ public class VariableDeclaration extends AstNode {
     private Expression initialiser;
 
     public VariableDeclaration(Binding binding, Expression initialiser) {
+        super(binding.getSourcePosition());
         this.binding = binding;
         this.initialiser = initialiser;
     }

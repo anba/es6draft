@@ -16,7 +16,8 @@ package com.github.anba.es6draft.ast;
 public class CallSpreadElement extends Expression {
     private Expression expression;
 
-    public CallSpreadElement(Expression expression) {
+    public CallSpreadElement(long sourcePosition, Expression expression) {
+        super(sourcePosition);
         this.expression = expression;
     }
 

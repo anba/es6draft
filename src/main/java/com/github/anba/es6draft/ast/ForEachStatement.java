@@ -24,8 +24,9 @@ public class ForEachStatement extends IterationStatement implements ScopedNode {
     private Expression expression;
     private Statement statement;
 
-    public ForEachStatement(BlockScope scope, EnumSet<Abrupt> abrupt, Set<String> labelSet,
-            Node head, Expression expression, Statement statement) {
+    public ForEachStatement(long sourcePosition, BlockScope scope, EnumSet<Abrupt> abrupt,
+            Set<String> labelSet, Node head, Expression expression, Statement statement) {
+        super(sourcePosition);
         this.scope = scope;
         this.abrupt = abrupt;
         this.labelSet = labelSet;

@@ -20,20 +20,20 @@ import com.github.anba.es6draft.ast.SuperExpression;
  * </ul>
  */
 public class SuperExpressionValue extends SuperExpression {
-    public SuperExpressionValue() {
-        super();
+    public SuperExpressionValue(long sourcePosition) {
+        super(sourcePosition);
     }
 
-    public SuperExpressionValue(String name) {
-        super(name);
+    public SuperExpressionValue(long sourcePosition, String name) {
+        super(sourcePosition, name);
     }
 
-    public SuperExpressionValue(Expression expression) {
-        super(expression);
+    public SuperExpressionValue(long sourcePosition, Expression expression) {
+        super(sourcePosition, expression);
     }
 
-    public SuperExpressionValue(List<Expression> arguments) {
-        super(arguments);
+    public SuperExpressionValue(long sourcePosition, List<Expression> arguments) {
+        super(sourcePosition, arguments);
     }
 
     @Override

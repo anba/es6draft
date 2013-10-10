@@ -34,6 +34,7 @@ public class AssignmentExpression extends Expression {
     private Expression right;
 
     public AssignmentExpression(Operator operator, LeftHandSideExpression left, Expression right) {
+        super(left.getSourcePosition());
         this.operator = operator;
         this.left = left;
         this.right = right;

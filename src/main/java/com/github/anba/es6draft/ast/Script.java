@@ -24,8 +24,9 @@ public class Script extends AstNode implements TopLevelNode, ScopedNode {
     private EnumSet<Parser.Option> options;
     private boolean strict;
 
-    public Script(String sourceFile, FunctionScope scope, List<StatementListItem> statements,
-            EnumSet<Parser.Option> options, boolean strict) {
+    public Script(long sourcePosition, String sourceFile, FunctionScope scope,
+            List<StatementListItem> statements, EnumSet<Parser.Option> options, boolean strict) {
+        super(sourcePosition);
         this.sourceFile = sourceFile;
         this.scope = scope;
         this.statements = statements;

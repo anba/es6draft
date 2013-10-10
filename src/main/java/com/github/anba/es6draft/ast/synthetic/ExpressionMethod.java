@@ -16,16 +16,12 @@ public class ExpressionMethod extends Expression {
     private Expression expression;
 
     public ExpressionMethod(Expression expression) {
+        super(expression.getSourcePosition());
         this.expression = expression;
     }
 
     public Expression getExpression() {
         return expression;
-    }
-
-    @Override
-    public int getLine() {
-        return expression.getLine();
     }
 
     @Override

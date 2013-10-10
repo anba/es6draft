@@ -16,7 +16,8 @@ package com.github.anba.es6draft.ast;
 public class BooleanLiteral extends ValueLiteral<Boolean> {
     private boolean value;
 
-    public BooleanLiteral(boolean value) {
+    public BooleanLiteral(long sourcePosition, boolean value) {
+        super(sourcePosition);
         this.value = value;
     }
 

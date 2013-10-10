@@ -18,6 +18,7 @@ public class CommaExpression extends Expression {
     private List<Expression> operands;
 
     public CommaExpression(List<Expression> operands) {
+        super(first(operands).getSourcePosition());
         this.operands = operands;
     }
 
@@ -32,5 +33,10 @@ public class CommaExpression extends Expression {
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    private static Expression first(List<Expression> elements) {
+        assert !elements.isEmpty();
+        return elements.get(0);
     }
 }

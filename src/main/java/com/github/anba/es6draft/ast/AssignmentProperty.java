@@ -18,14 +18,16 @@ public class AssignmentProperty extends AstNode {
     private LeftHandSideExpression target;
     private Expression initialiser;
 
-    public AssignmentProperty(PropertyName propertyName, LeftHandSideExpression target,
-            Expression initialiser) {
+    public AssignmentProperty(long sourcePosition, PropertyName propertyName,
+            LeftHandSideExpression target, Expression initialiser) {
+        super(sourcePosition);
         this.propertyName = propertyName;
         this.target = target;
         this.initialiser = initialiser;
     }
 
-    public AssignmentProperty(Identifier identifier, Expression initialiser) {
+    public AssignmentProperty(long sourcePosition, Identifier identifier, Expression initialiser) {
+        super(sourcePosition);
         this.propertyName = null;
         this.target = identifier;
         this.initialiser = initialiser;

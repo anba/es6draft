@@ -13,7 +13,8 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  */
 @SuppressWarnings("serial")
 public class ParserEOFException extends ParserException {
-    public ParserEOFException(int line, int column, Messages.Key messageKey, String... args) {
-        super(ExceptionType.SyntaxError, line, column, messageKey, args);
+    public ParserEOFException(String file, int line, int column, Messages.Key messageKey,
+            String... args) {
+        super(ExceptionType.SyntaxError, file, line, column, messageKey, args);
     }
 }

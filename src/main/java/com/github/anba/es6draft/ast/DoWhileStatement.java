@@ -22,8 +22,9 @@ public class DoWhileStatement extends IterationStatement {
     private Expression test;
     private Statement statement;
 
-    public DoWhileStatement(EnumSet<Abrupt> abrupt, Set<String> labelSet, Expression test,
-            Statement statement) {
+    public DoWhileStatement(long sourcePosition, EnumSet<Abrupt> abrupt, Set<String> labelSet,
+            Expression test, Statement statement) {
+        super(sourcePosition);
         this.abrupt = abrupt;
         this.labelSet = labelSet;
         this.test = test;

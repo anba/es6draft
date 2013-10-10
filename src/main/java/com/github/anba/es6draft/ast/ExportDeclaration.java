@@ -16,19 +16,23 @@ public class ExportDeclaration extends StatementListItem {
     private VariableStatement variableStatement;
     private Declaration declaration;
 
-    public ExportDeclaration(ExportSpecifierSet exportSpecifierSet) {
+    public ExportDeclaration(long sourcePosition, ExportSpecifierSet exportSpecifierSet) {
+        super(sourcePosition);
         this.exportSpecifierSet = exportSpecifierSet;
     }
 
-    public ExportDeclaration(Expression expression) {
+    public ExportDeclaration(long sourcePosition, Expression expression) {
+        super(sourcePosition);
         this.expression = expression;
     }
 
-    public ExportDeclaration(VariableStatement variableStatement) {
+    public ExportDeclaration(long sourcePosition, VariableStatement variableStatement) {
+        super(sourcePosition);
         this.variableStatement = variableStatement;
     }
 
-    public ExportDeclaration(Declaration declaration) {
+    public ExportDeclaration(long sourcePosition, Declaration declaration) {
+        super(sourcePosition);
         this.declaration = declaration;
     }
 

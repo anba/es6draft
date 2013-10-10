@@ -16,6 +16,7 @@ public class ExpressionStatement extends Statement {
     private Expression expression;
 
     public ExpressionStatement(Expression expression) {
+        super(expression.getSourcePosition());
         this.expression = expression;
     }
 

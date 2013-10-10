@@ -13,6 +13,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class FormalParameter extends AstNode {
-    protected FormalParameter() {
+    protected FormalParameter(long sourcePosition) {
+        super(sourcePosition);
     }
 }

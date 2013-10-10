@@ -20,7 +20,9 @@ public class LetExpression extends Expression implements ScopedNode {
     private List<LexicalBinding> bindings;
     private Expression expression;
 
-    public LetExpression(BlockScope scope, List<LexicalBinding> bindings, Expression expression) {
+    public LetExpression(long sourcePosition, BlockScope scope, List<LexicalBinding> bindings,
+            Expression expression) {
+        super(sourcePosition);
         this.scope = scope;
         this.bindings = bindings;
         this.expression = expression;

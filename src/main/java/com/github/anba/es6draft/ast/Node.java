@@ -12,7 +12,9 @@ package com.github.anba.es6draft.ast;
 public interface Node {
     int getLine();
 
-    void setLine(int line);
+    int getColumn();
+
+    long getSourcePosition();
 
     <R, V> R accept(NodeVisitor<R, V> visitor, V value);
 }

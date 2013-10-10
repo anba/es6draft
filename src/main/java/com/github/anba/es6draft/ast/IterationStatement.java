@@ -13,6 +13,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class IterationStatement extends BreakableStatement {
-    protected IterationStatement() {
+    protected IterationStatement(long sourcePosition) {
+        super(sourcePosition);
     }
 }

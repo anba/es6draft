@@ -17,7 +17,8 @@ public class LexicalBinding extends AstNode {
     private Binding binding;
     private Expression initialiser;
 
-    public LexicalBinding(Binding binding, Expression initialiser) {
+    public LexicalBinding(long sourcePosition, Binding binding, Expression initialiser) {
+        super(sourcePosition);
         this.binding = binding;
         this.initialiser = initialiser;
     }

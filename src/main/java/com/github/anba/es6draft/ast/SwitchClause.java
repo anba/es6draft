@@ -18,7 +18,9 @@ public class SwitchClause extends AstNode {
     private Expression expression;
     private List<StatementListItem> statements;
 
-    public SwitchClause(Expression expression, List<StatementListItem> statements) {
+    public SwitchClause(long sourcePosition, Expression expression,
+            List<StatementListItem> statements) {
+        super(sourcePosition);
         this.expression = expression;
         this.statements = statements;
     }

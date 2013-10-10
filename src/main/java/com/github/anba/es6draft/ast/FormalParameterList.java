@@ -18,7 +18,8 @@ import java.util.List;
 public class FormalParameterList extends AstNode implements Iterable<FormalParameter> {
     private List<FormalParameter> formals;
 
-    public FormalParameterList(List<FormalParameter> formals) {
+    public FormalParameterList(long sourcePosition, List<FormalParameter> formals) {
+        super(sourcePosition);
         this.formals = formals;
     }
 

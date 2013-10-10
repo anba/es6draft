@@ -22,12 +22,14 @@ public class BindingProperty extends AstNode {
     private Expression initialiser;
 
     public BindingProperty(PropertyName propertyName, Binding binding, Expression initialiser) {
+        super(propertyName.getSourcePosition());
         this.propertyName = propertyName;
         this.binding = binding;
         this.initialiser = initialiser;
     }
 
     public BindingProperty(BindingIdentifier binding, Expression initialiser) {
+        super(binding.getSourcePosition());
         this.propertyName = null;
         this.binding = binding;
         this.initialiser = initialiser;

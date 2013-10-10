@@ -17,7 +17,8 @@ public class CoverInitialisedName extends PropertyDefinition {
     private Identifier identifier;
     private Expression initialiser;
 
-    public CoverInitialisedName(Identifier identifier, Expression initialiser) {
+    public CoverInitialisedName(long sourcePosition, Identifier identifier, Expression initialiser) {
+        super(sourcePosition);
         this.identifier = identifier;
         this.initialiser = initialiser;
     }

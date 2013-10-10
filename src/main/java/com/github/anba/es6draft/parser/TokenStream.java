@@ -24,16 +24,30 @@ public class TokenStream {
 
     private final Parser parser;
     private final TokenStreamInput input;
+
+    /** current line number */
     private int line;
+    /** start position of current line */
     private int linestart;
-    // stream position
+    /** start position of current token, includes leading whitespace and comments */
     private int position;
+    /** start position of next token, includes leading whitespace and comments */
     private int nextposition;
+
     // token data
+    /** current token in stream */
     private Token current;
+    /** next token in stream */
     private Token next;
-    private boolean hasLineTerminator;
+    /** line terminator preceding current token? */
     private boolean hasCurrentLineTerminator;
+    /** line terminator preceding next token? */
+    private boolean hasLineTerminator;
+    /** line/column info for current token */
+    private long sourcePosition;
+    /** line/column info for next token */
+    private long nextSourcePosition;
+
     // literal data
     private StringBuffer buffer = new StringBuffer();
     private String string = null;
@@ -89,10 +103,13 @@ public class TokenStream {
         hasLineTerminator = true;
     }
 
-    public TokenStream(Parser parser, TokenStreamInput input, int line) {
+    private void updateSourcePosition() {
+        nextSourcePosition = ((long) (input.position() - linestart) << 32) | line;
+    }
+
+    public TokenStream(Parser parser, TokenStreamInput input) {
         this.parser = parser;
         this.input = input;
-        this.line = line;
     }
 
     public int position() {
@@ -107,27 +124,36 @@ public class TokenStream {
         return ((long) line << 32) | linestart;
     }
 
-    public void init() {
+    public long sourcePosition() {
+        return sourcePosition;
+    }
+
+    public TokenStream initialise() {
+        // set internal state to default values
         this.hasLineTerminator = true;
         this.hasCurrentLineTerminator = true;
         this.position = input.position();
+        this.line = parser.getSourceLine();
+        this.linestart = input.position();
         this.current = scanTokenNoComment();
+        this.sourcePosition = nextSourcePosition;
         this.nextposition = input.position();
         this.next = null;
-        //
-        this.linestart = position;
+        return this;
     }
 
     public void reset(long position, long lineinfo) {
+        // reset character stream
         input.reset((int) position);
-        //
+        // reset internal state
         this.hasLineTerminator = false;
         this.hasCurrentLineTerminator = true;
         this.position = input.position();
         this.current = scanTokenNoComment();
+        this.sourcePosition = nextSourcePosition;
         this.nextposition = input.position();
         this.next = null;
-        //
+        // reset line state last, effectively ignoring any changes from scanTokenNoComment()
         this.line = (int) (lineinfo >>> 32);
         this.linestart = (int) lineinfo;
     }
@@ -164,6 +190,7 @@ public class TokenStream {
             next = scanTokenNoComment();
         }
         current = next;
+        sourcePosition = nextSourcePosition;
         position = nextposition;
         hasCurrentLineTerminator = hasLineTerminator;
         string = null;
@@ -180,10 +207,10 @@ public class TokenStream {
     public Token peekToken() {
         assert !(current == Token.DIV || current == Token.ASSIGN_DIV);
         if (next == null) {
-            hasLineTerminator = false;
             if (current == Token.NAME || current == Token.STRING) {
                 string = getString();
             }
+            hasLineTerminator = false;
             nextposition = input.position();
             next = scanTokenNoComment();
         }
@@ -437,6 +464,33 @@ public class TokenStream {
 
     //
 
+    /**
+     * <strong>[11] ECMAScript Language: Lexical Grammar</strong>
+     * 
+     * <pre>
+     * InputElementDiv ::
+     *     WhiteSpace
+     *     LineTerminator
+     *     Comment
+     *     Token
+     *     DivPunctuator
+     *     RightBracePunctuator
+     * InputElementRegExp ::
+     *     WhiteSpace
+     *     LineTerminator
+     *     Comment
+     *     Token
+     *     RightBracePunctuator
+     *     RegularExpressionLiteral
+     * InputElementTemplateTail ::
+     *     WhiteSpace
+     *     LineTerminator
+     *     Comment
+     *     Token
+     *     DivPunctuator
+     *     TemplateSubstitutionTail
+     * </pre>
+     */
     private Token scanTokenNoComment() {
         Token tok;
         do {
@@ -491,6 +545,8 @@ public class TokenStream {
             }
             break;
         }
+        updateSourcePosition();
+
         if (DEBUG)
             System.out.printf("scanToken() -> %c\n", (char) c);
 
@@ -1696,12 +1752,13 @@ public class TokenStream {
     }
 
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, getLine(), getColumn(), messageKey,
-                args);
+        throw new ParserException(ExceptionType.SyntaxError, parser.getSourceFile(), getLine(),
+                getColumn(), messageKey, args);
     }
 
     private ParserException eofError(Messages.Key messageKey, String... args) {
-        throw new ParserEOFException(getLine(), getColumn(), messageKey, args);
+        throw new ParserEOFException(parser.getSourceFile(), getLine(), getColumn(), messageKey,
+                args);
     }
 
     private boolean match(char c) {
@@ -1709,7 +1766,7 @@ public class TokenStream {
     }
 
     private void mustMatch(char c) {
-        if (!match(c)) {
+        if (input.get() != c) {
             throw error(Messages.Key.UnexpectedCharacter, String.valueOf((char) c));
         }
     }

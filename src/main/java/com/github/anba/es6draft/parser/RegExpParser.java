@@ -38,6 +38,7 @@ public final class RegExpParser {
     private final String source;
     private final int length;
     private final int flags;
+    private final String sourceFile;
     private final int sourceLine;
     private final int sourceColumn;
     private StringBuilder out;
@@ -56,17 +57,19 @@ public final class RegExpParser {
     // backref limit
     private int backreflimit = BACKREF_LIMIT;
 
-    private RegExpParser(String source, int flags, int sourceLine, int sourceColumn) {
+    private RegExpParser(String source, int flags, String sourceFile, int sourceLine,
+            int sourceColumn) {
         this.source = source;
         this.length = source.length();
         this.flags = flags;
+        this.sourceFile = sourceFile;
         this.sourceLine = sourceLine;
         this.sourceColumn = sourceColumn;
         this.out = new StringBuilder(length);
     }
 
-    public static RegExpParser parse(String p, String f, int sourceLine, int sourceColumn)
-            throws ParserException {
+    public static RegExpParser parse(String p, String f, String sourceFile, int sourceLine,
+            int sourceColumn) throws ParserException {
         // flags :: g | i | m | u | y
         final int global = 0b00001, ignoreCase = 0b00010, multiline = 0b00100, unicode = 0b01000, sticky = 0b10000;
         int flags = 0b00000;
@@ -105,7 +108,7 @@ public final class RegExpParser {
                     reason = Messages.Key.InvalidRegExpFlag;
                     break;
                 }
-                throw error(sourceLine, sourceColumn, reason, detail);
+                throw error(sourceFile, sourceLine, sourceColumn, reason, detail);
             }
         }
 
@@ -118,13 +121,14 @@ public final class RegExpParser {
             iflags |= Pattern.MULTILINE;
         }
 
-        RegExpParser parser = new RegExpParser(p, iflags, sourceLine, sourceColumn);
+        RegExpParser parser = new RegExpParser(p, iflags, sourceFile, sourceLine, sourceColumn);
         parser.pattern();
         String regexp = parser.out.toString();
         try {
             parser.pattern = Pattern.compile(regexp, iflags);
         } catch (PatternSyntaxException e) {
-            throw error(sourceLine, sourceColumn, Messages.Key.InvalidRegExpPattern, e.getMessage());
+            throw error(sourceFile, sourceLine, sourceColumn, Messages.Key.InvalidRegExpPattern,
+                    e.getMessage());
         }
         return parser;
     }
@@ -137,14 +141,14 @@ public final class RegExpParser {
         return negativeLAGroups;
     }
 
-    private static ParserException error(int line, int column, Messages.Key messageKey,
-            String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, line, column, messageKey, args);
+    private static ParserException error(String file, int line, int column,
+            Messages.Key messageKey, String... args) {
+        throw new ParserException(ExceptionType.SyntaxError, file, line, column, messageKey, args);
     }
 
     private ParserException error(Messages.Key messageKey, String... args) {
-        throw new ParserException(ExceptionType.SyntaxError, sourceLine, sourceColumn, messageKey,
-                args);
+        throw new ParserException(ExceptionType.SyntaxError, sourceFile, sourceLine, sourceColumn,
+                messageKey, args);
     }
 
     private boolean isMultiline() {

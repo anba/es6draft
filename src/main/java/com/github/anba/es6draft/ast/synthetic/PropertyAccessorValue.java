@@ -18,8 +18,8 @@ import com.github.anba.es6draft.ast.PropertyAccessor;
  * </ul>
  */
 public class PropertyAccessorValue extends PropertyAccessor {
-    public PropertyAccessorValue(Expression base, String name) {
-        super(base, name);
+    public PropertyAccessorValue(long sourcePosition, Expression base, String name) {
+        super(sourcePosition, base, name);
     }
 
     @Override

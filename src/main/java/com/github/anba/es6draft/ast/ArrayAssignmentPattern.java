@@ -18,7 +18,8 @@ import java.util.List;
 public class ArrayAssignmentPattern extends AssignmentPattern {
     private List<AssignmentElementItem> elements;
 
-    public ArrayAssignmentPattern(List<AssignmentElementItem> elements) {
+    public ArrayAssignmentPattern(long sourcePosition, List<AssignmentElementItem> elements) {
+        super(sourcePosition);
         this.elements = elements;
     }
 

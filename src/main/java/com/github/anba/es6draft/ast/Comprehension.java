@@ -21,6 +21,7 @@ public class Comprehension extends AstNode {
     private Expression expression;
 
     public Comprehension(List<ComprehensionQualifier> list, Expression expression) {
+        super(first(list).getSourcePosition());
         this.list = list;
         this.expression = expression;
     }
@@ -36,5 +37,10 @@ public class Comprehension extends AstNode {
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    private static ComprehensionQualifier first(List<ComprehensionQualifier> list) {
+        assert !list.isEmpty();
+        return list.get(0);
     }
 }

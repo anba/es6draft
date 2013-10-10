@@ -19,7 +19,8 @@ import java.util.List;
 public class ArrayLiteral extends ArrayInitialiser {
     private List<Expression> elements;
 
-    public ArrayLiteral(List<Expression> elements) {
+    public ArrayLiteral(long sourcePosition, List<Expression> elements) {
+        super(sourcePosition);
         this.elements = elements;
     }
 

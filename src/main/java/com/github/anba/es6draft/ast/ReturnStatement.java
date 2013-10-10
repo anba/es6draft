@@ -15,7 +15,8 @@ package com.github.anba.es6draft.ast;
 public class ReturnStatement extends Statement {
     private Expression expression;
 
-    public ReturnStatement(Expression expression) {
+    public ReturnStatement(long sourcePosition, Expression expression) {
+        super(sourcePosition);
         this.expression = expression;
     }
 

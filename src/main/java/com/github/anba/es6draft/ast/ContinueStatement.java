@@ -15,7 +15,8 @@ package com.github.anba.es6draft.ast;
 public class ContinueStatement extends Statement {
     private String label;
 
-    public ContinueStatement(String label) {
+    public ContinueStatement(long sourcePosition, String label) {
+        super(sourcePosition);
         this.label = label;
     }
 
