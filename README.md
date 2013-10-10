@@ -1,7 +1,7 @@
 es6draft
 ========
 
-Experimental ECMAScript 6 compiler and runtime written in Java.
+ECMAScript 6 compiler and runtime written in Java.
 
 ### Project Scope ###
 
@@ -10,6 +10,16 @@ Goals:
 
 Non-Goals:
 * Fast, optimized ECMAScript 6 runtime or Java interoperability
+
+
+### Implementation Status ###
+
+[ECMAScript 6 draft rev. 19] [es6drafts] and additionally:
+* Tail calls (currently limited to user-defined functions)
+
+[ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
+* basic support using the [ICU4J] [icu] library
+* subclassing intentionally restricted to ES6 classes
 
 
 ### Build Instructions and Shell ###
@@ -26,16 +36,6 @@ The following environment variables need to be set to run the test cases:
 Alternatively skip the tests with `mvn -DskipTests=true package`. 
 
 To start the shell, use `./src/main/bin/repl.sh`.
-
-
-### Implementation Status ###
-
-[ECMAScript 6 draft rev. 19] [es6drafts] and additionally:
-* Tail calls (currently limited to user-defined functions)
-
-[ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
-* basic support using the [ICU4J] [icu] library
-* subclassing intentionally restricted to ES6 classes
 
 
 [es6drafts]: http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts "Draft Specification for ES.next"
