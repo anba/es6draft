@@ -429,12 +429,10 @@
                 <concat destfile="${project.build.outputDirectory}/scripts/mozlegacy.js"
                   encoding="${project.build.sourceEncoding}" outputencoding="${project.build.sourceEncoding}">
                   <fileset dir="${project.basedir}/src/main/scripts">
-                    <include name="array.js" />
                     <include name="compat.js" />
                     <include name="it_object.js" />
                     <include name="iterator.js" />
                     <include name="legacy-generator.js" />
-                    <include name="math.js" />
                     <include name="number.js" />
                     <include name="proxy.js" />
                     <include name="source.js" />
