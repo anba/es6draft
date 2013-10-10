@@ -39,6 +39,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -161,6 +162,25 @@ public class Repl {
         }
     }
 
+    @SuppressWarnings("serial")
+    private static class ParserExceptionWithSource extends RuntimeException {
+        private final String source;
+
+        ParserExceptionWithSource(ParserException e, String source) {
+            super(e);
+            this.source = source;
+        }
+
+        @Override
+        public ParserException getCause() {
+            return (ParserException) super.getCause();
+        }
+
+        public String getSource() {
+            return source;
+        }
+    }
+
     private final EnumSet<Option> options;
     private final StartScript startScript;
     private final Console console;
@@ -186,6 +206,43 @@ public class Repl {
         }
     }
 
+    private void handleException(int lineOffset, ParserExceptionWithSource exception) {
+        ParserException e = exception.getCause();
+        String source = exception.getSource();
+
+        String sourceInfo = String.format("%s:%d:%d", e.getFile(), e.getLine(), e.getColumn());
+        int start = skipLines(source, e.getLine() - lineOffset);
+        int end = nextLineTerminator(source, start);
+        String offendingLine = source.substring(start, end);
+        String marker = Strings.repeat('.', Math.max(e.getColumn() - 1, 0)) + '^';
+
+        console.printf("%s %s: %s%n", sourceInfo, e.getType(), e.getFormattedMessage());
+        console.printf("%s %s%n", sourceInfo, offendingLine);
+        console.printf("%s %s%n", sourceInfo, marker);
+        if (options.contains(Option.StackTrace)) {
+            printStackTrace(e);
+        }
+    }
+
+    private static int skipLines(String s, int n) {
+        int index = 0;
+        for (int length = s.length(); n > 0; --n) {
+            int lineEnd = nextLineTerminator(s, index);
+            if (lineEnd + 1 < length && s.charAt(lineEnd) == '\r' && s.charAt(lineEnd + 1) == '\n') {
+                index = lineEnd + 2;
+            } else {
+                index = lineEnd + 1;
+            }
+        }
+        return index;
+    }
+
+    private static int nextLineTerminator(String s, int index) {
+        for (int length = s.length(); index < length && !Strings.isLineTerminator(s.charAt(index)); ++index) {
+        }
+        return index;
+    }
+
     private void printException(Exception e) {
         System.err.println(e);
         if (options.contains(Option.StackTrace)) {
@@ -207,9 +264,11 @@ public class Repl {
             try {
                 EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
                 Parser parser = new Parser("typein", line, options);
-                return parser.parse(source);
+                return parser.parseScript(source);
             } catch (ParserEOFException e) {
                 continue;
+            } catch (ParserException e) {
+                throw new ParserExceptionWithSource(e, source.toString());
             }
         }
     }
@@ -252,6 +311,8 @@ public class Repl {
                 if (e.getReason() == Reason.Quit) {
                     System.exit(0);
                 }
+            } catch (ParserExceptionWithSource e) {
+                handleException(line, e);
             } catch (ScriptException e) {
                 handleException(realm, e);
             } catch (ParserException | CompilationException | StackOverflowError e) {
