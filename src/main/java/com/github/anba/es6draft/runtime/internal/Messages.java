@@ -141,6 +141,8 @@ public final class Messages {
         NotSymbol("type.not_symbol"),
         NotExtensible("type.not_extensible"),
         IncompatibleObject("type.incompatible_object"),
+        InitialisedObject("type.initialised_object"),
+        UninitialisedObject("type.uninitialised_object"),
         SymbolObject("type.symbol_object"),
         SymbolString("type.symbol_string"),
         SymbolCreate("type.symbol_create"),

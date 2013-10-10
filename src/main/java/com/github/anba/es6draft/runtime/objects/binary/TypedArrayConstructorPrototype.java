@@ -99,7 +99,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         TypedArrayObject array = (TypedArrayObject) obj;
         /* steps 5-6 */
         if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.InitialisedObject);
         }
         /* steps 7-8 */
         ElementType elementType = array.getElementType();
@@ -149,11 +149,11 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         TypedArrayObject array = (TypedArrayObject) obj;
         /* steps 5-6 */
         if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.InitialisedObject);
         }
         /* step 7 */
         if (srcArray.getBuffer() == null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* steps 8-9 */
         ElementType elementType = array.getElementType();
@@ -198,7 +198,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         TypedArrayObject array = (TypedArrayObject) obj;
         /* steps 5-6 */
         if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.InitialisedObject);
         }
         /* steps 7-8 */
         ElementType elementType = array.getElementType();
@@ -226,7 +226,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         }
         /* steps 21-22 */
         if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.InitialisedObject);
         }
         /* steps 23-26 */
         array.setBuffer(data);
@@ -247,7 +247,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         Object obj = thisValue;
         /* step 3 */
         if (buffer.getData() == null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 4 */
         if (!(obj instanceof TypedArrayObject)) {
@@ -256,7 +256,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         TypedArrayObject array = (TypedArrayObject) obj;
         /* steps 5-6 */
         if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.InitialisedObject);
         }
         /* steps 7-8 */
         ElementType elementType = array.getElementType();
@@ -302,7 +302,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         }
         /* step 18 */
         if (array.getBuffer() != null) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.InitialisedObject);
         }
         /* steps 19-22 */
         array.setBuffer(buffer);

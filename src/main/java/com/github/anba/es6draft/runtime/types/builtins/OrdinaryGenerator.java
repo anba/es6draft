@@ -82,9 +82,8 @@ public class OrdinaryGenerator extends FunctionObject {
     @Override
     public GeneratorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
         if (!isInitialised()) {
-            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(callerContext, Messages.Key.UninitialisedObject);
         }
-
         /* steps 1-12 */
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
                 thisValue);

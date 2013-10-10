@@ -87,7 +87,7 @@ public class GeneratorObject extends OrdinaryObject {
         GeneratorState state = this.state;
         if (state == null) {
             // uninitialised generator object
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         switch (state) {
         case Executing:
@@ -114,7 +114,7 @@ public class GeneratorObject extends OrdinaryObject {
         GeneratorState state = this.state;
         if (state == null) {
             // uninitialised generator object
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         switch (state) {
         case Executing:

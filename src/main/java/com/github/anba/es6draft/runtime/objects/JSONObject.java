@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,6 +28,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -144,9 +144,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             String gap;
             if (Type.isNumber(space)) {
                 int nspace = (int) Math.max(0, Math.min(10, ToInteger(Type.numberValue(space))));
-                char[] a = new char[nspace];
-                Arrays.fill(a, ' ');
-                gap = new String(a);
+                gap = Strings.repeat(' ', nspace);
             } else if (Type.isString(space)) {
                 String sspace = Type.stringValue(space).toString();
                 gap = sspace.length() <= 10 ? sspace : sspace.substring(0, 10);
@@ -244,7 +242,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             } else if (o instanceof BooleanObject) {
                 BooleanObject bool = (BooleanObject) o;
                 if (!bool.isInitialised()) {
-                    throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 value = bool.getBooleanData();
             }

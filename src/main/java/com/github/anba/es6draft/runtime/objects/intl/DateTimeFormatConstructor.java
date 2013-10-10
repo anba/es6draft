@@ -224,7 +224,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         /* steps 1-2 */
         DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) obj;
         if (dateTimeFormat.isInitializedIntlObject()) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.InitialisedObject);
         }
         dateTimeFormat.setInitializedIntlObject(true);
         /* step 3 */

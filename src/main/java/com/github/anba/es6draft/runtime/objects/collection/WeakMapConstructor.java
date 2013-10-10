@@ -70,7 +70,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
         }
         WeakMapObject map = (WeakMapObject) thisValue;
         if (map.isInitialised()) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
         /* steps 5-7 */

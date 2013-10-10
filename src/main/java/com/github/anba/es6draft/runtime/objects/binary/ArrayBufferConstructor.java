@@ -148,7 +148,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
 
         // not possible right now - maybe later when neuter operation gets added
         if (srcData.getData() == null) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
 
         ArrayBufferObject destData = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
@@ -189,7 +189,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         /* steps 3-4 */
         ByteBuffer block = arrayBuffer.getData();
         if (block == null) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* steps 7-8 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
@@ -249,7 +249,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         /* steps 3-4 */
         ByteBuffer block = arrayBuffer.getData();
         if (block == null) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* steps 7-10 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
@@ -311,7 +311,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         }
         ArrayBufferObject buf = (ArrayBufferObject) thisValue;
         if (buf.getData() != null) {
-            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throwTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
         if (Type.isUndefined(length)) {

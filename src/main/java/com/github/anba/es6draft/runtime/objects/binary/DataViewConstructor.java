@@ -78,7 +78,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         ArrayBufferObject buffer = dataView.getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
         double numberIndex = ToNumber(cx, requestIndex);
@@ -121,7 +121,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         ArrayBufferObject buffer = dataView.getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
         double numberIndex = ToNumber(cx, requestIndex);
@@ -167,7 +167,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         /* step 3 (not applicable) */
         /* step 4 */
         if (dataView.getBuffer() != null) {
-            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throwTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         /* steps 5-6 */
         if (!(buffer instanceof ArrayBufferObject)) {
@@ -176,7 +176,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
         // FIXME: spec bug - missing check for initialisation status, cf. TypedArray Constructor
         if (bufferObj.getData() == null) {
-            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throwTypeError(calleeContext, Messages.Key.UninitialisedObject);
         }
         /* step 7 */
         double numberOffset = ToNumber(calleeContext, byteOffset);
@@ -209,7 +209,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         }
         /* step 15 */
         if (dataView.getBuffer() != null) {
-            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throwTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         /* steps 16-18 */
         dataView.setBuffer(bufferObj);

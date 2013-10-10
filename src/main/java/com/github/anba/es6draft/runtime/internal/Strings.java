@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import java.util.Arrays;
+
 import com.github.anba.es6draft.parser.TokenStream;
 
 /**
@@ -82,6 +84,16 @@ public final class Strings {
             return "";
         }
         return s.substring(start, end);
+    }
+
+    /**
+     * Repeat {@code c} {@code n}-times
+     */
+    public static String repeat(char c, int n) {
+        assert n >= 0;
+        char[] value = new char[n];
+        Arrays.fill(value, c);
+        return new String(value);
     }
 
     /**

@@ -60,7 +60,8 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
     public enum Properties {
         ;
 
-        private static DateTimeFormatObject dateTimeFormat(ExecutionContext cx, Object object) {
+        private static DateTimeFormatObject thisDateTimeFormatValue(ExecutionContext cx,
+                Object object) {
             if (object instanceof DateTimeFormatObject) {
                 DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) object;
                 if (dateTimeFormat.isInitializedDateTimeFormat()) {
@@ -84,7 +85,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
          */
         @Accessor(name = "format", type = Accessor.Type.Getter)
         public static Object format(ExecutionContext cx, Object thisValue) {
-            DateTimeFormatObject dateTimeFormat = dateTimeFormat(cx, thisValue);
+            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatValue(cx, thisValue);
             if (dateTimeFormat.getBoundFormat() == null) {
                 FormatFunction f = new FormatFunction(cx.getRealm());
                 Callable bf = (Callable) FunctionPrototype.Properties.bind(cx, f, thisValue);
@@ -98,7 +99,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
          */
         @Function(name = "resolvedOptions", arity = 0)
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
-            DateTimeFormatObject dateTimeFormat = dateTimeFormat(cx, thisValue);
+            DateTimeFormatObject dateTimeFormat = thisDateTimeFormatValue(cx, thisValue);
             OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
             CreateOwnDataProperty(cx, object, "locale", dateTimeFormat.getLocale());
             CreateOwnDataProperty(cx, object, "calendar", dateTimeFormat.getCalendar());

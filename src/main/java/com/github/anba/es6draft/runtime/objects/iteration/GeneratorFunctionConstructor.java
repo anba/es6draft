@@ -116,7 +116,6 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
             throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
-
         /* steps 18-19 */
         FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 20 */

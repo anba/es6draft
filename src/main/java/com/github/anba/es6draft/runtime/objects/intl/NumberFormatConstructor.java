@@ -148,7 +148,7 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
         /* steps 1-2 */
         NumberFormatObject numberFormat = (NumberFormatObject) obj;
         if (numberFormat.isInitializedIntlObject()) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.InitialisedObject);
         }
         numberFormat.setInitializedIntlObject(true);
         /* step 3 */

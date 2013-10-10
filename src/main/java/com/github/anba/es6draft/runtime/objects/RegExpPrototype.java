@@ -577,7 +577,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 /* step 5 */
                 RegExpObject rx = (RegExpObject) pattern;
                 if (!rx.isInitialised()) {
-                    throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 if (!Type.isUndefined(flags)) {
                     throw throwTypeError(cx, Messages.Key.NotUndefined);

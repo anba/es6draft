@@ -120,7 +120,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         public static Object length(ExecutionContext cx, Object thisValue) {
             TypedArrayObject typedArray = thisTypedArrayObject(cx, thisValue);
             if (typedArray.getBuffer() == null) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.UninitialisedObject);
             }
             return typedArray.getArrayLength();
         }
@@ -139,7 +139,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 ArrayBufferObject targetBuffer = target.getBuffer();
                 /* step 7 */
                 if (targetBuffer == null) {
-                    throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 /* step 8 */
                 long targetLength = target.getArrayLength();
@@ -194,13 +194,13 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 ArrayBufferObject targetBuffer = target.getBuffer();
                 /* step 8 */
                 if (targetBuffer == null) {
-                    throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 /* step 9 */
                 ArrayBufferObject srcBuffer = typedArray.getBuffer();
                 /* step 10 */
                 if (srcBuffer == null) {
-                    throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 /* step 11 */
                 long targetLength = target.getArrayLength();
@@ -265,7 +265,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             ArrayBufferObject buffer = array.getBuffer();
             /* step 6 */
             if (buffer == null) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.UninitialisedObject);
             }
             /* step 7 */
             long srcLength = array.getArrayLength();

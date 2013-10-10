@@ -82,7 +82,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
         ArrayBufferObject buffer = getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
         long length = getArrayLength();
@@ -112,7 +112,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
         ArrayBufferObject buffer = getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
         long length = getArrayLength();

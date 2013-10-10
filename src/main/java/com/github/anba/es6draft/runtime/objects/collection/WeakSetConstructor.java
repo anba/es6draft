@@ -70,7 +70,7 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
         }
         WeakSetObject set = (WeakSetObject) thisValue;
         if (set.isInitialised()) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
         /* steps 5-7 */

@@ -237,7 +237,7 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
         /* steps 1-2 */
         CollatorObject collator = (CollatorObject) obj;
         if (collator.isInitializedIntlObject()) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throwTypeError(cx, Messages.Key.InitialisedObject);
         }
         collator.setInitializedIntlObject(true);
         /* step 3 */

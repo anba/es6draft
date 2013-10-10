@@ -73,7 +73,7 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
         }
         SetObject set = (SetObject) thisValue;
         if (set.isInitialised()) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
         /* steps 5-7 */

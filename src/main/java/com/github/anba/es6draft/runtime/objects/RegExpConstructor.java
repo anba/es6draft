@@ -86,7 +86,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
             /* step 4 */
             RegExpObject regexp = (RegExpObject) pattern;
             if (!regexp.isInitialised()) {
-                throwTypeError(calleeContext, Messages.Key.RegExpNotInitialised);
+                throwTypeError(calleeContext, Messages.Key.UninitialisedObject);
             }
             if (!Type.isUndefined(flags)) {
                 throwTypeError(calleeContext, Messages.Key.NotUndefined);

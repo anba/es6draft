@@ -42,7 +42,7 @@ public class ListIteratorPrototype extends OrdinaryObject implements Initialisab
     public enum Properties {
         ;
 
-        private static ListIterator<?> listIterator(ExecutionContext cx, Object object) {
+        private static ListIterator<?> thisListIteratorValue(ExecutionContext cx, Object object) {
             if (object instanceof ListIterator) {
                 return (ListIterator<?>) object;
             }
@@ -54,7 +54,7 @@ public class ListIteratorPrototype extends OrdinaryObject implements Initialisab
 
         @Function(name = "next", arity = 0)
         public static Object send(ExecutionContext cx, Object thisValue) {
-            Iterator<?> iterator = listIterator(cx, thisValue).getIterator();
+            Iterator<?> iterator = thisListIteratorValue(cx, thisValue).getIterator();
             if (!iterator.hasNext()) {
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }

@@ -86,7 +86,7 @@ public class OrdinaryFunction extends FunctionObject {
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         /* step 1 */
         if (!isInitialised()) {
-            throw throwTypeError(callerContext, Messages.Key.IncompatibleObject);
+            throw throwTypeError(callerContext, Messages.Key.UninitialisedObject);
         }
         /* steps 2-3 (implicit) */
         Object oldCaller = caller.getValue();
@@ -131,7 +131,7 @@ public class OrdinaryFunction extends FunctionObject {
 
                 /* step 1 */
                 if (!f.isInitialised()) {
-                    throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+                    throw throwTypeError(calleeContext, Messages.Key.UninitialisedObject);
                 }
                 /* steps 2-3 (implicit) */
                 Object oldCaller = f.caller.getValue();
