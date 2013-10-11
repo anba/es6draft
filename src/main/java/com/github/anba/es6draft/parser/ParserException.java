@@ -6,16 +6,16 @@
  */
 package com.github.anba.es6draft.parser;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
-
 import java.text.MessageFormat;
 import java.util.Locale;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.InternalException;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 
 /**
  * {@link RuntimeException} subclass for parser exceptions
@@ -26,10 +26,10 @@ public class ParserException extends InternalException {
         SyntaxError, ReferenceError
     }
 
-    private final Messages.Key messageKey;
+    private final ExceptionType type;
     private final String file;
     private final int line, column;
-    private final ExceptionType type;
+    private final Messages.Key messageKey;
     private final String[] messageArguments;
 
     public ParserException(ExceptionType type, String file, int line, int column,
@@ -41,6 +41,11 @@ public class ParserException extends InternalException {
         this.column = column;
         this.messageKey = messageKey;
         this.messageArguments = args;
+    }
+
+    private String format(String pattern, Locale locale) {
+        MessageFormat format = new MessageFormat(pattern, locale);
+        return format.format(messageArguments);
     }
 
     @Override
@@ -75,16 +80,18 @@ public class ParserException extends InternalException {
     }
 
     public String getFormattedMessage(Locale locale) {
-        String pattern = Messages.create(locale).getString(messageKey);
-        MessageFormat format = new MessageFormat(pattern, locale);
-        return format.format(messageArguments);
+        return format(Messages.create(locale).getString(messageKey), locale);
     }
 
     @Override
     public ScriptException toScriptException(ExecutionContext cx) {
+        Realm realm = cx.getRealm();
+        String message = format(realm.message(messageKey), realm.getLocale());
         if (type == ExceptionType.ReferenceError) {
-            return throwReferenceError(cx, messageKey, messageArguments);
+            return Errors.newError(cx, Intrinsics.ReferenceError, message, getFile(), getLine(),
+                    getColumn());
         }
-        return throwSyntaxError(cx, messageKey, messageArguments);
+        return Errors.newError(cx, Intrinsics.SyntaxError, message, getFile(), getLine(),
+                getColumn());
     }
 }
