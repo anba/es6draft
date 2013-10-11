@@ -6,16 +6,15 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.text.MessageFormat;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * Static helper methods to create and throw {@link ScriptException} objects
@@ -24,27 +23,38 @@ public final class Errors {
     private Errors() {
     }
 
-    static Object newError(ExecutionContext cx, Intrinsics constructor, Messages.Key key) {
-        Realm realm = cx.getRealm();
-        String message = realm.message(key);
-        ScriptObject nativeError = realm.getIntrinsic(constructor);
-        return ((Callable) nativeError).call(cx, UNDEFINED, message);
+    public static ScriptException newError(ExecutionContext cx, Intrinsics constructor,
+            String message) {
+        Callable nativeError = (Callable) cx.getIntrinsic(constructor);
+        return ((ErrorObject) nativeError.call(cx, UNDEFINED, message)).getException();
     }
 
-    static Object newError(ExecutionContext cx, Intrinsics constructor, Messages.Key key,
-            String... args) {
+    public static ScriptException newError(ExecutionContext cx, Intrinsics constructor,
+            String message, String file, int line, int column) {
+        Callable nativeError = (Callable) cx.getIntrinsic(constructor);
+        return ((ErrorObject) nativeError.call(cx, UNDEFINED, message, file, line, column))
+                .getException();
+    }
+
+    public static ScriptException newError(ExecutionContext cx, Intrinsics constructor,
+            Messages.Key key) {
         Realm realm = cx.getRealm();
-        MessageFormat format = new MessageFormat(realm.message(key), realm.getLocale());
-        String message = format.format(args);
-        ScriptObject nativeError = realm.getIntrinsic(constructor);
-        return ((Callable) nativeError).call(cx, UNDEFINED, message);
+        String message = realm.message(key);
+        return newError(cx, constructor, message);
+    }
+
+    public static ScriptException newError(ExecutionContext cx, Intrinsics constructor,
+            Messages.Key key, String... args) {
+        Realm realm = cx.getRealm();
+        String message = new MessageFormat(realm.message(key), realm.getLocale()).format(args);
+        return newError(cx, constructor, message);
     }
 
     /**
      * Throws a new {@code InternalError} instance
      */
     public static ScriptException throwInternalError(ExecutionContext cx, Messages.Key key) {
-        return _throw(newError(cx, Intrinsics.InternalError, key));
+        throw newError(cx, Intrinsics.InternalError, key);
     }
 
     /**
@@ -52,14 +62,14 @@ public final class Errors {
      */
     public static ScriptException throwInternalError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return _throw(newError(cx, Intrinsics.InternalError, key, args));
+        throw newError(cx, Intrinsics.InternalError, key, args);
     }
 
     /**
      * Throws a new {@code TypeError} instance
      */
     public static ScriptException throwTypeError(ExecutionContext cx, Messages.Key key) {
-        return _throw(newError(cx, Intrinsics.TypeError, key));
+        throw newError(cx, Intrinsics.TypeError, key);
     }
 
     /**
@@ -67,14 +77,14 @@ public final class Errors {
      */
     public static ScriptException throwTypeError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return _throw(newError(cx, Intrinsics.TypeError, key, args));
+        throw newError(cx, Intrinsics.TypeError, key, args);
     }
 
     /**
      * Throws a new {@code ReferenceError} instance
      */
     public static ScriptException throwReferenceError(ExecutionContext cx, Messages.Key key) {
-        return _throw(newError(cx, Intrinsics.ReferenceError, key));
+        throw newError(cx, Intrinsics.ReferenceError, key);
     }
 
     /**
@@ -82,14 +92,14 @@ public final class Errors {
      */
     public static ScriptException throwReferenceError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return _throw(newError(cx, Intrinsics.ReferenceError, key, args));
+        throw newError(cx, Intrinsics.ReferenceError, key, args);
     }
 
     /**
      * Throws a new {@code SyntaxError} instance
      */
     public static ScriptException throwSyntaxError(ExecutionContext cx, Messages.Key key) {
-        return _throw(newError(cx, Intrinsics.SyntaxError, key));
+        throw newError(cx, Intrinsics.SyntaxError, key);
     }
 
     /**
@@ -97,14 +107,14 @@ public final class Errors {
      */
     public static ScriptException throwSyntaxError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return _throw(newError(cx, Intrinsics.SyntaxError, key, args));
+        throw newError(cx, Intrinsics.SyntaxError, key, args);
     }
 
     /**
      * Throws a new {@code RangeError} instance
      */
     public static ScriptException throwRangeError(ExecutionContext cx, Messages.Key key) {
-        return _throw(newError(cx, Intrinsics.RangeError, key));
+        throw newError(cx, Intrinsics.RangeError, key);
     }
 
     /**
@@ -112,14 +122,14 @@ public final class Errors {
      */
     public static ScriptException throwRangeError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return _throw(newError(cx, Intrinsics.RangeError, key, args));
+        throw newError(cx, Intrinsics.RangeError, key, args);
     }
 
     /**
      * Throws a new {@code URIError} instance
      */
     public static ScriptException throwURIError(ExecutionContext cx, Messages.Key key) {
-        return _throw(newError(cx, Intrinsics.URIError, key));
+        throw newError(cx, Intrinsics.URIError, key);
     }
 
     /**
@@ -127,6 +137,6 @@ public final class Errors {
      */
     public static ScriptException throwURIError(ExecutionContext cx, Messages.Key key,
             String... args) {
-        return _throw(newError(cx, Intrinsics.URIError, key, args));
+        throw newError(cx, Intrinsics.URIError, key, args);
     }
 }
