@@ -104,7 +104,6 @@ string-trim.js
 fast/js/exception-properties.js
 
 # cause?
-function-call-register-allocation.js
 fast/js/stack-overflow-arrity-catch.js
 
 # property key enumeration order
@@ -193,7 +192,8 @@ fast/js/arguments.js
 # Compilation or runtime issues       #
 #######################################
 
-# Different maximal stack depth (related to JIT?)
+# Different maximal stack depth
+function-call-register-allocation.js
 stack-overflow-catch.js
 
 # Method code too large
