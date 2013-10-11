@@ -416,6 +416,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
             double[] numbers = new double[values.length];
             for (int i = 0, len = values.length; i < len; ++i) {
                 double num = ToNumber(cx, values[i]);
+                numbers[i] = num;
                 if (Double.isInfinite(num)) {
                     hasInfinity = true;
                 } else if (Double.isNaN(num)) {
@@ -431,7 +432,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
             } else if (!hasNonZero) {
                 return +0.0;
             } else if (values.length == 1) {
-                return numbers[0];
+                return Math.abs(numbers[0]); // sqrt(value1^2)
             }
             double result = Math.hypot(numbers[0], numbers[1]);
             for (int i = 2, len = values.length; i < len; ++i) {
