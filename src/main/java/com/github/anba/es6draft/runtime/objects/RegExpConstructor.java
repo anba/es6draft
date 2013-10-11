@@ -155,7 +155,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
         Pattern match;
         BitSet negativeLAGroups;
         try {
-            RegExpParser parser = RegExpParser.parse(p, f, "", -1, -1);
+            RegExpParser parser = RegExpParser.parse(p, f, "<regexp>", 1, 1);
             match = parser.getPattern();
             negativeLAGroups = parser.getNegativeLookaheadGroups();
         } catch (ParserException e) {
