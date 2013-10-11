@@ -160,6 +160,32 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
+         * Extension: Error.prototype.columnNumber
+         */
+        @Accessor(name = "columnNumber", type = Accessor.Type.Getter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = true))
+        public static Object get_columnNumber(ExecutionContext cx, Object thisValue) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            // no column information available in StackTraceElements...
+            return 0;
+        }
+
+        /**
+         * Extension: Error.prototype.columnNumber
+         */
+        @Accessor(name = "columnNumber", type = Accessor.Type.Setter, attributes = @Attributes(
+                writable = false, enumerable = false, configurable = true))
+        public static Object set_columnNumber(ExecutionContext cx, Object thisValue, Object value) {
+            if (!(thisValue instanceof ErrorObject)) {
+                return UNDEFINED;
+            }
+            CreateOwnDataProperty(cx, (ErrorObject) thisValue, "columnNumber", value);
+            return UNDEFINED;
+        }
+
+        /**
          * Extension: Error.prototype.stack
          */
         @Accessor(name = "stack", type = Accessor.Type.Getter, attributes = @Attributes(

@@ -116,7 +116,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
     /**
      * 19.5.6.1.1 NativeError (message)
      * <p>
-     * <strong>Extension</strong>: NativeError (message, fileName, lineNumber)
+     * <strong>Extension</strong>: NativeError (message, fileName, lineNumber, columnNumber)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -144,7 +144,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
             DefinePropertyOrThrow(calleeContext, obj, "message", msgDesc);
         }
 
-        /* extension: fileName and lineNumber arguments */
+        /* extension: fileName, lineNumber and columnNumber arguments */
         if (args.length > 1) {
             CharSequence fileName = ToString(calleeContext, args[1]);
             CreateOwnDataProperty(calleeContext, obj, "fileName", fileName);
@@ -152,6 +152,10 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         if (args.length > 2) {
             int lineNumber = ToInt32(calleeContext, args[2]);
             CreateOwnDataProperty(calleeContext, obj, "lineNumber", lineNumber);
+        }
+        if (args.length > 3) {
+            int columnNumber = ToInt32(calleeContext, args[3]);
+            CreateOwnDataProperty(calleeContext, obj, "columnNumber", columnNumber);
         }
 
         /* step 7 */
