@@ -324,23 +324,23 @@ public final class StaticSemantics {
     /**
      * Static Semantics: TailCallNodes (not in spec)
      */
-    public static Set<CallExpression> TailCallNodes(Expression expr) {
+    public static Set<Expression> TailCallNodes(Expression expr) {
         while (expr instanceof CommaExpression) {
             List<Expression> list = ((CommaExpression) expr).getOperands();
             expr = list.get(list.size() - 1);
         }
-        if (expr instanceof CallExpression) {
-            return singleton((CallExpression) expr);
+        if (IsCallExpression(expr)) {
+            return singleton(expr);
         } else if (expr instanceof ConditionalExpression) {
-            HashSet<CallExpression> tail = new HashSet<>(8);
+            HashSet<Expression> tail = new HashSet<>(8);
             for (ArrayDeque<Expression> queue = new ArrayDeque<>(singleton(expr)); !queue.isEmpty();) {
                 Expression e = queue.remove();
                 while (e instanceof CommaExpression) {
                     List<Expression> list = ((CommaExpression) e).getOperands();
                     e = list.get(list.size() - 1);
                 }
-                if (e instanceof CallExpression) {
-                    tail.add((CallExpression) e);
+                if (IsCallExpression(e)) {
+                    tail.add(e);
                 } else if (e instanceof ConditionalExpression) {
                     queue.add(((ConditionalExpression) e).getThen());
                     queue.add(((ConditionalExpression) e).getOtherwise());
@@ -353,6 +353,12 @@ public final class StaticSemantics {
     }
 
     //
+
+    private static boolean IsCallExpression(Expression expr) {
+        return expr instanceof CallExpression
+                || expr instanceof TemplateCallExpression
+                || (expr instanceof SuperExpression && ((SuperExpression) expr).getArguments() != null);
+    }
 
     private static <T> Set<T> emptyIfNull(Set<T> list) {
         return (list != null ? list : Collections.<T> emptySet());

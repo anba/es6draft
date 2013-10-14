@@ -699,8 +699,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         // stack: [args, thisValue, func(Callable)]
 
         /* steps 10, 12-13 */
-        // TODO: tail-call for SuperExpression(call) or TemplateCallExpression?
-        if (call instanceof CallExpression && mv.isTailCall((CallExpression) call)) {
+        if (mv.isTailCall(call)) {
             Label noTailCall = new Label();
             mv.dup();
             mv.instanceOf(Types.OrdinaryFunction);

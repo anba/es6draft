@@ -13,7 +13,7 @@ import java.util.Set;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.CallExpression;
+import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.Scope;
 import com.github.anba.es6draft.ast.ScopedNode;
@@ -36,7 +36,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private final Variable<ExecutionContext> executionContext;
     private Scope scope;
     // tail-call support
-    private Set<CallExpression> tail = emptySet();
+    private Set<Expression> tail = emptySet();
 
     protected ExpressionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
             boolean strict, boolean globalCode) {
@@ -96,11 +96,11 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         lineInfo(node.getLine());
     }
 
-    boolean isTailCall(CallExpression expr) {
+    boolean isTailCall(Expression expr) {
         return tail.contains(expr);
     }
 
-    void setTailCall(Set<CallExpression> tail) {
+    void setTailCall(Set<Expression> tail) {
         assert tail != null;
         this.tail = tail;
     }
