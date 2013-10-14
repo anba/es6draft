@@ -133,6 +133,11 @@ public class CodeSizeAnalysis implements AutoCloseable {
         }
 
         @Override
+        public Integer visit(CallExpression node, Integer size) {
+            throw new CodeSizeException(size);
+        }
+
+        @Override
         public Integer visit(CommaExpression node, Integer size) {
             return visit(node, size, new CommaExpressionSubMethod());
         }
@@ -193,8 +198,18 @@ public class CodeSizeAnalysis implements AutoCloseable {
         }
 
         @Override
+        public Integer visit(SuperExpression node, Integer size) {
+            throw new CodeSizeException(size);
+        }
+
+        @Override
         public Integer visit(SwitchClause node, Integer size) {
             return visit(node, size, new NestedSubMethod.SwitchClauseSubMethod());
+        }
+
+        @Override
+        public Integer visit(TemplateLiteral node, Integer size) {
+            throw new CodeSizeException(size);
         }
     }
 }
