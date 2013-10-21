@@ -529,8 +529,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
         assert type == ValType.Reference && base instanceof Identifier;
 
-        Variable<ScriptObject> methodCallObject = mv.newVariable("methodCallObject",
-                ScriptObject.class);
+        Variable<ScriptObject> methodCallObject = mv.newScratchVariable(ScriptObject.class);
         Label argListEval = new Label();
         Label afterCall = new Label();
         Label stdCall = new Label(), stdCallCheck = new Label();
@@ -585,6 +584,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             /* EvaluateMethodCall: step 6 */
             // stack: [args, ref(Reference)] -> [args, ref(Reference), base]
             mv.load(methodCallObject);
+            mv.freeVariable(methodCallObject);
 
             mv.dup();
             mv.instanceOf(Types.OrdinaryObject);
@@ -613,8 +613,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.invoke(Methods.ScriptRuntime_OrdinaryInvokeGet);
 
             mv.goTo(stdCallCheck);
-
-            mv.freeVariable(methodCallObject);
         }
         mv.mark(stdCall);
 

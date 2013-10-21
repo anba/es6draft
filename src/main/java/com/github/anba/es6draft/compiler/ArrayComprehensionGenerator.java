@@ -53,7 +53,8 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
             return visit((Expression) node, mv);
         }
 
-        this.result = mv.newVariable("result", ArrayList.class);
+        mv.enterVariableScope();
+        result = mv.newVariable("result", ArrayList.class);
         mv.anew(Types.ArrayList);
         mv.dup();
         mv.invoke(Methods.ArrayList_init);
@@ -64,7 +65,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
         mv.loadExecutionContext();
         mv.load(result);
         mv.invoke(Methods.AbstractOperations_CreateArrayFromList);
-        mv.freeVariable(result);
+        mv.exitVariableScope();
 
         return null;
     }
