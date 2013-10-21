@@ -62,19 +62,26 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 Type.getMethodType(Types.EnvironmentRecord));
     }
 
+    private static final int EXECUTION_CONTEXT = 0;
+    private static final int FUNCTION = 1;
+    private static final int ARGUMENTS = 2;
+
     private static class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
         static final Type methodDescriptor = Type.getMethodType(Types.ExoticArguments,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
 
         FunctionDeclInitMethodGenerator(CodeGenerator codegen, String methodName, boolean strict) {
-            super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, false);
+            super(codegen, methodName, methodDescriptor, strict, false);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
+            setParameterName("function", FUNCTION, Types.FunctionObject);
+            setParameterName("arguments", ARGUMENTS, Types.Object_);
         }
     }
-
-    private static final int EXECUTION_CONTEXT = 0;
-    private static final int FUNCTION = 1;
-    private static final int ARGUMENTS = 2;
 
     FunctionDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);

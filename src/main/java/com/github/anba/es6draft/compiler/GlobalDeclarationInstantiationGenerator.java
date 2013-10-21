@@ -76,11 +76,28 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     }
 
     private static final int EXECUTION_CONTEXT = 0;
-    private static final int GLOBALENV = 1;
-    private static final int DELETABLE_BINDINGS = 2;
+    private static final int GLOBAL_ENV = 1;
+    private static final int LEXICAL_ENV = 2;
+    private static final int DELETABLE_BINDINGS = 3;
 
-    private static final Type methodType = Type.getMethodType(Type.VOID_TYPE,
-            Types.ExecutionContext, Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
+    private static class GlobalDeclInitMethodGenerator extends ExpressionVisitor {
+        static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
+                Type.BOOLEAN_TYPE);
+
+        GlobalDeclInitMethodGenerator(CodeGenerator codegen, String methodName, boolean strict) {
+            super(codegen, methodName, methodDescriptor, strict, false);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
+            setParameterName("globalEnv", GLOBAL_ENV, Types.LexicalEnvironment);
+            setParameterName("lexicalEnv", LEXICAL_ENV, Types.LexicalEnvironment);
+            setParameterName("deletableBindings", DELETABLE_BINDINGS, Type.BOOLEAN_TYPE);
+        }
+    }
 
     GlobalDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);
@@ -88,7 +105,9 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
 
     void generate(Script script) {
         String methodName = codegen.methodName(script, ScriptName.Init);
-        InstructionVisitor mv = codegen.publicStaticMethod(methodName, methodType);
+        ExpressionVisitor mv = new GlobalDeclInitMethodGenerator(codegen, methodName,
+                IsStrict(script));
+
         mv.lineInfo(script.getLine());
         mv.begin();
         generate(script, mv);
@@ -98,7 +117,9 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     private void generate(Script script, InstructionVisitor mv) {
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
-        Variable<LexicalEnvironment> env = mv.getParameter(GLOBALENV, LexicalEnvironment.class);
+        Variable<LexicalEnvironment> env = mv.getParameter(GLOBAL_ENV, LexicalEnvironment.class);
+        Variable<LexicalEnvironment> lexEnv = mv
+                .getParameter(LEXICAL_ENV, LexicalEnvironment.class);
         Variable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS, boolean.class);
 
         Variable<GlobalEnvironmentRecord> envRec = mv.newVariable("envRec",
@@ -160,7 +181,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         for (FunctionDeclaration f : functionsToInitialise) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
-            InstantiateFunctionObject(context, env, f, mv);
+            InstantiateFunctionObject(context, lexEnv, f, mv);
             createGlobalFunctionBinding(envRec, fn, deletableBindings, mv);
         }
         /* step 14 */
@@ -181,7 +202,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
             if (d instanceof GeneratorDeclaration) {
                 String fn = BoundName(d);
                 // stack: [] -> [fo]
-                InstantiateGeneratorObject(context, env, (GeneratorDeclaration) d, mv);
+                InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) d, mv);
                 // setMutableBinding(envRec, fn, false, mv);
                 initialiseBinding(envRec, fn, mv);
             }

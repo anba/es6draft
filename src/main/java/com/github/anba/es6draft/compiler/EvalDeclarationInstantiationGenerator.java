@@ -45,13 +45,12 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
                 Type.getMethodType(Types.EnvironmentRecord));
-
-        // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_bindingNotPresentOrThrow = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "bindingNotPresentOrThrow", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.EnvironmentRecord, Types.String));
     }
+
+    private static final int EXECUTION_CONTEXT = 0;
+    private static final int VAR_ENV = 1;
+    private static final int LEX_ENV = 2;
+    private static final int DELETABLE_BINDINGS = 3;
 
     private static class EvalDeclInitMethodGenerator extends ExpressionVisitor {
         static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
@@ -59,19 +58,22 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
                 Type.BOOLEAN_TYPE);
 
         EvalDeclInitMethodGenerator(CodeGenerator codegen, String methodName, boolean strict) {
-            super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, false);
+            super(codegen, methodName, methodDescriptor, strict, false);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", EXECUTION_CONTEXT, Types.ExecutionContext);
+            setParameterName("variableEnv", VAR_ENV, Types.LexicalEnvironment);
+            setParameterName("lexicalEnv", LEX_ENV, Types.LexicalEnvironment);
+            setParameterName("deletableBindings", DELETABLE_BINDINGS, Type.BOOLEAN_TYPE);
         }
     }
 
     EvalDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);
     }
-
-    private static final int EXECUTION_CONTEXT = 0;
-    private static final int LEX_ENV = 1;
-    private static final int VAR_ENV = 2;
-    private static final int DELETABLE_BINDINGS = 3;
 
     void generate(Script evalScript) {
         String methodName = codegen.methodName(evalScript, ScriptName.EvalInit);
@@ -101,8 +103,8 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
 
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
-        Variable<LexicalEnvironment> lexEnv = mv.getParameter(LEX_ENV, LexicalEnvironment.class);
         Variable<LexicalEnvironment> varEnv = mv.getParameter(VAR_ENV, LexicalEnvironment.class);
+        Variable<LexicalEnvironment> lexEnv = mv.getParameter(LEX_ENV, LexicalEnvironment.class);
         Variable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS, boolean.class);
 
         Variable<LexicalEnvironment> env = varEnv;
@@ -117,14 +119,15 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         mv.invoke(Methods.LexicalEnvironment_getEnvRec);
         mv.store(lexEnvRec);
 
-        // begin-modification
-        for (String name : LexicallyDeclaredNames(evalScript)) {
-            mv.load(context);
-            mv.load(lexEnvRec);
-            mv.aconst(name);
-            mv.invoke(Methods.ScriptRuntime_bindingNotPresentOrThrow);
-        }
-        // end-modification
+        // Lexical declarations are always placed into new lexical environment, see Eval#eval()
+        // // begin-modification
+        // for (String name : LexicallyDeclaredNames(evalScript)) {
+        // mv.load(context);
+        // mv.load(lexEnvRec);
+        // mv.aconst(name);
+        // mv.invoke(Methods.ScriptRuntime_bindingNotPresentOrThrow);
+        // }
+        // // end-modification
 
         /* steps 1-2 (not applicable) */
         /* step 3 */
