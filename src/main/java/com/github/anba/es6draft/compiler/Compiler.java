@@ -25,6 +25,7 @@ import com.github.anba.es6draft.ast.Scope;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodAllocation;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeAnalysis;
@@ -140,7 +141,7 @@ public class Compiler {
 
     private static void debug(byte[] b) {
         ClassReader cr = new ClassReader(b);
-        cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), ClassReader.SKIP_DEBUG);
+        cr.accept(new TraceClassVisitor(new PrintWriter(System.out)), 0);
     }
 
     private String sourceMap(Script script) {
@@ -179,7 +180,8 @@ public class Compiler {
         Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE);
 
         InstructionVisitor mv = new InstructionVisitor(cw.visitMethod(Opcodes.ACC_PUBLIC,
-                methodName, "()V", null, null), methodName, methodDescriptor);
+                methodName, "()V", null, null), methodName, methodDescriptor,
+                MethodAllocation.Instance);
         mv.begin();
         mv.loadThis();
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI,
@@ -195,7 +197,8 @@ public class Compiler {
         Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE);
 
         InstructionVisitor mv = new InstructionVisitor(cw.visitMethod(Opcodes.ACC_PUBLIC,
-                methodName, "()V", null, null), methodName, methodDescriptor);
+                methodName, "()V", null, null), methodName, methodDescriptor,
+                MethodAllocation.Instance);
         mv.begin();
         mv.loadThis();
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI,
