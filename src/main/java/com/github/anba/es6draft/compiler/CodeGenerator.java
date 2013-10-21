@@ -33,6 +33,7 @@ import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.MethodAllocation;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
@@ -137,7 +138,7 @@ class CodeGenerator implements AutoCloseable {
 
     InstructionVisitor publicStaticMethod(String methodName, Type methodDescriptor) {
         MethodVisitor mv = publicStaticMethod(methodName, methodDescriptor.getInternalName());
-        return new InstructionVisitor(mv, methodName, methodDescriptor);
+        return new InstructionVisitor(mv, methodName, methodDescriptor, MethodAllocation.Class);
     }
 
     // template strings
@@ -348,6 +349,8 @@ class CodeGenerator implements AutoCloseable {
         StatementVisitor mv = new ScriptStatementVisitor(this, node);
         mv.lineInfo(node);
         mv.begin();
+        mv.loadUndefined();
+        mv.storeCompletionValue();
 
         mv.enterScope(node);
         Completion result = Completion.Normal;
@@ -551,12 +554,10 @@ class CodeGenerator implements AutoCloseable {
     ValType expressionValue(Expression node, ExpressionVisitor mv) {
         Expression nodeValue = node.asValue();
         ValType type = nodeValue.accept(exprgen, mv);
-
         if (type == ValType.Reference) {
             mv.loadExecutionContext();
             mv.invoke(Methods.Reference_GetValue);
         }
-
         return (type != ValType.Reference ? type : ValType.Any);
     }
 
@@ -570,82 +571,58 @@ class CodeGenerator implements AutoCloseable {
 
     /* ----------------------------------------------------------------------------------------- */
 
-    private abstract static class StatementVisitorImpl extends StatementVisitor {
-        private static final int COMPLETION_SLOT = 1;
-
-        private final boolean initCompletionValue;
-        private final Variable<Object> completionValue;
-
-        protected StatementVisitorImpl(CodeGenerator codegen, String methodName,
-                Type methodDescriptor, boolean strict, TopLevelNode topLevelNode,
-                CodeType codeType, boolean initCompletionValue) {
-            super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, topLevelNode, codeType);
-            this.initCompletionValue = initCompletionValue;
-            this.completionValue = reserveFixedSlot(COMPLETION_SLOT, Object.class);
-        }
-
-        @Override
-        void storeCompletionValue() {
-            store(completionValue);
-        }
-
-        @Override
-        void loadCompletionValue() {
-            load(completionValue);
-        }
-
-        @Override
-        public void begin() {
-            super.begin();
-            if (initCompletionValue) {
-                loadUndefined();
-                storeCompletionValue();
-            }
-        }
-    }
-
-    private static class ScriptStatementVisitor extends StatementVisitorImpl {
+    private static class ScriptStatementVisitor extends StatementVisitor {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
         ScriptStatementVisitor(CodeGenerator codegen, Script node) {
             super(codegen, codegen.methodName(node, ScriptName.Code), methodDescriptor,
                     IsStrict(node), node, node.isGlobalCode() ? CodeType.GlobalScript
-                            : CodeType.NonGlobalScript, true);
+                            : CodeType.NonGlobalScript);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
         }
     }
 
-    private static class FunctionStatementVisitor extends StatementVisitorImpl {
+    private static class FunctionStatementVisitor extends StatementVisitor {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
         FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
             super(codegen, codegen.methodName(node, FunctionName.Code), methodDescriptor,
-                    IsStrict(node), node, CodeType.Function, true);
+                    IsStrict(node), node, CodeType.Function);
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
         }
     }
 
-    private static class StatementListMethodStatementVisitor extends StatementVisitorImpl {
+    private static class StatementListMethodStatementVisitor extends StatementVisitor {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext, Types.Object);
 
         StatementListMethodStatementVisitor(CodeGenerator codegen, StatementListMethod node,
                 StatementVisitor parent) {
             super(codegen, codegen.methodName(parent.getTopLevelNode(), node), methodDescriptor,
-                    parent.isStrict(), parent.getTopLevelNode(), parent.getCodeType(), false);
+                    parent.isStrict(), parent.getTopLevelNode(), parent.getCodeType());
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("completion", 1, Types.Object);
         }
     }
 
-    private abstract static class ExpressionVisitorImpl extends ExpressionVisitor {
-        protected ExpressionVisitorImpl(CodeGenerator codegen, String methodName,
-                Type methodDescriptor, boolean strict, boolean globalCode) {
-            super(codegen.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, strict, globalCode);
-        }
-    }
-
-    private static class ArrowFunctionVisitor extends ExpressionVisitorImpl {
+    private static class ArrowFunctionVisitor extends ExpressionVisitor {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
@@ -653,9 +630,15 @@ class CodeGenerator implements AutoCloseable {
             super(codegen, codegen.methodName(node, FunctionName.Code), methodDescriptor,
                     IsStrict(node), false);
         }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+        }
     }
 
-    private static class GeneratorComprehensionVisitor extends ExpressionVisitorImpl {
+    private static class GeneratorComprehensionVisitor extends ExpressionVisitor {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
@@ -664,9 +647,15 @@ class CodeGenerator implements AutoCloseable {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .isGlobalCode());
         }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+        }
     }
 
-    private static class ExpressionMethodVisitor extends ExpressionVisitorImpl {
+    private static class ExpressionMethodVisitor extends ExpressionVisitor {
         static final Type methodDescriptor = Type.getMethodType(Types.Object,
                 Types.ExecutionContext);
 
@@ -675,9 +664,15 @@ class CodeGenerator implements AutoCloseable {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .isGlobalCode());
         }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+        }
     }
 
-    private static class SpreadElementMethodVisitor extends ExpressionVisitorImpl {
+    private static class SpreadElementMethodVisitor extends ExpressionVisitor {
         static final Type methodDescriptor = Type.getMethodType(Type.INT_TYPE,
                 Types.ExecutionContext, Types.ExoticArray, Type.INT_TYPE);
 
@@ -686,9 +681,17 @@ class CodeGenerator implements AutoCloseable {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .isGlobalCode());
         }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("array", 1, Types.ExoticArray);
+            setParameterName("index", 2, Type.INT_TYPE);
+        }
     }
 
-    private static class PropertyDefinitionsMethodVisitor extends ExpressionVisitorImpl {
+    private static class PropertyDefinitionsMethodVisitor extends ExpressionVisitor {
         static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.ScriptObject);
 
@@ -696,6 +699,13 @@ class CodeGenerator implements AutoCloseable {
                 ExpressionVisitor parent) {
             super(codegen, codegen.methodName(node), methodDescriptor, parent.isStrict(), parent
                     .isGlobalCode());
+        }
+
+        @Override
+        public void begin() {
+            super.begin();
+            setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("object", 1, Types.ScriptObject);
         }
     }
 }
