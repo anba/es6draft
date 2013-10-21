@@ -491,6 +491,8 @@ tests/basic/cross-context-stack-1.js
 tests/basic/bug863084.js
 # decompileThis
 tests/basic/decompile-script.js
+# getpda
+tests/basic/bug923390.js
 
 # Unsupported 'Testing' functions
 # gcparam
