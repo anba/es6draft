@@ -10,7 +10,6 @@ import static java.util.Collections.emptySet;
 
 import java.util.Set;
 
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.Expression;
@@ -31,19 +30,27 @@ abstract class ExpressionVisitor extends InstructionVisitor {
                 Types.Undefined, "UNDEFINED", Types.Undefined);
     }
 
+    private static final int CONTEXT_SLOT = 0;
+
     private final boolean strict;
     private final boolean globalCode;
-    private final Variable<ExecutionContext> executionContext;
+    private Variable<ExecutionContext> executionContext;
     private Scope scope;
     // tail-call support
     private Set<Expression> tail = emptySet();
 
-    protected ExpressionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
-            boolean strict, boolean globalCode) {
-        super(mv, methodName, methodDescriptor);
+    protected ExpressionVisitor(CodeGenerator codeGenerator, String methodName,
+            Type methodDescriptor, boolean strict, boolean globalCode) {
+        super(codeGenerator.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
+                methodName, methodDescriptor, MethodAllocation.Class);
         this.strict = strict;
         this.globalCode = globalCode;
-        this.executionContext = reserveFixedSlot(0, ExecutionContext.class);
+    }
+
+    @Override
+    public void begin() {
+        super.begin();
+        this.executionContext = getParameter(CONTEXT_SLOT, ExecutionContext.class);
     }
 
     /**

@@ -15,13 +15,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.BreakStatement;
 import com.github.anba.es6draft.ast.BreakableStatement;
 import com.github.anba.es6draft.ast.ContinueStatement;
+import com.github.anba.es6draft.ast.GuardedCatchNode;
 import com.github.anba.es6draft.ast.IterationStatement;
 import com.github.anba.es6draft.ast.LabelledStatement;
 import com.github.anba.es6draft.ast.TopLevelNode;
@@ -120,39 +120,70 @@ abstract class StatementVisitor extends ExpressionVisitor {
         GlobalScript, NonGlobalScript, Function,
     }
 
+    private static final int COMPLETION_SLOT = 1;
+
     private final TopLevelNode topLevelNode;
     private final CodeType codeType;
-    private final boolean completionValue;
+    private final boolean isScriptCode;
+    private Variable<Object> completionValue;
     private Labels labels = new Labels(null);
     private int finallyDepth = 0;
 
     // tail-call support
     private int wrapped = 0;
 
-    protected StatementVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
-            boolean strict, TopLevelNode topLevelNode, CodeType codeType) {
-        super(mv, methodName, methodDescriptor, strict, codeType == CodeType.GlobalScript);
+    protected StatementVisitor(CodeGenerator codeGenerator, String methodName,
+            Type methodDescriptor, boolean strict, TopLevelNode topLevelNode, CodeType codeType) {
+        super(codeGenerator, methodName, methodDescriptor, strict,
+                codeType == CodeType.GlobalScript);
         this.topLevelNode = topLevelNode;
         this.codeType = codeType;
-        this.completionValue = codeType != CodeType.Function;
+        this.isScriptCode = codeType != CodeType.Function;
         // no return in script code
         this.labels.returnLabel = codeType == CodeType.Function ? new JumpLabel() : null;
     }
 
-    abstract void storeCompletionValue();
+    @Override
+    public void begin() {
+        super.begin();
+        completionValue = hasParameter(COMPLETION_SLOT, Object.class) ? getParameter(
+                COMPLETION_SLOT, Object.class) : reserveFixedSlot("completion", COMPLETION_SLOT,
+                Object.class);
+    }
 
-    abstract void loadCompletionValue();
-
+    /**
+     * Returns the {@link TopLevelNode} for this statement visitor
+     */
     TopLevelNode getTopLevelNode() {
         return topLevelNode;
     }
 
+    /**
+     * Returns the {@link CodeType} for this statement visitor
+     */
     CodeType getCodeType() {
         return codeType;
     }
 
+    /**
+     * Pushes the completion value onto the stack
+     */
+    void loadCompletionValue() {
+        load(completionValue);
+    }
+
+    /**
+     * Pops the stack's top element and stores it into the completion value
+     */
+    void storeCompletionValue() {
+        store(completionValue);
+    }
+
+    /**
+     * Pops the stack's top element and conditionally stores it into the completion value.
+     */
     void storeCompletionValueForScript(ValType type) {
-        if (isCompletionValue()) {
+        if (isScriptCode && finallyDepth == 0) {
             toBoxed(type);
             storeCompletionValue();
         } else {
@@ -160,15 +191,17 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
-    boolean isCompletionValue() {
-        return completionValue && finallyDepth == 0;
-    }
-
+    /**
+     * Enter a finally scoped block
+     */
     void enterFinallyScoped() {
         assert labels != null;
         labels = new Labels(labels);
     }
 
+    /**
+     * Exit a finally scoped block
+     */
     List<TempLabel> exitFinallyScoped() {
         List<TempLabel> tempLabels = labels.tempLabels;
         labels = labels.parent;
@@ -176,26 +209,44 @@ abstract class StatementVisitor extends ExpressionVisitor {
         return tempLabels != null ? tempLabels : Collections.<TempLabel> emptyList();
     }
 
+    /**
+     * Returns <code>true</code> when currently within a wrapped block
+     */
     boolean isWrapped() {
         return wrapped != 0;
     }
 
+    /**
+     * Enter a try-catch-finally wrapped block
+     */
     void enterWrapped() {
         ++wrapped;
     }
 
+    /**
+     * Exit a try-catch-finally wrapped block
+     */
     void exitWrapped() {
         --wrapped;
     }
 
+    /**
+     * Enter a finally block
+     */
     void enterFinally() {
         ++finallyDepth;
     }
 
+    /**
+     * Exit a finally block
+     */
     void exitFinally() {
         --finallyDepth;
     }
 
+    /**
+     * Start code generation for {@link IterationStatement} nodes
+     */
     void enterIteration(IterationStatement node, JumpLabel lblBreak, JumpLabel lblContinue) {
         boolean hasBreak = node.getAbrupt().contains(Abrupt.Break);
         boolean hasContinue = node.getAbrupt().contains(Abrupt.Continue);
@@ -214,6 +265,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
+    /**
+     * Stop code generation for {@link IterationStatement} nodes
+     */
     void exitIteration(IterationStatement node) {
         boolean hasBreak = node.getAbrupt().contains(Abrupt.Break);
         boolean hasContinue = node.getAbrupt().contains(Abrupt.Continue);
@@ -232,6 +286,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
+    /**
+     * Start code generation for {@link BreakableStatement} nodes
+     */
     void enterBreakable(BreakableStatement node, JumpLabel lblBreak) {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
@@ -242,6 +299,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
+    /**
+     * Stop code generation for {@link BreakableStatement} nodes
+     */
     void exitBreakable(BreakableStatement node) {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
@@ -252,6 +312,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
+    /**
+     * Start code generation for {@link LabelledStatement} nodes
+     */
     void enterLabelled(LabelledStatement node, JumpLabel lblBreak) {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
@@ -261,6 +324,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
+    /**
+     * Stop code generation for {@link LabelledStatement} nodes
+     */
     void exitLabelled(LabelledStatement node) {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
@@ -270,36 +336,60 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
+    /**
+     * Start code generation for {@link TryStatement} nodes with {@link GuardedCatchNode}
+     */
     void enterCatchWithGuarded(TryStatement node, Label lblCatch) {
         labels.catchLabels.push(lblCatch);
     }
 
+    /**
+     * Stop code generation for {@link TryStatement} nodes with {@link GuardedCatchNode}
+     */
     void exitCatchWithGuarded(TryStatement node) {
         labels.catchLabels.pop();
     }
 
+    /**
+     * Returns the current return-label
+     */
     Label returnLabel() {
         return labels.returnLabel().mark();
     }
 
+    /**
+     * Returns the current return-label, but does not increase the use-count
+     */
     Label returnLabelImmediate() {
         return labels.returnLabel();
     }
 
+    /**
+     * Returns <code>true</code> iff the current return-label has a positive use-count
+     */
     boolean hasReturn() {
         return labels.returnLabel().isUsed();
     }
 
+    /**
+     * Returns the break-label for the given {@link BreakStatement}
+     */
     Label breakLabel(BreakStatement node) {
         String name = node.getLabel();
         return labels.breakLabel(name).mark();
     }
 
+    /**
+     * Returns the continue-label for the given {@link ContinueStatement}
+     */
     Label continueLabel(ContinueStatement node) {
         String name = node.getLabel();
         return labels.continueLabel(name).mark();
     }
 
+    /**
+     * Returns the catch-label originally set in {@link #enterCatchWithGuarded(TryStatement, Label)}
+     */
     Label catchWithGuardedLabel() {
         return labels.catchLabels.peek();
     }
