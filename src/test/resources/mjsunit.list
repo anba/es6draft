@@ -260,6 +260,9 @@ for-in.js
 # var-declaration on global only calls setter when executed
 regress/regress-1119.js
 
+# MethodDefinition syntax not supported
+regress/regress-parse-object-literal.js
+
 
 #######################################
 # Compilation or runtime issues       #
