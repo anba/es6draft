@@ -227,6 +227,7 @@ class StatementGenerator extends
         // L1: <statement>
         // IFNE ToBoolean(<expr>) L1
 
+        mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Completion result;
@@ -252,7 +253,7 @@ class StatementGenerator extends
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
 
-        freeVariable(savedEnv, mv);
+        mv.exitVariableScope();
 
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed());
     }
@@ -298,7 +299,10 @@ class StatementGenerator extends
         JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
         Label loopstart = new Label(), loopbody = new Label();
 
+        mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
+        @SuppressWarnings("rawtypes")
+        Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
 
         // Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
         ValType type = expressionValue(expr, mv);
@@ -341,8 +345,6 @@ class StatementGenerator extends
             }
         }
 
-        @SuppressWarnings("rawtypes")
-        Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
         mv.store(iter);
 
         mv.goTo(lblContinue);
@@ -441,8 +443,7 @@ class StatementGenerator extends
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
 
-        mv.freeVariable(iter);
-        freeVariable(savedEnv, mv);
+        mv.exitVariableScope();
 
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
     }
@@ -485,6 +486,7 @@ class StatementGenerator extends
             lexDecl.accept(this, mv);
         }
 
+        mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Label lblTest = new Label(), lblStmt = new Label();
@@ -522,7 +524,7 @@ class StatementGenerator extends
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
 
-        freeVariable(savedEnv, mv);
+        mv.exitVariableScope();
 
         if (head instanceof LexicalDeclaration) {
             if (node.getTest() != null || lblBreak.isUsed()) {
@@ -584,6 +586,7 @@ class StatementGenerator extends
 
     @Override
     public Completion visit(LabelledStatement node, StatementVisitor mv) {
+        mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         JumpLabel label = new JumpLabel();
@@ -595,7 +598,7 @@ class StatementGenerator extends
         if (label.isUsed()) {
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
-        freeVariable(savedEnv, mv);
+        mv.exitVariableScope();
 
         return result.normal(label.isUsed());
     }
@@ -712,7 +715,11 @@ class StatementGenerator extends
 
         mv.lineInfo(0);
         mv.loadExecutionContext();
-        mv.loadCompletionValue();
+        if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
+            mv.aconst(null);
+        } else {
+            mv.loadCompletionValue();
+        }
 
         String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext, Types.Object);
         mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
@@ -750,271 +757,295 @@ class StatementGenerator extends
 
     @Override
     public Completion visit(TryStatement node, StatementVisitor mv) {
-        // NB: nop() instruction are inserted to ensure no empty blocks will be generated
+        boolean hasCatch = node.getCatchNode() != null || !node.getGuardedCatchNodes().isEmpty();
+        if (hasCatch && node.getFinallyBlock() != null) {
+            return visitTryCatchFinally(node, mv);
+        } else if (hasCatch) {
+            return visitTryCatch(node, mv);
+        } else {
+            return visitTryFinally(node, mv);
+        }
+    }
 
+    private Completion visitTryCatchFinally(TryStatement node, StatementVisitor mv) {
+        // NB: nop() instruction are inserted to ensure no empty blocks will be generated
         BlockStatement tryBlock = node.getTryBlock();
         CatchNode catchNode = node.getCatchNode();
         List<GuardedCatchNode> guardedCatchNodes = node.getGuardedCatchNodes();
         BlockStatement finallyBlock = node.getFinallyBlock();
+        assert catchNode != null || !guardedCatchNodes.isEmpty();
+        assert finallyBlock != null;
 
-        if ((catchNode != null || !guardedCatchNodes.isEmpty()) && finallyBlock != null) {
-            Label startCatchFinally = new Label();
-            Label endCatch = new Label(), handlerCatch = new Label();
-            Label endFinally = new Label(), handlerFinally = new Label();
-            Label handlerCatchStackOverflow = new Label();
-            Label handlerFinallyStackOverflow = new Label();
-            Label noException = new Label();
-            Label exceptionHandled = new Label();
+        Label startCatchFinally = new Label();
+        Label endCatch = new Label(), handlerCatch = new Label();
+        Label endFinally = new Label(), handlerFinally = new Label();
+        Label handlerCatchStackOverflow = new Label();
+        Label handlerFinallyStackOverflow = new Label();
+        Label noException = new Label();
+        Label exceptionHandled = new Label();
 
-            mv.enterFinallyScoped();
+        mv.enterVariableScope();
+        Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
+        Variable<ScriptException> exception = mv.newVariable("exception", ScriptException.class);
+        Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
 
-            Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
-            mv.mark(startCatchFinally);
-            mv.enterWrapped();
-            Completion tryResult = tryBlock.accept(this, mv);
-            if (!tryResult.isAbrupt()) {
-                mv.nop();
-                mv.goTo(noException);
+        mv.enterFinallyScoped();
+        mv.mark(startCatchFinally);
+        mv.enterWrapped();
+        Completion tryResult = tryBlock.accept(this, mv);
+        if (!tryResult.isAbrupt()) {
+            mv.nop();
+            mv.goTo(noException);
+        }
+        mv.exitWrapped();
+        mv.mark(endCatch);
+
+        // StackOverflowError -> ScriptException
+        mv.mark(handlerCatchStackOverflow);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_toInternalError);
+
+        Completion catchResult;
+        mv.mark(handlerCatch);
+        restoreEnvironment(savedEnv, mv);
+        mv.enterWrapped();
+        if (!guardedCatchNodes.isEmpty()) {
+            mv.enterCatchWithGuarded(node, new Label());
+
+            mv.store(exception);
+            Completion result = null;
+            for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
+                mv.load(exception);
+                Completion guardedResult = guardedCatchNode.accept(this, mv);
+                result = result != null ? result.select(guardedResult) : guardedResult;
             }
-            mv.exitWrapped();
-            mv.mark(endCatch);
-
-            // StackOverflowError -> ScriptException
-            mv.mark(handlerCatchStackOverflow);
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_toInternalError);
-
-            Completion catchResult;
-            mv.mark(handlerCatch);
-            restoreEnvironment(mv, savedEnv);
-            mv.enterWrapped();
-            if (!guardedCatchNodes.isEmpty()) {
-                mv.enterCatchWithGuarded(node, new Label());
-
-                Variable<ScriptException> exception = mv.newVariable("exception",
-                        ScriptException.class);
-                mv.store(exception);
-                Completion result = null;
-                for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
-                    mv.load(exception);
-                    Completion guardedResult = guardedCatchNode.accept(this, mv);
-                    result = result != null ? result.select(guardedResult) : guardedResult;
-                }
-                assert result != null;
-                if (catchNode != null) {
-                    mv.load(exception);
-                    catchResult = catchNode.accept(this, mv);
-                } else {
-                    mv.load(exception);
-                    mv.athrow();
-                    catchResult = Completion.Throw;
-                }
-
-                mv.freeVariable(exception);
-                mv.mark(mv.catchWithGuardedLabel());
-                mv.exitCatchWithGuarded(node);
-
-                catchResult = catchResult.select(result);
-            } else {
+            assert result != null;
+            if (catchNode != null) {
+                mv.load(exception);
                 catchResult = catchNode.accept(this, mv);
-            }
-            mv.exitWrapped();
-            mv.mark(endFinally);
-
-            // restore temp abrupt targets
-            List<TempLabel> tempLabels = mv.exitFinallyScoped();
-
-            // various finally blocks
-            if (!catchResult.isAbrupt()) {
-                mv.enterFinally();
-                Completion finallyResult = finallyBlock.accept(this, mv);
-                mv.exitFinally();
-                if (!finallyResult.isAbrupt()) {
-                    mv.goTo(exceptionHandled);
-                }
+            } else {
+                mv.load(exception);
+                mv.athrow();
+                catchResult = Completion.Throw;
             }
 
-            mv.mark(handlerFinallyStackOverflow);
-            mv.mark(handlerFinally);
-            Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
-            mv.store(throwable);
-            restoreEnvironment(mv, savedEnv);
+            mv.mark(mv.catchWithGuardedLabel());
+            mv.exitCatchWithGuarded(node);
+
+            catchResult = catchResult.select(result);
+        } else {
+            catchResult = catchNode.accept(this, mv);
+        }
+        mv.exitWrapped();
+        mv.mark(endFinally);
+
+        // restore temp abrupt targets
+        List<TempLabel> tempLabels = mv.exitFinallyScoped();
+
+        // various finally blocks
+        if (!catchResult.isAbrupt()) {
             mv.enterFinally();
             Completion finallyResult = finallyBlock.accept(this, mv);
             mv.exitFinally();
             if (!finallyResult.isAbrupt()) {
-                mv.load(throwable);
-                mv.athrow();
-            }
-            mv.freeVariable(throwable);
-
-            if (!tryResult.isAbrupt()) {
-                mv.mark(noException);
-                mv.enterFinally();
-                finallyBlock.accept(this, mv);
-                mv.exitFinally();
-                if (!finallyResult.isAbrupt()) {
-                    mv.goTo(exceptionHandled);
-                }
-            }
-
-            // abrupt completion (return, break, continue) finally blocks
-            for (TempLabel temp : tempLabels) {
-                mv.mark(temp);
-                restoreEnvironment(mv, savedEnv);
-                mv.enterFinally();
-                finallyBlock.accept(this, mv);
-                mv.exitFinally();
-                if (!finallyResult.isAbrupt()) {
-                    mv.goTo(temp.getActual().mark());
-                }
-            }
-
-            mv.mark(exceptionHandled);
-
-            mv.freeVariable(savedEnv);
-            mv.visitTryCatchBlock(startCatchFinally, endCatch, handlerCatch,
-                    Types.ScriptException.getInternalName());
-            mv.visitTryCatchBlock(startCatchFinally, endCatch, handlerCatchStackOverflow,
-                    Types.StackOverflowError.getInternalName());
-            mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinally,
-                    Types.ScriptException.getInternalName());
-            mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinallyStackOverflow,
-                    Types.StackOverflowError.getInternalName());
-
-            return finallyResult.then(tryResult.select(catchResult));
-        } else if (catchNode != null || !guardedCatchNodes.isEmpty()) {
-            Label startCatch = new Label(), endCatch = new Label(), handlerCatch = new Label();
-            Label handlerCatchStackOverflow = new Label();
-            Label exceptionHandled = new Label();
-
-            Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
-            mv.mark(startCatch);
-            mv.enterWrapped();
-            Completion tryResult = tryBlock.accept(this, mv);
-            if (!tryResult.isAbrupt()) {
-                mv.nop();
                 mv.goTo(exceptionHandled);
             }
-            mv.exitWrapped();
-            mv.mark(endCatch);
+        }
 
-            // StackOverflowError -> ScriptException
-            mv.mark(handlerCatchStackOverflow);
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_toInternalError);
+        mv.mark(handlerFinallyStackOverflow);
+        mv.mark(handlerFinally);
+        mv.store(throwable);
+        restoreEnvironment(savedEnv, mv);
+        mv.enterFinally();
+        Completion finallyResult = finallyBlock.accept(this, mv);
+        mv.exitFinally();
+        if (!finallyResult.isAbrupt()) {
+            mv.load(throwable);
+            mv.athrow();
+        }
 
-            Completion catchResult;
-            mv.mark(handlerCatch);
-            restoreEnvironment(mv, savedEnv);
-            if (!guardedCatchNodes.isEmpty()) {
-                mv.enterCatchWithGuarded(node, new Label());
-
-                Variable<ScriptException> exception = mv.newVariable("exception",
-                        ScriptException.class);
-                mv.store(exception);
-                Completion result = null;
-                for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
-                    mv.load(exception);
-                    Completion guardedResult = guardedCatchNode.accept(this, mv);
-                    result = result != null ? result.select(guardedResult) : guardedResult;
-                }
-                assert result != null;
-                if (catchNode != null) {
-                    mv.load(exception);
-                    catchResult = catchNode.accept(this, mv);
-                } else {
-                    mv.load(exception);
-                    mv.athrow();
-                    catchResult = Completion.Throw;
-                }
-
-                mv.freeVariable(exception);
-                mv.mark(mv.catchWithGuardedLabel());
-                mv.exitCatchWithGuarded(node);
-
-                catchResult = catchResult.select(result);
-            } else {
-                catchResult = catchNode.accept(this, mv);
-            }
-            mv.mark(exceptionHandled);
-
-            mv.freeVariable(savedEnv);
-            mv.visitTryCatchBlock(startCatch, endCatch, handlerCatch,
-                    Types.ScriptException.getInternalName());
-            mv.visitTryCatchBlock(startCatch, endCatch, handlerCatchStackOverflow,
-                    Types.StackOverflowError.getInternalName());
-
-            return tryResult.select(catchResult);
-        } else {
-            assert finallyBlock != null;
-            Label startFinally = new Label(), endFinally = new Label(), handlerFinally = new Label();
-            Label handlerFinallyStackOverflow = new Label();
-            Label noException = new Label();
-            Label exceptionHandled = new Label();
-
-            mv.enterFinallyScoped();
-
-            Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
-            mv.mark(startFinally);
-            mv.enterWrapped();
-            Completion tryResult = tryBlock.accept(this, mv);
-            if (!tryResult.isAbrupt()) {
-                mv.nop();
-                mv.goTo(noException);
-            }
-            mv.exitWrapped();
-            mv.mark(endFinally);
-
-            // restore temp abrupt targets
-            List<TempLabel> tempLabels = mv.exitFinallyScoped();
-
-            mv.mark(handlerFinallyStackOverflow);
-            mv.mark(handlerFinally);
-            Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
-            mv.store(throwable);
-            restoreEnvironment(mv, savedEnv);
+        if (!tryResult.isAbrupt()) {
+            mv.mark(noException);
             mv.enterFinally();
-            Completion finallyResult = finallyBlock.accept(this, mv);
+            finallyBlock.accept(this, mv);
             mv.exitFinally();
             if (!finallyResult.isAbrupt()) {
-                mv.load(throwable);
-                mv.athrow();
+                mv.goTo(exceptionHandled);
             }
-            mv.freeVariable(throwable);
-
-            if (!tryResult.isAbrupt()) {
-                mv.mark(noException);
-                mv.enterFinally();
-                finallyBlock.accept(this, mv);
-                mv.exitFinally();
-                if (!finallyResult.isAbrupt()) {
-                    mv.goTo(exceptionHandled);
-                }
-            }
-
-            // abrupt completion (return, break, continue) finally blocks
-            for (TempLabel temp : tempLabels) {
-                mv.mark(temp);
-                restoreEnvironment(mv, savedEnv);
-                mv.enterFinally();
-                finallyBlock.accept(this, mv);
-                mv.exitFinally();
-                if (!finallyResult.isAbrupt()) {
-                    mv.goTo(temp.getActual().mark());
-                }
-            }
-
-            mv.mark(exceptionHandled);
-
-            mv.freeVariable(savedEnv);
-            mv.visitTryCatchBlock(startFinally, endFinally, handlerFinally,
-                    Types.ScriptException.getInternalName());
-            mv.visitTryCatchBlock(startFinally, endFinally, handlerFinallyStackOverflow,
-                    Types.StackOverflowError.getInternalName());
-
-            return finallyResult.then(tryResult);
         }
+
+        // abrupt completion (return, break, continue) finally blocks
+        for (TempLabel temp : tempLabels) {
+            mv.mark(temp);
+            restoreEnvironment(savedEnv, mv);
+            mv.enterFinally();
+            finallyBlock.accept(this, mv);
+            mv.exitFinally();
+            if (!finallyResult.isAbrupt()) {
+                mv.goTo(temp.getActual().mark());
+            }
+        }
+
+        mv.mark(exceptionHandled);
+
+        mv.exitVariableScope();
+        mv.visitTryCatchBlock(startCatchFinally, endCatch, handlerCatch,
+                Types.ScriptException.getInternalName());
+        mv.visitTryCatchBlock(startCatchFinally, endCatch, handlerCatchStackOverflow,
+                Types.StackOverflowError.getInternalName());
+        mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinally,
+                Types.ScriptException.getInternalName());
+        mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinallyStackOverflow,
+                Types.StackOverflowError.getInternalName());
+
+        return finallyResult.then(tryResult.select(catchResult));
+    }
+
+    private Completion visitTryCatch(TryStatement node, StatementVisitor mv) {
+        // NB: nop() instruction are inserted to ensure no empty blocks will be generated
+        BlockStatement tryBlock = node.getTryBlock();
+        CatchNode catchNode = node.getCatchNode();
+        List<GuardedCatchNode> guardedCatchNodes = node.getGuardedCatchNodes();
+        assert catchNode != null || !guardedCatchNodes.isEmpty();
+        assert node.getFinallyBlock() == null;
+
+        Label startCatch = new Label(), endCatch = new Label(), handlerCatch = new Label();
+        Label handlerCatchStackOverflow = new Label();
+        Label exceptionHandled = new Label();
+
+        mv.enterVariableScope();
+        Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
+        Variable<ScriptException> exception = mv.newVariable("exception", ScriptException.class);
+
+        mv.mark(startCatch);
+        mv.enterWrapped();
+        Completion tryResult = tryBlock.accept(this, mv);
+        if (!tryResult.isAbrupt()) {
+            mv.nop();
+            mv.goTo(exceptionHandled);
+        }
+        mv.exitWrapped();
+        mv.mark(endCatch);
+
+        // StackOverflowError -> ScriptException
+        mv.mark(handlerCatchStackOverflow);
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_toInternalError);
+
+        Completion catchResult;
+        mv.mark(handlerCatch);
+        restoreEnvironment(savedEnv, mv);
+        if (!guardedCatchNodes.isEmpty()) {
+            mv.enterCatchWithGuarded(node, new Label());
+
+            mv.store(exception);
+            Completion result = null;
+            for (GuardedCatchNode guardedCatchNode : guardedCatchNodes) {
+                mv.load(exception);
+                Completion guardedResult = guardedCatchNode.accept(this, mv);
+                result = result != null ? result.select(guardedResult) : guardedResult;
+            }
+            assert result != null;
+            if (catchNode != null) {
+                mv.load(exception);
+                catchResult = catchNode.accept(this, mv);
+            } else {
+                mv.load(exception);
+                mv.athrow();
+                catchResult = Completion.Throw;
+            }
+
+            mv.mark(mv.catchWithGuardedLabel());
+            mv.exitCatchWithGuarded(node);
+
+            catchResult = catchResult.select(result);
+        } else {
+            catchResult = catchNode.accept(this, mv);
+        }
+        mv.mark(exceptionHandled);
+
+        mv.exitVariableScope();
+        mv.visitTryCatchBlock(startCatch, endCatch, handlerCatch,
+                Types.ScriptException.getInternalName());
+        mv.visitTryCatchBlock(startCatch, endCatch, handlerCatchStackOverflow,
+                Types.StackOverflowError.getInternalName());
+
+        return tryResult.select(catchResult);
+    }
+
+    private Completion visitTryFinally(TryStatement node, StatementVisitor mv) {
+        // NB: nop() instruction are inserted to ensure no empty blocks will be generated
+        BlockStatement tryBlock = node.getTryBlock();
+        BlockStatement finallyBlock = node.getFinallyBlock();
+        assert node.getCatchNode() == null && node.getGuardedCatchNodes().isEmpty();
+        assert finallyBlock != null;
+
+        Label startFinally = new Label(), endFinally = new Label(), handlerFinally = new Label();
+        Label handlerFinallyStackOverflow = new Label();
+        Label noException = new Label();
+        Label exceptionHandled = new Label();
+
+        mv.enterVariableScope();
+        Variable<LexicalEnvironment> savedEnv = saveEnvironment(mv);
+        Variable<Throwable> throwable = mv.newVariable("throwable", Throwable.class);
+
+        mv.enterFinallyScoped();
+        mv.mark(startFinally);
+        mv.enterWrapped();
+        Completion tryResult = tryBlock.accept(this, mv);
+        if (!tryResult.isAbrupt()) {
+            mv.nop();
+            mv.goTo(noException);
+        }
+        mv.exitWrapped();
+        mv.mark(endFinally);
+
+        // restore temp abrupt targets
+        List<TempLabel> tempLabels = mv.exitFinallyScoped();
+
+        mv.mark(handlerFinallyStackOverflow);
+        mv.mark(handlerFinally);
+        mv.store(throwable);
+        restoreEnvironment(savedEnv, mv);
+        mv.enterFinally();
+        Completion finallyResult = finallyBlock.accept(this, mv);
+        mv.exitFinally();
+        if (!finallyResult.isAbrupt()) {
+            mv.load(throwable);
+            mv.athrow();
+        }
+
+        if (!tryResult.isAbrupt()) {
+            mv.mark(noException);
+            mv.enterFinally();
+            finallyBlock.accept(this, mv);
+            mv.exitFinally();
+            if (!finallyResult.isAbrupt()) {
+                mv.goTo(exceptionHandled);
+            }
+        }
+
+        // abrupt completion (return, break, continue) finally blocks
+        for (TempLabel temp : tempLabels) {
+            mv.mark(temp);
+            restoreEnvironment(savedEnv, mv);
+            mv.enterFinally();
+            finallyBlock.accept(this, mv);
+            mv.exitFinally();
+            if (!finallyResult.isAbrupt()) {
+                mv.goTo(temp.getActual().mark());
+            }
+        }
+
+        mv.mark(exceptionHandled);
+
+        mv.exitVariableScope();
+        mv.visitTryCatchBlock(startFinally, endFinally, handlerFinally,
+                Types.ScriptException.getInternalName());
+        mv.visitTryCatchBlock(startFinally, endFinally, handlerFinallyStackOverflow,
+                Types.StackOverflowError.getInternalName());
+
+        return finallyResult.then(tryResult);
     }
 
     @Override
@@ -1153,6 +1184,7 @@ class StatementGenerator extends
         Label lblNext = new Label();
         JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
 
+        mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Completion result;
@@ -1177,7 +1209,7 @@ class StatementGenerator extends
             restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
         }
 
-        freeVariable(savedEnv, mv);
+        mv.exitVariableScope();
 
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
     }
