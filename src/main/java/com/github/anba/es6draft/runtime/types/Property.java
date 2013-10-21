@@ -94,7 +94,7 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Converts this property into a {@link PropertyDescriptor} object
+     * Converts this property to a {@link PropertyDescriptor} object
      */
     public PropertyDescriptor toPropertyDescriptor() {
         return new PropertyDescriptor(this);

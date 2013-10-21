@@ -62,7 +62,7 @@ public final class PropertyDescriptor implements Cloneable {
         origin = original.origin;
     }
 
-    // package-private for PropertyDescriptorView
+    // package-private for Property
     PropertyDescriptor(Property original) {
         present = original.isDataDescriptor() ? POPULATED_DATA_DESC : POPULATED_ACCESSOR_DESC;
         value = original.getValue();
@@ -123,7 +123,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * Converts this property descriptor into a {@link Property} object
+     * Converts this property descriptor to a {@link Property} object
      */
     public Property toProperty() {
         return new Property(this);
@@ -230,13 +230,9 @@ public final class PropertyDescriptor implements Cloneable {
      */
     public static Object FromPropertyDescriptor(ExecutionContext cx, PropertyDescriptor desc)
             throws IllegalArgumentException {
-        // FromPropertyDescriptor assumes that Desc is a fully populated descriptor
-        if (desc != null) {
-            int present = desc.present;
-            if ((present & ~POPULATED_ACCESSOR_DESC) != 0 && (present & ~POPULATED_DATA_DESC) != 0) {
-                throw new IllegalArgumentException(String.valueOf(present));
-            }
-        }
+        // FIXME: FromPropertyDescriptor does not assume that Desc is a fully populated descriptor!
+        // Only assert it's a valid property descriptor
+        assert !(desc.isDataDescriptor() && desc.isAccessorDescriptor());
 
         /* step 1 */
         if (desc == null) {
@@ -249,15 +245,24 @@ public final class PropertyDescriptor implements Cloneable {
         /* steps 3-4 */
         ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* steps 5-10 */
-        if (desc.isDataDescriptor()) {
+        if (desc.hasValue()) {
             obj.defineOwnProperty(cx, "value", _p(desc.getValue()));
+        }
+        if (desc.hasWritable()) {
             obj.defineOwnProperty(cx, "writable", _p(desc.isWritable()));
-        } else {
+        }
+        if (desc.hasGetter()) {
             obj.defineOwnProperty(cx, "get", _p(undefinedIfNull(desc.getGetter())));
+        }
+        if (desc.hasSetter()) {
             obj.defineOwnProperty(cx, "set", _p(undefinedIfNull(desc.getSetter())));
         }
-        obj.defineOwnProperty(cx, "enumerable", _p(desc.isEnumerable()));
-        obj.defineOwnProperty(cx, "configurable", _p(desc.isConfigurable()));
+        if (desc.hasEnumerable()) {
+            obj.defineOwnProperty(cx, "enumerable", _p(desc.isEnumerable()));
+        }
+        if (desc.hasConfigurable()) {
+            obj.defineOwnProperty(cx, "configurable", _p(desc.isConfigurable()));
+        }
         /* step 11 */
         return obj;
     }
