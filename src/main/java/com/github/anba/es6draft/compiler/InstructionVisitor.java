@@ -6,8 +6,12 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
@@ -23,74 +27,165 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
  */
 class InstructionVisitor extends InstructionAdapter {
     private static class Variables {
-        private static final Type INVALID = Type.getType("invalid");
+        private static final Type RESERVED = Type.getType("reserved");
         private static final int INITIAL_SIZE = 8;
+        private final AtomicInteger id = new AtomicInteger();
         private final BitSet variables = new BitSet();
         private Type[] types = new Type[INITIAL_SIZE];
+        private VariableScope varScope = null;
 
-        void reserveFixedSlot(int var, Type type) {
+        private static Type[] grow(Type[] types) {
+            int newLength = types.length + (types.length >>> 1);
+            return Arrays.copyOf(types, newLength, Type[].class);
+        }
+
+        private void assign(int slot, Type type) {
             if (type.getSize() == 1) {
-                assert var < INITIAL_SIZE;
-                assert types[var] == null || types[var].equals(type);
-                types[var] = type;
-                variables.set(var);
+                types[slot] = type;
+                variables.set(slot);
             } else {
-                assert var + 1 < INITIAL_SIZE;
-                assert types[var] == null || types[var].equals(type);
-                assert types[var + 1] == null || types[var + 1] == INVALID;
-                types[var] = type;
-                types[var + 1] = INVALID;
-                variables.set(var, var + 2);
+                types[slot] = type;
+                types[slot + 1] = RESERVED;
+                variables.set(slot, slot + 2);
             }
         }
 
-        int newVariable(Type type) {
-            int size = type.getSize();
-            for (int var = 0;;) {
-                var = variables.nextClearBit(var);
-                if (var + size > types.length) {
-                    int newLength = types.length + (types.length >>> 1);
-                    types = Arrays.copyOf(types, newLength, Type[].class);
+        VariableScope enter() {
+            return varScope = new VariableScope(varScope, variables.length());
+        }
+
+        VariableScope exit() {
+            VariableScope scope = varScope;
+            varScope = scope.parent;
+            // clear stored variable type info
+            for (Variable<?> v : scope) {
+                v.alive = false;
+            }
+            Arrays.fill(types, scope.firstSlot, types.length, null);
+            variables.clear(scope.firstSlot, variables.size());
+            return scope;
+        }
+
+        void close() {
+            assert varScope == null : "unclosed variable scopes";
+        }
+
+        /**
+         * Adds a new entry to the variable map
+         */
+        <T> Variable<T> addVariable(String name, Type type, int slot) {
+            assert variables.get(slot) && types[slot].equals(type);
+            return varScope.add(name, type, slot);
+        }
+
+        /**
+         * Sets the variable information for a fixed slot
+         */
+        void reserveFixedSlot(Type type, int slot) {
+            assert slot >= 0;
+            if (slot + type.getSize() > types.length) {
+                types = grow(types);
+            }
+            assert types[slot] == null && (type.getSize() == 1 || types[slot + 1] == null);
+            assign(slot, type);
+        }
+
+        /**
+         * Sets the variable information for a fixed slot and adds an entry to the variable map
+         */
+        <T> Variable<T> reserveFixedSlot(String name, Type type, int slot) {
+            reserveFixedSlot(type, slot);
+            return varScope.add(name, type, slot);
+        }
+
+        /**
+         * Creates a new variable and adds it to the variable map
+         */
+        <T> Variable<T> newVariable(String name, Type type) {
+            int slot = newVariable(type);
+            if (slot < 0) {
+                // reusing an existing slot
+                return varScope.add("<shared>", type, slot);
+            }
+            if (name == null) {
+                // null-name signals scratch variable, don't create variable map entry
+                return varScope.add("<scratch>", type, -slot);
+            }
+            String uniqueName = name + "$" + id.incrementAndGet();
+            return varScope.add(uniqueName, type, slot);
+        }
+
+        /**
+         * Marks the given variable as no longer being used, only applicable for scratch variables
+         */
+        void freeVariable(Variable<?> variable) {
+            int slot = variable.getSlot();
+            assert variable.alive && !(variable.alive = false);
+            assert "<scratch>".equals(variable.getName()) || "<shared>".equals(variable.getName());
+            assert variables.get(slot);
+            assert types[slot].equals(variable.getType());
+            variables.clear(slot);
+        }
+
+        private int newVariable(Type type) {
+            for (int slot = varScope.firstSlot, size = type.getSize();;) {
+                slot = variables.nextClearBit(slot);
+                if (slot + size > types.length) {
+                    types = grow(types);
                 }
-                Type old = types[var];
-                if (old == null || old.equals(type)) {
-                    if (type.getSize() != 2) {
-                        types[var] = type;
-                        variables.set(var);
-                        return var;
-                    } else {
-                        Type next = types[var + 1];
-                        if (next == null || next == INVALID) {
-                            types[var] = type;
-                            types[var + 1] = INVALID;
-                            variables.set(var, var + 2);
-                            return var;
-                        }
+                Type old = types[slot];
+                if (old == null) {
+                    if (size == 1 || types[slot + 1] == null) {
+                        assign(slot, type);
+                        return slot;
                     }
+                } else if (old.equals(type)) {
+                    assert size == 1 || types[slot + 1] == RESERVED;
+                    assign(slot, type);
+                    return -slot;
                 }
                 // try next index
-                var += 1;
+                slot += 1;
             }
         }
+    }
 
-        void freeVariable(int var) {
-            assert variables.get(var);
-            Type type = types[var];
-            assert type != null && type != INVALID : type;
-            variables.clear(var);
+    private static class VariableScope implements Iterable<Variable<?>> {
+        final VariableScope parent;
+        final int firstSlot;
+        final ArrayDeque<Variable<?>> variables = new ArrayDeque<>(6);
+        final Label start = new Label(), end = new Label();
+
+        VariableScope(VariableScope parent, int firstSlot) {
+            this.parent = parent;
+            this.firstSlot = firstSlot;
+        }
+
+        <T> Variable<T> add(String name, Type type, int slot) {
+            Variable<T> variable = new Variable<>(name, type, slot);
+            variables.add(variable);
+            return variable;
+        }
+
+        @Override
+        public Iterator<Variable<?>> iterator() {
+            if (variables.isEmpty()) {
+                return Collections.emptyIterator();
+            }
+            return variables.iterator();
         }
     }
 
     static final class Variable<T> {
         private final String name;
         private final Type type;
-        private final int var;
-        private boolean live = true;
+        private final int slot;
+        private boolean alive = true;
 
-        private Variable(String name, Type type, int var) {
+        private Variable(String name, Type type, int slot) {
             this.name = name;
             this.type = type;
-            this.var = var;
+            this.slot = slot;
         }
 
         public String getName() {
@@ -99,6 +194,14 @@ class InstructionVisitor extends InstructionAdapter {
 
         public Type getType() {
             return type;
+        }
+
+        public int getSlot() {
+            return slot < 0 ? -slot : slot;
+        }
+
+        public boolean isAlive() {
+            return alive;
         }
     }
 
@@ -159,10 +262,15 @@ class InstructionVisitor extends InstructionAdapter {
                 Types.StringBuilder, "toString", Type.getMethodType(Types.String));
     }
 
+    enum MethodAllocation {
+        Class, Instance
+    }
+
     private static final int MAX_STRING_SIZE = 16384;
 
     private final String methodName;
     private final Type methodDescriptor;
+    private final MethodAllocation methodAllocation;
     private final Variables variables = new Variables();
     private final ClassValue<Type> typeCache = new ClassValue<Type>() {
         @Override
@@ -175,45 +283,65 @@ class InstructionVisitor extends InstructionAdapter {
         return typeCache.get(c);
     }
 
-    protected InstructionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor) {
+    protected InstructionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
+            MethodAllocation methodAllocation) {
         super(Opcodes.ASM4, mv);
         this.methodName = methodName;
         this.methodDescriptor = methodDescriptor;
-        initParams(methodDescriptor);
+        this.methodAllocation = methodAllocation;
     }
 
-    public String getMethodName() {
+    public final String getMethodName() {
         return methodName;
     }
 
-    public Type getMethodDescriptor() {
+    public final Type getMethodDescriptor() {
         return methodDescriptor;
     }
 
-    private void initParams(Type methodType) {
-        Type[] argumentTypes = methodType.getArgumentTypes();
-        for (int i = 0, var = 0, len = argumentTypes.length; i < len; ++i) {
-            reserveFixedSlot(var, argumentTypes[i]);
-            var += argumentTypes[i].getSize();
+    public MethodAllocation getMethodAllocation() {
+        return methodAllocation;
+    }
+
+    protected final <T> Variable<T> reserveFixedSlot(String name, int slot, Class<T> clazz) {
+        return variables.reserveFixedSlot(name, getType(clazz), slot);
+    }
+
+    private void initialiseParameters() {
+        int slot = 0;
+        if (methodAllocation == MethodAllocation.Instance) {
+            variables.reserveFixedSlot("<this>", Types.Object, slot);
+            slot += Types.Object.getSize();
+        }
+        for (Type argument : methodDescriptor.getArgumentTypes()) {
+            variables.reserveFixedSlot(argument, slot);
+            slot += argument.getSize();
         }
     }
 
-    private void reserveFixedSlot(int var, Type type) {
-        variables.reserveFixedSlot(var, type);
-    }
-
-    protected final <T> Variable<T> reserveFixedSlot(int var, Class<T> clazz) {
-        Type type = getType(clazz);
-        reserveFixedSlot(var, type);
-        return new Variable<>("(fixed-slot)", type, var);
-    }
-
-    private static int parameterSlot(int index, Type[] argumentTypes) {
-        int slot = 0;
+    private int parameterSlot(int index, Type[] argumentTypes) {
+        int slot = methodAllocation == MethodAllocation.Instance ? 1 : 0;
         for (int i = 0; i < index; ++i) {
             slot += argumentTypes[i].getSize();
         }
         return slot;
+    }
+
+    protected void setParameterName(String name, int index, Class<?> clazz) {
+        setParameterName(name, index, getType(clazz));
+    }
+
+    protected void setParameterName(String name, int index, Type type) {
+        Type[] argTypes = methodDescriptor.getArgumentTypes();
+        if (!argTypes[index].equals(type)) {
+            throw new IllegalArgumentException();
+        }
+        variables.addVariable(name, argTypes[index], parameterSlot(index, argTypes));
+    }
+
+    public boolean hasParameter(int index, Class<?> clazz) {
+        Type[] argTypes = methodDescriptor.getArgumentTypes();
+        return index < argTypes.length && argTypes[index].equals(getType(clazz));
     }
 
     public <T> Variable<T> getParameter(int index, Class<T> clazz) {
@@ -228,14 +356,37 @@ class InstructionVisitor extends InstructionAdapter {
         load(getParameter(index, clazz));
     }
 
-    public <T> Variable<T> newVariable(String name, Class<T> clazz) {
-        Type type = getType(clazz);
-        return new Variable<>(name, type, variables.newVariable(type));
+    public void enterVariableScope() {
+        VariableScope scope = variables.enter();
+        mark(scope.start);
     }
 
-    public void freeVariable(Variable<?> var) {
-        assert var.live && !(var.live = false);
-        variables.freeVariable(var.var);
+    public void exitVariableScope() {
+        VariableScope scope = variables.exit();
+        mark(scope.end);
+        for (Variable<?> variable : scope) {
+            visitLocalVariable(variable, scope.start, scope.end);
+        }
+    }
+
+    public void visitLocalVariable(Variable<?> variable, Label start, Label end) {
+        if (variable.slot >= 0) {
+            visitLocalVariable(variable.getName(), variable.getType().getDescriptor(), null, start,
+                    end, variable.getSlot());
+        }
+    }
+
+    public <T> Variable<T> newVariable(String name, Class<T> clazz) {
+        assert name != null;
+        return variables.newVariable(name, getType(clazz));
+    }
+
+    public <T> Variable<T> newScratchVariable(Class<T> clazz) {
+        return variables.newVariable(null, getType(clazz));
+    }
+
+    public void freeVariable(Variable<?> variable) {
+        variables.freeVariable(variable);
     }
 
     @Override
@@ -244,8 +395,9 @@ class InstructionVisitor extends InstructionAdapter {
         super.load(var, type);
     }
 
-    public void load(Variable<?> var) {
-        super.load(var.var, var.type);
+    public void load(Variable<?> variable) {
+        assert variable.isAlive();
+        super.load(variable.getSlot(), variable.getType());
     }
 
     @Override
@@ -254,23 +406,32 @@ class InstructionVisitor extends InstructionAdapter {
         super.store(var, type);
     }
 
-    public void store(Variable<?> var) {
-        super.store(var.var, var.type);
+    public void store(Variable<?> variable) {
+        assert variable.isAlive();
+        super.store(variable.getSlot(), variable.getType());
     }
 
     public void begin() {
         visitCode();
+        enterVariableScope();
+        initialiseParameters();
     }
 
     public void end() {
+        exitVariableScope();
+        variables.close();
         visitMaxs(0, 0);
         visitEnd();
     }
 
+    public Label label() {
+        Label label = new Label();
+        mark(label);
+        return label;
+    }
+
     public void lineInfo(int line) {
-        Label start = new Label();
-        mv.visitLabel(start);
-        mv.visitLineNumber(line, start);
+        visitLineNumber(line, label());
     }
 
     /**
@@ -330,6 +491,7 @@ class InstructionVisitor extends InstructionAdapter {
      * &#x2205; → this
      */
     public void loadThis() {
+        assert methodAllocation == MethodAllocation.Instance;
         load(0, Types.Object);
     }
 
