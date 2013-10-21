@@ -12,12 +12,13 @@ const Object = global.Object,
       Function = global.Function,
       Array = global.Array,
       Proxy = global.Proxy,
+      Reflect = global.Reflect,
       TypeError = global.TypeError;
 
 const Object_create = Object.create,
       Object_assign = Object.assign;
 
-const Function_call = Function.prototype.call.bind(Function.prototype.call);
+const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 const iteratorSym = Symbol.iterator;
 
@@ -126,18 +127,41 @@ function toProxyHandler(handler) {
   if ('keys' in handler) {
     proxyHandler['ownKeys'] = () => [...handler['keys']()][iteratorSym]();
   }
-  proxyHandler['invoke'] = (_, pk, args, receiver) => Function_call(proxyHandler['get'](_, pk, receiver), receiver, ...args);
+  proxyHandler['invoke'] = (_, pk, args, receiver) => $CallFunction(proxyHandler['get'](_, pk, receiver), receiver, ...args);
   return proxyHandler;
 }
 
-Object.defineProperties(Object_assign(Proxy, {
+// Create a Proxy for the Proxy function in order to add an "invoke" trap while still passing Proxy surface tests
+var BuiltinProxy = Proxy;
+var NewProxy = new BuiltinProxy(BuiltinProxy, {
+  addInvokeTrap(p, handler) {
+    // Directly assign "invoke" trap to handler; this change is visible to other scripts, but tests don't complain
+    Object.mixin(handler, {
+      invoke(_, pk, args, receiver) {
+        var fn = Reflect.get(p, pk, receiver);
+        return $CallFunction(fn, p, ...args);
+      }
+    });
+    return p;
+  },
+  apply(target, thisValue, args) {
+    var p = $CallFunction(target, thisValue, ...args);
+    return this.addInvokeTrap(p, args[1]);
+  },
+  construct(target, args) {
+    var p = new target(...args);
+    return this.addInvokeTrap(p, args[1]);
+  }
+});
+
+Object.defineProperties(Object_assign(NewProxy, {
   create(handler, proto = null) {
     if (Object(handler) !== handler) throw TypeError();
     var proxyTarget = Object_create(proto);
     var proxyHandler = Object_assign({
       setPrototypeOf() { throw TypeError() }
     }, toProxyHandler(handler));
-    return new Proxy(proxyTarget, proxyHandler);
+    return new BuiltinProxy(proxyTarget, proxyHandler);
   },
   createFunction(handler, callTrap, constructTrap = callTrap) {
     if (Object(handler) !== handler) throw TypeError();
@@ -149,11 +173,16 @@ Object.defineProperties(Object_assign(Proxy, {
       apply(_, thisValue, args) { return callTrap.apply(thisValue, args) },
       construct(_, args) { return new constructTrap(...args) }
     }, toProxyHandler(handler));
-    return new Proxy(proxyTarget, proxyHandler);
+    return new BuiltinProxy(proxyTarget, proxyHandler);
   }
 }), {
   create: {enumerable: false},
   createFunction: {enumerable: false},
+});
+
+Object.defineProperty(global, "Proxy", {
+  value: NewProxy,
+  writable: true, enumerable: false, configurable: true
 });
 
 })(this);
