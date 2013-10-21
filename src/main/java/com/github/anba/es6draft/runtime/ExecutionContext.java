@@ -33,6 +33,14 @@ public final class ExecutionContext {
     private FunctionObject function = null;
     private GeneratorObject generator = null;
 
+    void setLexicalEnvironment(LexicalEnvironment lexEnv) {
+        this.lexEnv = lexEnv;
+    }
+
+    void setVariableEnvironment(LexicalEnvironment varEnv) {
+        this.varEnv = varEnv;
+    }
+
     public Realm getRealm() {
         return realm;
     }
@@ -94,8 +102,8 @@ public final class ExecutionContext {
         /* steps 3-6 */
         ExecutionContext progCxt = new ExecutionContext();
         progCxt.realm = realm;
-        progCxt.lexEnv = realm.getGlobalEnv();
         progCxt.varEnv = realm.getGlobalEnv();
+        progCxt.lexEnv = realm.getGlobalEnv();
         return progCxt;
     }
 
@@ -110,13 +118,13 @@ public final class ExecutionContext {
      * <p>
      * Runtime Semantics: Script Evaluation
      */
-    public static ExecutionContext newScriptExecutionContext(ExecutionContext cx) {
+    public static ExecutionContext newScriptExecutionContext(ExecutionContext callerContext) {
         /* steps 3-6 */
         ExecutionContext progCxt = new ExecutionContext();
-        progCxt.realm = cx.realm;
-        progCxt.lexEnv = cx.realm.getGlobalEnv();
-        progCxt.varEnv = cx.realm.getGlobalEnv();
-        progCxt.function = cx.function;
+        progCxt.realm = callerContext.realm;
+        progCxt.varEnv = callerContext.varEnv;
+        progCxt.lexEnv = callerContext.lexEnv;
+        progCxt.function = callerContext.function;
         return progCxt;
     }
 
@@ -130,12 +138,12 @@ public final class ExecutionContext {
      * 18.2.1 eval (x)
      */
     public static ExecutionContext newEvalExecutionContext(ExecutionContext callerContext,
-            LexicalEnvironment lexEnv, LexicalEnvironment varEnv) {
+            LexicalEnvironment varEnv, LexicalEnvironment lexEnv) {
         /* steps 17-20 */
         ExecutionContext progCxt = new ExecutionContext();
         progCxt.realm = callerContext.realm;
-        progCxt.lexEnv = lexEnv;
         progCxt.varEnv = varEnv;
+        progCxt.lexEnv = lexEnv;
         progCxt.function = callerContext.function;
         return progCxt;
     }
@@ -156,8 +164,8 @@ public final class ExecutionContext {
     public static ExecutionContext newGeneratorComprehensionContext(ExecutionContext callerContext) {
         ExecutionContext progCxt = new ExecutionContext();
         progCxt.realm = callerContext.realm;
-        progCxt.lexEnv = callerContext.lexEnv;
         progCxt.varEnv = callerContext.varEnv;
+        progCxt.lexEnv = callerContext.lexEnv;
         progCxt.function = callerContext.function;
         return progCxt;
     }
@@ -207,8 +215,8 @@ public final class ExecutionContext {
             }
             localEnv = newFunctionEnvironment(calleeContext, f, thisValue);
         }
-        calleeContext.lexEnv = localEnv;
         calleeContext.varEnv = localEnv;
+        calleeContext.lexEnv = localEnv;
         calleeContext.function = f;
         return calleeContext;
     }
