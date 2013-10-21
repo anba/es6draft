@@ -316,7 +316,7 @@ public class Parser {
     }
 
     public enum Option {
-        Strict, FunctionCode, LocalScope, DirectEval, EvalScript,
+        Strict, FunctionCode, LocalScope, DirectEval, EvalScript, EnclosedByWithStatement,
 
         /** B.1.1 Numeric Literals */
         LegacyOctalIntegerLiteral,

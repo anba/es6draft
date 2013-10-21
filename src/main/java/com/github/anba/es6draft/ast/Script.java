@@ -77,6 +77,10 @@ public class Script extends AstNode implements TopLevelNode, ScopedNode {
         return !options.contains(Parser.Option.FunctionCode);
     }
 
+    public boolean isEnclosedByWithStatement() {
+        return options.contains(Parser.Option.EnclosedByWithStatement);
+    }
+
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
