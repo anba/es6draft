@@ -113,9 +113,10 @@ public final class RuntimeInfo {
 
             @Override
             public void globalDeclarationInstantiation(ExecutionContext cx,
-                    LexicalEnvironment globalEnv, boolean deletableBindings) {
+                    LexicalEnvironment globalEnv, LexicalEnvironment lexicalEnv,
+                    boolean deletableBindings) {
                 try {
-                    initialisation.invokeExact(cx, globalEnv, deletableBindings);
+                    initialisation.invokeExact(cx, globalEnv, lexicalEnv, deletableBindings);
                 } catch (RuntimeException | Error e) {
                     throw e;
                 } catch (Throwable e) {
@@ -125,9 +126,10 @@ public final class RuntimeInfo {
 
             @Override
             public void evalDeclarationInstantiation(ExecutionContext cx,
-                    LexicalEnvironment lexEnv, LexicalEnvironment varEnv, boolean deletableBindings) {
+                    LexicalEnvironment variableEnv, LexicalEnvironment lexicalEnv,
+                    boolean deletableBindings) {
                 try {
-                    evalinitialisation.invokeExact(cx, lexEnv, varEnv, deletableBindings);
+                    evalinitialisation.invokeExact(cx, variableEnv, lexicalEnv, deletableBindings);
                 } catch (RuntimeException | Error e) {
                     throw e;
                 } catch (Throwable e) {
@@ -155,10 +157,10 @@ public final class RuntimeInfo {
         boolean isStrict();
 
         void globalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment globalEnv,
-                boolean deletableBindings);
+                LexicalEnvironment lexicalEnv, boolean deletableBindings);
 
-        void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment lexEnv,
-                LexicalEnvironment varEnv, boolean deletableBindings);
+        void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment variableEnv,
+                LexicalEnvironment lexicalEnv, boolean deletableBindings);
 
         Object evaluate(ExecutionContext cx);
     }

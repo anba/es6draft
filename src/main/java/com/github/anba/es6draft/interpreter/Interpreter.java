@@ -771,14 +771,16 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
         @Override
         public void globalDeclarationInstantiation(ExecutionContext cx,
-                LexicalEnvironment globalEnv, boolean deletableBindings) {
-            GlobalDeclarationInstantiation(cx, globalEnv, parsedScript, deletableBindings);
+                LexicalEnvironment globalEnv, LexicalEnvironment lexicalEnv,
+                boolean deletableBindings) {
+            GlobalDeclarationInstantiation(cx, parsedScript, globalEnv, lexicalEnv,
+                    deletableBindings);
         }
 
         @Override
-        public void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment lexEnv,
-                LexicalEnvironment varEnv, boolean deletableBindings) {
-            EvalDeclarationInstantiation(cx, lexEnv, varEnv, parsedScript, deletableBindings);
+        public void evalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment varEnv,
+                LexicalEnvironment lexEnv, boolean deletableBindings) {
+            EvalDeclarationInstantiation(cx, parsedScript, varEnv, lexEnv, deletableBindings);
         }
 
         @Override

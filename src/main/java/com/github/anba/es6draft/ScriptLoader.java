@@ -43,7 +43,7 @@ public class ScriptLoader {
         /* step 3 */
         LexicalEnvironment globalEnv = realm.getGlobalEnv();
         /* steps 4-5 */
-        scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv,
+        scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv, globalEnv,
                 deletableBindings);
         /* steps 6-9 */
         ExecutionContext progCxt = newScriptExecutionContext(realm);
@@ -64,9 +64,11 @@ public class ScriptLoader {
         if (scriptBody == null)
             return null;
         /* step 3 */
-        LexicalEnvironment globalEnv = realm.getGlobalEnv();
+        LexicalEnvironment variableEnv = cx.getVariableEnvironment();
+        assert variableEnv == realm.getGlobalEnv();
+        LexicalEnvironment lexicalEnv = cx.getLexicalEnvironment();
         /* steps 4-5 */
-        scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv,
+        scriptBody.globalDeclarationInstantiation(realm.defaultContext(), variableEnv, lexicalEnv,
                 deletableBindings);
         /* steps 6-9 */
         ExecutionContext progCxt = newScriptExecutionContext(cx);

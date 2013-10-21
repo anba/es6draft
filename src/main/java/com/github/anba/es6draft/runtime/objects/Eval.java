@@ -107,11 +107,14 @@ public final class Eval {
         /* steps 6-8 (implicit) */
         /* step 9 */
         if (!direct && !strictScript) {
-            return ScriptEvaluation(script, ctx, true);
+            assert cx.getVariableEnvironment() == cx.getLexicalEnvironment();
+            assert cx.getVariableEnvironment() == evalRealm.getGlobalEnv();
+            return ScriptEvaluation(script, cx, true);
         }
         /* step 10 */
-        if (direct && !strictScript && !strictCaller && globalScope) {
-            return ScriptEvaluation(script, ctx, true);
+        if (direct && !strictScript && !strictCaller
+                && cx.getVariableEnvironment() == evalRealm.getGlobalEnv()) {
+            return ScriptEvaluation(script, cx, true);
         }
         /* step 11 */
         if (direct) {
@@ -120,8 +123,8 @@ public final class Eval {
         LexicalEnvironment lexEnv, varEnv;
         if (direct) {
             /* step 12 */
-            lexEnv = ctx.getLexicalEnvironment();
-            varEnv = ctx.getVariableEnvironment();
+            lexEnv = cx.getLexicalEnvironment();
+            varEnv = cx.getVariableEnvironment();
         } else {
             /* step 13 */
             lexEnv = evalRealm.getGlobalEnv();
@@ -139,9 +142,9 @@ public final class Eval {
             // end-modification
         }
         /* steps 15-16 */
-        script.getScriptBody().evalDeclarationInstantiation(ctx, lexEnv, varEnv, true);
+        script.getScriptBody().evalDeclarationInstantiation(cx, varEnv, lexEnv, true);
         /* steps 17-20 */
-        ExecutionContext evalCxt = ExecutionContext.newEvalExecutionContext(ctx, lexEnv, varEnv);
+        ExecutionContext evalCxt = ExecutionContext.newEvalExecutionContext(cx, varEnv, lexEnv);
         /* steps 21-25 */
         Object result = script.evaluate(evalCxt);
         /* step 26 */

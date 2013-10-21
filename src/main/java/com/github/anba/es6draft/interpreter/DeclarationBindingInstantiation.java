@@ -40,8 +40,8 @@ final class DeclarationBindingInstantiation {
     /**
      * [15.1.2.1 Global Declaration Instantiation]
      */
-    public static void GlobalDeclarationInstantiation(ExecutionContext cx,
-            LexicalEnvironment globalEnv, Script script, boolean deletableBindings) {
+    public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script,
+            LexicalEnvironment globalEnv, LexicalEnvironment lexicalEnv, boolean deletableBindings) {
         LexicalEnvironment env = globalEnv;
         GlobalEnvironmentRecord envRec = (GlobalEnvironmentRecord) env.getEnvRec();
 
@@ -72,8 +72,8 @@ final class DeclarationBindingInstantiation {
     /**
      * [18.2.1.2 Eval Declaration Instantiation]
      */
-    public static void EvalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment lexEnv,
-            LexicalEnvironment varEnv, Script script, boolean deletableBindings) {
+    public static void EvalDeclarationInstantiation(ExecutionContext cx, Script script,
+            LexicalEnvironment varEnv, LexicalEnvironment lexEnv, boolean deletableBindings) {
         // FIXME: spec incomplete (using modified ES5.1 algorithm for now...)
 
         LexicalEnvironment env = varEnv;
