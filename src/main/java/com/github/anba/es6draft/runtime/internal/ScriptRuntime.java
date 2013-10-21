@@ -179,6 +179,46 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Property Definition Evaluation
      */
+    public static void ensureNewPropertyGet(ScriptObject object, Object propertyName,
+            ExecutionContext cx) {
+        Property prop;
+        if (propertyName instanceof String) {
+            prop = object.getOwnProperty(cx, (String) propertyName);
+        } else {
+            prop = object.getOwnProperty(cx, (Symbol) propertyName);
+        }
+        boolean duplicateKey = prop != null
+                && !(prop.isAccessorDescriptor() && prop.getGetter() == null);
+        if (duplicateKey) {
+            throwTypeError(cx, Messages.Key.DuplicatePropertyDefinition, propertyName.toString());
+        }
+    }
+
+    /**
+     * 12.1.5 Object Initialiser
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     */
+    public static void ensureNewPropertySet(ScriptObject object, Object propertyName,
+            ExecutionContext cx) {
+        Property prop;
+        if (propertyName instanceof String) {
+            prop = object.getOwnProperty(cx, (String) propertyName);
+        } else {
+            prop = object.getOwnProperty(cx, (Symbol) propertyName);
+        }
+        boolean duplicateKey = prop != null
+                && !(prop.isAccessorDescriptor() && prop.getSetter() == null);
+        if (duplicateKey) {
+            throwTypeError(cx, Messages.Key.DuplicatePropertyDefinition, propertyName.toString());
+        }
+    }
+
+    /**
+     * 12.1.5 Object Initialiser
+     * <p>
+     * Runtime Semantics: Property Definition Evaluation
+     */
     public static void defineProperty(ScriptObject object, Object propertyName, Object value,
             ExecutionContext cx) {
         DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
