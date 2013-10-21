@@ -110,9 +110,6 @@ public class IntlTest {
         // load and execute utils.js file
         global.include(Paths.get("utils.js"));
 
-        // load and execute date-format/utils.js file
-        global.include(Paths.get("date-format/utils.js"));
-
         // evaluate actual test-script
         Path js = testDir().resolve(test.script);
         try {
