@@ -5,9 +5,6 @@
 # <https://github.com/anba/es6draft>
 #
 
-# test case relies on global variable "done" with value `true` (traceur issue #325)
-feature/Yield/ReturnYield.js
-
 # ES6 spec bug? 'extends null' and default constructor
 feature/Classes/DefaultConstructor.js
 feature/Classes/ExtendStrange.js
