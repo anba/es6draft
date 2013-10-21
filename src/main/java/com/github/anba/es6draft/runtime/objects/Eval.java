@@ -32,35 +32,72 @@ public final class Eval {
     private Eval() {
     }
 
-    /**
-     * 18.2.1 eval (x)
-     */
-    public static Object indirectEval(ExecutionContext ctx, Object source) {
-        return eval(ctx, false, false, true, source);
+    public enum EvalFlags {
+        /**
+         * Flag for direct eval calls
+         */
+        Direct(0b0001),
+
+        /**
+         * Flag for strict-mode eval calls
+         */
+        Strict(0b0010),
+
+        /**
+         * Flag for global code eval calls
+         */
+        GlobalCode(0b0100),
+
+        /**
+         * Flag for eval calls enclosed by with-statement
+         */
+        EnclosedByWithStatement(0b1000);
+
+        private final int value;
+
+        private EvalFlags(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public boolean isSet(int bitmask) {
+            return (value & bitmask) != 0;
+        }
     }
 
     /**
      * 18.2.1 eval (x)
      */
-    public static Object directEval(Object source, ExecutionContext ctx, boolean strictCaller,
-            boolean globalCode) {
-        return eval(ctx, true, strictCaller, globalCode, source);
+    public static Object indirectEval(ExecutionContext cx, Object source) {
+        return eval(cx, source, EvalFlags.GlobalCode.getValue());
     }
 
-    private static Object eval(ExecutionContext ctx, boolean direct, boolean strictCaller,
-            boolean globalCode, Object source) {
-        assert !(ctx == null && strictCaller);
+    /**
+     * 18.2.1 eval (x)
+     */
+    public static Object directEval(Object source, ExecutionContext cx, int flags) {
+        return eval(cx, source, flags | EvalFlags.Direct.getValue());
+    }
+
+    private static Object eval(ExecutionContext cx, Object source, int flags) {
+        boolean direct = EvalFlags.Direct.isSet(flags);
+        boolean strictCaller = EvalFlags.Strict.isSet(flags);
+        boolean globalCode = EvalFlags.GlobalCode.isSet(flags);
+        boolean withStatement = EvalFlags.EnclosedByWithStatement.isSet(flags);
         /* step 1 */
         if (!Type.isString(source)) {
             return source;
         }
         /* step 5 */
-        Realm evalRealm = ctx.getRealm();
-        boolean globalScope = direct && (ctx.getLexicalEnvironment() == evalRealm.getGlobalEnv());
+        Realm evalRealm = cx.getRealm();
+        boolean globalScope = direct && (cx.getLexicalEnvironment() == evalRealm.getGlobalEnv());
 
         /* step 2 */
-        Script script = script(ctx, Type.stringValue(source), strictCaller, globalCode, direct,
-                globalScope);
+        Script script = script(cx, Type.stringValue(source), strictCaller, globalCode, direct,
+                globalScope, withStatement);
         /* step 3 */
         if (script == null) {
             return UNDEFINED;
@@ -112,7 +149,7 @@ public final class Eval {
     }
 
     private static Script script(ExecutionContext cx, CharSequence source, boolean strict,
-            boolean globalCode, boolean directEval, boolean globalScope) {
+            boolean globalCode, boolean directEval, boolean globalScope, boolean withStatement) {
         try {
             Realm realm = cx.getRealm();
             EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
@@ -128,6 +165,9 @@ public final class Eval {
             }
             if (!globalScope) {
                 options.add(Parser.Option.LocalScope);
+            }
+            if (withStatement) {
+                options.add(Parser.Option.EnclosedByWithStatement);
             }
             Parser parser = new Parser("<eval>", 1, options);
             com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);

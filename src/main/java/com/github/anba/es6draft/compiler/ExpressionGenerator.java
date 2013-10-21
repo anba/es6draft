@@ -32,6 +32,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.internal.Bootstrap;
+import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
@@ -62,7 +63,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         // class: Eval
         static final MethodDesc Eval_directEval = MethodDesc.create(MethodType.Static, Types.Eval,
                 "directEval", Type.getMethodType(Types.Object, Types.Object,
-                        Types.ExecutionContext, Type.BOOLEAN_TYPE, Type.BOOLEAN_TYPE));
+                        Types.ExecutionContext, Type.INT_TYPE));
 
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
@@ -342,9 +343,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             if (nextScope == null) {
                 ScopedNode node = scope.getNode();
                 if (node instanceof Script) {
-                    // FIXME: need to record with-statement information instead of simply returning
-                    // 'true' for all eval-scripts
-                    return ((Script) node).isEvalScript();
+                    return ((Script) node).isEnclosedByWithStatement();
                 }
                 return false;
             }
@@ -681,8 +680,17 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         // stack: [args0] -> [result]
         mv.loadExecutionContext();
-        mv.iconst(mv.isStrict());
-        mv.iconst(mv.isGlobalCode());
+        int evalFlags = EvalFlags.Direct.getValue();
+        if (mv.isStrict()) {
+            evalFlags |= EvalFlags.Strict.getValue();
+        }
+        if (mv.isGlobalCode()) {
+            evalFlags |= EvalFlags.GlobalCode.getValue();
+        }
+        if (isEnclosedByWithStatement(mv)) {
+            evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
+        }
+        mv.iconst(evalFlags);
         mv.invoke(Methods.Eval_directEval);
 
         mv.goTo(afterCall);

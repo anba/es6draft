@@ -29,6 +29,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
+import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -55,10 +56,12 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
     private boolean strict;
     private boolean globalCode;
+    private boolean enclosedByWithStatement;
 
     public Interpreter(Script parsedScript) {
         this.strict = parsedScript.isStrict();
         this.globalCode = parsedScript.isGlobalCode();
+        this.enclosedByWithStatement = parsedScript.isEnclosedByWithStatement();
     }
 
     /* ----------------------------------------------------------------------------------------- */
@@ -654,8 +657,18 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         Object[] argList = ArgumentListEvaluation(arguments, cx);
         Callable f = CheckCallable(func, cx);
         if (directEval && IsBuiltinEval(ref, f, cx)) {
+            int evalFlags = EvalFlags.Direct.getValue();
+            if (strict) {
+                evalFlags |= EvalFlags.Strict.getValue();
+            }
+            if (globalCode) {
+                evalFlags |= EvalFlags.GlobalCode.getValue();
+            }
+            if (enclosedByWithStatement) {
+                evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
+            }
             Object x = argList.length > 0 ? argList[0] : UNDEFINED;
-            return Eval.directEval(x, cx, strict, globalCode);
+            return Eval.directEval(x, cx, evalFlags);
         }
         if (directEval && ref instanceof Reference) {
             // adjust thisValue if in with-statement, counterpart to the special direct-eval logic
