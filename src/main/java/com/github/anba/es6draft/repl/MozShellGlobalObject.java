@@ -28,6 +28,7 @@ import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.ast.ExpressionStatement;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -67,16 +68,25 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     /**
      * Returns a new instance of this class
      */
+    public static MozShellGlobalObject newGlobal(ShellConsole console, Path baseDir, Path script,
+            Path libdir, ScriptCache scriptCache, Set<CompatibilityOption> options) {
+        return newGlobal(console, baseDir, script, libdir, scriptCache, options,
+                EnumSet.noneOf(Compiler.Option.class));
+    }
+
+    /**
+     * Returns a new instance of this class
+     */
     public static MozShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
             final Path script, final Path libdir, final ScriptCache scriptCache,
-            final Set<CompatibilityOption> options) {
+            final Set<CompatibilityOption> options, final Set<Compiler.Option> compilerOptions) {
         Realm realm = Realm.newRealm(new ObjectAllocator<MozShellGlobalObject>() {
             @Override
             public MozShellGlobalObject newInstance(Realm realm) {
                 return new MozShellGlobalObject(realm, console, baseDir, script, scriptCache,
                         libdir);
             }
-        }, options);
+        }, options, compilerOptions);
         return (MozShellGlobalObject) realm.getGlobalThis();
     }
 
