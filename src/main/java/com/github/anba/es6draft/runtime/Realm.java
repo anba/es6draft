@@ -20,6 +20,8 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.anba.es6draft.compiler.Compiler;
+import com.github.anba.es6draft.compiler.Compiler.Option;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -92,6 +94,7 @@ public final class Realm {
     private ExecutionContext defaultContext;
 
     private Set<CompatibilityOption> options;
+    private EnumSet<Option> compilerOptions;
 
     private Locale locale = Locale.getDefault();
     private TimeZone timezone = TimeZone.getDefault();
@@ -211,6 +214,13 @@ public final class Realm {
     }
 
     /**
+     * Returns the compiler options for this realm instance
+     */
+    public EnumSet<Option> getCompilerOptions() {
+        return compilerOptions;
+    }
+
+    /**
      * Returns the template call-site object for {@code key}
      */
     public ScriptObject getTemplateCallSite(String key) {
@@ -266,6 +276,14 @@ public final class Realm {
      */
     public static Realm newRealm(ObjectAllocator<? extends GlobalObject> allocator,
             Set<CompatibilityOption> options) {
+        return newRealm(allocator, options, EnumSet.noneOf(Compiler.Option.class));
+    }
+
+    /**
+     * Creates a new {@link Realm} object
+     */
+    public static Realm newRealm(ObjectAllocator<? extends GlobalObject> allocator,
+            Set<CompatibilityOption> options, Set<Compiler.Option> compilerOptions) {
         Realm realm = new Realm();
         GlobalObject globalThis = allocator.newInstance(realm);
         ExecutionContext defaultContext = newScriptExecutionContext(realm);
@@ -273,10 +291,15 @@ public final class Realm {
         LexicalEnvironment globalEnv = new LexicalEnvironment(defaultContext, envRec);
 
         //
+        defaultContext.setVariableEnvironment(globalEnv);
+        defaultContext.setLexicalEnvironment(globalEnv);
+
+        //
         realm.globalThis = globalThis;
         realm.globalEnv = globalEnv;
         realm.defaultContext = defaultContext;
         realm.options = EnumSet.copyOf(options);
+        realm.compilerOptions = EnumSet.copyOf(compilerOptions);
 
         // intrinsics: 19, 20, 21, 22.1, 24.3
         initialiseFundamentalObjects(realm);
