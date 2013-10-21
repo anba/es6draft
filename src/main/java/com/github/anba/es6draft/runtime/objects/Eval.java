@@ -114,7 +114,8 @@ public final class Eval {
     private static Script script(ExecutionContext cx, CharSequence source, boolean strict,
             boolean globalCode, boolean directEval, boolean globalScope) {
         try {
-            EnumSet<Parser.Option> options = Parser.Option.from(cx.getRealm().getOptions());
+            Realm realm = cx.getRealm();
+            EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
             options.add(Parser.Option.EvalScript);
             if (strict) {
                 options.add(Parser.Option.Strict);
@@ -133,8 +134,8 @@ public final class Eval {
             if (parsedScript.getStatements().isEmpty()) {
                 return null;
             }
-            String className = cx.getRealm().nextEvalName();
-            return ScriptLoader.load(className, parsedScript);
+            String className = realm.nextEvalName();
+            return ScriptLoader.load(className, parsedScript, realm.getCompilerOptions());
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }

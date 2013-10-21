@@ -184,6 +184,7 @@ public class Repl {
     private final EnumSet<Option> options;
     private final StartScript startScript;
     private final Console console;
+    private AtomicInteger scriptCounter = new AtomicInteger(0);
 
     private Repl(EnumSet<Option> options, StartScript startScript, Console console) {
         this.options = options;
@@ -277,7 +278,13 @@ public class Repl {
      * REPL: Eval
      */
     private Object eval(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
-        Script script = script(parsedScript);
+        String className = "typein_" + scriptCounter.incrementAndGet();
+        Script script;
+        if (options.contains(Option.CompileOnly)) {
+            script = ScriptLoader.compile(className, parsedScript, realm.getCompilerOptions());
+        } else {
+            script = ScriptLoader.load(className, parsedScript, realm.getCompilerOptions());
+        }
         return ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
@@ -323,35 +330,23 @@ public class Repl {
         }
     }
 
-    private AtomicInteger scriptCounter = new AtomicInteger(0);
-
-    private Script script(com.github.anba.es6draft.ast.Script parsedScript)
-            throws CompilationException {
-        String className = "typein_" + scriptCounter.incrementAndGet();
-        if (options.contains(Option.CompileOnly)) {
-            EnumSet<Compiler.Option> opts = EnumSet.noneOf(Compiler.Option.class);
-            if (options.contains(Option.Debug)) {
-                opts.add(Compiler.Option.Debug);
-            }
-            return ScriptLoader.compile(className, parsedScript, opts);
-        } else {
-            return ScriptLoader.load(className, parsedScript);
-        }
-    }
-
     private ShellGlobalObject newGlobal() {
         ReplConsole console = new ReplConsole(this.console);
         Path baseDir = Paths.get("").toAbsolutePath();
         Path script = Paths.get("./.");
-        Set<CompatibilityOption> compatOpts;
+        Set<CompatibilityOption> compatibilityOptions;
         if (options.contains(Option.Strict)) {
-            compatOpts = CompatibilityOption.StrictCompatibility();
+            compatibilityOptions = CompatibilityOption.StrictCompatibility();
         } else if (options.contains(Option.MozillaShell)) {
-            compatOpts = CompatibilityOption.MozCompatibility();
+            compatibilityOptions = CompatibilityOption.MozCompatibility();
         } else {
-            compatOpts = CompatibilityOption.WebCompatibility();
+            compatibilityOptions = CompatibilityOption.WebCompatibility();
         }
-        ScriptCache scriptCache = new ScriptCache(Parser.Option.from(compatOpts));
+        Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
+        if (options.contains(Option.Debug)) {
+            compilerOptions.add(Compiler.Option.Debug);
+        }
+        ScriptCache scriptCache = new ScriptCache(Parser.Option.from(compatibilityOptions));
 
         List<String> initScripts;
         ShellGlobalObject global;
@@ -359,15 +354,15 @@ public class Repl {
             Path libDir = Paths.get("");
             initScripts = asList("mozlegacy.js");
             global = MozShellGlobalObject.newGlobal(console, baseDir, script, libDir, scriptCache,
-                    compatOpts);
+                    compatibilityOptions, compilerOptions);
         } else if (options.contains(Option.V8Shell)) {
             initScripts = asList("v8legacy.js");
             global = V8ShellGlobalObject.newGlobal(console, baseDir, script, scriptCache,
-                    compatOpts);
+                    compatibilityOptions, compilerOptions);
         } else {
             initScripts = emptyList();
             global = SimpleShellGlobalObject.newGlobal(console, baseDir, script, scriptCache,
-                    compatOpts);
+                    compatibilityOptions, compilerOptions);
         }
 
         for (String name : initScripts) {

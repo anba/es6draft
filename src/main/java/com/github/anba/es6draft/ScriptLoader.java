@@ -54,7 +54,7 @@ public class ScriptLoader {
     }
 
     /**
-     * [15.1.2 ScriptEvaluation]
+     * [15.2.7 Runtime Semantics: Script Evaluation]
      */
     public static Object ScriptEvaluation(Script script, ExecutionContext cx,
             boolean deletableBindings) {
@@ -83,9 +83,19 @@ public class ScriptLoader {
      */
     public static Script load(String className, com.github.anba.es6draft.ast.Script parsedScript)
             throws CompilationException {
+        return load(className, parsedScript, EnumSet.noneOf(Compiler.Option.class));
+    }
+
+    /**
+     * Returns an executable {@link Script} object for given
+     * {@link com.github.anba.es6draft.ast.Script} AST-node. This may either be an
+     * {@link InterpretedScript} or {@link CompiledScript} instance.
+     */
+    public static Script load(String className, com.github.anba.es6draft.ast.Script parsedScript,
+            EnumSet<Compiler.Option> options) throws CompilationException {
         Script script = Interpreter.script(parsedScript);
         if (script == null) {
-            script = compile(className, parsedScript, EnumSet.noneOf(Compiler.Option.class));
+            script = compile(className, parsedScript, options);
         }
         return script;
     }
@@ -114,12 +124,12 @@ public class ScriptLoader {
     /**
      * Compiles the given {@link FunctionNode} to a {@link RuntimeInfo.Function} object
      */
-    public static RuntimeInfo.Function compile(String className, FunctionNode function)
-            throws CompilationException {
+    public static RuntimeInfo.Function compile(String className, FunctionNode function,
+            EnumSet<Compiler.Option> options) throws CompilationException {
         try {
             // prepend '#' to mark generated classes, cf. ErrorPrototype
             String clazzName = "#" + className;
-            Compiler compiler = new Compiler(EnumSet.noneOf(Compiler.Option.class));
+            Compiler compiler = new Compiler(options);
             byte[] bytes = compiler.compile(function, clazzName);
             ClassLoader cl = new ByteClassLoader(clazzName, bytes);
             Class<?> c = cl.loadClass(clazzName);

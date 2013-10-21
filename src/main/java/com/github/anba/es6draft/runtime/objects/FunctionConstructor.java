@@ -63,6 +63,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
+        Realm realm = calleeContext.getRealm();
 
         /* steps 1-7 */
         int argCount = args.length;
@@ -87,12 +88,11 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         /* steps 8-13 */
         RuntimeInfo.Function function;
         try {
-            EnumSet<Parser.Option> options = Parser.Option.from(calleeContext.getRealm()
-                    .getOptions());
+            EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
             Parser parser = new Parser("<Function>", 1, options);
             FunctionDefinition functionDef = parser.parseFunction(p, bodyText);
             String className = calleeContext.getRealm().nextFunctionName();
-            function = ScriptLoader.compile(className, functionDef);
+            function = ScriptLoader.compile(className, functionDef, realm.getCompilerOptions());
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(calleeContext);
         }
