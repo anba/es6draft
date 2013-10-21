@@ -41,13 +41,15 @@ class RuntimeInfoGenerator {
                 Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
                         Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.MethodHandle,
                         Types.MethodHandle, Types.String));
+    }
 
-        // Method descriptors
-
+    // Method descriptors
+    private static class MethodDescriptors {
         static final String functionInit = Type.getMethodDescriptor(Types.ExoticArguments,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
         static final String globalInit = Type.getMethodDescriptor(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment, Type.BOOLEAN_TYPE);
+                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
+                Type.BOOLEAN_TYPE);
         static final String evalInit = Type.getMethodDescriptor(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
                 Type.BOOLEAN_TYPE);
@@ -123,7 +125,7 @@ class RuntimeInfoGenerator {
     void runtimeInfo(FunctionNode node, Future<String> source) {
         String className = codegen.getClassName();
         InstructionVisitor mv = codegen.publicStaticMethod(
-                codegen.methodName(node, FunctionName.RTI), Methods.functionRTI);
+                codegen.methodName(node, FunctionName.RTI), MethodDescriptors.functionRTI);
 
         mv.begin();
 
@@ -131,9 +133,9 @@ class RuntimeInfoGenerator {
         mv.iconst(functionFlags(node));
         mv.iconst(ExpectedArgumentCount(node.getParameters()));
         mv.invokeStaticMH(className, codegen.methodName(node, FunctionName.Init),
-                Methods.functionInit);
+                MethodDescriptors.functionInit);
         mv.invokeStaticMH(className, codegen.methodName(node, FunctionName.Code),
-                Methods.functionCode);
+                MethodDescriptors.functionCode);
         mv.aconst(get(source));
         mv.invoke(Methods.RTI_newFunction);
         mv.areturn();
@@ -144,15 +146,17 @@ class RuntimeInfoGenerator {
     void runtimeInfo(Script node) {
         String className = codegen.getClassName();
         InstructionVisitor mv = codegen.publicStaticMethod(
-                codegen.methodName(node, ScriptName.RTI), Methods.scriptRTI);
+                codegen.methodName(node, ScriptName.RTI), MethodDescriptors.scriptRTI);
 
         mv.begin();
 
         mv.iconst(IsStrict(node));
-        mv.invokeStaticMH(className, codegen.methodName(node, ScriptName.Init), Methods.globalInit);
+        mv.invokeStaticMH(className, codegen.methodName(node, ScriptName.Init),
+                MethodDescriptors.globalInit);
         mv.invokeStaticMH(className, codegen.methodName(node, ScriptName.EvalInit),
-                Methods.evalInit);
-        mv.invokeStaticMH(className, codegen.methodName(node, ScriptName.Code), Methods.scriptCode);
+                MethodDescriptors.evalInit);
+        mv.invokeStaticMH(className, codegen.methodName(node, ScriptName.Code),
+                MethodDescriptors.scriptCode);
         mv.invoke(Methods.RTI_newScriptBody);
         mv.areturn();
 
