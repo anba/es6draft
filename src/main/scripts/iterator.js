@@ -34,6 +34,13 @@ const mozIteratorSym = "@@iterator";
 // map from Symbol.iterator to pseudo-symbol "@@iterator"
 Object.defineProperty(Object.prototype, iteratorSym, {
   get() { return () => this[mozIteratorSym]() },
+  set(iter) {
+    Object_defineProperty(this, iteratorSym, {
+      __proto__: null,
+      value: iter,
+      writable: true, enumerable: true, configurable: true
+    });
+  },
   enumerable: false, configurable: true
 });
 
@@ -344,28 +351,16 @@ function MakeBuiltinArrayIterator(ctor) {
 
 { /* Array.prototype */
   const BuiltinIterator = MakeBuiltinIterator(Array);
-  const BuiltinArrayIterator = MakeBuiltinArrayIterator(Array);
   const iterF = {
     keys: Array.prototype['keys'],
     values: Array.prototype['values'],
     entries: Array.prototype['entries'],
   };
-  const throwsOnGet = new Proxy({}, {get: () => { throw new TypeError() }});
 
-  // legacy iterator for Array.prototype
-  Object.defineProperties(Object.assign(Array.prototype, {
-    iterator() {
-      return new BuiltinArrayIterator(this != null ? this : throwsOnGet, iterF.values)
-    },
-  }), {
-    iterator: {enumerable: false},
-  });
-
-  // "@@iterator" based on legacy iterator
-  const ArrayPrototype_iterator = Array.prototype.iterator;
+  // Array.prototype[mozIteratorSym]
   Object.defineProperties(Object.assign(Array.prototype, {
     [mozIteratorSym]() {
-      return new LegacyIterator($CallFunction(ArrayPrototype_iterator, this));
+      return new BuiltinIterator(this, iterF.values);
     },
   }), {
     [mozIteratorSym]: {enumerable: false},
@@ -382,25 +377,15 @@ function MakeBuiltinArrayIterator(ctor) {
 
 // make Strings and TypedArrays iterable
 {
-  const ArrayPrototype_iterator = Array.prototype.iterator;
+  const ArrayPrototype_iterator = Array.prototype[mozIteratorSym];
   const types = ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"];
   const TypedArrays = [for (type of types) global[type + "Array"]];
   [String, ...TypedArrays].forEach(
     ctor => {
-      // legacy iterator based on Array.prototype.iterator
-      Object.defineProperties(Object.assign(ctor.prototype, {
-        iterator() {
-          return $CallFunction(ArrayPrototype_iterator, this);
-        }
-      }), {
-        iterator: {enumerable: false},
-      });
-
-      // "@@iterator" based on legacy iterator
-      const legacyIterator = ctor.prototype.iterator;
+      // "@@iterator" iterator based on Array.prototype[mozIteratorSym]
       Object.defineProperties(Object.assign(ctor.prototype, {
         [mozIteratorSym]() {
-          return new LegacyIterator($CallFunction(legacyIterator, this));
+          return $CallFunction(ArrayPrototype_iterator, this);
         }
       }), {
         [mozIteratorSym]: {enumerable: false},
