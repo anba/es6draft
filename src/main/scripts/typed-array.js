@@ -8,23 +8,25 @@
 (function TypedArray(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      Math = global.Math,
-      TypeError = global.TypeError;
+const {
+  Object, Function, Math, TypeError,
+} = global;
 
-const Math_max = Math.max,
-      Math_min = Math.min;
+const {
+  max: Math_max,
+  min: Math_min,
+} = Math;
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 const types = ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"];
 const TypedArrays = [for (type of types) global[type + "Array"]];
 
-[...TypedArrays].forEach(
+TypedArrays.forEach(
   ctor => {
-    const subarray = ctor.prototype.subarray,
-          set = ctor.prototype.set;
+    const {
+      subarray, set
+    } = ctor.prototype;
     Object.defineProperty(ctor.prototype, "move", {
       value(start, end, dest) {
         start = +start; end = +end; dest = +dest;

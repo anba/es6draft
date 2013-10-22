@@ -8,10 +8,9 @@
 (function LegacyGenerator(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      Symbol = global.Symbol,
-      StopIteration = global.StopIteration;
+const {
+  Object, Function, Symbol, StopIteration,
+} = global;
 
 const Object_defineProperty = Object.defineProperty,
       Object_getPrototypeOf = Object.getPrototypeOf,

@@ -8,15 +8,15 @@
 (function OldProxyAPI(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      Array = global.Array,
-      Proxy = global.Proxy,
-      Reflect = global.Reflect,
-      TypeError = global.TypeError;
+const {
+  Object, Function, Array, Proxy, Reflect, TypeError,
+} = global;
 
-const Object_create = Object.create,
-      Object_assign = Object.assign;
+const {
+  create: Object_create,
+  assign: Object_assign,
+  mixin: Object_mixin,
+} = Object;
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
@@ -136,7 +136,7 @@ var BuiltinProxy = Proxy;
 var NewProxy = new BuiltinProxy(BuiltinProxy, {
   addInvokeTrap(p, handler) {
     // Directly assign "invoke" trap to handler; this change is visible to other scripts, but tests don't complain
-    Object.mixin(handler, {
+    Object_mixin(handler, {
       invoke(_, pk, args, receiver) {
         var fn = Reflect.get(p, pk, receiver);
         return $CallFunction(fn, p, ...args);

@@ -8,32 +8,36 @@
 (function ArrayStringStatics(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function;
+const {
+  Object, Function,
+} = global;
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 { /* Array statics */
 const Array = global.Array;
-const Array_prototype_join = Array.prototype.join,
-      Array_prototype_reverse = Array.prototype.reverse,
-      Array_prototype_sort = Array.prototype.sort,
-      Array_prototype_push = Array.prototype.push,
-      Array_prototype_pop = Array.prototype.pop,
-      Array_prototype_shift = Array.prototype.shift,
-      Array_prototype_unshift = Array.prototype.unshift,
-      Array_prototype_splice = Array.prototype.splice,
-      Array_prototype_concat = Array.prototype.concat,
-      Array_prototype_slice = Array.prototype.slice,
-      Array_prototype_filter = Array.prototype.filter,
-      Array_prototype_lastIndexOf = Array.prototype.lastIndexOf,
-      Array_prototype_indexOf = Array.prototype.indexOf,
-      Array_prototype_forEach = Array.prototype.forEach,
-      Array_prototype_map = Array.prototype.map,
-      Array_prototype_every = Array.prototype.every,
-      Array_prototype_some = Array.prototype.some,
-      Array_prototype_reduce = Array.prototype.reduce,
-      Array_prototype_reduceRight = Array.prototype.reduceRight;
+
+const {
+  join: Array_prototype_join,
+  reverse: Array_prototype_reverse,
+  sort: Array_prototype_sort,
+  push: Array_prototype_push,
+  pop: Array_prototype_pop,
+  shift: Array_prototype_shift,
+  unshift: Array_prototype_unshift,
+  splice: Array_prototype_splice,
+  concat: Array_prototype_concat,
+  slice: Array_prototype_slice,
+  filter: Array_prototype_filter,
+  lastIndexOf: Array_prototype_lastIndexOf,
+  indexOf: Array_prototype_indexOf,
+  forEach: Array_prototype_forEach,
+  map: Array_prototype_map,
+  every: Array_prototype_every,
+  some: Array_prototype_some,
+  reduce: Array_prototype_reduce,
+  reduceRight: Array_prototype_reduceRight,
+} = Array.prototype;
 
 Object.defineProperties(Object.assign(Array, {
   join(array, $1, ...more) {
@@ -127,30 +131,33 @@ Object.defineProperties(Object.assign(Array, {
 
 { /* String statics */
 const String = global.String;
-const String_prototype_quote = String.prototype.quote,
-      String_prototype_substring = String.prototype.substring,
-      String_prototype_toLowerCase = String.prototype.toLowerCase,
-      String_prototype_toUpperCase = String.prototype.toUpperCase,
-      String_prototype_charAt = String.prototype.charAt,
-      String_prototype_charCodeAt = String.prototype.charCodeAt,
-      String_prototype_contains = String.prototype.contains,
-      String_prototype_indexOf = String.prototype.indexOf,
-      String_prototype_lastIndexOf = String.prototype.lastIndexOf,
-      String_prototype_startsWith = String.prototype.startsWith,
-      String_prototype_endsWith = String.prototype.endsWith,
-      String_prototype_trim = String.prototype.trim,
-      String_prototype_trimLeft = String.prototype.trimLeft,
-      String_prototype_trimRight = String.prototype.trimRight,
-      String_prototype_toLocaleLowerCase = String.prototype.toLocaleLowerCase,
-      String_prototype_toLocaleUpperCase = String.prototype.toLocaleUpperCase,
-      String_prototype_localeCompare = String.prototype.localeCompare,
-      String_prototype_match = String.prototype.match,
-      String_prototype_search = String.prototype.search,
-      String_prototype_replace = String.prototype.replace,
-      String_prototype_split = String.prototype.split,
-      String_prototype_substr = String.prototype.substr,
-      String_prototype_concat = String.prototype.concat,
-      String_prototype_slice = String.prototype.slice;
+
+const {
+  quote: String_prototype_quote,
+  substring: String_prototype_substring,
+  toLowerCase: String_prototype_toLowerCase,
+  toUpperCase: String_prototype_toUpperCase,
+  charAt: String_prototype_charAt,
+  charCodeAt: String_prototype_charCodeAt,
+  contains: String_prototype_contains,
+  indexOf: String_prototype_indexOf,
+  lastIndexOf: String_prototype_lastIndexOf,
+  startsWith: String_prototype_startsWith,
+  endsWith: String_prototype_endsWith,
+  trim: String_prototype_trim,
+  trimLeft: String_prototype_trimLeft,
+  trimRight: String_prototype_trimRight,
+  toLocaleLowerCase: String_prototype_toLocaleLowerCase,
+  toLocaleUpperCase: String_prototype_toLocaleUpperCase,
+  localeCompare: String_prototype_localeCompare,
+  match: String_prototype_match,
+  search: String_prototype_search,
+  replace: String_prototype_replace,
+  split: String_prototype_split,
+  substr: String_prototype_substr,
+  concat: String_prototype_concat,
+  slice: String_prototype_slice,
+} = String.prototype;
 
 Object.defineProperties(Object.assign(String, {
   quote(string, ...more) {

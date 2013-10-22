@@ -8,9 +8,9 @@
 (function NumberExtensions(global) {
 "use strict";
 
-const Object = global.Object,
-      Number = global.Number,
-      Math = global.Math;
+const {
+  Object, Number, Math,
+} = global;
 
 Object.defineProperties(Object.assign(Number, {
   toInteger(v) {

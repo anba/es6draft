@@ -8,10 +8,9 @@
 (function Stacktrace(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      Math = global.Math,
-      Error = global.Error;
+const {
+  Object, Function, Math, Error,
+} = global;
 
 const Object_defineProperty = Object.defineProperty,
       Error_prototype_toString = Error.prototype.toString,

@@ -8,10 +8,9 @@
 (function Generator(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      Symbol = global.Symbol,
-      TypeError = global.TypeError;
+const {
+  Object, Function, Symbol, TypeError,
+} = global;
 
 const Object_defineProperty = Object.defineProperty,
       Object_getPrototypeOf = Object.getPrototypeOf,
@@ -20,6 +19,9 @@ const Object_defineProperty = Object.defineProperty,
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 const Generator = Object.getPrototypeOf(function*(){});
+const GeneratorPrototype = Generator.prototype;
+const GeneratorPrototype_next = GeneratorPrototype.next;
+const nextCalledOnce = Symbol("nextCalledOnce");
 
 Object.defineProperty(Generator, Symbol.hasInstance, {
   value(O) {
@@ -45,14 +47,10 @@ Object.defineProperty(Generator, Symbol.hasInstance, {
   writable: false, enumerable: false, configurable: true
 });
 
-const GeneratorPrototype = Generator.prototype;
-const GeneratorPrototype_next = GeneratorPrototype.next;
-const genState = Symbol("genState");
-
 Object.defineProperty(GeneratorPrototype, "next", {
   value(...args) {
-    if (!Object_hasOwnProperty(this, genState)) {
-      Object_defineProperty(this, genState, {__proto__: null, value: true});
+    if (!Object_hasOwnProperty(this, nextCalledOnce)) {
+      Object_defineProperty(this, nextCalledOnce, {__proto__: null, value: true});
       // drop arguments on first call to next()
       return $CallFunction(GeneratorPrototype_next, this);
     }

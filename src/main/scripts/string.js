@@ -8,15 +8,19 @@
 (function StringExtensions(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      String = global.String,
-      RegExp = global.RegExp;
+const {
+  Object, Function, String, RegExp,
+} = global;
 
-const RegExp_prototype_replace = RegExp.prototype.replace,
-      String_prototype_match = String.prototype.match,
-      String_prototype_search = String.prototype.search,
-      String_prototype_replace = String.prototype.replace;
+const {
+  replace: RegExp_prototype_replace
+} = RegExp.prototype;
+
+const {
+  match: String_prototype_match,
+  replace: String_prototype_replace,
+  search: String_prototype_search,
+} = String.prototype;
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 

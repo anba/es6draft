@@ -8,19 +8,20 @@
 (function ItObject(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      Error = global.Error,
-      Proxy = global.Proxy,
-      Reflect = global.Reflect;
+const {
+  Object, Function, Error, Proxy, Reflect,
+} = global;
 
-const Object_assign = Object.assign,
-      Reflect_getOwnPropertyDescriptor = Reflect.getOwnPropertyDescriptor,
-      Reflect_defineProperty = Reflect.defineProperty,
-      Reflect_get = Reflect.get,
-      Reflect_set = Reflect.set,
-      Reflect_deleteProperty = Reflect.deleteProperty,
-      Reflect_enumerate = Reflect.enumerate;
+const Object_assign = Object.assign;
+
+const {
+  getOwnPropertyDescriptor: Reflect_getOwnPropertyDescriptor,
+  defineProperty: Reflect_defineProperty,
+  get: Reflect_get,
+  set: Reflect_set,
+  deleteProperty: Reflect_deleteProperty,
+  enumerate: Reflect_enumerate,
+} = Reflect;
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 

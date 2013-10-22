@@ -8,16 +8,13 @@
 (function Internal_Error(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      InternalError = global.InternalError,
-      RangeError = global.RangeError,
-      Symbol = global.Symbol;
+const {
+  Object, Function, InternalError, RangeError, Symbol,
+} = global;
 
-const hasInstanceSym = Symbol.hasInstance;
-const instanceOf = Function.prototype.call.bind(Function.prototype[hasInstanceSym]);
+const instanceOf = Function.prototype.call.bind(Function.prototype[Symbol.hasInstance]);
 
-Object.defineProperty(RangeError, hasInstanceSym, {
+Object.defineProperty(RangeError, Symbol.hasInstance, {
   value(o) {
     return instanceOf(RangeError, o) || instanceOf(InternalError, o);
   }, configurable: true

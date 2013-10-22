@@ -8,16 +8,15 @@
 (function Compatibility(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      RegExp = global.RegExp,
-      String = global.String,
-      Symbol = global.Symbol,
-      TypeError = global.TypeError;
+const {
+  Object, Function, RegExp, String, Symbol, TypeError,
+} = global;
 
-const Object_defineProperty = Object.defineProperty,
-      Object_getPrototypeOf = Object.getPrototypeOf,
-      Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+const {
+  defineProperty: Object_defineProperty,
+  getPrototypeOf: Object_getPrototypeOf,
+  getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
+} = Object;
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 

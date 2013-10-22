@@ -8,20 +8,11 @@
 (function ToSource(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      Array = global.Array,
-      String = global.String,
-      Boolean = global.Boolean,
-      Number = global.Number,
-      Math = global.Math,
-      Date = global.Date,
-      RegExp = global.RegExp,
-      Error = global.Error,
-      TypeError = global.TypeError,
-      JSON = global.JSON,
-      Intl = global.Intl,
-      WeakSet = global.WeakSet;
+const {
+  Object, Function, Array, String, Boolean,
+  Number, Math, Date, RegExp, Error,
+  TypeError, JSON, Intl, WeakSet,
+} = global;
 
 const Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
       Object_hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),

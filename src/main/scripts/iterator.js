@@ -8,13 +8,9 @@
 (function IteratorAPI(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      Array = global.Array,
-      String = global.String,
-      Symbol = global.Symbol,
-      TypeError = global.TypeError,
-      Proxy = global.Proxy;
+const {
+  Object, Function, Array, String, Symbol, TypeError, Proxy,
+} = global;
 
 const Object_keys = Object.keys,
       Object_defineProperty = Object.defineProperty,
@@ -23,10 +19,12 @@ const Object_keys = Object.keys,
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
-const iteratorSym = Symbol.iterator,
-      toStringTagSym = Symbol.toStringTag,
-      hasInstanceSym = Symbol.hasInstance,
-      createSym = Symbol.create;
+const {
+  iterator: iteratorSym,
+  toStringTag: toStringTagSym,
+  hasInstance: hasInstanceSym,
+  create: createSym,
+} = Symbol;
 
 // pseudo-symbol in SpiderMonkey
 const mozIteratorSym = "@@iterator";
@@ -293,16 +291,16 @@ function MakeBuiltinArrayIterator(ctor) {
 { /* Map.prototype */
   const Map = global.Map;
   const BuiltinIterator = MakeBuiltinIterator(Map);
-  const iterF = {
-    keys: Map.prototype['keys'],
-    values: Map.prototype['values'],
-    entries: Map.prototype['entries'],
-  };
+  const {
+    keys: Map_prototype_keys,
+    values: Map_prototype_values,
+    entries: Map_prototype_entries,
+  } = Map.prototype;
 
   Object.defineProperties(Object.assign(Map.prototype, {
-    keys() { return new BuiltinIterator(this, iterF.keys) },
-    values() { return new BuiltinIterator(this, iterF.values) },
-    entries() { return new BuiltinIterator(this, iterF.entries) },
+    keys() { return new BuiltinIterator(this, Map_prototype_keys) },
+    values() { return new BuiltinIterator(this, Map_prototype_values) },
+    entries() { return new BuiltinIterator(this, Map_prototype_entries) },
   }), {
     keys: {enumerable: false},
     values: {enumerable: false},
@@ -315,20 +313,21 @@ function MakeBuiltinArrayIterator(ctor) {
     writable: true, enumerable: false, configurable: true
   });
 
+  // delete original Map.prototype[@@iterator]
   delete Map.prototype[iteratorSym];
 }
 
 { /* Set.prototype */
   const Set = global.Set;
   const BuiltinIterator = MakeBuiltinIterator(Set);
-  const iterF = {
-    values: Set.prototype['values'],
-    entries: Set.prototype['entries'],
-  };
+  const {
+    values: Set_prototype_values,
+    entries: Set_prototype_entries,
+  } = Set.prototype;
 
   Object.defineProperties(Object.assign(Set.prototype, {
-    values() { return new BuiltinIterator(this, iterF.values) },
-    entries() { return new BuiltinIterator(this, iterF.entries) },
+    values() { return new BuiltinIterator(this, Set_prototype_values) },
+    entries() { return new BuiltinIterator(this, Set_prototype_entries) },
   }), {
     values: {enumerable: false},
     entries: {enumerable: false},
@@ -346,21 +345,22 @@ function MakeBuiltinArrayIterator(ctor) {
     writable: true, enumerable: false, configurable: true
   });
 
+  // delete original Set.prototype[@@iterator]
   delete Set.prototype[iteratorSym];
 }
 
 { /* Array.prototype */
   const BuiltinIterator = MakeBuiltinIterator(Array);
-  const iterF = {
-    keys: Array.prototype['keys'],
-    values: Array.prototype['values'],
-    entries: Array.prototype['entries'],
-  };
+  const {
+    keys: Array_prototype_keys,
+    values: Array_prototype_values,
+    entries: Array_prototype_entries,
+  } = Array.prototype;
 
   // Array.prototype[mozIteratorSym]
   Object.defineProperties(Object.assign(Array.prototype, {
     [mozIteratorSym]() {
-      return new BuiltinIterator(this, iterF.values);
+      return new BuiltinIterator(this, Array_prototype_values);
     },
   }), {
     [mozIteratorSym]: {enumerable: false},

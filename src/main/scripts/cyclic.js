@@ -8,22 +8,25 @@
 (function Cyclic(global) {
 "use strict";
 
-const Object = global.Object,
-      Function = global.Function,
-      Array = global.Array,
-      Error = global.Error,
-      Set = global.Set,
-      WeakSet = global.WeakSet;
+const {
+  Object, Function, Array, Error, Set, WeakSet,
+} = global;
 
 const Array_prototype_join = Array.prototype.join,
       Array_prototype_toLocaleString = Array.prototype.toLocaleString,
-      Error_prototype_toString = Error.prototype.toString,
-      Set_prototype_add = Set.prototype.add,
-      Set_prototype_delete = Set.prototype.delete,
-      Set_prototype_has = Set.prototype.has,
-      WeakSet_prototype_add = WeakSet.prototype.add,
-      WeakSet_prototype_delete = WeakSet.prototype.delete,
-      WeakSet_prototype_has = WeakSet.prototype.has;
+      Error_prototype_toString = Error.prototype.toString;
+
+const {
+  add: Set_prototype_add,
+  delete: Set_prototype_delete,
+  has: Set_prototype_has,
+} = Set.prototype;
+
+const {
+  add: WeakSet_prototype_add,
+  delete: WeakSet_prototype_delete,
+  has: WeakSet_prototype_has,
+} = WeakSet.prototype;
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 const weakset = new WeakSet(), set = new Set();
