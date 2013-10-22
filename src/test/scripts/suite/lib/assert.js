@@ -27,7 +27,7 @@ const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
 
 function IsCallable(o) {
-  try{
+  try {
     (new Proxy(o, {apply: () => {}}))();
     return true;
   } catch(e) {
@@ -36,7 +36,7 @@ function IsCallable(o) {
 }
 
 function IsConstructor(o) {
-  try{
+  try {
     new (new Proxy(o, {construct: () => ({})}));
     return true;
   } catch(e) {
