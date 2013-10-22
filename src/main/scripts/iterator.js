@@ -236,56 +236,6 @@ function MakeBuiltinIterator(ctor) {
   return BuiltinIterator;
 }
 
-// (internal) MakeBuiltinArrayIterator:: std:iteration:Iterator -> LegacyIterator
-function MakeBuiltinArrayIterator(ctor) {
-  const iterSym = Symbol("iter");
-  const closedSym = Symbol("closed");
-
-  class BuiltinArrayIterator extends Iterator {
-    constructor(obj, iterF) {
-      Object_defineProperty(this, iterSym, {__proto__: null, value: $CallFunction(iterF, obj)});
-      Object_defineProperty(this, closedSym, {__proto__: null, value: false, configurable: true});
-    }
-
-    next() {
-      if (!this[closedSym]) {
-        var next = this[iterSym].next();
-        if (Object(next) === next && !next.done) {
-          return next.value;
-        }
-        Object_defineProperty(this, closedSym, {__proto__: null, value: true, configurable: false});
-      }
-      throw StopIteration;
-    }
-
-    get [toStringTagSym]() {
-      return ctor.name + " Iterator";
-    }
-
-    get [closedSym]() {
-      return true;
-    }
-
-    static [createSym]() {
-      return $CallFunction(Function.prototype[createSym], this);
-    }
-  }
-
-  delete BuiltinArrayIterator.prototype.constructor;
-
-  Object.defineProperties(BuiltinArrayIterator.prototype, {
-    next: {enumerable: false},
-    [toStringTagSym]: {enumerable: false},
-    [closedSym]: {enumerable: false},
-  });
-
-  Object.defineProperties(BuiltinArrayIterator, {
-    [createSym]: {writable: false, enumerable: false},
-  });
-
-  return BuiltinArrayIterator;
-}
-
 // make prototype[mozIteratorSym]() an own data property and remove @@iterator hook
 
 { /* Map.prototype */
