@@ -157,6 +157,9 @@ class StatementGenerator extends
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
+    /**
+     * 13.1.9 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(BlockStatement node, StatementVisitor mv) {
         if (node.getStatements().isEmpty()) {
@@ -188,17 +191,23 @@ class StatementGenerator extends
         return result;
     }
 
+    /**
+     * 13.8.2 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(BreakStatement node, StatementVisitor mv) {
         mv.goTo(mv.breakLabel(node));
         return Completion.Break;
     }
 
+    /**
+     * 14.5.15 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(ClassDeclaration node, StatementVisitor mv) {
         ClassDefinitionEvaluation(node, null, mv);
 
-        // stack: [lexEnv, value] -> []
+        // stack: [envRec, value] -> []
         getEnvironmentRecord(mv);
         mv.swap();
         BindingInitialisationWithEnvironment(node.getName(), mv);
@@ -206,12 +215,18 @@ class StatementGenerator extends
         return Completion.Normal;
     }
 
+    /**
+     * 13.7.2 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(ContinueStatement node, StatementVisitor mv) {
         mv.goTo(mv.continueLabel(node));
         return Completion.Continue;
     }
 
+    /**
+     * 13.15.1 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(DebuggerStatement node, StatementVisitor mv) {
         mv.lineInfo(node);
@@ -219,6 +234,11 @@ class StatementGenerator extends
         return Completion.Normal;
     }
 
+    /**
+     * 13.0.3 Runtime Semantics: Evaluation<br>
+     * 13.0.2 Runtime Semantics: LabelledEvaluation<br>
+     * 13.6.1.2 Runtime Semantics: LabelledEvaluation
+     */
     @Override
     public Completion visit(DoWhileStatement node, StatementVisitor mv) {
         Label lblNext = new Label();
@@ -258,12 +278,18 @@ class StatementGenerator extends
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed());
     }
 
+    /**
+     * 13.3.1 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(EmptyStatement node, StatementVisitor mv) {
         // nothing to do!
         return Completion.Normal;
     }
 
+    /**
+     * 13.4.1 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(ExpressionStatement node, StatementVisitor mv) {
         ValType type = expressionValue(node.getExpression(), mv);
@@ -275,24 +301,41 @@ class StatementGenerator extends
         Enumerate, Iterate, EnumerateValues
     }
 
+    /**
+     * Extension: 'for-each' statement
+     */
     @Override
     public Completion visit(ForEachStatement node, StatementVisitor mv) {
         return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
                 IterationKind.EnumerateValues, mv);
     }
 
+    /**
+     * 13.0.3 Runtime Semantics: Evaluation<br>
+     * 13.0.2 Runtime Semantics: LabelledEvaluation<br>
+     * 13.6.4.5 Runtime Semantics: LabelledEvaluation
+     */
     @Override
     public Completion visit(ForInStatement node, StatementVisitor mv) {
         return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
                 IterationKind.Enumerate, mv);
     }
 
+    /**
+     * 13.0.3 Runtime Semantics: Evaluation<br>
+     * 13.0.2 Runtime Semantics: LabelledEvaluation<br>
+     * 13.6.4.5 Runtime Semantics: LabelledEvaluation
+     */
     @Override
     public Completion visit(ForOfStatement node, StatementVisitor mv) {
         return visitForInOfLoop(node, node.getExpression(), node.getHead(), node.getStatement(),
                 IterationKind.Iterate, mv);
     }
 
+    /**
+     * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation<br>
+     * 13.6.4.7 Runtime Semantics: ForIn/OfBodyEvaluation
+     */
     private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion visitForInOfLoop(
             FORSTATEMENT node, Expression expr, Node lhs, Statement stmt,
             IterationKind iterationKind, StatementVisitor mv) {
@@ -304,7 +347,7 @@ class StatementGenerator extends
         @SuppressWarnings("rawtypes")
         Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
 
-        // Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
+        // Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
         ValType type = expressionValue(expr, mv);
         mv.toBoxed(type);
 
@@ -345,6 +388,7 @@ class StatementGenerator extends
             }
         }
 
+        // Runtime Semantics: ForIn/OfBodyEvaluation
         mv.store(iter);
 
         mv.goTo(lblContinue);
@@ -448,6 +492,12 @@ class StatementGenerator extends
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
     }
 
+    /**
+     * 13.0.3 Runtime Semantics: Evaluation<br>
+     * 13.0.2 Runtime Semantics: LabelledEvaluation<br>
+     * 13.6.3.2 Runtime Semantics: LabelledEvaluation<br>
+     * 13.6.3.3 Runtime Semantics: ForBodyEvaluation
+     */
     @Override
     public Completion visit(ForStatement node, StatementVisitor mv) {
         Node head = node.getHead();
@@ -542,6 +592,9 @@ class StatementGenerator extends
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
     }
 
+    /**
+     * 14.1.15 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(FunctionDeclaration node, StatementVisitor mv) {
         codegen.compile(node);
@@ -552,6 +605,9 @@ class StatementGenerator extends
         return Completion.Normal;
     }
 
+    /**
+     * 14.4.12 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(GeneratorDeclaration node, StatementVisitor mv) {
         codegen.compile(node);
@@ -562,6 +618,9 @@ class StatementGenerator extends
         return Completion.Normal;
     }
 
+    /**
+     * 13.5.2 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(IfStatement node, StatementVisitor mv) {
         Label l0 = new Label(), l1 = new Label();
@@ -584,6 +643,10 @@ class StatementGenerator extends
         }
     }
 
+    /**
+     * 13.12.4 Runtime Semantics: Evaluation<br>
+     * 13.12.3 Runtime Semantics: LabelledEvaluation
+     */
     @Override
     public Completion visit(LabelledStatement node, StatementVisitor mv) {
         mv.enterVariableScope();
@@ -603,6 +666,9 @@ class StatementGenerator extends
         return result.normal(label.isUsed());
     }
 
+    /**
+     * 13.2.1.5 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(LexicalDeclaration node, StatementVisitor mv) {
         for (LexicalBinding binding : node.getElements()) {
@@ -612,6 +678,9 @@ class StatementGenerator extends
         return Completion.Normal;
     }
 
+    /**
+     * Extension: 'let' statement
+     */
     @Override
     public Completion visit(LetStatement node, StatementVisitor mv) {
         // create new declarative lexical environment
@@ -665,6 +734,9 @@ class StatementGenerator extends
         return result;
     }
 
+    /**
+     * 13.2.1.5 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(LexicalBinding node, StatementVisitor mv) {
         Binding binding = node.getBinding();
@@ -688,6 +760,9 @@ class StatementGenerator extends
         return Completion.Normal;
     }
 
+    /**
+     * 13.9.2 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(ReturnStatement node, StatementVisitor mv) {
         Expression expr = node.getExpression();
@@ -725,7 +800,7 @@ class StatementGenerator extends
         mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
 
         if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
-            // TODO: only emit when `return` used in StmtListMethod
+            // TODO: only emit when `return` used in StatementListMethod
             Label noReturn = new Label();
             mv.dup();
             mv.ifnull(noReturn);
@@ -740,11 +815,17 @@ class StatementGenerator extends
         return Completion.Normal; // TODO: return correct result
     }
 
+    /**
+     * 13.11.7 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(SwitchStatement node, StatementVisitor mv) {
         return node.accept(new SwitchStatementGenerator(codegen), mv);
     }
 
+    /**
+     * 13.13.1 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(ThrowStatement node, StatementVisitor mv) {
         ValType type = expressionValue(node.getExpression(), mv);
@@ -755,6 +836,9 @@ class StatementGenerator extends
         return Completion.Throw;
     }
 
+    /**
+     * 13.14.5 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(TryStatement node, StatementVisitor mv) {
         boolean hasCatch = node.getCatchNode() != null || !node.getGuardedCatchNodes().isEmpty();
@@ -767,6 +851,11 @@ class StatementGenerator extends
         }
     }
 
+    /**
+     * 13.14.5 Runtime Semantics: Evaluation<br>
+     * 
+     * <code>try-catch-finally</code>
+     */
     private Completion visitTryCatchFinally(TryStatement node, StatementVisitor mv) {
         // NB: nop() instruction are inserted to ensure no empty blocks will be generated
         BlockStatement tryBlock = node.getTryBlock();
@@ -901,6 +990,11 @@ class StatementGenerator extends
         return finallyResult.then(tryResult.select(catchResult));
     }
 
+    /**
+     * 13.14.5 Runtime Semantics: Evaluation<br>
+     * 
+     * <code>try-catch</code>
+     */
     private Completion visitTryCatch(TryStatement node, StatementVisitor mv) {
         // NB: nop() instruction are inserted to ensure no empty blocks will be generated
         BlockStatement tryBlock = node.getTryBlock();
@@ -973,6 +1067,11 @@ class StatementGenerator extends
         return tryResult.select(catchResult);
     }
 
+    /**
+     * 13.14.5 Runtime Semantics: Evaluation<br>
+     * 
+     * <code>try-finally</code>
+     */
     private Completion visitTryFinally(TryStatement node, StatementVisitor mv) {
         // NB: nop() instruction are inserted to ensure no empty blocks will be generated
         BlockStatement tryBlock = node.getTryBlock();
@@ -1048,6 +1147,9 @@ class StatementGenerator extends
         return finallyResult.then(tryResult);
     }
 
+    /**
+     * 13.14.4 Runtime Semantics: CatchClauseEvaluation
+     */
     @Override
     public Completion visit(CatchNode node, StatementVisitor mv) {
         Binding catchParameter = node.getCatchParameter();
@@ -1095,6 +1197,9 @@ class StatementGenerator extends
         return result;
     }
 
+    /**
+     * Extension: 'catch-if' statement
+     */
     @Override
     public Completion visit(GuardedCatchNode node, StatementVisitor mv) {
         Binding catchParameter = node.getCatchParameter();
@@ -1153,6 +1258,9 @@ class StatementGenerator extends
         return result;
     }
 
+    /**
+     * 13.2.2.3 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(VariableDeclaration node, StatementVisitor mv) {
         Binding binding = node.getBinding();
@@ -1171,6 +1279,9 @@ class StatementGenerator extends
         return Completion.Normal;
     }
 
+    /**
+     * 13.2.2.3 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(VariableStatement node, StatementVisitor mv) {
         for (VariableDeclaration decl : node.getElements()) {
@@ -1179,6 +1290,11 @@ class StatementGenerator extends
         return Completion.Normal;
     }
 
+    /**
+     * 13.0.3 Runtime Semantics: Evaluation<br>
+     * 13.0.2 Runtime Semantics: LabelledEvaluation<br>
+     * 13.6.2.2 Runtime Semantics: LabelledEvaluation
+     */
     @Override
     public Completion visit(WhileStatement node, StatementVisitor mv) {
         Label lblNext = new Label();
@@ -1214,6 +1330,9 @@ class StatementGenerator extends
         return result.normal(lblContinue.isUsed() || lblBreak.isUsed()).select(Completion.Normal);
     }
 
+    /**
+     * 13.10.3 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(WithStatement node, StatementVisitor mv) {
         // with(<Expression>)

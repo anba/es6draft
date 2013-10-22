@@ -46,7 +46,7 @@ import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * 
+ * 12.1.5.7 Runtime Semantics: PropertyDefinitionEvaluation
  */
 class CodeGenerator implements AutoCloseable {
     private static class Methods {

@@ -84,21 +84,15 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.1.4.2 Array Comprehension
+     * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
      * <p>
-     * Runtime Semantics: ComprehensionEvaluation
-     * <p>
-     * ComprehensionQualifierTail: AssignmentExpression
+     * ComprehensionQualifierTail : AssignmentExpression
      */
     @Override
     protected abstract Void visit(Expression node, ExpressionVisitor mv);
 
     /**
-     * 12.1.4.2 Array Comprehension
-     * <p>
-     * Runtime Semantics: ComprehensionEvaluation
-     * <p>
-     * Comprehension : ComprehensionFor ComprehensionQualifierTail
+     * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
      */
     @Override
     public Void visit(Comprehension node, ExpressionVisitor mv) {
@@ -123,6 +117,9 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         return null;
     }
 
+    /**
+     * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
+     */
     @Override
     public Void visit(LegacyComprehension node, ExpressionVisitor mv) {
         // create new declarative lexical environment
@@ -161,9 +158,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.1.4.2 Array Comprehension
-     * <p>
-     * Runtime Semantics: QualifierEvaluation
+     * 12.1.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
      * <p>
      * ComprehensionFor : if ( AssignmentExpression )
      */
@@ -182,11 +177,9 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     }
 
     /**
-     * 12.1.4.2 Array Comprehension
+     * 12.1.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
      * <p>
-     * Runtime Semantics: QualifierEvaluation
-     * <p>
-     * ComprehensionFor : for (ForBinding of AssignmentExpression )
+     * ComprehensionFor : for ( ForBinding of AssignmentExpression )
      */
     @Override
     public Void visit(ComprehensionFor node, ExpressionVisitor mv) {
@@ -250,6 +243,11 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         return null;
     }
 
+    /**
+     * 12.1.4.2.4 Runtime Semantics: ComprehensionComponentEvaluation
+     * <p>
+     * ComprehensionFor : for ( ForBinding of AssignmentExpression )
+     */
     @Override
     public Void visit(LegacyComprehensionFor node, ExpressionVisitor mv) {
         Label lblContinue = new Label(), lblBreak = new Label();

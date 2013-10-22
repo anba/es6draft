@@ -25,7 +25,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
  * <h2>13.1 Block</h2>
  * <ul>
- * <li>13.1.2.1 Block Declaration Instantiation
+ * <li>13.1.10 Runtime Semantics: Block Declaration Instantiation
  * </ul>
  */
 class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {

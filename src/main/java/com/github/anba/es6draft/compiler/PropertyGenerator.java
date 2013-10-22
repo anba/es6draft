@@ -24,7 +24,9 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
- *
+ * 12.1.5.7 Runtime Semantics: PropertyDefinitionEvaluation<br>
+ * 14.3.7 Runtime Semantics: PropertyDefinitionEvaluation<br>
+ * 14.4.11 Runtime Semantics: PropertyDefinitionEvaluation
  */
 class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     private static class Methods {
@@ -107,6 +109,11 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
+    /**
+     * 12.1.5.6 Runtime Semantics: Evaluation
+     * <p>
+     * ComputedPropertyName : [ AssignmentExpression ]
+     */
     @Override
     public Void visit(ComputedPropertyName node, ExpressionVisitor mv) {
         ValType type = expressionValue(node.getExpression(), mv);
@@ -131,6 +138,10 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         return null;
     }
 
+    /**
+     * 14.3.7 Runtime Semantics: PropertyDefinitionEvaluation<br>
+     * 14.4.11 Runtime Semantics: PropertyDefinitionEvaluation
+     */
     @Override
     public Void visit(MethodDefinition node, ExpressionVisitor mv) {
         codegen.compile(node);
@@ -210,6 +221,11 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         return null;
     }
 
+    /**
+     * 12.1.5.7 Runtime Semantics: PropertyDefinitionEvaluation
+     * <p>
+     * PropertyDefinition : IdentifierName
+     */
     @Override
     public Void visit(PropertyNameDefinition node, ExpressionVisitor mv) {
         Identifier propertyName = node.getPropertyName();
@@ -225,6 +241,11 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         return null;
     }
 
+    /**
+     * 12.1.5.7 Runtime Semantics: PropertyDefinitionEvaluation
+     * <p>
+     * PropertyDefinition : PropertyName : AssignmentExpression
+     */
     @Override
     public Void visit(PropertyValueDefinition node, ExpressionVisitor mv) {
         // Runtime Semantics: Evaluation -> Property Definition Evaluation

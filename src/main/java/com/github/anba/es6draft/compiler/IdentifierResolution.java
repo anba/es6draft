@@ -15,7 +15,8 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
- *
+ * 12.1.2.2 Runtime Semantics: Evaluation<br>
+ * 13.2.1.4 Runtime Semantics: BindingInitialisation
  */
 class IdentifierResolution {
     private static class Methods {

@@ -31,9 +31,7 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 12.1.7 Generator Comprehensions
-     * <p>
-     * Runtime Semantics: Evaluation
+     * 12.1.7.2 Runtime Semantics: Evaluation
      */
     @Override
     public Void visit(GeneratorComprehension node, ExpressionVisitor mv) {
@@ -49,11 +47,9 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     }
 
     /**
-     * 12.1.4.2 Array Comprehension
+     * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
      * <p>
-     * Runtime Semantics: ComprehensionEvaluation
-     * <p>
-     * ComprehensionQualifierTail: AssignmentExpression
+     * ComprehensionQualifierTail : AssignmentExpression
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {

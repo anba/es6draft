@@ -32,7 +32,7 @@ import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
- *
+ * 13.11 The switch Statement
  */
 class SwitchStatementGenerator extends
         DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
@@ -160,6 +160,9 @@ class SwitchStatementGenerator extends
         return result;
     }
 
+    /**
+     * 13.11.7 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(SwitchStatement node, StatementVisitor mv) {
         // stack -> switchValue
