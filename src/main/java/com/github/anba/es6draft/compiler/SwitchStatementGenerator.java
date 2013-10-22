@@ -217,8 +217,29 @@ class SwitchStatementGenerator extends
             pushLexicalEnvironment(mv);
         }
 
-        List<SwitchClause> clauses = node.getClauses();
         JumpLabel lblBreak = new JumpLabel();
+        Completion result = CaseBlockEvaluation(node, type, lblBreak, switchValue, mv);
+
+        if (!declarations.isEmpty() && !result.isAbrupt()) {
+            popLexicalEnvironment(mv);
+        }
+        mv.exitScope();
+
+        mv.mark(lblBreak);
+        if (lblBreak.isUsed()) {
+            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
+        }
+        mv.exitVariableScope();
+
+        return result;
+    }
+
+    /**
+     * 13.11.5 Runtime Semantics: CaseBlockEvaluation
+     */
+    private Completion CaseBlockEvaluation(SwitchStatement node, SwitchType type,
+            JumpLabel lblBreak, Variable<?> switchValue, StatementVisitor mv) {
+        List<SwitchClause> clauses = node.getClauses();
         Label lblDefault = null;
         Label[] labels = new Label[clauses.size()];
         for (int i = 0, size = clauses.size(); i < size; ++i) {
@@ -273,20 +294,7 @@ class SwitchStatementGenerator extends
         }
         mv.exitBreakable(node);
 
-        result = result.normal(lblBreak.isUsed() || lblDefault == null || !lastResult.isAbrupt());
-
-        if (!declarations.isEmpty() && !result.isAbrupt()) {
-            popLexicalEnvironment(mv);
-        }
-        mv.exitScope();
-
-        mv.mark(lblBreak);
-        if (lblBreak.isUsed()) {
-            restoreEnvironment(node, Abrupt.Break, savedEnv, mv);
-        }
-        mv.exitVariableScope();
-
-        return result;
+        return result.normal(lblBreak.isUsed() || lblDefault == null || !lastResult.isAbrupt());
     }
 
     private static boolean hasDefaultClause(SwitchStatement node) {
