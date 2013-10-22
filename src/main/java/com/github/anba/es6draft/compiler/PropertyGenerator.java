@@ -261,17 +261,13 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
             if (mv.isStrict()) {
                 // stack: [<object>, pk] -> [<object>, pk, <object>, pk]
                 mv.dup2();
-            }
-            ValType type = expressionValue(propertyValue, mv);
-            mv.toBoxed(type);
-            if (mv.isStrict()) {
-                // stack: [<object>, pk, <object>, pk, value] -> [<object>, pk, value, <object>, pk]
-                mv.dupX2();
-                mv.pop();
-                // stack: [<object>, pk, value, <object>, pk] -> [<object>, pk, value]
+                // stack: [<object>, pk, <object>, pk] -> [<object>, pk]
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureNewProperty);
             }
+            // stack: [<object>, pk]
+            ValType type = expressionValue(propertyValue, mv);
+            mv.toBoxed(type);
             // stack: [<object>, pk, value]
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty);
