@@ -61,20 +61,6 @@ class SwitchStatementGenerator extends
                 Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.Object));
     }
 
-    public SwitchStatementGenerator(CodeGenerator codegen) {
-        super(codegen);
-    }
-
-    @Override
-    protected Completion visit(Node node, StatementVisitor mv) {
-        throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
-    }
-
-    @Override
-    protected Completion visit(StatementListItem node, StatementVisitor mv) {
-        return codegen.statement(node, mv);
-    }
-
     private enum SwitchType {
         Int, Char, String, Generic, Default;
 
@@ -101,8 +87,7 @@ class SwitchStatementGenerator extends
                     if (!(expr instanceof StringLiteral)) {
                         return false;
                     }
-                    java.lang.String value = ((StringLiteral) expr).getValue();
-                    if (value.length() != 1) {
+                    if (((StringLiteral) expr).getValue().length() != 1) {
                         return false;
                     }
                 }
@@ -122,33 +107,40 @@ class SwitchStatementGenerator extends
 
         static SwitchType of(SwitchStatement node) {
             List<SwitchClause> clauses = node.getClauses();
-            if (clauses.size() == 0 || clauses.size() == 1
-                    && clauses.get(0).getExpression() == null) {
+            if (clauses.size() == 0 || clauses.size() == 1 && clauses.get(0).isDefaultClause()) {
                 // empty or only default clause
                 return Default;
             }
-            Expression testExpr = clauses.get(0).getExpression();
-            if (testExpr == null) {
-                testExpr = clauses.get(1).getExpression();
+            if (isIntSwitch(node)) {
+                return Int;
             }
-            if (testExpr instanceof NumericLiteral) {
-                double value = ((NumericLiteral) testExpr).getValue();
-                if (value == (int) value && isIntSwitch(node)) {
-                    return Int;
-                }
-            } else if (testExpr instanceof StringLiteral) {
-                java.lang.String value = ((StringLiteral) testExpr).getValue();
-                if (value.length() == 1 && isCharSwitch(node)) {
-                    return Char;
-                }
-                if (isStringSwitch(node)) {
-                    return String;
-                }
+            if (isCharSwitch(node)) {
+                return Char;
+            }
+            if (isStringSwitch(node)) {
+                return String;
             }
             return Generic;
         }
     }
 
+    public SwitchStatementGenerator(CodeGenerator codegen) {
+        super(codegen);
+    }
+
+    @Override
+    protected Completion visit(Node node, StatementVisitor mv) {
+        throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
+    }
+
+    @Override
+    protected Completion visit(StatementListItem node, StatementVisitor mv) {
+        return codegen.statement(node, mv);
+    }
+
+    /**
+     * 13.11.7 Runtime Semantics: Evaluation
+     */
     @Override
     public Completion visit(SwitchClause node, StatementVisitor mv) {
         Completion result = Completion.Normal;
@@ -244,7 +236,7 @@ class SwitchStatementGenerator extends
         Label[] labels = new Label[clauses.size()];
         for (int i = 0, size = clauses.size(); i < size; ++i) {
             labels[i] = new Label();
-            if (clauses.get(i).getExpression() == null) {
+            if (clauses.get(i).isDefaultClause()) {
                 assert lblDefault == null;
                 lblDefault = labels[i];
             }
@@ -270,7 +262,7 @@ class SwitchStatementGenerator extends
             // skip leading clauses until default clause found
             while (iter.hasNext()) {
                 SwitchClause switchClause = iter.next();
-                if (switchClause.getExpression() == null) {
+                if (switchClause.isDefaultClause()) {
                     lastResult = switchClause.accept(this, mv);
                     break;
                 }
@@ -299,7 +291,7 @@ class SwitchStatementGenerator extends
 
     private static boolean hasDefaultClause(SwitchStatement node) {
         for (SwitchClause switchClause : node.getClauses()) {
-            if (switchClause.getExpression() == null) {
+            if (switchClause.isDefaultClause()) {
                 return true;
             }
         }

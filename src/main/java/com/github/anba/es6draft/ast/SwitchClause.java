@@ -38,6 +38,10 @@ public class SwitchClause extends AstNode {
         this.statements = statements;
     }
 
+    public boolean isDefaultClause() {
+        return expression == null;
+    }
+
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
