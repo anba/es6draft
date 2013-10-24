@@ -3990,7 +3990,7 @@ public class Parser {
      */
     private Statement labelledStatement() {
         long sourcePos = ts.sourcePosition();
-        HashSet<String> labelSet = new HashSet<>(4);
+        LinkedHashSet<String> labelSet = new LinkedHashSet<>(4);
         labels: for (;;) {
             switch (token()) {
             case FOR:
