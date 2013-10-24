@@ -112,6 +112,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // class: CharSequence
         static final MethodDesc CharSequence_length = MethodDesc.create(MethodType.Interface,
                 Types.CharSequence, "length", Type.getMethodType(Type.INT_TYPE));
+        static final MethodDesc CharSequence_toString = MethodDesc.create(MethodType.Interface,
+                Types.CharSequence, "toString", Type.getMethodType(Types.String));
 
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createImmutableBinding = MethodDesc.create(
@@ -692,6 +694,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.Boolean_toString);
             return;
         case String:
+            mv.invoke(Methods.CharSequence_toString);
             return;
         case Object:
         case Any:
@@ -757,6 +760,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.Boolean_toString);
             return;
         case String:
+            mv.invoke(Methods.CharSequence_toString);
             return;
         case Object:
             mv.loadExecutionContext();
