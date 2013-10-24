@@ -196,6 +196,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         return codegen.expressionValue(node, mv);
     }
 
+    protected final void expressionBoxedValue(Expression node, ExpressionVisitor mv) {
+        codegen.expressionBoxedValue(node, mv);
+    }
+
     /**
      * stack: [] -> []
      */

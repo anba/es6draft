@@ -116,6 +116,10 @@ class DestructuringAssignmentGenerator {
             return codegen.expressionValue(node, mv);
         }
 
+        protected final void expressionBoxedValue(Expression node, ExpressionVisitor mv) {
+            codegen.expressionBoxedValue(node, mv);
+        }
+
         @Override
         protected final R visit(Node node, V value) {
             throw new IllegalStateException();
@@ -259,8 +263,7 @@ class DestructuringAssignmentGenerator {
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    ValType type = expressionValue(initialiser, mv);
-                    mv.toBoxed(type);
+                    expressionBoxedValue(initialiser, mv);
                 }
                 mv.mark(undef);
             }
@@ -322,8 +325,7 @@ class DestructuringAssignmentGenerator {
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    ValType type = expressionValue(initialiser, mv);
-                    mv.toBoxed(type);
+                    expressionBoxedValue(initialiser, mv);
                 }
                 mv.mark(undef);
             }

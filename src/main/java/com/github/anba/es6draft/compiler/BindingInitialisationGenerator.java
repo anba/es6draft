@@ -163,6 +163,10 @@ class BindingInitialisationGenerator {
             return codegen.expressionValue(node, mv);
         }
 
+        protected final void expressionBoxedValue(Expression node, ExpressionVisitor mv) {
+            codegen.expressionBoxedValue(node, mv);
+        }
+
         protected final void dupArgs() {
             if (environment == EnvironmentType.EnvironmentFromStack) {
                 mv.dup2();
@@ -340,8 +344,7 @@ class BindingInitialisationGenerator {
                     mv.ifeq(undef);
                     {
                         mv.pop();
-                        ValType type = expressionValue(initialiser, mv);
-                        mv.toBoxed(type);
+                        expressionBoxedValue(initialiser, mv);
                     }
                     mv.mark(undef);
                 }
@@ -436,8 +439,7 @@ class BindingInitialisationGenerator {
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    ValType type = expressionValue(initialiser, mv);
-                    mv.toBoxed(type);
+                    expressionBoxedValue(initialiser, mv);
                 }
                 mv.mark(undef);
             }
@@ -493,8 +495,7 @@ class BindingInitialisationGenerator {
                 mv.ifeq(undef);
                 {
                     mv.pop();
-                    ValType type = expressionValue(initialiser, mv);
-                    mv.toBoxed(type);
+                    expressionBoxedValue(initialiser, mv);
                 }
                 mv.mark(undef);
             }

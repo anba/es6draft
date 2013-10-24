@@ -233,8 +233,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         assert propName != null;
 
         mv.aconst(propName);
-        ValType type = expressionValue(propertyName, mv);
-        mv.toBoxed(type);
+        expressionBoxedValue(propertyName, mv);
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_defineProperty_String);
 
@@ -266,20 +265,17 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
                 mv.invoke(Methods.ScriptRuntime_ensureNewProperty);
             }
             // stack: [<object>, pk]
-            ValType type = expressionValue(propertyValue, mv);
-            mv.toBoxed(type);
+            expressionBoxedValue(propertyValue, mv);
             // stack: [<object>, pk, value]
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty);
         } else if ("__proto__".equals(propName)) {
-            ValType type = expressionValue(propertyValue, mv);
-            mv.toBoxed(type);
+            expressionBoxedValue(propertyValue, mv);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else {
             mv.aconst(propName);
-            ValType type = expressionValue(propertyValue, mv);
-            mv.toBoxed(type);
+            expressionBoxedValue(propertyValue, mv);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty_String);
         }

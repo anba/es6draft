@@ -561,6 +561,10 @@ class CodeGenerator implements AutoCloseable {
         return (type != ValType.Reference ? type : ValType.Any);
     }
 
+    void expressionBoxedValue(Expression node, ExpressionVisitor mv) {
+        mv.toBoxed(expressionValue(node, mv));
+    }
+
     void propertyDefinition(PropertyDefinition node, ExpressionVisitor mv) {
         node.accept(propgen, mv);
     }
