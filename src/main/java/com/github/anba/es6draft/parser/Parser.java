@@ -10,15 +10,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
@@ -3706,7 +3698,8 @@ public class Parser {
 
     private ArrayAssignmentPattern toDestructuring(ArrayLiteral array) {
         List<AssignmentElementItem> list = newSmallList();
-        for (Expression e : array.getElements()) {
+        for (Iterator<Expression> iterator = array.getElements().iterator(); iterator.hasNext();) {
+            Expression e = iterator.next();
             AssignmentElementItem element;
             if (e instanceof Elision) {
                 // Elision
@@ -3717,6 +3710,10 @@ public class Parser {
                 Expression expression = ((SpreadElement) e).getExpression();
                 LeftHandSideExpression target = destructuringSimpleAssignmentTarget(expression);
                 element = new AssignmentRestElement(e.getSourcePosition(), target);
+                // no further elements after AssignmentRestElement allowed
+                if (iterator.hasNext()) {
+                    reportSyntaxError(iterator.next(), Messages.Key.InvalidDestructuring);
+                }
             } else {
                 // AssignmentElement : DestructuringAssignmentTarget Initialiser{opt}
                 // DestructuringAssignmentTarget : LeftHandSideExpression
