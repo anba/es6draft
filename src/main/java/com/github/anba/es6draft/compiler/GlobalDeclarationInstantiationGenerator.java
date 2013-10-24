@@ -25,6 +25,7 @@ import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -129,6 +130,15 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.checkcast(Types.GlobalEnvironmentRecord);
         mv.store(envRec);
 
+        Variable<EnvironmentRecord> lexEnvRec = mv
+                .newVariable("lexEnvRec", EnvironmentRecord.class);
+        mv.load(lexEnv);
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        mv.store(lexEnvRec);
+
+        // Throughout this algorithm `env == lexEnv` holds for ScriptEvaluation, the `env /= lexEnv`
+        // case applies only to EvalScriptEvaluation, cf. runtime.objects.Eval.
+
         /* step 1 */
         @SuppressWarnings("unused")
         boolean strict = script.isStrict();
@@ -137,8 +147,12 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         /* step 3 */
         Set<String> varNames = VarDeclaredNames(script);
         /* step 4 */
-        for (String name : lexNames) {
-            canDeclareLexicalScopedOrThrow(context, envRec, name, mv);
+        if (script.isGlobalScope()) {
+            // Perform this step only for ScriptEvaluation, EvalScriptEvaluation places lexical
+            // declarations in a fresh environment
+            for (String name : lexNames) {
+                canDeclareLexicalScopedOrThrow(context, envRec, name, mv);
+            }
         }
         /* step 5 */
         for (String name : varNames) {
@@ -194,17 +208,17 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         for (Declaration d : lexDeclarations) {
             for (String dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
-                    createImmutableBinding(envRec, dn, mv);
+                    createImmutableBinding(lexEnvRec, dn, mv);
                 } else {
-                    createMutableBinding(envRec, dn, false, mv);
+                    createMutableBinding(lexEnvRec, dn, false, mv);
                 }
             }
             if (d instanceof GeneratorDeclaration) {
                 String fn = BoundName(d);
                 // stack: [] -> [fo]
                 InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) d, mv);
-                // setMutableBinding(envRec, fn, false, mv);
-                initialiseBinding(envRec, fn, mv);
+                // setMutableBinding(lexEnvRec, fn, false, mv);
+                initialiseBinding(lexEnvRec, fn, mv);
             }
         }
         /* step 17 */

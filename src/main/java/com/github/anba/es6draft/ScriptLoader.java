@@ -54,31 +54,6 @@ public class ScriptLoader {
     }
 
     /**
-     * [15.2.7 Runtime Semantics: Script Evaluation]
-     */
-    public static Object ScriptEvaluation(Script script, ExecutionContext cx,
-            boolean deletableBindings) {
-        Realm realm = cx.getRealm();
-        /* steps 1-2 */
-        RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
-        if (scriptBody == null)
-            return null;
-        /* step 3 */
-        LexicalEnvironment variableEnv = cx.getVariableEnvironment();
-        assert variableEnv == realm.getGlobalEnv();
-        LexicalEnvironment lexicalEnv = cx.getLexicalEnvironment();
-        /* steps 4-5 */
-        scriptBody.globalDeclarationInstantiation(realm.defaultContext(), variableEnv, lexicalEnv,
-                deletableBindings);
-        /* steps 6-9 */
-        ExecutionContext progCxt = newScriptExecutionContext(cx);
-        /* steps 10-14 */
-        Object result = script.evaluate(progCxt);
-        /* step 15 */
-        return result;
-    }
-
-    /**
      * Returns an executable {@link Script} object for given
      * {@link com.github.anba.es6draft.ast.Script} AST-node. This may either be an
      * {@link InterpretedScript} or {@link CompiledScript} instance.

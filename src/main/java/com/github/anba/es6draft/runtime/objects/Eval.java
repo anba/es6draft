@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.ScriptLoader.ScriptEvaluation;
+import static com.github.anba.es6draft.runtime.ExecutionContext.newEvalExecutionContext;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.EnumSet;
@@ -19,6 +20,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
@@ -109,17 +111,27 @@ public final class Eval {
         }
         /* step 4 */
         boolean strictScript = script.getScriptBody().isStrict();
+        // strictCaller implies strictScript, but no such assertion in the specification
+        assert !strictCaller || strictScript : "'strictCaller => strictScript' does not hold";
         /* steps 6-8 (implicit) */
         /* step 9 */
         if (!direct && !strictScript) {
-            assert cx.getVariableEnvironment() == cx.getLexicalEnvironment();
             assert cx.getVariableEnvironment() == evalRealm.getGlobalEnv();
-            return ScriptEvaluation(script, cx, true);
+            assert cx.getLexicalEnvironment() == evalRealm.getGlobalEnv();
+            return ScriptEvaluation(script, evalRealm, true);
         }
         /* step 10 */
-        if (direct && !strictScript && !strictCaller
-                && cx.getVariableEnvironment() == evalRealm.getGlobalEnv()) {
-            return ScriptEvaluation(script, cx, true);
+        if (direct && !strictScript && !strictCaller && globalScope) {
+            assert cx.getVariableEnvironment() == evalRealm.getGlobalEnv();
+            assert cx.getLexicalEnvironment() == evalRealm.getGlobalEnv();
+            return ScriptEvaluation(script, evalRealm, true);
+        }
+        if (direct && !strictScript && !strictCaller && globalCode) {
+            assert cx.getVariableEnvironment() == evalRealm.getGlobalEnv();
+            // The assertion does not hold in this implementation because lexical environments
+            // are only emitted when lexical declarations are present (optimization strikes back!)
+            // assert cx.getLexicalEnvironment() != evalRealm.getGlobalEnv();
+            return EvalScriptEvaluation(script, cx, true);
         }
         /* step 11 */
         if (direct) {
@@ -142,17 +154,48 @@ public final class Eval {
             varEnv = strictVarEnv;
         } else {
             // begin-modification
-            // lexically declared variables are being placed into a new declarative environment
+            // lexically declared variables are placed into a new declarative environment
             lexEnv = LexicalEnvironment.newDeclarativeEnvironment(lexEnv);
             // end-modification
         }
         /* steps 15-16 */
         script.getScriptBody().evalDeclarationInstantiation(cx, varEnv, lexEnv, true);
         /* steps 17-20 */
-        ExecutionContext evalCxt = ExecutionContext.newEvalExecutionContext(cx, varEnv, lexEnv);
+        ExecutionContext evalCxt = newEvalExecutionContext(cx, varEnv, lexEnv);
         /* steps 21-25 */
         Object result = script.evaluate(evalCxt);
         /* step 26 */
+        return result;
+    }
+
+    /**
+     * Slightly modified {@link ScriptLoader#ScriptEvaluation(Script, Realm, boolean)} method to
+     * create a separate lexical environment for lexically declared variables
+     */
+    private static Object EvalScriptEvaluation(Script script, ExecutionContext cx,
+            boolean deletableBindings) {
+        Realm realm = cx.getRealm();
+        /* steps 1-2 */
+        RuntimeInfo.ScriptBody scriptBody = script.getScriptBody();
+        if (scriptBody == null)
+            return null;
+        /* step 3 */
+        LexicalEnvironment variableEnv = cx.getVariableEnvironment();
+        assert variableEnv == realm.getGlobalEnv();
+        LexicalEnvironment lexicalEnv = cx.getLexicalEnvironment();
+
+        // begin-modification
+        // lexically declared variables are placed into a new declarative environment
+        lexicalEnv = LexicalEnvironment.newDeclarativeEnvironment(lexicalEnv);
+        // end-modification
+
+        /* steps 4-5 */
+        scriptBody.globalDeclarationInstantiation(cx, variableEnv, lexicalEnv, deletableBindings);
+        /* steps 6-9 */
+        ExecutionContext progCxt = newEvalExecutionContext(cx, variableEnv, lexicalEnv);
+        /* steps 10-14 */
+        Object result = script.evaluate(progCxt);
+        /* step 15 */
         return result;
     }
 

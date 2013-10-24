@@ -110,27 +110,6 @@ public final class ExecutionContext {
     /**
      * <div>
      * <ul>
-     * <li>15 ECMAScript Language: Scripts and Modules
-     * <ul>
-     * <li>15.1 Script
-     * <ul>
-     * <li>15.1.2 Runtime Semantics</div>
-     * <p>
-     * Runtime Semantics: Script Evaluation
-     */
-    public static ExecutionContext newScriptExecutionContext(ExecutionContext callerContext) {
-        /* steps 3-6 */
-        ExecutionContext progCxt = new ExecutionContext();
-        progCxt.realm = callerContext.realm;
-        progCxt.varEnv = callerContext.varEnv;
-        progCxt.lexEnv = callerContext.lexEnv;
-        progCxt.function = callerContext.function;
-        return progCxt;
-    }
-
-    /**
-     * <div>
-     * <ul>
      * <li>18 The Global Object
      * <ul>
      * <li>18.2 Function Properties of the Global Object</div>
