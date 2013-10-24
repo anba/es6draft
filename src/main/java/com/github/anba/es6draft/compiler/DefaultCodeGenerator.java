@@ -101,6 +101,14 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 Types.AbstractOperations, "ToString",
                 Type.getMethodType(Types.CharSequence, Types.ExecutionContext, Types.Object));
 
+        static final MethodDesc AbstractOperations_ToString_int = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToString",
+                Type.getMethodType(Types.String, Type.INT_TYPE));
+
+        static final MethodDesc AbstractOperations_ToString_long = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "ToString",
+                Type.getMethodType(Types.String, Type.LONG_TYPE));
+
         static final MethodDesc AbstractOperations_ToString_double = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "ToString",
                 Type.getMethodType(Types.String, Type.DOUBLE_TYPE));
@@ -636,12 +644,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.AbstractOperations_ToString_double);
             return;
         case Number_int:
-            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
-            mv.invoke(Methods.AbstractOperations_ToString_double);
+            mv.invoke(Methods.AbstractOperations_ToString_int);
             return;
         case Number_uint:
-            mv.cast(Type.LONG_TYPE, Type.DOUBLE_TYPE);
-            mv.invoke(Methods.AbstractOperations_ToString_double);
+            mv.invoke(Methods.AbstractOperations_ToString_long);
             return;
         case Undefined:
             mv.pop();
@@ -675,12 +681,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.AbstractOperations_ToString_double);
             return;
         case Number_int:
-            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
-            mv.invoke(Methods.AbstractOperations_ToString_double);
+            mv.invoke(Methods.AbstractOperations_ToString_int);
             return;
         case Number_uint:
-            mv.cast(Type.LONG_TYPE, Type.DOUBLE_TYPE);
-            mv.invoke(Methods.AbstractOperations_ToString_double);
+            mv.invoke(Methods.AbstractOperations_ToString_long);
             return;
         case Undefined:
             mv.pop();
@@ -741,12 +745,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.invoke(Methods.AbstractOperations_ToString_double);
             return;
         case Number_int:
-            mv.cast(Type.INT_TYPE, Type.DOUBLE_TYPE);
-            mv.invoke(Methods.AbstractOperations_ToString_double);
+            mv.invoke(Methods.AbstractOperations_ToString_int);
             return;
         case Number_uint:
-            mv.cast(Type.LONG_TYPE, Type.DOUBLE_TYPE);
-            mv.invoke(Methods.AbstractOperations_ToString_double);
+            mv.invoke(Methods.AbstractOperations_ToString_long);
             return;
         case Undefined:
             mv.pop();
