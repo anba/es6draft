@@ -431,6 +431,9 @@ js1_6/extensions/regress-465443.js
 js1_8_1/extensions/regress-437288-01.js
 js1_8_5/regress/regress-383902.js
 
+# script code, but not global scope(!), eval() does not add lexical declarations to global object
+js1_5/Regress/regress-103602.js
+
 
 ############################################
 # Unsupported built-in object functions    #
