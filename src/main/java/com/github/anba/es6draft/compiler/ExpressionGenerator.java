@@ -1800,10 +1800,17 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         ValType baseType = evalAndGetValue(node.getBase(), mv);
         mv.toBoxed(baseType);
         ValType elementType = evalAndGetValue(node.getElement(), mv);
-        mv.toBoxed(elementType);
-        mv.loadExecutionContext();
-        mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ScriptRuntime_getElement);
+        if (elementType.isPrimitive()) {
+            ToFlatString(elementType, mv);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getProperty);
+        } else {
+            mv.toBoxed(elementType);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getElement);
+        }
 
         return ValType.Reference;
     }
@@ -1816,10 +1823,17 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         ValType baseType = evalAndGetValue(node.getBase(), mv);
         mv.toBoxed(baseType);
         ValType elementType = evalAndGetValue(node.getElement(), mv);
-        mv.toBoxed(elementType);
-        mv.loadExecutionContext();
-        mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ScriptRuntime_getElementValue);
+        if (elementType.isPrimitive()) {
+            ToFlatString(elementType, mv);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getPropertyValue);
+        } else {
+            mv.toBoxed(elementType);
+            mv.loadExecutionContext();
+            mv.iconst(mv.isStrict());
+            mv.invoke(Methods.ScriptRuntime_getElementValue);
+        }
 
         return ValType.Any;
     }
