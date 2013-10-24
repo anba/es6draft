@@ -56,11 +56,13 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
     private boolean strict;
     private boolean globalCode;
+    private boolean globalScope;
     private boolean enclosedByWithStatement;
 
     public Interpreter(Script parsedScript) {
         this.strict = parsedScript.isStrict();
         this.globalCode = parsedScript.isGlobalCode();
+        this.globalScope = parsedScript.isGlobalScope();
         this.enclosedByWithStatement = parsedScript.isEnclosedByWithStatement();
     }
 
@@ -663,6 +665,9 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
             }
             if (globalCode) {
                 evalFlags |= EvalFlags.GlobalCode.getValue();
+            }
+            if (globalScope) {
+                evalFlags |= EvalFlags.GlobalScope.getValue();
             }
             if (enclosedByWithStatement) {
                 evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();

@@ -351,6 +351,14 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
     }
 
+    private static boolean isGlobalScope(ExpressionVisitor mv) {
+        ScopedNode node = mv.getScope().getNode();
+        if (node instanceof Script) {
+            return ((Script) node).isGlobalScope();
+        }
+        return false;
+    }
+
     /**
      * [12.2.3 EvaluateCall Abstract Operation]
      */
@@ -684,6 +692,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         if (mv.isGlobalCode()) {
             evalFlags |= EvalFlags.GlobalCode.getValue();
+        }
+        if (isGlobalScope(mv)) {
+            evalFlags |= EvalFlags.GlobalScope.getValue();
         }
         if (isEnclosedByWithStatement(mv)) {
             evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();

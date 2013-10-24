@@ -36,22 +36,27 @@ public final class Eval {
         /**
          * Flag for direct eval calls
          */
-        Direct(0b0001),
+        Direct(0b00001),
 
         /**
          * Flag for strict-mode eval calls
          */
-        Strict(0b0010),
+        Strict(0b00010),
 
         /**
          * Flag for global code eval calls
          */
-        GlobalCode(0b0100),
+        GlobalCode(0b00100),
+
+        /**
+         * Flag for global scope eval calls
+         */
+        GlobalScope(0b01000),
 
         /**
          * Flag for eval calls enclosed by with-statement
          */
-        EnclosedByWithStatement(0b1000);
+        EnclosedByWithStatement(0b10000);
 
         private final int value;
 
@@ -72,7 +77,7 @@ public final class Eval {
      * 18.2.1 eval (x)
      */
     public static Object indirectEval(ExecutionContext cx, Object source) {
-        return eval(cx, source, EvalFlags.GlobalCode.getValue());
+        return eval(cx, source, EvalFlags.GlobalCode.getValue() | EvalFlags.GlobalScope.getValue());
     }
 
     /**
@@ -86,6 +91,7 @@ public final class Eval {
         boolean direct = EvalFlags.Direct.isSet(flags);
         boolean strictCaller = EvalFlags.Strict.isSet(flags);
         boolean globalCode = EvalFlags.GlobalCode.isSet(flags);
+        boolean globalScope = EvalFlags.GlobalScope.isSet(flags);
         boolean withStatement = EvalFlags.EnclosedByWithStatement.isSet(flags);
         /* step 1 */
         if (!Type.isString(source)) {
@@ -93,7 +99,6 @@ public final class Eval {
         }
         /* step 5 */
         Realm evalRealm = cx.getRealm();
-        boolean globalScope = direct && (cx.getLexicalEnvironment() == evalRealm.getGlobalEnv());
 
         /* step 2 */
         Script script = script(cx, Type.stringValue(source), strictCaller, globalCode, direct,
