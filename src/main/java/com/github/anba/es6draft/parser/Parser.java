@@ -817,7 +817,7 @@ public class Parser {
     public Script parseScript(CharSequence source) throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
-        ts = new TokenStream(this, new StringTokenStreamInput(source));
+        ts = new TokenStream(this, new TokenStreamInput(source));
         return script();
     }
 
@@ -832,7 +832,7 @@ public class Parser {
             ModuleDeclaration module;
             newContext(ContextKind.Module);
             try {
-                ts = new TokenStream(this, new StringTokenStreamInput(source)).initialise();
+                ts = new TokenStream(this, new TokenStreamInput(source)).initialise();
 
                 String moduleName = sourceFile; // only basename(sourceFile)?
                 List<StatementListItem> body = moduleBody(Token.EOF);
@@ -864,7 +864,7 @@ public class Parser {
             FunctionExpression function;
             newContext(ContextKind.Function);
             try {
-                ts = new TokenStream(this, new StringTokenStreamInput(formals)).initialise();
+                ts = new TokenStream(this, new TokenStreamInput(formals)).initialise();
                 FormalParameterList parameters = formalParameters(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
@@ -875,7 +875,7 @@ public class Parser {
                     formals = "\n" + formals + "\n";
                 }
 
-                ts = new TokenStream(this, new StringTokenStreamInput(bodyText)).initialise();
+                ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialise();
                 List<StatementListItem> statements = functionBody(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);
@@ -919,7 +919,7 @@ public class Parser {
             GeneratorExpression generator;
             newContext(ContextKind.Generator);
             try {
-                ts = new TokenStream(this, new StringTokenStreamInput(formals)).initialise();
+                ts = new TokenStream(this, new TokenStreamInput(formals)).initialise();
                 FormalParameterList parameters = formalParameters(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFormalParameterList);
@@ -930,7 +930,7 @@ public class Parser {
                     formals = "\n" + formals + "\n";
                 }
 
-                ts = new TokenStream(this, new StringTokenStreamInput(bodyText)).initialise();
+                ts = new TokenStream(this, new TokenStreamInput(bodyText)).initialise();
                 List<StatementListItem> statements = functionBody(Token.EOF);
                 if (token() != Token.EOF) {
                     reportSyntaxError(Messages.Key.InvalidFunctionBody);

@@ -35,7 +35,7 @@ public class JSONParser {
 
     public JSONParser(ExecutionContext cx, CharSequence source) {
         this.cx = cx;
-        ts = new JSONTokenStream(new StringTokenStreamInput(source));
+        ts = new JSONTokenStream(new TokenStreamInput(source));
     }
 
     private void reportParseError(Messages.Key messageKey, String... args) {
