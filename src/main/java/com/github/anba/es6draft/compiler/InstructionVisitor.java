@@ -278,6 +278,7 @@ class InstructionVisitor extends InstructionAdapter {
             return Type.getType(c);
         }
     };
+    private int lastLineNumber = -1;
 
     private Type getType(Class<?> c) {
         return typeCache.get(c);
@@ -431,6 +432,11 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     public void lineInfo(int line) {
+        if (lastLineNumber == line) {
+            // omit duplicate line info entries;
+            return;
+        }
+        lastLineNumber = line;
         visitLineNumber(line, label());
     }
 

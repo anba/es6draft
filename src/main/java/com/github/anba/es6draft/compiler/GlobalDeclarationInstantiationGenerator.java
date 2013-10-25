@@ -109,7 +109,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         ExpressionVisitor mv = new GlobalDeclInitMethodGenerator(codegen, methodName,
                 IsStrict(script));
 
-        mv.lineInfo(script.getLine());
+        mv.lineInfo(script);
         mv.begin();
         generate(script, mv);
         mv.end();
