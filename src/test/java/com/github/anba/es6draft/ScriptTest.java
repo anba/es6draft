@@ -13,7 +13,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,10 +38,8 @@ import com.github.anba.es6draft.repl.SimpleShellGlobalObject;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.UncheckedIOException;
 
 /**
  *
@@ -116,22 +113,7 @@ public class ScriptTest {
     private static final Set<String> excludeFiles = new HashSet<>();
     private static final Set<String> excludeDirs = new HashSet<>(asList("lib"));
 
-    private static List<TestInfo> loadTests(Path searchdir, final Path basedir) throws IOException {
-        BiFunction<Path, BufferedReader, TestInfo> create = new BiFunction<Path, BufferedReader, TestInfo>() {
-            @Override
-            public TestInfo apply(Path script, BufferedReader reader) {
-                try {
-                    return createTestInfo(script, reader);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-        };
-
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, create);
-    }
-
-    private static TestInfo createTestInfo(Path script, BufferedReader reader) throws IOException {
-        return new TestInfo(script);
+    private static List<TestInfo> loadTests(Path searchdir, Path basedir) throws IOException {
+        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles);
     }
 }

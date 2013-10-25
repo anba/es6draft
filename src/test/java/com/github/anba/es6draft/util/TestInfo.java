@@ -27,6 +27,7 @@ import java.util.Set;
 import org.junit.runners.Parameterized;
 
 import com.github.anba.es6draft.util.Functional.BiFunction;
+import com.github.anba.es6draft.util.Functional.Function;
 
 /**
  * Base class to store test information
@@ -70,36 +71,83 @@ public class TestInfo {
      * Recursively searches for js-file test cases in {@code searchdir} and its sub-directories
      */
     public static <T extends TestInfo> List<T> loadTests(Path searchdir, final Path basedir,
-            final Set<String> excludeDirs, final Set<String> excludeFiles, final Charset charset,
+            Set<String> excludeDirs, Set<String> excludeFiles, final Charset charset,
             final BiFunction<Path, BufferedReader, T> create) throws IOException {
         final List<T> tests = new ArrayList<>();
-        Files.walkFileTree(searchdir, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(searchdir, new TestFileVisitor(excludeDirs, excludeFiles) {
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-                    throws IOException {
-                if (excludeDirs.contains(dir.getFileName().toString())) {
-                    return FileVisitResult.SKIP_SUBTREE;
+            public void visitFile(Path file) throws IOException {
+                try (BufferedReader reader = Files.newBufferedReader(file, charset)) {
+                    tests.add(create.apply(basedir.relativize(file), reader));
+                } catch (UncheckedIOException e) {
+                    throw e.getCause();
                 }
-                return super.preVisitDirectory(dir, attrs);
-            }
-
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                    throws IOException {
-                if (attrs.isRegularFile() && attrs.size() != 0L) {
-                    String name = file.getFileName().toString();
-                    if (!excludeFiles.contains(name) && name.endsWith(".js")) {
-                        try (BufferedReader reader = Files.newBufferedReader(file, charset)) {
-                            tests.add(create.apply(basedir.relativize(file), reader));
-                        } catch (UncheckedIOException e) {
-                            throw e.getCause();
-                        }
-                    }
-                }
-                return FileVisitResult.CONTINUE;
             }
         });
         return tests;
+    }
+
+    private static final Function<Path, TestInfo> defaultCreate = new Function<Path, TestInfo>() {
+        @Override
+        public TestInfo apply(Path script) {
+            return new TestInfo(script);
+        }
+    };
+
+    /**
+     * Recursively searches for js-file test cases in {@code searchdir} and its sub-directories
+     */
+    public static List<TestInfo> loadTests(Path searchdir, final Path basedir,
+            final Set<String> excludeDirs, final Set<String> excludeFiles) throws IOException {
+        return loadTests(searchdir, basedir, excludeDirs, excludeFiles, defaultCreate);
+    }
+
+    /**
+     * Recursively searches for js-file test cases in {@code searchdir} and its sub-directories
+     */
+    public static <T extends TestInfo> List<T> loadTests(Path searchdir, final Path basedir,
+            Set<String> excludeDirs, Set<String> excludeFiles, final Function<Path, T> create)
+            throws IOException {
+        final List<T> tests = new ArrayList<>();
+        Files.walkFileTree(searchdir, new TestFileVisitor(excludeDirs, excludeFiles) {
+            @Override
+            public void visitFile(Path file) throws IOException {
+                tests.add(create.apply(basedir.relativize(file)));
+            }
+        });
+        return tests;
+    }
+
+    private static abstract class TestFileVisitor extends SimpleFileVisitor<Path> {
+        private final Set<String> excludeDirs;
+        private final Set<String> excludeFiles;
+
+        TestFileVisitor(Set<String> excludeDirs, Set<String> excludeFiles) {
+            this.excludeDirs = excludeDirs;
+            this.excludeFiles = excludeFiles;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+                throws IOException {
+            if (excludeDirs.contains(dir.getFileName().toString())) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+            return super.preVisitDirectory(dir, attrs);
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            if (attrs.isRegularFile() && attrs.size() != 0L) {
+                String name = file.getFileName().toString();
+                if (!excludeFiles.contains(name) && name.endsWith(".js")) {
+                    visitFile(file);
+                }
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        protected abstract void visitFile(Path path) throws IOException;
     }
 
     /**

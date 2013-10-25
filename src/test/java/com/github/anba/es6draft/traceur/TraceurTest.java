@@ -143,7 +143,7 @@ public class TraceurTest {
             "Collection", "LegacyModules", "Modules", "PrivateNames", "PrivateNameSyntax",
             "PropertyMethodAssignment", "PropertyOptionalComma", "Types"));
 
-    private static List<TestInfo> loadTests(Path searchdir, final Path basedir) throws IOException {
+    private static List<TestInfo> loadTests(Path searchdir, Path basedir) throws IOException {
         BiFunction<Path, BufferedReader, TestInfo> create = new BiFunction<Path, BufferedReader, TestInfo>() {
             @Override
             public TestInfo apply(Path script, BufferedReader reader) {

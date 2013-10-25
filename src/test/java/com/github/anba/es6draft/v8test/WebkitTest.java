@@ -15,9 +15,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,10 +44,8 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.UncheckedIOException;
 
 /**
  *
@@ -132,24 +128,8 @@ public class WebkitTest {
     private static final Set<String> excludeFiles = new HashSet<>();
     private static final Set<String> excludeDirs = new HashSet<>(asList("resources"));
 
-    private static List<TestInfo> loadTests(Path searchdir, final Path basedir) throws IOException {
-        BiFunction<Path, BufferedReader, TestInfo> create = new BiFunction<Path, BufferedReader, TestInfo>() {
-            @Override
-            public TestInfo apply(Path script, BufferedReader reader) {
-                try {
-                    return createTestInfo(script, reader);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-        };
-
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles,
-                StandardCharsets.ISO_8859_1, create);
-    }
-
-    private static TestInfo createTestInfo(Path script, BufferedReader reader) throws IOException {
+    private static List<TestInfo> loadTests(Path searchdir, Path basedir) throws IOException {
         // no special flags present in v8-webkit tests
-        return new TestInfo(script);
+        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles);
     }
 }

@@ -175,7 +175,7 @@ public class MozillaJitTest {
             "debug", "gc", "ion", "jaeger", "modules", "parallel", "parallelarray", "truthiness",
             "v8-v5"));
 
-    private static List<MozTest> loadTests(Path searchdir, final Path basedir) throws IOException {
+    private static List<MozTest> loadTests(Path searchdir, Path basedir) throws IOException {
         BiFunction<Path, BufferedReader, MozTest> create = new BiFunction<Path, BufferedReader, MozTest>() {
             @Override
             public MozTest apply(Path script, BufferedReader reader) {
