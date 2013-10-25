@@ -80,6 +80,16 @@ public class TokenStream {
             }
         }
 
+        void add(String s) {
+            int len = length;
+            int newlen = len + s.length();
+            if (newlen > cbuf.length) {
+                cbuf = Arrays.copyOf(cbuf, Integer.highestOneBit(newlen) << 1);
+            }
+            s.getChars(0, s.length(), cbuf, len);
+            length = newlen;
+        }
+
         @Override
         public String toString() {
             return new String(cbuf, 0, length);
@@ -1325,6 +1335,7 @@ public class TokenStream {
 
         final int EOF = TokenStreamInput.EOF;
         TokenStreamInput input = this.input;
+        int start = input.position();
         StringBuffer buffer = this.buffer();
         hasEscape = false;
         for (;;) {
@@ -1333,16 +1344,16 @@ public class TokenStream {
                 throw eofError(Messages.Key.UnterminatedStringLiteral);
             }
             if (c == quoteChar) {
+                buffer.add(input.range(start, input.position() - 1));
                 break;
             }
             if (isLineTerminator(c)) {
                 throw error(Messages.Key.UnterminatedStringLiteral);
             }
             if (c != '\\') {
-                // TODO: add substring range
-                buffer.add(c);
                 continue;
             }
+            buffer.add(input.range(start, input.position() - 1));
             hasEscape = true;
             c = input.get();
             if (isLineTerminator(c)) {
@@ -1351,6 +1362,7 @@ public class TokenStream {
                     // \r\n sequence
                 }
                 incrementLine();
+                start = input.position();
                 continue;
             }
             // escape sequences
@@ -1418,6 +1430,7 @@ public class TokenStream {
                 // fall-through
             }
             buffer.addCodepoint(c);
+            start = input.position();
         }
 
         return Token.STRING;
