@@ -788,7 +788,7 @@ class StatementGenerator extends
     public Completion visit(StatementListMethod node, StatementVisitor mv) {
         codegen.compile(node, mv);
 
-        mv.lineInfo(0);
+        mv.lineInfo(0); // 0 = hint for stacktraces to omit this frame
         mv.loadExecutionContext();
         if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
             mv.aconst(null);
