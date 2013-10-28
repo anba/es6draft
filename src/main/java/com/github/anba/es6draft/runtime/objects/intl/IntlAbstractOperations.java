@@ -249,6 +249,75 @@ public final class IntlAbstractOperations {
         nu,
         // DateTimeFormat
         ca, /* nu */
+        ;
+
+        private static ExtensionKey forName(String name, int index) {
+            assert index + 2 <= name.length();
+            char c0 = name.charAt(index), c1 = name.charAt(index + 1);
+            if (c0 == 'c') {
+                return c1 == 'a' ? ca : c1 == 'o' ? co : null;
+            }
+            if (c0 == 'k') {
+                return c1 == 'f' ? kf : c1 == 'n' ? kn : null;
+            }
+            return c0 == 'n' && c1 == 'u' ? nu : null;
+        }
+    }
+
+    private static EnumMap<ExtensionKey, String> unicodeLocaleExtensions(String extension) {
+        /*
+         * http://unicode.org/reports/tr35/#Unicode_locale_identifier
+         *
+         * unicode_locale_extensions = sep "u" (1*(sep keyword) / 1*(sep attribute) *(sep keyword))
+         * keyword = key [sep type]
+         * key = 2alphanum
+         * type = 3*8alphanum *(sep 3*8alphanum)
+         * attribute = 3*8alphanum
+         */
+        final int KEY_LENGTH = 2;
+        final int SEP_LENGTH = 1;
+        final int KEY_SEP_LENGTH = KEY_LENGTH + SEP_LENGTH;
+
+        assert extension.startsWith("-u-") && extension.length() >= 3 + KEY_LENGTH : extension;
+        EnumMap<ExtensionKey, String> map = new EnumMap<>(ExtensionKey.class);
+        ExtensionKey key = null;
+        int start = 3, startKeyword = start, length = extension.length();
+        for (int index = start; index < length; ++index) {
+            char c = extension.charAt(index);
+            if (c != '-') {
+                continue;
+            }
+            int partLength = index - start;
+            assert partLength >= KEY_LENGTH;
+            if (partLength == KEY_LENGTH) {
+                // found new keyword
+                if (key != null && !map.containsKey(key)) {
+                    // commit last keyword
+                    int from = startKeyword + KEY_SEP_LENGTH;
+                    int to = start - SEP_LENGTH;
+                    String type = to >= from ? extension.substring(from, to) : "";
+                    map.put(key, type);
+                }
+                key = ExtensionKey.forName(extension, start);
+                startKeyword = start;
+            }
+            start = index + 1;
+        }
+        boolean trailingKeyword = length - start == KEY_LENGTH;
+        if (key != null && !map.containsKey(key)) {
+            // commit last keyword
+            int from = startKeyword + KEY_SEP_LENGTH;
+            int to = trailingKeyword ? start - SEP_LENGTH : length;
+            String type = to >= from ? extension.substring(from, to) : "";
+            map.put(key, type);
+        }
+        if (trailingKeyword) {
+            key = ExtensionKey.forName(extension, start);
+            if (key != null && !map.containsKey(key)) {
+                map.put(key, "");
+            }
+        }
+        return map;
     }
 
     /**
@@ -263,12 +332,12 @@ public final class IntlAbstractOperations {
      */
     public interface LocaleDataInfo {
         /**
-         * Returns {@link #entries(ExtensionKey)}.get(0)
+         * Returns {@link #entries(IntlAbstractOperations.ExtensionKey)}.get(0)
          */
         String defaultValue(ExtensionKey extensionKey);
 
         /**
-         * Returns [sortLocaleData]], [[searchLocaleData]] or [[localeData]]
+         * Returns [[sortLocaleData]], [[searchLocaleData]] or [[localeData]]
          */
         List<String> entries(ExtensionKey extensionKey);
     }
@@ -609,10 +678,12 @@ public final class IntlAbstractOperations {
         String foundLocale = r.locale;
         LocaleDataInfo foundLocaleData = localeData.info(ULocale.forLanguageTag(foundLocale));
         /* step 5 */
-        List<String> extensionSubtags = null;
+        // List<String> extensionSubtags = null;
+        EnumMap<ExtensionKey, String> extensionSubtags = null;
         if (r.extension != null) {
             String extension = r.extension;
-            extensionSubtags = Arrays.asList(extension.split("-"));
+            // extensionSubtags = Arrays.asList(extension.split("-"));
+            extensionSubtags = unicodeLocaleExtensions(extension);
         }
         /* steps 6-7 */
         ResolvedLocale result = new ResolvedLocale();
@@ -639,11 +710,10 @@ public final class IntlAbstractOperations {
             String value = keyLocaleData.get(0);
             String supportedExtensionAddition = "";
             if (extensionSubtags != null) {
-                int keyPos = extensionSubtags.indexOf(key.name());
-                if (keyPos != -1) {
-                    if (keyPos + 1 < extensionSubtags.size()
-                            && extensionSubtags.get(keyPos + 1).length() > 2) {
-                        String requestedValue = extensionSubtags.get(keyPos + 1);
+                // int keyPos = extensionSubtags.indexOf(key.name());
+                if (extensionSubtags.containsKey(key)) {
+                    if (!extensionSubtags.get(key).isEmpty()) {
+                        String requestedValue = extensionSubtags.get(key);
                         int valuePos = keyLocaleData.indexOf(requestedValue);
                         if (valuePos != -1) {
                             value = requestedValue;
