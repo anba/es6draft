@@ -37,7 +37,7 @@ ecma_5/RegExp/exec.js
 # - no special [[Class]] for TypedArray/DataView prototypes
 js1_8_5/extensions/dataview.js
 
-# lexical declarations must be not duplicated in same scope
+# lexical declarations must not be duplicated in same scope
 ecma_6/Generators/syntax.js
 
 
@@ -276,6 +276,9 @@ ecma_5/extensions/proxy-array-target-length-definition.js
 # legacy generator support requires adding non-standard properties to GeneratorPrototype
 ecma_6/Generators/runtime.js
 
+# Various issues, see modified reflect-parse.js file
+js1_8_5/extensions/reflect-parse.js
+
 
 #######################################
 # ES6 related runtime changes         #
@@ -434,6 +437,9 @@ js1_8_5/regress/regress-383902.js
 # script code, but not global scope(!), eval() does not add lexical declarations to global object
 js1_5/Regress/regress-103602.js
 
+# object initialiser shorthand not supported in SpiderMonkey
+js1_8_5/extensions/regress-696109.js
+
 
 ############################################
 # Unsupported built-in object functions    #
@@ -535,11 +541,6 @@ js1_8_5/extensions/clone-v1-typed-array.js
 
 # enableSPSProfilingAssertions() not supported
 js1_8_5/extensions/sps-generators.js
-
-# Reflect not supported
-js1_8_5/extensions/reflect-parse.js
-js1_8_5/extensions/reflect-parse-proxy.js
-js1_8_5/extensions/regress-696109.js
 
 
 #######################################

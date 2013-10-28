@@ -363,6 +363,7 @@ tests/bug825379.js
 
 # ES6: duplicate formal-parameter + variable declaration (non-simple parameter lists)
 tests/auto-regress/bug765055.js
+tests/auto-regress/bug785305.js
 
 # ES6-change: block-scoped function declaration
 tests/basic/bug-826124.js
@@ -383,6 +384,7 @@ tests/basic/bug728609.js
 tests/basic/bug738841.js
 
 # Initialiser in for-in
+tests/auto-regress/bug590772.js
 tests/auto-regress/bug596817.js
 tests/closures/bug540136.js
 tests/closures/bug540348.js
@@ -435,12 +437,6 @@ tests/auto-regress/bug784011.js
 tests/auto-regress/bug786106.js
 tests/auto-regress/bug789107.js
 tests/auto-regress/bug791445.js
-
-# Reflect not supported
-tests/auto-regress/bug590772.js
-tests/auto-regress/bug785305.js
-tests/basic/bug639311.js
-tests/for-of/bug-728079-js17-4.js
 
 # Debugger API
 tests/arguments/rest-debugger.js
