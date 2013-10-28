@@ -83,6 +83,14 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Types.ExoticArray, "ArrayCreate",
                 Type.getMethodType(Types.ExoticArray, Types.ExecutionContext, Type.LONG_TYPE));
 
+        static final MethodDesc ExoticArray_DenseArrayCreate = MethodDesc.create(MethodType.Static,
+                Types.ExoticArray, "DenseArrayCreate",
+                Type.getMethodType(Types.ExoticArray, Types.ExecutionContext, Types.Object_));
+
+        static final MethodDesc ExoticArray_SparseArrayCreate = MethodDesc.create(
+                MethodType.Static, Types.ExoticArray, "SparseArrayCreate",
+                Type.getMethodType(Types.ExoticArray, Types.ExecutionContext, Types.Object_));
+
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
@@ -795,18 +803,50 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     @Override
     public ValType visit(ArrayLiteral node, ExpressionVisitor mv) {
+        int elision = 0;
         boolean hasSpread = false;
         for (Expression element : node.getElements()) {
-            if (element instanceof SpreadElement) {
+            if (element instanceof Elision) {
+                elision += 1;
+            } else if (element instanceof SpreadElement) {
                 hasSpread = true;
-                break;
             }
         }
 
-        mv.loadExecutionContext();
-        mv.lconst(0);
-        mv.invoke(Methods.ExoticArray_ArrayCreate);
         if (!hasSpread) {
+            // Try to initialise array with faster {Dense, Sparse}ArrayCreate methods
+            int length = node.getElements().size();
+            float density = (float) (length - elision) / length;
+            if ((density >= 0.25f && length < 0x10) || (density >= 0.75f && length < 0x1000)) {
+                mv.loadExecutionContext();
+                mv.newarray(length, Types.Object);
+                int nextIndex = 0;
+                for (Expression element : node.getElements()) {
+                    if (element instanceof Elision) {
+                        // Elision
+                    } else {
+                        mv.dup();
+                        mv.iconst(nextIndex);
+                        evalAndGetBoxedValue(element, mv);
+                        mv.astore(Types.Object);
+                    }
+                    nextIndex += 1;
+                }
+                if (elision == 0) {
+                    mv.invoke(Methods.ExoticArray_DenseArrayCreate);
+                } else {
+                    mv.invoke(Methods.ExoticArray_SparseArrayCreate);
+                }
+                return ValType.Object;
+            }
+        }
+
+        if (!hasSpread) {
+            int length = node.getElements().size();
+            mv.loadExecutionContext();
+            mv.lconst(length); // initialise with correct "length"
+            mv.invoke(Methods.ExoticArray_ArrayCreate);
+
             int nextIndex = 0;
             for (Expression element : node.getElements()) {
                 if (element instanceof Elision) {
@@ -820,15 +860,13 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 }
                 nextIndex += 1;
             }
-            mv.dup();
-            mv.loadExecutionContext();
-            mv.swap();
-            mv.aconst("length");
-            mv.iconst(nextIndex);
-            mv.toBoxed(Type.INT_TYPE);
-            mv.iconst(false);
-            mv.invoke(Methods.AbstractOperations_Put);
+            assert nextIndex == length;
+            // omit call Put(array, "length", nextIndex false), array is initialised with length
         } else {
+            mv.loadExecutionContext();
+            mv.lconst(0);
+            mv.invoke(Methods.ExoticArray_ArrayCreate);
+
             // stack: [array, nextIndex]
             mv.iconst(0); // nextIndex
 
@@ -839,13 +877,15 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.swap();
             mv.dup();
             mv.loadExecutionContext();
+            // stack: [(nextIndex), array, array, cx] -> [array, cx, array, (nextIndex)]
             mv.dup2X2();
             mv.pop2();
             mv.swap();
-            // stack: [array, cx, array, (nextIndex)]
+            // stack: [array, cx, array, (nextIndex)] -> [array, cx, array, pk, (nextIndex), false]
             mv.aconst("length");
             mv.swap();
             mv.iconst(false);
+            // stack: [array, cx, array, pk, (nextIndex), false] -> [array]
             mv.invoke(Methods.AbstractOperations_Put);
         }
 
