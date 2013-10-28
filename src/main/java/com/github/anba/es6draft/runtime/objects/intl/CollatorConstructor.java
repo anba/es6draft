@@ -75,13 +75,14 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
             ExtensionKey.kn, ExtensionKey.kf);
 
     /**
-     * Collation type keys (BCP 47; CLDR, version 23)
+     * Collation type keys (BCP 47; CLDR, version 24)
      */
     private enum CollationType {/* @formatter:off */
         big5han("big5han"),
         dict("dict", "dictionary"),
         direct("direct"), // deprecated, not supported in ICU
         ducet("ducet"),
+        eor("eor"),
         gb2312("gb2312", "gb2312han"),
         phonebk("phonebk", "phonebook"),
         phonetic("phonetic"),

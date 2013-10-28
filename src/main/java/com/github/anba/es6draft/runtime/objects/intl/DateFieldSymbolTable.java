@@ -510,6 +510,7 @@ final class DateFieldSymbolTable {
 
             case 'l':
             case 'j':
+            case 'J':
             default:
                 throw new IllegalArgumentException(Character.toString(symbol));
             }

@@ -85,7 +85,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
             ExtensionKey.nu);
 
     /**
-     * Calendar algorithm keys (BCP 47; CLDR, version 23)
+     * Calendar algorithm keys (BCP 47; CLDR, version 24)
      */
     private enum CalendarAlgorithm {/* @formatter:off */
         buddhist("buddhist"),
@@ -98,11 +98,17 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         hebrew("hebrew"),
         indian("indian"),
         islamic("islamic"),
-        islamicc("islamicc", "islamic-civil"),
+        islamic_umalqura("islamic-umalqura"),
+        islamic_tbla("islamic-tbla"),
+        // commented out, instead handled by "islamicc"
+        /* islamic_civil("islamic-civil"), */
+        islamic_rgsa("islamic-rgsa"),
         iso8601("iso8601"),
         japanese("japanese"),
         persian("persian"),
-        roc("roc");
+        roc("roc"),
+        islamicc("islamicc", "islamic-civil"), // deprecated
+        ;
         /* @formatter:on */
 
         private final String name;
@@ -120,6 +126,10 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
 
         public String getName() {
             return name;
+        }
+
+        public String getAlias() {
+            return alias;
         }
 
         public static CalendarAlgorithm forName(String name) {
@@ -181,6 +191,9 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
             for (int i = 0, len = values.length; i < len; ++i) {
                 CalendarAlgorithm algorithm = CalendarAlgorithm.forName(values[i]);
                 result.add(algorithm.getName());
+                if (algorithm.getAlias() != null) {
+                    result.add(algorithm.getAlias());
+                }
             }
             return result;
         }
