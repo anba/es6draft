@@ -13,13 +13,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
@@ -29,13 +25,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * </ul>
  */
 class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
-    private static class Methods {
-        // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
-    }
-
     BlockDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);
     }
@@ -49,7 +38,7 @@ class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantia
 
         // stack: [env] -> [env, envRec]
         mv.dup();
-        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        getEnvironmentRecord(mv);
 
         /* step 3 */
         for (Declaration d : declarations) {

@@ -40,11 +40,6 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         // class: IllegalStateException
         static final MethodDesc IllegalStateException_init = MethodDesc.create(MethodType.Special,
                 Types.IllegalStateException, "<init>", Type.getMethodType(Type.VOID_TYPE));
-
-        // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
@@ -106,17 +101,15 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         Variable<LexicalEnvironment> varEnv = mv.getParameter(VAR_ENV, LexicalEnvironment.class);
         Variable<LexicalEnvironment> lexEnv = mv.getParameter(LEX_ENV, LexicalEnvironment.class);
         Variable<Boolean> deletableBindings = mv.getParameter(DELETABLE_BINDINGS, boolean.class);
-
         Variable<LexicalEnvironment> env = varEnv;
+
         Variable<EnvironmentRecord> envRec = mv.newVariable("envRec", EnvironmentRecord.class);
-        mv.load(env);
-        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        getEnvironmentRecord(env, mv);
         mv.store(envRec);
 
         Variable<EnvironmentRecord> lexEnvRec = mv
                 .newVariable("lexEnvRec", EnvironmentRecord.class);
-        mv.load(lexEnv);
-        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        getEnvironmentRecord(lexEnv, mv);
         mv.store(lexEnvRec);
 
         // Lexical declarations are always placed into new lexical environment, see Eval#eval()

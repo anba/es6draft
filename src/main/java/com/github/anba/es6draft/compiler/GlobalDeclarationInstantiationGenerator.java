@@ -40,11 +40,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
  */
 class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static class Methods {
-        // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
-
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_canDeclareLexicalScopedOrThrow = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "canDeclareLexicalScopedOrThrow", Type
@@ -66,6 +61,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
                         .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
                                 Types.GlobalEnvironmentRecord, Types.String));
 
+        // class: GlobalEnvironmentRecord
         static final MethodDesc GlobalEnvironmentRecord_createGlobalVarBinding = MethodDesc.create(
                 MethodType.Virtual, Types.GlobalEnvironmentRecord, "createGlobalVarBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Type.BOOLEAN_TYPE));
@@ -125,15 +121,13 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
 
         Variable<GlobalEnvironmentRecord> envRec = mv.newVariable("envRec",
                 GlobalEnvironmentRecord.class);
-        mv.load(env);
-        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        getEnvironmentRecord(env, mv);
         mv.checkcast(Types.GlobalEnvironmentRecord);
         mv.store(envRec);
 
         Variable<EnvironmentRecord> lexEnvRec = mv
                 .newVariable("lexEnvRec", EnvironmentRecord.class);
-        mv.load(lexEnv);
-        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        getEnvironmentRecord(lexEnv, mv);
         mv.store(lexEnvRec);
 
         // Throughout this algorithm `env == lexEnv` holds for ScriptEvaluation, the `env /= lexEnv`

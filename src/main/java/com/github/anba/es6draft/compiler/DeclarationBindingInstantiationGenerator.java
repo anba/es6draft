@@ -52,6 +52,11 @@ abstract class DeclarationBindingInstantiationGenerator {
                 MethodType.Interface, Types.EnvironmentRecord, "setMutableBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object, Type.BOOLEAN_TYPE));
 
+        // class: LexicalEnvironment
+        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
+                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
+                Type.getMethodType(Types.EnvironmentRecord));
+
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_InstantiateFunctionObject = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "InstantiateFunctionObject", Type
@@ -197,6 +202,25 @@ abstract class DeclarationBindingInstantiationGenerator {
         mv.swap();
         mv.iconst(strict);
         mv.invoke(Methods.EnvironmentRecord_setMutableBinding);
+    }
+
+    /**
+     * Emit function call for: {@link LexicalEnvironment#getEnvRec()}
+     * <p>
+     * stack: [] -> [envRec]
+     */
+    protected void getEnvironmentRecord(Variable<LexicalEnvironment> env, InstructionVisitor mv) {
+        mv.load(env);
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+    }
+
+    /**
+     * Emit function call for: {@link LexicalEnvironment#getEnvRec()}
+     * <p>
+     * stack: [env] -> [envRec]
+     */
+    protected void getEnvironmentRecord(InstructionVisitor mv) {
+        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
     }
 
     /**

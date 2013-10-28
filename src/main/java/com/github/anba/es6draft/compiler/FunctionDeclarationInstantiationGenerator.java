@@ -55,11 +55,6 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                         .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
                                 Types.ExoticArguments, Types.FunctionObject, Types.String_,
                                 Types.LexicalEnvironment));
-
-        // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
@@ -110,8 +105,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.store(env);
 
         Variable<EnvironmentRecord> envRec = mv.newVariable("envRec", EnvironmentRecord.class);
-        mv.load(env);
-        mv.invoke(Methods.LexicalEnvironment_getEnvRec);
+        getEnvironmentRecord(env, mv);
         mv.store(envRec);
 
         Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
