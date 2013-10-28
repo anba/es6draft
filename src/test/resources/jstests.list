@@ -5,14 +5,12 @@
 # <https://github.com/anba/es6draft>
 #
 
-# FIXME: generator tests disabled until https://bugzilla.mozilla.org/show_bug.cgi?id=924040 is fixed
+# unboxed yield* in SpiderMonkey
 ecma_6/Generators/delegating-yield-1.js
 ecma_6/Generators/delegating-yield-2.js
 ecma_6/Generators/delegating-yield-3.js
 ecma_6/Generators/delegating-yield-5.js
-ecma_6/Generators/delegating-yield-6.js
 ecma_6/Generators/delegating-yield-7.js
-ecma_6/Generators/delegating-yield-11.js
 
 # ES6 spec bugs
 js1_7/geniter/regress-347593.js
@@ -45,9 +43,9 @@ ecma_6/Generators/syntax.js
 # Intl only partially supported    #
 ####################################
 
-Intl/NumberFormat/StringBuffer.js
+Intl/DateTimeFormat/format.js
 Intl/NumberFormat/format.js
-Intl/NumberFormat/significantDigitsOfZero.js
+Intl/NumberFormat/StringBuffer.js
 
 
 ###############################################################
@@ -536,6 +534,7 @@ js1_8_5/extensions/clone-leaf-object.js
 js1_8_5/extensions/clone-object.js
 js1_8_5/extensions/clone-regexp.js
 js1_8_5/extensions/clone-simple.js
+js1_8_5/extensions/clone-transferables.js
 js1_8_5/extensions/clone-typed-array.js
 js1_8_5/extensions/clone-v1-typed-array.js
 
