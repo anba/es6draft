@@ -791,8 +791,8 @@ class StatementGenerator extends
             mv.loadCompletionValue();
         }
 
-        String desc = Type.getMethodDescriptor(Types.Object, Types.ExecutionContext, Types.Object);
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node),
+                codegen.methodDescriptor(node));
 
         if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
             // TODO: only emit when `return` used in StatementListMethod

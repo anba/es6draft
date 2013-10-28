@@ -868,7 +868,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             // Runtime Semantics: Evaluation -> MethodDefinition
             mv.invokestatic(codegen.getClassName(),
                     codegen.methodName(constructor, FunctionName.RTI),
-                    Type.getMethodDescriptor(Types.RuntimeInfo$Function));
+                    codegen.methodDescriptor(constructor, FunctionName.RTI));
         } else {
             // step 7
             if (def.getHeritage() != null) {

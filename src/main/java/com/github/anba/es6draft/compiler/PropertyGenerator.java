@@ -131,9 +131,8 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         mv.swap();
 
         // stack: [<object>] -> []
-        String desc = Type.getMethodDescriptor(Type.VOID_TYPE, Types.ExecutionContext,
-                Types.ScriptObject);
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node), desc);
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node),
+                codegen.methodDescriptor(node));
 
         return null;
     }
@@ -173,7 +172,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
             }
 
             mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                    Type.getMethodDescriptor(Types.RuntimeInfo$Function));
+                    codegen.methodDescriptor(node, FunctionName.RTI));
             mv.loadExecutionContext();
 
             switch (node.getType()) {
@@ -196,7 +195,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         } else {
             mv.aconst(propName);
             mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                    Type.getMethodDescriptor(Types.RuntimeInfo$Function));
+                    codegen.methodDescriptor(node, FunctionName.RTI));
             mv.loadExecutionContext();
 
             switch (node.getType()) {

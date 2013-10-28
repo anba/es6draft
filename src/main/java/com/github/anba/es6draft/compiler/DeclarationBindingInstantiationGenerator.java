@@ -223,7 +223,7 @@ abstract class DeclarationBindingInstantiationGenerator {
         codegen.compile(f);
 
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
-                Type.getMethodDescriptor(Types.RuntimeInfo$Function));
+                codegen.methodDescriptor(f, FunctionName.RTI));
 
         mv.invoke(Methods.ScriptRuntime_InstantiateFunctionObject);
     }
@@ -252,7 +252,7 @@ abstract class DeclarationBindingInstantiationGenerator {
         codegen.compile(f);
 
         mv.invokestatic(codegen.getClassName(), codegen.methodName(f, FunctionName.RTI),
-                Type.getMethodDescriptor(Types.RuntimeInfo$Function));
+                codegen.methodDescriptor(f, FunctionName.RTI));
 
         if (!(f instanceof LegacyGeneratorDeclaration)) {
             mv.invoke(Methods.ScriptRuntime_InstantiateGeneratorObject);

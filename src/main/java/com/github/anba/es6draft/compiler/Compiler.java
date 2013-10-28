@@ -80,7 +80,8 @@ public class Compiler {
             codegen.compile(script);
 
             // add default constructor
-            defaultScriptConstructor(cw, className, codegen.methodName(script, ScriptName.RTI));
+            defaultScriptConstructor(cw, className, codegen.methodName(script, ScriptName.RTI),
+                    codegen.methodDescriptor(script, ScriptName.RTI));
         }
 
         // finalize
@@ -117,7 +118,8 @@ public class Compiler {
 
             // add default constructor
             defaultFunctionConstructor(cw, className,
-                    codegen.methodName(function, FunctionName.RTI));
+                    codegen.methodName(function, FunctionName.RTI),
+                    codegen.methodDescriptor(function, FunctionName.RTI));
         }
 
         // finalize
@@ -185,7 +187,7 @@ public class Compiler {
     }
 
     private static void defaultScriptConstructor(ClassWriter cw, String className,
-            String methodNameRTI) {
+            String methodNameRTI, String methodDescriptorRTI) {
         String methodName = "<init>";
         Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE);
 
@@ -194,15 +196,14 @@ public class Compiler {
                 MethodAllocation.Instance);
         mv.begin();
         mv.loadThis();
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI,
-                Type.getMethodType(Types.RuntimeInfo$ScriptBody).getDescriptor());
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI, methodDescriptorRTI);
         mv.invoke(Methods.CompiledScript_Constructor);
         mv.areturn();
         mv.end();
     }
 
     private static void defaultFunctionConstructor(ClassWriter cw, String className,
-            String methodNameRTI) {
+            String methodNameRTI, String methodDescriptorRTI) {
         String methodName = "<init>";
         Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE);
 
@@ -211,8 +212,7 @@ public class Compiler {
                 MethodAllocation.Instance);
         mv.begin();
         mv.loadThis();
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI,
-                Type.getMethodType(Types.RuntimeInfo$Function).getDescriptor());
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI, methodDescriptorRTI);
         mv.invoke(Methods.CompiledFunction_Constructor);
         mv.areturn();
         mv.end();

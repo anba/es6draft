@@ -62,6 +62,41 @@ class CodeGenerator implements AutoCloseable {
                         Types.ExecutionContext));
     }
 
+    private static class MethodDescriptors {
+        static final String TemplateLiteral = Type.getMethodDescriptor(Types.String_);
+
+        static final String StatementListMethod = Type.getMethodDescriptor(Types.Object,
+                Types.ExecutionContext, Types.Object);
+
+        static final String GeneratorComprehension = Type.getMethodDescriptor(Types.Object,
+                Types.ExecutionContext);
+
+        static final String SpreadElementMethod = Type.getMethodDescriptor(Type.INT_TYPE,
+                Types.ExecutionContext, Types.ExoticArray, Type.INT_TYPE);
+
+        static final String PropertyDefinitionsMethod = Type.getMethodDescriptor(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.ScriptObject);
+
+        static final String ExpressionMethod = Type.getMethodDescriptor(Types.Object,
+                Types.ExecutionContext);
+
+        static final String FunctionNode_Code = Type.getMethodDescriptor(Types.Object,
+                Types.ExecutionContext);
+        static final String FunctionNode_Init = Type.getMethodDescriptor(Types.ExoticArguments,
+                Types.ExecutionContext, Types.FunctionObject, Types.Object_);
+        static final String FunctionNode_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$Function);
+
+        static final String Script_Code = Type.getMethodDescriptor(Types.Object,
+                Types.ExecutionContext);
+        static final String Script_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
+                Type.BOOLEAN_TYPE);
+        static final String Script_EvalInit = Type.getMethodDescriptor(Type.VOID_TYPE,
+                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
+                Type.BOOLEAN_TYPE);
+        static final String Script_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$ScriptBody);
+    }
+
     private static final boolean EVALUATE_SIZE = false;
     private static final boolean INCLUDE_SOURCE = true;
     private static final Future<String> NO_SOURCE = new ImmediateFuture<>(null);
@@ -195,7 +230,15 @@ class CodeGenerator implements AutoCloseable {
         return addMethodName(node, getCodeName(topLevel), '\'');
     }
 
-    private final String methodName(TemplateLiteral node) {
+    private final String getCodeName(TopLevelNode node) {
+        if (node instanceof FunctionNode) {
+            return methodName((FunctionNode) node, FunctionName.Code);
+        }
+        assert node instanceof Script;
+        return methodName((Script) node, ScriptName.Code);
+    }
+
+    final String methodName(TemplateLiteral node) {
         String n = methodNames.get(node);
         if (n == null) {
             n = addMethodName(node, "template");
@@ -295,12 +338,88 @@ class CodeGenerator implements AutoCloseable {
         return n;
     }
 
-    private final String getCodeName(TopLevelNode node) {
-        if (node instanceof FunctionNode) {
-            return methodName((FunctionNode) node, FunctionName.Code);
+    final String methodDescriptor(TemplateLiteral node) {
+        return MethodDescriptors.TemplateLiteral;
+    }
+
+    final String methodDescriptor(StatementListMethod node) {
+        return MethodDescriptors.StatementListMethod;
+    }
+
+    final String methodDescriptor(GeneratorComprehension node) {
+        return MethodDescriptors.GeneratorComprehension;
+    }
+
+    final String methodDescriptor(SpreadElementMethod node) {
+        return MethodDescriptors.SpreadElementMethod;
+    }
+
+    final String methodDescriptor(PropertyDefinitionsMethod node) {
+        return MethodDescriptors.PropertyDefinitionsMethod;
+    }
+
+    final String methodDescriptor(ExpressionMethod node) {
+        return MethodDescriptors.ExpressionMethod;
+    }
+
+    final String methodDescriptor(FunctionNode node, FunctionName name) {
+        switch (name) {
+        case Code:
+            return MethodDescriptors.FunctionNode_Code;
+        case Init:
+            return MethodDescriptors.FunctionNode_Init;
+        case RTI:
+            return MethodDescriptors.FunctionNode_RTI;
+        default:
+            throw new IllegalStateException();
         }
-        assert node instanceof Script;
-        return methodName((Script) node, ScriptName.Code);
+    }
+
+    final String methodDescriptor(Script node, ScriptName name) {
+        switch (name) {
+        case Code:
+            return MethodDescriptors.Script_Code;
+        case Init:
+            return MethodDescriptors.Script_Init;
+        case EvalInit:
+            return MethodDescriptors.Script_EvalInit;
+        case RTI:
+            return MethodDescriptors.Script_RTI;
+        default:
+            throw new IllegalStateException();
+        }
+    }
+
+    final Type methodType(TemplateLiteral node) {
+        return Type.getMethodType(methodDescriptor(node));
+    }
+
+    final Type methodType(StatementListMethod node) {
+        return Type.getMethodType(methodDescriptor(node));
+    }
+
+    final Type methodType(GeneratorComprehension node) {
+        return Type.getMethodType(methodDescriptor(node));
+    }
+
+    final Type methodType(SpreadElementMethod node) {
+        return Type.getMethodType(methodDescriptor(node));
+    }
+
+    final Type methodType(PropertyDefinitionsMethod node) {
+        return Type.getMethodType(methodDescriptor(node));
+    }
+
+    final Type methodType(ExpressionMethod node) {
+        return Type.getMethodType(methodDescriptor(node));
+    }
+
+    final Type methodType(FunctionNode node, FunctionName name) {
+        return Type.getMethodType(methodDescriptor(node, name));
+    }
+
+    final Type methodType(Script node, ScriptName name) {
+        return Type.getMethodType(methodDescriptor(node, name));
     }
 
     /**
@@ -308,21 +427,17 @@ class CodeGenerator implements AutoCloseable {
      */
     void GetTemplateCallSite(TemplateLiteral node, ExpressionVisitor mv) {
         assert isCompiled(node);
-        String methodName = methodName(node);
-        String desc = Type.getMethodDescriptor(Types.String_);
 
         // GetTemplateCallSite
         mv.aconst(templateKey(node));
-        mv.invokeStaticMH(className, methodName, desc);
+        mv.invokeStaticMH(className, methodName(node), methodDescriptor(node));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_GetTemplateCallSite);
     }
 
     void compile(TemplateLiteral node) {
         if (!isCompiled(node)) {
-            String name = methodName(node);
-            Type desc = Type.getMethodType(Types.String_);
-            InstructionVisitor body = publicStaticMethod(name, desc);
+            InstructionVisitor body = publicStaticMethod(methodName(node), methodType(node));
             body.lineInfo(node.getBeginLine());
             body.begin();
 
@@ -579,8 +694,7 @@ class CodeGenerator implements AutoCloseable {
     /* ----------------------------------------------------------------------------------------- */
 
     private static class ScriptStatementVisitor extends StatementVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Types.Object,
-                Types.ExecutionContext);
+        static final Type methodDescriptor = Type.getMethodType(MethodDescriptors.Script_Code);
 
         ScriptStatementVisitor(CodeGenerator codegen, Script node) {
             super(codegen, codegen.methodName(node, ScriptName.Code), methodDescriptor,
@@ -596,8 +710,8 @@ class CodeGenerator implements AutoCloseable {
     }
 
     private static class FunctionStatementVisitor extends StatementVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Types.Object,
-                Types.ExecutionContext);
+        static final Type methodDescriptor = Type
+                .getMethodType(MethodDescriptors.FunctionNode_Code);
 
         FunctionStatementVisitor(CodeGenerator codegen, FunctionNode node) {
             super(codegen, codegen.methodName(node, FunctionName.Code), methodDescriptor,
@@ -612,8 +726,8 @@ class CodeGenerator implements AutoCloseable {
     }
 
     private static class StatementListMethodStatementVisitor extends StatementVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Types.Object,
-                Types.ExecutionContext, Types.Object);
+        static final Type methodDescriptor = Type
+                .getMethodType(MethodDescriptors.StatementListMethod);
 
         StatementListMethodStatementVisitor(CodeGenerator codegen, StatementListMethod node,
                 StatementVisitor parent) {
@@ -630,8 +744,8 @@ class CodeGenerator implements AutoCloseable {
     }
 
     private static class ArrowFunctionVisitor extends ExpressionVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Types.Object,
-                Types.ExecutionContext);
+        static final Type methodDescriptor = Type
+                .getMethodType(MethodDescriptors.FunctionNode_Code);
 
         ArrowFunctionVisitor(CodeGenerator codegen, ArrowFunction node) {
             super(codegen, codegen.methodName(node, FunctionName.Code), methodDescriptor,
@@ -646,8 +760,8 @@ class CodeGenerator implements AutoCloseable {
     }
 
     private static class GeneratorComprehensionVisitor extends ExpressionVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Types.Object,
-                Types.ExecutionContext);
+        static final Type methodDescriptor = Type
+                .getMethodType(MethodDescriptors.GeneratorComprehension);
 
         GeneratorComprehensionVisitor(CodeGenerator codegen, GeneratorComprehension node,
                 ExpressionVisitor parent) {
@@ -663,8 +777,7 @@ class CodeGenerator implements AutoCloseable {
     }
 
     private static class ExpressionMethodVisitor extends ExpressionVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Types.Object,
-                Types.ExecutionContext);
+        static final Type methodDescriptor = Type.getMethodType(MethodDescriptors.ExpressionMethod);
 
         ExpressionMethodVisitor(CodeGenerator codegen, ExpressionMethod node,
                 ExpressionVisitor parent) {
@@ -680,8 +793,8 @@ class CodeGenerator implements AutoCloseable {
     }
 
     private static class SpreadElementMethodVisitor extends ExpressionVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Type.INT_TYPE,
-                Types.ExecutionContext, Types.ExoticArray, Type.INT_TYPE);
+        static final Type methodDescriptor = Type
+                .getMethodType(MethodDescriptors.SpreadElementMethod);
 
         SpreadElementMethodVisitor(CodeGenerator codegen, SpreadElementMethod node,
                 ExpressionVisitor parent) {
@@ -699,8 +812,8 @@ class CodeGenerator implements AutoCloseable {
     }
 
     private static class PropertyDefinitionsMethodVisitor extends ExpressionVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.ScriptObject);
+        static final Type methodDescriptor = Type
+                .getMethodType(MethodDescriptors.PropertyDefinitionsMethod);
 
         PropertyDefinitionsMethodVisitor(CodeGenerator codegen, PropertyDefinitionsMethod node,
                 ExpressionVisitor parent) {
