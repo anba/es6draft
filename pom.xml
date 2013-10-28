@@ -509,6 +509,7 @@
           <excludes>
             <exclude>src/main/third_party/**</exclude>
             <exclude>src/main/resources/build-date</exclude>
+            <exclude>src/test/scripts/reflect</exclude>
           </excludes>
           <includes>
             <include>src/**</include>
