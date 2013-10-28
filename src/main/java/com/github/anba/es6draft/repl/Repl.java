@@ -207,7 +207,7 @@ public class Repl {
         }
     }
 
-    private void handleException(int lineOffset, ParserExceptionWithSource exception) {
+    private void handleException(ParserExceptionWithSource exception, int lineOffset) {
         ParserException e = exception.getCause();
         String source = exception.getSource();
 
@@ -319,7 +319,7 @@ public class Repl {
                     System.exit(0);
                 }
             } catch (ParserExceptionWithSource e) {
-                handleException(line, e);
+                handleException(e, line);
             } catch (ScriptException e) {
                 handleException(realm, e);
             } catch (ParserException | CompilationException | StackOverflowError e) {
