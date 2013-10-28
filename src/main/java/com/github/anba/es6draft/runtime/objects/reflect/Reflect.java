@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.reflect;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListFromArrayLike;
-import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToPropertyKey;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
@@ -18,8 +15,11 @@ import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToProper
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -45,6 +45,7 @@ public class Reflect extends OrdinaryObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
+        createProperties(this, cx, AdditionalProperties.class);
     }
 
     /**
@@ -300,6 +301,28 @@ public class Reflect extends OrdinaryObject implements Initialisable {
             ScriptObject obj = ToObject(cx, target);
             /* step 3 */
             return obj.ownPropertyKeys(cx);
+        }
+    }
+
+    @CompatibilityExtension(CompatibilityOption.ReflectParse)
+    public enum AdditionalProperties {
+        ;
+
+        /**
+         * Reflect.parse(src[, options])
+         */
+        @Function(name = "parse", arity = 1)
+        public static Object parse(ExecutionContext cx, Object thisValue, Object src, Object options) {
+            String source = ToFlatString(cx, src);
+            ScriptObject opts;
+            if (Type.isUndefinedOrNull(options)) {
+                opts = null;
+            } else if (!Type.isObject(options)) {
+                throw Errors.throwTypeError(cx, Messages.Key.NotObjectType);
+            } else {
+                opts = Type.objectValue(options);
+            }
+            return ReflectParser.parse(cx, source, opts);
         }
     }
 }
