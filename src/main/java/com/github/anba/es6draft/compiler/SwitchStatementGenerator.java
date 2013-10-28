@@ -345,8 +345,7 @@ class SwitchStatementGenerator extends
             Expression expr = switchClause.getExpression();
             if (expr != null) {
                 mv.load(switchValue);
-                ValType type = expressionValue(expr, mv);
-                mv.toBoxed(type);
+                expressionBoxedValue(expr, mv);
                 mv.invoke(Methods.ScriptRuntime_strictEqualityComparison);
                 mv.ifne(caseLabel);
             }

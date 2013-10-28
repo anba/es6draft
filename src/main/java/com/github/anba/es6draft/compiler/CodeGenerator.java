@@ -422,8 +422,7 @@ class CodeGenerator implements AutoCloseable {
         body.setTailCall(TailCallNodes(node.getExpression()));
 
         body.enterScope(node);
-        ValType type = expressionValue(node.getExpression(), body);
-        body.toBoxed(type);
+        expressionBoxedValue(node.getExpression(), body);
         body.exitScope();
 
         body.areturn();
@@ -537,8 +536,7 @@ class CodeGenerator implements AutoCloseable {
             body.begin();
 
             body.setScope(mv.getScope());
-            ValType type = expressionValue(node.getExpression(), body);
-            body.toBoxed(type);
+            expressionBoxedValue(node.getExpression(), body);
 
             body.areturn();
             body.end();
@@ -561,8 +559,13 @@ class CodeGenerator implements AutoCloseable {
         return (type != ValType.Reference ? type : ValType.Any);
     }
 
-    void expressionBoxedValue(Expression node, ExpressionVisitor mv) {
-        mv.toBoxed(expressionValue(node, mv));
+    ValType expressionBoxedValue(Expression node, ExpressionVisitor mv) {
+        ValType type = expressionValue(node, mv);
+        if (type.isJavaPrimitive()) {
+            mv.toBoxed(type);
+            return ValType.Any;
+        }
+        return type;
     }
 
     void propertyDefinition(PropertyDefinition node, ExpressionVisitor mv) {

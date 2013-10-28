@@ -348,8 +348,7 @@ class StatementGenerator extends
         Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
 
         // Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
-        ValType type = expressionValue(expr, mv);
-        mv.toBoxed(type);
+        expressionBoxedValue(expr, mv);
 
         mv.dup();
         isUndefinedOrNull(mv);
@@ -704,11 +703,9 @@ class StatementGenerator extends
 
                 Expression initialiser = binding.getInitialiser();
                 if (initialiser != null) {
-                    ValType type = expressionValue(initialiser, mv);
+                    ValType type = expressionBoxedValue(initialiser, mv);
                     if (binding.getBinding() instanceof BindingPattern) {
                         ToObject(type, mv);
-                    } else {
-                        mv.toBoxed(type);
                     }
                 } else {
                     assert binding.getBinding() instanceof BindingIdentifier;
@@ -742,8 +739,7 @@ class StatementGenerator extends
         Binding binding = node.getBinding();
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
-            ValType type = expressionValue(initialiser, mv);
-            mv.toBoxed(type);
+            ValType type = expressionBoxedValue(initialiser, mv);
             if (binding instanceof BindingPattern && type != ValType.Object) {
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
@@ -770,8 +766,7 @@ class StatementGenerator extends
             if (!mv.isWrapped()) {
                 mv.setTailCall(TailCallNodes(expr));
             }
-            ValType type = expressionValue(expr, mv);
-            mv.toBoxed(type);
+            expressionBoxedValue(expr, mv);
             if (!mv.isWrapped()) {
                 mv.setTailCall(TailCallNodes(null));
             }
@@ -828,8 +823,7 @@ class StatementGenerator extends
      */
     @Override
     public Completion visit(ThrowStatement node, StatementVisitor mv) {
-        ValType type = expressionValue(node.getExpression(), mv);
-        mv.toBoxed(type);
+        expressionBoxedValue(node.getExpression(), mv);
         mv.invoke(Methods.ScriptRuntime_throw);
         mv.athrow();
 
@@ -1266,8 +1260,7 @@ class StatementGenerator extends
         Binding binding = node.getBinding();
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
-            ValType type = expressionValue(initialiser, mv);
-            mv.toBoxed(type);
+            ValType type = expressionBoxedValue(initialiser, mv);
             if (binding instanceof BindingPattern && type != ValType.Object) {
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);

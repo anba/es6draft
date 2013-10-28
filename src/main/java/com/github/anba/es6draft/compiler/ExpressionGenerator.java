@@ -287,6 +287,15 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      * ref = `eval` {@code node}<br>
      * GetValue(ref)<br>
      */
+    private void evalAndGetBoxedValue(Expression node, ExpressionVisitor mv) {
+        ValType type = evalAndGetValue(node, mv);
+        mv.toBoxed(type);
+    }
+
+    /**
+     * ref = `eval` {@code node}<br>
+     * GetValue(ref)<br>
+     */
     private ValType evalAndGetValue(Expression node, ExpressionVisitor mv) {
         Expression valueNode = node.asValue();
         ValType type = valueNode.accept(this, mv);
@@ -752,8 +761,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 /* [12.2.5 Argument Lists] ArgumentListEvaluation */
                 Expression argument = arguments.get(i);
                 hasSpread |= (argument instanceof CallSpreadElement);
-                ValType argtype = evalAndGetValue(argument, mv);
-                mv.toBoxed(argtype);
+                evalAndGetBoxedValue(argument, mv);
                 mv.astore(Types.Object);
             }
             if (hasSpread) {
@@ -806,8 +814,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 } else {
                     mv.dup();
                     mv.iconst(nextIndex);
-                    ValType type = evalAndGetValue(element, mv);
-                    mv.toBoxed(type);
+                    evalAndGetBoxedValue(element, mv);
                     mv.loadExecutionContext();
                     mv.invoke(Methods.ScriptRuntime_defineProperty__int);
                 }
@@ -887,8 +894,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             } else {
                 // stack: [array, nextIndex] -> [array, nextIndex, array, nextIndex]
                 mv.dup2();
-                ValType type = evalAndGetValue(element, mv);
-                mv.toBoxed(type);
+                evalAndGetBoxedValue(element, mv);
                 mv.loadExecutionContext();
                 // stack: [array, nextIndex, array, nextIndex, obj] -> [array, nextIndex]
                 mv.invoke(Methods.ScriptRuntime_defineProperty__int);
@@ -914,8 +920,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         // stack: [array, array, nextIndex] -> [array, array, nextIndex, obj]
         Expression spread = node.getExpression();
-        ValType type = evalAndGetValue(spread, mv);
-        mv.toBoxed(type);
+        evalAndGetBoxedValue(spread, mv);
 
         mv.loadExecutionContext();
 
@@ -1480,10 +1485,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case LT: {
             // 12.8 Relational Operators ( < )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
 
             mv.loadExecutionContext();
             invokeDynamicOperator(node.getOperator(), mv);
@@ -1502,10 +1505,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case GT: {
             // 12.8 Relational Operators ( > )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
             mv.swap();
 
             mv.loadExecutionContext();
@@ -1524,10 +1525,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case LE: {
             // 12.8 Relational Operators ( <= )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
             mv.swap();
 
             mv.loadExecutionContext();
@@ -1546,10 +1545,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case GE: {
             // 12.8 Relational Operators ( >= )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
 
             mv.loadExecutionContext();
             invokeDynamicOperator(node.getOperator(), mv);
@@ -1567,10 +1564,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case INSTANCEOF: {
             // 12.8 Relational Operators ( instanceof )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
 
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_InstanceofOperator);
@@ -1578,11 +1573,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case IN: {
             // 12.8 Relational Operators ( in )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
 
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_in);
@@ -1590,11 +1582,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case EQ: {
             // 12.9 Equality Operators ( == )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
 
             mv.loadExecutionContext();
             invokeDynamicOperator(node.getOperator(), mv);
@@ -1603,11 +1592,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case NE: {
             // 12.9 Equality Operators ( != )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
 
             mv.loadExecutionContext();
             invokeDynamicOperator(node.getOperator(), mv);
@@ -1617,11 +1603,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case SHEQ: {
             // 12.9 Equality Operators ( === )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
 
             invokeDynamicOperator(node.getOperator(), mv);
 
@@ -1629,11 +1612,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         }
         case SHNE: {
             // 12.9 Equality Operators ( !== )
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
-
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(left, mv);
+            evalAndGetBoxedValue(right, mv);
 
             invokeDynamicOperator(node.getOperator(), mv);
 
@@ -1694,8 +1674,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             // 12.11 Binary Logical Operators
             Label after = new Label();
 
-            ValType ltype = evalAndGetValue(left, mv);
-            mv.toBoxed(ltype);
+            evalAndGetBoxedValue(left, mv);
             mv.dup();
             ToBoolean(ValType.Any, mv);
             if (node.getOperator() == BinaryExpression.Operator.AND) {
@@ -1704,8 +1683,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 mv.ifne(after);
             }
             mv.pop();
-            ValType rtype = evalAndGetValue(right, mv);
-            mv.toBoxed(rtype);
+            evalAndGetBoxedValue(right, mv);
             mv.mark(after);
 
             return ValType.Any;
@@ -1746,8 +1724,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     @Override
     public ValType visit(CallSpreadElement node, ExpressionVisitor mv) {
-        ValType type = evalAndGetValue(node.getExpression(), mv);
-        mv.toBoxed(type);
+        evalAndGetBoxedValue(node.getExpression(), mv);
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_SpreadArray);
 
@@ -1792,12 +1769,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         ValType typeTest = evalAndGetValue(node.getTest(), mv);
         ToBoolean(typeTest, mv);
         mv.ifeq(l0);
-        ValType typeThen = evalAndGetValue(node.getThen(), mv);
-        mv.toBoxed(typeThen);
+        evalAndGetBoxedValue(node.getThen(), mv);
         mv.goTo(l1);
         mv.mark(l0);
-        ValType typeOtherwise = evalAndGetValue(node.getOtherwise(), mv);
-        mv.toBoxed(typeOtherwise);
+        evalAndGetBoxedValue(node.getOtherwise(), mv);
         mv.mark(l1);
 
         return ValType.Any;
@@ -1808,8 +1783,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     @Override
     public ValType visit(ElementAccessor node, ExpressionVisitor mv) {
-        ValType baseType = evalAndGetValue(node.getBase(), mv);
-        mv.toBoxed(baseType);
+        evalAndGetBoxedValue(node.getBase(), mv);
         ValType elementType = evalAndGetValue(node.getElement(), mv);
         if (elementType.isPrimitive()) {
             ToFlatString(elementType, mv);
@@ -1817,7 +1791,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getProperty);
         } else {
-            mv.toBoxed(elementType);
             mv.loadExecutionContext();
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getElement);
@@ -1831,8 +1804,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     @Override
     public ValType visit(ElementAccessorValue node, ExpressionVisitor mv) {
-        ValType baseType = evalAndGetValue(node.getBase(), mv);
-        mv.toBoxed(baseType);
+        evalAndGetBoxedValue(node.getBase(), mv);
         ValType elementType = evalAndGetValue(node.getElement(), mv);
         if (elementType.isPrimitive()) {
             ToFlatString(elementType, mv);
@@ -1840,7 +1812,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getPropertyValue);
         } else {
-            mv.toBoxed(elementType);
             mv.loadExecutionContext();
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_getElementValue);
@@ -1969,11 +1940,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
                 Expression initialiser = binding.getInitialiser();
                 if (initialiser != null) {
-                    ValType type = expressionValue(initialiser, mv);
+                    ValType type = expressionBoxedValue(initialiser, mv);
                     if (binding.getBinding() instanceof BindingPattern) {
                         ToObject(type, mv);
-                    } else {
-                        mv.toBoxed(type);
                     }
                 } else {
                     assert binding.getBinding() instanceof BindingIdentifier;
@@ -2002,8 +1971,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     @Override
     public ValType visit(NewExpression node, ExpressionVisitor mv) {
-        ValType type = evalAndGetValue(node.getExpression(), mv);
-        mv.toBoxed(type);
+        evalAndGetBoxedValue(node.getExpression(), mv);
         ArgumentListEvaluation(node.getArguments(), mv);
         mv.lineInfo(node);
         mv.loadExecutionContext();
@@ -2058,8 +2026,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     @Override
     public ValType visit(PropertyAccessor node, ExpressionVisitor mv) {
-        ValType type = evalAndGetValue(node.getBase(), mv);
-        mv.toBoxed(type);
+        evalAndGetBoxedValue(node.getBase(), mv);
         mv.aconst(node.getName());
         mv.loadExecutionContext();
         mv.iconst(mv.isStrict());
@@ -2073,8 +2040,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     @Override
     public ValType visit(PropertyAccessorValue node, ExpressionVisitor mv) {
-        ValType type = evalAndGetValue(node.getBase(), mv);
-        mv.toBoxed(type);
+        evalAndGetBoxedValue(node.getBase(), mv);
         mv.aconst(node.getName());
         mv.loadExecutionContext();
         mv.iconst(mv.isStrict());
@@ -2397,8 +2363,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     public ValType visit(YieldExpression node, ExpressionVisitor mv) {
         Expression expr = node.getExpression();
         if (expr != null) {
-            ValType type = evalAndGetValue(expr, mv);
-            mv.toBoxed(type);
+            evalAndGetBoxedValue(expr, mv);
         } else {
             mv.loadUndefined();
         }

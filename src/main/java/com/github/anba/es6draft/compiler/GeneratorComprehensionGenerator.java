@@ -55,8 +55,7 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     protected Void visit(Expression node, ExpressionVisitor mv) {
         assert initialised : "generator-comprehension generator not initialised";
 
-        ValType type = expressionValue(node, mv);
-        mv.toBoxed(type);
+        expressionBoxedValue(node, mv);
         mv.loadExecutionContext();
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_yield);

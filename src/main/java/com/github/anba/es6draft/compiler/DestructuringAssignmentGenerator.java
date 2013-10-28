@@ -116,8 +116,8 @@ class DestructuringAssignmentGenerator {
             return codegen.expressionValue(node, mv);
         }
 
-        protected final void expressionBoxedValue(Expression node, ExpressionVisitor mv) {
-            codegen.expressionBoxedValue(node, mv);
+        protected final ValType expressionBoxedValue(Expression node, ExpressionVisitor mv) {
+            return codegen.expressionBoxedValue(node, mv);
         }
 
         @Override

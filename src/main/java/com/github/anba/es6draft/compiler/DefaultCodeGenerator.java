@@ -206,8 +206,8 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         return codegen.expressionValue(node, mv);
     }
 
-    protected final void expressionBoxedValue(Expression node, ExpressionVisitor mv) {
-        codegen.expressionBoxedValue(node, mv);
+    protected final ValType expressionBoxedValue(Expression node, ExpressionVisitor mv) {
+        return codegen.expressionBoxedValue(node, mv);
     }
 
     /**
@@ -371,6 +371,24 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             case Number_uint:
             case String:
                 return true;
+            case Object:
+            case Reference:
+            case Any:
+            default:
+                return false;
+            }
+        }
+
+        public boolean isJavaPrimitive() {
+            switch (this) {
+            case Boolean:
+            case Number:
+            case Number_int:
+            case Number_uint:
+                return true;
+            case Undefined:
+            case Null:
+            case String:
             case Object:
             case Reference:
             case Any:
@@ -810,8 +828,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getDefaultClassProto);
         } else {
-            ValType type = expressionValue(def.getHeritage(), mv);
-            mv.toBoxed(type);
+            expressionBoxedValue(def.getHeritage(), mv);
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getClassProto);
         }

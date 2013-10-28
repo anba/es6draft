@@ -185,8 +185,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     public Void visit(ComprehensionFor node, ExpressionVisitor mv) {
         Label lblContinue = new Label(), lblBreak = new Label();
 
-        ValType type = expressionValue(node.getExpression(), mv);
-        mv.toBoxed(type);
+        expressionBoxedValue(node.getExpression(), mv);
 
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_iterate);
@@ -253,8 +252,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         Label lblContinue = new Label(), lblBreak = new Label();
         Label loopstart = new Label();
 
-        ValType type = expressionValue(node.getExpression(), mv);
-        mv.toBoxed(type);
+        expressionBoxedValue(node.getExpression(), mv);
 
         mv.dup();
         isUndefinedOrNull(mv);
