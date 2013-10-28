@@ -59,6 +59,10 @@ public class OrdinaryObject implements ScriptObject {
         this.realm = realm;
     }
 
+    final void addProperty(String propertyKey, Property property) {
+        __put__(propertyKey, property);
+    }
+
     /** [[Prototype]] */
     public final ScriptObject getPrototype() {
         return prototype;

@@ -158,17 +158,17 @@ public class OrdinaryFunction extends FunctionObject {
     private void updateLegacyProperties(ExecutionContext cx, FunctionObject caller,
             ExoticArguments arguments) {
         if (caller == null || caller.isStrict()) {
-            this.caller.apply(new PropertyDescriptor(NULL));
+            this.caller.applyValue(NULL);
         } else {
-            this.caller.apply(new PropertyDescriptor(caller));
+            this.caller.applyValue(caller);
         }
         ExoticArguments args = CreateLegacyArguments(cx, arguments, this);
-        this.arguments.apply(new PropertyDescriptor(args));
+        this.arguments.applyValue(args);
     }
 
     private void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
-        this.caller.apply(new PropertyDescriptor(oldCaller));
-        this.arguments.apply(new PropertyDescriptor(oldArguments));
+        this.caller.applyValue(oldCaller);
+        this.arguments.applyValue(oldArguments);
     }
 
     /* ***************************************************************************************** */

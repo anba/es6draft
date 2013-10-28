@@ -30,6 +30,9 @@ public final class Property implements Cloneable {
     private boolean enumerable;
     private boolean configurable;
 
+    /**
+     * Copy constructor
+     */
     private Property(Property original) {
         type = original.type;
         value = original.value;
@@ -40,7 +43,11 @@ public final class Property implements Cloneable {
         configurable = original.configurable;
     }
 
-    // package-private for PropertyDescriptor
+    /**
+     * Create a new {@link Property} from the supplied {@link PropertyDescriptor} object
+     * <p>
+     * <strong>package-private for PropertyDescriptor</strong>
+     */
     Property(PropertyDescriptor original) {
         type = original.isAccessorDescriptor() ? Type.AccessorProperty : Type.DataProperty;
         value = original.getValue();
@@ -51,10 +58,42 @@ public final class Property implements Cloneable {
         configurable = original.isConfigurable();
     }
 
+    /**
+     * Create a new {@link Property} object for a data-property
+     */
+    public Property(Object value, boolean writable, boolean enumerable, boolean configurable) {
+        this.type = Type.DataProperty;
+        this.value = value;
+        this.getter = null;
+        this.setter = null;
+        this.writable = writable;
+        this.enumerable = enumerable;
+        this.configurable = configurable;
+    }
+
+    /**
+     * Create a new {@link Property} object for an accessor-property
+     */
+    public Property(Callable getter, Callable setter, boolean enumerable, boolean configurable) {
+        this.type = Type.AccessorProperty;
+        this.value = UNDEFINED;
+        this.getter = getter;
+        this.setter = setter;
+        this.writable = false;
+        this.enumerable = enumerable;
+        this.configurable = configurable;
+    }
+
+    /**
+     * Convert this property to a data-property
+     */
     public void toDataProperty() {
         toProperty(Type.DataProperty);
     }
 
+    /**
+     * Convert this property to an accessor-property
+     */
     public void toAccessorProperty() {
         toProperty(Type.AccessorProperty);
     }
@@ -69,6 +108,9 @@ public final class Property implements Cloneable {
         writable = false;
     }
 
+    /**
+     * Copies all present fields from {@code desc} into this {@link Property} object
+     */
     public void apply(PropertyDescriptor desc) {
         if (isDataDescriptor()) {
             if (desc.hasValue()) {
@@ -94,7 +136,16 @@ public final class Property implements Cloneable {
     }
 
     /**
-     * Converts this property to a {@link PropertyDescriptor} object
+     * Updates the [[Value]] field of this {@link Property} object. Only applicable for
+     * data-properties.
+     */
+    public void applyValue(Object value) {
+        assert isDataDescriptor() && value != null;
+        this.value = value;
+    }
+
+    /**
+     * Returns a new {@link PropertyDescriptor} object for this property
      */
     public PropertyDescriptor toPropertyDescriptor() {
         return new PropertyDescriptor(this);
