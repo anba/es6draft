@@ -19,8 +19,8 @@ public class PropertyAccessor extends LeftHandSideExpression {
     private Expression base;
     private String name;
 
-    public PropertyAccessor(long sourcePosition, Expression base, String name) {
-        super(sourcePosition);
+    public PropertyAccessor(long beginPosition, long endPosition, Expression base, String name) {
+        super(beginPosition, endPosition);
         this.base = base;
         this.name = name;
     }
@@ -35,7 +35,7 @@ public class PropertyAccessor extends LeftHandSideExpression {
 
     @Override
     public PropertyAccessorValue asValue() {
-        return new PropertyAccessorValue(getSourcePosition(), base, name);
+        return new PropertyAccessorValue(getBeginPosition(), getEndPosition(), base, name);
     }
 
     @Override

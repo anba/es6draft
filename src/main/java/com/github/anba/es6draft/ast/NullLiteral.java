@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public class NullLiteral extends Literal {
-    public NullLiteral(long sourcePosition) {
-        super(sourcePosition);
+    public NullLiteral(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 
     @Override

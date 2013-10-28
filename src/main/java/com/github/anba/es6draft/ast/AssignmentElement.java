@@ -17,9 +17,9 @@ public class AssignmentElement extends AstNode implements AssignmentElementItem 
     private LeftHandSideExpression target;
     private Expression initialiser;
 
-    public AssignmentElement(long sourcePosition, LeftHandSideExpression target,
+    public AssignmentElement(long beginPosition, long endPosition, LeftHandSideExpression target,
             Expression initialiser) {
-        super(sourcePosition);
+        super(beginPosition, endPosition);
         this.target = target;
         this.initialiser = initialiser;
     }

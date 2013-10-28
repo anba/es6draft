@@ -20,9 +20,10 @@ public class ClassExpression extends Expression implements ClassDefinition {
     private List<MethodDefinition> staticMethods;
     private List<MethodDefinition> prototypeMethods;
 
-    public ClassExpression(long sourcePosition, BindingIdentifier name, Expression heritage,
-            List<MethodDefinition> staticMethods, List<MethodDefinition> prototypeMethods) {
-        super(sourcePosition);
+    public ClassExpression(long beginPosition, long endPosition, BindingIdentifier name,
+            Expression heritage, List<MethodDefinition> staticMethods,
+            List<MethodDefinition> prototypeMethods) {
+        super(beginPosition, endPosition);
         this.name = name;
         this.heritage = heritage;
         this.staticMethods = staticMethods;

@@ -15,8 +15,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public class Elision extends Expression implements AssignmentElementItem {
-    public Elision(long sourcePosition) {
-        super(sourcePosition);
+    public Elision(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 
     @Override

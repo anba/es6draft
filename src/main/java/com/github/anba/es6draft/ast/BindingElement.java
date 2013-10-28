@@ -17,8 +17,9 @@ public class BindingElement extends FormalParameter implements BindingElementIte
     private Binding binding;
     private Expression initialiser;
 
-    public BindingElement(long sourcePosition, Binding binding, Expression initialiser) {
-        super(sourcePosition);
+    public BindingElement(long beginPosition, long endPosition, Binding binding,
+            Expression initialiser) {
+        super(beginPosition, endPosition);
         this.binding = binding;
         this.initialiser = initialiser;
     }

@@ -14,7 +14,7 @@ import com.github.anba.es6draft.ast.SpreadElement;
  */
 public class SpreadElementMethod extends SpreadElement {
     public SpreadElementMethod(SpreadArrayLiteral array) {
-        super(array.getSourcePosition(), array);
+        super(array.getBeginPosition(), array.getEndPosition(), array);
     }
 
     @Override

@@ -323,7 +323,7 @@ class CodeGenerator implements AutoCloseable {
             String name = methodName(node);
             Type desc = Type.getMethodType(Types.String_);
             InstructionVisitor body = publicStaticMethod(name, desc);
-            body.lineInfo(node.getLine());
+            body.lineInfo(node.getBeginLine());
             body.begin();
 
             List<TemplateCharacters> strings = TemplateStrings(node);

@@ -18,7 +18,7 @@ public class VariableDeclaration extends AstNode {
     private Expression initialiser;
 
     public VariableDeclaration(Binding binding, Expression initialiser) {
-        super(binding.getSourcePosition());
+        super(binding.getBeginPosition(), eitherOr(initialiser, binding).getEndPosition());
         this.binding = binding;
         this.initialiser = initialiser;
     }
@@ -34,5 +34,9 @@ public class VariableDeclaration extends AstNode {
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    private static AstNode eitherOr(AstNode left, AstNode right) {
+        return left != null ? left : right;
     }
 }

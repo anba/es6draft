@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>13 ECMAScript Language: Statements and Declarations</h1>
  */
 public abstract class BreakableStatement extends Statement implements AbruptNode {
-    protected BreakableStatement(long sourcePosition) {
-        super(sourcePosition);
+    protected BreakableStatement(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 }

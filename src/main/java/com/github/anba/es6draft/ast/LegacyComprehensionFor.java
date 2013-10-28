@@ -23,9 +23,9 @@ public class LegacyComprehensionFor extends ComprehensionQualifier {
         Enumerate, Iterate, EnumerateValues
     }
 
-    public LegacyComprehensionFor(long sourcePosition, IterationKind iterationKind,
-            Binding binding, Expression expression) {
-        super(sourcePosition);
+    public LegacyComprehensionFor(long beginPosition, long endPosition,
+            IterationKind iterationKind, Binding binding, Expression expression) {
+        super(beginPosition, endPosition);
         this.iterationKind = iterationKind;
         this.binding = binding;
         this.expression = expression;

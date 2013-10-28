@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public class BindingElision extends AstNode implements BindingElementItem {
-    public BindingElision(long sourcePosition) {
-        super(sourcePosition);
+    public BindingElision(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 
     @Override

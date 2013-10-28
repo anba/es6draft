@@ -18,8 +18,8 @@ import com.github.anba.es6draft.ast.synthetic.IdentifierValue;
 public class Identifier extends LeftHandSideExpression implements PropertyName {
     private String name;
 
-    public Identifier(long sourcePosition, String name) {
-        super(sourcePosition);
+    public Identifier(long beginPosition, long endPosition, String name) {
+        super(beginPosition, endPosition);
         this.name = name;
     }
 
@@ -30,7 +30,7 @@ public class Identifier extends LeftHandSideExpression implements PropertyName {
 
     @Override
     public IdentifierValue asValue() {
-        return new IdentifierValue(getSourcePosition(), name);
+        return new IdentifierValue(getBeginPosition(), getEndPosition(), name);
     }
 
     @Override

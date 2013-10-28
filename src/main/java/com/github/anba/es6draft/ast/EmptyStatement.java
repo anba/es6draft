@@ -13,8 +13,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public class EmptyStatement extends Statement {
-    public EmptyStatement(long sourcePosition) {
-        super(sourcePosition);
+    public EmptyStatement(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 
     @Override

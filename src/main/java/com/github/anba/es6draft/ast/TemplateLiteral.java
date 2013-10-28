@@ -19,8 +19,9 @@ public class TemplateLiteral extends Expression {
     private List<Expression> elements;
     private boolean tagged;
 
-    public TemplateLiteral(long sourcePosition, boolean tagged, List<Expression> elements) {
-        super(sourcePosition);
+    public TemplateLiteral(long beginPosition, long endPosition, boolean tagged,
+            List<Expression> elements) {
+        super(beginPosition, endPosition);
         this.tagged = tagged;
         this.elements = elements;
     }

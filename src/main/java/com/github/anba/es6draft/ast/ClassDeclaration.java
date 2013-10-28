@@ -20,9 +20,10 @@ public class ClassDeclaration extends Declaration implements ClassDefinition {
     private List<MethodDefinition> staticMethods;
     private List<MethodDefinition> prototypeMethods;
 
-    public ClassDeclaration(long sourcePosition, BindingIdentifier name, Expression heritage,
-            List<MethodDefinition> staticMethods, List<MethodDefinition> prototypeMethods) {
-        super(sourcePosition);
+    public ClassDeclaration(long beginPosition, long endPosition, BindingIdentifier name,
+            Expression heritage, List<MethodDefinition> staticMethods,
+            List<MethodDefinition> prototypeMethods) {
+        super(beginPosition, endPosition);
         this.name = name;
         this.heritage = heritage;
         this.staticMethods = staticMethods;

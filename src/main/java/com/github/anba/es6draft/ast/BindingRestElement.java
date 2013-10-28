@@ -16,8 +16,9 @@ package com.github.anba.es6draft.ast;
 public class BindingRestElement extends FormalParameter implements BindingElementItem {
     private BindingIdentifier bindingIdentifier;
 
-    public BindingRestElement(long sourcePosition, BindingIdentifier bindingIdentifier) {
-        super(sourcePosition);
+    public BindingRestElement(long beginPosition, long endPosition,
+            BindingIdentifier bindingIdentifier) {
+        super(beginPosition, endPosition);
         this.bindingIdentifier = bindingIdentifier;
     }
 

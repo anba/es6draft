@@ -20,9 +20,9 @@ public class LabelledStatement extends Statement implements AbruptNode {
     private Set<String> labels;
     private Statement statement;
 
-    public LabelledStatement(long sourcePosition, EnumSet<Abrupt> abrupt, Set<String> labels,
-            Statement statement) {
-        super(sourcePosition);
+    public LabelledStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
+            Set<String> labels, Statement statement) {
+        super(beginPosition, endPosition);
         this.abrupt = abrupt;
         this.labels = labels;
         this.statement = statement;

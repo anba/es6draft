@@ -17,8 +17,9 @@ public class TemplateCallExpression extends Expression {
     private Expression base;
     private TemplateLiteral template;
 
-    public TemplateCallExpression(long sourcePosition, Expression base, TemplateLiteral template) {
-        super(sourcePosition);
+    public TemplateCallExpression(long beginPosition, long endPosition, Expression base,
+            TemplateLiteral template) {
+        super(beginPosition, endPosition);
         this.base = base;
         this.template = template;
     }

@@ -21,7 +21,7 @@ public class Comprehension extends AstNode {
     private Expression expression;
 
     public Comprehension(List<ComprehensionQualifier> list, Expression expression) {
-        super(first(list).getSourcePosition());
+        super(first(list).getBeginPosition(), expression.getEndPosition());
         this.list = list;
         this.expression = expression;
     }

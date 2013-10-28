@@ -20,9 +20,10 @@ public class TryStatement extends Statement {
     private BlockStatement finallyBlock;
     private List<GuardedCatchNode> guardedCatchNodes;
 
-    public TryStatement(long sourcePosition, BlockStatement tryBlock, CatchNode catchNode,
-            List<GuardedCatchNode> guardedCatchNodes, BlockStatement finallyBlock) {
-        super(sourcePosition);
+    public TryStatement(long beginPosition, long endPosition, BlockStatement tryBlock,
+            CatchNode catchNode, List<GuardedCatchNode> guardedCatchNodes,
+            BlockStatement finallyBlock) {
+        super(beginPosition, endPosition);
         this.tryBlock = tryBlock;
         this.catchNode = catchNode;
         this.guardedCatchNodes = guardedCatchNodes;

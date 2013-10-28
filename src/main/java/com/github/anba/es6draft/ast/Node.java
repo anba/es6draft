@@ -10,11 +10,17 @@ package com.github.anba.es6draft.ast;
  * Base interface for all abstract-syntax-tree nodes
  */
 public interface Node {
-    int getLine();
+    int getBeginLine();
 
-    int getColumn();
+    int getBeginColumn();
 
-    long getSourcePosition();
+    long getBeginPosition();
+
+    int getEndLine();
+
+    int getEndColumn();
+
+    long getEndPosition();
 
     <R, V> R accept(NodeVisitor<R, V> visitor, V value);
 }

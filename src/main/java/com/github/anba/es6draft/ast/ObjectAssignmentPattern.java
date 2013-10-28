@@ -18,8 +18,9 @@ import java.util.List;
 public class ObjectAssignmentPattern extends AssignmentPattern {
     private List<AssignmentProperty> properties;
 
-    public ObjectAssignmentPattern(long sourcePosition, List<AssignmentProperty> properties) {
-        super(sourcePosition);
+    public ObjectAssignmentPattern(long beginPosition, long endPosition,
+            List<AssignmentProperty> properties) {
+        super(beginPosition, endPosition);
         this.properties = properties;
     }
 

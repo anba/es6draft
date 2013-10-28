@@ -13,8 +13,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public class DebuggerStatement extends Statement {
-    public DebuggerStatement(long sourcePosition) {
-        super(sourcePosition);
+    public DebuggerStatement(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 
     @Override

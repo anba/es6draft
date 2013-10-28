@@ -19,9 +19,9 @@ public class ComprehensionFor extends ComprehensionQualifier implements ScopedNo
     private Binding binding;
     private Expression expression;
 
-    public ComprehensionFor(long sourcePosition, BlockScope scope, Binding binding,
-            Expression expression) {
-        super(sourcePosition);
+    public ComprehensionFor(long beginPosition, long endPosition, BlockScope scope,
+            Binding binding, Expression expression) {
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.binding = binding;
         this.expression = expression;

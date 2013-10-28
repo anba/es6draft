@@ -54,7 +54,7 @@ public class BinaryExpression extends Expression {
     private Expression right;
 
     public BinaryExpression(Operator operator, Expression left, Expression right) {
-        super(left.getSourcePosition());
+        super(left.getBeginPosition(), right.getEndPosition());
         this.operator = operator;
         this.left = left;
         this.right = right;

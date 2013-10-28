@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.NodeVisitor;
  */
 public class SpreadArrayLiteral extends ArrayLiteral {
     public SpreadArrayLiteral(List<Expression> elements) {
-        super(first(elements).getSourcePosition(), elements);
+        super(first(elements).getBeginPosition(), last(elements).getEndPosition(), elements);
     }
 
     @Override
@@ -28,5 +28,10 @@ public class SpreadArrayLiteral extends ArrayLiteral {
     private static Expression first(List<Expression> elements) {
         assert !elements.isEmpty();
         return elements.get(0);
+    }
+
+    private static Expression last(List<Expression> elements) {
+        assert !elements.isEmpty();
+        return elements.get(elements.size() - 1);
     }
 }

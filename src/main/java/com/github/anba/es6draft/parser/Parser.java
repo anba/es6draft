@@ -670,6 +670,11 @@ public class Parser {
         return (int) (sourcePosition >>> 32);
     }
 
+    private long beginSource() {
+        // make columns 1-indexed
+        return ((long) 1 << 32) | getSourceLine();
+    }
+
     private ParserException reportException(ParserException exception) {
         throw exception;
     }
@@ -705,8 +710,9 @@ public class Parser {
     /**
      * Report parser error with the given type and position
      */
-    private ParserException reportError(ExceptionType type, int line, int column,
+    private ParserException reportError(ExceptionType type, long sourcePosition,
             Messages.Key messageKey, String... args) {
+        int line = toLine(sourcePosition), column = toColumn(sourcePosition);
         throw new ParserException(type, sourceFile, line, column, messageKey, args);
     }
 
@@ -715,15 +721,14 @@ public class Parser {
      */
     private ParserException reportSyntaxError(long sourcePosition, Messages.Key messageKey,
             String... args) {
-        int line = toLine(sourcePosition), col = toColumn(sourcePosition);
-        throw reportError(ExceptionType.SyntaxError, line, col, messageKey, args);
+        throw reportError(ExceptionType.SyntaxError, sourcePosition, messageKey, args);
     }
 
     /**
-     * Report syntax error from the node's source-position
+     * Report syntax error from the node's begin source-position
      */
     private ParserException reportSyntaxError(Node node, Messages.Key messageKey, String... args) {
-        throw reportSyntaxError(node.getSourcePosition(), messageKey, args);
+        throw reportSyntaxError(node.getBeginPosition(), messageKey, args);
     }
 
     /**
@@ -736,15 +741,16 @@ public class Parser {
     /**
      * Report (or store) strict-mode parser error with the given type and position
      */
-    private void reportStrictModeError(ExceptionType type, int line, int column,
+    private void reportStrictModeError(ExceptionType type, long sourcePosition,
             Messages.Key messageKey, String... args) {
         if (context.strictMode == StrictMode.Unknown) {
             if (context.strictError == null) {
+                int line = toLine(sourcePosition), column = toColumn(sourcePosition);
                 context.strictError = new ParserException(type, sourceFile, line, column,
                         messageKey, args);
             }
         } else if (context.strictMode == StrictMode.Strict) {
-            reportError(type, line, column, messageKey, args);
+            reportError(type, sourcePosition, messageKey, args);
         }
     }
 
@@ -753,15 +759,14 @@ public class Parser {
      */
     private void reportStrictModeSyntaxError(long sourcePosition, Messages.Key messageKey,
             String... args) {
-        int line = toLine(sourcePosition), col = toColumn(sourcePosition);
-        reportStrictModeError(ExceptionType.SyntaxError, line, col, messageKey, args);
+        reportStrictModeError(ExceptionType.SyntaxError, sourcePosition, messageKey, args);
     }
 
     /**
      * Report (or store) strict-mode syntax error from the node's source-position
      */
     private void reportStrictModeSyntaxError(Node node, Messages.Key messageKey, String... args) {
-        reportStrictModeSyntaxError(node.getSourcePosition(), messageKey, args);
+        reportStrictModeSyntaxError(node.getBeginPosition(), messageKey, args);
     }
 
     /**
@@ -838,7 +843,8 @@ public class Parser {
                 List<StatementListItem> body = moduleBody(Token.EOF);
 
                 FunctionContext scope = context.funContext;
-                module = new ModuleDeclaration(sourceLine, moduleName, body, scope);
+                module = new ModuleDeclaration(beginSource(), ts.endPosition(), moduleName, body,
+                        scope);
                 scope.node = module;
             } finally {
                 restoreContext();
@@ -885,8 +891,8 @@ public class Parser {
                 String body = String.format("\n%s\n", bodyText);
 
                 FunctionContext scope = context.funContext;
-                function = new FunctionExpression(sourceLine, scope, "anonymous", parameters,
-                        statements, header, body);
+                function = new FunctionExpression(beginSource(), ts.endPosition(), scope,
+                        "anonymous", parameters, statements, header, body);
                 scope.node = function;
 
                 function_StaticSemantics(function);
@@ -940,8 +946,8 @@ public class Parser {
                 String body = String.format("\n%s\n", bodyText);
 
                 FunctionContext scope = context.funContext;
-                generator = new GeneratorExpression(sourceLine, scope, "anonymous", parameters,
-                        statements, header, body);
+                generator = new GeneratorExpression(beginSource(), ts.endPosition(), scope,
+                        "anonymous", parameters, statements, header, body);
                 scope.node = generator;
 
                 generator_StaticSemantics(generator);
@@ -964,7 +970,8 @@ public class Parser {
         boolean strict = (context.strictMode == StrictMode.Strict);
 
         FunctionContext scope = context.funContext;
-        Script script = new Script(sourceLine, sourceFile, scope, statements, options, strict);
+        Script script = new Script(beginSource(), ts.endPosition(), sourceFile, scope, statements,
+                options, strict);
         scope.node = script;
 
         return script;
@@ -992,7 +999,8 @@ public class Parser {
             boolean strict = (context.strictMode == StrictMode.Strict);
 
             FunctionContext scope = context.funContext;
-            Script script = new Script(sourceLine, sourceFile, scope, statements, options, strict);
+            Script script = new Script(beginSource(), ts.endPosition(), sourceFile, scope,
+                    statements, options, strict);
             scope.node = script;
 
             return script;
@@ -1045,7 +1053,7 @@ public class Parser {
     private ModuleDeclaration moduleDeclaration() {
         newContext(ContextKind.Module);
         try {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             consume("module");
             if (token() == Token.STRING) {
                 String moduleName = stringLiteral();
@@ -1054,7 +1062,8 @@ public class Parser {
                 consume(Token.RC);
 
                 FunctionContext scope = context.funContext;
-                ModuleDeclaration module = new ModuleDeclaration(sourcePos, moduleName, body, scope);
+                ModuleDeclaration module = new ModuleDeclaration(begin, ts.endPosition(),
+                        moduleName, body, scope);
                 scope.node = module;
 
                 return module;
@@ -1065,8 +1074,8 @@ public class Parser {
                 semicolon();
 
                 FunctionContext scope = context.funContext;
-                ModuleDeclaration module = new ModuleDeclaration(sourcePos, identifier, moduleName,
-                        scope);
+                ModuleDeclaration module = new ModuleDeclaration(begin, ts.endPosition(),
+                        identifier, moduleName, scope);
                 scope.node = module;
 
                 return module;
@@ -1113,7 +1122,7 @@ public class Parser {
      * </pre>
      */
     private ExportDeclaration exportDeclaration() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.EXPORT);
         switch (token()) {
         case LC:
@@ -1121,7 +1130,7 @@ public class Parser {
             // "export" ExportSpecifierSet ";"
             ExportSpecifierSet exportSpecifierSet = exportSpecifierSet();
             semicolon();
-            return new ExportDeclaration(sourcePos, exportSpecifierSet);
+            return new ExportDeclaration(begin, ts.endPosition(), exportSpecifierSet);
         }
 
         case DEFAULT: {
@@ -1129,13 +1138,13 @@ public class Parser {
             consume(Token.DEFAULT);
             Expression expression = assignmentExpression(true);
             semicolon();
-            return new ExportDeclaration(sourcePos, expression);
+            return new ExportDeclaration(begin, ts.endPosition(), expression);
         }
 
         case VAR: {
             // "export" VariableDeclaration
             VariableStatement variableStatement = variableStatement();
-            return new ExportDeclaration(sourcePos, variableStatement);
+            return new ExportDeclaration(begin, ts.endPosition(), variableStatement);
         }
 
         case FUNCTION:
@@ -1145,7 +1154,7 @@ public class Parser {
             // "export" FunctionDeclaration
             // "export" ClassDeclaration
             Declaration declaration = declaration();
-            return new ExportDeclaration(sourcePos, declaration);
+            return new ExportDeclaration(begin, ts.endPosition(), declaration);
         }
 
         default:
@@ -1162,7 +1171,7 @@ public class Parser {
      * </pre>
      */
     private ExportSpecifierSet exportSpecifierSet() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         if (token() == Token.LC) {
             List<ExportSpecifier> exports = newSmallList();
             consume(Token.LC);
@@ -1182,7 +1191,7 @@ public class Parser {
                 sourceModule = moduleSpecifier();
             }
 
-            return new ExportSpecifierSet(sourcePos, exports, sourceModule);
+            return new ExportSpecifierSet(begin, ts.endPosition(), exports, sourceModule);
         } else {
             consume(Token.MUL);
             String sourceModule = null;
@@ -1191,7 +1200,7 @@ public class Parser {
                 sourceModule = moduleSpecifier();
             }
 
-            return new ExportSpecifierSet(sourcePos, sourceModule);
+            return new ExportSpecifierSet(begin, ts.endPosition(), sourceModule);
         }
     }
 
@@ -1203,7 +1212,7 @@ public class Parser {
      * </pre>
      */
     private ExportSpecifier exportSpecifier() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         String localName = identifier();
         String externalName;
         if (isName("as")) {
@@ -1212,7 +1221,7 @@ public class Parser {
         } else {
             externalName = localName;
         }
-        return new ExportSpecifier(sourcePos, localName, externalName);
+        return new ExportSpecifier(begin, ts.endPosition(), localName, externalName);
     }
 
     /**
@@ -1235,20 +1244,21 @@ public class Parser {
      * </pre>
      */
     private ImportDeclaration importDeclaration() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.IMPORT);
         if (token() == Token.STRING) {
             String moduleSpecifier = moduleSpecifier();
             semicolon();
 
-            return new ImportDeclaration(sourcePos, moduleSpecifier);
+            return new ImportDeclaration(begin, ts.endPosition(), moduleSpecifier);
         } else {
             ImportSpecifierSet importSpecifierSet = importSpecifierSet();
             consume("from");
             String moduleSpecifier = moduleSpecifier();
             semicolon();
 
-            return new ImportDeclaration(sourcePos, importSpecifierSet, moduleSpecifier);
+            return new ImportDeclaration(begin, ts.endPosition(), importSpecifierSet,
+                    moduleSpecifier);
         }
     }
 
@@ -1261,11 +1271,11 @@ public class Parser {
      * </pre>
      */
     private ImportSpecifierSet importSpecifierSet() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         if (isIdentifier(token())) {
             String defaultImport = identifier();
 
-            return new ImportSpecifierSet(sourcePos, defaultImport);
+            return new ImportSpecifierSet(begin, ts.endPosition(), defaultImport);
         } else {
             List<ImportSpecifier> imports = newSmallList();
             consume(Token.LC);
@@ -1279,7 +1289,7 @@ public class Parser {
             }
             consume(Token.RC);
 
-            return new ImportSpecifierSet(sourcePos, imports);
+            return new ImportSpecifierSet(begin, ts.endPosition(), imports);
         }
     }
 
@@ -1293,7 +1303,7 @@ public class Parser {
      */
     private ImportSpecifier importSpecifier() {
         assert context.strictMode != StrictMode.Unknown : "undefined strict-mode in import specifier";
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         String externalName, localName;
         if (!isReservedWord(token())) {
             externalName = identifier();
@@ -1308,7 +1318,7 @@ public class Parser {
             consume("as");
             localName = identifier();
         }
-        return new ImportSpecifier(sourcePos, externalName, localName);
+        return new ImportSpecifier(begin, ts.endPosition(), externalName, localName);
     }
 
     /**
@@ -1326,7 +1336,7 @@ public class Parser {
         List<StatementListItem> statements = newSmallList();
         boolean strict = false;
         directive: while (token() == Token.STRING) {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             boolean hasEscape = ts.hasEscape(); // peek() may clear hasEscape flag
             Token next = peek();
             switch (next) {
@@ -1346,7 +1356,8 @@ public class Parser {
                 strict = true;
             }
             semicolon();
-            statements.add(new ExpressionStatement(new StringLiteral(sourcePos, string)));
+            statements.add(new ExpressionStatement(new StringLiteral(begin, ts.endPosition(),
+                    string)));
         }
         applyStrictMode(strict);
         return statements;
@@ -1462,12 +1473,12 @@ public class Parser {
         // 'yield' is always a keyword in strict-mode and in generators, but parse function name
         // in the context of the surrounding environment
         if (token() == Token.YIELD) {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             if (isYieldName(context.parent)) {
                 consume(Token.YIELD);
-                return new BindingIdentifier(sourcePos, getName(Token.YIELD));
+                return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
             }
-            reportStrictModeSyntaxError(sourcePos, Messages.Key.StrictModeInvalidIdentifier,
+            reportStrictModeSyntaxError(begin, Messages.Key.StrictModeInvalidIdentifier,
                     getName(Token.YIELD));
             reportTokenMismatch("<identifier>", Token.YIELD);
         }
@@ -1485,7 +1496,7 @@ public class Parser {
     private FunctionDeclaration functionDeclaration() {
         newContext(ContextKind.Function);
         try {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = bindingIdentifierFunctionName();
@@ -1496,12 +1507,8 @@ public class Parser {
             String header, body;
             List<StatementListItem> statements;
             if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
-                // need to call manually b/c functionBody() isn't used here
-                applyStrictMode(false);
-
                 int startBody = ts.position();
-                statements = Collections.<StatementListItem> singletonList(new ReturnStatement(ts
-                        .sourcePosition(), assignmentExpression(true)));
+                statements = expressionClosureBody();
                 int endFunction = ts.position();
 
                 header = ts.range(startFunction, startBody);
@@ -1518,8 +1525,8 @@ public class Parser {
             }
 
             FunctionContext scope = context.funContext;
-            FunctionDeclaration function = new FunctionDeclaration(sourcePos, scope, identifier,
-                    parameters, statements, header, body);
+            FunctionDeclaration function = new FunctionDeclaration(begin, ts.endPosition(), scope,
+                    identifier, parameters, statements, header, body);
             scope.node = function;
 
             function_StaticSemantics(function);
@@ -1543,7 +1550,7 @@ public class Parser {
     private FunctionExpression functionExpression() {
         newContext(ContextKind.Function);
         try {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = null;
@@ -1557,12 +1564,8 @@ public class Parser {
             String header, body;
             List<StatementListItem> statements;
             if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
-                // need to call manually b/c functionBody() isn't used here
-                applyStrictMode(false);
-
                 int startBody = ts.position();
-                statements = Collections.<StatementListItem> singletonList(new ReturnStatement(ts
-                        .sourcePosition(), assignmentExpression(true)));
+                statements = expressionClosureBody();
                 int endFunction = ts.position();
 
                 header = ts.range(startFunction, startBody);
@@ -1579,8 +1582,8 @@ public class Parser {
             }
 
             FunctionContext scope = context.funContext;
-            FunctionExpression function = new FunctionExpression(sourcePos, scope, identifier,
-                    parameters, statements, header, body);
+            FunctionExpression function = new FunctionExpression(begin, ts.endPosition(), scope,
+                    identifier, parameters, statements, header, body);
             scope.node = function;
 
             function_StaticSemantics(function);
@@ -1614,8 +1617,8 @@ public class Parser {
      */
     private FormalParameterList formalParameters(Token end) {
         if (token() == end) {
-            long sourcePos = ts.sourcePosition();
-            return new FormalParameterList(sourcePos, Collections.<FormalParameter> emptyList());
+            return new FormalParameterList(ts.beginPosition(), ts.endPosition(),
+                    Collections.<FormalParameter> emptyList());
         }
         return formalParameterList();
     }
@@ -1638,13 +1641,14 @@ public class Parser {
      * </pre>
      */
     private FormalParameterList formalParameterList() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         List<FormalParameter> formals = newSmallList();
         for (;;) {
             if (token() == Token.TRIPLE_DOT) {
-                long sourcePosRest = ts.sourcePosition();
+                long beginRest = ts.beginPosition();
                 consume(Token.TRIPLE_DOT);
-                formals.add(new BindingRestElement(sourcePosRest, bindingIdentifierStrict()));
+                BindingIdentifier identifier = bindingIdentifierStrict();
+                formals.add(new BindingRestElement(beginRest, ts.endPosition(), identifier));
                 break;
             } else {
                 formals.add(bindingElement());
@@ -1655,7 +1659,7 @@ public class Parser {
                 }
             }
         }
-        return new FormalParameterList(sourcePos, formals);
+        return new FormalParameterList(begin, ts.endPosition(), formals);
     }
 
     private static <T> T containsAny(Set<T> set, List<T> list) {
@@ -1750,6 +1754,22 @@ public class Parser {
     }
 
     /**
+     * <strong>[14.1] Function Definitions</strong>
+     * 
+     * <pre>
+     * ExpressionClosureBody :
+     *     AssignmentExpression
+     * </pre>
+     */
+    private List<StatementListItem> expressionClosureBody() {
+        // need to call manually b/c directivePrologue() isn't used here
+        applyStrictMode(false);
+        Expression expr = assignmentExpression(true);
+        return Collections.<StatementListItem> singletonList(new ReturnStatement(
+                ts.beginPosition(), ts.endPosition(), expr));
+    }
+
+    /**
      * <strong>[14.2] Arrow Function Definitions</strong>
      * 
      * <pre>
@@ -1773,7 +1793,7 @@ public class Parser {
     private ArrowFunction arrowFunction(boolean allowIn) {
         newContext(ContextKind.ArrowFunction);
         try {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             StringBuilder source = new StringBuilder();
             source.append("function anonymous");
 
@@ -1787,8 +1807,10 @@ public class Parser {
                 source.append(ts.range(start, ts.position()));
             } else {
                 BindingIdentifier identifier = bindingIdentifierStrict();
-                FormalParameter parameter = new BindingElement(sourcePos, identifier, null);
-                parameters = new FormalParameterList(sourcePos, singletonList(parameter));
+                FormalParameter parameter = new BindingElement(begin, ts.endPosition(), identifier,
+                        null);
+                parameters = new FormalParameterList(begin, ts.endPosition(),
+                        singletonList(parameter));
 
                 source.append('(').append(identifier.getName()).append(')');
             }
@@ -1804,8 +1826,8 @@ public class Parser {
                 String body = ts.range(startBody, endFunction);
 
                 FunctionContext scope = context.funContext;
-                ArrowFunction function = new ArrowFunction(sourcePos, scope, parameters,
-                        statements, header, body);
+                ArrowFunction function = new ArrowFunction(begin, ts.endPosition(), scope,
+                        parameters, statements, header, body);
                 scope.node = function;
 
                 arrowFunction_StaticSemantics(function);
@@ -1823,8 +1845,8 @@ public class Parser {
                 String body = "return " + ts.range(startBody, endFunction);
 
                 FunctionContext scope = context.funContext;
-                ArrowFunction function = new ArrowFunction(sourcePos, scope, parameters,
-                        expression, header, body);
+                ArrowFunction function = new ArrowFunction(begin, ts.endPosition(), scope,
+                        parameters, expression, header, body);
                 scope.node = function;
 
                 arrowFunction_StaticSemantics(function);
@@ -1883,12 +1905,12 @@ public class Parser {
      * </pre>
      */
     private MethodDefinition normalMethod(boolean alwaysStrict) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         PropertyName propertyName = propertyName();
-        return normalMethod(sourcePos, propertyName, alwaysStrict);
+        return normalMethod(begin, propertyName, alwaysStrict);
     }
 
-    private MethodDefinition normalMethod(long sourcePos, PropertyName propertyName,
+    private MethodDefinition normalMethod(long begin, PropertyName propertyName,
             boolean alwaysStrict) {
         newContext(ContextKind.Method);
         if (alwaysStrict) {
@@ -1910,8 +1932,8 @@ public class Parser {
 
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Function;
-            MethodDefinition method = new MethodDefinition(sourcePos, scope, type, propertyName,
-                    parameters, statements, context.hasSuperReference(), header, body);
+            MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
+                    propertyName, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = method;
 
             methodDefinition_StaticSemantics(method);
@@ -1931,7 +1953,7 @@ public class Parser {
      * </pre>
      */
     private MethodDefinition getterMethod(boolean alwaysStrict) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
 
         consume(Token.NAME); // "get"
         PropertyName propertyName = propertyName();
@@ -1943,19 +1965,15 @@ public class Parser {
         try {
             consume(Token.LP);
             int startFunction = ts.position() - 1;
-            FormalParameterList parameters = new FormalParameterList(ts.sourcePosition(),
-                    Collections.<FormalParameter> emptyList());
+            FormalParameterList parameters = new FormalParameterList(ts.beginPosition(),
+                    ts.endPosition(), Collections.<FormalParameter> emptyList());
             consume(Token.RP);
 
             List<StatementListItem> statements;
             String header, body;
             if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
-                // need to call manually b/c functionBody() isn't used here
-                applyStrictMode(false);
-
                 int startBody = ts.position();
-                statements = Collections.<StatementListItem> singletonList(new ReturnStatement(ts
-                        .sourcePosition(), assignmentExpression(true)));
+                statements = expressionClosureBody();
                 int endFunction = ts.position();
 
                 header = "function " + ts.range(startFunction, startBody);
@@ -1973,8 +1991,8 @@ public class Parser {
 
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Getter;
-            MethodDefinition method = new MethodDefinition(sourcePos, scope, type, propertyName,
-                    parameters, statements, context.hasSuperReference(), header, body);
+            MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
+                    propertyName, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = method;
 
             methodDefinition_StaticSemantics(method);
@@ -1994,7 +2012,7 @@ public class Parser {
      * </pre>
      */
     private MethodDefinition setterMethod(boolean alwaysStrict) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
 
         consume(Token.NAME); // "set"
         PropertyName propertyName = propertyName();
@@ -2012,12 +2030,8 @@ public class Parser {
             List<StatementListItem> statements;
             String header, body;
             if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
-                // need to call manually b/c functionBody() isn't used here
-                applyStrictMode(false);
-
                 int startBody = ts.position();
-                statements = Collections.<StatementListItem> singletonList(new ReturnStatement(ts
-                        .sourcePosition(), assignmentExpression(true)));
+                statements = expressionClosureBody();
                 int endFunction = ts.position();
 
                 header = "function " + ts.range(startFunction, startBody);
@@ -2035,8 +2049,8 @@ public class Parser {
 
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Setter;
-            MethodDefinition method = new MethodDefinition(sourcePos, scope, type, propertyName,
-                    parameters, statements, context.hasSuperReference(), header, body);
+            MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
+                    propertyName, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = method;
 
             methodDefinition_StaticSemantics(method);
@@ -2057,9 +2071,10 @@ public class Parser {
      * </pre>
      */
     private FormalParameterList propertySetParameterList() {
-        long sourcePos = ts.sourcePosition();
-        FormalParameter setParameter = new BindingElement(sourcePos, binding(), null);
-        return new FormalParameterList(sourcePos, singletonList(setParameter));
+        long begin = ts.beginPosition();
+        Binding binding = binding();
+        FormalParameter setParameter = new BindingElement(begin, ts.endPosition(), binding, null);
+        return new FormalParameterList(begin, ts.endPosition(), singletonList(setParameter));
     }
 
     private MethodType methodType() {
@@ -2146,7 +2161,7 @@ public class Parser {
      * </pre>
      */
     private MethodDefinition generatorMethod(boolean alwaysStrict) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
 
         consume(Token.MUL);
         PropertyName propertyName = propertyName();
@@ -2171,8 +2186,8 @@ public class Parser {
 
             FunctionContext scope = context.funContext;
             MethodType type = MethodType.Generator;
-            MethodDefinition method = new MethodDefinition(sourcePos, scope, type, propertyName,
-                    parameters, statements, context.hasSuperReference(), header, body);
+            MethodDefinition method = new MethodDefinition(begin, ts.endPosition(), scope, type,
+                    propertyName, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = method;
 
             methodDefinition_StaticSemantics(method);
@@ -2194,7 +2209,7 @@ public class Parser {
     private GeneratorDeclaration generatorDeclaration(boolean starless) {
         newContext(ContextKind.Generator);
         try {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
             if (!starless) {
@@ -2216,11 +2231,11 @@ public class Parser {
             FunctionContext scope = context.funContext;
             GeneratorDeclaration generator;
             if (!starless) {
-                generator = new GeneratorDeclaration(sourcePos, scope, identifier, parameters,
-                        statements, header, body);
-            } else {
-                generator = new LegacyGeneratorDeclaration(sourcePos, scope, identifier,
+                generator = new GeneratorDeclaration(begin, ts.endPosition(), scope, identifier,
                         parameters, statements, header, body);
+            } else {
+                generator = new LegacyGeneratorDeclaration(begin, ts.endPosition(), scope,
+                        identifier, parameters, statements, header, body);
             }
             scope.node = generator;
 
@@ -2245,7 +2260,7 @@ public class Parser {
     private GeneratorExpression generatorExpression(boolean starless) {
         newContext(ContextKind.Generator);
         try {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
             if (!starless) {
@@ -2270,11 +2285,11 @@ public class Parser {
             FunctionContext scope = context.funContext;
             GeneratorExpression generator;
             if (!starless) {
-                generator = new GeneratorExpression(sourcePos, scope, identifier, parameters,
-                        statements, header, body);
+                generator = new GeneratorExpression(begin, ts.endPosition(), scope, identifier,
+                        parameters, statements, header, body);
             } else {
-                generator = new LegacyGeneratorExpression(sourcePos, scope, identifier, parameters,
-                        statements, header, body);
+                generator = new LegacyGeneratorExpression(begin, ts.endPosition(), scope,
+                        identifier, parameters, statements, header, body);
             }
             scope.node = generator;
 
@@ -2320,7 +2335,7 @@ public class Parser {
             reportSyntaxError(Messages.Key.InvalidYieldStatement);
         }
 
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.YIELD);
         boolean delegatedYield = false;
         if (token() == Token.MUL) {
@@ -2344,7 +2359,7 @@ public class Parser {
                 expr = null;
             }
         }
-        return new YieldExpression(sourcePos, delegatedYield, expr);
+        return new YieldExpression(begin, ts.endPosition(), delegatedYield, expr);
     }
 
     private boolean assignmentExpressionFirstSet(Token token) {
@@ -2433,7 +2448,7 @@ public class Parser {
      * </pre>
      */
     private ClassDeclaration classDeclaration() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.CLASS);
         BindingIdentifier name = bindingIdentifierPureStrict();
         Expression heritage = null;
@@ -2447,8 +2462,8 @@ public class Parser {
         classBody(name, staticMethods, prototypeMethods);
         consume(Token.RC);
 
-        ClassDeclaration decl = new ClassDeclaration(sourcePos, name, heritage, staticMethods,
-                prototypeMethods);
+        ClassDeclaration decl = new ClassDeclaration(begin, ts.endPosition(), name, heritage,
+                staticMethods, prototypeMethods);
         addLexDeclaredName(name);
         addLexScopedDeclaration(decl);
         return decl;
@@ -2467,7 +2482,7 @@ public class Parser {
      * </pre>
      */
     private ClassExpression classExpression() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.CLASS);
         BindingIdentifier name = null;
         if (token() != Token.EXTENDS && token() != Token.LC) {
@@ -2491,7 +2506,8 @@ public class Parser {
         }
         consume(Token.RC);
 
-        return new ClassExpression(sourcePos, name, heritage, staticMethods, prototypeMethods);
+        return new ClassExpression(begin, ts.endPosition(), name, heritage, staticMethods,
+                prototypeMethods);
     }
 
     /**
@@ -2658,7 +2674,7 @@ public class Parser {
      * </pre>
      */
     private BlockStatement block(List<Binding> inherited) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.LC);
         BlockContext scope = enterBlockContext();
         if (!inherited.isEmpty()) {
@@ -2671,7 +2687,7 @@ public class Parser {
         exitBlockContext();
         consume(Token.RC);
 
-        BlockStatement block = new BlockStatement(sourcePos, scope, list);
+        BlockStatement block = new BlockStatement(begin, ts.endPosition(), scope, list);
         scope.node = block;
         return block;
     }
@@ -2776,7 +2792,7 @@ public class Parser {
      * </pre>
      */
     private LexicalDeclaration lexicalDeclaration(boolean allowIn) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         LexicalDeclaration.Type type;
         if (token() == Token.LET) {
             consume(Token.LET);
@@ -2790,7 +2806,7 @@ public class Parser {
             semicolon();
         }
 
-        LexicalDeclaration decl = new LexicalDeclaration(sourcePos, type, list);
+        LexicalDeclaration decl = new LexicalDeclaration(begin, ts.endPosition(), type, list);
         addLexScopedDeclaration(decl);
         return decl;
     }
@@ -2831,7 +2847,7 @@ public class Parser {
      * </pre>
      */
     private LexicalBinding lexicalBinding(boolean isConst, boolean allowIn) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         Binding binding;
         Expression initialiser = null;
         if (token() == Token.LC || token() == Token.LB) {
@@ -2856,7 +2872,7 @@ public class Parser {
             binding = bindingIdentifier;
         }
 
-        return new LexicalBinding(sourcePos, binding, initialiser);
+        return new LexicalBinding(begin, ts.endPosition(), binding, initialiser);
     }
 
     /**
@@ -2868,14 +2884,14 @@ public class Parser {
      * </pre>
      */
     private BindingIdentifier bindingIdentifier() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         String identifier = identifier();
         if (context.strictMode != StrictMode.NonStrict) {
             if ("arguments".equals(identifier) || "eval".equals(identifier)) {
-                reportStrictModeSyntaxError(sourcePos, Messages.Key.StrictModeRestrictedIdentifier);
+                reportStrictModeSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
             }
         }
-        return new BindingIdentifier(sourcePos, identifier);
+        return new BindingIdentifier(begin, ts.endPosition(), identifier);
     }
 
     /**
@@ -2887,12 +2903,12 @@ public class Parser {
      * </pre>
      */
     private BindingIdentifier bindingIdentifierStrict() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         String identifier = identifier();
         if ("arguments".equals(identifier) || "eval".equals(identifier)) {
-            reportSyntaxError(sourcePos, Messages.Key.StrictModeRestrictedIdentifier);
+            reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
         }
-        return new BindingIdentifier(sourcePos, identifier);
+        return new BindingIdentifier(begin, ts.endPosition(), identifier);
     }
 
     /**
@@ -2904,12 +2920,12 @@ public class Parser {
      * </pre>
      */
     private BindingIdentifier bindingIdentifierPureStrict() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         String identifier = strictIdentifier();
         if ("arguments".equals(identifier) || "eval".equals(identifier)) {
-            reportSyntaxError(sourcePos, Messages.Key.StrictModeRestrictedIdentifier);
+            reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
         }
-        return new BindingIdentifier(sourcePos, identifier);
+        return new BindingIdentifier(begin, ts.endPosition(), identifier);
     }
 
     /**
@@ -2936,12 +2952,12 @@ public class Parser {
      * </pre>
      */
     private VariableStatement variableStatement() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.VAR);
         List<VariableDeclaration> decls = variableDeclarationList(true);
         semicolon();
 
-        VariableStatement varStmt = new VariableStatement(sourcePos, decls);
+        VariableStatement varStmt = new VariableStatement(begin, ts.endPosition(), decls);
         addVarScopedDeclaration(varStmt);
         return varStmt;
     }
@@ -3049,7 +3065,7 @@ public class Parser {
      * </pre>
      */
     private ObjectBindingPattern objectBindingPattern() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         List<BindingProperty> list = newSmallList();
         consume(Token.LC);
         while (token() != Token.RC) {
@@ -3064,7 +3080,7 @@ public class Parser {
 
         objectBindingPattern_StaticSemantics(list);
 
-        return new ObjectBindingPattern(sourcePos, list);
+        return new ObjectBindingPattern(begin, ts.endPosition(), list);
     }
 
     /**
@@ -3126,7 +3142,7 @@ public class Parser {
      * </pre>
      */
     private ArrayBindingPattern arrayBindingPattern() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         List<BindingElementItem> list = newSmallList();
         consume(Token.LB);
         boolean needComma = false;
@@ -3137,11 +3153,12 @@ public class Parser {
                 needComma = false;
             } else if (tok == Token.COMMA) {
                 consume(Token.COMMA);
-                list.add(new BindingElision(0));
+                list.add(new BindingElision(0, 0));
             } else if (tok == Token.TRIPLE_DOT) {
-                long sourcePosRest = ts.sourcePosition();
+                long beginRest = ts.beginPosition();
                 consume(Token.TRIPLE_DOT);
-                list.add(new BindingRestElement(sourcePosRest, bindingIdentifierStrict()));
+                BindingIdentifier identifier = bindingIdentifierStrict();
+                list.add(new BindingRestElement(beginRest, ts.endPosition(), identifier));
                 break;
             } else {
                 list.add(bindingElementStrict());
@@ -3152,7 +3169,7 @@ public class Parser {
 
         arrayBindingPattern_StaticSemantics(list);
 
-        return new ArrayBindingPattern(sourcePos, list);
+        return new ArrayBindingPattern(begin, ts.endPosition(), list);
     }
 
     /**
@@ -3203,14 +3220,14 @@ public class Parser {
      * </pre>
      */
     private BindingElement bindingElement() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         Binding binding = binding();
         Expression initialiser = null;
         if (token() == Token.ASSIGN) {
             initialiser = initialiser(true);
         }
 
-        return new BindingElement(sourcePos, binding, initialiser);
+        return new BindingElement(begin, ts.endPosition(), binding, initialiser);
     }
 
     /**
@@ -3225,14 +3242,14 @@ public class Parser {
      * </pre>
      */
     private BindingElement bindingElementStrict() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         Binding binding = bindingStrict();
         Expression initialiser = null;
         if (token() == Token.ASSIGN) {
             initialiser = initialiser(true);
         }
 
-        return new BindingElement(sourcePos, binding, initialiser);
+        return new BindingElement(begin, ts.endPosition(), binding, initialiser);
     }
 
     private static String BoundName(BindingIdentifier binding) {
@@ -3303,9 +3320,10 @@ public class Parser {
      * </pre>
      */
     private EmptyStatement emptyStatement() {
+        long begin = ts.sourcePosition();
         consume(Token.SEMI);
 
-        return new EmptyStatement(0);
+        return new EmptyStatement(begin, ts.endPosition());
     }
 
     /**
@@ -3340,7 +3358,7 @@ public class Parser {
      * </pre>
      */
     private IfStatement ifStatement() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.IF);
         consume(Token.LP);
         Expression test = expression(true);
@@ -3352,7 +3370,7 @@ public class Parser {
             otherwise = statement();
         }
 
-        return new IfStatement(sourcePos, test, then, otherwise);
+        return new IfStatement(begin, ts.endPosition(), test, then, otherwise);
     }
 
     /**
@@ -3364,10 +3382,10 @@ public class Parser {
      * </pre>
      */
     private DoWhileStatement doWhileStatement(Set<String> labelSet) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.DO);
 
-        LabelContext labelCx = enterIteration(sourcePos, labelSet);
+        LabelContext labelCx = enterIteration(begin, labelSet);
         Statement stmt = statement();
         exitIteration();
 
@@ -3379,7 +3397,8 @@ public class Parser {
             consume(Token.SEMI);
         }
 
-        return new DoWhileStatement(sourcePos, labelCx.abrupts, labelCx.labelSet, test, stmt);
+        return new DoWhileStatement(begin, ts.endPosition(), labelCx.abrupts, labelCx.labelSet,
+                test, stmt);
     }
 
     /**
@@ -3391,17 +3410,18 @@ public class Parser {
      * </pre>
      */
     private WhileStatement whileStatement(Set<String> labelSet) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.WHILE);
         consume(Token.LP);
         Expression test = expression(true);
         consume(Token.RP);
 
-        LabelContext labelCx = enterIteration(sourcePos, labelSet);
+        LabelContext labelCx = enterIteration(begin, labelSet);
         Statement stmt = statement();
         exitIteration();
 
-        return new WhileStatement(sourcePos, labelCx.abrupts, labelCx.labelSet, test, stmt);
+        return new WhileStatement(begin, ts.endPosition(), labelCx.abrupts, labelCx.labelSet, test,
+                stmt);
     }
 
     /**
@@ -3427,7 +3447,7 @@ public class Parser {
      * </pre>
      */
     private IterationStatement forStatement(Set<String> labelSet) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.FOR);
         boolean each = false;
         if (token() != Token.LP && isName("each") && isEnabled(Option.ForEachStatement)) {
@@ -3440,10 +3460,10 @@ public class Parser {
         Node head;
         switch (token()) {
         case VAR:
-            long sourcePosVar = ts.sourcePosition();
+            long beginVar = ts.beginPosition();
             consume(Token.VAR);
-            VariableStatement varStmt = new VariableStatement(sourcePosVar,
-                    variableDeclarationList(false));
+            List<VariableDeclaration> decls = variableDeclarationList(false);
+            VariableStatement varStmt = new VariableStatement(beginVar, ts.endPosition(), decls);
             addVarScopedDeclaration(varStmt);
             head = varStmt;
             break;
@@ -3478,7 +3498,7 @@ public class Parser {
             }
             consume(Token.RP);
 
-            LabelContext labelCx = enterIteration(sourcePos, labelSet);
+            LabelContext labelCx = enterIteration(begin, labelSet);
             Statement stmt = statement();
             exitIteration();
 
@@ -3486,8 +3506,8 @@ public class Parser {
                 exitBlockContext();
             }
 
-            ForStatement iteration = new ForStatement(sourcePos, lexBlockContext, labelCx.abrupts,
-                    labelCx.labelSet, head, test, step, stmt);
+            ForStatement iteration = new ForStatement(begin, ts.endPosition(), lexBlockContext,
+                    labelCx.abrupts, labelCx.labelSet, head, test, step, stmt);
             if (lexBlockContext != null) {
                 lexBlockContext.node = iteration;
             }
@@ -3505,7 +3525,7 @@ public class Parser {
             }
             consume(Token.RP);
 
-            LabelContext labelCx = enterIteration(sourcePos, labelSet);
+            LabelContext labelCx = enterIteration(begin, labelSet);
             Statement stmt = statement();
             exitIteration();
 
@@ -3514,15 +3534,15 @@ public class Parser {
             }
 
             if (each) {
-                ForEachStatement iteration = new ForEachStatement(sourcePos, lexBlockContext,
-                        labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
+                ForEachStatement iteration = new ForEachStatement(begin, ts.endPosition(),
+                        lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
                 if (lexBlockContext != null) {
                     lexBlockContext.node = iteration;
                 }
                 return iteration;
             } else {
-                ForInStatement iteration = new ForInStatement(sourcePos, lexBlockContext,
-                        labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
+                ForInStatement iteration = new ForInStatement(begin, ts.endPosition(),
+                        lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
                 if (lexBlockContext != null) {
                     lexBlockContext.node = iteration;
                 }
@@ -3541,7 +3561,7 @@ public class Parser {
             }
             consume(Token.RP);
 
-            LabelContext labelCx = enterIteration(sourcePos, labelSet);
+            LabelContext labelCx = enterIteration(begin, labelSet);
             Statement stmt = statement();
             exitIteration();
 
@@ -3549,7 +3569,7 @@ public class Parser {
                 exitBlockContext();
             }
 
-            ForOfStatement iteration = new ForOfStatement(sourcePos, lexBlockContext,
+            ForOfStatement iteration = new ForOfStatement(begin, ts.endPosition(), lexBlockContext,
                     labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
             if (lexBlockContext != null) {
                 lexBlockContext.node = iteration;
@@ -3630,7 +3650,7 @@ public class Parser {
             }
         }
         // everything else => invalid lhs
-        throw reportError(type, lhs.getLine(), lhs.getColumn(), messageKey);
+        throw reportError(type, lhs.getBeginPosition(), messageKey);
     }
 
     /**
@@ -3671,16 +3691,20 @@ public class Parser {
                     target = destructuringAssignmentTarget(propertyValue);
                     initialiser = null;
                 }
-                property = new AssignmentProperty(p.getSourcePosition(), propertyName, target,
-                        initialiser);
+                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
+                        propertyName, target, initialiser);
             } else if (p instanceof PropertyNameDefinition) {
                 // AssignmentProperty : Identifier
                 PropertyNameDefinition def = (PropertyNameDefinition) p;
-                property = assignmentProperty(def.getPropertyName(), null);
+                assignmentProperty_StaticSemantics(def.getPropertyName());
+                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
+                        def.getPropertyName(), null);
             } else if (p instanceof CoverInitialisedName) {
                 // AssignmentProperty : Identifier Initialiser
                 CoverInitialisedName def = (CoverInitialisedName) p;
-                property = assignmentProperty(def.getPropertyName(), def.getInitialiser());
+                assignmentProperty_StaticSemantics(def.getPropertyName());
+                property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
+                        def.getPropertyName(), def.getInitialiser());
             } else {
                 assert p instanceof MethodDefinition;
                 throw reportSyntaxError(p, Messages.Key.InvalidDestructuring);
@@ -3688,8 +3712,8 @@ public class Parser {
             list.add(property);
         }
         context.removeLiteral(object);
-        ObjectAssignmentPattern pattern = new ObjectAssignmentPattern(object.getSourcePosition(),
-                list);
+        ObjectAssignmentPattern pattern = new ObjectAssignmentPattern(object.getBeginPosition(),
+                object.getEndPosition(), list);
         if (object.isParenthesised()) {
             pattern.addParentheses();
         }
@@ -3709,7 +3733,8 @@ public class Parser {
                 // DestructuringAssignmentTarget : LeftHandSideExpression
                 Expression expression = ((SpreadElement) e).getExpression();
                 LeftHandSideExpression target = destructuringSimpleAssignmentTarget(expression);
-                element = new AssignmentRestElement(e.getSourcePosition(), target);
+                element = new AssignmentRestElement(e.getBeginPosition(), e.getEndPosition(),
+                        target);
                 // no further elements after AssignmentRestElement allowed
                 if (iterator.hasNext()) {
                     reportSyntaxError(iterator.next(), Messages.Key.InvalidDestructuring);
@@ -3730,11 +3755,13 @@ public class Parser {
                     target = destructuringAssignmentTarget(e);
                     initialiser = null;
                 }
-                element = new AssignmentElement(e.getSourcePosition(), target, initialiser);
+                element = new AssignmentElement(e.getBeginPosition(), e.getEndPosition(), target,
+                        initialiser);
             }
             list.add(element);
         }
-        ArrayAssignmentPattern pattern = new ArrayAssignmentPattern(array.getSourcePosition(), list);
+        ArrayAssignmentPattern pattern = new ArrayAssignmentPattern(array.getBeginPosition(),
+                array.getEndPosition(), list);
         if (array.isParenthesised()) {
             pattern.addParentheses();
         }
@@ -3779,7 +3806,7 @@ public class Parser {
         throw reportSyntaxError(lhs, Messages.Key.InvalidDestructuring);
     }
 
-    private AssignmentProperty assignmentProperty(Identifier identifier, Expression initialiser) {
+    private void assignmentProperty_StaticSemantics(Identifier identifier) {
         switch (identifier.getName()) {
         case "eval":
         case "arguments":
@@ -3787,7 +3814,6 @@ public class Parser {
         case "super":
             reportSyntaxError(identifier, Messages.Key.InvalidDestructuring);
         }
-        return new AssignmentProperty(identifier.getSourcePosition(), identifier, initialiser);
     }
 
     /**
@@ -3800,7 +3826,7 @@ public class Parser {
      * </pre>
      */
     private ContinueStatement continueStatement() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         String label;
         consume(Token.CONTINUE);
         if (noLineTerminator() && isIdentifier(token())) {
@@ -3813,17 +3839,17 @@ public class Parser {
         LabelContext target = findContinueTarget(label);
         if (target == null) {
             if (label == null) {
-                reportSyntaxError(sourcePos, Messages.Key.InvalidContinueTarget);
+                reportSyntaxError(begin, Messages.Key.InvalidContinueTarget);
             } else {
-                reportSyntaxError(sourcePos, Messages.Key.LabelTargetNotFound, label);
+                reportSyntaxError(begin, Messages.Key.LabelTargetNotFound, label);
             }
         }
         if (target.type != StatementType.Iteration) {
-            reportSyntaxError(sourcePos, Messages.Key.InvalidContinueTarget);
+            reportSyntaxError(begin, Messages.Key.InvalidContinueTarget);
         }
         target.mark(Abrupt.Continue);
 
-        return new ContinueStatement(sourcePos, label);
+        return new ContinueStatement(begin, ts.endPosition(), label);
     }
 
     /**
@@ -3836,7 +3862,7 @@ public class Parser {
      * </pre>
      */
     private BreakStatement breakStatement() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         String label;
         consume(Token.BREAK);
         if (noLineTerminator() && isIdentifier(token())) {
@@ -3849,14 +3875,14 @@ public class Parser {
         LabelContext target = findBreakTarget(label);
         if (target == null) {
             if (label == null) {
-                reportSyntaxError(sourcePos, Messages.Key.InvalidBreakTarget);
+                reportSyntaxError(begin, Messages.Key.InvalidBreakTarget);
             } else {
-                reportSyntaxError(sourcePos, Messages.Key.LabelTargetNotFound, label);
+                reportSyntaxError(begin, Messages.Key.LabelTargetNotFound, label);
             }
         }
         target.mark(Abrupt.Break);
 
-        return new BreakStatement(sourcePos, label);
+        return new BreakStatement(begin, ts.endPosition(), label);
     }
 
     /**
@@ -3873,7 +3899,7 @@ public class Parser {
             reportSyntaxError(Messages.Key.InvalidReturnStatement);
         }
 
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         Expression expr = null;
         consume(Token.RETURN);
         if (noLineTerminator()
@@ -3882,7 +3908,7 @@ public class Parser {
         }
         semicolon();
 
-        return new ReturnStatement(sourcePos, expr);
+        return new ReturnStatement(begin, ts.endPosition(), expr);
     }
 
     /**
@@ -3894,8 +3920,8 @@ public class Parser {
      * </pre>
      */
     private WithStatement withStatement() {
-        long sourcePos = ts.sourcePosition();
-        reportStrictModeSyntaxError(sourcePos, Messages.Key.StrictModeWithStatement);
+        long begin = ts.beginPosition();
+        reportStrictModeSyntaxError(begin, Messages.Key.StrictModeWithStatement);
 
         consume(Token.WITH);
         consume(Token.LP);
@@ -3906,7 +3932,7 @@ public class Parser {
         Statement stmt = statement();
         exitWithContext();
 
-        WithStatement withStatement = new WithStatement(sourcePos, scope, expr, stmt);
+        WithStatement withStatement = new WithStatement(begin, ts.endPosition(), scope, expr, stmt);
         scope.node = withStatement;
         return withStatement;
     }
@@ -3931,18 +3957,18 @@ public class Parser {
      */
     private SwitchStatement switchStatement(Set<String> labelSet) {
         List<SwitchClause> clauses = newList();
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.SWITCH);
         consume(Token.LP);
         Expression expr = expression(true);
         consume(Token.RP);
 
         consume(Token.LC);
-        LabelContext labelCx = enterBreakable(sourcePos, labelSet);
+        LabelContext labelCx = enterBreakable(begin, labelSet);
         BlockContext scope = enterBlockContext();
         boolean hasDefault = false;
         for (;;) {
-            long sourcePosClause = ts.sourcePosition();
+            long beginClause = ts.beginPosition();
             Expression caseExpr;
             Token tok = token();
             if (tok == Token.CASE) {
@@ -3968,14 +3994,14 @@ public class Parser {
                     list.add(statementListItem());
                 }
             }
-            clauses.add(new SwitchClause(sourcePosClause, caseExpr, list));
+            clauses.add(new SwitchClause(beginClause, ts.endPosition(), caseExpr, list));
         }
         exitBlockContext();
         exitBreakable();
         consume(Token.RC);
 
-        SwitchStatement switchStatement = new SwitchStatement(sourcePos, scope, labelCx.abrupts,
-                labelCx.labelSet, expr, clauses);
+        SwitchStatement switchStatement = new SwitchStatement(begin, ts.endPosition(), scope,
+                labelCx.abrupts, labelCx.labelSet, expr, clauses);
         scope.node = switchStatement;
         return switchStatement;
     }
@@ -3989,7 +4015,7 @@ public class Parser {
      * </pre>
      */
     private Statement labelledStatement() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         LinkedHashSet<String> labelSet = new LinkedHashSet<>(4);
         labels: for (;;) {
             switch (token()) {
@@ -4008,11 +4034,11 @@ public class Parser {
                 // fall-through
             case NAME:
                 if (LOOKAHEAD(Token.COLON)) {
-                    long sourcePosLabel = ts.sourcePosition();
+                    long beginLabel = ts.beginPosition();
                     String name = identifier();
                     consume(Token.COLON);
                     if (!labelSet.add(name)) {
-                        reportSyntaxError(sourcePosLabel, Messages.Key.DuplicateLabel, name);
+                        reportSyntaxError(beginLabel, Messages.Key.DuplicateLabel, name);
                     }
                     break;
                 }
@@ -4034,11 +4060,12 @@ public class Parser {
 
         assert !labelSet.isEmpty();
 
-        LabelContext labelCx = enterLabelled(sourcePos, StatementType.Statement, labelSet);
+        LabelContext labelCx = enterLabelled(begin, StatementType.Statement, labelSet);
         Statement stmt = statement();
         exitLabelled();
 
-        return new LabelledStatement(sourcePos, labelCx.abrupts, labelCx.labelSet, stmt);
+        return new LabelledStatement(begin, ts.endPosition(), labelCx.abrupts, labelCx.labelSet,
+                stmt);
     }
 
     /**
@@ -4050,7 +4077,7 @@ public class Parser {
      * </pre>
      */
     private ThrowStatement throwStatement() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.THROW);
         if (!noLineTerminator()) {
             reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
@@ -4058,7 +4085,7 @@ public class Parser {
         Expression expr = expression(true);
         semicolon();
 
-        return new ThrowStatement(sourcePos, expr);
+        return new ThrowStatement(begin, ts.endPosition(), expr);
     }
 
     /**
@@ -4082,7 +4109,7 @@ public class Parser {
         BlockStatement tryBlock, finallyBlock = null;
         CatchNode catchNode = null;
         List<GuardedCatchNode> guardedCatchNodes = emptyList();
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.TRY);
         tryBlock = block(NO_INHERITED_BINDING);
         Token tok = token();
@@ -4090,7 +4117,7 @@ public class Parser {
             if (isEnabled(Option.GuardedCatch)) {
                 guardedCatchNodes = newSmallList();
                 while (token() == Token.CATCH && catchNode == null) {
-                    long sourcePosCatch = ts.sourcePosition();
+                    long beginCatch = ts.beginPosition();
                     consume(Token.CATCH);
                     BlockContext catchScope = enterBlockContext();
 
@@ -4113,18 +4140,18 @@ public class Parser {
 
                     exitBlockContext();
                     if (guard != null) {
-                        GuardedCatchNode guardedCatchNode = new GuardedCatchNode(sourcePosCatch,
-                                catchScope, catchParameter, guard, catchBlock);
+                        GuardedCatchNode guardedCatchNode = new GuardedCatchNode(beginCatch,
+                                ts.endPosition(), catchScope, catchParameter, guard, catchBlock);
                         catchScope.node = guardedCatchNode;
                         guardedCatchNodes.add(guardedCatchNode);
                     } else {
-                        catchNode = new CatchNode(sourcePosCatch, catchScope, catchParameter,
-                                catchBlock);
+                        catchNode = new CatchNode(beginCatch, ts.endPosition(), catchScope,
+                                catchParameter, catchBlock);
                         catchScope.node = catchNode;
                     }
                 }
             } else {
-                long sourcePosCatch = ts.sourcePosition();
+                long beginCatch = ts.beginPosition();
                 consume(Token.CATCH);
                 BlockContext catchScope = enterBlockContext();
 
@@ -4137,7 +4164,8 @@ public class Parser {
                 BlockStatement catchBlock = block(singletonList(catchParameter));
 
                 exitBlockContext();
-                catchNode = new CatchNode(sourcePosCatch, catchScope, catchParameter, catchBlock);
+                catchNode = new CatchNode(beginCatch, ts.endPosition(), catchScope, catchParameter,
+                        catchBlock);
                 catchScope.node = catchNode;
             }
 
@@ -4150,7 +4178,8 @@ public class Parser {
             finallyBlock = block(NO_INHERITED_BINDING);
         }
 
-        return new TryStatement(sourcePos, tryBlock, catchNode, guardedCatchNodes, finallyBlock);
+        return new TryStatement(begin, ts.endPosition(), tryBlock, catchNode, guardedCatchNodes,
+                finallyBlock);
     }
 
     /**
@@ -4162,11 +4191,11 @@ public class Parser {
      * </pre>
      */
     private DebuggerStatement debuggerStatement() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.DEBUGGER);
         semicolon();
 
-        return new DebuggerStatement(sourcePos);
+        return new DebuggerStatement(begin, ts.endPosition());
     }
 
     /**
@@ -4179,7 +4208,7 @@ public class Parser {
      */
     private Statement letStatement() {
         BlockContext scope = enterBlockContext();
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.LET);
 
         consume(Token.LP);
@@ -4188,12 +4217,13 @@ public class Parser {
 
         if (token() != Token.LC && isEnabled(Option.LetExpression)) {
             // let expression disguised as let statement - also error in strict mode(!)
-            reportStrictModeSyntaxError(sourcePos, Messages.Key.UnexpectedToken, token().toString());
+            reportStrictModeSyntaxError(begin, Messages.Key.UnexpectedToken, token().toString());
             Expression expression = assignmentExpression(true);
 
             exitBlockContext();
 
-            LetExpression letExpression = new LetExpression(sourcePos, scope, bindings, expression);
+            LetExpression letExpression = new LetExpression(begin, ts.endPosition(), scope,
+                    bindings, expression);
             scope.node = letExpression;
             return new ExpressionStatement(letExpression);
         } else {
@@ -4201,7 +4231,8 @@ public class Parser {
 
             exitBlockContext();
 
-            LetStatement block = new LetStatement(sourcePos, scope, bindings, letBlock);
+            LetStatement block = new LetStatement(begin, ts.endPosition(), scope, bindings,
+                    letBlock);
             scope.node = block;
             return block;
         }
@@ -4244,23 +4275,25 @@ public class Parser {
      * </pre>
      */
     private Expression primaryExpression() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         Token tok = token();
         switch (tok) {
         case THIS:
             consume(tok);
-            return new ThisExpression(sourcePos);
+            return new ThisExpression(begin, ts.endPosition());
         case NULL:
             consume(tok);
-            return new NullLiteral(sourcePos);
+            return new NullLiteral(begin, ts.endPosition());
         case FALSE:
         case TRUE:
             consume(tok);
-            return new BooleanLiteral(sourcePos, tok == Token.TRUE);
+            return new BooleanLiteral(begin, ts.endPosition(), tok == Token.TRUE);
         case NUMBER:
-            return new NumericLiteral(sourcePos, numericLiteral());
+            double number = numericLiteral();
+            return new NumericLiteral(begin, ts.endPosition(), number);
         case STRING:
-            return new StringLiteral(sourcePos, stringLiteral());
+            String string = stringLiteral();
+            return new StringLiteral(begin, ts.endPosition(), string);
         case DIV:
         case ASSIGN_DIV:
             return regularExpressionLiteral(tok);
@@ -4285,7 +4318,8 @@ public class Parser {
                 return letExpression();
             }
         default:
-            return new Identifier(sourcePos, identifier());
+            String ident = identifier();
+            return new Identifier(begin, ts.endPosition(), ident);
         }
     }
 
@@ -4353,14 +4387,15 @@ public class Parser {
         if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
             reportSyntaxError(Messages.Key.EmptyParenthesisedExpression);
         }
-        return new EmptyExpression(0);
+        return new EmptyExpression(0, 0);
     }
 
     private SpreadElement arrowFunctionRestParameter() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        SpreadElement spread = new SpreadElement(sourcePos, new Identifier(ts.sourcePosition(),
-                identifier()));
+        String ident = identifier();
+        Identifier identifier = new Identifier(ts.beginPosition(), ts.endPosition(), ident);
+        SpreadElement spread = new SpreadElement(begin, ts.endPosition(), identifier);
         if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
             reportSyntaxError(spread, Messages.Key.InvalidSpreadExpression);
         }
@@ -4380,7 +4415,7 @@ public class Parser {
         if (LOOKAHEAD(Token.FOR)) {
             return arrayComprehension();
         } else {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             if (isEnabled(Option.LegacyComprehension)) {
                 switch (peek()) {
                 case RB:
@@ -4397,10 +4432,10 @@ public class Parser {
                         ts.reset(position, lineinfo);
                         return legacyArrayComprehension();
                     }
-                    return arrayLiteral(sourcePos, expression);
+                    return arrayLiteral(begin, expression);
                 }
             }
-            return arrayLiteral(sourcePos, null);
+            return arrayLiteral(begin, null);
         }
     }
 
@@ -4424,7 +4459,7 @@ public class Parser {
      *     ... AssignmentExpression
      * </pre>
      */
-    private ArrayLiteral arrayLiteral(long sourcePos, Expression expr) {
+    private ArrayLiteral arrayLiteral(long begin, Expression expr) {
         List<Expression> list = newList();
         boolean needComma = false;
         if (expr == null) {
@@ -4439,11 +4474,12 @@ public class Parser {
                 needComma = false;
             } else if (tok == Token.COMMA) {
                 consume(Token.COMMA);
-                list.add(new Elision(0));
+                list.add(new Elision(0, 0));
             } else if (tok == Token.TRIPLE_DOT) {
-                long sourcePosSpread = ts.sourcePosition();
+                long beginSpread = ts.beginPosition();
                 consume(Token.TRIPLE_DOT);
-                list.add(new SpreadElement(sourcePosSpread, assignmentExpression(true)));
+                Expression expression = assignmentExpression(true);
+                list.add(new SpreadElement(beginSpread, ts.endPosition(), expression));
                 needComma = true;
             } else {
                 list.add(assignmentExpressionNoValidation(true));
@@ -4452,7 +4488,7 @@ public class Parser {
         }
         consume(Token.RB);
 
-        return new ArrayLiteral(sourcePos, list);
+        return new ArrayLiteral(begin, ts.endPosition(), list);
     }
 
     /**
@@ -4464,12 +4500,12 @@ public class Parser {
      * </pre>
      */
     private ArrayComprehension arrayComprehension() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.LB);
         Comprehension comprehension = comprehension();
         consume(Token.RB);
 
-        return new ArrayComprehension(sourcePos, comprehension);
+        return new ArrayComprehension(begin, ts.endPosition(), comprehension);
     }
 
     /**
@@ -4519,7 +4555,7 @@ public class Parser {
      * </pre>
      */
     private ComprehensionFor comprehensionFor() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.FOR);
         consume(Token.LP);
         Binding b = binding();
@@ -4528,7 +4564,7 @@ public class Parser {
         consume(Token.RP);
         BlockContext scope = enterBlockContext();
         addLexDeclaredName(b);
-        return new ComprehensionFor(sourcePos, scope, b, expression);
+        return new ComprehensionFor(begin, ts.endPosition(), scope, b, expression);
     }
 
     /**
@@ -4540,12 +4576,12 @@ public class Parser {
      * </pre>
      */
     private ComprehensionIf comprehensionIf() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.IF);
         consume(Token.LP);
         Expression expression = assignmentExpression(true);
         consume(Token.RP);
-        return new ComprehensionIf(sourcePos, expression);
+        return new ComprehensionIf(begin, ts.endPosition(), expression);
     }
 
     /**
@@ -4557,12 +4593,11 @@ public class Parser {
      * </pre>
      */
     private ArrayComprehension legacyArrayComprehension() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.LB);
         LegacyComprehension comprehension = legacyComprehension();
         consume(Token.RB);
-
-        return new ArrayComprehension(sourcePos, comprehension);
+        return new ArrayComprehension(begin, ts.endPosition(), comprehension);
     }
 
     /**
@@ -4589,7 +4624,7 @@ public class Parser {
 
         List<ComprehensionQualifier> list = newSmallList();
         while (token() == Token.FOR) {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             consume(Token.FOR);
             boolean each = false;
             if (token() != Token.LP && isName("each")) {
@@ -4614,16 +4649,17 @@ public class Parser {
             Expression expression = expression(true);
             consume(Token.RP);
 
-            list.add(new LegacyComprehensionFor(sourcePos, iterationKind, b, expression));
+            list.add(new LegacyComprehensionFor(begin, ts.endPosition(), iterationKind, b,
+                    expression));
         }
 
         if (token() == Token.IF) {
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             consume(Token.IF);
             consume(Token.LP);
             Expression expression = expression(true);
             consume(Token.RP);
-            list.add(new ComprehensionIf(sourcePos, expression));
+            list.add(new ComprehensionIf(begin, ts.endPosition(), expression));
         }
 
         exitBlockContext();
@@ -4645,7 +4681,7 @@ public class Parser {
      * </pre>
      */
     private ObjectLiteral objectLiteral() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         List<PropertyDefinition> defs = newList();
         consume(Token.LC);
         while (token() != Token.RC) {
@@ -4657,7 +4693,7 @@ public class Parser {
             }
         }
         consume(Token.RC);
-        ObjectLiteral object = new ObjectLiteral(sourcePos, defs);
+        ObjectLiteral object = new ObjectLiteral(begin, ts.endPosition(), defs);
         context.addLiteral(object);
         return object;
     }
@@ -4737,7 +4773,7 @@ public class Parser {
      * </pre>
      */
     private PropertyDefinition propertyDefinition() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         if (token() == Token.LB) {
             // either `PropertyName : AssignmentExpression` or MethodDefinition (normal)
             PropertyName propertyName = computedPropertyName();
@@ -4745,28 +4781,31 @@ public class Parser {
                 // it's the `PropertyName : AssignmentExpression` case
                 consume(Token.COLON);
                 Expression propertyValue = assignmentExpressionNoValidation(true);
-                return new PropertyValueDefinition(sourcePos, propertyName, propertyValue);
+                return new PropertyValueDefinition(begin, ts.endPosition(), propertyName,
+                        propertyValue);
             }
             // otherwise it's MethodDefinition (normal)
-            return normalMethod(sourcePos, propertyName, false);
+            return normalMethod(begin, propertyName, false);
         }
         if (LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = literalPropertyName();
             consume(Token.COLON);
             Expression propertyValue = assignmentExpressionNoValidation(true);
-            return new PropertyValueDefinition(sourcePos, propertyName, propertyValue);
+            return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
         }
         if (LOOKAHEAD(Token.COMMA) || LOOKAHEAD(Token.RC)) {
             // Static Semantics: It is a Syntax Error if IdentifierName is a
             // ReservedWord.
-            Identifier identifier = new Identifier(sourcePos, identifier());
-            return new PropertyNameDefinition(sourcePos, identifier);
+            String ident = identifier();
+            Identifier identifier = new Identifier(begin, ts.endPosition(), ident);
+            return new PropertyNameDefinition(begin, ts.endPosition(), identifier);
         }
         if (LOOKAHEAD(Token.ASSIGN)) {
-            Identifier identifier = new Identifier(sourcePos, identifier());
+            String ident = identifier();
+            Identifier identifier = new Identifier(begin, ts.endPosition(), ident);
             consume(Token.ASSIGN);
             Expression initialiser = assignmentExpression(true);
-            return new CoverInitialisedName(sourcePos, identifier, initialiser);
+            return new CoverInitialisedName(begin, ts.endPosition(), identifier, initialiser);
         }
         return methodDefinition(false);
     }
@@ -4799,14 +4838,17 @@ public class Parser {
      * </pre>
      */
     private PropertyName literalPropertyName() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         switch (token()) {
         case STRING:
-            return new StringLiteral(sourcePos, stringLiteral());
+            String string = stringLiteral();
+            return new StringLiteral(begin, ts.endPosition(), string);
         case NUMBER:
-            return new NumericLiteral(sourcePos, numericLiteral());
+            double number = numericLiteral();
+            return new NumericLiteral(begin, ts.endPosition(), number);
         default:
-            return new Identifier(sourcePos, identifierName());
+            String ident = identifierName();
+            return new Identifier(begin, ts.endPosition(), ident);
         }
     }
 
@@ -4819,12 +4861,12 @@ public class Parser {
      * </pre>
      */
     private PropertyName computedPropertyName() {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.LB);
         Expression expression = assignmentExpression(true);
         consume(Token.RB);
 
-        return new ComputedPropertyName(sourcePos, expression);
+        return new ComputedPropertyName(begin, ts.endPosition(), expression);
     }
 
     /**
@@ -4839,12 +4881,12 @@ public class Parser {
         boolean yieldAllowed = context.yieldAllowed;
         try {
             context.yieldAllowed = false;
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             consume(Token.LP);
             Comprehension comprehension = comprehension();
             consume(Token.RP);
 
-            return new GeneratorComprehension(sourcePos, comprehension);
+            return new GeneratorComprehension(begin, ts.endPosition(), comprehension);
         } finally {
             context.yieldAllowed = yieldAllowed;
         }
@@ -4862,12 +4904,12 @@ public class Parser {
         boolean yieldAllowed = context.yieldAllowed;
         try {
             context.yieldAllowed = false;
-            long sourcePos = ts.sourcePosition();
+            long begin = ts.beginPosition();
             consume(Token.LP);
             LegacyComprehension comprehension = legacyComprehension();
             consume(Token.RP);
 
-            return new GeneratorComprehension(sourcePos, comprehension);
+            return new GeneratorComprehension(begin, ts.endPosition(), comprehension);
         } finally {
             context.yieldAllowed = yieldAllowed;
         }
@@ -4882,11 +4924,11 @@ public class Parser {
      * </pre>
      */
     private Expression regularExpressionLiteral(Token tok) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         String[] re = ts.readRegularExpression(tok);
-        regularExpressionLiteral_StaticSemantics(sourcePos, re[0], re[1]);
+        regularExpressionLiteral_StaticSemantics(begin, re[0], re[1]);
         consume(tok);
-        return new RegularExpressionLiteral(sourcePos, re[0], re[1]);
+        return new RegularExpressionLiteral(begin, ts.endPosition(), re[0], re[1]);
     }
 
     private void regularExpressionLiteral_StaticSemantics(long sourcePos, String p, String f) {
@@ -4912,16 +4954,12 @@ public class Parser {
     private TemplateLiteral templateLiteral(boolean tagged) {
         List<Expression> elements = newList();
 
-        long sourcePosition = ts.sourcePosition();
-        long sourcePos = sourcePosition;
-        String[] values = ts.readTemplateLiteral(Token.TEMPLATE);
-        elements.add(new TemplateCharacters(sourcePos, values[0], values[1]));
+        long begin = ts.beginPosition();
+        templateCharacters(elements, Token.TEMPLATE);
         while (token() == Token.LC) {
             consume(Token.LC);
             elements.add(expression(true));
-            sourcePos = ts.sourcePosition();
-            values = ts.readTemplateLiteral(Token.RC);
-            elements.add(new TemplateCharacters(sourcePos, values[0], values[1]));
+            templateCharacters(elements, Token.RC);
         }
         consume(Token.TEMPLATE);
 
@@ -4929,7 +4967,13 @@ public class Parser {
             reportSyntaxError(Messages.Key.FunctionTooManyArguments);
         }
 
-        return new TemplateLiteral(sourcePosition, tagged, elements);
+        return new TemplateLiteral(begin, ts.endPosition(), tagged, elements);
+    }
+
+    private void templateCharacters(List<Expression> elements, Token start) {
+        long begin = ts.beginPosition();
+        String[] values = ts.readTemplateLiteral(start);
+        elements.add(new TemplateCharacters(begin, ts.endPosition(), values[0], values[1]));
     }
 
     /**
@@ -4942,7 +4986,7 @@ public class Parser {
      */
     private LetExpression letExpression() {
         BlockContext scope = enterBlockContext();
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         consume(Token.LET);
 
         consume(Token.LP);
@@ -4953,7 +4997,8 @@ public class Parser {
 
         exitBlockContext();
 
-        LetExpression letExpression = new LetExpression(sourcePos, scope, bindings, expression);
+        LetExpression letExpression = new LetExpression(begin, ts.endPosition(), scope, bindings,
+                expression);
         scope.node = letExpression;
 
         return letExpression;
@@ -4987,7 +5032,7 @@ public class Parser {
      * </pre>
      */
     private Expression leftHandSideExpression(boolean allowCall) {
-        long sourcePos = ts.sourcePosition();
+        long begin = ts.beginPosition();
         Expression lhs;
         if (token() == Token.NEW) {
             consume(Token.NEW);
@@ -4998,7 +5043,7 @@ public class Parser {
             } else {
                 args = emptyList();
             }
-            lhs = new NewExpression(sourcePos, expr, args);
+            lhs = new NewExpression(begin, ts.endPosition(), expr, args);
         } else if (token() == Token.SUPER) {
             ParseContext cx = context.findSuperContext();
             if (cx.kind == ContextKind.Script && !isEnabled(Option.FunctionCode)
@@ -5012,20 +5057,20 @@ public class Parser {
             case DOT:
                 consume(Token.DOT);
                 String name = identifierName();
-                lhs = new SuperExpression(sourcePos, name);
+                lhs = new SuperExpression(begin, ts.endPosition(), name);
                 break;
             case LB:
                 consume(Token.LB);
                 Expression expr = expression(true);
                 consume(Token.RB);
-                lhs = new SuperExpression(sourcePos, expr);
+                lhs = new SuperExpression(begin, ts.endPosition(), expr);
                 break;
             case LP:
                 if (!allowCall) {
-                    lhs = new SuperExpression(sourcePos);
+                    lhs = new SuperExpression(begin, ts.endPosition());
                 } else {
                     List<Expression> args = arguments();
-                    lhs = new SuperExpression(sourcePos, args);
+                    lhs = new SuperExpression(begin, ts.endPosition(), args);
                 }
                 break;
             case TEMPLATE:
@@ -5033,7 +5078,7 @@ public class Parser {
                 throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
             default:
                 if (!allowCall) {
-                    lhs = new SuperExpression(sourcePos);
+                    lhs = new SuperExpression(begin, ts.endPosition());
                 } else {
                     throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
                 }
@@ -5046,17 +5091,17 @@ public class Parser {
         for (;;) {
             switch (token()) {
             case DOT:
-                sourcePos = ts.sourcePosition();
+                begin = ts.beginPosition();
                 consume(Token.DOT);
                 String name = identifierName();
-                lhs = new PropertyAccessor(sourcePos, lhs, name);
+                lhs = new PropertyAccessor(begin, ts.endPosition(), lhs, name);
                 break;
             case LB:
-                sourcePos = ts.sourcePosition();
+                begin = ts.beginPosition();
                 consume(Token.LB);
                 Expression expr = expression(true);
                 consume(Token.RB);
-                lhs = new ElementAccessor(sourcePos, lhs, expr);
+                lhs = new ElementAccessor(begin, ts.endPosition(), lhs, expr);
                 break;
             case LP:
                 if (!allowCall) {
@@ -5065,14 +5110,14 @@ public class Parser {
                 if (lhs instanceof Identifier && "eval".equals(((Identifier) lhs).getName())) {
                     context.funContext.directEval = true;
                 }
-                sourcePos = ts.sourcePosition();
+                begin = ts.beginPosition();
                 List<Expression> args = arguments();
-                lhs = new CallExpression(sourcePos, lhs, args);
+                lhs = new CallExpression(begin, ts.endPosition(), lhs, args);
                 break;
             case TEMPLATE:
-                sourcePos = ts.sourcePosition();
+                begin = ts.beginPosition();
                 TemplateLiteral templ = templateLiteral(true);
-                lhs = new TemplateCallExpression(sourcePos, lhs, templ);
+                lhs = new TemplateCallExpression(begin, ts.endPosition(), lhs, templ);
                 break;
             default:
                 return lhs;
@@ -5118,9 +5163,10 @@ public class Parser {
             for (;;) {
                 Expression expr;
                 if (token() == Token.TRIPLE_DOT) {
-                    long sourcePos = ts.sourcePosition();
+                    long begin = ts.beginPosition();
                     consume(Token.TRIPLE_DOT);
-                    expr = new CallSpreadElement(sourcePos, assignmentExpression(true));
+                    Expression e = assignmentExpression(true);
+                    expr = new CallSpreadElement(begin, ts.endPosition(), e);
                 } else {
                     expr = assignmentExpression(true);
                 }
@@ -5164,6 +5210,7 @@ public class Parser {
      * </pre>
      */
     private Expression unaryExpression() {
+        long begin = ts.beginPosition();
         Token tok = token();
         switch (tok) {
         case DELETE:
@@ -5175,16 +5222,15 @@ public class Parser {
         case SUB:
         case BITNOT:
         case NOT: {
-            long sourcePos = ts.sourcePosition();
             consume(tok);
-            UnaryExpression unary = new UnaryExpression(sourcePos, unaryOp(tok, false),
-                    unaryExpression());
+            Expression operand = unaryExpression();
+            UnaryExpression unary = new UnaryExpression(begin, ts.endPosition(),
+                    unaryOp(tok, false), operand);
             if (tok == Token.INC || tok == Token.DEC) {
-                validateSimpleAssignment(unary.getOperand(), ExceptionType.ReferenceError,
+                validateSimpleAssignment(operand, ExceptionType.ReferenceError,
                         Messages.Key.InvalidIncDecTarget);
             }
             if (tok == Token.DELETE) {
-                Expression operand = unary.getOperand();
                 if (operand instanceof Identifier) {
                     reportStrictModeSyntaxError(unary, Messages.Key.StrictModeInvalidDeleteOperand);
                 }
@@ -5198,9 +5244,8 @@ public class Parser {
                 if (tok == Token.INC || tok == Token.DEC) {
                     validateSimpleAssignment(lhs, ExceptionType.ReferenceError,
                             Messages.Key.InvalidIncDecTarget);
-                    long sourcePos = ts.sourcePosition();
                     consume(tok);
-                    return new UnaryExpression(sourcePos, unaryOp(tok, true), lhs);
+                    return new UnaryExpression(begin, ts.endPosition(), unaryOp(tok, true), lhs);
                 }
             }
             return lhs;

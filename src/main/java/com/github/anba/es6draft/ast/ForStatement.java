@@ -25,9 +25,10 @@ public class ForStatement extends IterationStatement implements ScopedNode {
     private Expression step;
     private Statement statement;
 
-    public ForStatement(long sourcePosition, BlockScope scope, EnumSet<Abrupt> abrupt,
-            Set<String> labelSet, Node head, Expression test, Expression step, Statement statement) {
-        super(sourcePosition);
+    public ForStatement(long beginPosition, long endPosition, BlockScope scope,
+            EnumSet<Abrupt> abrupt, Set<String> labelSet, Node head, Expression test,
+            Expression step, Statement statement) {
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.abrupt = abrupt;
         this.labelSet = labelSet;

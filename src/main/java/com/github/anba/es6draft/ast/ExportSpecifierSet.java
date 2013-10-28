@@ -16,14 +16,14 @@ public class ExportSpecifierSet extends AstNode {
     private List<ExportSpecifier> exports;
     private String sourceModule;
 
-    public ExportSpecifierSet(long sourcePosition, String sourceModule) {
-        super(sourcePosition);
+    public ExportSpecifierSet(long beginPosition, long endPosition, String sourceModule) {
+        super(beginPosition, endPosition);
         this.sourceModule = sourceModule;
     }
 
-    public ExportSpecifierSet(long sourcePosition, List<ExportSpecifier> exports,
+    public ExportSpecifierSet(long beginPosition, long endPosition, List<ExportSpecifier> exports,
             String sourceModule) {
-        super(sourcePosition);
+        super(beginPosition, endPosition);
         this.exports = exports;
         this.sourceModule = sourceModule;
     }

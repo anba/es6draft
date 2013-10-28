@@ -19,8 +19,9 @@ public class NewExpression extends Expression {
     private Expression expression;
     private List<Expression> arguments;
 
-    public NewExpression(long sourcePosition, Expression expression, List<Expression> arguments) {
-        super(sourcePosition);
+    public NewExpression(long beginPosition, long endPosition, Expression expression,
+            List<Expression> arguments) {
+        super(beginPosition, endPosition);
         this.expression = expression;
         this.arguments = arguments;
     }

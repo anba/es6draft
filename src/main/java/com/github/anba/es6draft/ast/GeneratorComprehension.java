@@ -16,8 +16,8 @@ package com.github.anba.es6draft.ast;
 public class GeneratorComprehension extends Expression {
     private Comprehension comprehension;
 
-    public GeneratorComprehension(long sourcePosition, Comprehension comprehension) {
-        super(sourcePosition);
+    public GeneratorComprehension(long beginPosition, long endPosition, Comprehension comprehension) {
+        super(beginPosition, endPosition);
         this.comprehension = comprehension;
     }
 

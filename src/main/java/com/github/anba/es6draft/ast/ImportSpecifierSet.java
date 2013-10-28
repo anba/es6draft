@@ -16,13 +16,13 @@ public class ImportSpecifierSet extends AstNode {
     private String defaultImport;
     private List<ImportSpecifier> imports;
 
-    public ImportSpecifierSet(long sourcePosition, String defaultImport) {
-        super(sourcePosition);
+    public ImportSpecifierSet(long beginPosition, long endPosition, String defaultImport) {
+        super(beginPosition, endPosition);
         this.defaultImport = defaultImport;
     }
 
-    public ImportSpecifierSet(long sourcePosition, List<ImportSpecifier> imports) {
-        super(sourcePosition);
+    public ImportSpecifierSet(long beginPosition, long endPosition, List<ImportSpecifier> imports) {
+        super(beginPosition, endPosition);
         this.imports = imports;
     }
 

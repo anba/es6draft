@@ -17,8 +17,8 @@ public class TemplateCharacters extends Expression {
     private String value;
     private String rawValue;
 
-    public TemplateCharacters(long sourcePosition, String value, String rawValue) {
-        super(sourcePosition);
+    public TemplateCharacters(long beginPosition, long endPosition, String value, String rawValue) {
+        super(beginPosition, endPosition);
         this.value = value;
         this.rawValue = rawValue;
     }

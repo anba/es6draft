@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class PropertyDefinition extends AstNode {
-    protected PropertyDefinition(long sourcePosition) {
-        super(sourcePosition);
+    protected PropertyDefinition(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 
     public abstract PropertyName getPropertyName();

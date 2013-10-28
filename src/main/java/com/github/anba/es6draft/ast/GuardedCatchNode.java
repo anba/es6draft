@@ -19,9 +19,9 @@ public class GuardedCatchNode extends AstNode implements ScopedNode {
     private BlockStatement catchBlock;
     private Expression guard;
 
-    public GuardedCatchNode(long sourcePosition, BlockScope scope, Binding catchParameter,
-            Expression guard, BlockStatement catchBlock) {
-        super(sourcePosition);
+    public GuardedCatchNode(long beginPosition, long endPosition, BlockScope scope,
+            Binding catchParameter, Expression guard, BlockStatement catchBlock) {
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.catchParameter = catchParameter;
         this.guard = guard;

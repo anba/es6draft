@@ -13,8 +13,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public class EmptyExpression extends Expression {
-    public EmptyExpression(long sourcePosition) {
-        super(sourcePosition);
+    public EmptyExpression(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 
     @Override

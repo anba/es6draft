@@ -18,7 +18,7 @@ public class ConditionalExpression extends Expression {
     private Expression otherwise;
 
     public ConditionalExpression(Expression test, Expression then, Expression otherwise) {
-        super(test.getSourcePosition());
+        super(test.getBeginPosition(), otherwise.getEndPosition());
         this.test = test;
         this.then = then;
         this.otherwise = otherwise;

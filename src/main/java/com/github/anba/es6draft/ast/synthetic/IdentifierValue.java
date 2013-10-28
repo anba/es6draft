@@ -17,8 +17,8 @@ import com.github.anba.es6draft.ast.NodeVisitor;
  * </ul>
  */
 public class IdentifierValue extends Identifier {
-    public IdentifierValue(long sourcePosition, String name) {
-        super(sourcePosition, name);
+    public IdentifierValue(long beginPosition, long endPosition, String name) {
+        super(beginPosition, endPosition, name);
     }
 
     @Override

@@ -15,10 +15,11 @@ import java.util.List;
  * </ul>
  */
 public class LegacyGeneratorExpression extends GeneratorExpression {
-    public LegacyGeneratorExpression(long sourcePosition, FunctionScope scope,
+    public LegacyGeneratorExpression(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
             List<StatementListItem> statements, String headerSource, String bodySource) {
-        super(sourcePosition, scope, identifier, parameters, statements, headerSource, bodySource);
+        super(beginPosition, endPosition, scope, identifier, parameters, statements, headerSource,
+                bodySource);
     }
 
     @Override

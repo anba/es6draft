@@ -23,10 +23,10 @@ public class FunctionExpression extends Expression implements FunctionDefinition
     private StrictMode strictMode;
     private String headerSource, bodySource;
 
-    public FunctionExpression(long sourcePosition, FunctionScope scope,
+    public FunctionExpression(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
             List<StatementListItem> statements, String headerSource, String bodySource) {
-        super(sourcePosition);
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
         this.functionName = (identifier != null ? identifier.getName() : "");
@@ -36,10 +36,10 @@ public class FunctionExpression extends Expression implements FunctionDefinition
         this.bodySource = bodySource;
     }
 
-    public FunctionExpression(long sourcePosition, FunctionScope scope, String functionName,
-            FormalParameterList parameters, List<StatementListItem> statements,
-            String headerSource, String bodySource) {
-        super(sourcePosition);
+    public FunctionExpression(long beginPosition, long endPosition, FunctionScope scope,
+            String functionName, FormalParameterList parameters,
+            List<StatementListItem> statements, String headerSource, String bodySource) {
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = null;
         this.functionName = functionName;

@@ -22,9 +22,9 @@ public class WhileStatement extends IterationStatement {
     private Expression test;
     private Statement statement;
 
-    public WhileStatement(long sourcePosition, EnumSet<Abrupt> abrupt, Set<String> labelSet,
-            Expression test, Statement statement) {
-        super(sourcePosition);
+    public WhileStatement(long beginPosition, long endPosition, EnumSet<Abrupt> abrupt,
+            Set<String> labelSet, Expression test, Statement statement) {
+        super(beginPosition, endPosition);
         this.abrupt = abrupt;
         this.labelSet = labelSet;
         this.test = test;

@@ -17,9 +17,9 @@ public class WithStatement extends Statement implements ScopedNode {
     private Expression expression;
     private Statement statement;
 
-    public WithStatement(long sourcePosition, BlockScope scope, Expression expression,
-            Statement statement) {
-        super(sourcePosition);
+    public WithStatement(long beginPosition, long endPosition, BlockScope scope,
+            Expression expression, Statement statement) {
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.expression = expression;
         this.statement = statement;

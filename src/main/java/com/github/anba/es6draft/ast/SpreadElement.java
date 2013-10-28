@@ -17,8 +17,8 @@ package com.github.anba.es6draft.ast;
 public class SpreadElement extends Expression {
     private Expression expression;
 
-    public SpreadElement(long sourcePosition, Expression expression) {
-        super(sourcePosition);
+    public SpreadElement(long beginPosition, long endPosition, Expression expression) {
+        super(beginPosition, endPosition);
         this.expression = expression;
     }
 

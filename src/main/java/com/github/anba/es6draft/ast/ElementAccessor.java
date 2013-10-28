@@ -19,8 +19,8 @@ public class ElementAccessor extends LeftHandSideExpression {
     private Expression base;
     private Expression element;
 
-    public ElementAccessor(long sourcePosition, Expression base, Expression element) {
-        super(sourcePosition);
+    public ElementAccessor(long beginPosition, long endPosition, Expression base, Expression element) {
+        super(beginPosition, endPosition);
         this.base = base;
         this.element = element;
     }
@@ -35,7 +35,7 @@ public class ElementAccessor extends LeftHandSideExpression {
 
     @Override
     public ElementAccessorValue asValue() {
-        return new ElementAccessorValue(getSourcePosition(), base, element);
+        return new ElementAccessorValue(getBeginPosition(), getEndPosition(), base, element);
     }
 
     @Override

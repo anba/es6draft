@@ -16,7 +16,7 @@ public class ExpressionMethod extends Expression {
     private Expression expression;
 
     public ExpressionMethod(Expression expression) {
-        super(expression.getSourcePosition());
+        super(expression.getBeginPosition(), expression.getEndPosition());
         this.expression = expression;
     }
 

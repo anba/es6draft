@@ -19,8 +19,9 @@ public class BlockStatement extends Statement implements ScopedNode {
     private BlockScope scope;
     private List<StatementListItem> statements = new ArrayList<>();
 
-    public BlockStatement(long sourcePosition, BlockScope scope, List<StatementListItem> statements) {
-        super(sourcePosition);
+    public BlockStatement(long beginPosition, long endPosition, BlockScope scope,
+            List<StatementListItem> statements) {
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.statements = statements;
     }

@@ -22,26 +22,26 @@ public class SuperExpression extends LeftHandSideExpression {
     private Expression expression;
     private List<Expression> arguments;
 
-    public SuperExpression(long sourcePosition) {
+    public SuperExpression(long beginPosition, long endPosition) {
         // new super()
-        super(sourcePosition);
+        super(beginPosition, endPosition);
     }
 
-    public SuperExpression(long sourcePosition, String name) {
+    public SuperExpression(long beginPosition, long endPosition, String name) {
         // super.<name>
-        super(sourcePosition);
+        super(beginPosition, endPosition);
         this.name = name;
     }
 
-    public SuperExpression(long sourcePosition, Expression expression) {
+    public SuperExpression(long beginPosition, long endPosition, Expression expression) {
         // super[expression]
-        super(sourcePosition);
+        super(beginPosition, endPosition);
         this.expression = expression;
     }
 
-    public SuperExpression(long sourcePosition, List<Expression> arguments) {
+    public SuperExpression(long beginPosition, long endPosition, List<Expression> arguments) {
         // super(<arguments>)
-        super(sourcePosition);
+        super(beginPosition, endPosition);
         this.arguments = arguments;
     }
 
@@ -60,13 +60,13 @@ public class SuperExpression extends LeftHandSideExpression {
     @Override
     public Expression asValue() {
         if (name != null) {
-            return new SuperExpressionValue(getSourcePosition(), name);
+            return new SuperExpressionValue(getBeginPosition(), getEndPosition(), name);
         } else if (expression != null) {
-            return new SuperExpressionValue(getSourcePosition(), expression);
+            return new SuperExpressionValue(getBeginPosition(), getEndPosition(), expression);
         } else if (arguments != null) {
-            return new SuperExpressionValue(getSourcePosition(), arguments);
+            return new SuperExpressionValue(getBeginPosition(), getEndPosition(), arguments);
         } else {
-            return new SuperExpressionValue(getSourcePosition());
+            return new SuperExpressionValue(getBeginPosition(), getEndPosition());
         }
     }
 

@@ -159,15 +159,25 @@ public class Compiler {
         // line numbers are limited to uint16 in bytecode, valid line count not needed for smap
         final int maxLineCount = 0xffff;
         try (Formatter smap = new Formatter(Locale.ROOT)) {
+            // Header
+            // - ID
             smap.format("SMAP%n");
+            // - OutputFileName
             smap.format("%s%n", script.getSourceFile());
+            // - DefaultStratumId
             smap.format("Script%n");
+            // Section
+            // - StratumSection
             smap.format("*S Script%n");
+            // - FileSection
             smap.format("*F%n");
-            smap.format("+ 1 %s%n", path.getFileName());
-            smap.format("%s%n", path);
+            // -- FileInfo
+            smap.format("+ 1 %s%n%s%n", path.getFileName(), path);
+            // - LineSection
             smap.format("*L%n");
-            smap.format("%d#1,%d:%d%n", script.getLine(), maxLineCount, script.getLine());
+            // -- LineInfo
+            smap.format("%d#1,%d:%d%n", script.getBeginLine(), maxLineCount, script.getBeginLine());
+            // EndSection
             smap.format("*E%n");
 
             return smap.toString();

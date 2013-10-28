@@ -13,8 +13,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class LeftHandSideExpression extends Expression {
-    protected LeftHandSideExpression(long sourcePosition) {
-        super(sourcePosition);
+    protected LeftHandSideExpression(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 
     @Override

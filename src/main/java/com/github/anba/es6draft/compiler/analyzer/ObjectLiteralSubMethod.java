@@ -34,8 +34,9 @@ public class ObjectLiteralSubMethod extends SubMethod<ObjectLiteral> {
             PropertyValueDefinition valDef = (PropertyValueDefinition) node;
 
             int savedSize = -size + EXPR_METHOD_SIZE;
-            this.node = new PropertyValueDefinition(valDef.getSourcePosition(),
-                    valDef.getPropertyName(), new ExpressionMethod(valDef.getPropertyValue()));
+            this.node = new PropertyValueDefinition(valDef.getBeginPosition(),
+                    valDef.getEndPosition(), valDef.getPropertyName(), new ExpressionMethod(
+                            valDef.getPropertyValue()));
             this.size = EXPR_METHOD_SIZE;
             return savedSize;
         }

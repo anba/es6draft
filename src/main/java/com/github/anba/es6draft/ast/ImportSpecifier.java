@@ -14,8 +14,9 @@ public class ImportSpecifier extends AstNode {
     private String externalName;
     private String localName;
 
-    public ImportSpecifier(long sourcePosition, String externalName, String localName) {
-        super(sourcePosition);
+    public ImportSpecifier(long beginPosition, long endPosition, String externalName,
+            String localName) {
+        super(beginPosition, endPosition);
         this.externalName = externalName;
         this.localName = localName;
     }

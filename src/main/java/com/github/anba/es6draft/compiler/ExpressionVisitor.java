@@ -100,7 +100,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     }
 
     void lineInfo(Node node) {
-        lineInfo(node.getLine());
+        lineInfo(node.getBeginLine());
     }
 
     boolean isTailCall(Expression expr) {

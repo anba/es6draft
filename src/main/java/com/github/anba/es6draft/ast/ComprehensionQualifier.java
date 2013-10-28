@@ -15,7 +15,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class ComprehensionQualifier extends AstNode {
-    protected ComprehensionQualifier(long sourcePosition) {
-        super(sourcePosition);
+    protected ComprehensionQualifier(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 }

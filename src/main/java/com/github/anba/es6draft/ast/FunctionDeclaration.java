@@ -22,10 +22,10 @@ public class FunctionDeclaration extends Declaration implements FunctionDefiniti
     private StrictMode strictMode;
     private String headerSource, bodySource;
 
-    public FunctionDeclaration(long sourcePosition, FunctionScope scope,
+    public FunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
             List<StatementListItem> statements, String headerSource, String bodySource) {
-        super(sourcePosition);
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;

@@ -23,9 +23,10 @@ public class SwitchStatement extends BreakableStatement implements ScopedNode {
     private Expression expression;
     private List<SwitchClause> clauses;
 
-    public SwitchStatement(long sourcePosition, BlockScope scope, EnumSet<Abrupt> abrupt,
-            Set<String> labelSet, Expression expression, List<SwitchClause> clauses) {
-        super(sourcePosition);
+    public SwitchStatement(long beginPosition, long endPosition, BlockScope scope,
+            EnumSet<Abrupt> abrupt, Set<String> labelSet, Expression expression,
+            List<SwitchClause> clauses) {
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.abrupt = abrupt;
         this.labelSet = labelSet;

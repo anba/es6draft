@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class ArrayInitialiser extends Expression {
-    protected ArrayInitialiser(long sourcePosition) {
-        super(sourcePosition);
+    protected ArrayInitialiser(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 }

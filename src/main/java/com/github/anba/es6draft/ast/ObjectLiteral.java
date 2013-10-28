@@ -18,8 +18,8 @@ import java.util.List;
 public class ObjectLiteral extends Expression {
     private List<PropertyDefinition> properties;
 
-    public ObjectLiteral(long sourcePosition, List<PropertyDefinition> properties) {
-        super(sourcePosition);
+    public ObjectLiteral(long beginPosition, long endPosition, List<PropertyDefinition> properties) {
+        super(beginPosition, endPosition);
         this.properties = properties;
     }
 

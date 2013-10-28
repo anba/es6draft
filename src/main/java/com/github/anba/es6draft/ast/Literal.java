@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public abstract class Literal extends Expression {
-    protected Literal(long sourcePosition) {
-        super(sourcePosition);
+    protected Literal(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 }

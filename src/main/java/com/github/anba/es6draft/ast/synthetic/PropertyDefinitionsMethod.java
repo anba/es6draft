@@ -19,7 +19,7 @@ public class PropertyDefinitionsMethod extends PropertyDefinition {
     private List<PropertyDefinition> properties;
 
     public PropertyDefinitionsMethod(List<PropertyDefinition> properties) {
-        super(first(properties).getSourcePosition());
+        super(first(properties).getBeginPosition(), last(properties).getEndPosition());
         this.properties = properties;
     }
 
@@ -40,5 +40,10 @@ public class PropertyDefinitionsMethod extends PropertyDefinition {
     private static PropertyDefinition first(List<PropertyDefinition> properties) {
         assert !properties.isEmpty();
         return properties.get(0);
+    }
+
+    private static PropertyDefinition last(List<PropertyDefinition> properties) {
+        assert !properties.isEmpty();
+        return properties.get(properties.size() - 1);
     }
 }

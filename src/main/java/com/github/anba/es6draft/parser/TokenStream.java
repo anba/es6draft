@@ -43,9 +43,9 @@ public class TokenStream {
     private boolean hasCurrentLineTerminator;
     /** line terminator preceding next token? */
     private boolean hasLineTerminator;
-    /** line/column info for current token */
+    /** start line/column info for current token */
     private long sourcePosition;
-    /** line/column info for next token */
+    /** start line/column info for next token */
     private long nextSourcePosition;
 
     // literal data
@@ -136,6 +136,15 @@ public class TokenStream {
 
     public long sourcePosition() {
         return sourcePosition;
+    }
+
+    public long beginPosition() {
+        return sourcePosition;
+    }
+
+    public long endPosition() {
+        // add one to make columns 1-indexed
+        return ((long) (1 + position - linestart) << 32) | line;
     }
 
     public TokenStream initialise() {

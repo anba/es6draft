@@ -18,8 +18,9 @@ import com.github.anba.es6draft.ast.NodeVisitor;
  * </ul>
  */
 public class ElementAccessorValue extends ElementAccessor {
-    public ElementAccessorValue(long sourcePosition, Expression base, Expression element) {
-        super(sourcePosition, base, element);
+    public ElementAccessorValue(long beginPosition, long endPosition, Expression base,
+            Expression element) {
+        super(beginPosition, endPosition, base, element);
     }
 
     @Override

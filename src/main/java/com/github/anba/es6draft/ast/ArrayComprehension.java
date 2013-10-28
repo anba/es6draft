@@ -17,8 +17,8 @@ package com.github.anba.es6draft.ast;
 public class ArrayComprehension extends ArrayInitialiser {
     private Comprehension comprehension;
 
-    public ArrayComprehension(long sourcePosition, Comprehension comprehension) {
-        super(sourcePosition);
+    public ArrayComprehension(long beginPosition, long endPosition, Comprehension comprehension) {
+        super(beginPosition, endPosition);
         this.comprehension = comprehension;
     }
 

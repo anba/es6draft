@@ -14,8 +14,8 @@ package com.github.anba.es6draft.ast;
  * </ul>
  */
 public class ThisExpression extends Expression {
-    public ThisExpression(long sourcePosition) {
-        super(sourcePosition);
+    public ThisExpression(long beginPosition, long endPosition) {
+        super(beginPosition, endPosition);
     }
 
     @Override

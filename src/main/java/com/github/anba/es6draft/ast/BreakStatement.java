@@ -15,8 +15,8 @@ package com.github.anba.es6draft.ast;
 public class BreakStatement extends Statement {
     private String label;
 
-    public BreakStatement(long sourcePosition, String label) {
-        super(sourcePosition);
+    public BreakStatement(long beginPosition, long endPosition, String label) {
+        super(beginPosition, endPosition);
         this.label = label;
     }
 

@@ -29,11 +29,11 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
         Function, Generator, Getter, Setter
     }
 
-    public MethodDefinition(long sourcePosition, FunctionScope scope, MethodType type,
-            PropertyName propertyName, FormalParameterList parameters,
+    public MethodDefinition(long beginPosition, long endPosition, FunctionScope scope,
+            MethodType type, PropertyName propertyName, FormalParameterList parameters,
             List<StatementListItem> statements, boolean superReference, String headerSource,
             String bodySource) {
-        super(sourcePosition);
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.type = type;
         this.propertyName = propertyName;

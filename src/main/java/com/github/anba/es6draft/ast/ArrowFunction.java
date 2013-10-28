@@ -22,9 +22,10 @@ public class ArrowFunction extends Expression implements FunctionNode {
     private StrictMode strictMode;
     private String headerSource, bodySource;
 
-    public ArrowFunction(long sourcePosition, FunctionScope scope, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
-        super(sourcePosition);
+    public ArrowFunction(long beginPosition, long endPosition, FunctionScope scope,
+            FormalParameterList parameters, List<StatementListItem> statements,
+            String headerSource, String bodySource) {
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.parameters = parameters;
         this.statements = statements;
@@ -33,9 +34,10 @@ public class ArrowFunction extends Expression implements FunctionNode {
         this.bodySource = bodySource;
     }
 
-    public ArrowFunction(long sourcePosition, FunctionScope scope, FormalParameterList parameters,
-            Expression expression, String headerSource, String bodySource) {
-        super(sourcePosition);
+    public ArrowFunction(long beginPosition, long endPosition, FunctionScope scope,
+            FormalParameterList parameters, Expression expression, String headerSource,
+            String bodySource) {
+        super(beginPosition, endPosition);
         this.scope = scope;
         this.parameters = parameters;
         this.statements = null;

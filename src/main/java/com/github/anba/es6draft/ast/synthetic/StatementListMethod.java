@@ -19,7 +19,7 @@ public class StatementListMethod extends Statement {
     private List<StatementListItem> statements;
 
     public StatementListMethod(List<StatementListItem> statements) {
-        super(first(statements).getSourcePosition());
+        super(first(statements).getBeginPosition(), last(statements).getEndPosition());
         this.statements = statements;
     }
 
@@ -35,5 +35,10 @@ public class StatementListMethod extends Statement {
     private static StatementListItem first(List<StatementListItem> elements) {
         assert !elements.isEmpty();
         return elements.get(0);
+    }
+
+    private static StatementListItem last(List<StatementListItem> elements) {
+        assert !elements.isEmpty();
+        return elements.get(elements.size() - 1);
     }
 }
