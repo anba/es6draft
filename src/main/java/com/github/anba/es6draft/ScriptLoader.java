@@ -99,7 +99,8 @@ public class ScriptLoader {
     }
 
     /**
-     * Compiles the given {@link FunctionNode} to a {@link RuntimeInfo.Function} object
+     * Compiles the given {@link FunctionNode} to a
+     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function} object
      */
     public static RuntimeInfo.Function compile(String className, FunctionNode function,
             EnumSet<Compiler.Option> options) throws CompilationException {

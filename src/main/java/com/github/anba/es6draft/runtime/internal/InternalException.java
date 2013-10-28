@@ -14,35 +14,45 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 @SuppressWarnings("serial")
 public abstract class InternalException extends RuntimeException {
     /**
-     * {@inheritDoc}
+     * InternalException constructor
+     * 
+     * @see RuntimeException#RuntimeException()
      */
     public InternalException() {
         super();
     }
 
     /**
-     * {@inheritDoc}
+     * InternalException constructor
+     * 
+     * @see RuntimeException#RuntimeException(String)
      */
     public InternalException(String message) {
         super(message);
     }
 
     /**
-     * {@inheritDoc}
+     * InternalException constructor
+     * 
+     * @see RuntimeException#RuntimeException(String, Throwable)
      */
     public InternalException(String message, Throwable cause) {
         super(message, cause);
     }
 
     /**
-     * {@inheritDoc}
+     * InternalException constructor
+     * 
+     * @see RuntimeException#RuntimeException(Throwable)
      */
     public InternalException(Throwable cause) {
         super(cause);
     }
 
     /**
-     * {@inheritDoc}
+     * InternalException constructor
+     * 
+     * @see RuntimeException#RuntimeException(String, Throwable, boolean, boolean)
      */
     protected InternalException(String message, Throwable cause, boolean enableSuppression,
             boolean writableStackTrace) {

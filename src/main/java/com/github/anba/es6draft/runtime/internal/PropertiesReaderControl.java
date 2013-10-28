@@ -19,8 +19,8 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 /**
- * {@link ResourceBundle.Control} subclass to create {@link PropertyResourceBundle} objects which
- * use a configurable encoding instead of the default ISO-8859-1 encoding.
+ * {@link java.util.ResourceBundle.Control} subclass to create {@link PropertyResourceBundle}
+ * objects which use a configurable encoding instead of the default ISO-8859-1 encoding.
  */
 public class PropertiesReaderControl extends ResourceBundle.Control {
     private final Charset charset;

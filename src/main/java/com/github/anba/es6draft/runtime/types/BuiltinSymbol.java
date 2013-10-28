@@ -62,7 +62,7 @@ public enum BuiltinSymbol {
     ;
 
     /**
-     * Returns a {@link ExoticSymbol} object for this {@link Symbol}
+     * Returns a {@link Symbol} object for this {@link BuiltinSymbol}
      */
     public final Symbol get() {
         assert this != NONE;
