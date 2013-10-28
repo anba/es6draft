@@ -62,11 +62,9 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
     private static final int ARGUMENTS = 2;
 
     private static class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Types.ExoticArguments,
-                Types.ExecutionContext, Types.FunctionObject, Types.Object_);
-
-        FunctionDeclInitMethodGenerator(CodeGenerator codegen, String methodName, boolean strict) {
-            super(codegen, methodName, methodDescriptor, strict, false);
+        FunctionDeclInitMethodGenerator(CodeGenerator codegen, FunctionNode node) {
+            super(codegen, codegen.methodName(node, FunctionName.Init), codegen.methodType(node,
+                    FunctionName.Init), IsStrict(node), false);
         }
 
         @Override
@@ -82,20 +80,18 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         super(codegen);
     }
 
-    void generate(FunctionNode func) {
-        String methodName = codegen.methodName(func, FunctionName.Init);
-        ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(codegen, methodName,
-                IsStrict(func));
+    void generate(FunctionNode function) {
+        ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(codegen, function);
 
-        mv.lineInfo(func);
+        mv.lineInfo(function);
         mv.begin();
-        mv.enterScope(func);
-        generate(func, mv);
+        mv.enterScope(function);
+        generate(function, mv);
         mv.exitScope();
         mv.end();
     }
 
-    private void generate(FunctionNode func, ExpressionVisitor mv) {
+    private void generate(FunctionNode function, ExpressionVisitor mv) {
         Variable<ExecutionContext> context = mv.getParameter(EXECUTION_CONTEXT,
                 ExecutionContext.class);
 
@@ -116,18 +112,18 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         /* step 1 */
         // RuntimeInfo.Code code = func.getCode();
         /* step 2 */
-        boolean strict = IsStrict(func);
+        boolean strict = IsStrict(function);
         /* step 3 */
-        FormalParameterList formals = func.getParameters();
+        FormalParameterList formals = function.getParameters();
         /* step 4 */
         List<String> parameterNames = BoundNames(formals);
         /* step 5 */
-        List<StatementListItem> varDeclarations = VarScopedDeclarations(func);
+        List<StatementListItem> varDeclarations = VarScopedDeclarations(function);
         /* step 6 */
         List<Declaration> functionsToInitialise = new ArrayList<>();
         /* steps 7-8 */
         boolean argumentsObjectNeeded;
-        if (func instanceof ArrowFunction) { // => [[ThisMode]] of func is lexical
+        if (function instanceof ArrowFunction) { // => [[ThisMode]] of func is lexical
             argumentsObjectNeeded = false;
         } else {
             argumentsObjectNeeded = true;
@@ -172,7 +168,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             }
         }
         /* step 13 */
-        Set<String> varNames = VarDeclaredNames(func);
+        Set<String> varNames = VarDeclaredNames(function);
         /* step 14 */
         for (String varName : varNames) {
             boolean alreadyDeclared = bindings.contains(varName);
@@ -185,7 +181,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             }
         }
         /* step 15 */
-        List<Declaration> lexDeclarations = LexicallyScopedDeclarations(func);
+        List<Declaration> lexDeclarations = LexicallyScopedDeclarations(function);
         /* step 16 */
         for (Declaration d : lexDeclarations) {
             for (String dn : BoundNames(d)) {
@@ -216,7 +212,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         // stack: [] -> [ao]
         InstantiateArgumentsObject(mv);
         /* steps 21-22 */
-        BindingInitialisation(func, mv);
+        BindingInitialisation(function, mv);
         /* step 23 */
         if (argumentsObjectNeeded) {
             if (strict) {

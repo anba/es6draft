@@ -78,12 +78,9 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     private static final int DELETABLE_BINDINGS = 3;
 
     private static class GlobalDeclInitMethodGenerator extends ExpressionVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
-                Type.BOOLEAN_TYPE);
-
-        GlobalDeclInitMethodGenerator(CodeGenerator codegen, String methodName, boolean strict) {
-            super(codegen, methodName, methodDescriptor, strict, false);
+        GlobalDeclInitMethodGenerator(CodeGenerator codegen, Script node) {
+            super(codegen, codegen.methodName(node, ScriptName.Init), codegen.methodType(node,
+                    ScriptName.Init), IsStrict(node), false);
         }
 
         @Override
@@ -101,9 +98,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
     }
 
     void generate(Script script) {
-        String methodName = codegen.methodName(script, ScriptName.Init);
-        ExpressionVisitor mv = new GlobalDeclInitMethodGenerator(codegen, methodName,
-                IsStrict(script));
+        ExpressionVisitor mv = new GlobalDeclInitMethodGenerator(codegen, script);
 
         mv.lineInfo(script);
         mv.begin();

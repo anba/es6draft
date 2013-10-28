@@ -48,12 +48,9 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
     private static final int DELETABLE_BINDINGS = 3;
 
     private static class EvalDeclInitMethodGenerator extends ExpressionVisitor {
-        static final Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE,
-                Types.ExecutionContext, Types.LexicalEnvironment, Types.LexicalEnvironment,
-                Type.BOOLEAN_TYPE);
-
-        EvalDeclInitMethodGenerator(CodeGenerator codegen, String methodName, boolean strict) {
-            super(codegen, methodName, methodDescriptor, strict, false);
+        EvalDeclInitMethodGenerator(CodeGenerator codegen, Script node) {
+            super(codegen, codegen.methodName(node, ScriptName.EvalInit), codegen.methodType(node,
+                    ScriptName.EvalInit), IsStrict(node), false);
         }
 
         @Override
@@ -71,9 +68,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
     }
 
     void generate(Script evalScript) {
-        String methodName = codegen.methodName(evalScript, ScriptName.EvalInit);
-        ExpressionVisitor mv = new EvalDeclInitMethodGenerator(codegen, methodName,
-                IsStrict(evalScript));
+        ExpressionVisitor mv = new EvalDeclInitMethodGenerator(codegen, evalScript);
 
         mv.lineInfo(evalScript);
         mv.begin();
