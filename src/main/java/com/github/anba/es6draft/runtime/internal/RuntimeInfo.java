@@ -109,8 +109,6 @@ public final class RuntimeInfo {
                 return isStrict;
             }
 
-            // TODO: create ScriptBody and EvalScriptBody interfaces
-
             @Override
             public void globalDeclarationInstantiation(ExecutionContext cx,
                     LexicalEnvironment globalEnv, LexicalEnvironment lexicalEnv,
