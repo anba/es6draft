@@ -271,8 +271,9 @@ public final class RegExpParser {
 
     private void characterclass(boolean negation) {
         // TODO: check range [start-end] is valid
-        int startpos = pos;
+        int startLength = out.length();
         boolean inrange = false;
+        StringBuilder extra = null;
         charclass: for (;;) {
             if (eof()) {
                 throw error(Messages.Key.RegExpUnmatchedCharacter, "[");
@@ -281,6 +282,12 @@ public final class RegExpParser {
             int c = get();
             classatom: switch (c) {
             case ']':
+                if (extra != null) {
+                    if (out.length() != startLength) {
+                        out.append("&&");
+                    }
+                    out.append(extra);
+                }
                 pos -= 1; // so we can match ']' below again
                 return;
             case '\\': {
@@ -302,10 +309,11 @@ public final class RegExpParser {
                     if (!negation) {
                         out.append(characterClass_s);
                     } else {
-                        if (pos - 2 != startpos) {
-                            out.append("&&");
+                        if (extra == null) {
+                            extra = new StringBuilder(characterClass_S);
+                        } else {
+                            extra.append("&&").append(characterClass_S);
                         }
-                        out.append(characterClass_S);
                     }
                     continue charclass;
                 case 'S':
@@ -316,10 +324,11 @@ public final class RegExpParser {
                     if (!negation) {
                         out.append(characterClass_S);
                     } else {
-                        if (pos - 2 != startpos) {
-                            out.append("&&");
+                        if (extra == null) {
+                            extra = new StringBuilder(characterClass_s);
+                        } else {
+                            extra.append("&&").append(characterClass_s);
                         }
-                        out.append(characterClass_s);
                     }
                     continue charclass;
 
