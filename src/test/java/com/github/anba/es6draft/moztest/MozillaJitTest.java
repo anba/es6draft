@@ -173,7 +173,7 @@ public class MozillaJitTest {
     private static final Set<String> excludeFiles = new HashSet<>();
     private static final Set<String> excludeDirs = new HashSet<>(asList("asm.js", "baseline",
             "debug", "gc", "ion", "jaeger", "modules", "parallel", "parallelarray", "truthiness",
-            "v8-v5"));
+            "TypedObject", "v8-v5"));
 
     private static List<MozTest> loadTests(Path searchdir, Path basedir) throws IOException {
         BiFunction<Path, BufferedReader, MozTest> create = new BiFunction<Path, BufferedReader, MozTest>() {
