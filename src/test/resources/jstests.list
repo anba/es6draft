@@ -195,6 +195,11 @@ js1_5/extensions/toLocaleFormat-02.js
 # Error.prototype.stack vs. tail-calls
 js1_5/Exceptions/errstack-001.js
 
+# tail-call vs. caller
+ecma_5/extensions/function-caller-skips-eval-frames.js
+js1_8_5/regress/regress-577648-1.js
+js1_8_5/regress/regress-577648-2.js
+
 # different error message
 ecma_3/Array/15.4.5.1-01.js
 ecma_3/Exceptions/15.11.5.js
