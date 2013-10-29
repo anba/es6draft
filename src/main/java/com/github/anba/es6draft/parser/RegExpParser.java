@@ -270,8 +270,8 @@ public final class RegExpParser {
     }
 
     private void characterclass(boolean negation) {
-        // TODO: check range [start-end] is valid
         int startLength = out.length();
+        int rangeStartCV = 0;
         boolean inrange = false;
         StringBuilder extra = null;
         charclass: for (;;) {
@@ -279,7 +279,7 @@ public final class RegExpParser {
                 throw error(Messages.Key.RegExpUnmatchedCharacter, "[");
             }
 
-            int c = get();
+            int cv, c = get();
             classatom: switch (c) {
             case ']':
                 if (extra != null) {
@@ -336,18 +336,33 @@ public final class RegExpParser {
                     // CharacterEscape :: ControlEscape
                     mustMatch('b');
                     out.append("\\x08");
+                    cv = 0x08;
                     break classatom;
                 case 'f':
+                    // CharacterEscape :: ControlEscape
+                    out.append('\\').append((char) get());
+                    cv = '\f';
+                    break classatom;
                 case 'n':
+                    // CharacterEscape :: ControlEscape
+                    out.append('\\').append((char) get());
+                    cv = '\n';
+                    break classatom;
                 case 'r':
+                    // CharacterEscape :: ControlEscape
+                    out.append('\\').append((char) get());
+                    cv = '\r';
+                    break classatom;
                 case 't':
                     // CharacterEscape :: ControlEscape
                     out.append('\\').append((char) get());
+                    cv = '\t';
                     break classatom;
                 case 'v':
                     // CharacterEscape :: ControlEscape
                     mustMatch('v');
                     out.append('\u000B');
+                    cv = 0x0B;
                     break classatom;
                 case 'c': {
                     // CharacterEscape :: c ControlLetter
@@ -355,12 +370,16 @@ public final class RegExpParser {
                     if ((cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z')
                             || (cc >= '0' && cc <= '9') || cc == '_') {
                         // extended control letters with 0-9 and _
-                        out.append('\\').append((char) get())
-                                .append((char) ((get() | 0x40) & ~0x20));
+                        out.append('\\').append((char) get());
+                        // bit operations: lower to upper case and number to alpha
+                        char d = (char) ((get() | 0x40) & ~0x20);
+                        out.append(d);
+                        cv = d & 0x1F;
                         break classatom;
                     }
                     // convert invalid ControlLetter to \\
                     out.append("\\\\");
+                    cv = '\\';
                     break classatom;
                 }
                 case 'x': {
@@ -371,10 +390,12 @@ public final class RegExpParser {
                     if (x >= 0x00 && x <= 0xff) {
                         out.append("\\x").append(HEXDIGITS[(x >> 4) & 0xf])
                                 .append(HEXDIGITS[x & 0xf]);
+                        cv = x;
                     } else {
                         // invalid hex escape sequence, use "x"
                         pos = start;
                         out.append("x");
+                        cv = 'x';
                     }
                     break classatom;
                 }
@@ -385,10 +406,12 @@ public final class RegExpParser {
                     int u = readUnicode();
                     if (u >= 0 && u <= 0x10ffff) {
                         out.append("\\x{").append(Integer.toHexString(u)).append("}");
+                        cv = u;
                     } else {
                         // invalid hex escape sequence, use "u"
                         pos = start;
                         out.append("u");
+                        cv = 'u';
                     }
                     break classatom;
                 }
@@ -410,11 +433,14 @@ public final class RegExpParser {
                         num = num * 8 + (get() - '0');
                     }
                     out.append("\\0").append(Integer.toOctalString(num));
+                    cv = num;
                     break classatom;
                 }
                 case '8':
                 case '9': {
-                    out.append("\\\\").append((char) get());
+                    int d = get();
+                    out.append("\\\\").append((char) d);
+                    cv = d;
                     break classatom;
                 }
 
@@ -429,6 +455,7 @@ public final class RegExpParser {
                         // identity escape
                         out.append('\\').append((char) d);
                     }
+                    cv = d;
                     break classatom;
                 }
                 }
@@ -438,6 +465,7 @@ public final class RegExpParser {
             case '&':
                 // need to escape these characters for Java
                 out.append('\\').append((char) c);
+                cv = c;
                 break classatom;
             default: {
                 char cc = (char) c;
@@ -446,6 +474,7 @@ public final class RegExpParser {
                 } else {
                     out.append("\\x{").append(Integer.toHexString(c)).append("}");
                 }
+                cv = c;
                 break classatom;
             }
             }
@@ -453,11 +482,15 @@ public final class RegExpParser {
             if (inrange) {
                 // end range
                 inrange = false;
+                if (cv < rangeStartCV) {
+                    throw error(Messages.Key.RegExpInvalidCharacterRange);
+                }
             } else if (peek(0) == '-' && !(peek(1) == -1 || peek(1) == ']')) {
                 // start range
                 mustMatch('-');
                 out.append('-');
                 inrange = true;
+                rangeStartCV = cv;
             } else {
                 // no range
             }
