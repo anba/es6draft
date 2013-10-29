@@ -325,7 +325,7 @@ function MakeBuiltinIterator(ctor) {
   delete Array.prototype.entries;
 }
 
-// make Strings and TypedArrays iterable
+// make TypedArrays iterable
 {
   const ArrayPrototype_iterator = Array.prototype[mozIteratorSym];
   const types = ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"];
@@ -342,8 +342,36 @@ function MakeBuiltinIterator(ctor) {
       });
     }
   );
+}
 
-  // delete original String.prototype[@@iterator]
+{
+  const StringIteratorPrototype = Object.getPrototypeOf(""[iteratorSym]());
+
+  // add StringIterator.prototype[mozIteratorSym]
+  Object.defineProperty(StringIteratorPrototype, mozIteratorSym, {
+    value: StringIteratorPrototype[iteratorSym],
+    writable: true, enumerable: false, configurable: true
+  });
+
+  // add String.prototype[mozIteratorSym]
+  Object.defineProperty(String.prototype, mozIteratorSym, {
+    value: String.prototype[iteratorSym],
+    writable: true, enumerable: false, configurable: true
+  });
+
+  // change "length" to non-configurable for my own tests in SpiderMonkey... :-/
+  Object.defineProperty(StringIteratorPrototype[mozIteratorSym], "length", {
+    configurable: false
+  });
+  Object.defineProperty(StringIteratorPrototype.next, "length", {
+    configurable: false
+  });
+  Object.defineProperty(String.prototype[mozIteratorSym], "length", {
+    configurable: false
+  });
+
+  // delete original StringIteratorPrototype[@@iterator] and String.prototype[@@iterator]
+  delete StringIteratorPrototype[iteratorSym];
   delete String.prototype[iteratorSym];
 }
 
