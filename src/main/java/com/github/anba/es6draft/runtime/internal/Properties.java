@@ -42,6 +42,7 @@ import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
+import com.github.anba.es6draft.runtime.types.builtins.NativeTailCallFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -194,6 +195,15 @@ public final class Properties {
         AliasFunction[] value();
     }
 
+    /**
+     * Built-in function property with tail-call
+     */
+    @Documented
+    @Target({ ElementType.METHOD })
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface TailCall {
+    }
+
     @Documented
     @Target({ ElementType.ANNOTATION_TYPE })
     @Retention(RetentionPolicy.RUNTIME)
@@ -272,6 +282,7 @@ public final class Properties {
         Object protoValue = null;
         Map<Value, Object> values = null;
         Map<Function, MethodHandle> functions = null;
+        Map<Function, MethodHandle> tcfunctions = null;
         Map<Accessor, MethodHandle> accessors = null;
         List<Entry<AliasFunction, Function>> aliases = null;
     }
@@ -542,6 +553,11 @@ public final class Properties {
                 createFunction(owner, cx, entry.getKey(), entry.getValue());
             }
         }
+        if (layout.tcfunctions != null) {
+            for (Entry<Function, MethodHandle> entry : layout.tcfunctions.entrySet()) {
+                createTailCallFunction(owner, cx, entry.getKey(), entry.getValue());
+            }
+        }
         if (layout.accessors != null) {
             Map<String, PropertyDescriptor> accessors1 = new LinkedHashMap<>();
             Map<BuiltinSymbol, PropertyDescriptor> accessors2 = new EnumMap<>(BuiltinSymbol.class);
@@ -613,18 +629,26 @@ public final class Properties {
                 Accessor accessor = method.getAnnotation(Accessor.class);
                 AliasFunction alias = method.getAnnotation(AliasFunction.class);
                 AliasFunctions aliases = method.getAnnotation(AliasFunctions.class);
+                TailCall tailCall = method.getAnnotation(TailCall.class);
                 Value value = method.getAnnotation(Value.class);
                 assert function == null || (accessor == null && value == null);
                 assert accessor == null || (function == null && value == null);
                 assert value == null || (function == null && accessor == null);
                 assert alias == null || function != null;
                 assert aliases == null || function != null;
+                assert tailCall == null || function != null;
 
-                if (function != null) {
+                if (function != null && tailCall == null) {
                     if (layout.functions == null) {
                         layout.functions = new LinkedHashMap<>();
                     }
                     layout.functions.put(function, getStaticMethodHandle(lookup, method));
+                }
+                if (function != null && tailCall != null) {
+                    if (layout.tcfunctions == null) {
+                        layout.tcfunctions = new LinkedHashMap<>();
+                    }
+                    layout.tcfunctions.put(function, getStaticMethodHandle(lookup, method));
                 }
                 if (accessor != null) {
                     if (layout.accessors == null) {
@@ -910,6 +934,23 @@ public final class Properties {
         mh = MethodHandles.insertArguments(mh, 0, cx);
 
         NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, mh);
+        if (sym == BuiltinSymbol.NONE) {
+            owner.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
+        } else {
+            owner.defineOwnProperty(cx, sym.get(), propertyDescriptor(fun, attrs));
+        }
+    }
+
+    private static void createTailCallFunction(OrdinaryObject owner, ExecutionContext cx,
+            Function function, MethodHandle mh) {
+        String name = function.name();
+        BuiltinSymbol sym = function.symbol();
+        int arity = function.arity();
+        Attributes attrs = function.attributes();
+
+        mh = MethodHandles.insertArguments(mh, 0, cx);
+
+        NativeTailCallFunction fun = new NativeTailCallFunction(cx.getRealm(), name, arity, mh);
         if (sym == BuiltinSymbol.NONE) {
             owner.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
         } else {
