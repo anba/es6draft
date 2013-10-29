@@ -1799,8 +1799,8 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: PrepareForTailCall
      */
-    public static Object[] PrepareForTailCall(Object[] args, Object thisValue, Callable function) {
-        return new Object[] { function, thisValue, args };
+    public static Object PrepareForTailCall(Object[] args, Object thisValue, Callable function) {
+        return new TailCallInvocation((OrdinaryFunction) function, thisValue, args);
     }
 
     /* ***************************************************************************************** */

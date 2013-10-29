@@ -21,6 +21,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.Code;
+import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -144,14 +145,10 @@ public class OrdinaryFunction extends FunctionObject {
         try {
             Object result = code.handle().invokeExact(calleeContext);
             // tail-call with trampoline
-            while (result instanceof Object[]) {
-                // <func(Callable), thisValue, args>
-                Object[] h = (Object[]) result;
-                OrdinaryFunction f = (OrdinaryFunction) h[0];
-                Object thisValue = h[1];
-                Object[] args = (Object[]) h[2];
-
-                result = f.tailCall(callerContext, thisValue, args);
+            while (result instanceof TailCallInvocation) {
+                TailCallInvocation tc = (TailCallInvocation) result;
+                result = tc.getFunction().tailCall(callerContext, tc.getThisValue(),
+                        tc.getArgumentsList());
             }
             return result;
         } catch (RuntimeException | Error e) {
