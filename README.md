@@ -15,7 +15,7 @@ Non-Goals:
 ### Implementation Status ###
 
 [ECMAScript 6 draft rev. 19] [es6drafts] and additionally:
-* Tail calls (currently limited to user-defined functions)
+* Tail calls
 
 [ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
 * basic support using the [ICU4J] [icu] library
