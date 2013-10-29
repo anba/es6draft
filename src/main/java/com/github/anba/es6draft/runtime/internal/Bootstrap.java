@@ -33,6 +33,16 @@ public final class Bootstrap {
                 .getType(ExecutionContext.class);
     }
 
+    private static class CallNames {
+        static final String ADD = "expression::add";
+        static final String EQ = "expression::equals";
+        static final String SHEQ = "expression::strictEquals";
+        static final String LT = "expression::lessThan";
+        static final String GT = "expression::greaterThan";
+        static final String LE = "expression::lessThanEquals";
+        static final String GE = "expression::greaterThanEquals";
+    }
+
     private static final String OP_ADD = org.objectweb.asm.Type.getMethodDescriptor(Types.Object,
             Types.Object, Types.Object, Types.ExecutionContext);
     private static final String OP_CMP = org.objectweb.asm.Type.getMethodDescriptor(
@@ -55,21 +65,21 @@ public final class Bootstrap {
     public static String getName(BinaryExpression.Operator binary) {
         switch (binary) {
         case ADD:
-            return "expression::add";
+            return CallNames.ADD;
         case EQ:
         case NE:
-            return "expression::equals";
+            return CallNames.EQ;
         case SHEQ:
         case SHNE:
-            return "expression::strictEquals";
+            return CallNames.SHEQ;
         case LT:
-            return "expression::lessThan";
+            return CallNames.LT;
         case GT:
-            return "expression::greaterThan";
+            return CallNames.GT;
         case LE:
-            return "expression::lessThanEquals";
+            return CallNames.LE;
         case GE:
-            return "expression::greaterThanEquals";
+            return CallNames.GE;
         default:
             throw new UnsupportedOperationException(binary.toString());
         }
@@ -393,28 +403,28 @@ public final class Bootstrap {
 
             MethodHandle target;
             switch (name) {
-            case "expression::add":
+            case CallNames.ADD:
                 target = MethodHandles.insertArguments(addSetupMH, 0, callsite);
                 break;
-            case "expression::equals":
+            case CallNames.EQ:
                 target = MethodHandles.insertArguments(eqCmpSetupMH, 0, callsite);
                 break;
-            case "expression::strictEquals":
+            case CallNames.SHEQ:
                 target = MethodHandles.insertArguments(strictEqCmpSetupMH, 0, callsite);
                 break;
-            case "expression::lessThan":
+            case CallNames.LT:
                 target = MethodHandles
                         .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
                 break;
-            case "expression::greaterThan":
+            case CallNames.GT:
                 target = MethodHandles
                         .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
                 break;
-            case "expression::lessThanEquals":
+            case CallNames.LE:
                 target = MethodHandles
                         .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
                 break;
-            case "expression::greaterThanEquals":
+            case CallNames.GE:
                 target = MethodHandles
                         .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
                 break;
@@ -426,16 +436,16 @@ public final class Bootstrap {
             return callsite;
         } catch (StackOverflowError e) {
             switch (name) {
-            case "expression::add":
+            case CallNames.ADD:
                 return stackOverFlow_Add;
-            case "expression::equals":
+            case CallNames.EQ:
                 return stackOverFlow_Eq;
-            case "expression::strictEquals":
+            case CallNames.SHEQ:
                 return stackOverFlow_StrictEq;
-            case "expression::lessThan":
-            case "expression::greaterThan":
-            case "expression::lessThanEquals":
-            case "expression::greaterThanEquals":
+            case CallNames.LT:
+            case CallNames.GT:
+            case CallNames.LE:
+            case CallNames.GE:
                 return stackOverFlow_Cmp;
             default:
                 throw new IllegalArgumentException(name);
