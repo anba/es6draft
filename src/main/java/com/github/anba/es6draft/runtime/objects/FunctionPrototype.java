@@ -9,6 +9,8 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.EMPTY_ARRAY;
+import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -20,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
+import com.github.anba.es6draft.runtime.internal.Properties.TailCall;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -104,6 +107,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         /**
          * 19.2.3.1 Function.prototype.apply (thisArg, argArray)
          */
+        @TailCall
         @Function(name = "apply", arity = 2)
         public static Object apply(ExecutionContext cx, Object thisValue, Object thisArg,
                 Object argArray) {
@@ -114,17 +118,18 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             Callable func = (Callable) thisValue;
             /* step 2 */
             if (Type.isUndefinedOrNull(argArray)) {
-                return func.call(cx, thisArg);
+                return PrepareForTailCall(EMPTY_ARRAY, thisArg, func);
             }
             /* steps 3-4 */
             Object[] argList = CreateListFromArrayLike(cx, argArray);
             /* step 5 */
-            return func.call(cx, thisArg, argList);
+            return PrepareForTailCall(argList, thisArg, func);
         }
 
         /**
          * 19.2.3.3 Function.prototype.call (thisArg [, arg1 [, arg2, ... ]])
          */
+        @TailCall
         @Function(name = "call", arity = 1)
         public static Object call(ExecutionContext cx, Object thisValue, Object thisArg,
                 Object... args) {
@@ -134,7 +139,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             }
             Callable func = (Callable) thisValue;
             /* steps 2-4 */
-            return func.call(cx, thisArg, args);
+            return PrepareForTailCall(args, thisArg, func);
         }
 
         /**
