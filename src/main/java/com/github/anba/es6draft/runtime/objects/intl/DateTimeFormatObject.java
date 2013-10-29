@@ -67,7 +67,12 @@ public class DateTimeFormatObject extends OrdinaryObject {
         // calendar and numberingSystem are already handled in language-tag
         // assert locale.getKeywordValue("calendar").equals(calendar);
         // assert locale.getKeywordValue("numbers").equals(numberingSystem);
-        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern.get(), locale);
+        SimpleDateFormat dateFormat;
+        try {
+            dateFormat = new SimpleDateFormat(pattern.get(), locale);
+        } catch (IllegalMonitorStateException e) {
+            throw new StackOverflowError();
+        }
         if (timeZone != null) {
             dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
         }

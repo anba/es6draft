@@ -93,7 +93,12 @@ public class NumberFormatObject extends OrdinaryObject {
                 choice = NumberFormat.PLURALCURRENCYSTYLE;
             }
         }
-        DecimalFormat numberFormat = (DecimalFormat) NumberFormat.getInstance(locale, choice);
+        DecimalFormat numberFormat;
+        try {
+            numberFormat = (DecimalFormat) NumberFormat.getInstance(locale, choice);
+        } catch (IllegalMonitorStateException e) {
+            throw new StackOverflowError();
+        }
         if ("currency".equals(style)) {
             numberFormat.setCurrency(Currency.getInstance(currency));
         }
