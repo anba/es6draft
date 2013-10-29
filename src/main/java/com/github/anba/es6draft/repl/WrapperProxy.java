@@ -61,6 +61,14 @@ class WrapperProxy implements ScriptObject {
             return ((Callable) proxyTarget).call(callerContext, thisValue, args);
         }
 
+        /**
+         * [[Call]] (thisArgument, argumentsList)
+         */
+        @Override
+        public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) {
+            return call(callerContext, thisValue, args);
+        }
+
         @Override
         public String toSource() {
             return ((Callable) proxyTarget).toSource();

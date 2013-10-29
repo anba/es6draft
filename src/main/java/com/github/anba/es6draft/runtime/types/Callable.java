@@ -25,6 +25,12 @@ public interface Callable extends ScriptObject {
     Object call(ExecutionContext callerContext, Object thisValue, Object... args);
 
     /**
+     * [[Call]] in tail-call position
+     */
+    Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
+            throws Throwable;
+
+    /**
      * Source representation of this callable
      */
     String toSource();

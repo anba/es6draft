@@ -101,6 +101,14 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
+     * 9.1.15.1 [[Call]] Internal Method
+     */
+    @Override
+    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) {
+        return call(callerContext, thisValue, args);
+    }
+
+    /**
      * 14.4 Generator Function Definitions
      * <p>
      * Runtime Semantics EvaluateBody

@@ -6,23 +6,23 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
+import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
  *
  */
 public final class TailCallInvocation {
-    private final OrdinaryFunction function;
+    private final Callable function;
     private final Object thisValue;
     private final Object[] argumentsList;
 
-    public TailCallInvocation(OrdinaryFunction function, Object thisValue, Object[] argumentsList) {
+    public TailCallInvocation(Callable function, Object thisValue, Object[] argumentsList) {
         this.function = function;
         this.thisValue = thisValue;
         this.argumentsList = argumentsList;
     }
 
-    public OrdinaryFunction getFunction() {
+    public Callable getFunction() {
         return function;
     }
 

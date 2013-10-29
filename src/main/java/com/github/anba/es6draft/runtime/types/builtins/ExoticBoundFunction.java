@@ -115,6 +115,14 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     }
 
     /**
+     * 9.2.1.1 [[Call]]
+     */
+    @Override
+    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) {
+        return call(callerContext, thisValue, args);
+    }
+
+    /**
      * 9.2.1.3 BoundFunctionCreate Abstract Operation
      */
     public static ExoticBoundFunction BoundFunctionCreate(ExecutionContext cx,

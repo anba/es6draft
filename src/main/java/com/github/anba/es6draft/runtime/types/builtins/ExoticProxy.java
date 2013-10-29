@@ -68,6 +68,14 @@ public class ExoticProxy implements ScriptObject {
             return trap.call(callerContext, handler, target, thisValue, argArray);
         }
 
+        /**
+         * 9.3.14 [[Call]] (thisArgument, argumentsList)
+         */
+        @Override
+        public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) {
+            return call(callerContext, thisValue, args);
+        }
+
         @Override
         public String toSource() {
             return ((Callable) proxyTarget).toSource();

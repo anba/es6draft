@@ -78,6 +78,15 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
+     * 9.1.15.1 [[Call]] Internal Method
+     */
+    @Override
+    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
+            throws Throwable {
+        return call(callerContext, thisValue, args);
+    }
+
+    /**
      * 9.1.15.3 [[Get]] (P, Receiver)
      */
     @Override
