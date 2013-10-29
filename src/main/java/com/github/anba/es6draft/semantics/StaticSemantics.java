@@ -326,8 +326,7 @@ public final class StaticSemantics {
      */
     public static Set<Expression> TailCallNodes(Expression expr) {
         while (expr instanceof CommaExpression) {
-            List<Expression> list = ((CommaExpression) expr).getOperands();
-            expr = list.get(list.size() - 1);
+            expr = last(((CommaExpression) expr).getOperands());
         }
         if (IsCallExpression(expr)) {
             return singleton(expr);
@@ -336,8 +335,7 @@ public final class StaticSemantics {
             for (ArrayDeque<Expression> queue = new ArrayDeque<>(singleton(expr)); !queue.isEmpty();) {
                 Expression e = queue.remove();
                 while (e instanceof CommaExpression) {
-                    List<Expression> list = ((CommaExpression) e).getOperands();
-                    e = list.get(list.size() - 1);
+                    e = last(((CommaExpression) e).getOperands());
                 }
                 if (IsCallExpression(e)) {
                     tail.add(e);
@@ -366,5 +364,10 @@ public final class StaticSemantics {
 
     private static <T> List<T> emptyIfNull(List<T> list) {
         return (list != null ? list : Collections.<T> emptyList());
+    }
+
+    private static <T> T last(List<T> list) {
+        assert !list.isEmpty();
+        return list.get(list.size() - 1);
     }
 }
