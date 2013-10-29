@@ -21,8 +21,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import com.github.anba.es6draft.parser.RegExpParser.RegExpMatcher;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -353,7 +353,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             int m = matchResult.groupCount();
             Object[] arguments = new Object[m + 3];
             arguments[0] = matchResult.group();
-            GroupIterator iterator = new GroupIterator(rx, matchResult);
+            GroupIterator iterator = new GroupIterator(rx.getRegExpMatcher(), matchResult);
             for (int i = 1; iterator.hasNext(); ++i) {
                 String group = iterator.next();
                 arguments[i] = (group != null ? group : UNDEFINED);
@@ -514,7 +514,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                         return a;
                     }
                     p = e;
-                    GroupIterator iterator = new GroupIterator(rx, matcher);
+                    GroupIterator iterator = new GroupIterator(rx.getRegExpMatcher(), matcher);
                     while (iterator.hasNext()) {
                         String cap = iterator.next();
                         a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(
@@ -634,7 +634,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             return null;
         }
         /* step 9 */
-        Pattern matcher = r.getRegExpMatcher();
+        RegExpMatcher matcher = r.getRegExpMatcher();
         /* steps 10-11 */
         Matcher m = matcher.matcher(s);
         if (!sticky) {
@@ -690,7 +690,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         /* step 22 */
         array.defineOwnProperty(cx, "0", new PropertyDescriptor(matchedSubstr, true, true, true));
         /* step 23 */
-        GroupIterator iterator = new GroupIterator(r, m);
+        GroupIterator iterator = new GroupIterator(r.getRegExpMatcher(), m);
         for (int i = 1; iterator.hasNext(); ++i) {
             String capture = iterator.next();
             array.defineOwnProperty(cx, ToString(i), new PropertyDescriptor(
@@ -705,7 +705,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
      */
     public static String[] groups(RegExpObject r, MatchResult m) {
         assert r.isInitialised();
-        GroupIterator iterator = new GroupIterator(r, m);
+        GroupIterator iterator = new GroupIterator(r.getRegExpMatcher(), m);
         int c = m.groupCount();
         String[] groups = new String[c + 1];
         groups[0] = m.group();
@@ -722,8 +722,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         // start index of last valid group in matched string
         private int last;
 
-        GroupIterator(RegExpObject r, MatchResult result) {
-            assert r.isInitialised();
+        GroupIterator(RegExpMatcher r, MatchResult result) {
             this.result = result;
             this.negativeLAGroups = r.getNegativeLookaheadGroups();
             this.last = result.start();

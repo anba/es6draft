@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.parser;
 
 import java.util.BitSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -44,8 +44,6 @@ public final class RegExpParser {
     private StringBuilder out;
     private int pos = 0;
 
-    // Java pattern for the input RegExp
-    private Pattern pattern;
     // map of groups created within negative lookahead
     private BitSet negativeLAGroups = new BitSet();
     // map of invalidated groups
@@ -68,7 +66,7 @@ public final class RegExpParser {
         this.out = new StringBuilder(length);
     }
 
-    public static RegExpParser parse(String p, String f, String sourceFile, int sourceLine,
+    public static RegExpMatcher parse(String p, String f, String sourceFile, int sourceLine,
             int sourceColumn) throws ParserException {
         // flags :: g | i | m | u | y
         final int global = 0b00001, ignoreCase = 0b00010, multiline = 0b00100, unicode = 0b01000, sticky = 0b10000;
@@ -123,22 +121,38 @@ public final class RegExpParser {
 
         RegExpParser parser = new RegExpParser(p, iflags, sourceFile, sourceLine, sourceColumn);
         parser.pattern();
-        String regexp = parser.out.toString();
-        try {
-            parser.pattern = Pattern.compile(regexp, iflags);
-        } catch (PatternSyntaxException e) {
-            throw error(sourceFile, sourceLine, sourceColumn, Messages.Key.InvalidRegExpPattern,
-                    e.getMessage());
+
+        return new RegExpMatcher(parser.out.toString(), iflags, parser.negativeLAGroups);
+    }
+
+    public static final class RegExpMatcher {
+        // Java pattern for the input RegExp
+        private final String regex;
+        // Java flags for the input RegExp
+        private final int flags;
+        private final BitSet negativeLAGroups;
+        private Pattern pattern;
+
+        private RegExpMatcher(String regex, int flags, BitSet negativeLAGroups) {
+            this.regex = regex;
+            this.flags = flags;
+            this.negativeLAGroups = negativeLAGroups;
         }
-        return parser;
-    }
 
-    public Pattern getPattern() {
-        return pattern;
-    }
+        public Matcher matcher(CharSequence s) {
+            return getPattern().matcher(s);
+        }
 
-    public BitSet getNegativeLookaheadGroups() {
-        return negativeLAGroups;
+        public Pattern getPattern() {
+            if (pattern == null) {
+                pattern = Pattern.compile(regex, flags);
+            }
+            return pattern;
+        }
+
+        public BitSet getNegativeLookaheadGroups() {
+            return negativeLAGroups;
+        }
     }
 
     private static ParserException error(String file, int line, int column,

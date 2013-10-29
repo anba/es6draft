@@ -6,9 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import java.util.BitSet;
-import java.util.regex.Pattern;
-
+import com.github.anba.es6draft.parser.RegExpParser.RegExpMatcher;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -27,29 +25,20 @@ public class RegExpObject extends OrdinaryObject {
     private String originalFlags = null;
 
     /** [[RegExpMatcher]] */
-    private Pattern regExpMatcher = null;
-
-    private BitSet negativeLAGroups;
+    private RegExpMatcher regExpMatcher = null;
 
     public RegExpObject(Realm realm) {
         super(realm);
     }
 
-    protected void initialise(String originalSource, String originalFlags, Pattern match,
-            BitSet negativeLAGroups) {
+    protected void initialise(String originalSource, String originalFlags, RegExpMatcher matcher) {
         this.originalSource = originalSource;
         this.originalFlags = originalFlags;
-        this.regExpMatcher = match;
-        this.negativeLAGroups = negativeLAGroups;
+        this.regExpMatcher = matcher;
     }
 
     protected boolean isInitialised() {
         return regExpMatcher != null;
-    }
-
-    protected BitSet getNegativeLookaheadGroups() {
-        assert negativeLAGroups != null;
-        return negativeLAGroups;
     }
 
     /**
@@ -71,7 +60,7 @@ public class RegExpObject extends OrdinaryObject {
     /**
      * [[RegExpMatcher]]
      */
-    public Pattern getRegExpMatcher() {
+    public RegExpMatcher getRegExpMatcher() {
         assert regExpMatcher != null;
         return regExpMatcher;
     }

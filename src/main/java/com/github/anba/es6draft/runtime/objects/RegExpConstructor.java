@@ -14,13 +14,13 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
-import java.util.BitSet;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.parser.RegExpParser;
+import com.github.anba.es6draft.parser.RegExpParser.RegExpMatcher;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.*;
@@ -152,17 +152,14 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /* steps 7-8 */
-        Pattern match;
-        BitSet negativeLAGroups;
+        RegExpMatcher matcher;
         try {
-            RegExpParser parser = RegExpParser.parse(p, f, "<regexp>", 1, 1);
-            match = parser.getPattern();
-            negativeLAGroups = parser.getNegativeLookaheadGroups();
+            matcher = RegExpParser.parse(p, f, "<regexp>", 1, 1);
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
         /* steps 9-11 */
-        obj.initialise(p, f, match, negativeLAGroups);
+        obj.initialise(p, f, matcher);
         /* steps 12-13 */
         Put(cx, obj, "lastIndex", 0, true);
         /* step 14 */
