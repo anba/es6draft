@@ -62,7 +62,7 @@ public class ScriptTest {
         return toObjectArray(tests);
     }
 
-    private static Set<CompatibilityOption> options = CompatibilityOption.StrictCompatibility();
+    private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
     private static ScriptCache scriptCache = new ScriptCache(Parser.Option.from(options));
 
     @Rule
