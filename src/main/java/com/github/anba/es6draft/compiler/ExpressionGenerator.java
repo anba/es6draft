@@ -247,7 +247,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         static final MethodDesc ScriptRuntime_PrepareForTailCall = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "PrepareForTailCall",
-                Type.getMethodType(Types.Object_, Types.Object_, Types.Object, Types.Callable));
+                Type.getMethodType(Types.Object, Types.Object_, Types.Object, Types.Callable));
 
         static final MethodDesc ScriptRuntime_RegExp = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "RegExp", Type.getMethodType(Types.ScriptObject,
@@ -731,16 +731,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         /* steps 10, 12-13 */
         if (mv.isTailCall(call)) {
-            Label noTailCall = new Label();
-            mv.dup();
-            mv.instanceOf(Types.OrdinaryFunction);
-            mv.ifeq(noTailCall);
-
             // stack: [args, thisValue, func(Callable)] -> [<func(Callable), thisValue, args>]
             mv.invoke(Methods.ScriptRuntime_PrepareForTailCall);
-            mv.areturn(Types.Object_);
-
-            mv.mark(noTailCall);
+            // TODO: perform direct 'areturn' instead of using completion value
+            // mv.areturn(Types.Object_);
+            return;
         }
 
         // stack: [args, thisValue, func(Callable)] -> [func(Callable), cx, thisValue, args]
