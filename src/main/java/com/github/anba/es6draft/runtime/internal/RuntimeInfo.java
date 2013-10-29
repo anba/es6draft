@@ -32,7 +32,7 @@ public final class RuntimeInfo {
 
             @Override
             public Object evaluate(ExecutionContext cx) {
-                return EvaluateBody(cx, this);
+                return EvaluateBody(cx, cx, this);
             }
         };
     }
@@ -90,7 +90,7 @@ public final class RuntimeInfo {
 
             @Override
             public Object evaluate(ExecutionContext cx) {
-                return EvaluateBody(cx, this);
+                return EvaluateBody(cx, cx, this);
             }
 
             @Override

@@ -95,9 +95,30 @@ public class OrdinaryFunction extends FunctionObject {
             /* steps 4-14 */
             ExecutionContext calleeContext = EvaluateArguments(callerContext, this, thisValue, args);
             /* steps 15-16 */
-            Object result = EvaluateBody(calleeContext, getCode());
+            Object result = EvaluateBody(callerContext, calleeContext, getCode());
             /* step 17 */
             return result;
+        } finally {
+            if (isLegacy()) {
+                restoreLegacyProperties(oldCaller, oldArguments);
+            }
+        }
+    }
+
+    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
+            throws Throwable {
+        /* step 1 */
+        if (!isInitialised()) {
+            throw throwTypeError(callerContext, Messages.Key.UninitialisedObject);
+        }
+        /* steps 2-3 (implicit) */
+        Object oldCaller = caller.getValue();
+        Object oldArguments = arguments.getValue();
+        try {
+            /* steps 4-14 */
+            ExecutionContext calleeContext = EvaluateArguments(callerContext, this, thisValue, args);
+            /* steps 15-17 */
+            return getCode().handle().invokeExact(calleeContext);
         } finally {
             if (isLegacy()) {
                 restoreLegacyProperties(oldCaller, oldArguments);
@@ -118,7 +139,8 @@ public class OrdinaryFunction extends FunctionObject {
         return calleeContext;
     }
 
-    public static Object EvaluateBody(ExecutionContext calleeContext, Code code) {
+    public static Object EvaluateBody(ExecutionContext callerContext,
+            ExecutionContext calleeContext, Code code) {
         try {
             Object result = code.handle().invokeExact(calleeContext);
             // tail-call with trampoline
@@ -129,23 +151,7 @@ public class OrdinaryFunction extends FunctionObject {
                 Object thisValue = h[1];
                 Object[] args = (Object[]) h[2];
 
-                /* step 1 */
-                if (!f.isInitialised()) {
-                    throw throwTypeError(calleeContext, Messages.Key.UninitialisedObject);
-                }
-                /* steps 2-3 (implicit) */
-                Object oldCaller = f.caller.getValue();
-                Object oldArguments = f.arguments.getValue();
-                try {
-                    /* steps 4-14 */
-                    calleeContext = EvaluateArguments(calleeContext, f, thisValue, args);
-                    /* steps 15-17 */
-                    result = f.getCode().handle().invokeExact(calleeContext);
-                } finally {
-                    if (f.isLegacy()) {
-                        f.restoreLegacyProperties(oldCaller, oldArguments);
-                    }
-                }
+                result = f.tailCall(callerContext, thisValue, args);
             }
             return result;
         } catch (RuntimeException | Error e) {
