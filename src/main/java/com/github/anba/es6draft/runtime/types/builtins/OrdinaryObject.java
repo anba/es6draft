@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -713,7 +714,7 @@ public class OrdinaryObject implements ScriptObject {
     /** 9.1.13 [[OwnPropertyKeys]] ( ) */
     @Override
     public final ScriptObject ownPropertyKeys(ExecutionContext cx) {
-        return MakeListIterator(cx, enumerateOwnKeys().iterator());
+        return CreateListIterator(cx, enumerateOwnKeys());
     }
 
     /** 9.1.13 [[OwnPropertyKeys]] ( ) */

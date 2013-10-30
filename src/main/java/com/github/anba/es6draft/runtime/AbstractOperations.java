@@ -1550,7 +1550,7 @@ public final class AbstractOperations {
     /**
      * 7.4.7 CreateListIterator (list)
      */
-    public static ScriptObject CreateListIterator(ExecutionContext cx, List<?> list) {
+    public static ScriptObject CreateListIterator(ExecutionContext cx, Iterable<?> list) {
         // TODO: check implementation for conformance
         return ListIterator.MakeListIterator(cx, list.iterator());
     }
