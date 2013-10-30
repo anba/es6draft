@@ -201,17 +201,17 @@ public final class ExecutionContext {
     }
 
     /**
-     * Combined {@link #identifierResolution(String, boolean)} with
+     * Combined {@link #resolveBinding(String, boolean)} with
      * {@link Reference#GetValue(Object, ExecutionContext)} internal method
      */
-    public Object identifierValue(String name, boolean strict) {
+    public Object resolveBindingValue(String name, boolean strict) {
         return LexicalEnvironment.getIdentifierValueOrThrow(lexEnv, name, strict);
     }
 
     /**
-     * 8.3.1 Identifier Resolution
+     * 8.3.1 ResolveBinding(name)
      */
-    public Reference<EnvironmentRecord, String> identifierResolution(String name, boolean strict) {
+    public Reference<EnvironmentRecord, String> resolveBinding(String name, boolean strict) {
         /* steps 1-3 */
         return LexicalEnvironment.getIdentifierReference(lexEnv, name, strict);
     }

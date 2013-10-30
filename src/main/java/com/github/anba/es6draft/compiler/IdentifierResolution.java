@@ -21,13 +21,13 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 class IdentifierResolution {
     private static class Methods {
         // identifierResolution()
-        static final MethodDesc ExecutionContext_identifierResolution = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "identifierResolution",
+        static final MethodDesc ExecutionContext_resolveBinding = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "resolveBinding",
                 Type.getMethodType(Types.Reference, Types.String, Type.BOOLEAN_TYPE));
 
         // identifierValue()
-        static final MethodDesc ExecutionContext_identifierValue = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "identifierValue",
+        static final MethodDesc ExecutionContext_resolveBindingValue = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "resolveBindingValue",
                 Type.getMethodType(Types.Object, Types.String, Type.BOOLEAN_TYPE));
     }
 
@@ -49,7 +49,7 @@ class IdentifierResolution {
         mv.loadExecutionContext();
         mv.aconst(identifierName);
         mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ExecutionContext_identifierResolution);
+        mv.invoke(Methods.ExecutionContext_resolveBinding);
 
         return ValType.Reference;
     }
@@ -58,7 +58,7 @@ class IdentifierResolution {
         mv.loadExecutionContext();
         mv.aconst(identifierName);
         mv.iconst(mv.isStrict());
-        mv.invoke(Methods.ExecutionContext_identifierValue);
+        mv.invoke(Methods.ExecutionContext_resolveBindingValue);
 
         return ValType.Any;
     }

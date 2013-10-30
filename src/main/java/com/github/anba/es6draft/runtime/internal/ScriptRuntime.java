@@ -1734,7 +1734,7 @@ public final class ScriptRuntime {
         envRec.createImmutableBinding("arguments");
         ExoticArguments ao = InstantiateArgumentsObject(cx, args);
 
-        cx.identifierResolution("args", true).PutValue(createRestArray(ao, 0, cx), cx);
+        cx.resolveBinding("args", true).PutValue(createRestArray(ao, 0, cx), cx);
 
         CompleteStrictArgumentsObject(cx, ao);
         envRec.initialiseBinding("arguments", ao);
@@ -1747,7 +1747,7 @@ public final class ScriptRuntime {
         Reference<ScriptObject, ?> ref = MakeSuperReference(cx, (Object) null, true);
         // EvaluateCall: super(...args)
         Object func = ref.GetValue(cx);
-        Object[] argList = SpreadArray(cx.identifierValue("args", true), cx);
+        Object[] argList = SpreadArray(cx.resolveBindingValue("args", true), cx);
         Callable f = CheckCallable(func, cx);
         Object thisValue = GetCallThisValue(ref, cx);
         f.call(cx, thisValue, argList);

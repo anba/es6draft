@@ -340,7 +340,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         if (initialiser != null) {
             Object val = initialiser.accept(this, cx);
             val = GetValue(val, cx);
-            cx.identifierResolution(binding.getName(), strict).PutValue(val, cx);
+            cx.resolveBinding(binding.getName(), strict).PutValue(val, cx);
         }
         return null;
     }
@@ -754,7 +754,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
     @Override
     public Object visit(Identifier node, ExecutionContext cx) {
-        return cx.identifierResolution(node.getName(), strict);
+        return cx.resolveBinding(node.getName(), strict);
     }
 
     @Override
