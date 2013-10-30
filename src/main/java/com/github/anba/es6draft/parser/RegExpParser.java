@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.parser;
 
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  */
 public final class RegExpParser {
     private static final int BACKREF_LIMIT = 0xffff;
+    private static final int DEPTH_LIMIT = 0xffff;
     private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F' };
 
@@ -46,14 +48,6 @@ public final class RegExpParser {
 
     // map of groups created within negative lookahead
     private BitSet negativeLAGroups = new BitSet();
-    // map of invalidated groups
-    private BitSet validGroups = new BitSet();
-    // number of groups
-    private int groups = 0;
-    // maximum backref found
-    private int backrefmax = 0;
-    // backref limit
-    private int backreflimit = BACKREF_LIMIT;
 
     private RegExpParser(String source, int flags, String sourceFile, int sourceLine,
             int sourceColumn) {
@@ -196,22 +190,6 @@ public final class RegExpParser {
         return pos >= length;
     }
 
-    private void pattern() {
-        assert pos == 0;
-        disjunction(0, 0);
-        if (backrefmax > groups) {
-            out.setLength(0);
-            pos = 0;
-            groups = 0;
-            backreflimit = groups;
-            backrefmax = 0;
-            negativeLAGroups.clear();
-            validGroups.clear();
-            disjunction(0, 0);
-            assert backrefmax <= groups;
-        }
-    }
-
     /**
      * DecimalDigits :: DecimalDigit DecimalDigits DecimalDigit
      */
@@ -283,7 +261,37 @@ public final class RegExpParser {
         return c;
     }
 
+    /**
+     * <pre>
+     * CharacterClass  ::
+     *     [ [LA &#x2209; {<b>^</b>}] ClassRanges ]
+     *     [ <b>^</b> ClassRanges ]
+     * ClassRanges ::
+     *     [empty]
+     *     NonemptyClassRanges
+     * NonemptyClassRanges ::
+     *     ClassAtom
+     *     ClassAtom NonemptyClassRangesNoDash
+     *     ClassAtom <b>-</b> ClassAtom ClassRanges
+     * NonemptyClassRangesNoDash ::
+     *     ClassAtom
+     *     ClassAtomNoDash NonemptyClassRangesNoDash
+     *     ClassAtomNoDash <b>-</b> ClassAtom ClassRanges
+     * ClassAtom ::
+     *     <b>-</b>
+     *     ClassAtomNoDash
+     * ClassAtomNoDash ::
+     *     SourceCharacter <b>but not one of \ or ] or -</b>
+     *     <b>\</b> ClassEscape
+     * ClassEscape ::
+     *     DecimalEscape
+     *     <b>b</b>
+     *     CharacterEscape
+     *     CharacterClassEscape
+     * </pre>
+     */
     private void characterclass(boolean negation) {
+        StringBuilder out = this.out;
         int startLength = out.length();
         int rangeStartCV = 0;
         boolean inrange = false;
@@ -515,29 +523,114 @@ public final class RegExpParser {
     /**
      * <pre>
      * Pattern ::
-     *      Disjunction
+     *     Disjunction
      * Disjunction ::
-     *      Alternative
-     *      Alternative | Disjunction
+     *     Alternative
+     *     Alternative <b>|</b> Disjunction
      * Alternative ::
-     *      [empty]
-     *      Alternative Term
+     *     [empty]
+     *     Alternative Term
      * Term ::
-     *      Assertion
-     *      Atom
-     *      Atom Quantifier
+     *     Assertion
+     *     Atom
+     *     Atom Quantifier
+     * Assertion ::
+     *     <b>^</b>
+     *     <b>$</b>
+     *     <b>\ b</b>
+     *     <b>\ B</b>
+     *     <b>( ? =</b> Disjunction <b>)</b>
+     *     <b>( ? !</b> Disjunction <b>)</b>
+     * Quantifier ::
+     *     QuantifierPrefix
+     *     QuantifierPrefix <b>?</b>
+     * QuantifierPrefix ::
+     *     <b>+</b>
+     *     <b>?</b>
+     *     <b>{</b> DecimalDigits <b>}</b>
+     *     <b>{</b> DecimalDigits <b>, }</b>
+     *     <b>{</b> DecimalDigits <b>,</b> DecimalDigits <b>}</b>
+     * Atom ::
+     *     PatternCharacter
+     *     <b>.</b>
+     *     <b>\</b> AtomEscape
+     *     CharacterClass
+     *     <b>(</b> Disjunction <b>)</b>
+     *     <b>( ? :</b> Disjunction <b>)</b>
+     * PatternCharacter ::
+     *     SourceCharacter but not one of <b>^ $ \ . * + ? ( ) [ ] { } |</b>
+     * AtomEscape ::
+     *     DecimalEscape
+     *     CharacterEscape
+     *     CharacterClassEscape
+     * CharacterEscape ::
+     *     ControlEscape
+     *     <b>c</b> ControlLetter
+     *     HexEscapeSequence
+     *     UnicodeEscapeSequence
+     *     IdentityEscape
+     * ControlEscape ::  one of
+     *     <b>f n r t v</b>
+     * ControlLetter :: one of
+     *     <b>a b c d e f g h i j k l m n o p q r s t u v w x y z</b>
+     *     <b>A B C D E F G H I J K L M N O P Q R S T U V W X Y Z</b>
+     * IdentityEscape ::
+     *     SourceCharacter but not IdentifierPart
+     *     &lt;ZWJ&gt;
+     *     &lt;ZWNJ&gt;
+     * DecimalEscape ::
+     *     DecimalIntegerLiteral  [LA &#x2209; DecimalDigit]
+     * CharacterClassEscape :: one of
+     *     <b>d D s S w W</b>
      * </pre>
      */
-    private void disjunction(int depth, int negativedepth) {
-        if (depth > 0xffff) {
-            throw error(Messages.Key.RegExpPatternTooComplex);
-        }
+    private void pattern() {
+        // map of invalidated groups
+        BitSet validGroups = new BitSet();
+        // number of groups
+        int groups = 0;
+        // maximum back-reference found
+        int backrefmax = 0;
+        // back-reference limit
+        int backreflimit = BACKREF_LIMIT;
+        // current depths
+        int depth = 0;
+        int negativedepth = 0;
+        // map: depth -> negative
+        BitSet negativeGroup = new BitSet();
+        // map: depth -> capturing
+        BitSet capturingGroup = new BitSet();
+        // stack: groups
+        int[] groupStack = new int[8];
+        int groupStackSP = 0;
 
+        StringBuilder out = this.out;
         term: for (;;) {
             if (eof()) {
                 if (depth > 0) {
                     throw error(Messages.Key.RegExpUnmatchedCharacter, "(");
                 }
+                if (backrefmax > groups && backreflimit == BACKREF_LIMIT) {
+                    // dismiss state and start over once again
+                    out.setLength(0);
+                    pos = 0;
+                    negativeLAGroups.clear();
+                    // remember correct back reference limit
+                    backreflimit = groups;
+                    assert backreflimit != BACKREF_LIMIT;
+                    // reset locals
+                    validGroups.clear();
+                    groups = 0;
+                    backrefmax = 0;
+                    // assert other locals don't carry any state
+                    assert depth == 0;
+                    assert negativedepth == 0;
+                    assert negativeGroup.isEmpty();
+                    assert capturingGroup.isEmpty();
+                    assert groupStackSP == 0;
+                    continue term;
+                }
+                assert backrefmax <= groups;
                 return;
             }
 
@@ -741,9 +834,9 @@ public final class RegExpParser {
             }
 
             case '(': {
-                boolean negativeLA = false;
                 if (match('?')) {
                     // (?=X) or (?!X) or (?:X)
+                    boolean negativeLA = false;
                     int d = get();
                     switch (d) {
                     case '!':
@@ -757,35 +850,56 @@ public final class RegExpParser {
                         throw error(Messages.Key.RegExpInvalidQualifier);
                     }
                     if (negativeLA) {
-                        int g = groups;
-                        disjunction(depth + 1, negativedepth + 1);
-                        // invalidate all capturing groups created within the negative lookahead
-                        for (int v = groups; v != g; --v) {
-                            validGroups.clear(v);
+                        if (groupStackSP == groupStack.length) {
+                            groupStack = Arrays.copyOf(groupStack, groupStackSP << 1);
                         }
+                        groupStack[groupStackSP++] = groups;
+                        depth += 1;
+                        negativedepth += 1;
+                        negativeGroup.set(depth);
                     } else {
-                        disjunction(depth + 1, negativedepth);
+                        depth += 1;
                     }
                 } else {
                     out.append('(');
-                    int g = ++groups;
-                    disjunction(depth + 1, negativedepth);
+                    if (groupStackSP == groupStack.length) {
+                        groupStack = Arrays.copyOf(groupStack, groupStackSP << 1);
+                    }
+                    groupStack[groupStackSP++] = ++groups;
+                    depth += 1;
+                    capturingGroup.set(depth);
+                }
+                if (depth >= DEPTH_LIMIT || groups >= BACKREF_LIMIT) {
+                    throw error(Messages.Key.RegExpPatternTooComplex);
+                }
+                continue term;
+            }
+
+            case ')': {
+                out.append(')');
+                if (depth == 0) {
+                    throw error(Messages.Key.RegExpUnmatchedCharacter, ")");
+                }
+                if (capturingGroup.get(depth)) {
+                    capturingGroup.clear(depth);
+                    // update group information after parsing ")"
+                    int g = groupStack[--groupStackSP];
                     validGroups.set(g);
                     if (negativedepth > 0) {
                         negativeLAGroups.set(g);
                     }
                 }
-                out.append((char) mustMatch(')'));
-                break atom;
-            }
-
-            case ')': {
-                if (depth > 0) {
-                    // -1 so caller can match ')' again
-                    pos -= 1;
-                    return;
+                if (negativeGroup.get(depth)) {
+                    negativeGroup.clear(depth);
+                    // invalidate all capturing groups created within the negative lookahead
+                    int g = groupStack[--groupStackSP];
+                    for (int v = groups; v != g; --v) {
+                        validGroups.clear(v);
+                    }
+                    negativedepth -= 1;
                 }
-                throw error(Messages.Key.RegExpUnmatchedCharacter, ")");
+                depth -= 1;
+                break atom;
             }
 
             case '[': {
