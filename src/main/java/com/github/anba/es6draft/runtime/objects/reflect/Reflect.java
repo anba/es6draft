@@ -132,12 +132,11 @@ public class Reflect extends OrdinaryObject implements Initialisable {
         @Function(name = "hasOwn", arity = 2)
         public static Object hasOwn(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey) {
-            // TODO: unusual parameter evaluation order
             // TODO function still relevant after [[HasOwn]] removal from MOP?
             /* steps 1-2 */
-            Object key = ToPropertyKey(cx, propertyKey);
-            /* steps 3-4 */
             ScriptObject obj = ToObject(cx, target);
+            /* steps 3-4 */
+            Object key = ToPropertyKey(cx, propertyKey);
             /* step 5 */
             if (key instanceof String) {
                 return HasOwnProperty(cx, obj, (String) key);
