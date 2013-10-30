@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -91,13 +91,13 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
             CollatorObject collator = thisCollatorValue(cx, thisValue);
             OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            CreateOwnDataProperty(cx, object, "locale", collator.getLocale());
-            CreateOwnDataProperty(cx, object, "usage", collator.getUsage());
-            CreateOwnDataProperty(cx, object, "sensitivity", collator.getSensitivity());
-            CreateOwnDataProperty(cx, object, "ignorePunctuation", collator.isIgnorePunctuation());
-            CreateOwnDataProperty(cx, object, "collation", collator.getCollation());
-            CreateOwnDataProperty(cx, object, "numeric", collator.isNumeric());
-            CreateOwnDataProperty(cx, object, "caseFirst", collator.getCaseFirst());
+            CreateDataProperty(cx, object, "locale", collator.getLocale());
+            CreateDataProperty(cx, object, "usage", collator.getUsage());
+            CreateDataProperty(cx, object, "sensitivity", collator.getSensitivity());
+            CreateDataProperty(cx, object, "ignorePunctuation", collator.isIgnorePunctuation());
+            CreateDataProperty(cx, object, "collation", collator.getCollation());
+            CreateDataProperty(cx, object, "numeric", collator.isNumeric());
+            CreateDataProperty(cx, object, "caseFirst", collator.getCaseFirst());
             return object;
         }
     }

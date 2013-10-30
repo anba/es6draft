@@ -6,9 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.GeneratorThread.newGeneratorThreadFactory;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.concurrent.Callable;

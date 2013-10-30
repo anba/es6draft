@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -92,31 +92,30 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
             NumberFormatObject numberFormat = thisNumberFormatValue(cx, thisValue);
             OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            CreateOwnDataProperty(cx, object, "locale", numberFormat.getLocale());
-            CreateOwnDataProperty(cx, object, "numberingSystem", numberFormat.getNumberingSystem());
-            CreateOwnDataProperty(cx, object, "style", numberFormat.getStyle());
+            CreateDataProperty(cx, object, "locale", numberFormat.getLocale());
+            CreateDataProperty(cx, object, "numberingSystem", numberFormat.getNumberingSystem());
+            CreateDataProperty(cx, object, "style", numberFormat.getStyle());
             if (numberFormat.getCurrency() != null) {
-                CreateOwnDataProperty(cx, object, "currency", numberFormat.getCurrency());
+                CreateDataProperty(cx, object, "currency", numberFormat.getCurrency());
             }
             if (numberFormat.getCurrencyDisplay() != null) {
-                CreateOwnDataProperty(cx, object, "currencyDisplay",
-                        numberFormat.getCurrencyDisplay());
+                CreateDataProperty(cx, object, "currencyDisplay", numberFormat.getCurrencyDisplay());
             }
-            CreateOwnDataProperty(cx, object, "minimumIntegerDigits",
+            CreateDataProperty(cx, object, "minimumIntegerDigits",
                     numberFormat.getMinimumIntegerDigits());
-            CreateOwnDataProperty(cx, object, "minimumFractionDigits",
+            CreateDataProperty(cx, object, "minimumFractionDigits",
                     numberFormat.getMinimumFractionDigits());
-            CreateOwnDataProperty(cx, object, "maximumFractionDigits",
+            CreateDataProperty(cx, object, "maximumFractionDigits",
                     numberFormat.getMaximumFractionDigits());
             if (numberFormat.getMinimumSignificantDigits() != 0) {
-                CreateOwnDataProperty(cx, object, "minimumSignificantDigits",
+                CreateDataProperty(cx, object, "minimumSignificantDigits",
                         numberFormat.getMinimumSignificantDigits());
             }
             if (numberFormat.getMaximumSignificantDigits() != 0) {
-                CreateOwnDataProperty(cx, object, "maximumSignificantDigits",
+                CreateDataProperty(cx, object, "maximumSignificantDigits",
                         numberFormat.getMaximumSignificantDigits());
             }
-            CreateOwnDataProperty(cx, object, "useGrouping", numberFormat.isUseGrouping());
+            CreateDataProperty(cx, object, "useGrouping", numberFormat.isUseGrouping());
             return object;
         }
     }

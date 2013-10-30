@@ -6,24 +6,13 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.Invoke;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>25 The "std:iteration" Module</h1><br>
@@ -73,140 +62,5 @@ public final class IterationAbstractOperations {
         assert generator != null;
         /* steps 5-11 */
         return generator.yield(iterNextObj);
-    }
-
-    /**
-     * 25.4.3.4 CreateIterResultObject (value, done)
-     */
-    public static ScriptObject CreateIterResultObject(ExecutionContext cx, Object value,
-            boolean done) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* step 3 */
-        CreateOwnDataProperty(cx, obj, "value", value);
-        /* step 4 */
-        CreateOwnDataProperty(cx, obj, "done", done);
-        /* step 5 */
-        return obj;
-    }
-
-    /**
-     * 25.4.3.5 GetIterator ( obj )
-     */
-    public static ScriptObject GetIterator(ExecutionContext cx, Object obj) {
-        /* steps 1-2 */
-        Object iterator = Invoke(cx, obj, BuiltinSymbol.iterator.get());
-        /* step 3 */
-        if (!Type.isObject(iterator)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 4 */
-        return Type.objectValue(iterator);
-    }
-
-    /**
-     * 25.4.3.6 IteratorNext ( iterator, value )
-     */
-    public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator) {
-        return IteratorNext(cx, iterator, UNDEFINED);
-    }
-
-    /**
-     * 25.4.3.6 IteratorNext ( iterator, value )
-     */
-    public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator, Object value) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        Object result = Invoke(cx, iterator, "next", value);
-        /* step 4 */
-        if (!Type.isObject(result)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* step 5 */
-        return Type.objectValue(result);
-    }
-
-    /**
-     * FIXME: Not in spec<br>
-     * 25.4.3.? IteratorThrow ( iterator, value )
-     */
-    public static ScriptObject IteratorThrow(ExecutionContext cx, ScriptObject iterator,
-            Object value) {
-        Object result = Invoke(cx, iterator, "throw", value);
-        if (!Type.isObject(result)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
-        }
-        return Type.objectValue(result);
-    }
-
-    /**
-     * 25.4.3.7 IteratorComplete (iterResult)
-     */
-    public static boolean IteratorComplete(ExecutionContext cx, ScriptObject iterResult) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        Object done = Get(cx, iterResult, "done");
-        /* step 3 */
-        return ToBoolean(done);
-    }
-
-    /**
-     * 25.4.3.8 IteratorValue (iterResult)
-     */
-    public static Object IteratorValue(ExecutionContext cx, ScriptObject iterResult) {
-        /* step 1 (not applicable) */
-        /* step 2 */
-        return Get(cx, iterResult, "value");
-    }
-
-    /**
-     * 25.4.3.9 IteratorStep ( iterator, value )
-     */
-    public static ScriptObject IteratorStep(ExecutionContext cx, ScriptObject iterator) {
-        return IteratorStep(cx, iterator, UNDEFINED);
-    }
-
-    /**
-     * 25.4.3.9 IteratorStep ( iterator, value )
-     */
-    public static ScriptObject IteratorStep(ExecutionContext cx, ScriptObject iterator, Object value) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        ScriptObject result = IteratorNext(cx, iterator, value);
-        /* steps 4-5 */
-        boolean done = IteratorComplete(cx, result);
-        /* step 6 */
-        if (done) {
-            return null;
-        }
-        /* step 7 */
-        return result;
-    }
-
-    /**
-     * 25.4.3.10 CreateEmptyIterator ( )
-     */
-    public static ScriptObject CreateEmptyIterator(ExecutionContext cx) {
-        /* step 1 */
-        OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* step 2 */
-        BuiltinFunction emptyNextMethod = new EmptyIteratorNextMethod(cx.getRealm());
-        /* step 3 */
-        CreateOwnDataProperty(cx, obj, "next", emptyNextMethod);
-        /* step 4 */
-        return obj;
-    }
-
-    private static final class EmptyIteratorNextMethod extends BuiltinFunction {
-        public EmptyIteratorNextMethod(Realm realm) {
-            super(realm, "next", 0);
-        }
-
-        @Override
-        public ScriptObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            /* steps 1-2 */
-            return CreateIterResultObject(calleeContext(), UNDEFINED, true);
-        }
     }
 }

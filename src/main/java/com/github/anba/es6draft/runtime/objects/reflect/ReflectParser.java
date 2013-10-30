@@ -235,7 +235,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     private void addProperty(ScriptObject holder, String key, Object value) {
-        CreateOwnDataProperty(cx, holder, key, value);
+        CreateDataProperty(cx, holder, key, value);
     }
 
     private void addNodeInfo(ScriptObject holder, Node node, Type type) {

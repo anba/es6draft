@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.intl;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -101,12 +101,11 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
         public static Object resolvedOptions(ExecutionContext cx, Object thisValue) {
             DateTimeFormatObject dateTimeFormat = thisDateTimeFormatValue(cx, thisValue);
             OrdinaryObject object = OrdinaryObject.ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            CreateOwnDataProperty(cx, object, "locale", dateTimeFormat.getLocale());
-            CreateOwnDataProperty(cx, object, "calendar", dateTimeFormat.getCalendar());
-            CreateOwnDataProperty(cx, object, "numberingSystem",
-                    dateTimeFormat.getNumberingSystem());
+            CreateDataProperty(cx, object, "locale", dateTimeFormat.getLocale());
+            CreateDataProperty(cx, object, "calendar", dateTimeFormat.getCalendar());
+            CreateDataProperty(cx, object, "numberingSystem", dateTimeFormat.getNumberingSystem());
             assert dateTimeFormat.getTimeZone() != null;
-            CreateOwnDataProperty(cx, object, "timeZone", dateTimeFormat.getTimeZone());
+            CreateDataProperty(cx, object, "timeZone", dateTimeFormat.getTimeZone());
             // hour12, weekday, era, year, month, day, hour, minute, second, and timeZoneName
             // properties are restored from pattern field or rather its corresponding skeleton
             DateTimePatternGenerator generator = DateTimePatternGenerator.getEmptyInstance();
@@ -118,9 +117,9 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
                 }
                 FieldWeight weight = skeleton.getWeight(field);
                 if (weight != null) {
-                    CreateOwnDataProperty(cx, object, field.toString(), weight.toString());
+                    CreateDataProperty(cx, object, field.toString(), weight.toString());
                     if (field == DateField.Hour) {
-                        CreateOwnDataProperty(cx, object, "hour12", skeleton.isHour12());
+                        CreateDataProperty(cx, object, "hour12", skeleton.isHour12());
                     }
                 }
             }

@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.repl;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -282,7 +282,7 @@ class WrapperProxy implements ScriptObject {
                 if (!Type.isObject(receiver)) {
                     return false;
                 }
-                return CreateOwnDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+                return CreateDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
             }
         }
         if (ownDesc.isDataDescriptor()) {
@@ -298,7 +298,7 @@ class WrapperProxy implements ScriptObject {
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
                 return _receiver.defineOwnProperty(cx, propertyKey, valueDesc);
             } else {
-                return CreateOwnDataProperty(cx, _receiver, propertyKey, value);
+                return CreateDataProperty(cx, _receiver, propertyKey, value);
             }
         }
         assert ownDesc.isAccessorDescriptor();
@@ -325,7 +325,7 @@ class WrapperProxy implements ScriptObject {
                 if (!Type.isObject(receiver)) {
                     return false;
                 }
-                return CreateOwnDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
+                return CreateDataProperty(cx, Type.objectValue(receiver), propertyKey, value);
             }
         }
         if (ownDesc.isDataDescriptor()) {
@@ -341,7 +341,7 @@ class WrapperProxy implements ScriptObject {
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
                 return _receiver.defineOwnProperty(cx, propertyKey, valueDesc);
             } else {
-                return CreateOwnDataProperty(cx, _receiver, propertyKey, value);
+                return CreateDataProperty(cx, _receiver, propertyKey, value);
             }
         }
         assert ownDesc.isAccessorDescriptor();

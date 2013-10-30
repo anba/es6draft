@@ -6,10 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects.collection;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
@@ -155,8 +155,8 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
                 } else {
                     assert itemKind == MapIterationKind.KeyValue;
                     ScriptObject array = ArrayCreate(cx, 2);
-                    CreateOwnDataProperty(cx, array, "0", e.getKey());
-                    CreateOwnDataProperty(cx, array, "1", e.getValue());
+                    CreateDataProperty(cx, array, "0", e.getKey());
+                    CreateDataProperty(cx, array, "1", e.getValue());
                     result = array;
                 }
                 return CreateIterResultObject(cx, result, false);

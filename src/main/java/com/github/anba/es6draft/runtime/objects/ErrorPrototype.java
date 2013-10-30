@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -130,7 +130,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            CreateOwnDataProperty(cx, (ErrorObject) thisValue, "fileName", value);
+            CreateDataProperty(cx, (ErrorObject) thisValue, "fileName", value);
             return UNDEFINED;
         }
 
@@ -155,7 +155,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            CreateOwnDataProperty(cx, (ErrorObject) thisValue, "lineNumber", value);
+            CreateDataProperty(cx, (ErrorObject) thisValue, "lineNumber", value);
             return UNDEFINED;
         }
 
@@ -181,7 +181,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            CreateOwnDataProperty(cx, (ErrorObject) thisValue, "columnNumber", value);
+            CreateDataProperty(cx, (ErrorObject) thisValue, "columnNumber", value);
             return UNDEFINED;
         }
 
@@ -206,7 +206,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
             }
-            CreateOwnDataProperty(cx, (ErrorObject) thisValue, "stack", value);
+            CreateDataProperty(cx, (ErrorObject) thisValue, "stack", value);
             return UNDEFINED;
         }
 
@@ -243,9 +243,9 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
         List<ScriptObject> list = new ArrayList<>();
         for (StackTraceElement element : new StackTraceElementIterable(e)) {
             OrdinaryObject elem = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-            CreateOwnDataProperty(cx, elem, "methodName", getMethodName(element));
-            CreateOwnDataProperty(cx, elem, "fileName", element.getFileName());
-            CreateOwnDataProperty(cx, elem, "lineNumber", element.getLineNumber());
+            CreateDataProperty(cx, elem, "methodName", getMethodName(element));
+            CreateDataProperty(cx, elem, "fileName", element.getFileName());
+            CreateDataProperty(cx, elem, "lineNumber", element.getLineNumber());
             list.add(elem);
         }
         return CreateArrayFromList(cx, list);

@@ -13,11 +13,13 @@ import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCrea
 import static com.github.anba.es6draft.runtime.objects.NumberObject.NumberCreate;
 import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,6 +33,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
+import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -121,7 +124,7 @@ public final class AbstractOperations {
             tryFirst = "valueOf";
             trySecond = "toString";
         }
-        /* steps 5-7 */
+        /* step 5 (first try) */
         Object first = Get(cx, object, tryFirst);
         if (IsCallable(first)) {
             Object result = ((Callable) first).call(cx, object);
@@ -129,7 +132,7 @@ public final class AbstractOperations {
                 return result;
             }
         }
-        /* steps 8-10 */
+        /* step 5 (second try) */
         Object second = Get(cx, object, trySecond);
         if (IsCallable(second)) {
             Object result = ((Callable) second).call(cx, object);
@@ -137,7 +140,7 @@ public final class AbstractOperations {
                 return result;
             }
         }
-        /* step 11 */
+        /* step 6 */
         throw throwTypeError(cx, Messages.Key.NoPrimitiveRepresentation);
     }
 
@@ -292,14 +295,71 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.8 ToString
+     * 7.1.8 ToInt8: (Signed 8 Bit Integer)
+     */
+    public static byte ToInt8(ExecutionContext cx, Object val) {
+        /* steps 1-2 */
+        double number = ToNumber(cx, val);
+        /* steps 3-6 */
+        return (byte) DoubleConversion.doubleToInt32(number);
+    }
+
+    /**
+     * 7.1.8 ToInt8: (Signed 8 Bit Integer)
+     */
+    public static byte ToInt8(double number) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-6 */
+        return (byte) DoubleConversion.doubleToInt32(number);
+    }
+
+    /**
+     * 7.1.9 ToUint8: (Unsigned 8 Bit Integer)
+     */
+    public static int ToUint8(ExecutionContext cx, Object val) {
+        /* steps 1-2 */
+        double number = ToNumber(cx, val);
+        /* steps 3-6 */
+        return DoubleConversion.doubleToInt32(number) & 0xFF;
+    }
+
+    /**
+     * 7.1.9 ToUint8: (Unsigned 8 Bit Integer)
+     */
+    public static int ToUint8(double number) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-6 */
+        return DoubleConversion.doubleToInt32(number) & 0xFF;
+    }
+
+    /**
+     * 7.1.10 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
+     */
+    public static int ToUint8Clamp(ExecutionContext cx, Object val) {
+        /* steps 1-2 */
+        double number = ToNumber(cx, val);
+        /* steps 3-8 */
+        return number <= 0 ? +0 : number > 255 ? 255 : (int) Math.rint(number);
+    }
+
+    /**
+     * 7.1.10 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
+     */
+    public static int ToUint8Clamp(double number) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-8 */
+        return number <= 0 ? +0 : number > 255 ? 255 : (int) Math.rint(number);
+    }
+
+    /**
+     * 7.1.11 ToString
      */
     public static String ToFlatString(ExecutionContext cx, Object val) {
         return ToString(cx, val).toString();
     }
 
     /**
-     * 7.1.8 ToString
+     * 7.1.11 ToString
      */
     public static CharSequence ToString(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
@@ -323,14 +383,14 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.8.1 ToString Applied to the Number Type
+     * 7.1.11.1 ToString Applied to the Number Type
      */
     public static String ToString(int val) {
         return Integer.toString(val);
     }
 
     /**
-     * 7.1.8.1 ToString Applied to the Number Type
+     * 7.1.11.1 ToString Applied to the Number Type
      */
     public static String ToString(long val) {
         if ((int) val == val) {
@@ -342,7 +402,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.8.1 ToString Applied to the Number Type
+     * 7.1.11.1 ToString Applied to the Number Type
      */
     public static String ToString(double val) {
         /* steps 1-4 (+ shortcut for integer values) */
@@ -369,7 +429,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.9 ToObject
+     * 7.1.12 ToObject
      */
     public static ScriptObject ToObject(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
@@ -391,7 +451,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.10 ToPropertyKey
+     * 7.1.13 ToPropertyKey
      */
     public static Object ToPropertyKey(ExecutionContext cx, Object val) {
         if (val instanceof Symbol) {
@@ -401,7 +461,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.11 ToLength
+     * 7.1.14 ToLength
      */
     public static long ToLength(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -410,6 +470,7 @@ public final class AbstractOperations {
         if (len <= 0) {
             return 0;
         }
+        /* step 4 */
         return (long) Math.min(len, 0x1FFFFFFFFFFFFFL);
     }
 
@@ -427,7 +488,7 @@ public final class AbstractOperations {
      * 7.2.2 IsCallable
      */
     public static boolean IsCallable(Object val) {
-        return (val instanceof Callable);
+        return val instanceof Callable;
     }
 
     /**
@@ -535,7 +596,7 @@ public final class AbstractOperations {
      */
     public static boolean IsConstructor(Object val) {
         /* steps 1-4 */
-        return (val instanceof Constructor && ((Constructor) val).isConstructor());
+        return val instanceof Constructor && ((Constructor) val).isConstructor();
     }
 
     /**
@@ -706,6 +767,7 @@ public final class AbstractOperations {
      * 7.3.1 Get (O, P)
      */
     public static Object Get(ExecutionContext cx, ScriptObject object, Object propertyKey) {
+        /* steps 1-3 */
         if (propertyKey instanceof String) {
             return Get(cx, object, (String) propertyKey);
         } else {
@@ -734,6 +796,7 @@ public final class AbstractOperations {
      */
     public static void Put(ExecutionContext cx, ScriptObject object, Object propertyKey,
             Object value, boolean _throw) {
+        /* steps 1-7 */
         if (propertyKey instanceof String) {
             Put(cx, object, (String) propertyKey, value, _throw);
         } else {
@@ -770,21 +833,21 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.3 CreateOwnDataProperty (O, P, V)
+     * 7.3.3 CreateDataProperty (O, P, V)
      */
-    public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
+    public static boolean CreateDataProperty(ExecutionContext cx, ScriptObject object,
             Object propertyKey, Object value) {
         if (propertyKey instanceof String) {
-            return CreateOwnDataProperty(cx, object, (String) propertyKey, value);
+            return CreateDataProperty(cx, object, (String) propertyKey, value);
         } else {
-            return CreateOwnDataProperty(cx, object, (Symbol) propertyKey, value);
+            return CreateDataProperty(cx, object, (Symbol) propertyKey, value);
         }
     }
 
     /**
-     * 7.3.3 CreateOwnDataProperty (O, P, V)
+     * 7.3.3 CreateDataProperty (O, P, V)
      */
-    public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
+    public static boolean CreateDataProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey, Object value) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
@@ -794,9 +857,9 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.3 CreateOwnDataProperty (O, P, V)
+     * 7.3.3 CreateDataProperty (O, P, V)
      */
-    public static boolean CreateOwnDataProperty(ExecutionContext cx, ScriptObject object,
+    public static boolean CreateDataProperty(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey, Object value) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
@@ -806,7 +869,49 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.4 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     */
+    public static void CreateDataPropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            Object propertyKey, Object value) {
+        if (propertyKey instanceof String) {
+            CreateDataPropertyOrThrow(cx, object, (String) propertyKey, value);
+        } else {
+            CreateDataPropertyOrThrow(cx, object, (Symbol) propertyKey, value);
+        }
+    }
+
+    /**
+     * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     */
+    public static void CreateDataPropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            String propertyKey, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        boolean success = CreateDataProperty(cx, object, propertyKey, value);
+        /* step 5 */
+        if (!success) {
+            throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
+        }
+        /* step 6 */
+    }
+
+    /**
+     * 7.3.4 CreateDataPropertyOrThrow (O, P, V)
+     */
+    public static void CreateDataPropertyOrThrow(ExecutionContext cx, ScriptObject object,
+            Symbol propertyKey, Object value) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        boolean success = CreateDataProperty(cx, object, propertyKey, value);
+        /* step 5 */
+        if (!success) {
+            throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey.toString());
+        }
+        /* step 6 */
+    }
+
+    /**
+     * 7.3.5 DefinePropertyOrThrow (O, P, desc)
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Object propertyKey, PropertyDescriptor desc) {
@@ -818,7 +923,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.4 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.5 DefinePropertyOrThrow (O, P, desc)
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             String propertyKey, PropertyDescriptor desc) {
@@ -832,7 +937,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.4 DefinePropertyOrThrow (O, P, desc)
+     * 7.3.5 DefinePropertyOrThrow (O, P, desc)
      */
     public static void DefinePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey, PropertyDescriptor desc) {
@@ -846,7 +951,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 DeletePropertyOrThrow (O, P)
+     * 7.3.6 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Object propertyKey) {
@@ -858,7 +963,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 DeletePropertyOrThrow (O, P)
+     * 7.3.6 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             String propertyKey) {
@@ -872,7 +977,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.5 DeletePropertyOrThrow (O, P)
+     * 7.3.6 DeletePropertyOrThrow (O, P)
      */
     public static void DeletePropertyOrThrow(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey) {
@@ -886,7 +991,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 HasProperty (O, P)
+     * 7.3.7 HasProperty (O, P)
      */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Object propertyKey) {
         if (propertyKey instanceof String) {
@@ -897,7 +1002,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 HasProperty (O, P)
+     * 7.3.7 HasProperty (O, P)
      */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-3 */
@@ -905,7 +1010,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.6 HasProperty (O, P)
+     * 7.3.7 HasProperty (O, P)
      */
     public static boolean HasProperty(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
         /* steps 1-3 */
@@ -913,7 +1018,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 HasOwnProperty (O, P)
+     * 7.3.8 HasOwnProperty (O, P)
      */
     public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
             Object propertyKey) {
@@ -925,7 +1030,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 HasOwnProperty (O, P)
+     * 7.3.8 HasOwnProperty (O, P)
      */
     public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
             String propertyKey) {
@@ -937,7 +1042,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.7 HasOwnProperty (O, P)
+     * 7.3.8 HasOwnProperty (O, P)
      */
     public static boolean HasOwnProperty(ExecutionContext cx, ScriptObject object,
             Symbol propertyKey) {
@@ -949,7 +1054,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 GetMethod (O, P)
+     * 7.3.9 GetMethod (O, P)
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, Object propertyKey) {
         if (propertyKey instanceof String) {
@@ -960,7 +1065,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 GetMethod (O, P)
+     * 7.3.9 GetMethod (O, P)
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, String propertyKey) {
         /* steps 1-4 */
@@ -978,7 +1083,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.8 GetMethod (O, P)
+     * 7.3.9 GetMethod (O, P)
      */
     public static Callable GetMethod(ExecutionContext cx, ScriptObject object, Symbol propertyKey) {
         /* steps 1-4 */
@@ -996,7 +1101,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 Invoke(O,P [,args])
+     * 7.3.10 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, Object object, Object propertyKey,
             Object... args) {
@@ -1008,7 +1113,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 Invoke(O,P [,args])
+     * 7.3.10 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
             Object... args) {
@@ -1024,7 +1129,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 Invoke(O,P [,args])
+     * 7.3.10 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, String propertyKey,
             Object... args) {
@@ -1034,7 +1139,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 Invoke(O,P [,args])
+     * 7.3.10 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, Object object, Symbol propertyKey,
             Object... args) {
@@ -1050,7 +1155,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.9 Invoke(O,P [,args])
+     * 7.3.10 Invoke(O,P [,args])
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
             Object... args) {
@@ -1060,7 +1165,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.10 SetIntegrityLevel (O, level)
+     * 7.3.11 SetIntegrityLevel (O, level)
      */
     public static boolean SetIntegrityLevel(ExecutionContext cx, ScriptObject object,
             IntegrityLevel level) {
@@ -1138,7 +1243,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.11 TestIntegrityLevel (O, level)
+     * 7.3.12 TestIntegrityLevel (O, level)
      */
     public static boolean TestIntegrityLevel(ExecutionContext cx, ScriptObject object,
             IntegrityLevel level) {
@@ -1200,7 +1305,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.12 CreateArrayFromList (elements)
+     * 7.3.13 CreateArrayFromList (elements)
      */
     public static ScriptObject CreateArrayFromList(ExecutionContext cx, List<?> elements) {
         /* step 1 (not applicable) */
@@ -1210,7 +1315,7 @@ public final class AbstractOperations {
         int n = 0;
         /* step 4 */
         for (Object e : elements) {
-            boolean status = CreateOwnDataProperty(cx, array, ToString(n), e);
+            boolean status = CreateDataProperty(cx, array, ToString(n), e);
             assert status;
             n += 1;
         }
@@ -1219,7 +1324,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.13 CreateListFromArrayLike (obj)
+     * 7.3.14 CreateListFromArrayLike (obj)
      */
     public static Object[] CreateListFromArrayLike(ExecutionContext cx, Object obj) {
         /* step 1 */
@@ -1230,12 +1335,12 @@ public final class AbstractOperations {
         /* step 2 */
         Object len = Get(cx, object, "length");
         /* steps 3-4 */
-        double n = ToInteger(cx, len);
+        long n = ToLength(cx, len);
         // CreateListFromArrayLike() is (currently) only used for argument arrays
         if (n > FunctionPrototype.getMaxArguments()) {
             throw throwRangeError(cx, Messages.Key.FunctionTooManyArguments);
         }
-        int length = n > 0 ? (int) n : 0;
+        int length = (int) n;
         /* step 5 */
         Object[] list = new Object[length];
         /* steps 6-7 */
@@ -1249,7 +1354,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.14 OrdinaryHasInstance (C, O)
+     * 7.3.15 OrdinaryHasInstance (C, O)
      */
     public static boolean OrdinaryHasInstance(ExecutionContext cx, Object c, Object o) {
         /* step 1 */
@@ -1283,7 +1388,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.15 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
+     * 7.3.16 GetPrototypeFromConstructor ( constructor, intrinsicDefaultProto )
      */
     public static ScriptObject GetPrototypeFromConstructor(ExecutionContext cx, Object constructor,
             Intrinsics intrinsicDefaultProto) {
@@ -1309,7 +1414,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.16 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
+     * 7.3.17 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
      */
     public static OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
             Object constructor, Intrinsics intrinsicDefaultProto) {
@@ -1321,7 +1426,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.16 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     * 7.3.17 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
      */
     public static <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
             ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,
@@ -1331,6 +1436,133 @@ public final class AbstractOperations {
         ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
         /* step 4 */
         return ObjectCreate(cx, proto, allocator);
+    }
+
+    /**
+     * 7.4.1 GetIterator ( obj )
+     */
+    public static ScriptObject GetIterator(ExecutionContext cx, Object obj) {
+        /* steps 1-2 */
+        Object iterator = Invoke(cx, obj, BuiltinSymbol.iterator.get());
+        /* step 3 */
+        if (!Type.isObject(iterator)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 4 */
+        return Type.objectValue(iterator);
+    }
+
+    /**
+     * 7.4.2 IteratorNext ( iterator, value )
+     */
+    public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator) {
+        return IteratorNext(cx, iterator, UNDEFINED);
+    }
+
+    /**
+     * 7.4.2 IteratorNext ( iterator, value )
+     */
+    public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator, Object value) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        Object result = Invoke(cx, iterator, "next", value);
+        /* step 4 */
+        if (!Type.isObject(result)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 5 */
+        return Type.objectValue(result);
+    }
+
+    /**
+     * FIXME: Not in spec<br>
+     * 7.4.? IteratorThrow ( iterator, value )
+     */
+    public static ScriptObject IteratorThrow(ExecutionContext cx, ScriptObject iterator,
+            Object value) {
+        Object result = Invoke(cx, iterator, "throw", value);
+        if (!Type.isObject(result)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        return Type.objectValue(result);
+    }
+
+    /**
+     * 7.4.3 IteratorComplete (iterResult)
+     */
+    public static boolean IteratorComplete(ExecutionContext cx, ScriptObject iterResult) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        Object done = Get(cx, iterResult, "done");
+        /* step 3 */
+        return ToBoolean(done);
+    }
+
+    /**
+     * 7.4.4 IteratorValue (iterResult)
+     */
+    public static Object IteratorValue(ExecutionContext cx, ScriptObject iterResult) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        return Get(cx, iterResult, "value");
+    }
+
+    /**
+     * 7.4.5 IteratorStep ( iterator, value )
+     */
+    public static ScriptObject IteratorStep(ExecutionContext cx, ScriptObject iterator) {
+        return IteratorStep(cx, iterator, UNDEFINED);
+    }
+
+    /**
+     * 7.4.5 IteratorStep ( iterator, value )
+     */
+    public static ScriptObject IteratorStep(ExecutionContext cx, ScriptObject iterator, Object value) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject result = IteratorNext(cx, iterator, value);
+        /* steps 4-5 */
+        boolean done = IteratorComplete(cx, result);
+        /* step 6 */
+        if (done) {
+            return null;
+        }
+        /* step 7 */
+        return result;
+    }
+
+    /**
+     * 7.4.6 CreateIterResultObject (value, done)
+     */
+    public static ScriptObject CreateIterResultObject(ExecutionContext cx, Object value,
+            boolean done) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        OrdinaryObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
+        /* step 3 */
+        CreateDataProperty(cx, obj, "value", value);
+        /* step 4 */
+        CreateDataProperty(cx, obj, "done", done);
+        /* step 5 */
+        return obj;
+    }
+
+    /**
+     * 7.4.7 CreateListIterator (list)
+     */
+    public static ScriptObject CreateListIterator(ExecutionContext cx, List<?> list) {
+        // TODO: check implementation for conformance
+        return ListIterator.MakeListIterator(cx, list.iterator());
+    }
+
+    /**
+     * 7.4.8 CreateEmptyIterator ( )
+     */
+    public static ScriptObject CreateEmptyIterator(ExecutionContext cx) {
+        /* step 1 */
+        List<?> empty = Collections.emptyList();
+        /* step 2 */
+        return CreateListIterator(cx, empty);
     }
 
     /**
@@ -1391,6 +1623,9 @@ public final class AbstractOperations {
         return nameList;
     }
 
+    /**
+     * 7.1.3.1 ToNumber Applied to the String Type
+     */
     private static final class NumberParser {
         private NumberParser() {
         }

@@ -432,7 +432,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     String p = ToString(n);
-                    boolean status = CreateOwnDataProperty(cx, a, p, kvalue);
+                    boolean status = CreateDataProperty(cx, a, p, kvalue);
                     if (!status) {
                         throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, p);
                     }
@@ -1188,13 +1188,13 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject blackList = ArrayCreate(cx, 7, Intrinsics.ArrayPrototype);
             /* steps 2-8 */
             boolean status = true;
-            status &= CreateOwnDataProperty(cx, blackList, "0", "find");
-            status &= CreateOwnDataProperty(cx, blackList, "1", "findIndex");
-            status &= CreateOwnDataProperty(cx, blackList, "2", "fill");
-            status &= CreateOwnDataProperty(cx, blackList, "3", "copyWithin");
-            status &= CreateOwnDataProperty(cx, blackList, "4", "entries");
-            status &= CreateOwnDataProperty(cx, blackList, "5", "keys");
-            status &= CreateOwnDataProperty(cx, blackList, "6", "values");
+            status &= CreateDataProperty(cx, blackList, "0", "find");
+            status &= CreateDataProperty(cx, blackList, "1", "findIndex");
+            status &= CreateDataProperty(cx, blackList, "2", "fill");
+            status &= CreateDataProperty(cx, blackList, "3", "copyWithin");
+            status &= CreateDataProperty(cx, blackList, "4", "entries");
+            status &= CreateDataProperty(cx, blackList, "5", "keys");
+            status &= CreateDataProperty(cx, blackList, "6", "values");
             /* step 9 */
             assert status;
             /* step 10 */

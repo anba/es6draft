@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.runtime.objects.internal;
 
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorStep;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.IteratorValue;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorStep;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IteratorValue;
 
 import java.util.Iterator;
 

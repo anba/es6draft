@@ -6,10 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.objects.collection;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.CreateIterResultObject;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 
@@ -148,8 +148,8 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
                 assert e != null;
                 if (itemKind == SetIterationKind.KeyValue) {
                     ExoticArray result = ArrayCreate(cx, 2);
-                    CreateOwnDataProperty(cx, result, "0", e.getKey());
-                    CreateOwnDataProperty(cx, result, "1", e.getKey());
+                    CreateDataProperty(cx, result, "0", e.getKey());
+                    CreateDataProperty(cx, result, "1", e.getKey());
                     return CreateIterResultObject(cx, result, false);
                 }
                 return CreateIterResultObject(cx, e.getKey(), false);

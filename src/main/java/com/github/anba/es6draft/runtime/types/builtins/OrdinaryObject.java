@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.CreateOwnDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
@@ -495,7 +495,7 @@ public class OrdinaryObject implements ScriptObject {
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
                 return _receiver.defineOwnProperty(cx, propertyKey, valueDesc);
             } else {
-                return CreateOwnDataProperty(cx, _receiver, propertyKey, value);
+                return CreateDataProperty(cx, _receiver, propertyKey, value);
             }
         }
         /* step 6 */
@@ -537,7 +537,7 @@ public class OrdinaryObject implements ScriptObject {
                 PropertyDescriptor valueDesc = new PropertyDescriptor(value);
                 return _receiver.defineOwnProperty(cx, propertyKey, valueDesc);
             } else {
-                return CreateOwnDataProperty(cx, _receiver, propertyKey, value);
+                return CreateDataProperty(cx, _receiver, propertyKey, value);
             }
         }
         /* step 6 */

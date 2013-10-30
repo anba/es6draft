@@ -350,13 +350,13 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         /* step 7 */
         if (needDefaults && ("date".equals(defaults) || "all".equals(defaults))) {
             for (String pk : asList("year", "month", "day")) {
-                CreateOwnDataProperty(cx, options, pk, "numeric");
+                CreateDataProperty(cx, options, pk, "numeric");
             }
         }
         /* step 8 */
         if (needDefaults && ("time".equals(defaults) || "all".equals(defaults))) {
             for (String pk : asList("hour", "minute", "second")) {
-                CreateOwnDataProperty(cx, options, pk, "numeric");
+                CreateDataProperty(cx, options, pk, "numeric");
             }
         }
         /* step 9 */

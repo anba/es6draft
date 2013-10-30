@@ -82,7 +82,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             /* step 7 */
             if (IsCallable(reviver)) {
                 ScriptObject root = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-                boolean status = CreateOwnDataProperty(cx, root, "", unfiltered);
+                boolean status = CreateDataProperty(cx, root, "", unfiltered);
                 assert status;
                 return Walk(cx, (Callable) reviver, root, "");
             }
@@ -154,7 +154,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             /* step 9 */
             ScriptObject wrapper = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* steps 10-11 */
-            boolean status = CreateOwnDataProperty(cx, wrapper, "", value);
+            boolean status = CreateDataProperty(cx, wrapper, "", value);
             assert status;
             /* step 12 */
             String result = Str(cx, stack, propertyList, replacerFunction, indent, gap, "", wrapper);

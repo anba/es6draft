@@ -80,15 +80,15 @@ public class ErrorConstructor extends BuiltinConstructor implements Initialisabl
         /* extension: fileName, lineNumber and columnNumber arguments */
         if (args.length > 1) {
             CharSequence fileName = ToString(calleeContext, args[1]);
-            CreateOwnDataProperty(calleeContext, obj, "fileName", fileName);
+            CreateDataProperty(calleeContext, obj, "fileName", fileName);
         }
         if (args.length > 2) {
             int lineNumber = ToInt32(calleeContext, args[2]);
-            CreateOwnDataProperty(calleeContext, obj, "lineNumber", lineNumber);
+            CreateDataProperty(calleeContext, obj, "lineNumber", lineNumber);
         }
         if (args.length > 3) {
             int columnNumber = ToInt32(calleeContext, args[3]);
-            CreateOwnDataProperty(calleeContext, obj, "columnNumber", columnNumber);
+            CreateDataProperty(calleeContext, obj, "columnNumber", columnNumber);
         }
 
         /* step 7 */
