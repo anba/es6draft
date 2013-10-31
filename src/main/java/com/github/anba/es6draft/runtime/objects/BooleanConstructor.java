@@ -86,7 +86,7 @@ public class BooleanConstructor extends BuiltinConstructor implements Initialisa
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Boolean";
 
         /**
@@ -99,7 +99,7 @@ public class BooleanConstructor extends BuiltinConstructor implements Initialisa
         /**
          * 19.3.2.2 Boolean[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.BooleanPrototype,
