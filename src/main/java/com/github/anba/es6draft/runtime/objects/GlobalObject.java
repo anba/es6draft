@@ -353,14 +353,6 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         @Value(name = "WeakSet")
         public static final Intrinsics WeakSet = Intrinsics.WeakSet;
 
-        // TODO: Proxy
-
-        @Value(name = "Proxy")
-        public static final Intrinsics Proxy = Intrinsics.Proxy;
-
-        @Value(name = "Reflect")
-        public static final Intrinsics Reflect = Intrinsics.Reflect;
-
         /**
          * 18.4.2 ArrayBuffer ( . . . )
          */
@@ -435,16 +427,28 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         ;
 
         /**
+         * 18.5.1 JSON
+         */
+        @Value(name = "JSON")
+        public static final Intrinsics JSON = Intrinsics.JSON;
+
+        /**
          * 18.5.2 Math
          */
         @Value(name = "Math")
         public static final Intrinsics Math = Intrinsics.Math;
 
         /**
-         * 18.5.1 JSON
+         * 18.5.3 Proxy
          */
-        @Value(name = "JSON")
-        public static final Intrinsics JSON = Intrinsics.JSON;
+        @Value(name = "Proxy")
+        public static final Intrinsics Proxy = Intrinsics.Proxy;
+
+        /**
+         * 18.5.4 Reflect
+         */
+        @Value(name = "Reflect")
+        public static final Intrinsics Reflect = Intrinsics.Reflect;
 
         // Internationalization API
 
