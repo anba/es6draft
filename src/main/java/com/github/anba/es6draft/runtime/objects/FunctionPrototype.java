@@ -85,7 +85,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
-        public static final String name = "FunctionPrototype";
+        public static final String name = "";
 
         /**
          * 19.2.3.4 Function.prototype.constructor
@@ -176,7 +176,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         /**
          * 19.2.4.6 Function.prototype[ @@create ] ( )
          */
-        @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
+        @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ObjectPrototype);
@@ -186,7 +186,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
          * 19.2.4.7 Function.prototype[@@hasInstance] (V)
          */
         @Function(
-                name = "@@hasInstance",
+                name = "[Symbol.hasInstance]",
                 arity = 1,
                 symbol = BuiltinSymbol.hasInstance,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = false))

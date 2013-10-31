@@ -122,6 +122,8 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         /* step 19 */
         MakeConstructor(calleeContext, fn);
         /* step 20 */
+        SetFunctionName(calleeContext, fn, "anonymous");
+        /* step 21 */
         return fn;
     }
 
@@ -157,13 +159,13 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Function";
 
         /**
          * 19.2.2.3 Function[ @@create ] ( )
          */
-        @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
+        @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
