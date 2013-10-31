@@ -144,6 +144,7 @@ public final class Messages {
         InitialisedObject("type.initialised_object"),
         UninitialisedObject("type.uninitialised_object"),
         SymbolObject("type.symbol_object"),
+        SymbolPrimitive("type.symbol_primitive"),
         SymbolString("type.symbol_string"),
         SymbolCreate("type.symbol_create"),
         CyclicProto("type.cyclic_proto"),

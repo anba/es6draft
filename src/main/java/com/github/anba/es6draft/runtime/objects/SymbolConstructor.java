@@ -83,11 +83,11 @@ public class SymbolConstructor extends BuiltinConstructor implements Initialisab
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Symbol";
 
         /**
-         * 19.4.2.5 Symbol.prototype
+         * 19.4.2.6 Symbol.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -108,51 +108,51 @@ public class SymbolConstructor extends BuiltinConstructor implements Initialisab
         public static final Symbol hasInstance = BuiltinSymbol.hasInstance.get();
 
         /**
-         * 19.4.2.x Symbol.isConcatSpreadable
+         * 19.4.2.3 Symbol.isConcatSpreadable
          */
         @Value(name = "isConcatSpreadable", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
         public static final Symbol isConcatSpreadable = BuiltinSymbol.isConcatSpreadable.get();
 
         /**
-         * 19.4.2.3 Symbol.isRegExp
+         * 19.4.2.4 Symbol.isRegExp
          */
         @Value(name = "isRegExp", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol isRegExp = BuiltinSymbol.isRegExp.get();
 
         /**
-         * 19.4.2.4 Symbol.iterator
+         * 19.4.2.5 Symbol.iterator
          */
         @Value(name = "iterator", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol iterator = BuiltinSymbol.iterator.get();
 
         /**
-         * 19.4.2.6 Symbol.toPrimitive
+         * 19.4.2.7 Symbol.toPrimitive
          */
         @Value(name = "toPrimitive", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol toPrimitive = BuiltinSymbol.toPrimitive.get();
 
         /**
-         * 19.4.2.7 Symbol.toStringTag
+         * 19.4.2.8 Symbol.toStringTag
          */
         @Value(name = "toStringTag", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol toStringTag = BuiltinSymbol.toStringTag.get();
 
         /**
-         * 19.4.2.8 Symbol.unscopables
+         * 19.4.2.9 Symbol.unscopables
          */
         @Value(name = "unscopables", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Symbol unscopables = BuiltinSymbol.unscopables.get();
 
         /**
-         * 19.4.2.9 Symbol[ @@create ] ( )
+         * 19.4.2.10 Symbol[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             throw Errors.throwTypeError(cx, Messages.Key.SymbolCreate);

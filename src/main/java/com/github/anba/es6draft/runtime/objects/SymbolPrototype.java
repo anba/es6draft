@@ -89,7 +89,17 @@ public class SymbolPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 19.4.3.4 Symbol.prototype [ @@toStringTag ]
+         * 19.4.3.4 Symbol.prototype [ @@toPrimitive ] ( hint )
+         */
+        @Function(name = "[Symbol.toPrimitive]", symbol = BuiltinSymbol.toPrimitive, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
+            /* step 1 */
+            throw throwTypeError(cx, Messages.Key.SymbolPrimitive);
+        }
+
+        /**
+         * 19.4.3.5 Symbol.prototype [ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
