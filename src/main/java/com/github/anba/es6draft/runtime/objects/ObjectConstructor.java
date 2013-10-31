@@ -70,9 +70,11 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object value = args.length > 0 ? args[0] : UNDEFINED;
+        /* step 1 */
         if (Type.isUndefinedOrNull(value)) {
             return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         }
+        /* step 2 */
         return ToObject(calleeContext, value);
     }
 
@@ -81,25 +83,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        // FIXME: spec issue? (should possibly call %Object%[[Call]], execution-context/realm!)
-        ExecutionContext calleeContext = calleeContext();
-        if (args.length > 0) {
-            Object value = args[0];
-            switch (Type.of(value)) {
-            case Object:
-                return Type.objectValue(value);
-            case String:
-            case Symbol:
-            case Boolean:
-            case Number:
-                return ToObject(calleeContext, value);
-            case Null:
-            case Undefined:
-            default:
-                break;
-            }
-        }
-        return ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
+        return (ScriptObject) call(callerContext, UNDEFINED, args);
     }
 
     /**
@@ -116,7 +100,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Object";
 
         /**
@@ -363,6 +347,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             ScriptException pendingException = null;
             /* step 9 */
             while (keys.hasNext()) {
+                // FIXME: missing ToPropertyKey() call in specification
                 Object nextKey = ToPropertyKey(cx, keys.next());
                 try {
                     Property desc;
@@ -607,11 +592,11 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 }
             }
         }
-        /* step 10 */
+        /* step 8 */
         if (pendingException != null) {
             throw pendingException;
         }
-        /* step 11 */
+        /* step 9 */
         return target;
     }
 }
