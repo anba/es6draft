@@ -117,10 +117,12 @@ public class ExoticArray extends OrdinaryObject {
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
         assert proto != null;
+        /* step 1 (not applicable) */
         /* steps 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(cx.getRealm());
         /* step 5 */
         array.setPrototype(proto);
+        /* steps 7-8 */
         if (length >= 0) {
             array.arrayInitialisationState = true;
         } else {
@@ -128,12 +130,15 @@ public class ExoticArray extends OrdinaryObject {
             array.arrayInitialisationState = false;
             length = 0;
         }
+        /* step 9 */
         // enfore array index invariant
-        length = ToUint32(length);
-        /* step 8 */
+        if (length > 0xFFFF_FFFFL) {
+            throw throwRangeError(cx, Messages.Key.InvalidArrayLength);
+        }
+        /* step 10 */
         array.ordinaryDefineOwnProperty("length",
                 new PropertyDescriptor(length, true, false, false));
-        /* step 9 */
+        /* step 11 */
         return array;
     }
 
