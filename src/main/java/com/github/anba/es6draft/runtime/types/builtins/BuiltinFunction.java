@@ -17,7 +17,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
@@ -30,14 +29,19 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     /** [[Realm]] */
     private final Realm realm;
 
+    private String name = "";
+
     public BuiltinFunction(Realm realm) {
         super(realm);
         this.realm = realm;
+        // FIXME: add "name" parameter to constructor
+        // this.name = name;
     }
 
     public BuiltinFunction(Realm realm, String name, int arity) {
         super(realm);
         this.realm = realm;
+        this.name = name;
         createDefaultFunctionProperties(name, arity);
     }
 
@@ -60,21 +64,20 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
      * [[Prototype]] to the <code>%FunctionPrototype%</code> object and calls
      * {@link OrdinaryFunction#AddRestrictedFunctionProperties(ExecutionContext, ScriptObject)}
      */
-    protected final void createDefaultFunctionProperties(String name, int arity) {
+    private final void createDefaultFunctionProperties(String name, int arity) {
         ExecutionContext cx = realm.defaultContext();
         setPrototype(realm.getIntrinsic(Intrinsics.FunctionPrototype));
-        defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, false));
+        if (!name.isEmpty()) {
+            // anonymous functions do not have an own "name" property, cf. 19.2.4.1
+            defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, true));
+        }
         defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, true));
         AddRestrictedFunctionProperties(cx, this);
     }
 
     @Override
     public String toSource() {
-        Property desc = ordinaryGetOwnProperty("name");
-        assert desc != null && desc.isDataDescriptor() : "built-in functions have an own 'name' data property";
-        Object name = desc.getValue();
-        assert Type.isString(name) : "'name' is a string valued data property";
-        return String.format("function %s() { /* native code */ }", Type.stringValue(name));
+        return String.format("function %s() { /* native code */ }", name);
     }
 
     /**

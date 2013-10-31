@@ -966,10 +966,11 @@ public final class Properties {
         Accessor.Type type = accessor.type();
         int arity = (type == Accessor.Type.Getter ? 0 : 1);
         Attributes attrs = accessor.attributes();
+        String functionName = (type == Accessor.Type.Getter ? "get " : "set ") + name;
 
         mh = MethodHandles.insertArguments(mh, 0, cx);
 
-        NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, mh);
+        NativeFunction fun = new NativeFunction(cx.getRealm(), functionName, arity, mh);
         PropertyDescriptor desc;
         if (sym == BuiltinSymbol.NONE) {
             if ((desc = accessors1.get(name)) == null) {
