@@ -458,6 +458,53 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
+     * 9.2.11 SetFunctionName Abstract Operation
+     */
+    public static void SetFunctionName(ExecutionContext cx, FunctionObject f, String name) {
+        SetFunctionName(cx, f, name, null);
+    }
+
+    /**
+     * 9.2.11 SetFunctionName Abstract Operation
+     */
+    public static void SetFunctionName(ExecutionContext cx, FunctionObject f, String name,
+            String prefix) {
+        /* step 1 */
+        assert f.isExtensible(cx) && !f.hasOwnProperty(cx, "name");
+        /* step 2 (implicit) */
+        /* step 3 (not applicable) */
+        /* step 4 */
+        if (prefix != null) {
+            name = prefix + " " + name;
+        }
+        /* step 5 */
+        boolean success = f.defineOwnProperty(cx, "name", new PropertyDescriptor(name, false,
+                false, true));
+        /* step 6 */
+        assert success;
+        /* step 7 (return) */
+    }
+
+    /**
+     * 9.2.11 SetFunctionName Abstract Operation
+     */
+    public static void SetFunctionName(ExecutionContext cx, FunctionObject f, Symbol name) {
+        SetFunctionName(cx, f, name, null);
+    }
+
+    /**
+     * 9.2.11 SetFunctionName Abstract Operation
+     */
+    public static void SetFunctionName(ExecutionContext cx, FunctionObject f, Symbol name,
+            String prefix) {
+        /* step 3 */
+        String description = name.getDescription();
+        String sname = description == null ? "" : "[" + description + "]";
+        /* steps 1-2, 4-7 */
+        SetFunctionName(cx, f, sname, prefix);
+    }
+
+    /**
      * 9.1.15.11 GetSuperBinding(obj) Abstract Operation
      */
     public static ScriptObject GetSuperBinding(Object obj) {
