@@ -99,9 +99,6 @@ public final class Eval {
         if (!Type.isString(source)) {
             return source;
         }
-        /* step 5 */
-        Realm evalRealm = cx.getRealm();
-
         /* step 2 */
         Script script = script(cx, Type.stringValue(source), strictCaller, globalCode, direct,
                 globalScope, withStatement);
@@ -113,7 +110,9 @@ public final class Eval {
         boolean strictScript = script.getScriptBody().isStrict();
         // strictCaller implies strictScript, but no such assertion in the specification
         assert !strictCaller || strictScript : "'strictCaller => strictScript' does not hold";
-        /* steps 6-8 (implicit) */
+        /* steps 6-7 (implicit) */
+        /* step 8 */
+        Realm evalRealm = cx.getRealm();
         /* step 9 */
         if (!direct && !strictScript) {
             assert cx.getVariableEnvironment() == evalRealm.getGlobalEnv();
@@ -126,6 +125,7 @@ public final class Eval {
             assert cx.getLexicalEnvironment() == evalRealm.getGlobalEnv();
             return ScriptEvaluation(script, evalRealm, true);
         }
+        // This step is missing the specification, depends on how eval + lexical declarations work.
         if (direct && !strictScript && !strictCaller && globalCode) {
             assert cx.getVariableEnvironment() == evalRealm.getGlobalEnv();
             // The assertion does not hold in this implementation because lexical environments
