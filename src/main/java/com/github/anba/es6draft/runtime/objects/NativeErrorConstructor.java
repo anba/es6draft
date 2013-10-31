@@ -184,7 +184,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "EvalError";
 
         /**
@@ -197,7 +197,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.EvalErrorPrototype,
@@ -219,7 +219,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "RangeError";
 
         /**
@@ -232,7 +232,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.RangeErrorPrototype,
@@ -254,7 +254,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "ReferenceError";
 
         /**
@@ -267,7 +267,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.ReferenceErrorPrototype,
@@ -289,7 +289,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "SyntaxError";
 
         /**
@@ -302,7 +302,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.SyntaxErrorPrototype,
@@ -324,7 +324,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "TypeError";
 
         /**
@@ -337,7 +337,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.TypeErrorPrototype,
@@ -359,7 +359,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "URIError";
 
         /**
@@ -372,7 +372,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.URIErrorPrototype,
@@ -394,7 +394,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "InternalError";
 
         /**
@@ -407,7 +407,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         /**
          * 19.5.6.2.2 NativeError [ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.InternalErrorPrototype,
