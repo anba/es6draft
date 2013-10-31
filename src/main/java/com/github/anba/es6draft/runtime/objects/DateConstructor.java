@@ -156,7 +156,7 @@ public class DateConstructor extends BuiltinConstructor implements Initialisable
         public static final int length = 7;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Date";
 
         /**
@@ -222,7 +222,7 @@ public class DateConstructor extends BuiltinConstructor implements Initialisable
         /**
          * 20.3.3.5 Date[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.DatePrototype,

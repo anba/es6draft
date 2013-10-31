@@ -200,7 +200,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.3.4.39 Date.prototype.toLocaleString ( )<br>
+         * 20.3.4.39 Date.prototype.toLocaleString (reserved1=undefined, reserved2=undefined)<br>
          * 13.3.1 Date.prototype.toLocaleString ([locales [, options]])
          */
         @Function(name = "toLocaleString", arity = 0)
@@ -220,7 +220,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.3.4.38 Date.prototype.toLocaleDateString ( )<br>
+         * 20.3.4.38 Date.prototype.toLocaleDateString (reserved1=undefined, reserved2=undefined)<br>
          * 13.3.2 Date.prototype.toLocaleDateString ([locales [, options]])
          */
         @Function(name = "toLocaleDateString", arity = 0)
@@ -240,7 +240,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 20.3.4.40 Date.prototype.toLocaleTimeString ( )<br>
+         * 20.3.4.40 Date.prototype.toLocaleTimeString (reserved1=undefined, reserved2=undefined)<br>
          * 13.3.3 Date.prototype.toLocaleTimeString ([locales [, options]])
          */
         @Function(name = "toLocaleTimeString", arity = 0)
@@ -935,7 +935,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         /**
          * 20.3.4.45 Date.prototype[@@toPrimitive] ( hint )
          */
-        @Function(name = "@@toPrimitive", arity = 1, symbol = BuiltinSymbol.toPrimitive,
+        @Function(name = "[Symbol.toPrimitive]", arity = 1, symbol = BuiltinSymbol.toPrimitive,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             /* steps 1-2 */
