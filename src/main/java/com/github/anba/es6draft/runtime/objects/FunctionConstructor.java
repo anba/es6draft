@@ -85,7 +85,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
             bodyText = ToString(calleeContext, args[k - 1]);
         }
 
-        /* steps 8-13 */
+        /* steps 8-12 */
         RuntimeInfo.Function function;
         try {
             EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
@@ -97,6 +97,8 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
             throw e.toScriptException(calleeContext);
         }
 
+        /* step 13 */
+        boolean strict = function.isStrict();
         /* step 14 */
         LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
         /* step 15 */
@@ -105,7 +107,10 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         if (!Type.isObject(f) || !(f instanceof FunctionObject)
                 || ((FunctionObject) f).getCode() != null) {
             ScriptObject proto = calleeContext.getIntrinsic(Intrinsics.FunctionPrototype);
-            f = FunctionAllocate(calleeContext, proto, FunctionKind.Normal);
+            f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
+        } else {
+            // FIXME: this also updates uninitialised generator (not function!)
+            ((FunctionObject) f).setStrict(strict);
         }
         /* step 17 */
         if (!(f instanceof OrdinaryFunction)) {
@@ -163,7 +168,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         public static Object create(ExecutionContext cx, Object thisValue) {
             ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
                     Intrinsics.FunctionPrototype);
-            OrdinaryFunction obj = FunctionAllocate(cx, proto, FunctionKind.Normal);
+            OrdinaryFunction obj = FunctionAllocate(cx, proto, false, FunctionKind.Normal);
             return obj;
         }
     }

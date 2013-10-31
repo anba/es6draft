@@ -13,6 +13,7 @@ import java.util.Collection;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -48,8 +49,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected Object /* String|ExoticSymbol */methodName;
 
     protected boolean isConstructor = false;
-    protected boolean legacy;
-    protected String source = null;
+    private boolean legacy;
+    private String source = null;
 
     protected Property caller = new PropertyDescriptor(NULL, false, false, false).toProperty();
     protected Property arguments = new PropertyDescriptor(NULL, false, false, false).toProperty();
@@ -207,6 +208,17 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     public final boolean isStrict() {
         return strict;
+    }
+
+    /**
+     * [[Strict]]
+     */
+    public void setStrict(boolean strict) {
+        assert realm != null : "[[Realm]] not set";
+        this.strict = strict;
+        // support for legacy 'caller' and 'arguments' properties
+        // TODO: 'caller' and 'arguments' properties are never updated for generator functions
+        this.legacy = !strict && realm.isEnabled(CompatibilityOption.FunctionPrototype);
     }
 
     /**

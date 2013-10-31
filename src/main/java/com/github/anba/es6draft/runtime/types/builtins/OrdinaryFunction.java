@@ -17,7 +17,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.Cr
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.Code;
@@ -212,7 +211,7 @@ public class OrdinaryFunction extends FunctionObject {
      * 9.1.15.5 FunctionAllocate Abstract Operation
      */
     public static OrdinaryFunction FunctionAllocate(ExecutionContext cx,
-            ScriptObject functionPrototype, FunctionKind kind) {
+            ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
         /* steps 4-6 */
@@ -222,17 +221,17 @@ public class OrdinaryFunction extends FunctionObject {
         } else {
             f = new OrdinaryFunction(realm);
         }
-        /* step 7 */
-        f.functionKind = kind;
-        /* step 8 */
-        f.setPrototype(functionPrototype);
-        /* step 9 */
-        // f.[[Extensible]] = true (implicit)
-        /* step 10 */
+        /* step 13 (moved) */
         f.realm = realm;
-        // support for legacy 'caller' and 'arguments' properties
-        f.legacy = realm.isEnabled(CompatibilityOption.FunctionPrototype);
+        /* step 9 */
+        f.setStrict(strict);
+        /* step 10 */
+        f.functionKind = kind;
         /* step 11 */
+        f.setPrototype(functionPrototype);
+        /* step 12 */
+        // f.[[Extensible]] = true (implicit)
+        /* step 14 */
         return f;
     }
 
@@ -251,30 +250,23 @@ public class OrdinaryFunction extends FunctionObject {
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment scope, ScriptObject homeObject, String methodName) {
-        boolean strict = function.isStrict();
-        // first update 'legacy' flag, otherwise AddRestrictedFunctionProperties() fails
-        f.legacy = f.legacy && !strict;
-
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 */
+        boolean strict = f.strict;
+        /* steps 3-4 */
         DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
-        String name = function.functionName() != null ? function.functionName() : "";
-        DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor(name, false, false, false));
-        /* step 3 */
+        /* step 5 */
         if (strict) {
             AddRestrictedFunctionProperties(cx, f);
         }
-        /* step 4 */
+        /* step 6 */
         f.scope = scope;
-        /* steps 5-6 */
+        /* steps 7-8 */
         f.function = function;
-        /* step 7 */
-        f.homeObject = homeObject;
-        /* step 8 */
-        f.methodName = methodName;
         /* step 9 */
-        f.strict = strict;
+        f.homeObject = homeObject;
+        f.methodName = methodName;
         /* steps 10-12 */
         if (kind == FunctionKind.Arrow) {
             f.thisMode = ThisMode.Lexical;
@@ -293,30 +285,23 @@ public class OrdinaryFunction extends FunctionObject {
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment scope, ScriptObject homeObject, Symbol methodName) {
-        boolean strict = function.isStrict();
-        // first update 'legacy' flag, otherwise AddRestrictedFunctionProperties() fails
-        f.legacy = f.legacy && !strict;
-
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 */
+        boolean strict = f.strict;
+        /* steps 3-4 */
         DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
-        String name = function.functionName() != null ? function.functionName() : "";
-        DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor(name, false, false, false));
-        /* step 3 */
+        /* step 5 */
         if (strict) {
             AddRestrictedFunctionProperties(cx, f);
         }
-        /* step 4 */
+        /* step 6 */
         f.scope = scope;
-        /* steps 5-6 */
+        /* steps 7-8 */
         f.function = function;
-        /* step 7 */
-        f.homeObject = homeObject;
-        /* step 8 */
-        f.methodName = methodName;
         /* step 9 */
-        f.strict = strict;
+        f.homeObject = homeObject;
+        f.methodName = methodName;
         /* steps 10-12 */
         if (kind == FunctionKind.Arrow) {
             f.thisMode = ThisMode.Lexical;
@@ -357,7 +342,7 @@ public class OrdinaryFunction extends FunctionObject {
             functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         }
         /* step 2 */
-        OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, kind);
+        OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
         return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
     }
@@ -374,7 +359,7 @@ public class OrdinaryFunction extends FunctionObject {
             functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         }
         /* step 2 */
-        OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, kind);
+        OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
         return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
     }
@@ -428,7 +413,7 @@ public class OrdinaryFunction extends FunctionObject {
         DefinePropertyOrThrow(cx, f, "arguments", new PropertyDescriptor(f, f, false, false));
         /* step 9 */
         f.preventExtensions(cx);
-
+        /* step 10 */
         return f;
     }
 

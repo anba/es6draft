@@ -89,7 +89,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
             bodyText = ToString(calleeContext, args[k - 1]);
         }
 
-        /* steps 8-13 */
+        /* steps 8-12 */
         RuntimeInfo.Function function;
         try {
             EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
@@ -101,6 +101,8 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
             throw e.toScriptException(calleeContext);
         }
 
+        /* step 13 */
+        boolean strict = function.isStrict();
         /* step 14 */
         LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
         /* step 15 */
@@ -109,7 +111,10 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         if (!Type.isObject(f) || !(f instanceof FunctionObject)
                 || ((FunctionObject) f).getCode() != null) {
             ScriptObject proto = calleeContext.getIntrinsic(Intrinsics.Generator);
-            f = FunctionAllocate(calleeContext, proto, FunctionKind.Normal);
+            f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
+        } else {
+            // FIXME: this also updates uninitialised function (not generator!)
+            ((FunctionObject) f).setStrict(strict);
         }
         /* step 17 */
         if (!(f instanceof OrdinaryGenerator)) {
@@ -168,7 +173,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue, Intrinsics.Generator);
-            OrdinaryGenerator obj = FunctionAllocate(cx, proto, FunctionKind.Normal);
+            OrdinaryGenerator obj = FunctionAllocate(cx, proto, false, FunctionKind.Normal);
             return obj;
         }
     }

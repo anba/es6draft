@@ -17,7 +17,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
@@ -174,24 +173,23 @@ public class OrdinaryGenerator extends FunctionObject {
      * 9.1.15.5 FunctionAllocate Abstract Operation
      */
     public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx,
-            ScriptObject functionPrototype, FunctionKind kind) {
+            ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
         assert kind != FunctionKind.ConstructorMethod;
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
-        /* steps 4-6 */
+        /* steps 4-8 */
         OrdinaryGenerator f = new OrdinaryConstructorGenerator(realm);
-        /* step 7 */
-        f.functionKind = kind;
-        /* step 8 */
-        f.setPrototype(functionPrototype);
-        /* step 9 */
-        // f.[[Extensible]] = true (implicit)
-        /* step 10 */
+        /* step 13 (moved) */
         f.realm = realm;
-        // support for legacy 'caller' and 'arguments' properties
-        // TODO: 'caller' and 'arguments' properties are never updated for generator functions
-        f.legacy = realm.isEnabled(CompatibilityOption.FunctionPrototype);
+        /* step 9 */
+        f.setStrict(strict);
+        /* step 10 */
+        f.functionKind = kind;
         /* step 11 */
+        f.setPrototype(functionPrototype);
+        /* step 12 */
+        // f.[[Extensible]] = true (implicit)
+        /* step 14 */
         return f;
     }
 
@@ -224,7 +222,7 @@ public class OrdinaryGenerator extends FunctionObject {
             functionPrototype = cx.getIntrinsic(Intrinsics.Generator);
         }
         /* step 2 */
-        OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, kind);
+        OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
         return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
     }
@@ -241,7 +239,7 @@ public class OrdinaryGenerator extends FunctionObject {
             functionPrototype = cx.getIntrinsic(Intrinsics.Generator);
         }
         /* step 2 */
-        OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, kind);
+        OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
         return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
     }
