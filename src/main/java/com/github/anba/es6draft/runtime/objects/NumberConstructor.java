@@ -90,7 +90,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Number";
 
         /**
@@ -278,7 +278,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         /**
          * 20.1.2.16 Number[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.NumberPrototype,
