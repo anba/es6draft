@@ -174,25 +174,25 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
             throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
-        // FIXME: spec bug - missing check for initialisation status, cf. TypedArray Constructor
+        /* step 7 */
         if (bufferObj.getData() == null) {
             throwTypeError(calleeContext, Messages.Key.UninitialisedObject);
         }
-        /* step 7 */
+        /* step 8 */
         double numberOffset = ToNumber(calleeContext, byteOffset);
-        /* steps 8-9 */
+        /* steps 9-10 */
         double offset = ToInteger(numberOffset);
-        /* step 10 */
+        /* step 11 */
         if (numberOffset != offset || offset < 0) {
             throwRangeError(calleeContext, Messages.Key.InvalidByteOffset);
         }
-        /* step 11 */
-        long bufferByteLength = bufferObj.getByteLength();
         /* step 12 */
+        long bufferByteLength = bufferObj.getByteLength();
+        /* step 13 */
         if (offset > bufferByteLength) {
             throwRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
         }
-        /* steps 13-14 */
+        /* steps 14-15 */
         long viewByteLength, viewByteOffset = (long) offset;
         if (Type.isUndefined(byteLength)) {
             viewByteLength = bufferByteLength - viewByteOffset;
@@ -207,15 +207,15 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
                 throwRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
             }
         }
-        /* step 15 */
+        /* step 16 */
         if (dataView.getBuffer() != null) {
             throwTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
-        /* steps 16-18 */
+        /* steps 17-19 */
         dataView.setBuffer(bufferObj);
         dataView.setByteLength(viewByteLength);
         dataView.setByteOffset(viewByteOffset);
-        /* steps 19 */
+        /* step 20 */
         return dataView;
     }
 
@@ -254,7 +254,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         /**
          * 24.2.3.2 DataView [ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.DataViewPrototype,
