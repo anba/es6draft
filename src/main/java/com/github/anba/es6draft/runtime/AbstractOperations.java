@@ -475,6 +475,19 @@ public final class AbstractOperations {
     }
 
     /**
+     * 7.1.14 ToLength
+     */
+    public static long ToLength(double len) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
+        if (len <= 0) {
+            return 0;
+        }
+        /* step 4 */
+        return (long) Math.min(len, 0x1FFFFFFFFFFFFFL);
+    }
+
+    /**
      * 7.2.1 CheckObjectCoercible
      */
     public static Object CheckObjectCoercible(ExecutionContext cx, Object val) {
@@ -533,6 +546,15 @@ public final class AbstractOperations {
         /* steps 9-10 */
         assert tx == Type.Object || tx == Type.Symbol;
         return (x == y);
+    }
+
+    /**
+     * 7.2.3 SameValue(x, y)
+     */
+    public static boolean SameValue(double x, double y) {
+        /* steps 1-5, 7-10 (not applicable) */
+        /* step 6 */
+        return Double.compare(x, y) == 0;
     }
 
     /**
