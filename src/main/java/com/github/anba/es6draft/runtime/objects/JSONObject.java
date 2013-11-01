@@ -64,14 +64,14 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 24.3.2 JSON.parse ( text [ , reviver ] )
+         * 24.3.1 JSON.parse ( text [ , reviver ] )
          */
         @Function(name = "parse", arity = 2)
         public static Object parse(ExecutionContext cx, Object thisValue, Object text,
                 Object reviver) {
             /* steps 1-2 */
             CharSequence jtext = ToString(cx, text);
-            /* steps 3-6 */
+            /* steps 3-7 */
             Object unfiltered;
             try {
                 JSONParser parser = new JSONParser(cx, jtext);
@@ -79,19 +79,19 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             } catch (ParserException e) {
                 throw throwSyntaxError(cx, Messages.Key.InvalidJSONLiteral);
             }
-            /* step 7 */
+            /* step 8 */
             if (IsCallable(reviver)) {
                 ScriptObject root = ObjectCreate(cx, Intrinsics.ObjectPrototype);
                 boolean status = CreateDataProperty(cx, root, "", unfiltered);
                 assert status;
                 return Walk(cx, (Callable) reviver, root, "");
             }
-            /* step 8 */
+            /* step 9 */
             return unfiltered;
         }
 
         /**
-         * 24.3.3 JSON.stringify ( value [ , replacer [ , space ] ] )
+         * 24.3.2 JSON.stringify ( value [ , replacer [ , space ] ] )
          */
         @Function(name = "stringify", arity = 3)
         public static Object stringify(ExecutionContext cx, Object thisValue, Object value,
@@ -165,7 +165,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 24.3.4 JSON [ @@toStringTag ]
+         * 24.3.3 JSON [ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
@@ -173,7 +173,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * Runtime Semantics: Walk Abstract Operation
+     * 24.3.1.1 Runtime Semantics: Walk Abstract Operation
      */
     public static Object Walk(ExecutionContext cx, Callable reviver, ScriptObject holder,
             String name) {
@@ -213,7 +213,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * Runtime Semantics: Str Abstract Operation
+     * 24.3.2.1 Runtime Semantics: Str Abstract Operation
      */
     public static String Str(ExecutionContext cx, Set<ScriptObject> stack,
             Set<String> propertyList, Callable replacerFunction, String indent, String gap,
@@ -284,7 +284,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             'a', 'b', 'c', 'd', 'e', 'f' };
 
     /**
-     * Runtime Semantics: Quote Abstract Operation
+     * 24.3.2.2 Runtime Semantics: Quote Abstract Operation
      */
     public static String Quote(CharSequence value) {
         StringBuilder product = new StringBuilder(value.length() + 2);
@@ -332,7 +332,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * Runtime Semantics: JO Abstract Operation
+     * 24.3.2.3 Runtime Semantics: JO Abstract Operation
      */
     public static String JO(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
@@ -398,7 +398,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * Runtime Semantics: JA Abstract Operation
+     * 24.3.2.4 Runtime Semantics: JA Abstract Operation
      */
     public static String JA(ExecutionContext cx, Set<ScriptObject> stack, Set<String> propertyList,
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
