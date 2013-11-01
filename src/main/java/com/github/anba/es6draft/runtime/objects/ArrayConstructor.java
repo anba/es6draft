@@ -26,7 +26,6 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
@@ -67,8 +66,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             for (int k = 0; k < numberOfArgs; ++k) {
                 String pk = ToString(k);
                 Object itemK = args[k];
-                DefinePropertyOrThrow(calleeContext, array, pk, new PropertyDescriptor(itemK, true,
-                        true, true));
+                CreateDataPropertyOrThrow(calleeContext, array, pk, itemK);
             }
             /* steps 10-11 */
             Put(calleeContext, array, "length", numberOfArgs, true);
@@ -82,12 +80,12 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             /* steps 7-8 */
             long intLen;
             if (!Type.isNumber(len)) {
-                DefinePropertyOrThrow(calleeContext, array, "0", new PropertyDescriptor(len, true,
-                        true, true));
+                CreateDataPropertyOrThrow(calleeContext, array, "0", len);
                 intLen = 1;
             } else {
-                intLen = ToUint32(calleeContext, len);
-                if (intLen != Type.numberValue(len)) {
+                double llen = Type.numberValue(len);
+                intLen = ToUint32(llen);
+                if (intLen != llen) {
                     throw throwRangeError(calleeContext, Messages.Key.InvalidArrayLength);
                 }
             }
@@ -181,7 +179,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             for (int k = 0; k < len; ++k) {
                 String pk = ToString(k);
                 Object kValue = items[k];
-                DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(kValue, true, true, true));
+                CreateDataPropertyOrThrow(cx, a, pk, kValue);
             }
             /* steps 9-10 */
             Put(cx, a, "length", len, true);
@@ -239,8 +237,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
                     } else {
                         mappedValue = nextValue;
                     }
-                    DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(mappedValue, true,
-                            true, true));
+                    CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
                 }
             }
             /* step 9 (?) */
@@ -251,8 +248,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             /* steps 13-15 */
             ScriptObject a;
             if (IsConstructor(c)) {
-                ScriptObject newObj = ((Constructor) c).construct(cx, len);
-                a = ToObject(cx, newObj);
+                a = ((Constructor) c).construct(cx, len);
             } else {
                 a = ArrayCreate(cx, len);
             }
@@ -268,8 +264,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
                     } else {
                         mappedValue = kValue;
                     }
-                    DefinePropertyOrThrow(cx, a, pk, new PropertyDescriptor(mappedValue, true,
-                            true, true));
+                    CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
                 }
             }
             /* steps 18-19 */
@@ -281,7 +276,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
         /**
          * 22.1.2.5 Array[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             /* steps 1-3 */

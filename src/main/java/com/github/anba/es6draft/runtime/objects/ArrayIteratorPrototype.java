@@ -22,7 +22,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -31,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>22 Indexed Collections</h1><br>
  * <h2>22.1 Array Objects</h2>
  * <ul>
- * <li>22.1.5 Array Iterator Object Structure
+ * <li>22.1.5 Array Iterator Objects
  * </ul>
  */
 public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisable {
@@ -95,7 +94,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
     }
 
     /**
-     * 22.1.5.2 The Array Iterator Prototype
+     * 22.1.5.2 The %ArrayIteratorPrototype% Object
      */
     public enum Properties {
         ;
@@ -104,13 +103,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 22.1.5.2.1 ArrayIterator.prototype.constructor FIXME: spec bug (no description)
-         */
-        @Value(name = "constructor")
-        public static final Object constructor = UNDEFINED;
-
-        /**
-         * 22.1.5.2.2 ArrayIterator.prototype.next( )
+         * 22.1.5.2.1 %ArrayIteratorPrototype%.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -126,29 +119,20 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
             /* step 4 */
             ScriptObject array = iter.iteratedObject;
             /* step 5 */
-            long index = iter.nextIndex;
-            /* step 6 */
-            ArrayIterationKind itemKind = iter.kind;
-            /* step 7 */
-            Object lenValue = Get(cx, array, "length");
-            /* steps 8-9 */
-            long len = ToLength(cx, lenValue);
-            /* step 10 */
-            if (itemKind == ArrayIterationKind.SparseKey
-                    || itemKind == ArrayIterationKind.SparseValue
-                    || itemKind == ArrayIterationKind.SparseKeyValue) {
-                boolean found = false;
-                while (!found && index < len) {
-                    String elementKey = ToString(index);
-                    found = HasProperty(cx, array, elementKey);
-                    if (!found) {
-                        index += 1;
-                    }
-                }
+            if (array == null) {
+                return CreateIterResultObject(cx, UNDEFINED, true);
             }
+            /* step 6 */
+            long index = iter.nextIndex;
+            /* step 7 */
+            ArrayIterationKind itemKind = iter.kind;
+            /* step 8 */
+            Object lenValue = Get(cx, array, "length");
+            /* steps 9-10 */
+            long len = ToLength(cx, lenValue);
             /* step 11 */
             if (index >= len) {
-                iter.nextIndex = Long.MAX_VALUE; // = +Infinity
+                iter.iteratedObject = null;
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
             /* step 12 */
@@ -166,9 +150,8 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
                 /* step 14 */
                 assert elementValue != null;
                 ScriptObject result = ArrayCreate(cx, 2);
-                result.defineOwnProperty(cx, "0", new PropertyDescriptor(index, true, true, true));
-                result.defineOwnProperty(cx, "1", new PropertyDescriptor(elementValue, true, true,
-                        true));
+                CreateDataProperty(cx, result, "0", index);
+                CreateDataProperty(cx, result, "1", elementValue);
                 return CreateIterResultObject(cx, result, false);
             } else if (itemKind == ArrayIterationKind.Key
                     || itemKind == ArrayIterationKind.SparseKey) {
@@ -184,15 +167,15 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
         }
 
         /**
-         * 22.1.5.2.3 ArrayIterator.prototype.@@iterator ()
+         * 22.1.5.2.2 %ArrayIteratorPrototype% [ @@iterator ]()
          */
-        @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
+        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
             return thisValue;
         }
 
         /**
-         * 22.1.5.2.4 ArrayIterator.prototype.@@toStringTag
+         * 22.1.5.2.3 %ArrayIteratorPrototype% [ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Array Iterator";

@@ -35,7 +35,6 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
@@ -143,6 +142,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 4 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
+                // FIXME: correct [[Realm]] test
                 if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx, 0);
                 }
@@ -169,13 +169,11 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                         boolean exists = HasProperty(cx, e, p);
                         if (exists) {
                             Object subElement = Get(cx, e, p);
-                            a.defineOwnProperty(cx, ToString(n), new PropertyDescriptor(subElement,
-                                    true, true, true));
+                            CreateDataPropertyOrThrow(cx, a, ToString(n), subElement);
                         }
                     }
                 } else {
-                    a.defineOwnProperty(cx, ToString(n++), new PropertyDescriptor(item, true, true,
-                            true));
+                    CreateDataPropertyOrThrow(cx, a, ToString(n++), item);
                 }
             }
             /* steps 10-11 */
@@ -415,6 +413,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject a = null;
             /* step 14 */
             if (o instanceof ExoticArray) {
+                // FIXME: correct [[Realm]] check
                 Object c = Get(cx, o, "constructor");
                 if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx, count);
@@ -431,11 +430,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 boolean kpresent = HasProperty(cx, o, pk);
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
-                    String p = ToString(n);
-                    boolean status = CreateDataProperty(cx, a, p, kvalue);
-                    if (!status) {
-                        throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, p);
-                    }
+                    CreateDataPropertyOrThrow(cx, a, ToString(n), kvalue);
                 }
             }
             /* steps 19-20 */
@@ -444,6 +439,9 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             return a;
         }
 
+        /**
+         * 22.1.3.24.1 Runtime Semantics: SortCompare Abstract Operation
+         */
         private static class DefaultComparator implements Comparator<Object> {
             private final ExecutionContext cx;
 
@@ -459,6 +457,9 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             }
         }
 
+        /**
+         * 22.1.3.24.1 Runtime Semantics: SortCompare Abstract Operation
+         */
         private static class FunctionComparator implements Comparator<Object> {
             private final ExecutionContext cx;
             private final Callable comparefn;
@@ -480,12 +481,19 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "sort", arity = 1)
         public static Object sort(ExecutionContext cx, Object thisValue, Object comparefn) {
+            /* step 1 */
             ScriptObject obj = ToObject(cx, thisValue);
-            long len = ToUint32(cx, Get(cx, obj, "length"));
+            /* step 2 */
+            Object lenValue = Get(cx, obj, "length");
+            /* steps 3-4 */
+            long len = ToLength(cx, lenValue);
+
+            // handle OOM early
             if (len > Integer.MAX_VALUE) {
                 throwInternalError(cx, Messages.Key.OutOfMemory);
             }
 
+            // collect elements
             int length = (int) len;
             int emptyCount = 0;
             int undefCount = 0;
@@ -504,6 +512,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 }
             }
 
+            // sort elements
             int count = elements.size();
             if (count > 1) {
                 Comparator<Object> comparator;
@@ -523,6 +532,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 }
             }
 
+            // and finally set sorted elements
             for (int i = 0, offset = 0; i < count; ++i) {
                 String p = ToString(offset + i);
                 Put(cx, obj, p, elements.get(i), true);
@@ -574,6 +584,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject a = null;
             /* step 13 */
             if (o instanceof ExoticArray) {
+                // FIXME: correct [[Realm]] check
                 Object c = Get(cx, o, "constructor");
                 if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx, actualDeleteCount);
@@ -589,8 +600,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 boolean fromPresent = HasProperty(cx, o, from);
                 if (fromPresent) {
                     Object fromValue = Get(cx, o, from);
-                    a.defineOwnProperty(cx, ToString(k), new PropertyDescriptor(fromValue, true,
-                            true, true));
+                    CreateDataPropertyOrThrow(cx, a, ToString(k), fromValue);
                 }
             }
             /* steps 18-19 */
@@ -896,6 +906,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject a = null;
             /* step 9 */
             if (o instanceof ExoticArray) {
+                // FIXME: correct [[Realm]] check
                 Object c = Get(cx, o, "constructor");
                 if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx, len);
@@ -912,8 +923,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 if (kpresent) {
                     Object kvalue = Get(cx, o, pk);
                     Object mappedValue = callback.call(cx, thisArg, kvalue, k, o);
-                    a.defineOwnProperty(cx, pk, new PropertyDescriptor(mappedValue, true, true,
-                            true));
+                    CreateDataPropertyOrThrow(cx, a, pk, mappedValue);
                 }
             }
             /* step 14 */
@@ -942,6 +952,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject a = null;
             /* step 9 */
             if (o instanceof ExoticArray) {
+                // FIXME: correct [[Realm]] check
                 Object c = Get(cx, o, "constructor");
                 if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx, 0);
@@ -959,8 +970,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     Object kvalue = Get(cx, o, pk);
                     Object selected = callback.call(cx, thisArg, kvalue, k, o);
                     if (ToBoolean(selected)) {
-                        a.defineOwnProperty(cx, ToString(to), new PropertyDescriptor(kvalue, true,
-                                true, true));
+                        CreateDataPropertyOrThrow(cx, a, ToString(to), kvalue);
                         to += 1;
                     }
                 }
