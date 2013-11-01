@@ -15,10 +15,10 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
- * <h1>25 The "std:iteration" Module</h1><br>
- * <h2>25.4 Generator Objects</h2>
+ * <h1>25 Control Abstraction Objects</h1><br>
+ * <h2>25.3 Generator Objects</h2>
  * <ul>
- * <li>25.4.3 Iteration Related Abstract Operations
+ * <li>25.3.3 Iteration Related Abstract Operations
  * </ul>
  */
 public final class IterationAbstractOperations {
@@ -26,7 +26,7 @@ public final class IterationAbstractOperations {
     }
 
     /**
-     * 25.4.3.1 GeneratorStart (generator, generatorBody)
+     * 25.3.3.1 GeneratorStart (generator, generatorBody)
      */
     public static GeneratorObject GeneratorStart(ExecutionContext cx, GeneratorObject generator,
             RuntimeInfo.Code generatorBody) {
@@ -37,7 +37,7 @@ public final class IterationAbstractOperations {
     }
 
     /**
-     * 25.4.3.2 GeneratorResume (generator, value)
+     * 25.3.3.2 GeneratorResume (generator, value)
      */
     public static Object GeneratorResume(ExecutionContext cx, Object generator, Object value) {
         /* step 1 */
@@ -53,7 +53,7 @@ public final class IterationAbstractOperations {
     }
 
     /**
-     * 25.4.3.3 GeneratorYield (iterNextObj)
+     * 25.3.3.3 GeneratorYield (iterNextObj)
      */
     public static Object GeneratorYield(ExecutionContext genContext, ScriptObject iterNextObj) {
         /* step 1 (?) */
