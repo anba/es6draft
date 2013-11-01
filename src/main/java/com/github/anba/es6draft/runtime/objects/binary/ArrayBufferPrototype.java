@@ -12,7 +12,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyBlockElements;
+import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyDataBlockBytes;
 
 import java.nio.ByteBuffer;
 
@@ -116,17 +116,17 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             /* steps 16-19 */
             ArrayBufferObject _new = thisArrayBufferObject(cx,
                     ((Constructor) ctor).construct(cx, newLen));
-            // TODO: missing check in spec - or move to CopyBlockElements?
+            /* step 20 */
             if (_new.getByteLength() < newLen) {
                 throw throwRangeError(cx, Messages.Key.InvalidBufferSize);
             }
-            /* step 20 */
-            ByteBuffer fromBuf = obj.getData();
             /* step 21 */
+            ByteBuffer fromBuf = obj.getData();
+            /* step 22 */
             ByteBuffer toBuf = _new.getData();
-            /* steps 22-23 */
-            CopyBlockElements(fromBuf, first, toBuf, 0, newLen);
-            /* step 24 */
+            /* steps 23-24 */
+            CopyDataBlockBytes(fromBuf, first, toBuf, 0, newLen);
+            /* step 25 */
             return _new;
         }
 

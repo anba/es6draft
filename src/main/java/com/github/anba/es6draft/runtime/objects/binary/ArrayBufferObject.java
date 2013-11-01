@@ -40,6 +40,7 @@ public class ArrayBufferObject extends OrdinaryObject {
      * [[ArrayBufferData]]
      */
     public void setData(ByteBuffer data) {
+        assert this.data == null : "ArrayBuffer already initialised";
         this.data = data;
     }
 
