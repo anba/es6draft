@@ -110,7 +110,7 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
             /* step 5 */
             if (!Type.isObject(value)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return false;
             }
             /* step 6 */
             WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
@@ -127,8 +127,7 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
             /* step ? */
             if (!Type.isObject(value)) {
-                // FIXME: unresolved -> return false or throw TypeError?
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return false;
             }
             /* step 5 */
             WeakHashMap<Object, Boolean> entries = s.getWeakSetData();

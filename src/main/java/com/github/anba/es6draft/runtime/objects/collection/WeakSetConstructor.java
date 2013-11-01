@@ -135,7 +135,7 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
         /**
          * 23.4.2.2 WeakSet[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.WeakSetPrototype,
