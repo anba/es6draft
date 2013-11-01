@@ -28,10 +28,10 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>25 The "std:iteration" Module</h1><br>
- * <h2>25.4 Generator Objects</h2>
+ * <h1>25 Control Abstraction Objects</h1><br>
+ * <h2>25.3 Generator Objects</h2>
  * <ul>
- * <li>25.4.2 Properties of Generator Instances
+ * <li>25.3.2 Properties of Generator Instances
  * </ul>
  */
 public class GeneratorObject extends OrdinaryObject {
@@ -157,7 +157,7 @@ public class GeneratorObject extends OrdinaryObject {
                 Object result;
                 try {
                     result = code.evaluate(context);
-                } catch (ScriptException e) {
+                } catch (ScriptException | StackOverflowError e) {
                     result = e;
                 } catch (Throwable t) {
                     out.put(COMPLETED);
@@ -194,16 +194,20 @@ public class GeneratorObject extends OrdinaryObject {
         }
 
         state = GeneratorState.Completed;
+        Object result;
         try {
-            Object result = future.get();
-            if (result instanceof ScriptException) {
-                throw (ScriptException) result;
-            }
-            return CreateIterResultObject(cx, result, true);
+            result = future.get();
         } catch (ExecutionException e) {
             throw new RuntimeException(e.getCause());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        if (result instanceof ScriptException) {
+            throw (ScriptException) result;
+        }
+        if (result instanceof StackOverflowError) {
+            throw (StackOverflowError) result;
+        }
+        return CreateIterResultObject(cx, result, true);
     }
 }
