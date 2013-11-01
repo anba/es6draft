@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>23 Keyed Collection</h1><br>
  * <h2>23.1 Map Objects</h2>
  * <ul>
- * <li>23.1.5 Map Iterator Object Structure
+ * <li>23.1.5 Map Iterator Objects
  * </ul>
  */
 public class MapIteratorPrototype extends OrdinaryObject implements Initialisable {
@@ -103,7 +103,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 23.1.5.2 The Map Iterator Prototype
+     * 23.1.5.2 The %MapIteratorPrototype% Object
      */
     public enum Properties {
         ;
@@ -112,14 +112,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 23.1.5.2.1 MapIterator.prototype.constructor<br>
-         * FIXME: spec bug (no description)
-         */
-        @Value(name = "constructor")
-        public static final Object constructor = UNDEFINED;
-
-        /**
-         * 23.1.5.2.2 MapIterator.prototype.next( )
+         * 23.1.5.2.1 %MapIteratorPrototype%.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -140,10 +133,14 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
             /* step 6 */
             MapIterationKind itemKind = o.iterationKind;
             /* step 7 */
-            assert m.getMapData() != null;
+            if (m == null) {
+                return CreateIterResultObject(cx, UNDEFINED, true);
+            }
             /* step 8 */
-            Iterator<Entry<Object, Object>> iter = o.iterator;
+            assert m.getMapData() != null;
             /* step 9 */
+            Iterator<Entry<Object, Object>> iter = o.iterator;
+            /* step 10 */
             if (iter.hasNext()) {
                 Entry<Object, Object> e = iter.next();
                 assert e != null;
@@ -161,20 +158,22 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
                 }
                 return CreateIterResultObject(cx, result, false);
             }
-            /* step 10 */
+            /* step 11 */
+            o.map = null;
+            /* step 12 */
             return CreateIterResultObject(cx, UNDEFINED, true);
         }
 
         /**
-         * 23.1.5.2.3 MapIterator.prototype[ @@iterator ]()
+         * 23.1.5.2.2 %MapIteratorPrototype% [ @@iterator ]()
          */
-        @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
+        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
             return thisValue;
         }
 
         /**
-         * 23.1.5.2.4 MapIterator.prototype[ @@toStringTag ]
+         * 23.1.5.2.3 %MapIteratorPrototype% [ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Map Iterator";
