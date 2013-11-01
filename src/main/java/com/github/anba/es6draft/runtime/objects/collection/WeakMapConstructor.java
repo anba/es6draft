@@ -141,7 +141,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
         /**
          * 23.3.2.2 WeakMap[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.WeakMapPrototype,

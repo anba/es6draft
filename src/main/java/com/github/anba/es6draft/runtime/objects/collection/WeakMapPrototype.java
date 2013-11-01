@@ -75,8 +75,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-4 */
             WeakMapObject m = thisWeakMapValue(cx, thisValue);
             /* step 5 */
-            WeakHashMap<Object, Object> entries = m.getWeakMapData();
-            entries.clear();
+            m.getWeakMapData().clear();
             /* step 6 */
             return UNDEFINED;
         }
@@ -92,7 +91,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             /* step 6 */
             if (!Type.isObject(key)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return false;
             }
             /* steps 7-8 */
             return entries.remove(key);
@@ -109,11 +108,11 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             /* step 6 */
             if (!Type.isObject(key)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return UNDEFINED;
             }
             /* steps 7-8 */
             Object value = entries.get(key);
-            return (value != null ? value : UNDEFINED);
+            return value != null ? value : UNDEFINED;
         }
 
         /**
@@ -127,7 +126,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             /* step 6 */
             if (!Type.isObject(key)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                return false;
             }
             /* steps 7-8 */
             return entries.containsKey(key);
