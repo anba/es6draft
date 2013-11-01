@@ -22,10 +22,10 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>25 The "std:iteration" Module</h1><br>
- * <h2>25.3 GeneratorFunction Objects</h2>
+ * <h1>25 Control Abstraction Objects</h1><br>
+ * <h2>25.2 GeneratorFunction Objects</h2>
  * <ul>
- * <li>25.3.3 Properties of the GeneratorFunction Prototype Object
+ * <li>25.2.3 Properties of the GeneratorFunction Prototype Object
  * </ul>
  */
 public class GeneratorFunctionPrototype extends OrdinaryObject implements Initialisable {
@@ -39,7 +39,7 @@ public class GeneratorFunctionPrototype extends OrdinaryObject implements Initia
     }
 
     /**
-     * 25.3.3 Properties of the GeneratorFunction Prototype Object
+     * 25.2.3 Properties of the GeneratorFunction Prototype Object
      */
     public enum Properties {
         ;
@@ -48,30 +48,30 @@ public class GeneratorFunctionPrototype extends OrdinaryObject implements Initia
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
         /**
-         * 25.3.3.1 GeneratorFunction.prototype.constructor
+         * 25.2.3.1 GeneratorFunction.prototype.constructor
          */
         @Value(name = "constructor", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
         public static final Intrinsics constructor = Intrinsics.GeneratorFunction;
 
         /**
-         * 25.3.3.2 GeneratorFunction.prototype.prototype
+         * 25.2.3.2 GeneratorFunction.prototype.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
         public static final Intrinsics prototype = Intrinsics.GeneratorPrototype;
 
         /**
-         * 25.3.3.3 GeneratorFunction.prototype [ @@toStringTag ]
+         * 25.2.3.3 GeneratorFunction.prototype [ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "GeneratorFunction";
 
         /**
-         * 25.3.3.4 GeneratorFunction.prototype [ @@create ] ( )
+         * 25.2.3.4 GeneratorFunction.prototype [ @@create ] ( )
          */
-        @Function(name = "@@create", arity = 0, symbol = BuiltinSymbol.create,
+        @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = true, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.GeneratorPrototype,
