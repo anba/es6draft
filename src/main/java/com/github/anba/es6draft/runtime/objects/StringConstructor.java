@@ -195,7 +195,7 @@ public class StringConstructor extends BuiltinConstructor implements Initialisab
         /**
          * 21.1.2.5 String[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
             ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,

@@ -42,7 +42,6 @@ import com.github.anba.es6draft.runtime.objects.intl.CollatorObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
@@ -163,9 +162,10 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "concat", arity = 1)
         public static Object concat(ExecutionContext cx, Object thisValue, Object... args) {
-            /* step 1 */
+            /* step 1 (omitted) */
+            /* step 2 */
             Object obj = CheckObjectCoercible(cx, thisValue);
-            /* steps 2-3 */
+            /* steps 3-4 */
             CharSequence s = ToString(cx, obj);
             /* step 5 (omitted) */
             /* step 6 */
@@ -227,7 +227,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 21.1.3.10 String.prototype.localeCompare (that)<br>
+         * 21.1.3.10 String.prototype.localeCompare (that, reserved1=undefined, reserved2=undefined)<br>
          * 13.1.1 String.prototype.localeCompare (that [, locales [, options]])
          */
         @Function(name = "localeCompare", arity = 1)
@@ -429,7 +429,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* step 7 */
             int lengthA = 0;
             /* step 8 */
-            long lim = Type.isUndefined(limit) ? 0xFFFFFFFFL : ToUint32(cx, limit);
+            long lim = Type.isUndefined(limit) ? 0x1_FFFFF_FFFF_FFFFL : ToLength(cx, limit);
             /* step 9 */
             int size = s.length();
             /* step 10 */
@@ -442,7 +442,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             }
             /* step 14 */
             if (Type.isUndefined(separator)) {
-                a.defineOwnProperty(cx, "0", new PropertyDescriptor(s, true, true, true));
+                CreateDataProperty(cx, a, "0", s);
                 return a;
             }
             /* step 15 */
@@ -450,7 +450,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                 if (r.length() == 0) {
                     return a;
                 }
-                a.defineOwnProperty(cx, "0", new PropertyDescriptor(s, true, true, true));
+                CreateDataProperty(cx, a, "0", s);
                 return a;
             }
             /* step 16 */
@@ -466,8 +466,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                         q = q + 1;
                     } else {
                         String t = s.substring(p, z);
-                        a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(t, true,
-                                true, true));
+                        CreateDataProperty(cx, a, ToString(lengthA), t);
                         lengthA += 1;
                         if (lengthA == lim) {
                             return a;
@@ -480,7 +479,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* step 18 */
             String t = s.substring(p, size);
             /* steps 19-20 */
-            a.defineOwnProperty(cx, ToString(lengthA), new PropertyDescriptor(t, true, true, true));
+            CreateDataProperty(cx, a, ToString(lengthA), t);
             /* step 21 */
             return a;
         }
@@ -652,21 +651,27 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             Object obj = CheckObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
+            /* step 4 */
+            if (Type.isObject(searchString)
+                    && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
+                // TODO: better error message
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            /* steps 5-6 */
             String searchStr = ToFlatString(cx, searchString);
-            /* steps 6-7 */
+            /* steps 7-8 */
             double pos = ToInteger(cx, position);
-            /* step 8 */
-            int len = s.length();
             /* step 9 */
-            int start = (int) Math.min(Math.max(pos, 0), len);
+            int len = s.length();
             /* step 10 */
-            int searchLength = searchStr.length();
+            int start = (int) Math.min(Math.max(pos, 0), len);
             /* step 11 */
+            int searchLength = searchStr.length();
+            /* step 12 */
             if (searchLength + start > len) {
                 return false;
             }
-            /* steps 12-13 */
+            /* steps 13-14 */
             return s.startsWith(searchStr, start);
         }
 
@@ -680,23 +685,29 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             Object obj = CheckObjectCoercible(cx, thisValue);
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
-            /* steps 4-5 */
+            /* step 4 */
+            if (Type.isObject(searchString)
+                    && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
+                // TODO: better error message
+                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            /* steps 5-6 */
             String searchStr = ToFlatString(cx, searchString);
-            /* step 6 */
+            /* step 7 */
             int len = s.length();
-            /* steps 7-8 */
+            /* steps 8-9 */
             double pos = Type.isUndefined(endPosition) ? len : ToInteger(cx, endPosition);
-            /* step 9 */
-            int end = (int) Math.min(Math.max(pos, 0), len);
             /* step 10 */
-            int searchLength = searchStr.length();
+            int end = (int) Math.min(Math.max(pos, 0), len);
             /* step 11 */
-            int start = end - searchLength;
+            int searchLength = searchStr.length();
             /* step 12 */
+            int start = end - searchLength;
+            /* step 13 */
             if (start < 0) {
                 return false;
             }
-            /* steps 13-14 */
+            /* steps 14-15 */
             return s.startsWith(searchStr, start);
         }
 
@@ -770,7 +781,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 21.1.3.27 String.prototype [ @@iterator ]( )
          */
-        @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
+        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
             Object obj = CheckObjectCoercible(cx, thisValue);
             String s = ToFlatString(cx, obj);

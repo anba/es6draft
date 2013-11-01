@@ -28,10 +28,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>21 Text Processing</h1><br>
  * <h2>21.1 String Objects</h2>
  * <ul>
- * <li>21.1.5 String Iterator Object Structure
+ * <li>21.1.5 String Iterator Objects
  * </ul>
- * 
- * TODO: Not yet specified, current implementation based on ArrayIteratorPrototype
  */
 public class StringIteratorPrototype extends OrdinaryObject implements Initialisable {
     public StringIteratorPrototype(Realm realm) {
@@ -71,15 +69,18 @@ public class StringIteratorPrototype extends OrdinaryObject implements Initialis
      * 21.1.5.1 CreateStringIterator Abstract Operation
      */
     public static OrdinaryObject CreateStringIterator(ExecutionContext cx, String string) {
+        /* steps 1-2 (omitted) */
+        /* steps 3-5 */
         StringIterator iterator = ObjectCreate(cx, Intrinsics.StringIteratorPrototype,
                 StringIteratorAllocator.INSTANCE);
         iterator.iteratedString = string;
         iterator.nextIndex = 0;
+        /* step 6 */
         return iterator;
     }
 
     /**
-     * 21.1.5.2 The String Iterator Prototype
+     * 21.1.5.2 The %StringIteratorPrototype% Object
      */
     public enum Properties {
         ;
@@ -88,46 +89,56 @@ public class StringIteratorPrototype extends OrdinaryObject implements Initialis
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 21.1.5.2.1 StringIterator.prototype.constructor
-         */
-        @Value(name = "constructor")
-        public static final Object constructor = UNDEFINED;
-
-        /**
-         * 21.1.5.2.2 StringIterator.prototype.next( )
+         * 21.1.5.2.1 %StringIteratorPrototype%.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
+            /* step 1 (omitted) */
+            /* step 2 */
             if (!Type.isObject(thisValue)) {
                 throw throwTypeError(cx, Messages.Key.NotObjectType);
             }
+            /* step 3 */
             if (!(thisValue instanceof StringIterator)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
             StringIterator iterator = (StringIterator) thisValue;
+            /* step 4 */
             String string = iterator.iteratedString;
-            int index = iterator.nextIndex;
-            int len = string.length();
-            if (index >= len) {
-                iterator.nextIndex = Integer.MAX_VALUE; // = +Infinity
+            /* step 5 */
+            if (string == null) {
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
-            int cp = string.codePointAt(index);
-            iterator.nextIndex = index + Character.charCount(cp);
-            String result = new String(Character.toChars(cp));
-            return CreateIterResultObject(cx, result, false);
+            /* step 6 */
+            int position = iterator.nextIndex;
+            /* step 7 */
+            int len = string.length();
+            /* step 8 */
+            if (position >= len) {
+                iterator.iteratedString = null;
+                return CreateIterResultObject(cx, UNDEFINED, true);
+            }
+            /* steps 9-11 */
+            int cp = string.codePointAt(position);
+            String resultString = new String(Character.toChars(cp));
+            /* step 12 */
+            int resultSize = Character.charCount(cp);
+            /* step 13 */
+            iterator.nextIndex = position + resultSize;
+            /* step 14 */
+            return CreateIterResultObject(cx, resultString, false);
         }
 
         /**
-         * 21.1.5.2.3 StringIterator.prototype.@@iterator ()
+         * 21.1.5.2.2 %StringIteratorPrototype% [@@iterator] ()
          */
-        @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
+        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
             return thisValue;
         }
 
         /**
-         * 21.1.5.2.4 StringIterator.prototype.@@toStringTag
+         * 21.1.5.2.3 %StringIteratorPrototype% [@@toStringTag]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "String Iterator";
