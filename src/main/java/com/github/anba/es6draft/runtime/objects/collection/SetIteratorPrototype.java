@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <h1>23 Keyed Collection</h1><br>
  * <h2>23.2 Set Objects</h2>
  * <ul>
- * <li>23.2.5 Set Iterator Object Structure
+ * <li>23.2.5 Set Iterator Objects
  * </ul>
  */
 public class SetIteratorPrototype extends OrdinaryObject implements Initialisable {
@@ -102,7 +102,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
     }
 
     /**
-     * 23.2.5.2 The Set Iterator Prototype
+     * 23.2.5.2 The %SetIteratorPrototype% Object
      */
     public enum Properties {
         ;
@@ -111,14 +111,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 23.2.5.2.1 SetIterator.prototype.constructor<br>
-         * FIXME: spec bug (no description)
-         */
-        @Value(name = "constructor")
-        public static final Object constructor = UNDEFINED;
-
-        /**
-         * 23.2.5.2.2 SetIterator.prototype.next( )
+         * 23.2.5.2.1 %SetIteratorPrototype%.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -139,10 +132,14 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
             /* step 6 */
             SetIterationKind itemKind = o.iterationKind;
             /* step 7 */
-            assert s.getSetData() != null;
+            if (s == null) {
+                return CreateIterResultObject(cx, UNDEFINED, true);
+            }
             /* step 8 */
-            Iterator<Entry<Object, Void>> iter = o.iterator;
+            assert s.getSetData() != null;
             /* step 9 */
+            Iterator<Entry<Object, Void>> iter = o.iterator;
+            /* step 10 */
             if (iter.hasNext()) {
                 Entry<Object, Void> e = iter.next();
                 assert e != null;
@@ -154,20 +151,22 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
                 }
                 return CreateIterResultObject(cx, e.getKey(), false);
             }
-            /* step 10 */
+            /* step 11 */
+            o.set = null;
+            /* step 12 */
             return CreateIterResultObject(cx, UNDEFINED, true);
         }
 
         /**
-         * 23.2.5.2.3 SetIterator.prototype[ @@iterator ]()
+         * 23.2.5.2.2 %SetIteratorPrototype% [ @@iterator ]()
          */
-        @Function(name = "@@iterator", symbol = BuiltinSymbol.iterator, arity = 0)
+        @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
             return thisValue;
         }
 
         /**
-         * 23.2.5.2.4 SetIterator.prototype[ @@toStringTag ]
+         * 23.2.5.2.3 %SetIteratorPrototype% [ @@toStringTag ]
          */
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Set Iterator";
