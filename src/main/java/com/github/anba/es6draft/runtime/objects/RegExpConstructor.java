@@ -75,7 +75,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
                     && Type.isUndefined(flags)) {
                 return pattern;
             }
-            obj = RegExpAllocate(calleeContext, this);
+            obj = RegExpAlloc(calleeContext, this);
         } else {
             /* step 4 */
             obj = (RegExpObject) thisValue;
@@ -124,7 +124,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
      * 21.2.3.3 Abstract Operations for the RegExp Constructor<br>
      * 21.2.3.3.1 Runtime Semantics: RegExpAlloc Abstract Operation
      */
-    public static RegExpObject RegExpAllocate(ExecutionContext cx, Object constructor) {
+    public static RegExpObject RegExpAlloc(ExecutionContext cx, Object constructor) {
         /* step 1 */
         RegExpObject obj = OrdinaryCreateFromConstructor(cx, constructor,
                 Intrinsics.RegExpPrototype, RegExpObjectAllocator.INSTANCE);
@@ -172,7 +172,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
      */
     public static RegExpObject RegExpCreate(ExecutionContext cx, Object pattern, Object flags) {
         /* steps 1-2 */
-        RegExpObject obj = RegExpAllocate(cx, cx.getIntrinsic(Intrinsics.RegExp));
+        RegExpObject obj = RegExpAlloc(cx, cx.getIntrinsic(Intrinsics.RegExp));
         /* step 3 */
         return RegExpInitialise(cx, obj, pattern, flags);
     }
@@ -264,10 +264,10 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
         /**
          * 21.2.4.2 RegExp[ @@create ] ( )
          */
-        @Function(name = "@@create", symbol = BuiltinSymbol.create, arity = 0,
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
-            return RegExpAllocate(cx, thisValue);
+            return RegExpAlloc(cx, thisValue);
         }
     }
 
