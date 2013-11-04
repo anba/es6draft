@@ -41,6 +41,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.RegExpConstructor;
+import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
@@ -119,7 +120,11 @@ public final class ScriptRuntime {
     /**
      * 12.1.4.1 Array Literal
      * <p>
-     * Runtime Semantics: Array Accumulation
+     * 12.1.4.1.2 Runtime Semantics: Array Accumulation
+     * <ul>
+     * <li>ElementList : Elision<sub>opt</opt> AssignmentExpression
+     * <li>ElementList : ElementList , Elision<sub>opt</opt> AssignmentExpression
+     * </ul>
      */
     public static void defineProperty(ScriptObject array, int nextIndex, Object value,
             ExecutionContext cx) {
@@ -133,27 +138,31 @@ public final class ScriptRuntime {
     /**
      * 12.1.4.1 Array Literal
      * <p>
-     * Runtime Semantics: Array Accumulation<br>
-     * Runtime Semantics: Evaluation
+     * 12.1.4.1.2 Runtime Semantics: Array Accumulation
+     * <ul>
+     * <li>SpreadElement : ... AssignmentExpression
+     * </ul>
      */
     public static int ArrayAccumulationSpreadElement(ScriptObject array, int nextIndex,
             Object spreadValue, ExecutionContext cx) {
-        /* steps 1-2 (cf. generated code) */
-        /* steps 3-4 */
-        ScriptObject spreadObj = ToObject(cx, spreadValue);
-        /* steps 5 */
-        Object lenVal = Get(cx, spreadObj, "length");
-        /* steps 6-7 */
-        long spreadLen = ToUint32(cx, lenVal);
-        /* steps 8-9 */
-        for (long n = 0; n < spreadLen; ++n, ++nextIndex) {
-            boolean exists = HasProperty(cx, spreadObj, ToString(n));
-            if (exists) {
-                Object v = spreadObj.get(cx, ToString(n), spreadObj);
-                defineProperty(array, nextIndex, v, cx);
-            }
+        /* steps 1-3 (cf. generated code) */
+        /* step 4 */
+        if (!Type.isObject(spreadValue)) {
+            // FIXME: spec bug ? why restrict to objects?
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
-        return nextIndex;
+        /* steps 5-6 */
+        ScriptObject iterator = GetIterator(cx, spreadValue);
+        /* step 7 */
+        for (;;) {
+            ScriptObject next = IteratorStep(cx, iterator);
+            if (next == null) {
+                return nextIndex;
+            }
+            Object nextValue = IteratorValue(cx, next);
+            defineProperty(array, nextIndex, nextValue, cx);
+            nextIndex += 1;
+        }
     }
 
     /**
