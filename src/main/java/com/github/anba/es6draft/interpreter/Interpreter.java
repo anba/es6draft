@@ -589,10 +589,6 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
                 Object value = propertyValue.accept(this, cx);
                 value = GetValue(value, cx);
 
-                if (strict) {
-                    ScriptRuntime.ensureNewProperty(obj, pk, cx);
-                }
-
                 ScriptRuntime.defineProperty(obj, pk, value, cx);
             } else {
                 Object value = propertyValue.accept(this, cx);

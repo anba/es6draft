@@ -85,19 +85,6 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         static final MethodDesc ScriptRuntime_defineProtoProperty = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "defineProtoProperty", Type.getMethodType(
                         Type.VOID_TYPE, Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_ensureNewProperty = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "ensureNewProperty", Type.getMethodType(
-                        Type.VOID_TYPE, Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_ensureNewPropertyGet = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "ensureNewPropertyGet", Type.getMethodType(
-                        Type.VOID_TYPE, Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_ensureNewPropertySet = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "ensureNewPropertySet", Type.getMethodType(
-                        Type.VOID_TYPE, Types.ScriptObject, Types.Object, Types.ExecutionContext));
-
     }
 
     public PropertyGenerator(CodeGenerator codegen) {
@@ -152,24 +139,6 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         if (propName == null) {
             assert node.getPropertyName() instanceof ComputedPropertyName;
             node.getPropertyName().accept(this, mv);
-
-            // stack: [<object>, pk] -> [<object>, pk, <object>, pk]
-            mv.dup2();
-
-            // stack: [<object>, pk, <object>, pk] -> [<object>, pk]
-            mv.loadExecutionContext();
-            switch (node.getType()) {
-            case Function:
-            case Generator:
-                mv.invoke(Methods.ScriptRuntime_ensureNewProperty);
-                break;
-            case Getter:
-                mv.invoke(Methods.ScriptRuntime_ensureNewPropertyGet);
-                break;
-            case Setter:
-                mv.invoke(Methods.ScriptRuntime_ensureNewPropertySet);
-                break;
-            }
 
             mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
                     codegen.methodDescriptor(node, FunctionName.RTI));
@@ -256,13 +225,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         if (propName == null) {
             assert propertyName instanceof ComputedPropertyName;
             propertyName.accept(this, mv);
-            if (mv.isStrict()) {
-                // stack: [<object>, pk] -> [<object>, pk, <object>, pk]
-                mv.dup2();
-                // stack: [<object>, pk, <object>, pk] -> [<object>, pk]
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureNewProperty);
-            }
+
             // stack: [<object>, pk]
             expressionBoxedValue(propertyValue, mv);
             // stack: [<object>, pk, value]
