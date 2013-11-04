@@ -147,14 +147,14 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
          */
         @Value(name = "MAX_SAFE_INTEGER", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
-        public static final Double MAX_SAFE_INTEGER = (double) 0x1FFFFFFFFFFFFFL;
+        public static final Double MAX_SAFE_INTEGER = (double) 0x1F_FFFF_FFFF_FFFFL;
 
         /**
          * 20.1.2.10 Number.MIN_SAFE_INTEGER
          */
         @Value(name = "MIN_SAFE_INTEGER", attributes = @Attributes(writable = false,
                 enumerable = false, configurable = false))
-        public static final Double MIN_SAFE_INTEGER = (double) -0x1FFFFFFFFFFFFFL;
+        public static final Double MIN_SAFE_INTEGER = (double) -0x1F_FFFF_FFFF_FFFFL;
 
         /**
          * 20.1.2.13 Number.parseInt (string, radix)
@@ -272,7 +272,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
             if (integer != num) {
                 return false;
             }
-            return Math.abs(integer) <= 0x1FFFFFFFFFFFFFL;
+            return Math.abs(integer) <= 0x1F_FFFF_FFFF_FFFFL;
         }
 
         /**

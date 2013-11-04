@@ -46,6 +46,7 @@ import com.google.doubleconversion.DoubleConversion;
  * <li>7.1 Type Conversion and Testing
  * <li>7.2 Testing and Comparison Operations
  * <li>7.3 Operations on Objects
+ * <li>7.4 Operations on Iterator Objects
  * </ul>
  */
 public final class AbstractOperations {
@@ -76,6 +77,7 @@ public final class AbstractOperations {
      * ToPrimitive for the Object type
      */
     private static Object ToPrimitive(ExecutionContext cx, ScriptObject argument, Type preferredType) {
+        // TODO: change Type to enum ToPrimitiveHint { Default, String, Number }
         /* steps 1-3 (moved) */
         /* steps 4-5 */
         Object exoticToPrim = Get(cx, argument, BuiltinSymbol.toPrimitive.get());
@@ -395,7 +397,7 @@ public final class AbstractOperations {
     public static String ToString(long val) {
         if ((int) val == val) {
             return Integer.toString((int) val);
-        } else if (-0x1FFFFFFFFFFFFFL <= val && val <= 0x1FFFFFFFFFFFFFL) {
+        } else if (-0x1F_FFFF_FFFF_FFFFL <= val && val <= 0x1F_FFFF_FFFF_FFFFL) {
             return Long.toString(val);
         }
         return ToString((double) val);
@@ -471,7 +473,7 @@ public final class AbstractOperations {
             return 0;
         }
         /* step 4 */
-        return (long) Math.min(len, 0x1FFFFFFFFFFFFFL);
+        return (long) Math.min(len, 0x1F_FFFF_FFFF_FFFFL);
     }
 
     /**
@@ -484,7 +486,7 @@ public final class AbstractOperations {
             return 0;
         }
         /* step 4 */
-        return (long) Math.min(len, 0x1FFFFFFFFFFFFFL);
+        return (long) Math.min(len, 0x1F_FFFF_FFFF_FFFFL);
     }
 
     /**

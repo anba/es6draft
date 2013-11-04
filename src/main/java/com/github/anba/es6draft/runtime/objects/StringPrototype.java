@@ -429,7 +429,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* step 7 */
             int lengthA = 0;
             /* step 8 */
-            long lim = Type.isUndefined(limit) ? 0x1_FFFFF_FFFF_FFFFL : ToLength(cx, limit);
+            long lim = Type.isUndefined(limit) ? 0x1F_FFFF_FFFF_FFFFL : ToLength(cx, limit);
             /* step 9 */
             int size = s.length();
             /* step 10 */

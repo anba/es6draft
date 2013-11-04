@@ -472,7 +472,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             /* step 10 */
             int lengthA = 0;
             /* step 11 */
-            long lim = Type.isUndefined(limit) ? 0x1FFFFFFFFFFFFFL : ToLength(cx, limit);
+            long lim = Type.isUndefined(limit) ? 0x1F_FFFF_FFFF_FFFFL : ToLength(cx, limit);
             /* step 12 */
             int size = s.length();
             /* step 13 */
