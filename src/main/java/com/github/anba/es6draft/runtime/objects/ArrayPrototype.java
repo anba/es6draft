@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Optional;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.ArrayIterationKind;
+import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -215,6 +216,18 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-14 */
+            return join(cx, o, len, separator);
+        }
+
+        /**
+         * 22.1.3.12 Array.prototype.join (separator)
+         * 
+         * @see ArrayPrototype.Properties#join(ExecutionContext, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#join(ExecutionContext, Object, Object)
+         */
+        public static String join(ExecutionContext cx, ScriptObject o, long len, Object separator) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (Type.isUndefined(separator)) {
                 separator = ",";
@@ -307,6 +320,18 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-9 */
+            return reverse(cx, o, len);
+        }
+
+        /**
+         * 22.1.3.20 Array.prototype.reverse ( )
+         * 
+         * @see ArrayPrototype.Properties#reverse(ExecutionContext, Object)
+         * @see TypedArrayPrototypePrototype.Properties#reverse(ExecutionContext, Object)
+         */
+        public static ScriptObject reverse(ExecutionContext cx, ScriptObject o, long len) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             long middle = len / 2L;
             /* steps 7-8 */
@@ -698,6 +723,20 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-13 */
+            return indexOf(cx, o, len, searchElement, fromIndex);
+        }
+
+        /**
+         * 22.1.3.11 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
+         * 
+         * @see ArrayPrototype.Properties#indexOf(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#indexOf(ExecutionContext, Object, Object,
+         *      Object)
+         */
+        public static Object indexOf(ExecutionContext cx, ScriptObject o, long len,
+                Object searchElement, Object fromIndex) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (len == 0) {
                 return -1;
@@ -751,6 +790,20 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-12 */
+            return lastIndexOf(cx, o, len, searchElement, fromIndex);
+        }
+
+        /**
+         * 22.1.3.14 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
+         * 
+         * @see ArrayPrototype.Properties#lastIndexOf(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#lastIndexOf(ExecutionContext, Object,
+         *      Object, Object)
+         */
+        public static long lastIndexOf(ExecutionContext cx, ScriptObject o, long len,
+                Object searchElement, Object fromIndex) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (len == 0) {
                 return -1;
@@ -797,6 +850,20 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-10 */
+            return every(cx, o, len, callbackfn, thisArg);
+        }
+
+        /**
+         * 22.1.3.5 Array.prototype.every ( callbackfn [ , thisArg ] )
+         * 
+         * @see ArrayPrototype.Properties#every(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#every(ExecutionContext, Object, Object,
+         *      Object)
+         */
+        public static boolean every(ExecutionContext cx, ScriptObject o, long len,
+                Object callbackfn, Object thisArg) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -831,6 +898,20 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-10 */
+            return some(cx, o, len, callbackfn, thisArg);
+        }
+
+        /**
+         * 22.1.3.23 Array.prototype.some ( callbackfn [ , thisArg ] )
+         * 
+         * @see ArrayPrototype.Properties#some(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#some(ExecutionContext, Object, Object,
+         *      Object)
+         */
+        public static boolean some(ExecutionContext cx, ScriptObject o, long len,
+                Object callbackfn, Object thisArg) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -865,6 +946,20 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-10 */
+            return forEach(cx, o, len, callbackfn, thisArg);
+        }
+
+        /**
+         * 22.1.3.10 Array.prototype.forEach ( callbackfn [ , thisArg ] )
+         * 
+         * @see ArrayPrototype.Properties#forEach(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#forEach(ExecutionContext, Object, Object,
+         *      Object)
+         */
+        public static Object forEach(ExecutionContext cx, ScriptObject o, long len,
+                Object callbackfn, Object thisArg) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -991,6 +1086,20 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-12 */
+            return reduce(cx, o, len, callbackfn, initialValue);
+        }
+
+        /**
+         * 22.1.3.18 Array.prototype.reduce ( callbackfn [ , initialValue ] )
+         * 
+         * @see ArrayPrototype.Properties#reduce(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#reduce(ExecutionContext, Object, Object,
+         *      Object)
+         */
+        public static Object reduce(ExecutionContext cx, ScriptObject o, long len,
+                Object callbackfn, Object initialValue) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -1044,6 +1153,20 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-12 */
+            return reduceRight(cx, o, len, callbackfn, initialValue);
+        }
+
+        /**
+         * 22.1.3.19 Array.prototype.reduceRight ( callbackfn [ , initialValue ] )
+         * 
+         * @see ArrayPrototype.Properties#reduceRight(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#reduceRight(ExecutionContext, Object,
+         *      Object, Object)
+         */
+        public static Object reduceRight(ExecutionContext cx, ScriptObject o, long len,
+                Object callbackfn, Object initialValue) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -1097,6 +1220,20 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-10 */
+            return find(cx, o, len, predicate, thisArg);
+        }
+
+        /**
+         * 22.1.3.8 Array.prototype.find ( predicate, thisArg = undefined )
+         * 
+         * @see ArrayPrototype.Properties#find(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#find(ExecutionContext, Object, Object,
+         *      Object)
+         */
+        public static Object find(ExecutionContext cx, ScriptObject o, long len, Object predicate,
+                Object thisArg) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(predicate)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -1131,6 +1268,20 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-10 */
+            return findIndex(cx, o, len, predicate, thisArg);
+        }
+
+        /**
+         * 22.1.3.9 Array.prototype.findIndex ( predicate [ , thisArg ] )
+         * 
+         * @see ArrayPrototype.Properties#findIndex(ExecutionContext, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#findIndex(ExecutionContext, Object, Object,
+         *      Object)
+         */
+        public static long findIndex(ExecutionContext cx, ScriptObject o, long len,
+                Object predicate, Object thisArg) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(predicate)) {
                 throw throwTypeError(cx, Messages.Key.NotCallable);
@@ -1223,32 +1374,44 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
-            /* step 6 */
-            len = Math.max(len, 0);
-            /* steps 7-8 */
+            /* steps 6-13 */
+            return fill(cx, o, len, value, start, end);
+        }
+
+        /**
+         * 22.1.3.6 Array.prototype.fill (value, start = 0, end = this.length)
+         * 
+         * @see ArrayPrototype.Properties#fill(ExecutionContext, Object, Object, Object, Object)
+         * @see TypedArrayPrototypePrototype.Properties#fill(ExecutionContext, Object, Object,
+         *      Object, Object)
+         */
+        public static ScriptObject fill(ExecutionContext cx, ScriptObject o, long len,
+                Object value, Object start, Object end) {
+            /* steps 1-5 (not applicable) */
+            /* steps 6-7 */
             double relativeStart = ToInteger(cx, start);
-            /* step 9 */
+            /* step 8 */
             long k;
             if (relativeStart < 0) {
                 k = (long) Math.max((len + relativeStart), 0);
             } else {
                 k = (long) Math.min(relativeStart, len);
             }
-            /* steps 10-11 */
+            /* steps 9-10 */
             double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 12 */
+            /* step 11 */
             long finall;
             if (relativeEnd < 0) {
                 finall = (long) Math.max((len + relativeEnd), 0);
             } else {
                 finall = (long) Math.min(relativeEnd, len);
             }
-            /* step 13 */
+            /* step 12 */
             for (; k < finall; ++k) {
                 String pk = ToString(k);
                 Put(cx, o, pk, value, true);
             }
-            /* step 14 */
+            /* step 13 */
             return o;
         }
 
@@ -1264,6 +1427,21 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             Object lenVal = Get(cx, o, "length");
             /* steps 4-5 */
             long len = ToLength(cx, lenVal);
+            /* steps 6-20 */
+            return copyWithin(cx, o, len, target, start, end);
+        }
+
+        /**
+         * 22.1.3.3 Array.prototype.copyWithin (target, start, end = this.length)
+         * 
+         * @see ArrayPrototype.Properties#copyWithin(ExecutionContext, Object, Object, Object,
+         *      Object)
+         * @see TypedArrayPrototypePrototype.Properties#copyWithin(ExecutionContext, Object, Object,
+         *      Object, Object)
+         */
+        public static ScriptObject copyWithin(ExecutionContext cx, ScriptObject o, long len,
+                Object target, Object start, Object end) {
+            /* steps 1-5 (not applicable) */
             /* step 6 */
             len = Math.max(len, 0);
             /* steps 7-8 */
