@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.reflect;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.CreateProxy;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.ProxyCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticProxy;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>26 The Reflect Module</h1><br>
+ * <h1>26 Reflection</h1><br>
  * <h2>26.2 Proxy Objects</h2>
  * <ul>
  * <li>26.2.1 The Proxy Factory Function
@@ -45,12 +45,15 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    /**
+     * 26.2.1.1 Proxy (target, handler)
+     */
     @Override
     public ExoticProxy call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object target = args.length > 0 ? args[0] : UNDEFINED;
         Object handler = args.length > 1 ? args[1] : UNDEFINED;
-        return CreateProxy(calleeContext, target, handler);
+        return ProxyCreate(calleeContext, target, handler);
     }
 
     @Override
@@ -58,6 +61,9 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
         return call(callerContext, null, args);
     }
 
+    /**
+     * 26.2.2 Properties of the Proxy Factory Function
+     */
     public enum Properties {
         ;
 
@@ -82,7 +88,7 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
         public static Object revocable(ExecutionContext cx, Object thisValue, Object target,
                 Object handler) {
             /* steps 1-2 */
-            ExoticProxy p = CreateProxy(cx, target, handler);
+            ExoticProxy p = ProxyCreate(cx, target, handler);
             /* step 3 */
             ProxyRevocationFunction revoker = new ProxyRevocationFunction(cx.getRealm());
             /* step 4 */
@@ -106,7 +112,7 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
         private ExoticProxy revokableProxy;
 
         public ProxyRevocationFunction(Realm realm) {
-            super(realm, "", 0);
+            super(realm, ANONYMOUS, 0);
         }
 
         @Override
@@ -121,7 +127,7 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
             revokableProxy = null;
             /* step 4 (implicit) */
             /* steps 5-6 */
-            // TODO: implement
+            p.revoke();
             /* step 7 */
             return UNDEFINED;
         }

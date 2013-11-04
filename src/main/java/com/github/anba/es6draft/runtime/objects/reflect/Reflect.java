@@ -32,7 +32,7 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>26 The Reflect Module</h1>
+ * <h1>26 Reflection</h1>
  * <ul>
  * <li>26.1 The Reflect Object
  * </ul>
