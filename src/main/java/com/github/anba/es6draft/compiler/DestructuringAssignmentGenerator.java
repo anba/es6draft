@@ -7,8 +7,9 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
+
+import java.util.Iterator;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
@@ -17,6 +18,7 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
@@ -43,13 +45,24 @@ class DestructuringAssignmentGenerator {
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
-                        Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
-                        Types.ExecutionContext));
+                MethodType.Static, Types.ScriptRuntime, "createRestArray",
+                Type.getMethodType(Types.ScriptObject, Types.Iterator, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "ensureObject",
                 Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_getIterator = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "getIterator",
+                Type.getMethodType(Types.Iterator, Types.ScriptObject, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_iteratorNextAndIgnore = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "iteratorNextAndIgnore",
+                Type.getMethodType(Type.VOID_TYPE, Types.Iterator));
+
+        static final MethodDesc ScriptRuntime_iteratorNextOrUndefined = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "iteratorNextOrUndefined",
+                Type.getMethodType(Types.Object, Types.Iterator));
 
         // class: Type
         static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
@@ -74,6 +87,11 @@ class DestructuringAssignmentGenerator {
         mv.invoke(Methods.Reference_PutValue);
     }
 
+    @SuppressWarnings("unchecked")
+    private static final <T> T uncheckedCast(Object o) {
+        return (T) o;
+    }
+
     private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {
         protected final CodeGenerator codegen;
         protected final ExpressionVisitor mv;
@@ -89,10 +107,11 @@ class DestructuringAssignmentGenerator {
             node.accept(init, null);
         }
 
-        protected final void IndexedDestructuringAssignmentEvaluation(Node node, int index) {
-            IndexedDestructuringAssignmentEvaluation init = new IndexedDestructuringAssignmentEvaluation(
+        protected final void IteratorDestructuringAssignmentEvaluation(Node node,
+                Variable<Iterator<?>> iterator) {
+            IteratorDestructuringAssignmentEvaluation init = new IteratorDestructuringAssignmentEvaluation(
                     codegen, mv);
-            node.accept(init, index);
+            node.accept(init, iterator);
         }
 
         protected final void KeyedDestructuringAssignmentEvaluation(Node node, String key) {
@@ -126,6 +145,9 @@ class DestructuringAssignmentGenerator {
         }
     }
 
+    /**
+     * 12.13.5.2 Runtime Semantics: DestructuringAssignmentEvaluation
+     */
     private static final class DestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, Void> {
         protected DestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
@@ -134,7 +156,18 @@ class DestructuringAssignmentGenerator {
 
         @Override
         public Void visit(ArrayAssignmentPattern node, Void value) {
-            IndexedDestructuringAssignmentEvaluation(node, 0);
+            // stack: [obj] -> [iterator]
+            Variable<Iterator<?>> iterator = uncheckedCast(mv.newScratchVariable(Iterator.class));
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_getIterator);
+            mv.store(iterator);
+
+            for (AssignmentElementItem element : node.getElements()) {
+                IteratorDestructuringAssignmentEvaluation(element, iterator);
+            }
+
+            mv.freeVariable(iterator);
+
             return null;
         }
 
@@ -143,16 +176,15 @@ class DestructuringAssignmentGenerator {
             for (AssignmentProperty property : node.getProperties()) {
                 // stack: [obj] -> [obj, obj]
                 mv.dup();
+                // stack: [obj, obj] -> [obj]
                 if (property.getPropertyName() == null) {
-                    // AssignmentProperty : Identifier Initialiser{opt}
+                    // AssignmentProperty : IdentifierReference Initialiser{opt}
                     assert property.getTarget() instanceof Identifier;
                     String name = ((Identifier) property.getTarget()).getName();
-                    // stack: [obj, obj] -> [obj]
                     KeyedDestructuringAssignmentEvaluation(property, name);
                 } else {
                     // AssignmentProperty : PropertyName : AssignmentElement
                     String name = PropName(property.getPropertyName());
-                    // stack: [obj, obj] -> [obj]
                     if (name != null) {
                         KeyedDestructuringAssignmentEvaluation(property, name);
                     } else {
@@ -170,59 +202,90 @@ class DestructuringAssignmentGenerator {
         }
     }
 
-    private static final class IndexedDestructuringAssignmentEvaluation extends
-            RuntimeSemantics<Void, Integer> {
-        protected IndexedDestructuringAssignmentEvaluation(CodeGenerator codegen,
+    /**
+     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     */
+    private static final class IteratorDestructuringAssignmentEvaluation extends
+            RuntimeSemantics<Void, Variable<Iterator<?>>> {
+        protected IteratorDestructuringAssignmentEvaluation(CodeGenerator codegen,
                 ExpressionVisitor mv) {
             super(codegen, mv);
         }
 
         @Override
-        public Void visit(ArrayAssignmentPattern node, Integer index) {
-            for (AssignmentElementItem element : node.getElements()) {
-                if (element instanceof Elision) {
-                    index = index + 1;
-                    continue;
-                }
+        public Void visit(Elision node, Variable<Iterator<?>> iterator) {
+            // stack: [] -> []
+            mv.load(iterator);
+            mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
 
-                // stack: [obj] -> [obj, obj]
-                mv.dup();
-                // stack: [obj, obj] -> [obj]
-                element.accept(this, index);
-                index = index + 1;
+            return null;
+        }
+
+        @Override
+        public Void visit(AssignmentElement node, Variable<Iterator<?>> iterator) {
+            LeftHandSideExpression target = node.getTarget();
+            Expression initialiser = node.getInitialiser();
+
+            ValType refType = null;
+            if (!(target instanceof AssignmentPattern)) {
+                // stack: [] -> [lref]
+                refType = expression(target, mv);
             }
-            // stack: [obj] -> []
-            mv.pop();
+
+            // stack: [(lref)] -> [(lref), v]
+            mv.load(iterator);
+            mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
+
+            // stack: [(lref), v] -> [(lref), v']
+            if (initialiser != null) {
+                Label undef = new Label();
+                mv.dup();
+                mv.invoke(Methods.Type_isUndefined);
+                mv.ifeq(undef);
+                {
+                    mv.pop();
+                    expressionBoxedValue(initialiser, mv);
+                }
+                mv.mark(undef);
+            }
+
+            if (target instanceof AssignmentPattern) {
+                // stack: [v'] -> [v']
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
+
+                // stack: [v'] -> []
+                DestructuringAssignmentEvaluation(target);
+            } else {
+                // stack: [lref, 'v] -> []
+                PutValue(target, refType, mv);
+            }
 
             return null;
         }
 
         @Override
-        public Void visit(AssignmentElement node, Integer index) {
-            String name = ToString(index);
-            KeyedDestructuringAssignmentEvaluation(node, name);
+        public Void visit(AssignmentRestElement node, Variable<Iterator<?>> iterator) {
+            LeftHandSideExpression target = node.getTarget();
 
-            return null;
-        }
+            // stack: [] -> [lref]
+            ValType refType = expression(target, mv);
 
-        @Override
-        public Void visit(AssignmentRestElement node, Integer index) {
-            // stack: [obj] -> [lref, obj]
-            ValType refType = expression(node.getTarget(), mv);
-            mv.swap();
-
-            mv.iconst(index);
+            // stack: [lref] -> [lref, rest]
+            mv.load(iterator);
             mv.loadExecutionContext();
-            // stack: [lref, obj, index, cx] -> [lref, rest]
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
             // stack: [lref, rest] -> []
-            PutValue(node.getTarget(), refType, mv);
+            PutValue(target, refType, mv);
 
             return null;
         }
     }
 
+    /**
+     * 12.13.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
+     */
     private static final class KeyedDestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, String> {
         protected KeyedDestructuringAssignmentEvaluation(CodeGenerator codegen, ExpressionVisitor mv) {
@@ -230,19 +293,10 @@ class DestructuringAssignmentGenerator {
         }
 
         @Override
-        public Void visit(AssignmentElement node, String propertyName) {
-            generate(node.getTarget(), node.getInitialiser(), propertyName);
-            return null;
-        }
-
-        @Override
         public Void visit(AssignmentProperty node, String propertyName) {
-            generate(node.getTarget(), node.getInitialiser(), propertyName);
-            return null;
-        }
+            LeftHandSideExpression target = node.getTarget();
+            Expression initialiser = node.getInitialiser();
 
-        private void generate(LeftHandSideExpression target, Expression initialiser,
-                String propertyName) {
             // stack: [obj] -> [cx, obj]
             mv.loadExecutionContext();
             mv.swap();
@@ -284,9 +338,14 @@ class DestructuringAssignmentGenerator {
                 // stack: [lref, 'v] -> []
                 PutValue(target, refType, mv);
             }
+
+            return null;
         }
     }
 
+    /**
+     * 12.13.5.4 Runtime Semantics: KeyedDestructuringAssignmentEvaluation
+     */
     private static final class ComputedKeyedDestructuringAssignmentEvaluation extends
             RuntimeSemantics<Void, ComputedPropertyName> {
         protected ComputedKeyedDestructuringAssignmentEvaluation(CodeGenerator codegen,
@@ -296,12 +355,9 @@ class DestructuringAssignmentGenerator {
 
         @Override
         public Void visit(AssignmentProperty node, ComputedPropertyName propertyName) {
-            generate(node.getTarget(), node.getInitialiser(), propertyName);
-            return null;
-        }
+            LeftHandSideExpression target = node.getTarget();
+            Expression initialiser = node.getInitialiser();
 
-        private void generate(LeftHandSideExpression target, Expression initialiser,
-                ComputedPropertyName propertyName) {
             // stack: [obj] -> [cx, obj]
             mv.loadExecutionContext();
             mv.swap();
@@ -346,6 +402,8 @@ class DestructuringAssignmentGenerator {
                 // stack: [lref, 'v] -> []
                 PutValue(target, refType, mv);
             }
+
+            return null;
         }
     }
 }

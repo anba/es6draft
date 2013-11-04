@@ -20,6 +20,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.F
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
+import static java.util.Arrays.asList;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -993,32 +994,50 @@ public final class ScriptRuntime {
         return UNDEFINED;
     }
 
-    /* ***************************************************************************************** */
-
     /**
-     * 13.2.4 Destructuring Binding Patterns
+     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
      * <p>
-     * Runtime Semantics: Indexed Binding Initialisation<br>
-     * BindingRestElement : ... BindingIdentifier
+     * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
      */
-    public static ScriptObject createRestArray(ScriptObject array, int index, ExecutionContext cx) {
+    public static ScriptObject createRestArray(Iterator<?> iterator, ExecutionContext cx) {
         ScriptObject result = ArrayCreate(cx, 0);
-        Object lenVal = Get(cx, array, "length");
-        long arrayLength = ToLength(cx, lenVal);
-        long n = 0;
-        while (index < arrayLength) {
-            String p = ToString(index);
-            boolean exists = HasProperty(cx, array, p);
-            if (exists) {
-                Object v = Get(cx, array, p);
-                PropertyDescriptor desc = new PropertyDescriptor(v, true, true, true);
-                result.defineOwnProperty(cx, ToString(n), desc);
-            }
-            n = n + 1;
-            index = index + 1;
+        for (int n = 0; iterator.hasNext(); ++n) {
+            Object nextValue = iterator.next();
+            CreateDataPropertyOrThrow(cx, result, ToString(n), nextValue);
         }
         return result;
     }
+
+    /**
+     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     * <p>
+     * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
+     */
+    public static Iterator<?> getIterator(ScriptObject obj, ExecutionContext cx) {
+        return ListIterator.FromListIterator(cx, GetIterator(cx, obj));
+    }
+
+    /**
+     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     * <p>
+     * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
+     */
+    public static void iteratorNextAndIgnore(Iterator<?> iterator) {
+        if (iterator.hasNext()) {
+            iterator.next();
+        }
+    }
+
+    /**
+     * 12.13.5.3 Runtime Semantics: IteratorDestructuringAssignmentEvaluation
+     * <p>
+     * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
+     */
+    public static Object iteratorNextOrUndefined(Iterator<?> iterator) {
+        return iterator.hasNext() ? iterator.next() : UNDEFINED;
+    }
+
+    /* ***************************************************************************************** */
 
     /**
      * 13.6.4 The for-in and for-of Statements
@@ -1756,7 +1775,7 @@ public final class ScriptRuntime {
         envRec.createImmutableBinding("arguments");
         ExoticArguments ao = InstantiateArgumentsObject(cx, args);
 
-        cx.resolveBinding("args", true).PutValue(createRestArray(ao, 0, cx), cx);
+        cx.resolveBinding("args", true).PutValue(createRestArray(asList(args).iterator(), cx), cx);
 
         CompleteStrictArgumentsObject(cx, ao);
         envRec.initialiseBinding("arguments", ao);

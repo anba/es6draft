@@ -7,9 +7,10 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
+
+import java.util.Iterator;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
@@ -18,6 +19,7 @@ import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
@@ -45,11 +47,6 @@ class BindingInitialisationGenerator {
                 MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
 
-        // class: ExoticArguments
-        static final MethodDesc ExoticArguments_getArgument = MethodDesc.create(MethodType.Virtual,
-                Types.ExoticArguments, "getArgument",
-                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.String));
-
         // class: LexicalEnvironment
         static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
                 MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
@@ -62,13 +59,24 @@ class BindingInitialisationGenerator {
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_createRestArray = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "createRestArray", Type.getMethodType(
-                        Types.ScriptObject, Types.ScriptObject, Type.INT_TYPE,
-                        Types.ExecutionContext));
+                MethodType.Static, Types.ScriptRuntime, "createRestArray",
+                Type.getMethodType(Types.ScriptObject, Types.Iterator, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "ensureObject",
                 Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_getIterator = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "getIterator",
+                Type.getMethodType(Types.Iterator, Types.ScriptObject, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_iteratorNextAndIgnore = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "iteratorNextAndIgnore",
+                Type.getMethodType(Type.VOID_TYPE, Types.Iterator));
+
+        static final MethodDesc ScriptRuntime_iteratorNextOrUndefined = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "iteratorNextOrUndefined",
+                Type.getMethodType(Types.Object, Types.Iterator));
 
         // class: Type
         static final MethodDesc Type_isUndefined = MethodDesc.create(MethodType.Static,
@@ -81,23 +89,28 @@ class BindingInitialisationGenerator {
         this.codegen = codegen;
     }
 
-    void generate(FunctionNode node, ExpressionVisitor mv) {
-        BindingInitialisation init = new BindingInitialisation(codegen, mv,
-                EnvironmentType.NoEnvironment, true);
+    void generate(FunctionNode node, Variable<Iterator<?>> iterator, ExpressionVisitor mv) {
+        IteratorBindingInitialisation init = new IteratorBindingInitialisation(codegen, mv,
+                EnvironmentType.NoEnvironment);
 
-        node.getParameters().accept(init, null);
+        node.getParameters().accept(init, iterator);
     }
 
     void generate(Binding node, ExpressionVisitor mv) {
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
-                EnvironmentType.NoEnvironment, false);
+                EnvironmentType.NoEnvironment);
         node.accept(init, null);
     }
 
     void generateWithEnvironment(Binding node, ExpressionVisitor mv) {
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
-                EnvironmentType.EnvironmentFromStack, false);
+                EnvironmentType.EnvironmentFromStack);
         node.accept(init, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static final <T> T uncheckedCast(Object o) {
+        return (T) o;
     }
 
     private enum EnvironmentType {
@@ -108,49 +121,34 @@ class BindingInitialisationGenerator {
         protected final CodeGenerator codegen;
         protected final ExpressionVisitor mv;
         protected final EnvironmentType environment;
-        protected final boolean parameterInitialisation;
 
         protected RuntimeSemantics(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment, boolean parameterInitialisation) {
+                EnvironmentType environment) {
             this.codegen = codegen;
             this.mv = mv;
             this.environment = environment;
-            this.parameterInitialisation = parameterInitialisation;
         }
 
         protected final void BindingInitialisation(Node node) {
-            BindingInitialisation init = new BindingInitialisation(codegen, mv, environment, false);
+            BindingInitialisation init = new BindingInitialisation(codegen, mv, environment);
             node.accept(init, null);
         }
 
-        protected final void IndexedBindingInitialisation(Node node, int index) {
-            IndexedBindingInitialisation init = new IndexedBindingInitialisation(codegen, mv,
-                    environment, false);
-            node.accept(init, index);
-        }
-
-        protected final void IndexedBindingInitialisation(FormalParameterList node, int index) {
-            IndexedBindingInitialisation init = new IndexedBindingInitialisation(codegen, mv,
-                    environment, true);
-            node.accept(init, index);
+        protected final void IteratorBindingInitialisation(Node node, Variable<Iterator<?>> iterator) {
+            IteratorBindingInitialisation init = new IteratorBindingInitialisation(codegen, mv,
+                    environment);
+            node.accept(init, iterator);
         }
 
         protected final void KeyedBindingInitialisation(Node node, String key) {
             KeyedBindingInitialisation init = new KeyedBindingInitialisation(codegen, mv,
-                    environment, false);
-            node.accept(init, key);
-        }
-
-        protected final void KeyedBindingInitialisation(Node node, String key,
-                boolean parameterInitialisation) {
-            KeyedBindingInitialisation init = new KeyedBindingInitialisation(codegen, mv,
-                    environment, parameterInitialisation);
+                    environment);
             node.accept(init, key);
         }
 
         protected final void ComputedKeyedBindingInitialisation(Node node, ComputedPropertyName key) {
             ComputedKeyedBindingInitialisation init = new ComputedKeyedBindingInitialisation(
-                    codegen, mv, environment, false);
+                    codegen, mv, environment);
             node.accept(init, key);
         }
 
@@ -188,24 +186,25 @@ class BindingInitialisationGenerator {
         private static IdentifierResolution identifierResolution = new IdentifierResolution();
 
         protected BindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment, boolean parameterInitialisation) {
-            super(codegen, mv, environment, parameterInitialisation);
-        }
-
-        @Override
-        public Void visit(FormalParameterList node, Void value) {
-            IndexedBindingInitialisation(node, 0);
-
-            return null;
+                EnvironmentType environment) {
+            super(codegen, mv, environment);
         }
 
         @Override
         public Void visit(ArrayBindingPattern node, Void _) {
             // step 1: Assert: Type(value) is Object
 
-            // step 2:
+            // step 2-3:
             // stack: [(env), value] -> []
-            IndexedBindingInitialisation(node, 0);
+            Variable<Iterator<?>> iterator = uncheckedCast(mv.newScratchVariable(Iterator.class));
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_getIterator);
+            mv.store(iterator);
+
+            // step 4:
+            IteratorBindingInitialisation(node, iterator);
+
+            mv.freeVariable(iterator);
 
             return null;
         }
@@ -218,15 +217,14 @@ class BindingInitialisationGenerator {
             for (BindingProperty property : node.getProperties()) {
                 // stack: [(env), value] -> [(env), value, (env), value]
                 dupArgs();
+                // stack: [(env), value, (env), value] -> [(env), value]
                 if (property.getPropertyName() == null) {
                     // BindingProperty : SingleNameBinding
                     String name = BoundNames(property.getBinding()).get(0);
-                    // stack: [(env), value, (env), value] -> [(env), value]
                     KeyedBindingInitialisation(property, name);
                 } else {
                     // BindingProperty : PropertyName : BindingElement
                     String name = PropName(property.getPropertyName());
-                    // stack: [(env), value, (env), value] -> [(env), value]
                     if (name != null) {
                         KeyedBindingInitialisation(property, name);
                     } else {
@@ -243,6 +241,9 @@ class BindingInitialisationGenerator {
             return null;
         }
 
+        /**
+         * 13.2.1.5 Runtime Semantics: BindingInitialisation
+         */
         @Override
         public Void visit(BindingIdentifier node, Void _) {
             if (environment == EnvironmentType.EnvironmentFromParameter) {
@@ -280,62 +281,85 @@ class BindingInitialisationGenerator {
         }
     }
 
-    private static final class IndexedBindingInitialisation extends RuntimeSemantics<Void, Integer> {
-        protected IndexedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment, boolean parameterInitialisation) {
-            super(codegen, mv, environment, parameterInitialisation);
+    /**
+     * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation<br>
+     * 14.1.13 Runtime Semantics: IteratorBindingInitialisation<br>
+     * 14.2.8 Runtime Semantics: IteratorBindingInitialisation
+     */
+    private static final class IteratorBindingInitialisation extends
+            RuntimeSemantics<Void, Variable<Iterator<?>>> {
+        protected IteratorBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
+                EnvironmentType environment) {
+            super(codegen, mv, environment);
         }
 
         @Override
-        public Void visit(FormalParameterList node, Integer index) {
+        public Void visit(FormalParameterList node, Variable<Iterator<?>> iterator) {
             assert environment != EnvironmentType.EnvironmentFromStack;
 
-            // stack: [value]
+            // stack: [] -> []
             for (FormalParameter formal : node) {
-                // stack: [value] -> [value, value]
-                mv.dup();
-                // stack: [value, value] -> [value]
-                formal.accept(this, index);
-                index = index + 1;
+                formal.accept(this, iterator);
             }
-            // stack: [value] -> []
-            mv.pop();
 
             return null;
         }
 
         @Override
-        public Void visit(BindingElement node, Integer index) {
+        public Void visit(ArrayBindingPattern node, Variable<Iterator<?>> iterator) {
+            // stack: [] -> []
+            for (BindingElementItem element : node.getElements()) {
+                element.accept(this, iterator);
+            }
+
+            return null;
+        }
+
+        @Override
+        public Void visit(BindingElision node, Variable<Iterator<?>> iterator) {
+            // stack: [] -> []
+            mv.load(iterator);
+            mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
+
+            return null;
+        }
+
+        @Override
+        public Void visit(BindingElement node, Variable<Iterator<?>> iterator) {
             Binding binding = node.getBinding();
+            Expression initialiser = node.getInitialiser();
+
             if (binding instanceof BindingIdentifier) {
-                // step 1
-                // stack: [(env), array] -> []
-                KeyedBindingInitialisation(node, ToString(index), parameterInitialisation);
-            } else {
-                assert binding instanceof BindingPattern;
-                Expression initialiser = node.getInitialiser();
+                // steps 1-4
+                mv.load(iterator);
+                mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
 
-                // step 1
-                String name = ToString(index);
-
-                if (parameterInitialisation) {
-                    mv.loadExecutionContext();
-                    mv.aconst(name);
-                    mv.invoke(Methods.ExoticArguments_getArgument);
-                } else {
-                    // stack: [(env), array] -> [(env), cx, array]
-                    mv.loadExecutionContext();
-                    mv.swap();
-
-                    // stack: [(env), cx, array] -> [(env), cx, array, p]
-                    mv.aconst(name);
-
-                    // steps 2-3
-                    // stack: [(env), cx, array, p] -> [(env), v]
-                    mv.invoke(Methods.AbstractOperations_Get_String);
+                // step 5
+                // stack: [(env), v] -> [(env), v']
+                if (initialiser != null) {
+                    Label undef = new Label();
+                    mv.dup();
+                    mv.invoke(Methods.Type_isUndefined);
+                    mv.ifeq(undef);
+                    {
+                        mv.pop();
+                        expressionBoxedValue(initialiser, mv);
+                        // FIXME: call SetFunctionName()
+                    }
+                    mv.mark(undef);
                 }
 
-                // step 4
+                // step 6
+                // stack: [(env), v'] -> []
+                BindingInitialisation(binding);
+            } else {
+                assert binding instanceof BindingPattern;
+
+                // steps 1-4
+                mv.load(iterator);
+                mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
+
+                // step 5
                 // stack: [(env), v] -> [(env), v']
                 if (initialiser != null) {
                     Label undef = new Label();
@@ -349,23 +373,24 @@ class BindingInitialisationGenerator {
                     mv.mark(undef);
                 }
 
-                // step 5
+                // step 7
                 // stack: [(env), v'] -> [(env), v']
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
 
-                // step 6
+                // step 8
                 // stack: [(env), v'] -> []
                 BindingInitialisation(binding);
             }
+
             return null;
         }
 
         @Override
-        public Void visit(BindingRestElement node, Integer index) {
-            mv.iconst(index);
+        public Void visit(BindingRestElement node, Variable<Iterator<?>> iterator) {
+            mv.load(iterator);
             mv.loadExecutionContext();
-            // stack: [(env), array, index, cx] -> [(env), rest]
+            // stack: [(env), array, iterator, cx] -> [(env), rest]
             mv.invoke(Methods.ScriptRuntime_createRestArray);
 
             // stack: [(env), rest] -> []
@@ -373,62 +398,32 @@ class BindingInitialisationGenerator {
 
             return null;
         }
-
-        @Override
-        public Void visit(ArrayBindingPattern node, Integer index) {
-            for (BindingElementItem element : node.getElements()) {
-                if (element instanceof BindingElision) {
-                    index = index + 1;
-                    continue;
-                }
-
-                // stack: [(env), value] -> [(env), value, (env), value]
-                dupArgs();
-                // stack: [(env), value, (env), value] -> [(env), value]
-                element.accept(this, index);
-                index = index + 1;
-            }
-            // stack: [(env), value] -> []
-            popArgs();
-            return null;
-        }
     }
 
+    /**
+     * 13.2.3.6 Runtime Semantics: KeyedBindingInitialisation
+     */
     private static final class KeyedBindingInitialisation extends RuntimeSemantics<Void, String> {
         protected KeyedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment, boolean parameterInitialisation) {
-            super(codegen, mv, environment, parameterInitialisation);
+                EnvironmentType environment) {
+            super(codegen, mv, environment);
         }
 
         @Override
-        public Void visit(BindingElement node, String key) {
-            generate(node.getBinding(), node.getInitialiser(), key);
-            return null;
-        }
+        public Void visit(BindingProperty node, String propertyName) {
+            Binding binding = node.getBinding();
+            Expression initialiser = node.getInitialiser();
 
-        @Override
-        public Void visit(BindingProperty node, String key) {
-            generate(node.getBinding(), node.getInitialiser(), key);
-            return null;
-        }
+            // stack: [(env), obj] -> [(env), cx, obj]
+            mv.loadExecutionContext();
+            mv.swap();
 
-        private void generate(Binding binding, Expression initialiser, String propertyName) {
-            if (parameterInitialisation) {
-                mv.loadExecutionContext();
-                mv.aconst(propertyName);
-                mv.invoke(Methods.ExoticArguments_getArgument);
-            } else {
-                // stack: [(env), obj] -> [(env), cx, obj]
-                mv.loadExecutionContext();
-                mv.swap();
+            // stack: [(env), cx, obj] -> [(env), cx, obj, propertyName]
+            mv.aconst(propertyName);
 
-                // stack: [(env), cx, obj] -> [(env), cx, obj, propertyName]
-                mv.aconst(propertyName);
-
-                // steps 1-2
-                // stack: [(env), cx, obj, propertyName] -> [(env), v]
-                mv.invoke(Methods.AbstractOperations_Get_String);
-            }
+            // steps 1-2
+            // stack: [(env), cx, obj, propertyName] -> [(env), v]
+            mv.invoke(Methods.AbstractOperations_Get_String);
 
             // step 3
             // stack: [(env), v] -> [(env), v']
@@ -440,6 +435,9 @@ class BindingInitialisationGenerator {
                 {
                     mv.pop();
                     expressionBoxedValue(initialiser, mv);
+                    if (!(binding instanceof BindingPattern)) {
+                        // FIXME: call SetFunctionName()
+                    }
                 }
                 mv.mark(undef);
             }
@@ -454,24 +452,26 @@ class BindingInitialisationGenerator {
             // step 5
             // stack: [(env), v'] -> []
             BindingInitialisation(binding);
+
+            return null;
         }
     }
 
+    /**
+     * 13.2.3.6 Runtime Semantics: KeyedBindingInitialisation
+     */
     private static final class ComputedKeyedBindingInitialisation extends
             RuntimeSemantics<Void, ComputedPropertyName> {
         protected ComputedKeyedBindingInitialisation(CodeGenerator codegen, ExpressionVisitor mv,
-                EnvironmentType environment, boolean parameterInitialisation) {
-            super(codegen, mv, environment, parameterInitialisation);
+                EnvironmentType environment) {
+            super(codegen, mv, environment);
         }
 
         @Override
-        public Void visit(BindingProperty node, ComputedPropertyName key) {
-            generate(node.getBinding(), node.getInitialiser(), key);
-            return null;
-        }
+        public Void visit(BindingProperty node, ComputedPropertyName propertyName) {
+            Binding binding = node.getBinding();
+            Expression initialiser = node.getInitialiser();
 
-        private void generate(Binding binding, Expression initialiser,
-                ComputedPropertyName propertyName) {
             // stack: [(env), obj] -> [(env), cx, obj]
             mv.loadExecutionContext();
             mv.swap();
@@ -496,6 +496,9 @@ class BindingInitialisationGenerator {
                 {
                     mv.pop();
                     expressionBoxedValue(initialiser, mv);
+                    if (!(binding instanceof BindingPattern)) {
+                        // FIXME: call SetFunctionName()
+                    }
                 }
                 mv.mark(undef);
             }
@@ -510,6 +513,8 @@ class BindingInitialisationGenerator {
             // step 5
             // stack: [(env), v'] -> []
             BindingInitialisation(binding);
+
+            return null;
         }
     }
 }

@@ -8,6 +8,7 @@ package com.github.anba.es6draft.compiler;
 
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -65,6 +66,7 @@ final class Types {
 
     // java.util
     static final Type ArrayList = Type.getType(ArrayList.class);
+    static final Type Arrays = Type.getType(Arrays.class);
     static final Type Iterator = Type.getType(Iterator.class);
     static final Type List = Type.getType(List.class);
     static final Type Set = Type.getType(Set.class);

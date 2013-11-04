@@ -10,6 +10,7 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -27,15 +28,18 @@ import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
- * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.1 Ordinary Object Internal Methods and Internal Data Properties</h2><br>
- * <h3>9.1.15 Ordinary Function Objects</h3>
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
+ * <h2>9.2 ECMAScript Function Objects</h2>
  * <ul>
- * <li>9.1.15.11 Function Declaration Instantiation
+ * <li>9.2.14 Function Declaration Instantiation
  * </ul>
  */
 class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
     private static class Methods {
+        // class: Arrays
+        static final MethodDesc Arrays_asList = MethodDesc.create(MethodType.Static, Types.Arrays,
+                "asList", Type.getMethodType(Types.List, Types.Object_));
+
         // class: ExecutionContext
         static final MethodDesc ExecutionContext_getVariableEnvironment = MethodDesc.create(
                 MethodType.Virtual, Types.ExecutionContext, "getVariableEnvironment",
@@ -55,6 +59,10 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                         .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
                                 Types.ExoticArguments, Types.FunctionObject, Types.String_,
                                 Types.LexicalEnvironment));
+
+        // class: List
+        static final MethodDesc List_iterator = MethodDesc.create(MethodType.Interface, Types.List,
+                "iterator", Type.getMethodType(Types.Iterator));
     }
 
     private static final int EXECUTION_CONTEXT = 0;
@@ -107,6 +115,12 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         Variable<Undefined> undef = mv.newVariable("undef", Undefined.class);
         mv.loadUndefined();
         mv.store(undef);
+
+        Variable<Iterator<?>> iterator = uncheckedCast(mv.newVariable("iterator", Iterator.class));
+        mv.loadParameter(ARGUMENTS, Object[].class);
+        mv.invoke(Methods.Arrays_asList);
+        mv.invoke(Methods.List_iterator);
+        mv.store(iterator);
 
         Set<String> bindings = new HashSet<>();
         /* step 1 */
@@ -208,11 +222,12 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             // setMutableBinding(envRec, fn, false, mv);
             initialiseBinding(envRec, fn, mv);
         }
+        // FIXME: apply spec updates from rev20
         /* steps 18-20 */
         // stack: [] -> [ao]
         InstantiateArgumentsObject(mv);
         /* steps 21-22 */
-        BindingInitialisation(function, mv);
+        BindingInitialisation(function, iterator, mv);
         /* step 23 */
         if (argumentsObjectNeeded) {
             if (strict) {
@@ -235,10 +250,10 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.invoke(Methods.ExoticArguments_InstantiateArgumentsObject);
     }
 
-    private void BindingInitialisation(FunctionNode node, ExpressionVisitor mv) {
-        // stack: [ao] -> [ao]
-        mv.dup();
-        new BindingInitialisationGenerator(codegen).generate(node, mv);
+    private void BindingInitialisation(FunctionNode node, Variable<Iterator<?>> iterator,
+            ExpressionVisitor mv) {
+        // stack: [] -> []
+        new BindingInitialisationGenerator(codegen).generate(node, iterator, mv);
     }
 
     private void CompleteStrictArgumentsObject(ExpressionVisitor mv) {
@@ -288,5 +303,10 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         for (String string : strings) {
             mv.astore(index++, string);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static final <T> T uncheckedCast(Object o) {
+        return (T) o;
     }
 }
