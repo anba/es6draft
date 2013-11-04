@@ -9,7 +9,8 @@ package com.github.anba.es6draft.runtime.internal;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.*;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorStart;
+import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteStrictArgumentsObject;
@@ -226,7 +227,7 @@ public final class ScriptRuntime {
     /**
      * 12.1.5 Object Initialiser
      * <p>
-     * Runtime Semantics: Property Definition Evaluation
+     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      */
     public static void defineProperty(ScriptObject object, Object propertyName, Object value,
             ExecutionContext cx) {
@@ -237,7 +238,7 @@ public final class ScriptRuntime {
     /**
      * 12.1.5 Object Initialiser
      * <p>
-     * Runtime Semantics: Property Definition Evaluation
+     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      */
     public static void defineProperty(ScriptObject object, String propertyName, Object value,
             ExecutionContext cx) {
@@ -252,6 +253,7 @@ public final class ScriptRuntime {
      */
     public static ScriptObject __EvaluateGeneratorComprehension(MethodHandle handle,
             ExecutionContext cx) {
+        // TODO: remove this method, no longer used
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         ExecutionContext calleeContext = ExecutionContext.newGeneratorComprehensionContext(cx);
         RuntimeInfo.Code newCode = RuntimeInfo.newCode(handle);
@@ -264,7 +266,7 @@ public final class ScriptRuntime {
     /**
      * 12.1.7 Generator Comprehensions
      * <p>
-     * Runtime Semantics: Evaluation
+     * 12.1.7.2 Runtime Semantics: Evaluation
      */
     public static ScriptObject EvaluateGeneratorComprehension(MethodHandle handle,
             ExecutionContext cx) {
@@ -340,6 +342,8 @@ public final class ScriptRuntime {
 
     public static ExoticArguments GeneratorComprehensionInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
+        // TODO: Apply FunctionDeclarationInstantiation changes from rev20
+
         // NB: generator comprehensions are defined in terms of generator functions which means they
         // inherit the function declaration instantiation code from 9.1.15.11, replicate here the
         // applicable algorithm steps (that means only steps 19-20, 24).
@@ -355,19 +359,17 @@ public final class ScriptRuntime {
     /**
      * 12.1.8 Regular Expression Literals
      * <p>
-     * Runtime Semantics: Evaluation
+     * 12.1.8.2 Runtime Semantics: Evaluation
      */
-    public static ScriptObject RegExp(ExecutionContext cx, String re, String flags) {
-        // FIXME: spec bug (call abstract operation RegExpCreate?!) (bug 749)
-        // Constructor ctor = (Constructor) cx.getIntrinsic(Intrinsics.RegExp);
-        // return ctor.construct(cx, re, flags);
-        return RegExpConstructor.RegExpCreate(cx, re, flags);
+    public static ScriptObject RegExp(ExecutionContext cx, String pattern, String flags) {
+        // TODO: move call to bytecode
+        return RegExpConstructor.RegExpCreate(cx, pattern, flags);
     }
 
     /**
      * 12.1.9 Template Literals
      * <p>
-     * Runtime Semantics: GetTemplateCallSite Abstract Operation
+     * 12.1.9.2.2 Runtime Semantics: GetTemplateCallSite
      */
     public static ScriptObject GetTemplateCallSite(String key, MethodHandle handle,
             ExecutionContext cx) {
@@ -416,10 +418,13 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.1 Property Accessors
+     * 12.2.2 Property Accessors
      * <p>
-     * Runtime Semantics: Evaluation<br>
-     * MemberExpression : MemberExpression . IdentifierName
+     * 12.2.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression . IdentifierName
+     * <li>CallExpression : CallExpression . IdentifierName
+     * </ul>
      */
     public static Reference<Object, String> getProperty(Object baseValue,
             String propertyNameString, ExecutionContext cx, boolean strict) {
@@ -431,10 +436,13 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.1 Property Accessors
+     * 12.2.2 Property Accessors
      * <p>
-     * Runtime Semantics: Evaluation<br>
-     * MemberExpression : MemberExpression . IdentifierName
+     * 12.2.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression . IdentifierName
+     * <li>CallExpression : CallExpression . IdentifierName
+     * </ul>
      */
     public static Object getPropertyValue(Object baseValue, String propertyNameString,
             ExecutionContext cx, boolean strict) {
@@ -448,10 +456,13 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.1 Property Accessors
+     * 12.2.2 Property Accessors
      * <p>
-     * Runtime Semantics: Evaluation<br>
-     * MemberExpression : MemberExpression [ Expression ]
+     * 12.2.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression [ Expression ]
+     * <li>CallExpression : CallExpression [ Expression ]
+     * </ul>
      */
     public static Reference<Object, ?> getElement(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
@@ -468,10 +479,13 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.1 Property Accessors
+     * 12.2.2 Property Accessors
      * <p>
-     * Runtime Semantics: Evaluation<br>
-     * MemberExpression : MemberExpression [ Expression ]
+     * 12.2.2.1 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>MemberExpression : MemberExpression [ Expression ]
+     * <li>CallExpression : CallExpression [ Expression ]
+     * </ul>
      */
     public static Object getElementValue(Object baseValue, Object propertyNameValue,
             ExecutionContext cx, boolean strict) {
@@ -492,9 +506,10 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.2 The new Operator
+     * 12.2.3 The new Operator
      * <p>
-     * Runtime Semantics: Evaluation<br>
+     * 12.2.3.1 Runtime Semantics: Evaluation<br>
+     * 12.2.5.2 Runtime Semantics: Evaluation
      * <ul>
      * <li>NewExpression : new NewExpression
      * <li>MemberExpression : new MemberExpression Arguments
@@ -503,23 +518,19 @@ public final class ScriptRuntime {
      */
     public static Object EvaluateConstructorCall(Object constructor, Object[] args,
             ExecutionContext cx) {
-        /* steps 1-3 (generated code) */
-        /* steps 4/6 */
-        if (!Type.isObject(constructor)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* steps 5/7 */
+        /* steps 1-3/1-3/1-6 (generated code) */
+        /* steps 4/6/7 */
         if (!IsConstructor(constructor)) {
             throw throwTypeError(cx, Messages.Key.NotConstructor);
         }
-        /* steps 6/8 */
+        /* steps 5/7/8 */
         return ((Constructor) constructor).construct(cx, args);
     }
 
     /**
-     * 12.2.3 Function Calls
+     * 12.2.4 Function Calls
      * <p>
-     * Runtime Semantics: EvaluateMethodCall Abstract Operation
+     * 12.2.4.3 Runtime Semantics: EvaluateMethodCall
      */
     public static Object OrdinaryInvokeGet(ScriptObject base, Reference<?, ?> ref,
             Object thisValue, ExecutionContext cx) {
@@ -1032,7 +1043,7 @@ public final class ScriptRuntime {
         /* step 5 */
         ScriptObject obj = ToObject(cx, o);
         /* step 7, step 8 */
-        ScriptObject keys = ToObject(cx, Invoke(cx, obj, BuiltinSymbol.iterator.get()));
+        ScriptObject keys = GetIterator(cx, obj);
         /* step 9 */
         return FromListIterator(cx, keys);
     }
@@ -1143,7 +1154,7 @@ public final class ScriptRuntime {
     /**
      * 14.1 Function Definitions
      * <p>
-     * Runtime Semantics: InstantiateFunctionObject
+     * 14.1.14 Runtime Semantics: InstantiateFunctionObject
      */
     public static OrdinaryFunction InstantiateFunctionObject(LexicalEnvironment scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
@@ -1158,7 +1169,7 @@ public final class ScriptRuntime {
     /**
      * 14.1 Function Definitions
      * <p>
-     * Runtime Semantics: Evaluation
+     * 14.1.15 Runtime Semantics: Evaluation
      * <ul>
      * <li>FunctionExpression : function ( FormalParameters ) { FunctionBody }
      * <li>FunctionExpression : function BindingIdentifier ( FormalParameters ) { FunctionBody }
@@ -1537,7 +1548,7 @@ public final class ScriptRuntime {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * Runtime Semantics: Evaluation
+     * 14.4.14 Runtime Semantics: Evaluation
      * <ul>
      * <li>GeneratorExpression: function* ( FormalParameters ) { FunctionBody }
      * <li>GeneratorExpression: function* BindingIdentifier ( FormalParameters ) { FunctionBody }
@@ -1563,7 +1574,7 @@ public final class ScriptRuntime {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * Runtime Semantics: Evaluation
+     * 14.4.14 Runtime Semantics: Evaluation
      * <ul>
      * <li>GeneratorExpression: function* ( FormalParameters ) { FunctionBody }
      * <li>GeneratorExpression: function* BindingIdentifier ( FormalParameters ) { FunctionBody }
@@ -1589,8 +1600,9 @@ public final class ScriptRuntime {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * Runtime Semantics: Evaluation
+     * 14.4.14 Runtime Semantics: Evaluation
      * <ul>
+     * <li>YieldExpression : yield
      * <li>YieldExpression : yield AssignmentExpression
      * </ul>
      */
@@ -1601,9 +1613,9 @@ public final class ScriptRuntime {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * Runtime Semantics: Evaluation
+     * 14.4.14 Runtime Semantics: Evaluation
      * <ul>
-     * <li>YieldExpression : yield YieldDelegator AssignmentExpression
+     * <li>YieldExpression : yield * AssignmentExpression
      * </ul>
      */
     public static Object delegatedYield(Object value, ExecutionContext cx) {
@@ -1640,7 +1652,7 @@ public final class ScriptRuntime {
     /**
      * 14.5 Class Definitions
      * <p>
-     * Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
      */
     public static ScriptObject[] getDefaultClassProto(ExecutionContext cx) {
         // step 1
@@ -1654,7 +1666,7 @@ public final class ScriptRuntime {
     /**
      * 14.5 Class Definitions
      * <p>
-     * Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
      */
     public static ScriptObject[] getClassProto(Object superClass, ExecutionContext cx) {
         ScriptObject protoParent;
@@ -1670,7 +1682,7 @@ public final class ScriptRuntime {
             if (!(Type.isObject(p) || Type.isNull(p))) {
                 throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            protoParent = (Type.isNull(p) ? null : Type.objectValue(p));
+            protoParent = Type.isNull(p) ? null : Type.objectValue(p);
             constructorParent = Type.objectValue(superClass);
         }
         // step 3
@@ -1681,7 +1693,7 @@ public final class ScriptRuntime {
     /**
      * 14.5 Class Definitions
      * <p>
-     * Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
      */
     public static RuntimeInfo.Function CreateDefaultConstructor() {
         String functionName = "constructor";
@@ -1698,7 +1710,7 @@ public final class ScriptRuntime {
     /**
      * 14.5 Class Definitions
      * <p>
-     * Runtime Semantics: ClassDefinitionEvaluation
+     * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
      */
     public static RuntimeInfo.Function CreateDefaultEmptyConstructor() {
         String functionName = "constructor";
@@ -1735,6 +1747,7 @@ public final class ScriptRuntime {
 
     public static ExoticArguments DefaultConstructorInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
+        // TODO: Apply FunctionDeclarationInstantiation changes from rev20
         EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
         envRec.createMutableBinding("args", false);
@@ -1789,6 +1802,7 @@ public final class ScriptRuntime {
 
     public static ExoticArguments DefaultEmptyConstructorInit(ExecutionContext cx,
             FunctionObject f, Object[] args) {
+        // TODO: Apply FunctionDeclarationInstantiation changes from rev20
         EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
         envRec.createImmutableBinding("arguments");
@@ -1806,7 +1820,7 @@ public final class ScriptRuntime {
     /**
      * 14.6 Tail Position Calls
      * <p>
-     * Runtime Semantics: PrepareForTailCall
+     * 14.6.1 Runtime Semantics: PrepareForTailCall
      */
     public static Object PrepareForTailCall(Object[] args, Object thisValue, Callable function) {
         return new TailCallInvocation(function, thisValue, args);
