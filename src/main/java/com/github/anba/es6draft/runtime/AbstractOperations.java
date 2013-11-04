@@ -35,6 +35,7 @@ import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.types.*;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -1428,6 +1429,8 @@ public final class AbstractOperations {
             Realm realm;
             if (constructor instanceof FunctionObject) {
                 realm = ((FunctionObject) constructor).getRealm();
+            } else if (constructor instanceof BuiltinFunction) {
+                realm = ((BuiltinFunction) constructor).getRealm();
             } else {
                 realm = cx.getRealm();
             }
