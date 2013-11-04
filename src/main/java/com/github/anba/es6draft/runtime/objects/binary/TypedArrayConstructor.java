@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -13,6 +14,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.O
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
@@ -41,11 +43,6 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     /** [[ElementType]] */
     public ElementType getElementType() {
         return elementType;
-    }
-
-    /** [[TypedArrayConstructor]] */
-    public String getTypedArrayConstructor() {
-        return elementType.getConstructorName();
     }
 
     @Override
@@ -90,7 +87,24 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        ScriptObject super_ = calleeContext.getIntrinsic(Intrinsics.TypedArray);
+        /* step 1 */
+        Object obj = thisValue;
+        /* steps 2-3 */
+        if (!(obj instanceof TypedArrayObject)) {
+            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+        }
+        TypedArrayObject array = (TypedArrayObject) obj;
+        /* step 4 */
+        if (array.getElementType() != null) {
+            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+        }
+        /* step 5 */
+        array.setElementType(getElementType());
+        /* steps 6-7 */
+        Realm realmF = calleeContext.getRealm();
+        /* step 8 */
+        ScriptObject super_ = realmF.getIntrinsic(Intrinsics.TypedArray);
+        /* steps 9-10 */
         return ((Callable) super_).call(calleeContext, thisValue, args);
     }
 

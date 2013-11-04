@@ -162,7 +162,6 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         ByteBuffer srcBlock = srcBuffer.getData();
         /* step 3 */
         if (srcBlock == null) {
-            // not possible right now - maybe later when neuter operation gets added
             throw throwTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 4 */
@@ -193,38 +192,6 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         CopyDataBlockBytes(srcBlock, srcByteIndex, targetBlock, targetByteIndex, count);
         /* step 18 */
         return targetBuffer;
-    }
-
-    /**
-     * 24.1.1.3 CloneArrayBuffer (srcBuffer, srcByteOffset, srcType, cloneElementType, srcLength)
-     */
-    @Deprecated
-    public static ArrayBufferObject CloneArrayBuffer(ExecutionContext cx,
-            ArrayBufferObject srcBuffer, long srcByteOffset, ElementType srcType,
-            ElementType cloneElementType, long srcLength) {
-        assert srcByteOffset >= 0
-                && (srcByteOffset <= srcLength * srcType.size() || srcLength == 0) : "startByteIndex="
-                + srcByteOffset + ", length=" + srcLength + ", srcType.size=" + srcType.size();
-        assert srcByteOffset % srcType.size() == 0;
-
-        ArrayBufferObject destData = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
-        SetArrayBufferData(cx, destData, srcLength * cloneElementType.size());
-
-        // direct copy
-        if (srcType == cloneElementType) {
-            long bytes = srcLength * srcType.size();
-            CopyDataBlockBytes(srcBuffer.getData(), srcByteOffset, destData.getData(), 0, bytes);
-            return destData;
-        }
-
-        for (long index = 0; index < srcLength; ++index) {
-            // Float32/64 -> GetValueFromBuffer() performs NaN canonicalization, expected here?
-            double value = GetValueFromBuffer(cx, srcBuffer,
-                    srcByteOffset + index * srcType.size(), srcType);
-            SetValueInBuffer(cx, destData, index * cloneElementType.size(), cloneElementType, value);
-        }
-
-        return destData;
     }
 
     /**

@@ -147,9 +147,10 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
     /**
      * [[ViewedArrayBuffer]]
      */
-    public void setBuffer(ArrayBufferObject data) {
-        assert data.getData() != null;
-        this.buffer = data;
+    public void setBuffer(ArrayBufferObject buffer) {
+        assert buffer != null && buffer.getData() != null;
+        assert this.buffer == null;
+        this.buffer = buffer;
     }
 
     /**
