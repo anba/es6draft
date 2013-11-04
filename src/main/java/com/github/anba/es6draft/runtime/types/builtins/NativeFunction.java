@@ -12,10 +12,9 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 
 /**
- * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
  * <ul>
- * <li>9.2.7 Built-in Function Objects
+ * <li>9.3 Built-in Function Objects
  * </ul>
  */
 public class NativeFunction extends BuiltinFunction {

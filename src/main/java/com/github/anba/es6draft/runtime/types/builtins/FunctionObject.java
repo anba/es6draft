@@ -22,10 +22,9 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.1 Ordinary Object Internal Methods and Internal Data Properties</h2>
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
  * <ul>
- * <li>9.1.15 Ordinary Function Objects
+ * <li>9.2 ECMAScript Function Objects
  * </ul>
  */
 public abstract class FunctionObject extends OrdinaryObject implements Callable {
@@ -124,7 +123,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.1.15.3 [[Get]] (P, Receiver)
+     * 9.2.3 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
@@ -133,7 +132,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.1.15.4 [[GetOwnProperty]] (P)
+     * 9.2.4 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {

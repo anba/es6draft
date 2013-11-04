@@ -31,10 +31,9 @@ import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
- * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.1 Ordinary Object Internal Methods and Internal Data Properties</h2>
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
  * <ul>
- * <li>9.1.15 Ordinary Function Objects
+ * <li>9.2 ECMAScript Function Objects
  * </ul>
  */
 public class OrdinaryFunction extends FunctionObject {
@@ -54,7 +53,7 @@ public class OrdinaryFunction extends FunctionObject {
         }
 
         /**
-         * 9.1.15.2 [[Construct]] (argumentsList)
+         * 9.2.2 [[Construct]] (argumentsList)
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -80,7 +79,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.1 [[Call]] Internal Method
+     * 9.2.1 [[Call]] Internal Method
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -177,7 +176,7 @@ public class OrdinaryFunction extends FunctionObject {
     /* ***************************************************************************************** */
 
     /**
-     * 9.1.15.2.1 OrdinaryConstruct (F, argumentsList)
+     * 9.2.2.1 OrdinaryConstruct (F, argumentsList)
      */
     public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject OrdinaryConstruct(
             ExecutionContext cx, FUNCTION f, Object[] args) {
@@ -208,7 +207,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.5 FunctionAllocate Abstract Operation
+     * 9.2.5 FunctionAllocate Abstract Operation
      */
     public static OrdinaryFunction FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
@@ -236,7 +235,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.6 FunctionInitialise Abstract Operation
+     * 9.2.6 FunctionInitialise Abstract Operation
      */
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
@@ -245,7 +244,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.6 FunctionInitialise Abstract Operation
+     * 9.2.6 FunctionInitialise Abstract Operation
      */
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
@@ -280,7 +279,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.6 FunctionInitialise Abstract Operation
+     * 9.2.6 FunctionInitialise Abstract Operation
      */
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
@@ -315,7 +314,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.7 FunctionCreate Abstract Operation
+     * 9.2.7 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
@@ -323,7 +322,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.7 FunctionCreate Abstract Operation
+     * 9.2.7 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
@@ -331,7 +330,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.7 FunctionCreate Abstract Operation
+     * 9.2.7 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,
@@ -348,7 +347,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.7 FunctionCreate Abstract Operation
+     * 9.2.7 FunctionCreate Abstract Operation
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,
@@ -365,7 +364,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.9 AddRestrictedFunctionProperties Abstract Operation
+     * 9.2.9 AddRestrictedFunctionProperties Abstract Operation
      */
     public static void AddRestrictedFunctionProperties(ExecutionContext cx, ScriptObject obj) {
         /* step 1 */
@@ -379,7 +378,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.9 The %ThrowTypeError% Function Object
+     * 9.2.9 The %ThrowTypeError% Function Object
      */
     private static class TypeErrorThrower extends BuiltinFunction {
         TypeErrorThrower(Realm realm) {
@@ -393,7 +392,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.9 The %ThrowTypeError% Function Object
+     * 9.2.9 The %ThrowTypeError% Function Object
      */
     public static Callable createThrowTypeError(ExecutionContext cx) {
         /* step 1 */
@@ -418,36 +417,36 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.10 MakeConstructor Abstract Operation
+     * 9.2.10 MakeConstructor Abstract Operation
      */
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f) {
-        /* step 2 */
+        /* step 3 */
         boolean installNeeded = true;
         ScriptObject prototype = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* step 3 */
+        /* step 4 */
         boolean writablePrototype = true;
         MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
     }
 
     /**
-     * 9.1.15.10 MakeConstructor Abstract Operation
+     * 9.2.10 MakeConstructor Abstract Operation
      */
     public static void MakeConstructor(ExecutionContext cx, FunctionObject f,
             boolean writablePrototype, ScriptObject prototype) {
-        /* step 1 */
+        /* step 2 */
         boolean installNeeded = false;
         MakeConstructor(cx, f, writablePrototype, prototype, installNeeded);
     }
 
     /**
-     * 9.1.15.10 MakeConstructor Abstract Operation
+     * 9.2.10 MakeConstructor Abstract Operation
      */
     private static void MakeConstructor(ExecutionContext cx, FunctionObject f,
             boolean writablePrototype, ScriptObject prototype, boolean installNeeded) {
         assert f instanceof Constructor : "MakeConstructor applied on non-Constructor";
-        /* step 4 */
-        f.isConstructor = true;
         /* step 5 */
+        f.isConstructor = true;
+        /* step 6 */
         if (installNeeded) {
             prototype.defineOwnProperty(cx, "constructor", new PropertyDescriptor(f,
                     writablePrototype, false, writablePrototype));
@@ -505,7 +504,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.11 GetSuperBinding(obj) Abstract Operation
+     * 9.2.12 GetSuperBinding(obj) Abstract Operation
      */
     public static ScriptObject GetSuperBinding(Object obj) {
         /* steps 1-2 */
@@ -517,7 +516,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.1.15.12 RebindSuper(function, newHome) Abstract Operation
+     * 9.2.13 RebindSuper(function, newHome) Abstract Operation
      */
     public static FunctionObject RebindSuper(ExecutionContext cx, FunctionObject function,
             ScriptObject newHome) {

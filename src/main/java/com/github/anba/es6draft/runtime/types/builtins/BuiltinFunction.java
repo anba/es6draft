@@ -19,13 +19,14 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
  * <ul>
- * <li>9.2.6 Built-in Function Objects
+ * <li>9.3 Built-in Function Objects
  * </ul>
  */
 public abstract class BuiltinFunction extends OrdinaryObject implements Callable {
+    protected static final String ANONYMOUS = "";
+
     /** [[Realm]] */
     private final Realm realm;
 
@@ -43,13 +44,6 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         this.realm = realm;
         this.name = name;
         createDefaultFunctionProperties(name, arity);
-    }
-
-    /**
-     * [[Realm]]
-     */
-    protected final Realm realm() {
-        return realm;
     }
 
     /**
@@ -72,6 +66,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
             defineOwnProperty(cx, "name", new PropertyDescriptor(name, false, false, true));
         }
         defineOwnProperty(cx, "length", new PropertyDescriptor(arity, false, false, true));
+        // 9.3.2 CreateBuiltinFunction Abstract Operation, step 2
         AddRestrictedFunctionProperties(cx, this);
     }
 
@@ -81,7 +76,14 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * 9.1.15.1 [[Call]] Internal Method
+     * [[Realm]]
+     */
+    public final Realm getRealm() {
+        return realm;
+    }
+
+    /**
+     * 9.3.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
@@ -90,7 +92,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * 9.1.15.3 [[Get]] (P, Receiver)
+     * 9.2.3 [[Get]] (P, Receiver)
      */
     @Override
     public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
@@ -107,7 +109,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * 9.1.15.4 [[GetOwnProperty]] (P)
+     * 9.2.4 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
