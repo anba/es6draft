@@ -37,9 +37,9 @@ import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
- * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1>
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
  * <ul>
- * <li>9.1 Ordinary Object Internal Methods and Internal Data Properties
+ * <li>9.1 Ordinary Object Internal Methods and Internal Slots
  * </ul>
  */
 public class OrdinaryObject implements ScriptObject {
@@ -118,6 +118,7 @@ public class OrdinaryObject implements ScriptObject {
     /** 9.1.1 [[GetPrototypeOf]] ( ) */
     @Override
     public ScriptObject getPrototypeOf(ExecutionContext cx) {
+        /* step 1 */
         return prototype;
     }
 
@@ -154,25 +155,30 @@ public class OrdinaryObject implements ScriptObject {
     /** 9.1.3 [[IsExtensible]] ( ) */
     @Override
     public boolean isExtensible(ExecutionContext cx) {
+        /* step 1 */
         return extensible;
     }
 
     /** 9.1.4 [[PreventExtensions]] ( ) */
     @Override
     public boolean preventExtensions(ExecutionContext cx) {
+        /* step 1 */
         this.extensible = false;
+        /* step 2 */
         return true;
     }
 
     /** 9.1.5 [[GetOwnProperty]] (P) */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
+        /* step 1 */
         return ordinaryGetOwnProperty(propertyKey);
     }
 
     /** 9.1.5 [[GetOwnProperty]] (P) */
     @Override
     public Property getOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+        /* step 1 */
         return ordinaryGetOwnProperty(propertyKey);
     }
 
@@ -180,12 +186,13 @@ public class OrdinaryObject implements ScriptObject {
      * 9.1.5.1 OrdinaryGetOwnProperty (O, P)
      */
     protected final Property ordinaryGetOwnProperty(String propertyKey) {
+        /* step 1 (implicit) */
         Property desc = __get__(propertyKey);
         /* step 2 */
         if (desc == null) {
             return null;
         }
-        /* steps 3-9 */
+        /* steps 3-9 (altered: returns live view) */
         return desc;
     }
 
@@ -193,12 +200,13 @@ public class OrdinaryObject implements ScriptObject {
      * 9.1.5.1 OrdinaryGetOwnProperty (O, P)
      */
     protected final Property ordinaryGetOwnProperty(Symbol propertyKey) {
+        /* step 1 (implicit) */
         Property desc = __get__(propertyKey);
         /* step 2 */
         if (desc == null) {
             return null;
         }
-        /* steps 3-9 */
+        /* steps 3-9 (altered: returns live view) */
         return desc;
     }
 
@@ -278,12 +286,11 @@ public class OrdinaryObject implements ScriptObject {
             /* step 1 */
             assert (object == null || propertyKey != null);
             /* step 2 */
-            if (current == null && !extensible) {
-                reason = "not extensible";
-                break reject;
-            }
-            /* step 3 */
-            if (current == null && extensible) {
+            if (current == null) {
+                if (!extensible) {
+                    reason = "not extensible";
+                    break reject;
+                }
                 if (desc.isGenericDescriptor() || desc.isDataDescriptor()) {
                     if (object != null) {
                         object.__put__(propertyKey, desc.toProperty());
@@ -296,15 +303,15 @@ public class OrdinaryObject implements ScriptObject {
                 }
                 return true;
             }
-            /* step 4 */
+            /* step 3 */
             if (desc.isEmpty()) {
                 return true;
             }
-            /* step 5 */
+            /* step 4 */
             if (current.isSubset(desc)) {
                 return true;
             }
-            /* step 6 */
+            /* step 5 */
             if (!current.isConfigurable()) {
                 if (desc.isConfigurable()) {
                     reason = "changing configurable";
@@ -316,10 +323,10 @@ public class OrdinaryObject implements ScriptObject {
                 }
             }
             if (desc.isGenericDescriptor()) {
-                /* step 7 */
+                /* step 6 */
                 // no further validation required, proceed below...
             } else if (desc.isDataDescriptor() != current.isDataDescriptor()) {
-                /* step 8 */
+                /* step 7 */
                 if (!current.isConfigurable()) {
                     reason = "changing data/accessor";
                     break reject;
@@ -334,7 +341,7 @@ public class OrdinaryObject implements ScriptObject {
                     }
                 }
             } else if (desc.isDataDescriptor() && current.isDataDescriptor()) {
-                /* step 9 */
+                /* step 8 */
                 if (!current.isConfigurable()) {
                     if (!current.isWritable() && desc.isWritable()) {
                         reason = "changing writable";
@@ -348,7 +355,7 @@ public class OrdinaryObject implements ScriptObject {
                     }
                 }
             } else {
-                /* step 10 */
+                /* step 9 */
                 assert desc.isAccessorDescriptor() && current.isAccessorDescriptor();
                 if (!current.isConfigurable()) {
                     if (desc.hasSetter() && !SameValue(desc.getSetter(), current.getSetter())) {
@@ -361,11 +368,11 @@ public class OrdinaryObject implements ScriptObject {
                     }
                 }
             }
-            /* step 11 */
+            /* step 10 */
             if (object != null) {
                 object.__get__(propertyKey).apply(desc);
             }
-            /* step 12 */
+            /* step 11 */
             return true;
         }
         return false;

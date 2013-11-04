@@ -19,10 +19,10 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>9.2.3 String Exotic Objects
+ * <li>9.4.3 String Exotic Objects
  * </ul>
  */
 public class ExoticString extends OrdinaryObject {
@@ -82,7 +82,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.1 [[GetOwnProperty]] ( P )
+     * 9.4.3.1 [[GetOwnProperty]] ( P )
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
@@ -104,7 +104,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.2 [[DefineOwnProperty]] (P, Desc)
+     * 9.4.3.2 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
@@ -115,7 +115,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.3 [[Enumerate]] ()
+     * 9.4.3.3 [[Enumerate]] ()
      */
     @Override
     protected Collection<String> enumerateKeys() {
@@ -125,7 +125,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.4 [[OwnPropertyKeys]] ()
+     * 9.4.3.4 [[OwnPropertyKeys]] ()
      */
     @Override
     protected Collection<Object> enumerateOwnKeys() {
@@ -144,7 +144,7 @@ public class ExoticString extends OrdinaryObject {
     }
 
     /**
-     * 9.2.3.5 StringCreate Abstract Operation
+     * 9.4.3.5 StringCreate Abstract Operation
      */
     public static ExoticString StringCreate(ExecutionContext cx, ScriptObject prototype) {
         // steps 1-7, 9 (implicit)

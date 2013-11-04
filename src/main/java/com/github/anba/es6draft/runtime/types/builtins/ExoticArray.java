@@ -24,10 +24,10 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>9.2.2 Array Exotic Objects
+ * <li>9.4.2 Array Exotic Objects
  * </ul>
  */
 public class ExoticArray extends OrdinaryObject {
@@ -51,7 +51,7 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 9.2.2 Array Exotic Objects
+     * 9.4.2 Array Exotic Objects
      * <p>
      * Introductory paragraph
      */
@@ -60,7 +60,7 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 9.2.2 Array Exotic Objects
+     * 9.4.2 Array Exotic Objects
      * <p>
      * Introductory paragraph
      */
@@ -69,7 +69,7 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 9.2.2.1 [[DefineOwnProperty]] (P, Desc)
+     * 9.4.2.1 [[DefineOwnProperty]] (P, Desc)
      */
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
@@ -99,21 +99,21 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 9.2.2.2 ArrayCreate Abstract Operation
+     * 9.4.2.2 ArrayCreate Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length) {
         return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
     }
 
     /**
-     * 9.2.2.2 ArrayCreate Abstract Operation
+     * 9.4.2.2 ArrayCreate Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, Intrinsics proto) {
         return ArrayCreate(cx, length, cx.getIntrinsic(proto));
     }
 
     /**
-     * 9.2.2.2 ArrayCreate Abstract Operation
+     * 9.4.2.2 ArrayCreate Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
         assert proto != null;
@@ -167,28 +167,38 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 9.2.2.3 ArraySetLength Abstract Operation
+     * 9.4.2.3 ArraySetLength Abstract Operation
      */
     public static boolean ArraySetLength(ExecutionContext cx, ExoticArray array,
             PropertyDescriptor desc) {
+        /* step 1 */
         if (!desc.hasValue()) {
             return array.ordinaryDefineOwnProperty("length", desc);
         }
+        /* step 2 */
         PropertyDescriptor newLenDesc = desc.clone();
+        /* step 3 */
         long newLen = ToUint32(cx, desc.getValue());
+        /* step 4 */
         if (newLen != ToNumber(cx, desc.getValue())) {
             throw throwRangeError(cx, Messages.Key.InvalidArrayLength);
         }
+        /* step 5 */
         newLenDesc.setValue(newLen);
+        /* step 6 */
         Property oldLenDesc = array.getOwnProperty(cx, "length");
         assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
+        /* step 7 */
         long oldLen = ToUint32(cx, oldLenDesc.getValue());
+        /* step 8 */
         if (newLen >= oldLen) {
             return array.ordinaryDefineOwnProperty("length", newLenDesc);
         }
+        /* step 9 */
         if (!oldLenDesc.isWritable()) {
             return false;
         }
+        /* steps 10-11 */
         boolean newWritable;
         if (!newLenDesc.hasWritable() || newLenDesc.isWritable()) {
             newWritable = true;
@@ -196,10 +206,13 @@ public class ExoticArray extends OrdinaryObject {
             newWritable = false;
             newLenDesc.setWritable(true);
         }
+        /* steps 12-13 */
         boolean succeeded = array.ordinaryDefineOwnProperty("length", newLenDesc);
+        /* step 14 */
         if (!succeeded) {
             return false;
         }
+        /* step 15 */
         if ((oldLen - newLen) > 1000) {
             oldLen = SparseArraySetLength(cx, array, newLen);
             if (oldLen >= 0) {
@@ -224,11 +237,13 @@ public class ExoticArray extends OrdinaryObject {
                 }
             }
         }
+        /* step 16 */
         if (!newWritable) {
             PropertyDescriptor nonWritable = new PropertyDescriptor();
             nonWritable.setWritable(false);
             array.ordinaryDefineOwnProperty("length", nonWritable);
         }
+        /* step 17 */
         return true;
     }
 

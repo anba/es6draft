@@ -16,10 +16,10 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
- * <h1>9 ECMAScript Ordinary and Exotic Objects Behaviours</h1><br>
- * <h2>9.2 Built-in Exotic Object Internal Methods and Data Fields</h2>
+ * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
+ * <h2>9.4 Built-in Exotic Object Internal Methods and Data Fields</h2>
  * <ul>
- * <li>9.2.1 Bound Function Exotic Objects
+ * <li>9.4.1 Bound Function Exotic Objects
  * </ul>
  */
 public class ExoticBoundFunction extends OrdinaryObject implements Callable {
@@ -46,7 +46,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
         }
 
         /**
-         * 9.2.1.2 [[Construct]]
+         * 9.4.1.2 [[Construct]]
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... extraArgs) {
@@ -96,7 +96,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     }
 
     /**
-     * 9.2.1.1 [[Call]]
+     * 9.4.1.1 [[Call]]
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... argumentsList) {
@@ -115,7 +115,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     }
 
     /**
-     * 9.2.1.1 [[Call]]
+     * 9.4.1.1 [[Call]]
      */
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -123,7 +123,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     }
 
     /**
-     * 9.2.1.3 BoundFunctionCreate Abstract Operation
+     * 9.4.1.3 BoundFunctionCreate Abstract Operation
      */
     public static ExoticBoundFunction BoundFunctionCreate(ExecutionContext cx,
             Callable targetFunction, Object boundThis, Object[] boundArgs) {
