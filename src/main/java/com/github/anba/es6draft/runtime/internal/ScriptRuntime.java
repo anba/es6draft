@@ -148,15 +148,15 @@ public final class ScriptRuntime {
      * </ul>
      */
     public static int ArrayAccumulationSpreadElement(ScriptObject array, int nextIndex,
-            Object spreadValue, ExecutionContext cx) {
+            Object spreadObj, ExecutionContext cx) {
         /* steps 1-3 (cf. generated code) */
         /* step 4 */
-        if (!Type.isObject(spreadValue)) {
+        if (!Type.isObject(spreadObj)) {
             // FIXME: spec bug ? why restrict to objects?
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
         /* steps 5-6 */
-        ScriptObject iterator = GetIterator(cx, spreadValue);
+        ScriptObject iterator = GetIterator(cx, spreadObj);
         /* step 7 */
         for (;;) {
             ScriptObject next = IteratorStep(cx, iterator);
@@ -689,35 +689,38 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.5 Argument Lists
+     * 12.2.6 Argument Lists
      * <p>
-     * Runtime Semantics: ArgumentListEvaluation
+     * 12.2.6.1 Runtime Semantics: ArgumentListEvaluation
      */
-    public static Object[] SpreadArray(Object spreadValue, ExecutionContext cx) {
+    public static Object[] SpreadArray(Object spreadObj, ExecutionContext cx) {
         final int MAX_ARGS = FunctionPrototype.getMaxArguments();
-        /* steps 1-3 (cf. generated code) */
-        /* steps 4-5 */
-        ScriptObject spreadObj = ToObject(cx, spreadValue);
-        /* step 6 */
-        Object lenVal = Get(cx, spreadObj, "length");
-        /* steps 7-8 */
-        long spreadLen = ToUint32(cx, lenVal);
-        if (spreadLen > MAX_ARGS) {
-            throw throwRangeError(cx, Messages.Key.FunctionTooManyArguments);
+        /* step 1 */
+        ArrayList<Object> list = new ArrayList<>();
+        /* steps 2-4 (cf. generated code) */
+        /* step 5 */
+        if (!Type.isObject(spreadObj)) {
+            // FIXME: spec bug ? why restrict to objects?
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
-        Object[] list = new Object[(int) spreadLen];
-        /* steps 9-10 */
-        for (int n = 0; n < spreadLen; ++n) {
-            Object nextArg = Get(cx, spreadObj, ToString(n));
-            list[n] = nextArg;
+        /* steps 6-7 */
+        ScriptObject iterator = GetIterator(cx, spreadObj);
+        /* step 8 */
+        for (int n = 0; n <= MAX_ARGS; ++n) {
+            ScriptObject next = IteratorStep(cx, iterator);
+            if (next == null) {
+                return list.toArray(new Object[n]);
+            }
+            Object nextArg = IteratorValue(cx, next);
+            list.add(nextArg);
         }
-        return list;
+        throw throwRangeError(cx, Messages.Key.FunctionTooManyArguments);
     }
 
     /**
-     * 12.2.5 Argument Lists
+     * 12.2.6 Argument Lists
      * <p>
-     * Runtime Semantics: ArgumentListEvaluation
+     * 12.2.6.1 Runtime Semantics: ArgumentListEvaluation
      */
     public static Object[] toFlatArray(Object[] array, ExecutionContext cx) {
         final int MAX_ARGS = FunctionPrototype.getMaxArguments();
