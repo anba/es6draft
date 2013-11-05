@@ -1593,10 +1593,7 @@ public class Parser {
         List<FormalParameter> formals = newSmallList();
         for (;;) {
             if (token() == Token.TRIPLE_DOT) {
-                long beginRest = ts.beginPosition();
-                consume(Token.TRIPLE_DOT);
-                BindingIdentifier identifier = bindingIdentifierStrict();
-                formals.add(new BindingRestElement(beginRest, ts.endPosition(), identifier));
+                formals.add(bindingRestElementStrict());
                 break;
             } else {
                 formals.add(bindingElement());
@@ -3095,10 +3092,7 @@ public class Parser {
                 consume(Token.COMMA);
                 list.add(new BindingElision(0, 0));
             } else if (tok == Token.TRIPLE_DOT) {
-                long beginRest = ts.beginPosition();
-                consume(Token.TRIPLE_DOT);
-                BindingIdentifier identifier = bindingIdentifierStrict();
-                list.add(new BindingRestElement(beginRest, ts.endPosition(), identifier));
+                list.add(bindingRestElementStrict());
                 break;
             } else {
                 list.add(bindingElementStrict());
@@ -3186,6 +3180,39 @@ public class Parser {
         }
 
         return new BindingElement(begin, ts.endPosition(), binding, initialiser);
+    }
+
+    /**
+     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * 
+     * <pre>
+     * BindingRestElement<sub>[yield]</sub> :
+     *     ... BindingIdentifier<sub>[?yield]</sub>
+     * </pre>
+     */
+    @SuppressWarnings("unused")
+    private BindingRestElement bindingRestElement() {
+        long begin = ts.beginPosition();
+        consume(Token.TRIPLE_DOT);
+        BindingIdentifier identifier = bindingIdentifier();
+
+        return new BindingRestElement(begin, ts.endPosition(), identifier);
+    }
+
+    /**
+     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * 
+     * <pre>
+     * BindingRestElement<sub>[yield]</sub> :
+     *     ... BindingIdentifier<sub>[?yield]</sub>
+     * </pre>
+     */
+    private BindingRestElement bindingRestElementStrict() {
+        long begin = ts.beginPosition();
+        consume(Token.TRIPLE_DOT);
+        BindingIdentifier identifier = bindingIdentifierStrict();
+
+        return new BindingRestElement(begin, ts.endPosition(), identifier);
     }
 
     private static String BoundName(BindingIdentifier binding) {
