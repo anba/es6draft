@@ -85,4 +85,55 @@ public enum Token {
     public String toString() {
         return name;
     }
+
+    public static boolean isBinaryOperator(Token token) {
+        switch (token) {
+        case ADD:
+        case AND:
+        case BITAND:
+        case BITOR:
+        case BITXOR:
+        case DIV:
+        case EQ:
+        case GE:
+        case GT:
+        case IN:
+        case INSTANCEOF:
+        case LE:
+        case LT:
+        case MOD:
+        case MUL:
+        case NE:
+        case OR:
+        case SHEQ:
+        case SHL:
+        case SHNE:
+        case SHR:
+        case SUB:
+        case USHR:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    public static boolean isAssignmentOperator(Token token) {
+        switch (token) {
+        case ASSIGN:
+        case ASSIGN_ADD:
+        case ASSIGN_BITAND:
+        case ASSIGN_BITOR:
+        case ASSIGN_BITXOR:
+        case ASSIGN_DIV:
+        case ASSIGN_MOD:
+        case ASSIGN_MUL:
+        case ASSIGN_SHL:
+        case ASSIGN_SHR:
+        case ASSIGN_SUB:
+        case ASSIGN_USHR:
+            return true;
+        default:
+            return false;
+        }
+    }
 }

@@ -1328,7 +1328,7 @@ public class Parser {
             case EOF:
                 break;
             default:
-                if (ts.hasNextLineTerminator() && !isOperator(next)) {
+                if (ts.hasNextLineTerminator() && !stringLiteralFollowSetNextLine(next)) {
                     break;
                 }
                 break directive;
@@ -1346,7 +1346,7 @@ public class Parser {
         return statements;
     }
 
-    private static boolean isOperator(Token token) {
+    private static boolean stringLiteralFollowSetNextLine(Token token) {
         switch (token) {
         case DOT:
         case LB:
@@ -1354,44 +1354,9 @@ public class Parser {
         case TEMPLATE:
         case COMMA:
         case HOOK:
-        case ASSIGN:
-        case ASSIGN_ADD:
-        case ASSIGN_BITAND:
-        case ASSIGN_BITOR:
-        case ASSIGN_BITXOR:
-        case ASSIGN_DIV:
-        case ASSIGN_MOD:
-        case ASSIGN_MUL:
-        case ASSIGN_SHL:
-        case ASSIGN_SHR:
-        case ASSIGN_SUB:
-        case ASSIGN_USHR:
-        case OR:
-        case AND:
-        case BITAND:
-        case BITOR:
-        case BITXOR:
-        case EQ:
-        case NE:
-        case SHEQ:
-        case SHNE:
-        case LT:
-        case LE:
-        case GT:
-        case GE:
-        case INSTANCEOF:
-        case IN:
-        case SHL:
-        case SHR:
-        case USHR:
-        case ADD:
-        case SUB:
-        case MUL:
-        case DIV:
-        case MOD:
             return true;
         default:
-            return false;
+            return Token.isBinaryOperator(token) || Token.isAssignmentOperator(token);
         }
     }
 
@@ -1412,13 +1377,13 @@ public class Parser {
     /* ***************************************************************************************** */
 
     private static FunctionNode.StrictMode toFunctionStrictness(boolean strict, boolean explicit) {
-        if (strict) {
-            if (explicit) {
-                return FunctionNode.StrictMode.ExplicitStrict;
-            }
-            return FunctionNode.StrictMode.ImplicitStrict;
+        if (!strict) {
+            return FunctionNode.StrictMode.NonStrict;
         }
-        return FunctionNode.StrictMode.NonStrict;
+        if (explicit) {
+            return FunctionNode.StrictMode.ExplicitStrict;
+        }
+        return FunctionNode.StrictMode.ImplicitStrict;
     }
 
     private <FUNCTION extends FunctionNode> FUNCTION inheritStrictness(FUNCTION function) {
