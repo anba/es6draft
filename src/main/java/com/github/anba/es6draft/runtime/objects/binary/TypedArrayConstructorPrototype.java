@@ -43,7 +43,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  */
 public class TypedArrayConstructorPrototype extends BuiltinFunction implements Initialisable {
     public TypedArrayConstructorPrototype(Realm realm) {
-        super(realm);
+        super(realm, "TypedArray");
     }
 
     @Override
@@ -357,7 +357,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "TypedArray";
 
         /**

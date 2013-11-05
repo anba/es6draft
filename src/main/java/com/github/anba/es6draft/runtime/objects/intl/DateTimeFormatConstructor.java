@@ -209,7 +209,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
     }
 
     public DateTimeFormatConstructor(Realm realm) {
-        super(realm);
+        super(realm, "DateTimeFormat");
     }
 
     @Override
@@ -684,7 +684,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "DateTimeFormat";
 
         /**

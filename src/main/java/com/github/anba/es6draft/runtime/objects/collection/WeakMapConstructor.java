@@ -39,7 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  */
 public class WeakMapConstructor extends BuiltinConstructor implements Initialisable {
     public WeakMapConstructor(Realm realm) {
-        super(realm);
+        super(realm, "WeakMap");
     }
 
     @Override
@@ -128,7 +128,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "WeakMap";
 
         /**

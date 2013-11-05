@@ -16,8 +16,8 @@ import com.github.anba.es6draft.runtime.types.Constructor;
  * </ul>
  */
 public abstract class BuiltinConstructor extends BuiltinFunction implements Constructor {
-    public BuiltinConstructor(Realm realm) {
-        super(realm);
+    public BuiltinConstructor(Realm realm, String name) {
+        super(realm, name);
     }
 
     @Override

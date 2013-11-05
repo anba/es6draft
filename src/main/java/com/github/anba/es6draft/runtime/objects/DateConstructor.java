@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  */
 public class DateConstructor extends BuiltinConstructor implements Initialisable {
     public DateConstructor(Realm realm) {
-        super(realm);
+        super(realm,"Date");
     }
 
     @Override

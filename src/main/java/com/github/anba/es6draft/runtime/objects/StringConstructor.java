@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticString;
  */
 public class StringConstructor extends BuiltinConstructor implements Initialisable {
     public StringConstructor(Realm realm) {
-        super(realm);
+        super(realm, "String");
     }
 
     @Override
@@ -93,7 +93,7 @@ public class StringConstructor extends BuiltinConstructor implements Initialisab
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "String";
 
         /**

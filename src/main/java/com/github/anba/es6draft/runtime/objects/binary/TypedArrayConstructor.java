@@ -36,7 +36,8 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     private final ElementType elementType;
 
     public TypedArrayConstructor(Realm realm, ElementType elementType) {
-        super(realm);
+        super(realm, (elementType == ElementType.Uint8C ? "Uint8ClampedArray" : elementType.name())
+                + "Array");
         this.elementType = elementType;
     }
 
@@ -130,7 +131,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Int8Array";
 
         /**
@@ -162,7 +163,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Uint8Array";
 
         /**
@@ -194,7 +195,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Uint8Clamped";
 
         /**
@@ -226,7 +227,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Int16Array";
 
         /**
@@ -258,7 +259,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Uint16Array";
 
         /**
@@ -290,7 +291,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Int32Array";
 
         /**
@@ -322,7 +323,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Uint32Array";
 
         /**
@@ -354,7 +355,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Float32Array";
 
         /**
@@ -386,7 +387,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         public static final int length = 3;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Float64Array";
 
         /**

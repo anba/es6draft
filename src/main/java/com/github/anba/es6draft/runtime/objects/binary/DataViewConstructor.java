@@ -45,7 +45,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  */
 public class DataViewConstructor extends BuiltinConstructor implements Initialisable {
     public DataViewConstructor(Realm realm) {
-        super(realm);
+        super(realm, "DataView");
     }
 
     @Override
@@ -236,13 +236,13 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         @Prototype
         public static final Intrinsics __proto__ = Intrinsics.FunctionPrototype;
 
-        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
-        public static final String name = "DataView";
-
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
         public static final int length = 3;
+
+        @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
+                configurable = true))
+        public static final String name = "DataView";
 
         /**
          * 24.2.3.1 DataView.prototype

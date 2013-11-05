@@ -382,7 +382,7 @@ public class OrdinaryFunction extends FunctionObject {
      */
     private static class TypeErrorThrower extends BuiltinFunction {
         TypeErrorThrower(Realm realm) {
-            super(realm);
+            super(realm, "ThrowTypeError");
         }
 
         @Override

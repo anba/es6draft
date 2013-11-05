@@ -46,7 +46,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
     private static final int MAX_ARGUMENTS = 0x10000;
 
     public FunctionPrototype(Realm realm) {
-        super(realm);
+        super(realm, "");
     }
 
     @Override
@@ -84,7 +84,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "";
 
         /**

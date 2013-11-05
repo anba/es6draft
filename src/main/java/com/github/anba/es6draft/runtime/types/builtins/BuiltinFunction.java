@@ -30,13 +30,12 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     /** [[Realm]] */
     private final Realm realm;
 
-    private String name = "";
+    private final String name;
 
-    public BuiltinFunction(Realm realm) {
+    public BuiltinFunction(Realm realm, String name) {
         super(realm);
         this.realm = realm;
-        // FIXME: add "name" parameter to constructor
-        // this.name = name;
+        this.name = name;
     }
 
     public BuiltinFunction(Realm realm, String name, int arity) {

@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public class ProxyConstructor extends BuiltinConstructor implements Initialisable {
     public ProxyConstructor(Realm realm) {
-        super(realm);
+        super(realm, "Proxy");
     }
 
     @Override
@@ -75,7 +75,7 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
         public static final int length = 2;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Proxy";
 
         @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)

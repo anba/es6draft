@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
  */
 public class ArrayConstructor extends BuiltinConstructor implements Initialisable {
     public ArrayConstructor(Realm realm) {
-        super(realm);
+        super(realm, "Array");
     }
 
     @Override
@@ -132,7 +132,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Array";
 
         /**

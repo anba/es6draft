@@ -39,7 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  */
 public class WeakSetConstructor extends BuiltinConstructor implements Initialisable {
     public WeakSetConstructor(Realm realm) {
-        super(realm);
+        super(realm, "WeakSet");
     }
 
     @Override
@@ -122,7 +122,7 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "WeakSet";
 
         /**

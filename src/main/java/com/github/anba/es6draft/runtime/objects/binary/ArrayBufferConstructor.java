@@ -53,7 +53,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     public ArrayBufferConstructor(Realm realm) {
-        super(realm);
+        super(realm, "ArrayBuffer");
     }
 
     @Override
@@ -376,7 +376,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "ArrayBuffer";
 
         /**

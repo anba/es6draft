@@ -122,7 +122,7 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
     }
 
     public NumberFormatConstructor(Realm realm) {
-        super(realm);
+        super(realm, "NumberFormat");
     }
 
     @Override
@@ -328,7 +328,7 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "NumberFormat";
 
         /**

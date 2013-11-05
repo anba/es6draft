@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  */
 public class NumberConstructor extends BuiltinConstructor implements Initialisable {
     public NumberConstructor(Realm realm) {
-        super(realm);
+        super(realm, "Number");
     }
 
     @Override

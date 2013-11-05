@@ -47,7 +47,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  */
 public class RegExpConstructor extends BuiltinConstructor implements Initialisable {
     public RegExpConstructor(Realm realm) {
-        super(realm);
+        super(realm, "RegExp");
     }
 
     @Override
@@ -251,7 +251,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
         public static final int length = 2;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "RegExp";
 
         /**

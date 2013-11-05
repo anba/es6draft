@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  */
 public class SetConstructor extends BuiltinConstructor implements Initialisable {
     public SetConstructor(Realm realm) {
-        super(realm);
+        super(realm, "Set");
     }
 
     @Override
@@ -133,7 +133,7 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Set";
 
         /**

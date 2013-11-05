@@ -212,7 +212,7 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
     }
 
     public CollatorConstructor(Realm realm) {
-        super(realm);
+        super(realm, "Collator");
     }
 
     @Override
@@ -353,7 +353,7 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Collator";
 
         /**

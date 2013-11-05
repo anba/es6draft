@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  */
 public class BooleanConstructor extends BuiltinConstructor implements Initialisable {
     public BooleanConstructor(Realm realm) {
-        super(realm);
+        super(realm,"Boolean");
     }
 
     @Override

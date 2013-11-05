@@ -49,7 +49,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
  */
 public class GeneratorFunctionConstructor extends BuiltinConstructor implements Initialisable {
     public GeneratorFunctionConstructor(Realm realm) {
-        super(realm);
+        super(realm, "GeneratorFunction");
     }
 
     @Override

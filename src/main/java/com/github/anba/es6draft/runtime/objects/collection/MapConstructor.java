@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  */
 public class MapConstructor extends BuiltinConstructor implements Initialisable {
     public MapConstructor(Realm realm) {
-        super(realm);
+        super(realm, "Map");
     }
 
     @Override
@@ -139,7 +139,7 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
         public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
-                configurable = false))
+                configurable = true))
         public static final String name = "Map";
 
         /**

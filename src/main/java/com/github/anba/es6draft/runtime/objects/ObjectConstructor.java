@@ -54,7 +54,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  */
 public class ObjectConstructor extends BuiltinConstructor implements Initialisable {
     public ObjectConstructor(Realm realm) {
-        super(realm);
+        super(realm, "Object");
     }
 
     @Override
