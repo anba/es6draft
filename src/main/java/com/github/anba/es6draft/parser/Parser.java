@@ -830,32 +830,9 @@ public class Parser {
         if (ts != null)
             throw new IllegalStateException();
 
-        newContext(ContextKind.Script);
-        try {
-            applyStrictMode(true); // defaults to strict
+        module();
 
-            ModuleDeclaration module;
-            newContext(ContextKind.Module);
-            try {
-                ts = new TokenStream(this, new TokenStreamInput(source)).initialise();
-
-                String moduleName = sourceFile; // only basename(sourceFile)?
-                List<StatementListItem> body = moduleBody(Token.EOF);
-
-                FunctionContext scope = context.funContext;
-                module = new ModuleDeclaration(beginSource(), ts.endPosition(), moduleName, body,
-                        scope);
-                scope.node = module;
-            } finally {
-                restoreContext();
-            }
-
-            createScript(module);
-
-            return module;
-        } finally {
-            restoreContext();
-        }
+        return null;
     }
 
     public FunctionDefinition parseFunction(CharSequence formals, CharSequence bodyText)
@@ -982,13 +959,13 @@ public class Parser {
     /* ***************************************************************************************** */
 
     /**
-     * <strong>[15.1] Script</strong>
+     * <strong>[15.2] Scripts</strong>
      * 
      * <pre>
      * Script :
      *     ScriptBody<sub>opt</sub>
      * ScriptBody :
-     *     OuterStatementList
+     *     ScriptItemList
      * </pre>
      */
     private Script script() {
@@ -996,7 +973,7 @@ public class Parser {
         try {
             ts.initialise();
             List<StatementListItem> prologue = directivePrologue();
-            List<StatementListItem> body = outerStatementList();
+            List<StatementListItem> body = scriptItemList();
             List<StatementListItem> statements = merge(prologue, body);
             boolean strict = (context.strictMode == StrictMode.Strict);
 
@@ -1012,28 +989,28 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1] Script</strong>
+     * <strong>[15.2] Scripts</strong>
      * 
      * <pre>
-     * OuterStatementList :
-     *     OuterItem
-     *     OuterStatementList OuterItem
-     * OuterItem :
+     * ScriptItemList :
+     *     ScriptItem
+     *     ScriptItemList ScriptItem
+     * ScriptItem :
      *     ModuleDeclaration
      *     ImportDeclaration
      *     StatementListItem
      * </pre>
      */
-    private List<StatementListItem> outerStatementList() {
+    private List<StatementListItem> scriptItemList() {
         List<StatementListItem> list = newList();
         while (token() != Token.EOF) {
             if (MODULES_ENABLED) {
                 // TODO: implement modules
                 if (token() == Token.IMPORT) {
-                    list.add(importDeclaration());
+                    importDeclaration();
                 } else if (isName("module") && (peek() == Token.STRING || isIdentifier(peek()))
                         && !ts.hasNextLineTerminator()) {
-                    list.add(moduleDeclaration());
+                    moduleDeclaration();
                 } else {
                     list.add(statementListItem());
                 }
@@ -1045,244 +1022,123 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.3] Modules</strong>
+     * <strong>[15.1] Modules</strong>
      * 
      * <pre>
-     * ModuleDeclaration ::= "module" [NoNewline] StringLiteral "{" ModuleBody "}"
-     *                    |  "module" Identifier "from" StringLiteral ";"
+     * Module :
+     *     ModuleBody<sub>opt</sub>
+     * ModuleBody :
+     *     ModuleItemList
      * </pre>
      */
-    private ModuleDeclaration moduleDeclaration() {
-        newContext(ContextKind.Module);
-        try {
-            long begin = ts.beginPosition();
-            consume("module");
-            if (token() == Token.STRING) {
-                String moduleName = stringLiteral();
-                consume(Token.LC);
-                List<StatementListItem> body = moduleBody(Token.RC);
-                consume(Token.RC);
-
-                FunctionContext scope = context.funContext;
-                ModuleDeclaration module = new ModuleDeclaration(begin, ts.endPosition(),
-                        moduleName, body, scope);
-                scope.node = module;
-
-                return module;
-            } else {
-                String identifier = identifier();
-                consume("from");
-                String moduleName = stringLiteral();
-                semicolon();
-
-                FunctionContext scope = context.funContext;
-                ModuleDeclaration module = new ModuleDeclaration(begin, ts.endPosition(),
-                        identifier, moduleName, scope);
-                scope.node = module;
-
-                return module;
-            }
-        } finally {
-            restoreContext();
-        }
+    private void module() {
+        moduleItemList();
     }
 
     /**
-     * <strong>[15.3] Modules</strong>
+     * <strong>[15.1] Modules</strong>
      * 
      * <pre>
-     * ModuleBody    ::= ModuleElement*
-     * ModuleElement ::= ScriptElement
-     *                |  ExportDeclaration
+     * ModuleItemList :
+     *     ModuleItem
+     *     ModuleItemList  ModuleItem
+     * ModuleItem :
+     *     ExportDeclaration
+     *     ScriptItem
+     * ScriptItem :
+     *     ModuleDeclaration
+     *     ImportDeclaration
+     *     StatementListItem
      * </pre>
      */
-    private List<StatementListItem> moduleBody(Token end) {
-        List<StatementListItem> list = newList();
-        while (token() != end) {
-            // actually: ExportDeclaration | ImportDeclaration | StatementListItem
-            // TODO: are nested modules (still) allowed? (disabled for now)
+    private void moduleItemList() {
+        while (token() != Token.EOF) {
             if (token() == Token.EXPORT) {
-                list.add(exportDeclaration());
+                exportDeclaration();
             } else if (token() == Token.IMPORT) {
-                list.add(importDeclaration());
+                importDeclaration();
+            } else if (isName("module") && (peek() == Token.STRING || isIdentifier(peek()))
+                    && !ts.hasNextLineTerminator()) {
+                moduleDeclaration();
             } else {
-                list.add(statementListItem());
+                statementListItem();
             }
         }
-        return list;
     }
 
     /**
-     * <strong>[15.3] Modules</strong>
+     * <strong>[15.1.1] Imports</strong>
      * 
      * <pre>
-     * ExportDeclaration ::= "export" ExportSpecifierSet ";"
-     *                    |  "export" "default" AssignmentExpression ";"
-     *                    |  "export" VariableDeclaration
-     *                    |  "export" FunctionDeclaration
-     *                    |  "export" ClassDeclaration
+     * ModuleDeclaration :
+     *     module [no <i>LineTerminator</i> here] ImportedBinding FromClause ;
      * </pre>
      */
-    private ExportDeclaration exportDeclaration() {
-        long begin = ts.beginPosition();
-        consume(Token.EXPORT);
-        switch (token()) {
-        case LC:
-        case MUL: {
-            // "export" ExportSpecifierSet ";"
-            ExportSpecifierSet exportSpecifierSet = exportSpecifierSet();
-            semicolon();
-            return new ExportDeclaration(begin, ts.endPosition(), exportSpecifierSet);
+    private void moduleDeclaration() {
+        consume("module");
+        if (!noLineTerminator()) {
+            reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
         }
-
-        case DEFAULT: {
-            // "export" "default" AssignmentExpression ";"
-            consume(Token.DEFAULT);
-            Expression expression = assignmentExpression(true);
-            semicolon();
-            return new ExportDeclaration(begin, ts.endPosition(), expression);
-        }
-
-        case VAR: {
-            // "export" VariableDeclaration
-            VariableStatement variableStatement = variableStatement();
-            return new ExportDeclaration(begin, ts.endPosition(), variableStatement);
-        }
-
-        case FUNCTION:
-        case CLASS:
-        case LET:
-        case CONST: {
-            // "export" FunctionDeclaration
-            // "export" ClassDeclaration
-            Declaration declaration = declaration();
-            return new ExportDeclaration(begin, ts.endPosition(), declaration);
-        }
-
-        default:
-            throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
-        }
+        importedBinding();
+        fromClause();
+        semicolon();
     }
 
     /**
-     * <strong>[15.3] Modules</strong>
+     * <strong>[15.1.1] Imports</strong>
      * 
      * <pre>
-     * ExportSpecifierSet ::= "{" (ExportSpecifier ("," ExportSpecifier)* ","?)? "}"
-     *                     |   "*" ("from" ModuleSpecifier)?
+     * FromClause :
+     *     from ModuleSpecifier
      * </pre>
      */
-    private ExportSpecifierSet exportSpecifierSet() {
-        long begin = ts.beginPosition();
-        if (token() == Token.LC) {
-            List<ExportSpecifier> exports = newSmallList();
-            consume(Token.LC);
-            while (token() != Token.RC) {
-                exports.add(exportSpecifier());
-                if (token() == Token.COMMA) {
-                    consume(Token.COMMA);
-                } else {
-                    break;
-                }
-            }
-            consume(Token.RC);
-            // FIXME: re-export should also work with named exports
-            String sourceModule = null;
-            if (isName("from")) {
-                consume("from");
-                sourceModule = moduleSpecifier();
-            }
-
-            return new ExportSpecifierSet(begin, ts.endPosition(), exports, sourceModule);
-        } else {
-            consume(Token.MUL);
-            String sourceModule = null;
-            if (isName("from")) {
-                consume("from");
-                sourceModule = moduleSpecifier();
-            }
-
-            return new ExportSpecifierSet(begin, ts.endPosition(), sourceModule);
-        }
+    private void fromClause() {
+        consume("from");
+        moduleSpecifier();
     }
 
     /**
-     * <strong>[15.3] Modules</strong>
+     * <strong>[15.1.1] Imports</strong>
      * 
      * <pre>
-     * ExportSpecifier ::= Identifier ("as" IdentifierName)?
+     * ImportDeclaration :
+     *     import ImportClause FromClause ;
+     *     import ModuleSpecifier ;
      * </pre>
      */
-    private ExportSpecifier exportSpecifier() {
-        long begin = ts.beginPosition();
-        String localName = identifier();
-        String externalName;
-        if (isName("as")) {
-            consume("as");
-            externalName = identifierName();
-        } else {
-            externalName = localName;
-        }
-        return new ExportSpecifier(begin, ts.endPosition(), localName, externalName);
-    }
-
-    /**
-     * <strong>[15.3] Modules</strong>
-     * 
-     * <pre>
-     * ModuleSpecifier ::= StringLiteral
-     * </pre>
-     */
-    private String moduleSpecifier() {
-        return stringLiteral();
-    }
-
-    /**
-     * <strong>[15.3] Modules</strong>
-     * 
-     * <pre>
-     * ImportDeclaration ::= "import" ImportSpecifierSet "from" ModuleSpecifier ";"
-     *                    |  "import" ModuleSpecifier ";"
-     * </pre>
-     */
-    private ImportDeclaration importDeclaration() {
-        long begin = ts.beginPosition();
+    private void importDeclaration() {
         consume(Token.IMPORT);
-        if (token() == Token.STRING) {
-            String moduleSpecifier = moduleSpecifier();
+        if (token() != Token.STRING) {
+            importClause();
+            fromClause();
             semicolon();
-
-            return new ImportDeclaration(begin, ts.endPosition(), moduleSpecifier);
         } else {
-            ImportSpecifierSet importSpecifierSet = importSpecifierSet();
-            consume("from");
-            String moduleSpecifier = moduleSpecifier();
+            moduleSpecifier();
             semicolon();
-
-            return new ImportDeclaration(begin, ts.endPosition(), importSpecifierSet,
-                    moduleSpecifier);
         }
     }
 
     /**
-     * <strong>[15.3] Modules</strong>
+     * <strong>[15.1.1] Imports</strong>
      * 
      * <pre>
-     * ImportSpecifierSet ::= Identifier
-     *                     |  "{" (ImportSpecifier ("," ImportSpecifier)* ","?)? "}"
+     * ImportClause :
+     *     ImportedBinding 
+     *     { } 
+     *     { ImportsList }
+     *     { ImportsList , }
+     * ImportsList :
+     *     ImportSpecifier
+     *     ImportsList , ImportSpecifier
      * </pre>
      */
-    private ImportSpecifierSet importSpecifierSet() {
-        long begin = ts.beginPosition();
-        if (isIdentifier(token())) {
-            String defaultImport = identifier();
-
-            return new ImportSpecifierSet(begin, ts.endPosition(), defaultImport);
+    private void importClause() {
+        if (token() != Token.LC) {
+            importedBinding();
         } else {
-            List<ImportSpecifier> imports = newSmallList();
             consume(Token.LC);
             while (token() != Token.RC) {
-                imports.add(importSpecifier());
+                importSpecifier();
                 if (token() == Token.COMMA) {
                     consume(Token.COMMA);
                 } else {
@@ -1290,17 +1146,16 @@ public class Parser {
                 }
             }
             consume(Token.RC);
-
-            return new ImportSpecifierSet(begin, ts.endPosition(), imports);
         }
     }
 
     /**
-     * <strong>[15.3] Modules</strong>
+     * <strong>[15.1.1] Imports</strong>
      * 
      * <pre>
-     * ImportSpecifier ::= Identifier ("as" Identifier)?
-     *                  |  ReservedWord "as" Identifier
+     * ImportSpecifier :
+     *     ImportedBinding
+     *     IdentifierName as ImportedBinding
      * </pre>
      */
     private ImportSpecifier importSpecifier() {
@@ -1308,23 +1163,149 @@ public class Parser {
         long begin = ts.beginPosition();
         String externalName, localName;
         if (!isReservedWord(token())) {
-            externalName = identifier();
+            externalName = importedBinding().getName();
             if (isName("as")) {
                 consume("as");
-                localName = identifier();
+                localName = importedBinding().getName();
             } else {
                 localName = externalName;
             }
         } else {
             externalName = identifierName();
             consume("as");
-            localName = identifier();
+            localName = importedBinding().getName();
         }
         return new ImportSpecifier(begin, ts.endPosition(), externalName, localName);
     }
 
     /**
-     * <strong>[15.2] Directive Prologues and the Use Strict Directive</strong>
+     * <strong>[15.1.1] Imports</strong>
+     * 
+     * <pre>
+     * ModuleSpecifier :
+     *     StringLiteral
+     * </pre>
+     */
+    private String moduleSpecifier() {
+        return stringLiteral();
+    }
+
+    /**
+     * <strong>[15.1.1] Imports</strong>
+     * 
+     * <pre>
+     * ImportedBinding :
+     *     BindingIdentifier
+     * </pre>
+     */
+    private BindingIdentifier importedBinding() {
+        return bindingIdentifier();
+    }
+
+    /**
+     * <strong>[15.1.2] Exports</strong>
+     * 
+     * <pre>
+     * ExportDeclaration :
+     *     export * FromClause<sub>opt</sub> ;
+     *     export ExportsClause FromClause<sub>opt</sub> ;
+     *     export VariableStatement
+     *     export Declaration
+     *     export BindingList ;
+     * </pre>
+     */
+    private void exportDeclaration() {
+        consume(Token.EXPORT);
+        switch (token()) {
+        case MUL: {
+            // export * FromClause<sub>opt</sub> ;
+            consume(Token.MUL);
+            if (isName("from")) {
+                fromClause();
+            }
+            semicolon();
+            return;
+        }
+
+        case LC: {
+            // export ExportsClause FromClause<sub>opt</sub> ;
+            exportsClause();
+            if (isName("from")) {
+                fromClause();
+            }
+            semicolon();
+            return;
+        }
+
+        case VAR: {
+            // export VariableStatement
+            variableStatement();
+            return;
+        }
+
+        case FUNCTION:
+        case CLASS:
+        case LET:
+        case CONST: {
+            // export Declaration
+            declaration();
+            return;
+        }
+
+        default: {
+            // export BindingList ;
+            bindingList(false, true);
+            semicolon();
+            return;
+        }
+        }
+    }
+
+    /**
+     * <strong>[15.1.2] Exports</strong>
+     * 
+     * <pre>
+     * ExportsClause :
+     *     { } 
+     *     { ExportsList }
+     *     { ExportsList , }
+     * ExportsList :
+     *     ExportSpecifier
+     *     ExportsList , ExportSpecifier
+     * </pre>
+     */
+    private void exportsClause() {
+        consume(Token.LC);
+        while (token() != Token.RC) {
+            exportSpecifier();
+            if (token() == Token.COMMA) {
+                consume(Token.COMMA);
+            } else {
+                break;
+            }
+        }
+        consume(Token.RC);
+    }
+
+    /**
+     * <strong>[15.1.2] Exports</strong>
+     * 
+     * <pre>
+     * ExportSpecifier :
+     *     IdentifierReference
+     *     IdentifierReference as IdentifierName
+     * </pre>
+     */
+    private void exportSpecifier() {
+        identifier();
+        if (isName("as")) {
+            consume("as");
+            identifierName();
+        }
+    }
+
+    /**
+     * <strong>[15.3] Directive Prologues and the Use Strict Directive</strong>
      * 
      * <pre>
      * DirectivePrologue :
