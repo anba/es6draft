@@ -905,7 +905,8 @@ public class Parser {
                 restoreContext();
             }
 
-            createScript(new ExpressionStatement(function));
+            createScript(new ExpressionStatement(function.getBeginPosition(),
+                    function.getEndPosition(), function));
 
             return function;
         } finally {
@@ -957,7 +958,8 @@ public class Parser {
                 restoreContext();
             }
 
-            createScript(new ExpressionStatement(generator));
+            createScript(new ExpressionStatement(generator.getBeginPosition(),
+                    generator.getEndPosition(), generator));
 
             return generator;
         } finally {
@@ -1350,14 +1352,14 @@ public class Parser {
                 }
                 break directive;
             }
-            // got a directive
+            // found a directive
             String string = stringLiteral();
             if (!hasEscape && "use strict".equals(string)) {
                 strict = true;
             }
+            StringLiteral stringLiteral = new StringLiteral(begin, ts.endPosition(), string);
             semicolon();
-            statements.add(new ExpressionStatement(new StringLiteral(begin, ts.endPosition(),
-                    string)));
+            statements.add(new ExpressionStatement(begin, ts.endPosition(), stringLiteral));
         }
         applyStrictMode(strict);
         return statements;
@@ -3341,10 +3343,11 @@ public class Parser {
         case CLASS:
             reportSyntaxError(Messages.Key.InvalidToken, token().toString());
         default:
+            long begin = ts.beginPosition();
             Expression expr = expression(true);
             semicolon();
 
-            return new ExpressionStatement(expr);
+            return new ExpressionStatement(begin, ts.endPosition(), expr);
         }
     }
 
@@ -4225,7 +4228,7 @@ public class Parser {
             LetExpression letExpression = new LetExpression(begin, ts.endPosition(), scope,
                     bindings, expression);
             scope.node = letExpression;
-            return new ExpressionStatement(letExpression);
+            return new ExpressionStatement(begin, ts.endPosition(), letExpression);
         } else {
             BlockStatement letBlock = block(toBindings(bindings));
 

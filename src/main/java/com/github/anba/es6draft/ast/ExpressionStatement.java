@@ -15,8 +15,8 @@ package com.github.anba.es6draft.ast;
 public class ExpressionStatement extends Statement {
     private Expression expression;
 
-    public ExpressionStatement(Expression expression) {
-        super(expression.getBeginPosition(), expression.getEndPosition());
+    public ExpressionStatement(long beginPosition, long endPosition, Expression expression) {
+        super(beginPosition, endPosition);
         this.expression = expression;
     }
 
