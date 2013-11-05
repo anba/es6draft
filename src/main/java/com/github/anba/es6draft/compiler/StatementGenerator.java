@@ -399,8 +399,8 @@ class StatementGenerator extends
         if (lhs instanceof Expression) {
             assert lhs instanceof LeftHandSideExpression;
             if (lhs instanceof AssignmentPattern) {
-                // FIXME: spec bug - only this ToObject() has been removed, but not below!
-                ToObject(ValType.Any, mv);
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
                 DestructuringAssignment((AssignmentPattern) lhs, mv);
             } else {
                 ValType lhsType = expression((Expression) lhs, mv);
@@ -410,9 +410,10 @@ class StatementGenerator extends
         } else if (lhs instanceof VariableStatement) {
             VariableDeclaration varDecl = ((VariableStatement) lhs).getElements().get(0);
             Binding binding = varDecl.getBinding();
-            // Binding Instantiation: ForBinding
+            // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
             if (binding instanceof BindingPattern) {
-                ToObject(ValType.Any, mv);
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
             BindingInitialisation(binding, mv);
         } else {
@@ -445,9 +446,10 @@ class StatementGenerator extends
                 }
                 mv.swap();
 
-                // Binding Instantiation: ForBinding
+                // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
                 if (lexicalBinding.getBinding() instanceof BindingPattern) {
-                    ToObject(ValType.Any, mv);
+                    mv.loadExecutionContext();
+                    mv.invoke(Methods.ScriptRuntime_ensureObject);
                 }
 
                 // stack: [iterEnv, envRec, nextValue] -> [iterEnv]
@@ -1168,10 +1170,9 @@ class StatementGenerator extends
             }
             mv.swap();
 
-            // FIXME: this ToObject() call has been removed, but not for ForBinding!
             if (catchParameter instanceof BindingPattern) {
-                // ToObject(...)
-                ToObject(ValType.Any, mv);
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
 
             // stack: [catchEnv, envRec, ex] -> [catchEnv]
@@ -1218,10 +1219,9 @@ class StatementGenerator extends
             }
             mv.swap();
 
-            // FIXME: this ToObject() call has been removed, but not for ForBinding!
             if (catchParameter instanceof BindingPattern) {
-                // ToObject(...)
-                ToObject(ValType.Any, mv);
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
 
             // stack: [catchEnv, envRec, ex] -> [catchEnv]

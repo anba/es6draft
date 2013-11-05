@@ -56,6 +56,10 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
                 Type.getMethodType(Types.EnvironmentRecord));
 
         // class: ScriptRuntime
+        static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "ensureObject",
+                Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_enumerate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "enumerate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
@@ -219,9 +223,10 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             }
             mv.swap();
 
-            // Binding Instantiation: ForBinding
+            // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
             if (node.getBinding() instanceof BindingPattern) {
-                ToObject(ValType.Any, mv);
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_ensureObject);
             }
 
             // stack: [forEnv, envRec, nextValue] -> [forEnv]
