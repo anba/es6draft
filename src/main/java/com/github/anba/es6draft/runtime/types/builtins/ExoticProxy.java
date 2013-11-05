@@ -57,7 +57,8 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * Revoke this proxy
+     * Revoke this proxy, that means set both, [[ProxyTarget]] and [[ProxyHandler]], to {@code null}
+     * and by that prevent further operations on this proxy.
      */
     public void revoke() {
         assert this.proxyHandler != null && this.proxyTarget != null;
@@ -510,7 +511,6 @@ public class ExoticProxy implements ScriptObject {
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(cx, handler, "get");
         if (trap == null) {
-            // FIXME: spec bug? (set receiver to target when receiver === proxy)
             return __get(cx, target, propertyKey, receiver);
         }
         Object trapResult = trap.call(cx, handler, target, propertyKey, receiver);
@@ -556,7 +556,6 @@ public class ExoticProxy implements ScriptObject {
         ScriptObject target = proxyTarget;
         Callable trap = GetMethod(cx, handler, "set");
         if (trap == null) {
-            // FIXME: spec bug? (set receiver to target when receiver === proxy)
             return __set(cx, target, propertyKey, value, receiver);
         }
         Object trapResult = trap.call(cx, handler, target, propertyKey, value, receiver);
