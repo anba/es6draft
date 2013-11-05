@@ -3648,7 +3648,8 @@ public class Parser {
             return (PropertyAccessor) lhs;
         } else if (lhs instanceof SuperExpression) {
             SuperExpression superExpr = (SuperExpression) lhs;
-            if (superExpr.getExpression() != null || superExpr.getName() != null) {
+            if (superExpr.getType() == SuperExpression.Type.ElementAccessor
+                    || superExpr.getType() == SuperExpression.Type.PropertyAccessor) {
                 return superExpr;
             }
         }
@@ -3800,11 +3801,11 @@ public class Parser {
             return toDestructuring((ArrayLiteral) lhs);
         } else if (lhs instanceof SuperExpression) {
             SuperExpression superExpr = (SuperExpression) lhs;
-            if (superExpr.getExpression() != null || superExpr.getName() != null) {
+            if (superExpr.getType() == SuperExpression.Type.ElementAccessor
+                    || superExpr.getType() == SuperExpression.Type.PropertyAccessor) {
                 return superExpr;
             }
         }
-        // FIXME: spec bug (IsInvalidAssignmentPattern not defined) (Bug 716)
         // everything else => invalid lhs
         throw reportSyntaxError(lhs, Messages.Key.InvalidDestructuring);
     }

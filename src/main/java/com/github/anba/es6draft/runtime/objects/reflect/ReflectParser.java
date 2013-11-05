@@ -1577,19 +1577,30 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         boolean computed = false;
         Object arguments = NULL;
         String kind;
-        if (node.getName() != null) {
+        switch (node.getType()) {
+        case PropertyAccessor: {
             property = createIdentifier(node.getName());
             computed = false;
             kind = "property";
-        } else if (node.getExpression() != null) {
+            break;
+        }
+        case ElementAccessor: {
             property = node.getExpression().accept(this, value);
             computed = true;
             kind = "property";
-        } else if (node.getArguments() != null) {
+            break;
+        }
+        case CallExpression: {
             arguments = createList(node.getArguments(), value);
             kind = "call";
-        } else {
+            break;
+        }
+        case NewExpression: {
             kind = "new";
+            break;
+        }
+        default:
+            throw new IllegalStateException();
         }
         ScriptObject expression = createExpression(node, Type.SuperExpression);
         addProperty(expression, "property", property);

@@ -2111,14 +2111,16 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     @Override
     public ValType visit(SuperExpression node, ExpressionVisitor mv) {
-        if (node.getName() != null) {
+        switch (node.getType()) {
+        case PropertyAccessor: {
             mv.loadExecutionContext();
             mv.aconst(node.getName());
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeStringSuperReference);
 
             return ValType.Reference;
-        } else if (node.getExpression() != null) {
+        }
+        case ElementAccessor: {
             mv.loadExecutionContext();
             ValType type = evalAndGetValue(node.getExpression(), mv);
             ToPropertyKey(type, mv);
@@ -2126,7 +2128,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
             return ValType.Reference;
-        } else if (node.getArguments() != null) {
+        }
+        case CallExpression: {
             mv.loadExecutionContext();
             mv.aconst(null);
             mv.iconst(mv.isStrict());
@@ -2135,13 +2138,17 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
 
             return ValType.Any;
-        } else {
+        }
+        case NewExpression: {
             mv.loadExecutionContext();
             mv.aconst(null);
             mv.iconst(mv.isStrict());
             mv.invoke(Methods.ScriptRuntime_MakeSuperReference);
 
             return ValType.Reference;
+        }
+        default:
+            throw new IllegalStateException();
         }
     }
 
@@ -2150,7 +2157,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     @Override
     public ValType visit(SuperExpressionValue node, ExpressionVisitor mv) {
-        if (node.getName() != null) {
+        switch (node.getType()) {
+        case PropertyAccessor: {
             mv.loadExecutionContext();
             mv.aconst(node.getName());
             mv.iconst(mv.isStrict());
@@ -2159,7 +2167,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             GetValue(node, ValType.Reference, mv);
 
             return ValType.Any;
-        } else if (node.getExpression() != null) {
+        }
+        case ElementAccessor: {
             mv.loadExecutionContext();
             ValType type = evalAndGetValue(node.getExpression(), mv);
             ToPropertyKey(type, mv);
@@ -2169,7 +2178,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             GetValue(node, ValType.Reference, mv);
 
             return ValType.Any;
-        } else if (node.getArguments() != null) {
+        }
+        case CallExpression: {
             mv.loadExecutionContext();
             mv.aconst(null);
             mv.iconst(mv.isStrict());
@@ -2178,7 +2188,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             EvaluateCall(node, node, ValType.Reference, node.getArguments(), false, mv);
 
             return ValType.Any;
-        } else {
+        }
+        case NewExpression: {
             mv.loadExecutionContext();
             mv.aconst(null);
             mv.iconst(mv.isStrict());
@@ -2187,6 +2198,9 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
             GetValue(node, ValType.Reference, mv);
 
             return ValType.Any;
+        }
+        default:
+            throw new IllegalStateException();
         }
     }
 

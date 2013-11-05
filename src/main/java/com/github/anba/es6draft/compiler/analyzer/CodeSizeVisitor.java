@@ -613,14 +613,17 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(SuperExpression node, CodeSizeHandler value) {
-        if (node.getName() != null) {
+        switch (node.getType()) {
+        case PropertyAccessor:
             return 10;
-        } else if (node.getExpression() != null) {
+        case ElementAccessor:
             return analyze(node, node.getExpression(), 15, value);
-        } else if (node.getArguments() != null) {
+        case CallExpression:
             return analyze(node, node.getArguments(), 25, 5, value);
-        } else {
+        case NewExpression:
             return 10;
+        default:
+            throw new IllegalStateException();
         }
     }
 

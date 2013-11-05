@@ -355,7 +355,7 @@ public final class StaticSemantics {
     private static boolean IsCallExpression(Expression expr) {
         return expr instanceof CallExpression
                 || expr instanceof TemplateCallExpression
-                || (expr instanceof SuperExpression && ((SuperExpression) expr).getArguments() != null);
+                || (expr instanceof SuperExpression && ((SuperExpression) expr).getType() == SuperExpression.Type.CallExpression);
     }
 
     private static <T> Set<T> emptyIfNull(Set<T> list) {

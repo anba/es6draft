@@ -18,6 +18,11 @@ import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
  * </ul>
  */
 public class SuperExpression extends LeftHandSideExpression {
+    public enum Type {
+        ElementAccessor, PropertyAccessor, CallExpression, NewExpression
+    }
+
+    private final Type type;
     private String name;
     private Expression expression;
     private List<Expression> arguments;
@@ -25,24 +30,32 @@ public class SuperExpression extends LeftHandSideExpression {
     public SuperExpression(long beginPosition, long endPosition) {
         // new super()
         super(beginPosition, endPosition);
+        this.type = Type.NewExpression;
     }
 
     public SuperExpression(long beginPosition, long endPosition, String name) {
         // super.<name>
         super(beginPosition, endPosition);
+        this.type = Type.PropertyAccessor;
         this.name = name;
     }
 
     public SuperExpression(long beginPosition, long endPosition, Expression expression) {
         // super[expression]
         super(beginPosition, endPosition);
+        this.type = Type.ElementAccessor;
         this.expression = expression;
     }
 
     public SuperExpression(long beginPosition, long endPosition, List<Expression> arguments) {
         // super(<arguments>)
         super(beginPosition, endPosition);
+        this.type = Type.CallExpression;
         this.arguments = arguments;
+    }
+
+    public Type getType() {
+        return type;
     }
 
     public String getName() {
@@ -59,14 +72,17 @@ public class SuperExpression extends LeftHandSideExpression {
 
     @Override
     public Expression asValue() {
-        if (name != null) {
-            return new SuperExpressionValue(getBeginPosition(), getEndPosition(), name);
-        } else if (expression != null) {
-            return new SuperExpressionValue(getBeginPosition(), getEndPosition(), expression);
-        } else if (arguments != null) {
+        switch (type) {
+        case CallExpression:
             return new SuperExpressionValue(getBeginPosition(), getEndPosition(), arguments);
-        } else {
+        case ElementAccessor:
+            return new SuperExpressionValue(getBeginPosition(), getEndPosition(), expression);
+        case NewExpression:
             return new SuperExpressionValue(getBeginPosition(), getEndPosition());
+        case PropertyAccessor:
+            return new SuperExpressionValue(getBeginPosition(), getEndPosition(), name);
+        default:
+            throw new IllegalStateException();
         }
     }
 
