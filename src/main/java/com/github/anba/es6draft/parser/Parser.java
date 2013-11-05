@@ -3308,7 +3308,11 @@ public class Parser {
         case LC:
         case FUNCTION:
         case CLASS:
-            reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+            break;
+        case LET:
+            if (LOOKAHEAD(Token.LB)) {
+                break;
+            }
         default:
             long begin = ts.beginPosition();
             Expression expr = expression(true);
