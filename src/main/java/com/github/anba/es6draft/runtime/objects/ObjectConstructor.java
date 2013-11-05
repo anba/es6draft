@@ -341,7 +341,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             /* steps 3-4 */
             ScriptObject from = ToObject(cx, source);
             /* steps 5-6 */
-            Iterator<?> keys = FromListIterator(cx, from.ownPropertyKeys(cx));
+            Iterator<?> keys = FromListIterator(cx, from, from.ownPropertyKeys(cx));
             /* step 7 (omitted) */
             /* step 8 */
             ScriptException pendingException = null;
@@ -477,7 +477,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
         /* steps 3-4 */
-        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
         /* step 5 */
         List<String> nameList = new ArrayList<>();
         /* step 6 (omitted) */
@@ -499,7 +499,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         /* steps 1-2 */
         ScriptObject obj = ToObject(cx, o);
         /* steps 3-4 */
-        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
         /* step 5 */
         List<Symbol> nameList = new ArrayList<>();
         /* step 6 (omitted) */
@@ -521,7 +521,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             OBJECT target, ScriptObject source) {
         /* steps 1-2 (not applicable) */
         /* steps 3-4 */
-        Iterator<?> keys = FromListIterator(cx, source.ownPropertyKeys(cx));
+        Iterator<?> keys = FromListIterator(cx, source, source.ownPropertyKeys(cx));
         /* step 5 (omitted) */
         /* step 6 */
         ScriptException pendingException = null;

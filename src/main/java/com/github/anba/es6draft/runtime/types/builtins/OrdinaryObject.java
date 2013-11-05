@@ -11,8 +11,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIter
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.MakeListIterator;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.ArrayList;
@@ -641,7 +640,7 @@ public class OrdinaryObject implements ScriptObject {
     /** 9.1.12 [[Enumerate]] () */
     @Override
     public final ScriptObject enumerate(ExecutionContext cx) {
-        return MakeListIterator(cx, new EnumKeysIterator(cx, this));
+        return CreateListIterator(cx, new EnumKeysIterator(cx, this));
     }
 
     /** 9.1.12 [[Enumerate]] () */
@@ -695,7 +694,7 @@ public class OrdinaryObject implements ScriptObject {
                     } else {
                         this.obj = null;
                         this.keys = null;
-                        this.protoKeys = FromListIterator(cx, proto.enumerate(cx));
+                        this.protoKeys = FromScriptIterator(cx, proto.enumerate(cx));
                     }
                 } else {
                     this.obj = null;

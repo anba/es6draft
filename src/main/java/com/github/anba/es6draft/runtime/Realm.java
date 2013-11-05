@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.objects.binary.TypedArrayConstructorProt
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototype;
 import com.github.anba.es6draft.runtime.objects.binary.TypedArrayPrototypePrototype;
 import com.github.anba.es6draft.runtime.objects.collection.*;
-import com.github.anba.es6draft.runtime.objects.internal.ListIteratorPrototype;
+import com.github.anba.es6draft.runtime.objects.internal.ListIteratorNext;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorConstructor;
 import com.github.anba.es6draft.runtime.objects.intl.CollatorPrototype;
 import com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor;
@@ -512,16 +512,9 @@ public final class Realm {
      */
     private static void initialiseInternalObjects(Realm realm) {
         Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
-        ExecutionContext defaultContext = realm.defaultContext;
 
-        // allocation phase
-        ListIteratorPrototype listIteratorPrototype = new ListIteratorPrototype(realm);
-
-        // registration phase
-        intrinsics.put(Intrinsics.ListIteratorPrototype, listIteratorPrototype);
-
-        // initialisation phase
-        listIteratorPrototype.initialise(defaultContext);
+        // intrinsic functions
+        intrinsics.put(Intrinsics.ListIteratorNext, new ListIteratorNext(realm));
     }
 
     /**

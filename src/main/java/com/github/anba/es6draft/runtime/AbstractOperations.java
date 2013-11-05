@@ -1197,7 +1197,7 @@ public final class AbstractOperations {
         /* steps 1-2 */
         assert level == IntegrityLevel.Sealed || level == IntegrityLevel.Frozen;
         /* steps 3-4 */
-        Iterator<?> keys = FromListIterator(cx, object.ownPropertyKeys(cx));
+        Iterator<?> keys = FromListIterator(cx, object, object.ownPropertyKeys(cx));
         /* step 5 */
         ScriptException pendingException = null;
         if (level == IntegrityLevel.Sealed) {
@@ -1281,7 +1281,7 @@ public final class AbstractOperations {
             return false;
         }
         /* steps 7-8 */
-        Iterator<?> keys = FromListIterator(cx, object.ownPropertyKeys(cx));
+        Iterator<?> keys = FromListIterator(cx, object, object.ownPropertyKeys(cx));
         /* step 9 */
         ScriptException pendingException = null;
         /* step 10 */
@@ -1578,8 +1578,14 @@ public final class AbstractOperations {
      * 7.4.7 CreateListIterator (list)
      */
     public static ScriptObject CreateListIterator(ExecutionContext cx, Iterable<?> list) {
-        // TODO: check implementation for conformance
-        return ListIterator.MakeListIterator(cx, list.iterator());
+        return ListIterator.CreateListIterator(cx, list.iterator());
+    }
+
+    /**
+     * 7.4.7 CreateListIterator (list)
+     */
+    public static ScriptObject CreateListIterator(ExecutionContext cx, Iterator<?> iterator) {
+        return ListIterator.CreateListIterator(cx, iterator);
     }
 
     /**
@@ -1597,7 +1603,7 @@ public final class AbstractOperations {
      */
     public static List<String> GetOwnPropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
@@ -1613,7 +1619,7 @@ public final class AbstractOperations {
      */
     public static List<String> GetOwnEnumerablePropertyNames(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
         List<String> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());
@@ -1633,7 +1639,7 @@ public final class AbstractOperations {
      */
     public static List<Object> GetOwnEnumerablePropertyKeys(ExecutionContext cx, ScriptObject obj) {
         // FIXME: spec clean-up (Bug 1142)
-        Iterator<?> keys = FromListIterator(cx, obj.ownPropertyKeys(cx));
+        Iterator<?> keys = FromListIterator(cx, obj, obj.ownPropertyKeys(cx));
         List<Object> nameList = new ArrayList<>();
         while (keys.hasNext()) {
             Object key = ToPropertyKey(cx, keys.next());

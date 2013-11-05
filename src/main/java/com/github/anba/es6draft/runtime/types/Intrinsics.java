@@ -108,7 +108,7 @@ public enum Intrinsics {/* @formatter:off */
     Intl_DateTimeFormatPrototype,
 
     // internal
-    ListIteratorPrototype,
+    ListIteratorNext,
     InternalError,
     InternalErrorPrototype,
 

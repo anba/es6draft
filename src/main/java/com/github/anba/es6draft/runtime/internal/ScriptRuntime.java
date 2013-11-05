@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.internal;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
+import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorStart;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
@@ -26,6 +27,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1014,7 +1016,7 @@ public final class ScriptRuntime {
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
      */
     public static Iterator<?> getIterator(ScriptObject obj, ExecutionContext cx) {
-        return ListIterator.FromListIterator(cx, GetIterator(cx, obj));
+        return ListIterator.FromScriptIterator(cx, GetIterator(cx, obj));
     }
 
     /**
@@ -1050,7 +1052,7 @@ public final class ScriptRuntime {
         /* step 6, step 8 */
         ScriptObject keys = obj.enumerate(cx);
         /* step 9 */
-        return FromListIterator(cx, keys);
+        return FromListIterator(cx, obj, keys);
     }
 
     /**
@@ -1064,7 +1066,7 @@ public final class ScriptRuntime {
         /* step 7, step 8 */
         ScriptObject keys = GetIterator(cx, obj);
         /* step 9 */
-        return FromListIterator(cx, keys);
+        return FromScriptIterator(cx, keys);
     }
 
     /**
@@ -1079,7 +1081,7 @@ public final class ScriptRuntime {
         /* step 6, step 8 */
         ScriptObject keys = obj.enumerate(cx);
         /* step 9 */
-        return new ValuesIterator(cx, obj, FromListIterator(cx, keys));
+        return new ValuesIterator(cx, obj, FromListIterator(cx, obj, keys));
     }
 
     private static class ValuesIterator extends SimpleIterator<Object> {

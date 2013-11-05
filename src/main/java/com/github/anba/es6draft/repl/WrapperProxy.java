@@ -7,11 +7,11 @@
 package com.github.anba.es6draft.repl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.MakeListIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.HashSet;
@@ -392,7 +392,7 @@ class WrapperProxy implements ScriptObject {
      */
     @Override
     public ScriptObject enumerate(ExecutionContext cx) {
-        return MakeListIterator(cx, new AppendIterator(cx, this));
+        return CreateListIterator(cx, new AppendIterator(cx, proxyTarget, getProto(cx)));
     }
 
     private static final class AppendIterator extends SimpleIterator<Object> {
@@ -402,11 +402,11 @@ class WrapperProxy implements ScriptObject {
         private final Iterator<?> protoKeys;
         private HashSet<Object> visitedKeys = new HashSet<>();
 
-        AppendIterator(ExecutionContext cx, WrapperProxy proxy) {
+        AppendIterator(ExecutionContext cx, ScriptObject proxyTarget, ScriptObject proto) {
             this.cx = cx;
-            this.proxyTarget = proxy.proxyTarget;
-            this.targetKeys = FromListIterator(cx, proxyTarget.ownPropertyKeys(cx));
-            this.protoKeys = FromListIterator(cx, proxy.getProto(cx).enumerate(cx));
+            this.proxyTarget = proxyTarget;
+            this.targetKeys = FromListIterator(cx, proxyTarget, proxyTarget.ownPropertyKeys(cx));
+            this.protoKeys = FromListIterator(cx, proto, proto.enumerate(cx));
         }
 
         @Override
