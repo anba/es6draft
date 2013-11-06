@@ -97,12 +97,14 @@ class BindingInitialisationGenerator {
     }
 
     void generate(Binding node, ExpressionVisitor mv) {
+        // stack: [value] -> []
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
                 EnvironmentType.NoEnvironment);
         node.accept(init, null);
     }
 
     void generateWithEnvironment(Binding node, ExpressionVisitor mv) {
+        // stack: [env, value] -> []
         BindingInitialisation init = new BindingInitialisation(codegen, mv,
                 EnvironmentType.EnvironmentFromStack);
         node.accept(init, null);
@@ -180,6 +182,18 @@ class BindingInitialisationGenerator {
                 mv.pop();
             }
         }
+
+        protected final void dupEnv() {
+            if (environment == EnvironmentType.EnvironmentFromStack) {
+                mv.dup();
+            }
+        }
+
+        protected final void popEnv() {
+            if (environment == EnvironmentType.EnvironmentFromStack) {
+                mv.pop();
+            }
+        }
     }
 
     private static final class BindingInitialisation extends RuntimeSemantics<Void, Void> {
@@ -195,7 +209,7 @@ class BindingInitialisationGenerator {
             // step 1: Assert: Type(value) is Object
 
             // step 2-3:
-            // stack: [(env), value] -> []
+            // stack: [(env), value] -> [(env)]
             Variable<Iterator<?>> iterator = uncheckedCast(mv.newScratchVariable(Iterator.class));
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_getIterator);
@@ -205,6 +219,9 @@ class BindingInitialisationGenerator {
             IteratorBindingInitialisation(node, iterator);
 
             mv.freeVariable(iterator);
+
+            // stack: [(env)] -> []
+            popEnv();
 
             return null;
         }
@@ -307,8 +324,9 @@ class BindingInitialisationGenerator {
 
         @Override
         public Void visit(ArrayBindingPattern node, Variable<Iterator<?>> iterator) {
-            // stack: [] -> []
+            // stack: [(env)] -> [(env)]
             for (BindingElementItem element : node.getElements()) {
+                dupEnv();
                 element.accept(this, iterator);
             }
 
@@ -317,9 +335,10 @@ class BindingInitialisationGenerator {
 
         @Override
         public Void visit(BindingElision node, Variable<Iterator<?>> iterator) {
-            // stack: [] -> []
+            // stack: [(env)] -> []
             mv.load(iterator);
             mv.invoke(Methods.ScriptRuntime_iteratorNextAndIgnore);
+            popEnv();
 
             return null;
         }
