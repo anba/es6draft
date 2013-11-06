@@ -47,7 +47,7 @@ function IsConstructor(o) {
 function PropertyKeyToString(pk) {
   switch(typeof pk) {
     case 'symbol':
-      return String(Object(pk));
+      return Object(pk).toString();
     case 'string':
     default:
       return String(pk);
@@ -195,7 +195,7 @@ function assertBuiltinFunction(fun, name, arity) {
   assertNotConstructor(fun);
   assertSame(Function.prototype, Object_getPrototypeOf(fun), `${name}.[[Prototype]]`);
   assertDataProperty(fun, "length", {value: arity, writable: false, enumerable: false, configurable: true});
-  assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: false});
+  assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: true});
   assertAccessorProperty(fun, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
   assertAccessorProperty(fun, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
 }
@@ -206,7 +206,7 @@ function assertBuiltinConstructor(fun, name, arity) {
   assertConstructor(fun);
   assertSame(Function.prototype, Object_getPrototypeOf(fun), `${name}.[[Prototype]]`);
   assertDataProperty(fun, "length", {value: arity, writable: false, enumerable: false, configurable: true});
-  assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: false});
+  assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: true});
   assertAccessorProperty(fun, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
   assertAccessorProperty(fun, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
 }
