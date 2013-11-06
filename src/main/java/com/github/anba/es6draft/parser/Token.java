@@ -10,15 +10,12 @@ package com.github.anba.es6draft.parser;
  * Enumeration of lexer tokens
  */
 public enum Token {
-    // Keyword -> 11.6.1.1
+    // Keyword -> 11.6.2.1
     BREAK("break"), CASE("case"), CATCH("catch"), CLASS("class"), CONTINUE("continue"), CONST(
             "const"), DEBUGGER("debugger"), DEFAULT("default"), DELETE("delete"), DO("do"), ELSE(
-            "else"), EXPORT("export"), FINALLY("finally"), FOR("for"), FUNCTION("function"), IF(
-            "if"),
-    IMPORT("import"),
-    IN("in"),
+            "else"), EXPORT("export"), EXTENDS("extends"), FINALLY("finally"), FOR("for"),
+    FUNCTION("function"), IF("if"), IMPORT("import"), IN("in"),
     INSTANCEOF("instanceof"),
-    LET("let"),
     NEW("new"),
     RETURN("return"),
     SUPER("super"),
@@ -32,12 +29,12 @@ public enum Token {
     WHILE("while"),
     WITH("with"),
     YIELD("yield"),
-    // FutureReservedWord -> 11.6.1.2
+    // FutureReservedWord -> 11.6.2.2
     ENUM("enum"),
-    EXTENDS("extends"),
-    // FutureReservedWord (strict) -> 11.6.1.2
+    // FutureReservedWord (strict) -> 11.6.2.2
     IMPLEMENTS("implements"),
     INTERFACE("interface"),
+    LET("let"),
     PACKAGE("package"),
     PRIVATE("private"),
     PROTECTED("protected"),

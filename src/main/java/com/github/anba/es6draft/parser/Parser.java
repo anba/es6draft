@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
  * <li>12 ECMAScript Language: Expressions
  * <li>13 ECMAScript Language: Statements and Declarations
  * <li>14 ECMAScript Language: Functions and Classes
- * <li>15 ECMAScript Language: Scripts and Modules
+ * <li>15 ECMAScript Language: Modules and Scripts
  * </ul>
  */
 public class Parser {
@@ -683,14 +683,21 @@ public class Parser {
      * Report mismatched token error from tokenstream's current position
      */
     private ParserException reportTokenMismatch(Token expected, Token actual) {
-        long sourcePosition = ts.sourcePosition();
-        int line = toLine(sourcePosition), col = toColumn(sourcePosition);
-        if (actual == Token.EOF) {
-            throw new ParserEOFException(sourceFile, line, col, Messages.Key.UnexpectedToken,
-                    actual.toString(), expected.toString());
-        }
-        throw new ParserException(ExceptionType.SyntaxError, sourceFile, line, col,
-                Messages.Key.UnexpectedToken, actual.toString(), expected.toString());
+        throw reportTokenMismatch(expected.toString(), actual);
+    }
+
+    /**
+     * Report mismatched token error from tokenstream's current position
+     */
+    private ParserException reportTokenNotIdentifier(Token actual) {
+        throw reportTokenMismatch("<identifier>", actual);
+    }
+
+    /**
+     * Report mismatched token error from tokenstream's current position
+     */
+    private ParserException reportTokenNotIdentifierName(Token actual) {
+        throw reportTokenMismatch("<identifier-name>", actual);
     }
 
     /**
@@ -872,12 +879,12 @@ public class Parser {
                         "anonymous", parameters, statements, header, body);
                 scope.node = function;
 
-                function_StaticSemantics(function);
+                function_EarlyErrors(function);
 
                 function = inheritStrictness(function);
             } catch (RetryGenerator e) {
                 // don't bother with legacy support here
-                throw reportSyntaxError(Messages.Key.InvalidYieldStatement);
+                throw reportSyntaxError(Messages.Key.InvalidYieldExpression);
             } finally {
                 restoreContext();
             }
@@ -928,7 +935,7 @@ public class Parser {
                         "anonymous", parameters, statements, header, body);
                 scope.node = generator;
 
-                generator_StaticSemantics(generator);
+                generator_EarlyErrors(generator);
 
                 generator = inheritStrictness(generator);
             } finally {
@@ -1008,8 +1015,9 @@ public class Parser {
                 // TODO: implement modules
                 if (token() == Token.IMPORT) {
                     importDeclaration();
-                } else if (isName("module") && (peek() == Token.STRING || isIdentifier(peek()))
-                        && !ts.hasNextLineTerminator()) {
+                } else if (isName("module")
+                        && (peek() == Token.STRING || isIdentifierReference(peek()))
+                        && noNextLineTerminator()) {
                     moduleDeclaration();
                 } else {
                     list.add(statementListItem());
@@ -1057,8 +1065,9 @@ public class Parser {
                 exportDeclaration();
             } else if (token() == Token.IMPORT) {
                 importDeclaration();
-            } else if (isName("module") && (peek() == Token.STRING || isIdentifier(peek()))
-                    && !ts.hasNextLineTerminator()) {
+            } else if (isName("module")
+                    && (peek() == Token.STRING || isIdentifierReference(peek()))
+                    && noNextLineTerminator()) {
                 moduleDeclaration();
             } else {
                 statementListItem();
@@ -1245,11 +1254,19 @@ public class Parser {
 
         case FUNCTION:
         case CLASS:
-        case LET:
         case CONST: {
             // export Declaration
             declaration();
             return;
+        }
+        case LET: {
+            if (lexicalBindingFirstSet(peek())) {
+                // export Declaration
+                declaration();
+                return;
+            }
+            // 'let' as identifier, e.g. `export let;`
+            // fall-through
         }
 
         default: {
@@ -1297,7 +1314,7 @@ public class Parser {
      * </pre>
      */
     private void exportSpecifier() {
-        identifier();
+        identifierReference();
         if (isName("as")) {
             consume("as");
             identifierName();
@@ -1328,10 +1345,10 @@ public class Parser {
             case EOF:
                 break;
             default:
-                if (ts.hasNextLineTerminator() && !stringLiteralFollowSetNextLine(next)) {
-                    break;
+                if (noNextLineTerminator() || stringLiteralFollowSetNextLine(next)) {
+                    break directive;
                 }
-                break directive;
+                break;
             }
             // found a directive
             String string = stringLiteral();
@@ -1428,7 +1445,7 @@ public class Parser {
             }
             reportStrictModeSyntaxError(begin, Messages.Key.StrictModeInvalidIdentifier,
                     getName(Token.YIELD));
-            reportTokenMismatch("<identifier>", Token.YIELD);
+            reportTokenNotIdentifier(Token.YIELD);
         }
         return bindingIdentifier();
     }
@@ -1477,7 +1494,7 @@ public class Parser {
                     identifier, parameters, statements, header, body);
             scope.node = function;
 
-            function_StaticSemantics(function);
+            function_EarlyErrors(function);
 
             addFunctionDeclaration(function);
 
@@ -1534,7 +1551,7 @@ public class Parser {
                     identifier, parameters, statements, header, body);
             scope.node = function;
 
-            function_StaticSemantics(function);
+            function_EarlyErrors(function);
 
             return inheritStrictness(function);
         } finally {
@@ -1629,7 +1646,7 @@ public class Parser {
     /**
      * 14.1.1 Static Semantics: Early Errors
      */
-    private void function_StaticSemantics(FunctionDefinition function) {
+    private void function_EarlyErrors(FunctionDefinition function) {
         assert context.scopeContext == context.funContext;
 
         FunctionContext scope = context.funContext;
@@ -1637,33 +1654,35 @@ public class Parser {
         List<String> boundNames = BoundNames(parameters);
         scope.parameterNames = new HashSet<>(boundNames);
 
+        boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
         if (!simple) {
             checkFormalParameterRedeclaration(function, boundNames, scope.varDeclaredNames);
         }
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
-        formalParameters_StaticSemantics(function, boundNames, scope.parameterNames, simple);
+        if (strict) {
+            strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
+        } else {
+            formalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
+        }
     }
 
     /**
      * 14.1.1 Static Semantics: Early Errors
      */
-    private void strictFormalParameters_StaticSemantics(FunctionNode node, List<String> boundNames,
-            Set<String> names) {
+    private void strictFormalParameters_EarlyErrors(FunctionNode node, List<String> boundNames,
+            Set<String> names, boolean simple) {
         boolean hasDuplicates = (boundNames.size() != names.size());
-        boolean hasEvalOrArguments = (names.contains("eval") || names.contains("arguments"));
         if (hasDuplicates) {
             reportSyntaxError(node, Messages.Key.StrictModeDuplicateFormalParameter);
         }
-        if (hasEvalOrArguments) {
-            reportSyntaxError(node, Messages.Key.StrictModeRestrictedIdentifier);
-        }
+        formalParameters_EarlyErrors(node, boundNames, names, simple);
     }
 
     /**
      * 14.1.1 Static Semantics: Early Errors
      */
-    private void formalParameters_StaticSemantics(FunctionNode node, List<String> boundNames,
+    private void formalParameters_EarlyErrors(FunctionNode node, List<String> boundNames,
             Set<String> names, boolean simple) {
         boolean strict = (context.strictMode != StrictMode.NonStrict);
         if (!strict && simple) {
@@ -1679,12 +1698,10 @@ public class Parser {
                 reportSyntaxError(node, Messages.Key.StrictModeRestrictedIdentifier);
             }
         }
+        // FIXME: spec bug - already handled in StrictFormalParameters
         if (strict) {
             if (hasDuplicates) {
                 reportStrictModeSyntaxError(node, Messages.Key.StrictModeDuplicateFormalParameter);
-            }
-            if (hasEvalOrArguments) {
-                reportStrictModeSyntaxError(node, Messages.Key.StrictModeRestrictedIdentifier);
             }
         }
     }
@@ -1760,7 +1777,7 @@ public class Parser {
 
                 source.append(ts.range(start, ts.position()));
             } else {
-                BindingIdentifier identifier = bindingIdentifierStrict();
+                BindingIdentifier identifier = bindingIdentifier();
                 FormalParameter parameter = new BindingElement(begin, ts.endPosition(), identifier,
                         null);
                 parameters = new FormalParameterList(begin, ts.endPosition(),
@@ -1784,7 +1801,7 @@ public class Parser {
                         parameters, statements, header, body);
                 scope.node = function;
 
-                arrowFunction_StaticSemantics(function);
+                arrowFunction_EarlyErrors(function);
 
                 return inheritStrictness(function);
             } else {
@@ -1803,7 +1820,7 @@ public class Parser {
                         parameters, expression, header, body);
                 scope.node = function;
 
-                arrowFunction_StaticSemantics(function);
+                arrowFunction_EarlyErrors(function);
 
                 return inheritStrictness(function);
             }
@@ -1812,7 +1829,10 @@ public class Parser {
         }
     }
 
-    private void arrowFunction_StaticSemantics(ArrowFunction function) {
+    /**
+     * 14.2.1 Static Semantics: Early Errors
+     */
+    private void arrowFunction_EarlyErrors(ArrowFunction function) {
         assert context.scopeContext == context.funContext;
 
         FunctionContext scope = context.funContext;
@@ -1820,9 +1840,10 @@ public class Parser {
         List<String> boundNames = BoundNames(parameters);
         scope.parameterNames = new HashSet<>(boundNames);
 
+        boolean simple = IsSimpleParameterList(parameters);
         checkFormalParameterRedeclaration(function, boundNames, scope.varDeclaredNames);
         checkFormalParameterRedeclaration(function, boundNames, scope.lexDeclaredNames);
-        strictFormalParameters_StaticSemantics(function, boundNames, scope.parameterNames);
+        strictFormalParameters_EarlyErrors(function, boundNames, scope.parameterNames, simple);
     }
 
     /**
@@ -1890,7 +1911,7 @@ public class Parser {
                     propertyName, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = method;
 
-            methodDefinition_StaticSemantics(method);
+            methodDefinition_EarlyErrors(method);
 
             return inheritStrictness(method);
         } finally {
@@ -1949,7 +1970,7 @@ public class Parser {
                     propertyName, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = method;
 
-            methodDefinition_StaticSemantics(method);
+            methodDefinition_EarlyErrors(method);
 
             return inheritStrictness(method);
         } finally {
@@ -2007,7 +2028,7 @@ public class Parser {
                     propertyName, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = method;
 
-            methodDefinition_StaticSemantics(method);
+            methodDefinition_EarlyErrors(method);
 
             return inheritStrictness(method);
         } finally {
@@ -2052,7 +2073,7 @@ public class Parser {
     /**
      * 14.3.1 Static Semantics: Early Errors
      */
-    private void methodDefinition_StaticSemantics(MethodDefinition method) {
+    private void methodDefinition_EarlyErrors(MethodDefinition method) {
         assert context.scopeContext == context.funContext;
 
         FunctionContext scope = context.funContext;
@@ -2060,22 +2081,21 @@ public class Parser {
         List<String> boundNames = BoundNames(parameters);
         scope.parameterNames = new HashSet<>(boundNames);
 
+        boolean simple = IsSimpleParameterList(parameters);
         switch (method.getType()) {
         case Function:
         case Generator: {
             checkFormalParameterRedeclaration(method, boundNames, scope.varDeclaredNames);
             checkFormalParameterRedeclaration(method, boundNames, scope.lexDeclaredNames);
-            strictFormalParameters_StaticSemantics(method, boundNames, scope.parameterNames);
+            strictFormalParameters_EarlyErrors(method, boundNames, scope.parameterNames, simple);
             return;
         }
         case Setter: {
-            boolean simple = IsSimpleParameterList(parameters);
             if (!simple) {
                 checkFormalParameterRedeclaration(method, boundNames, scope.varDeclaredNames);
             }
             checkFormalParameterRedeclaration(method, boundNames, scope.lexDeclaredNames);
-            propertySetParameterList_StaticSemantics(method, boundNames, scope.parameterNames,
-                    simple);
+            propertySetParameterList_EarlyErrors(method, boundNames, scope.parameterNames, simple);
             return;
         }
         case Getter:
@@ -2087,9 +2107,8 @@ public class Parser {
     /**
      * 14.3.1 Static Semantics: Early Errors
      */
-    private void propertySetParameterList_StaticSemantics(FunctionNode node,
-            List<String> boundNames, Set<String> names, boolean simple) {
-        boolean strict = (context.strictMode != StrictMode.NonStrict);
+    private void propertySetParameterList_EarlyErrors(FunctionNode node, List<String> boundNames,
+            Set<String> names, boolean simple) {
         boolean hasDuplicates = (boundNames.size() != names.size());
         boolean hasEvalOrArguments = (names.contains("eval") || names.contains("arguments"));
         if (!simple) {
@@ -2103,12 +2122,6 @@ public class Parser {
         // FIXME: spec bug - duplicate check done twice
         if (hasDuplicates) {
             reportSyntaxError(node, Messages.Key.StrictModeDuplicateFormalParameter);
-        }
-        // FIXME: spec bug - not handled in draft
-        if (strict) {
-            if (hasEvalOrArguments) {
-                reportStrictModeSyntaxError(node, Messages.Key.StrictModeRestrictedIdentifier);
-            }
         }
     }
 
@@ -2150,7 +2163,7 @@ public class Parser {
                     propertyName, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = method;
 
-            methodDefinition_StaticSemantics(method);
+            methodDefinition_EarlyErrors(method);
 
             return inheritStrictness(method);
         } finally {
@@ -2199,7 +2212,7 @@ public class Parser {
             }
             scope.node = generator;
 
-            generator_StaticSemantics(generator);
+            generator_EarlyErrors(generator);
 
             addGeneratorDeclaration(generator);
 
@@ -2253,7 +2266,7 @@ public class Parser {
             }
             scope.node = generator;
 
-            generator_StaticSemantics(generator);
+            generator_EarlyErrors(generator);
 
             return inheritStrictness(generator);
         } finally {
@@ -2264,7 +2277,7 @@ public class Parser {
     /**
      * 14.4.1 Static Semantics: Early Errors
      */
-    private void generator_StaticSemantics(GeneratorDefinition generator) {
+    private void generator_EarlyErrors(GeneratorDefinition generator) {
         assert context.scopeContext == context.funContext;
 
         FunctionContext scope = context.funContext;
@@ -2272,12 +2285,17 @@ public class Parser {
         List<String> boundNames = BoundNames(parameters);
         scope.parameterNames = new HashSet<>(boundNames);
 
+        boolean strict = (context.strictMode != StrictMode.NonStrict);
         boolean simple = IsSimpleParameterList(parameters);
         if (!simple) {
             checkFormalParameterRedeclaration(generator, boundNames, scope.varDeclaredNames);
         }
         checkFormalParameterRedeclaration(generator, boundNames, scope.lexDeclaredNames);
-        formalParameters_StaticSemantics(generator, boundNames, scope.parameterNames, simple);
+        if (strict) {
+            strictFormalParameters_EarlyErrors(generator, boundNames, scope.parameterNames, simple);
+        } else {
+            formalParameters_EarlyErrors(generator, boundNames, scope.parameterNames, simple);
+        }
     }
 
     /**
@@ -2295,8 +2313,7 @@ public class Parser {
             if (context.kind == ContextKind.Function && isEnabled(Option.LegacyGenerator)) {
                 throw new RetryGenerator();
             }
-            // TODO: change message key to "InvalidYieldExpression"
-            reportSyntaxError(Messages.Key.InvalidYieldStatement);
+            reportSyntaxError(Messages.Key.InvalidYieldExpression);
         }
 
         long begin = ts.beginPosition();
@@ -2366,19 +2383,17 @@ public class Parser {
         case ASSIGN_DIV:
             // FIRST(RegularExpressionLiteral)
             return true;
-        case LET:
-            // FIXME: always true b/c 'let' as identifier allowd?
-            return isEnabled(Option.LetExpression);
         case NAME:
         case IMPLEMENTS:
         case INTERFACE:
+        case LET:
         case PACKAGE:
         case PRIVATE:
         case PROTECTED:
         case PUBLIC:
         case STATIC:
             // FIRST(Identifier)
-            return isIdentifier(token);
+            return isIdentifierReference(token);
         default:
             return false;
         }
@@ -2416,6 +2431,8 @@ public class Parser {
     private ClassDeclaration classDeclaration() {
         long begin = ts.beginPosition();
         consume(Token.CLASS);
+        // Only ClassBody is strict code: BindingIdentifier restricted based on surrounding code;
+        // FIXME: contradicts resolution from https://bugs.ecmascript.org/show_bug.cgi?id=1464
         BindingIdentifier name = bindingIdentifierPureStrict();
         Expression heritage = null;
         if (token() == Token.EXTENDS) {
@@ -2452,6 +2469,8 @@ public class Parser {
         consume(Token.CLASS);
         BindingIdentifier name = null;
         if (token() != Token.EXTENDS && token() != Token.LC) {
+            // Only ClassBody is strict code: BindingIdentifier restricted based on surrounding code
+            // FIXME: contradicts resolution from https://bugs.ecmascript.org/show_bug.cgi?id=1464
             name = bindingIdentifierPureStrict();
         }
         Expression heritage = null;
@@ -2504,12 +2523,15 @@ public class Parser {
             }
         }
 
-        classBody_StaticSemantics(className, staticMethods, true);
-        classBody_StaticSemantics(className, prototypeMethods, false);
+        classBody_EarlyErrors(className, staticMethods, true);
+        classBody_EarlyErrors(className, prototypeMethods, false);
     }
 
-    private void classBody_StaticSemantics(BindingIdentifier className,
-            List<MethodDefinition> defs, boolean isStatic) {
+    /**
+     * 14.5.1 Static Semantics: Early Errors
+     */
+    private void classBody_EarlyErrors(BindingIdentifier className, List<MethodDefinition> defs,
+            boolean isStatic) {
         final int VALUE = 0, GETTER = 1, SETTER = 2;
         Map<String, Integer> values = new HashMap<>();
         for (MethodDefinition def : defs) {
@@ -2526,6 +2548,7 @@ public class Parser {
                 if ("constructor".equals(key) && SpecialMethod(def)) {
                     reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
                 }
+                // TODO: still necessary? -> SetFunctionName
                 if (className != null) {
                     def.setFunctionName(className.getName());
                 }
@@ -2610,16 +2633,23 @@ public class Parser {
             return tryStatement();
         case DEBUGGER:
             return debuggerStatement();
-        case LET:
-            if (isEnabled(Option.LetStatement)) {
-                return letStatement();
+        case YIELD:
+            if (isYieldName() && LOOKAHEAD(Token.COLON)) {
+                return labelledStatement();
             }
             break;
-        case YIELD:
-            if (!isYieldName()) {
-                break;
+        case LET:
+            if (isEnabled(Option.LetStatement) || isEnabled(Option.LetExpression)) {
+                return letStatement();
             }
             // fall-through
+        case IMPLEMENTS:
+        case INTERFACE:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
         case NAME:
             if (LOOKAHEAD(Token.COLON)) {
                 return labelledStatement();
@@ -2686,15 +2716,16 @@ public class Parser {
      */
     private StatementListItem statementListItem() {
         switch (token()) {
-        case LET:
-            if (LOOKAHEAD(Token.LP)
-                    && (isEnabled(Option.LetStatement) || isEnabled(Option.LetExpression))) {
-                return statement();
-            }
         case FUNCTION:
         case CLASS:
         case CONST:
             return declaration();
+        case LET:
+            if (lexicalBindingFirstSet(peek())) {
+                return declaration();
+            }
+            // 'let' as identifier, e.g. `let + 1`
+            // fall-through
         default:
             return statement();
         }
@@ -2805,17 +2836,15 @@ public class Parser {
         Binding binding;
         Expression initialiser = null;
         if (token() == Token.LC || token() == Token.LB) {
-            BindingPattern bindingPattern = bindingPattern();
+            BindingPattern bindingPattern = bindingPattern(false);
             addLexDeclaredName(bindingPattern);
-            if (allowIn) {
-                initialiser = initialiser(allowIn);
-            } else if (token() == Token.ASSIGN) {
-                // make initialiser optional if `allowIn == false`
+            if (token() == Token.ASSIGN || allowIn) {
+                // make initialiser optional if `allowIn == false`, cf. validateFor{InOf}
                 initialiser = initialiser(allowIn);
             }
             binding = bindingPattern;
         } else {
-            BindingIdentifier bindingIdentifier = bindingIdentifier();
+            BindingIdentifier bindingIdentifier = bindingIdentifier(false);
             addLexDeclaredName(bindingIdentifier);
             if (token() == Token.ASSIGN) {
                 initialiser = initialiser(allowIn);
@@ -2830,6 +2859,21 @@ public class Parser {
     }
 
     /**
+     * Returns {@code true} iff {@code token} is in the first-set of LexicalBinding
+     */
+    private boolean lexicalBindingFirstSet(Token token) {
+        switch (token) {
+        default:
+            if (!isIdentifierReference(token)) {
+                return false;
+            }
+        case LB:
+        case LC:
+            return true;
+        }
+    }
+
+    /**
      * <strong>[13.2.1] Let and Const Declarations</strong>
      * 
      * <pre>
@@ -2840,8 +2884,25 @@ public class Parser {
      * </pre>
      */
     private BindingIdentifier bindingIdentifier() {
+        return bindingIdentifier(true);
+    }
+
+    /**
+     * <strong>[13.2.1] Let and Const Declarations</strong>
+     * 
+     * <pre>
+     * BindingIdentifier<sub>[default, yield]</sub> :
+     *     <sub>[+default]</sub> default
+     *     <sub>[~yield]</sub> yield
+     *     Identifier
+     * </pre>
+     */
+    private BindingIdentifier bindingIdentifier(boolean allowLet) {
         long begin = ts.beginPosition();
-        String identifier = identifier();
+        if (token() == Token.LET && !allowLet) {
+            reportTokenNotIdentifier(Token.LET);
+        }
+        String identifier = identifierReference();
         if (context.strictMode != StrictMode.NonStrict) {
             if ("arguments".equals(identifier) || "eval".equals(identifier)) {
                 reportStrictModeSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
@@ -2852,6 +2913,9 @@ public class Parser {
 
     /**
      * <strong>[13.2.1] Let and Const Declarations</strong>
+     * <p>
+     * Difference when compared to {@link #bindingIdentifier()}:<br>
+     * Neither "arguments" nor "eval" is allowed.
      * 
      * <pre>
      * BindingIdentifier<sub>[default, yield]</sub> :
@@ -2860,9 +2924,12 @@ public class Parser {
      *     Identifier
      * </pre>
      */
-    private BindingIdentifier bindingIdentifierStrict() {
+    private BindingIdentifier bindingIdentifierStrict(boolean allowLet) {
         long begin = ts.beginPosition();
-        String identifier = identifier();
+        if (token() == Token.LET && !allowLet) {
+            reportTokenNotIdentifier(Token.LET);
+        }
+        String identifier = identifierReference();
         if ("arguments".equals(identifier) || "eval".equals(identifier)) {
             reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
         }
@@ -2871,6 +2938,9 @@ public class Parser {
 
     /**
      * <strong>[13.2.1] Let and Const Declarations</strong>
+     * <p>
+     * Difference when compared to {@link #bindingIdentifier()}:<br>
+     * Neither "arguments" nor "eval" is allowed.
      * 
      * <pre>
      * BindingIdentifier<sub>[default, yield]</sub> :
@@ -2881,7 +2951,7 @@ public class Parser {
      */
     private BindingIdentifier bindingIdentifierPureStrict() {
         long begin = ts.beginPosition();
-        String identifier = strictIdentifier();
+        String identifier = strictIdentifierReference();
         if ("arguments".equals(identifier) || "eval".equals(identifier)) {
             reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
         }
@@ -2984,10 +3054,23 @@ public class Parser {
      * </pre>
      */
     private BindingPattern bindingPattern() {
+        return bindingPattern(true);
+    }
+
+    /**
+     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * 
+     * <pre>
+     * BindingPattern<sub>[yield]</sub> :
+     *     ObjectBindingPattern<sub>[?yield]</sub>
+     *     ArrayBindingPattern<sub>[?yield]</sub>
+     * </pre>
+     */
+    private BindingPattern bindingPattern(boolean allowLet) {
         if (token() == Token.LC) {
-            return objectBindingPattern();
+            return objectBindingPattern(allowLet);
         } else {
-            return arrayBindingPattern();
+            return arrayBindingPattern(allowLet);
         }
     }
 
@@ -3004,12 +3087,12 @@ public class Parser {
      *     BindingPropertyList<sub>[?yield]</sub> , BindingProperty<sub>[?yield]</sub>
      * </pre>
      */
-    private ObjectBindingPattern objectBindingPattern() {
+    private ObjectBindingPattern objectBindingPattern(boolean allowLet) {
         long begin = ts.beginPosition();
         List<BindingProperty> list = newSmallList();
         consume(Token.LC);
         while (token() != Token.RC) {
-            list.add(bindingProperty());
+            list.add(bindingProperty(allowLet));
             if (token() == Token.COMMA) {
                 consume(Token.COMMA);
             } else {
@@ -3018,7 +3101,7 @@ public class Parser {
         }
         consume(Token.RC);
 
-        objectBindingPattern_StaticSemantics(list);
+        objectBindingPattern_EarlyErrors(list);
 
         return new ObjectBindingPattern(begin, ts.endPosition(), list);
     }
@@ -3034,17 +3117,17 @@ public class Parser {
      *     BindingIdentifier<sub>[?yield]</sub> Initialiser<sub>[in, ?yield]</sub><sub>opt</sub>
      * </pre>
      */
-    private BindingProperty bindingProperty() {
+    private BindingProperty bindingProperty(boolean allowLet) {
         if (token() == Token.LB || LOOKAHEAD(Token.COLON)) {
             PropertyName propertyName = propertyName();
             consume(Token.COLON);
             Binding binding;
             if (token() == Token.LC) {
-                binding = objectBindingPattern();
+                binding = objectBindingPattern(allowLet);
             } else if (token() == Token.LB) {
-                binding = arrayBindingPattern();
+                binding = arrayBindingPattern(allowLet);
             } else {
-                binding = bindingIdentifierStrict();
+                binding = bindingIdentifierStrict(allowLet);
             }
             Expression initialiser = null;
             if (token() == Token.ASSIGN) {
@@ -3052,7 +3135,7 @@ public class Parser {
             }
             return new BindingProperty(propertyName, binding, initialiser);
         } else {
-            BindingIdentifier binding = bindingIdentifierStrict();
+            BindingIdentifier binding = bindingIdentifierStrict(allowLet);
             Expression initialiser = null;
             if (token() == Token.ASSIGN) {
                 initialiser = initialiser(true);
@@ -3078,7 +3161,7 @@ public class Parser {
      *     ... BindingIdentifier<sub>[?yield]</sub>
      * </pre>
      */
-    private ArrayBindingPattern arrayBindingPattern() {
+    private ArrayBindingPattern arrayBindingPattern(boolean allowLet) {
         long begin = ts.beginPosition();
         List<BindingElementItem> list = newSmallList();
         consume(Token.LB);
@@ -3092,16 +3175,16 @@ public class Parser {
                 consume(Token.COMMA);
                 list.add(new BindingElision(0, 0));
             } else if (tok == Token.TRIPLE_DOT) {
-                list.add(bindingRestElementStrict());
+                list.add(bindingRestElementStrict(allowLet));
                 break;
             } else {
-                list.add(bindingElementStrict());
+                list.add(bindingElementStrict(allowLet));
                 needComma = true;
             }
         }
         consume(Token.RB);
 
-        arrayBindingPattern_StaticSemantics(list);
+        arrayBindingPattern_EarlyErrors(list);
 
         return new ArrayBindingPattern(begin, ts.endPosition(), list);
     }
@@ -3114,14 +3197,7 @@ public class Parser {
      * </pre>
      */
     private Binding binding() {
-        switch (token()) {
-        case LC:
-            return objectBindingPattern();
-        case LB:
-            return arrayBindingPattern();
-        default:
-            return bindingIdentifier();
-        }
+        return binding(true);
     }
 
     /**
@@ -3131,14 +3207,35 @@ public class Parser {
      *     BindingPattern<sub>[?yield]</sub>
      * </pre>
      */
-    private Binding bindingStrict() {
+    private Binding binding(boolean allowLet) {
         switch (token()) {
         case LC:
-            return objectBindingPattern();
+            return objectBindingPattern(allowLet);
         case LB:
-            return arrayBindingPattern();
+            return arrayBindingPattern(allowLet);
         default:
-            return bindingIdentifierStrict();
+            return bindingIdentifier(allowLet);
+        }
+    }
+
+    /**
+     * Difference when compared to {@link #binding()}:<br>
+     * Neither "arguments" nor "eval" is allowed.
+     * 
+     * <pre>
+     * Binding<sub>[yield]</sub> :
+     *     BindingIdentifier<sub>[?yield]</sub>
+     *     BindingPattern<sub>[?yield]</sub>
+     * </pre>
+     */
+    private Binding bindingStrict(boolean allowLet) {
+        switch (token()) {
+        case LC:
+            return objectBindingPattern(allowLet);
+        case LB:
+            return arrayBindingPattern(allowLet);
+        default:
+            return bindingIdentifierStrict(allowLet);
         }
     }
 
@@ -3152,14 +3249,7 @@ public class Parser {
      * </pre>
      */
     private BindingElement bindingElement() {
-        long begin = ts.beginPosition();
-        Binding binding = binding();
-        Expression initialiser = null;
-        if (token() == Token.ASSIGN) {
-            initialiser = initialiser(true);
-        }
-
-        return new BindingElement(begin, ts.endPosition(), binding, initialiser);
+        return bindingElement(true);
     }
 
     /**
@@ -3171,9 +3261,32 @@ public class Parser {
      *     BindingPattern<sub>[?yield]</sub> Initialiser<sub>[in, ?yield]</sub><sub>opt</sub>
      * </pre>
      */
-    private BindingElement bindingElementStrict() {
+    private BindingElement bindingElement(boolean allowLet) {
         long begin = ts.beginPosition();
-        Binding binding = bindingStrict();
+        Binding binding = binding(allowLet);
+        Expression initialiser = null;
+        if (token() == Token.ASSIGN) {
+            initialiser = initialiser(true);
+        }
+
+        return new BindingElement(begin, ts.endPosition(), binding, initialiser);
+    }
+
+    /**
+     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * <p>
+     * Difference when compared to {@link #bindingElement()}:<br>
+     * Neither "arguments" nor "eval" is allowed.
+     * 
+     * <pre>
+     * BindingElement<sub>[yield]</sub> :
+     *     SingleNameBinding<sub>[?yield]</sub>
+     *     BindingPattern<sub>[?yield]</sub> Initialiser<sub>[in, ?yield]</sub><sub>opt</sub>
+     * </pre>
+     */
+    private BindingElement bindingElementStrict(boolean allowLet) {
+        long begin = ts.beginPosition();
+        Binding binding = bindingStrict(allowLet);
         Expression initialiser = null;
         if (token() == Token.ASSIGN) {
             initialiser = initialiser(true);
@@ -3191,16 +3304,19 @@ public class Parser {
      * </pre>
      */
     @SuppressWarnings("unused")
-    private BindingRestElement bindingRestElement() {
+    private BindingRestElement bindingRestElement(boolean allowLet) {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        BindingIdentifier identifier = bindingIdentifier();
+        BindingIdentifier identifier = bindingIdentifier(allowLet);
 
         return new BindingRestElement(begin, ts.endPosition(), identifier);
     }
 
     /**
      * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * <p>
+     * Difference when compared to {@link #bindingRestElement()}:<br>
+     * Neither "arguments" nor "eval" is allowed.
      * 
      * <pre>
      * BindingRestElement<sub>[yield]</sub> :
@@ -3208,9 +3324,24 @@ public class Parser {
      * </pre>
      */
     private BindingRestElement bindingRestElementStrict() {
+        return bindingRestElementStrict(true);
+    }
+
+    /**
+     * <strong>[13.2.3] Destructuring Binding Patterns</strong>
+     * <p>
+     * Difference when compared to {@link #bindingRestElement()}:<br>
+     * Neither "arguments" nor "eval" is allowed.
+     * 
+     * <pre>
+     * BindingRestElement<sub>[yield]</sub> :
+     *     ... BindingIdentifier<sub>[?yield]</sub>
+     * </pre>
+     */
+    private BindingRestElement bindingRestElementStrict(boolean allowLet) {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        BindingIdentifier identifier = bindingIdentifierStrict();
+        BindingIdentifier identifier = bindingIdentifierStrict(allowLet);
 
         return new BindingRestElement(begin, ts.endPosition(), identifier);
     }
@@ -3226,7 +3357,7 @@ public class Parser {
     /**
      * 13.2.3.1 Static Semantics: Early Errors
      */
-    private void objectBindingPattern_StaticSemantics(List<BindingProperty> list) {
+    private void objectBindingPattern_EarlyErrors(List<BindingProperty> list) {
         for (BindingProperty property : list) {
             // BindingProperty : PropertyName ':' BindingElement
             // BindingProperty : BindingIdentifier Initialiser<opt>
@@ -3250,7 +3381,7 @@ public class Parser {
     /**
      * 13.2.3.1 Static Semantics: Early Errors
      */
-    private void arrayBindingPattern_StaticSemantics(List<BindingElementItem> list) {
+    private void arrayBindingPattern_EarlyErrors(List<BindingElementItem> list) {
         for (BindingElementItem element : list) {
             if (element instanceof BindingElement) {
                 Binding binding = ((BindingElement) element).getBinding();
@@ -3442,24 +3573,27 @@ public class Parser {
             addVarScopedDeclaration(varStmt);
             head = varStmt;
             break;
-        case LET:
+        case SEMI:
+            head = null;
+            break;
         case CONST:
             lexBlockContext = enterBlockContext();
             head = lexicalDeclaration(false);
             break;
-        case SEMI:
-            head = null;
-            break;
+        case LET:
+            if (lexicalBindingFirstSet(peek())) {
+                lexBlockContext = enterBlockContext();
+                head = lexicalDeclaration(false);
+                break;
+            }
+            // 'let' as identifier, e.g. `for (let ;;) {}`
+            // fall-through
         default:
             head = expression(false);
             break;
         }
 
-        if (each && token() != Token.IN) {
-            reportTokenMismatch(Token.IN, token());
-        }
-
-        if (token() == Token.SEMI) {
+        if (!each && token() == Token.SEMI) {
             head = validateFor(head);
             consume(Token.SEMI);
             Expression test = null;
@@ -3487,7 +3621,7 @@ public class Parser {
                 lexBlockContext.node = iteration;
             }
             return iteration;
-        } else if (token() == Token.IN) {
+        } else if (each || token() == Token.IN) {
             head = validateForInOf(head);
             consume(Token.IN);
             Expression expr;
@@ -3672,13 +3806,13 @@ public class Parser {
             } else if (p instanceof PropertyNameDefinition) {
                 // AssignmentProperty : Identifier
                 PropertyNameDefinition def = (PropertyNameDefinition) p;
-                assignmentProperty_StaticSemantics(def.getPropertyName());
+                assignmentProperty_EarlyErrors(def.getPropertyName());
                 property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
                         def.getPropertyName(), null);
             } else if (p instanceof CoverInitialisedName) {
                 // AssignmentProperty : Identifier Initialiser
                 CoverInitialisedName def = (CoverInitialisedName) p;
-                assignmentProperty_StaticSemantics(def.getPropertyName());
+                assignmentProperty_EarlyErrors(def.getPropertyName());
                 property = new AssignmentProperty(p.getBeginPosition(), p.getEndPosition(),
                         def.getPropertyName(), def.getInitialiser());
             } else {
@@ -3782,7 +3916,7 @@ public class Parser {
         throw reportSyntaxError(lhs, Messages.Key.InvalidDestructuring);
     }
 
-    private void assignmentProperty_StaticSemantics(Identifier identifier) {
+    private void assignmentProperty_EarlyErrors(Identifier identifier) {
         switch (identifier.getName()) {
         case "eval":
         case "arguments":
@@ -3798,16 +3932,15 @@ public class Parser {
      * <pre>
      * ContinueStatement<sub>[yield]</sub> :
      *     continue ;
-     *     continue [no <i>LineTerminator</i> here] IdentifierReference ;
-     *     <sub>[~yield]</sub> continue [no <i>LineTerminator</i> here] yield;
+     *     continue [no <i>LineTerminator</i> here] IdentifierReference<sub>[?yield]</sub> ;
      * </pre>
      */
     private ContinueStatement continueStatement() {
         long begin = ts.beginPosition();
         String label;
         consume(Token.CONTINUE);
-        if (noLineTerminator() && isIdentifier(token())) {
-            label = identifier();
+        if (noLineTerminator() && isIdentifierReference(token())) {
+            label = identifierReference();
         } else {
             label = null;
         }
@@ -3835,16 +3968,15 @@ public class Parser {
      * <pre>
      * BreakStatement<sub>[yield]</sub> :
      *     break ;
-     *     break [no <i>LineTerminator</i> here] IdentifierReference ;
-     *     <sub>[~yield]</sub> break [no <i>LineTerminator</i> here] yield;
+     *     break [no <i>LineTerminator</i> here] IdentifierReference<sub>[?yield]</sub> ;
      * </pre>
      */
     private BreakStatement breakStatement() {
         long begin = ts.beginPosition();
         String label;
         consume(Token.BREAK);
-        if (noLineTerminator() && isIdentifier(token())) {
-            label = identifier();
+        if (noLineTerminator() && isIdentifierReference(token())) {
+            label = identifierReference();
         } else {
             label = null;
         }
@@ -3989,8 +4121,7 @@ public class Parser {
      * 
      * <pre>
      * LabelledStatement<sub>[yield, return]</sub> :
-     *     IdentifierReference : Statement<sub>[?yield, ?return]</sub>
-     *     <sub>[~yield]</sub> yield : Statement<sub>[?return]</sub>
+     *     IdentifierReference<sub>[?yield]</sub> : Statement<sub>[?yield, ?return]</sub>
      * </pre>
      */
     private Statement labelledStatement() {
@@ -4007,18 +4138,24 @@ public class Parser {
             case SWITCH:
                 return switchStatement(labelSet);
             case YIELD:
-                if (!isYieldName()) {
+                if (isYieldName() && LOOKAHEAD(Token.COLON)) {
+                    break;
+                }
+                break labels;
+            case LET:
+                if (isEnabled(Option.LetStatement) || isEnabled(Option.LetExpression)) {
                     break labels;
                 }
                 // fall-through
+            case IMPLEMENTS:
+            case INTERFACE:
+            case PACKAGE:
+            case PRIVATE:
+            case PROTECTED:
+            case PUBLIC:
+            case STATIC:
             case NAME:
                 if (LOOKAHEAD(Token.COLON)) {
-                    long beginLabel = ts.beginPosition();
-                    String name = identifier();
-                    consume(Token.COLON);
-                    if (!labelSet.add(name)) {
-                        reportSyntaxError(beginLabel, Messages.Key.DuplicateLabel, name);
-                    }
                     break;
                 }
             case LC:
@@ -4034,6 +4171,12 @@ public class Parser {
             case DEBUGGER:
             default:
                 break labels;
+            }
+            long beginLabel = ts.beginPosition();
+            String name = identifierReference();
+            consume(Token.COLON);
+            if (!labelSet.add(name)) {
+                reportSyntaxError(beginLabel, Messages.Key.DuplicateLabel, name);
             }
         }
 
@@ -4114,7 +4257,10 @@ public class Parser {
 
                     consume(Token.RP);
 
-                    // catch-block receives a blacklist of forbidden lexical declarable names
+                    // CatchBlock receives a list of non-available lexical declarable names to
+                    // fulfill the early error restriction that the BoundNames of CatchParameter
+                    // must not also occur in either the LexicallyDeclaredNames or the
+                    // VarDeclaredNames of CatchBlock
                     BlockStatement catchBlock = block(singletonList(catchParameter));
 
                     exitBlockContext();
@@ -4139,7 +4285,10 @@ public class Parser {
                 addLexDeclaredName(catchParameter);
                 consume(Token.RP);
 
-                // catch-block receives a blacklist of forbidden lexical declarable names
+                // CatchBlock receives a list of non-available lexical declarable names to
+                // fulfill the early error restriction that the BoundNames of CatchParameter
+                // must not also occur in either the LexicallyDeclaredNames or the
+                // VarDeclaredNames of CatchBlock
                 BlockStatement catchBlock = block(singletonList(catchParameter));
 
                 exitBlockContext();
@@ -4297,7 +4446,7 @@ public class Parser {
                 return letExpression();
             }
         default:
-            String ident = identifier();
+            String ident = identifierReference();
             return new Identifier(begin, ts.endPosition(), ident);
         }
     }
@@ -4372,13 +4521,121 @@ public class Parser {
     private SpreadElement arrowFunctionRestParameter() {
         long begin = ts.beginPosition();
         consume(Token.TRIPLE_DOT);
-        String ident = identifier(); // actually bindingIdentifier(), but we don't care here
+        String ident = identifierReference(); // actually bindingIdentifier()
         Identifier identifier = new Identifier(ts.beginPosition(), ts.endPosition(), ident);
         SpreadElement spread = new SpreadElement(begin, ts.endPosition(), identifier);
         if (!(token() == Token.RP && LOOKAHEAD(Token.ARROW))) {
             reportSyntaxError(spread, Messages.Key.InvalidSpreadExpression);
         }
         return spread;
+    }
+
+    /**
+     * <strong>[12.1.2] Identifier Reference</strong>
+     * 
+     * <pre>
+     * IdentifierReference<sub>[yield]</sub> :
+     *     Identifier
+     *     <sub>[~yield]</sub> yield
+     * </pre>
+     */
+    private String identifierReference() {
+        Token tok = token();
+        if (!isIdentifierReference(tok)) {
+            reportTokenNotIdentifier(tok);
+        }
+        String name = getName(tok);
+        consume(tok);
+        return name;
+    }
+
+    /**
+     * <strong>[12.1.2] Identifier Reference</strong>
+     * 
+     * <pre>
+     * IdentifierReference<sub>[yield]</sub> :
+     *     Identifier
+     *     <sub>[~yield]</sub> yield
+     * </pre>
+     */
+    private String strictIdentifierReference() {
+        Token tok = token();
+        if (!isStrictIdentifierReference(tok)) {
+            reportTokenNotIdentifier(tok);
+        }
+        String name = getName(tok);
+        consume(tok);
+        return name;
+    }
+
+    /**
+     * <strong>[12.1.2] Identifier Reference</strong>
+     */
+    private boolean isIdentifierReference(Token tok) {
+        switch (tok) {
+        case NAME:
+            return true;
+        case YIELD:
+            return isYieldName();
+        case IMPLEMENTS:
+        case INTERFACE:
+        case LET:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
+            if (context.strictMode != StrictMode.NonStrict) {
+                reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
+            }
+            return (context.strictMode != StrictMode.Strict);
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * <strong>[12.1.2] Identifier Reference</strong>
+     */
+    private boolean isStrictIdentifierReference(Token tok) {
+        switch (tok) {
+        case NAME:
+            return true;
+        case YIELD:
+        case IMPLEMENTS:
+        case INTERFACE:
+        case LET:
+        case PACKAGE:
+        case PRIVATE:
+        case PROTECTED:
+        case PUBLIC:
+        case STATIC:
+            throw reportSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
+     * the current context
+     */
+    private boolean isYieldName() {
+        return isYieldName(context);
+    }
+
+    /**
+     * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
+     * the supplied context
+     */
+    private boolean isYieldName(ParseContext context) {
+        // 'yield' is always a keyword in strict-mode and in generators
+        if (context.strictMode == StrictMode.Strict || context.kind == ContextKind.Generator) {
+            return false;
+        }
+        // proactively flag as syntax error if current strict mode is unknown
+        reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(Token.YIELD));
+        return true;
     }
 
     /**
@@ -4537,7 +4794,7 @@ public class Parser {
         long begin = ts.beginPosition();
         consume(Token.FOR);
         consume(Token.LP);
-        Binding b = binding();
+        Binding b = binding(false);
         consume("of");
         Expression expression = assignmentExpression(true);
         consume(Token.RP);
@@ -4778,14 +5035,14 @@ public class Parser {
             return new PropertyValueDefinition(begin, ts.endPosition(), propertyName, propertyValue);
         }
         if (LOOKAHEAD(Token.COMMA) || LOOKAHEAD(Token.RC)) {
-            // Static Semantics: It is a Syntax Error if IdentifierName is a
-            // ReservedWord.
-            String ident = identifier();
+            // TODO: investigate why spec does not use "IdentifierReference[?yield]"
+            String ident = identifierReference();
             Identifier identifier = new Identifier(begin, ts.endPosition(), ident);
             return new PropertyNameDefinition(begin, ts.endPosition(), identifier);
         }
         if (LOOKAHEAD(Token.ASSIGN)) {
-            String ident = identifier();
+            // TODO: investigate why spec does not use "IdentifierReference[?yield]"
+            String ident = identifierReference();
             Identifier identifier = new Identifier(begin, ts.endPosition(), ident);
             consume(Token.ASSIGN);
             Expression initialiser = assignmentExpression(true);
@@ -4910,12 +5167,15 @@ public class Parser {
     private Expression regularExpressionLiteral(Token tok) {
         long begin = ts.beginPosition();
         String[] re = ts.readRegularExpression(tok);
-        regularExpressionLiteral_StaticSemantics(begin, re[0], re[1]);
+        regularExpressionLiteral_EarlyErrors(begin, re[0], re[1]);
         consume(tok);
         return new RegularExpressionLiteral(begin, ts.endPosition(), re[0], re[1]);
     }
 
-    private void regularExpressionLiteral_StaticSemantics(long sourcePos, String p, String f) {
+    /**
+     * 12.1.8.1 Static Semantics: Early Errors
+     */
+    private void regularExpressionLiteral_EarlyErrors(long sourcePos, String p, String f) {
         // parse to validate regular expression, but ignore actual result
         RegExpParser.parse(p, f, sourceFile, toLine(sourcePos), toColumn(sourcePos));
     }
@@ -5592,25 +5852,11 @@ public class Parser {
     }
 
     /**
-     * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
-     * the current context
+     * Returns {@code true} if the current and the next token are not separated from each other by a
+     * line-terminator
      */
-    private boolean isYieldName() {
-        return isYieldName(context);
-    }
-
-    /**
-     * Returns <code>true</code> if {@link Token#YIELD} should be treated as {@link Token#NAME} in
-     * the supplied context
-     */
-    private boolean isYieldName(ParseContext context) {
-        // 'yield' is always a keyword in strict-mode and in generators
-        if (context.strictMode == StrictMode.Strict || context.kind == ContextKind.Generator) {
-            return false;
-        }
-        // proactively flag as syntax error if current strict mode is unknown
-        reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(Token.YIELD));
-        return true;
+    private boolean noNextLineTerminator() {
+        return !ts.hasNextLineTerminator();
     }
 
     /**
@@ -5633,103 +5879,11 @@ public class Parser {
 
     /**
      * <strong>[11.6] Identifier Names and Identifiers</strong>
-     * 
-     * <pre>
-     * Identifier ::
-     *     IdentifierName but not ReservedWord
-     * ReservedWord ::
-     *     Keyword
-     *     FutureReservedWord
-     *     NullLiteral
-     *     BooleanLiteral
-     * </pre>
-     */
-    private String identifier() {
-        Token tok = token();
-        if (!isIdentifier(tok)) {
-            reportTokenMismatch("<identifier>", tok);
-        }
-        String name = getName(tok);
-        consume(tok);
-        return name;
-    }
-
-    /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
-     * 
-     * <pre>
-     * Identifier ::
-     *     IdentifierName but not ReservedWord
-     * ReservedWord ::
-     *     Keyword
-     *     FutureReservedWord
-     *     NullLiteral
-     *     BooleanLiteral
-     * </pre>
-     */
-    private String strictIdentifier() {
-        Token tok = token();
-        if (!isStrictIdentifier(tok)) {
-            reportTokenMismatch("<identifier>", tok);
-        }
-        String name = getName(tok);
-        consume(tok);
-        return name;
-    }
-
-    /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
-     */
-    private boolean isIdentifier(Token tok) {
-        switch (tok) {
-        case NAME:
-            return true;
-        case YIELD:
-            return isYieldName();
-        case IMPLEMENTS:
-        case INTERFACE:
-        case PACKAGE:
-        case PRIVATE:
-        case PROTECTED:
-        case PUBLIC:
-        case STATIC:
-            if (context.strictMode != StrictMode.NonStrict) {
-                reportStrictModeSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
-            }
-            return (context.strictMode != StrictMode.Strict);
-        default:
-            return false;
-        }
-    }
-
-    /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
-     */
-    private boolean isStrictIdentifier(Token tok) {
-        switch (tok) {
-        case NAME:
-            return true;
-        case YIELD:
-        case IMPLEMENTS:
-        case INTERFACE:
-        case PACKAGE:
-        case PRIVATE:
-        case PROTECTED:
-        case PUBLIC:
-        case STATIC:
-            throw reportSyntaxError(Messages.Key.StrictModeInvalidIdentifier, getName(tok));
-        default:
-            return false;
-        }
-    }
-
-    /**
-     * <strong>[11.6] Identifier Names and Identifiers</strong>
      */
     private String identifierName() {
         Token tok = token();
         if (!isIdentifierName(tok)) {
-            reportTokenMismatch("<identifier-name>", tok);
+            reportTokenNotIdentifierName(tok);
         }
         String name = getName(tok);
         consume(tok);
@@ -5759,6 +5913,7 @@ public class Parser {
         case DO:
         case ELSE:
         case EXPORT:
+        case EXTENDS:
         case FINALLY:
         case FOR:
         case FUNCTION:
@@ -5766,7 +5921,6 @@ public class Parser {
         case IMPORT:
         case IN:
         case INSTANCEOF:
-        case LET:
         case NEW:
         case RETURN:
         case SUPER:
@@ -5779,17 +5933,17 @@ public class Parser {
         case VOID:
         case WHILE:
         case WITH:
+        case YIELD:
             // Future Reserved Words
         case ENUM:
-        case EXTENDS:
         case IMPLEMENTS:
         case INTERFACE:
+        case LET:
         case PACKAGE:
         case PRIVATE:
         case PROTECTED:
         case PUBLIC:
         case STATIC:
-        case YIELD:
             return true;
         default:
             return false;
@@ -5829,6 +5983,7 @@ public class Parser {
         case DO:
         case ELSE:
         case EXPORT:
+        case EXTENDS:
         case FINALLY:
         case FOR:
         case FUNCTION:
@@ -5836,7 +5991,6 @@ public class Parser {
         case IMPORT:
         case IN:
         case INSTANCEOF:
-        case LET:
         case NEW:
         case RETURN:
         case SUPER:
@@ -5850,6 +6004,8 @@ public class Parser {
         case WHILE:
         case WITH:
             return true;
+        case YIELD:
+            return (context.strictMode == StrictMode.Strict);
         default:
             return false;
         }
@@ -5862,17 +6018,16 @@ public class Parser {
         assert context.strictMode != StrictMode.Unknown : "unknown strict-mode";
         switch (tok) {
         case ENUM:
-        case EXTENDS:
             return true;
         case IMPLEMENTS:
         case INTERFACE:
+        case LET:
         case PACKAGE:
         case PRIVATE:
         case PROTECTED:
         case PUBLIC:
         case STATIC:
-        case YIELD:
-            return (context.strictMode != StrictMode.Strict);
+            return (context.strictMode == StrictMode.Strict);
         default:
             return false;
         }

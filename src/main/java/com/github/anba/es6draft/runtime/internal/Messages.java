@@ -78,7 +78,7 @@ public final class Messages {
         MissingColonAfterPropertyId("parser.missing_colon_after_property_id"),
         DuplicatePropertyDefinition("parser.duplicate_property_definition"),
         InvalidReturnStatement("parser.invalid_return_statement"),
-        InvalidYieldStatement("parser.invalid_yield_statement"),
+        InvalidYieldExpression("parser.invalid_yield_expression"),
         DuplicateLabel("parser.duplicate_label"),
         LabelTargetNotFound("parser.label_target_not_found"),
         InvalidBreakTarget("parser.invalid_break_target"),
