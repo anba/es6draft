@@ -90,8 +90,17 @@ feature/Scope/LetForInInitializers1.js
 feature/Destructuring/ArrowFunction.js
 feature/Destructuring/Catch.js
 feature/Destructuring/Class.js
+feature/Destructuring/ForInLoop.js
+feature/Destructuring/ForOfLoop.js
 feature/Destructuring/Method.js
 feature/Destructuring/SetAccessor.js
+
+# Array destructuring without @@iterator
+feature/Destructuring/Rest.js
+
+# ... spread call without @@iterator, no implicit ToObject
+feature/Spread/Type.js
+feature/TempVarTransformer/UseStrictDirective.js
 
 
 #######################################
@@ -100,7 +109,11 @@ feature/Destructuring/SetAccessor.js
 
 # module syntax
 feature/ComputedPropertyNames/PrivateName.js
+feature/Syntax/Error_WithInModule.module.js
 feature/TemplateLiterals/InModule.js
+feature/TemplateLiterals/resources/f.js
+feature/TemplateLiterals/resources/m.js
+feature/TemplateLiterals/resources/n.js
 feature/Yield/Tree.js
 feature/Yield/TreeUsingPrivateNameSyntax.js
 

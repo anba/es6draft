@@ -6,11 +6,6 @@
 #
 
 
-# Pending update: https://bugs.ecmascript.org/show_bug.cgi?id=1113
-tests/basic/spread-call-eval.js
-tests/basic/spread-call-funapply.js
-tests/basic/spread-call-not-iterable.js
-
 # invalid test, missing TypeError in SpiderMonkey
 tests/proxy/bug897403.js
 
@@ -100,9 +95,6 @@ tests/basic/testArrayComp2.js
 tests/basic/testBrandedVsGeneric.js
 tests/basic/testCustomIterator.js
 
-# Array spread works with iterables in SM
-tests/collections/Set-values-2.js
-
 # emulated ArrayIterator.prototype.next does not work cross-global
 tests/for-of/next-3.js
 
@@ -160,6 +152,9 @@ tests/self-hosting/invoke-self-hosted-with-primitive-this.js
 
 # Different Parser strategy
 tests/basic/bug862228.js
+
+# eval() and Function() set parser line relative to current source line
+tests/basic/spread-call-eval.js
 
 # Different realm change on function calls
 tests/collections/bug-743101.js
@@ -332,6 +327,11 @@ tests/collections/Map-constructor-3.js
 # No implicit ToObject() in destructuring
 tests/basic/bug685321-1.js
 tests/basic/bug685321-2.js
+tests/arguments/destructuring-exprbody.js
+tests/basic/testBug714650.js
+
+# contextual .name property for functions
+tests/self-test/assertDeepEq.js
 
 
 #######################################

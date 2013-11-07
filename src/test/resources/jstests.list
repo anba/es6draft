@@ -324,11 +324,24 @@ ecma/String/15.5.4.11-1.js
 ecma_5/Object/15.2.3.6-function-length.js
 ecma_5/strict/15.3.5.1.js
 
+# function .name property is configurable=true
+ecma_5/strict/function-name.js
+
 # Missing properties in destructuring throw TypeError
 js1_7/geniter/regress-345736.js
 
 # No implicit ToObject() in destructuring
 js1_5/extensions/regress-469625.js
+js1_7/extensions/regress-355410.js
+js1_8_1/extensions/regress-477158.js
+
+# array destructuring on object without @@iterator
+js1_7/extensions/regress-351102-03.js
+js1_8_5/regress/regress-646820-3.js
+
+# String.prototype.split changed to use ToLength instead of ToUint32
+ecma_2/String/split-002.js
+ecma_5/String/split-undefined-separator.js
 
 
 #######################################
@@ -649,6 +662,7 @@ js1_5/Regress/regress-280769-2.js
 js1_5/Regress/regress-280769-4.js
 js1_5/Regress/regress-280769-5.js
 js1_5/Regress/regress-312588.js
+js1_8_5/regress/no-array-comprehension-length-limit.js
 
 # Timeout
 ecma_5/Array/unshift-01.js

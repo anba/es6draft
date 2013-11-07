@@ -207,6 +207,13 @@ regress/regress-1530.js
 array-indexing.js
 array-length.js
 
+# String.prototype.split changed to call ToLength instead of ToUint32 on limit argument
+string-split.js
+
+# String.prototype.{ends,starts}With throws TypeError when argument is RegExp
+harmony/string-endswith.js
+harmony/string-startswith.js
+
 
 #######################################
 # ES6 related syntax changes          #
@@ -220,9 +227,6 @@ throw-and-catch-function.js
 
 # function declaration not in block
 regress/regress-220.js
-
-# 'yield' is now a proper keyword
-keywords-and-reserved_words.js
 
 # temp dead zone const, const redeclarations etc.
 const-declaration.js
@@ -277,9 +281,6 @@ limit-locals.js
 # too many arguments
 regress/regress-1122.js
 
-# StackOverflow: recursion in RegExp parser
-regress/regress-1129.js
-
 # Timeout
 array-concat.js
 array-functions-prototype-misc.js
@@ -301,7 +302,6 @@ regress/regress-1200351.js
 regress/regress-581.js
 regress/regress-634.js
 regress/regress-685.js
-regress/regress-crbug-84186.js
 regress/regress-deep-proto.js
 sparse-array-reverse.js
 compiler/expression-trees.js

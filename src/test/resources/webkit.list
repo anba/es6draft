@@ -170,9 +170,6 @@ for-in-cached.js
 object-literal-direct-put.js
 object-literal-syntax.js
 
-# 'let' and 'yield' are now proper keywords
-keywords-and-reserved_words.js
-
 # function declaration are block scoped
 fast/js/kde/func-decl.js
 
