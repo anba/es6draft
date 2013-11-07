@@ -305,8 +305,8 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static final <T> T uncheckedCast(Object o) {
-        return (T) o;
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static final Variable<Iterator<?>> uncheckedCast(Variable<Iterator> o) {
+        return (Variable<Iterator<?>>) (Variable<?>) o;
     }
 }

@@ -87,9 +87,9 @@ class DestructuringAssignmentGenerator {
         mv.invoke(Methods.Reference_PutValue);
     }
 
-    @SuppressWarnings("unchecked")
-    private static final <T> T uncheckedCast(Object o) {
-        return (T) o;
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static final Variable<Iterator<?>> uncheckedCast(Variable<Iterator> o) {
+        return (Variable<Iterator<?>>) (Variable<?>) o;
     }
 
     private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {

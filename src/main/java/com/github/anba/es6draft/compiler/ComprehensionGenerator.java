@@ -75,11 +75,15 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
     private Iterator<Node> elements;
 
-    @SuppressWarnings("rawtypes")
-    private Iterator<Variable<Iterator>> iterators;
+    private Iterator<Variable<Iterator<?>>> iterators;
 
     ComprehensionGenerator(CodeGenerator codegen) {
         super(codegen);
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static final Variable<Iterator<?>> uncheckedCast(Variable<Iterator> o) {
+        return (Variable<Iterator<?>>) (Variable<?>) o;
     }
 
     @Override
@@ -106,11 +110,10 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         elements = list.iterator();
 
         // create variables early for the sake of generating useful local variable maps
-        @SuppressWarnings("rawtypes")
-        List<Variable<Iterator>> iters = new ArrayList<>();
+        List<Variable<Iterator<?>>> iters = new ArrayList<>();
         for (Node e : list) {
             if (e instanceof ComprehensionFor || e instanceof LegacyComprehensionFor) {
-                iters.add(mv.newVariable("iter", Iterator.class));
+                iters.add(uncheckedCast(mv.newVariable("iter", Iterator.class)));
             }
         }
         iterators = iters.iterator();
@@ -194,8 +197,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_iterate);
 
-        @SuppressWarnings("rawtypes")
-        Variable<Iterator> iter = iterators.next();
+        Variable<Iterator<?>> iter = iterators.next();
         mv.store(iter);
 
         mv.mark(lblContinue);
@@ -291,8 +293,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
             mv.invoke(Methods.ScriptRuntime_iterate);
         }
 
-        @SuppressWarnings("rawtypes")
-        Variable<Iterator> iter = iterators.next();
+        Variable<Iterator<?>> iter = iterators.next();
         mv.store(iter);
 
         mv.mark(lblContinue);
