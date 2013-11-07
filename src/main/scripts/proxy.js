@@ -25,6 +25,17 @@ const iteratorSym = Symbol.iterator;
 // pseudo-symbol in SpiderMonkey
 const mozIteratorSym = "@@iterator";
 
+function toArrayIterator(obj) {
+  if (obj == null) throw TypeError();
+  obj = Object(obj);
+  var length = obj.length >>> 0;
+  var result = [];
+  for (var i = 0; i < length; ++i) {
+    result[i] = obj[i];
+  }
+  return result[iteratorSym]();
+}
+
 function toProxyHandler(handler) {
   var TypeErrorThrower = () => { throw TypeError() };
   /* fundamental traps mapping:
@@ -50,7 +61,7 @@ function toProxyHandler(handler) {
     proxyHandler['getOwnPropertyDescriptor'] = (_, pk) => handler['getPropertyDescriptor'](pk);
   }
   if ('getOwnPropertyNames' in handler) {
-    proxyHandler['ownKeys'] = () => [...handler['getOwnPropertyNames']()][iteratorSym]();
+    proxyHandler['ownKeys'] = () => toArrayIterator(handler['getOwnPropertyNames']());
   }
   if ('defineProperty' in handler) {
     proxyHandler['defineProperty'] = (_, pk, desc) => (handler['defineProperty'](pk, desc), true);
@@ -116,7 +127,7 @@ function toProxyHandler(handler) {
     };
   }
   if ('enumerate' in handler) {
-    proxyHandler['enumerate'] = () => [...handler['enumerate']()][iteratorSym]();
+    proxyHandler['enumerate'] = () => toArrayIterator(handler['enumerate']());
   } else if ('iterate' in handler) {
     proxyHandler['enumerate'] = () => handler['iterate']()[iteratorSym]();
   } else {
@@ -125,7 +136,7 @@ function toProxyHandler(handler) {
     )[iteratorSym]();
   }
   if ('keys' in handler) {
-    proxyHandler['ownKeys'] = () => [...handler['keys']()][iteratorSym]();
+    proxyHandler['ownKeys'] = () => toArrayIterator(handler['keys']());
   }
   proxyHandler['invoke'] = (_, pk, args, receiver) => $CallFunction(proxyHandler['get'](_, pk, receiver), receiver, ...args);
   return proxyHandler;
