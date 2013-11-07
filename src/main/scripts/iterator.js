@@ -312,17 +312,23 @@ function MakeBuiltinIterator(ctor) {
     [mozIteratorSym]() {
       return new BuiltinIterator(this, Array_prototype_values);
     },
+    keys() {
+      return new BuiltinIterator(this, Array_prototype_keys);
+    },
+    entries() {
+      return new BuiltinIterator(this, Array_prototype_entries);
+    },
   }), {
     [mozIteratorSym]: {enumerable: false},
+    keys: {enumerable: false},
+    entries: {enumerable: false},
   });
 
   // delete original Array.prototype[@@iterator]
   delete Array.prototype[iteratorSym];
 
-  // keys, values and entries currently disabled in SpiderMonkey :(
-  delete Array.prototype.keys;
+  // values currently disabled in SpiderMonkey :(
   delete Array.prototype.values;
-  delete Array.prototype.entries;
 }
 
 // make TypedArrays iterable
@@ -394,11 +400,7 @@ function MakeBuiltinIterator(ctor) {
       }
       Object_defineProperty(this, isMapSym, {__proto__: null, value: true, configurable: false});
       if (iterable !== undefined) {
-        if ("entries" in iterable) {
-          iterable = iterable.entries();
-        } else {
-          iterable = iterable[mozIteratorSym]();
-        }
+        iterable = iterable[mozIteratorSym]();
       }
       return super(iterable, comparator);
     }
