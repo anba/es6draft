@@ -169,7 +169,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         /**
          * 23.2.5.2.3 %SetIteratorPrototype% [ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Set Iterator";
     }
 }

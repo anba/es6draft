@@ -538,8 +538,8 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 21.2.5.15 RegExp.prototype.@@isRegExp
          */
-        @Value(name = "@@isRegExp", symbol = BuiltinSymbol.isRegExp, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = true))
+        @Value(name = "[Symbol.isRegExp]", symbol = BuiltinSymbol.isRegExp,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final boolean isRegExp = true;
 
     }

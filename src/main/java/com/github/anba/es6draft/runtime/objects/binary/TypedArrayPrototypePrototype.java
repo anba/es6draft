@@ -710,7 +710,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         /**
          * 22.2.3.31 %TypedArray%.prototype [ @@iterator ] ( )
          */
-        @Value(name = "@@iterator", symbol = BuiltinSymbol.iterator)
+        @Value(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object iterator(ExecutionContext cx) {
             // same as %TypedArray%.prototype.values
             return Get(cx, cx.getIntrinsic(Intrinsics.ArrayPrototype), "values");

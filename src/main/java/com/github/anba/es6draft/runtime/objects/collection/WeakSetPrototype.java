@@ -138,7 +138,7 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 23.4.3.6 WeakSet.prototype[ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "WeakSet";
     }

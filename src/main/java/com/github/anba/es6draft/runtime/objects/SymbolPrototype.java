@@ -101,7 +101,7 @@ public class SymbolPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 19.4.3.5 Symbol.prototype [ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Symbol";
     }

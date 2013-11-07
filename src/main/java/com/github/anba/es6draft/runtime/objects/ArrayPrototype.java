@@ -1331,7 +1331,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
          * 22.1.3.30 Array.prototype [ @@iterator ] ( )
          */
         @Function(name = "values", arity = 0)
-        @AliasFunction(name = "@@iterator", symbol = BuiltinSymbol.iterator)
+        @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object values(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
             ScriptObject o = ToObject(cx, thisValue);
@@ -1342,7 +1342,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 22.1.3.31 Array.prototype [ @@unscopables ]
          */
-        @Value(name = "@@unscopables", symbol = BuiltinSymbol.unscopables,
+        @Value(name = "[Symbol.unscopables]", symbol = BuiltinSymbol.unscopables,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object unscopables(ExecutionContext cx) {
             /* step 1 */

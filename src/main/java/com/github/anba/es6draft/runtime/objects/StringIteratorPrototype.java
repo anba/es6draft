@@ -140,7 +140,7 @@ public class StringIteratorPrototype extends OrdinaryObject implements Initialis
         /**
          * 21.1.5.2.3 %StringIteratorPrototype% [@@toStringTag]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "String Iterator";
     }
 }

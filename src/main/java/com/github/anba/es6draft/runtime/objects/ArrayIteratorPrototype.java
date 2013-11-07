@@ -177,7 +177,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
         /**
          * 22.1.5.2.3 %ArrayIteratorPrototype% [ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Array Iterator";
     }
 }

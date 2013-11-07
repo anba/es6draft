@@ -108,7 +108,7 @@ public class MathObject extends OrdinaryObject implements Initialisable {
         /**
          * 20.2.1.9 Math[ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Math";
     }

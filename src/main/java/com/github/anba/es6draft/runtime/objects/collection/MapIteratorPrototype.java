@@ -175,7 +175,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         /**
          * 23.1.5.2.3 %MapIteratorPrototype% [ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Map Iterator";
     }
 }

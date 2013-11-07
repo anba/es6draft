@@ -133,7 +133,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
         /**
          * 24.1.4.4 ArrayBuffer.prototype.@@toStringTag
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "ArrayBuffer";
     }
 }

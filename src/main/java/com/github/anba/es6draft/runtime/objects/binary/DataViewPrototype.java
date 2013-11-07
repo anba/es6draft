@@ -243,7 +243,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 24.2.4.21 DataView.prototype[ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "DataView";
     }
 }

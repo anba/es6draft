@@ -87,7 +87,7 @@ public class GeneratorPrototype extends OrdinaryObject implements Initialisable 
         /**
          * 25.3.1.5 Generator.prototype [ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Generator";
     }

@@ -167,7 +167,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
         /**
          * 24.3.3 JSON [ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "JSON";
     }

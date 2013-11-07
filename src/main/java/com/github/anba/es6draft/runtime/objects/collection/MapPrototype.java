@@ -161,7 +161,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
          * 23.1.3.12 Map.prototype[ @@iterator ] ( )
          */
         @Function(name = "entries", arity = 0)
-        @AliasFunction(name = "@@iterator", symbol = BuiltinSymbol.iterator)
+        @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object entries(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
             MapObject m = thisMapValue(cx, thisValue);
@@ -222,7 +222,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 23.1.3.13 Map.prototype[ @@toStringTag ]
          */
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag,
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static final String toStringTag = "Map";
     }

@@ -78,7 +78,7 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
                 configurable = true))
         public static final String name = "Proxy";
 
-        @Value(name = "@@toStringTag", symbol = BuiltinSymbol.toStringTag)
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Proxy";
 
         /**
