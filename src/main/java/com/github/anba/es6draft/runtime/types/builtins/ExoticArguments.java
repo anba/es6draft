@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
 import java.util.Arrays;
@@ -238,16 +237,6 @@ public class ExoticArguments extends OrdinaryObject {
             // this object is effectively unmodifiable
             return true;
         }
-    }
-
-    /**
-     * Temporary helper method to work around bug 1866, called from generated code
-     */
-    public Object getArgument(ExecutionContext cx, String propertyKey) {
-        if (hasOwnProperty(cx, propertyKey)) {
-            return get(cx, propertyKey, this);
-        }
-        return UNDEFINED;
     }
 
     /**
