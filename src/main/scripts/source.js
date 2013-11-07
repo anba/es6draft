@@ -49,7 +49,21 @@ function Quote(s, qc = '"') {
   return qc + r + qc;
 }
 
+const startsWithParens = /^\s*\(/;
+const anonymousFunction = /^\s*function\s*\*?\s*\(/;
 const ASCII_Ident = /^[_$a-zA-Z][_$a-zA-Z0-9]*$/;
+
+function IsAnonymousFunction(source) {
+  // comments betwenn "function" and "(" are not handled
+  return anonymousFunction.test(source);
+}
+
+function UnwrapAndRemoveName(source) {
+  if (startsWithParens.test(source)) {
+    source = source.substring(source.indexOf('(') + 1, source.lastIndexOf(')'));
+  }
+  return source.substring(source.indexOf('('));
+}
 
 function IsInt32(name) {
   return ((name | 0) >= 0 && (name | 0) <= 0x7fffffff && (name | 0) + "" == name);
@@ -72,7 +86,7 @@ function ToSource(o) {
     case 'string':
       return Quote(o);
     case 'symbol':
-      return String(Object(o));
+      return Object(o).toString();
     case 'function':
     case 'object':
       if (o !== null) {
@@ -103,16 +117,14 @@ function ObjectToSource(o) {
       if (desc == null) {
         // ignore removed properties
       } else if ('value' in desc) {
-        s += ToPropertyName(name) + ":" + ToSource(desc.value);
+        s += `${ToPropertyName(name)}:${ToSource(desc.value)}`
       } else {
         if (desc.get !== void 0) {
-          var fsrc = ToSource(desc.get);
-          s += "get " + ToPropertyName(name) + fsrc.substr(fsrc.indexOf('('));
+          s += `get ${ToPropertyName(name)} ${UnwrapAndRemoveName(ToSource(desc.get))}`;
           if (desc.set !== void 0) s += ", ";
         }
         if (desc.set !== void 0) {
-          var fsrc = ToSource(desc.set);
-          s += "set " + ToPropertyName(name) + fsrc.substr(fsrc.indexOf('('));
+          s += `set ${ToPropertyName(name)} ${UnwrapAndRemoveName(ToSource(desc.set))}`;
         }
       }
       if (i + 1 < len) s += ", ";
@@ -169,10 +181,11 @@ Object.defineProperty(Object.assign(Function.prototype, {
     if (typeof this != 'function') {
       return ObjectToSource(this);
     }
-    if (this.name == "") {
-      return "(" + Function.prototype.toString.call(this) + ")";
+    var source = Function.prototype.toString.call(this);
+    if (IsAnonymousFunction(source)) {
+      return "(" + source + ")";
     }
-    return Function.prototype.toString.call(this);
+    return source;
   }
 }), "toSource", {enumerable: false});
 
