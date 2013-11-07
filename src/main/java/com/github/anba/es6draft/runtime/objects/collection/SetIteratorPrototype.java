@@ -96,6 +96,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         /* steps 6-8 */
         iterator.set = set;
         iterator.nextIndex = 0;
+        iterator.iterationKind = kind;
         iterator.iterator = entries.iterator();
         /* step 9 */
         return iterator;
