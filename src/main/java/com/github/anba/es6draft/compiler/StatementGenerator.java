@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
-import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
-import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
-import static com.github.anba.es6draft.semantics.StaticSemantics.TailCallNodes;
+import static com.github.anba.es6draft.semantics.StaticSemantics.*;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -206,6 +203,8 @@ class StatementGenerator extends
     @Override
     public Completion visit(ClassDeclaration node, StatementVisitor mv) {
         ClassDefinitionEvaluation(node, null, mv);
+
+        SetFunctionName(node, node.getName().getName(), mv);
 
         // stack: [envRec, value] -> []
         getEnvironmentRecord(mv);
@@ -734,7 +733,7 @@ class StatementGenerator extends
     }
 
     /**
-     * 13.2.1.5 Runtime Semantics: Evaluation
+     * 13.2.1.6 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(LexicalBinding node, StatementVisitor mv) {
@@ -745,6 +744,9 @@ class StatementGenerator extends
             if (binding instanceof BindingPattern && type != ValType.Object) {
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
+            }
+            if (binding instanceof BindingIdentifier && IsAnonymousFunctionDefinition(initialiser)) {
+                SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
             }
         } else {
             assert binding instanceof BindingIdentifier;
@@ -1264,6 +1266,9 @@ class StatementGenerator extends
             if (binding instanceof BindingPattern && type != ValType.Object) {
                 mv.loadExecutionContext();
                 mv.invoke(Methods.ScriptRuntime_ensureObject);
+            }
+            if (binding instanceof BindingIdentifier && IsAnonymousFunctionDefinition(initialiser)) {
+                SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
             }
             BindingInitialisation(binding, mv);
         } else {

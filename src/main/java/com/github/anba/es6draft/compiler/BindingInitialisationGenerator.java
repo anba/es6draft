@@ -6,8 +6,10 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.SetFunctionName;
 import static com.github.anba.es6draft.compiler.DefaultCodeGenerator.ToPropertyKey;
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import java.util.Iterator;
@@ -349,6 +351,9 @@ class BindingInitialisationGenerator {
             Expression initialiser = node.getInitialiser();
 
             if (binding instanceof BindingIdentifier) {
+                // BindingElement : SingleNameBinding
+                // SingleNameBinding : BindingIdentifier Initialiser{opt}
+
                 // steps 1-4
                 mv.load(iterator);
                 mv.invoke(Methods.ScriptRuntime_iteratorNextOrUndefined);
@@ -363,7 +368,10 @@ class BindingInitialisationGenerator {
                     {
                         mv.pop();
                         expressionBoxedValue(initialiser, mv);
-                        // FIXME: call SetFunctionName()
+                        if (IsAnonymousFunctionDefinition(initialiser)) {
+                            SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(),
+                                    mv);
+                        }
                     }
                     mv.mark(undef);
                 }
@@ -372,6 +380,7 @@ class BindingInitialisationGenerator {
                 // stack: [(env), v'] -> []
                 BindingInitialisation(binding);
             } else {
+                // BindingElement : BindingPattern Initialiser{opt}
                 assert binding instanceof BindingPattern;
 
                 // steps 1-4
@@ -454,8 +463,9 @@ class BindingInitialisationGenerator {
                 {
                     mv.pop();
                     expressionBoxedValue(initialiser, mv);
-                    if (!(binding instanceof BindingPattern)) {
-                        // FIXME: call SetFunctionName()
+                    if (binding instanceof BindingIdentifier
+                            && IsAnonymousFunctionDefinition(initialiser)) {
+                        SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
                     }
                 }
                 mv.mark(undef);
@@ -515,8 +525,9 @@ class BindingInitialisationGenerator {
                 {
                     mv.pop();
                     expressionBoxedValue(initialiser, mv);
-                    if (!(binding instanceof BindingPattern)) {
-                        // FIXME: call SetFunctionName()
+                    if (binding instanceof BindingIdentifier
+                            && IsAnonymousFunctionDefinition(initialiser)) {
+                        SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
                     }
                 }
                 mv.mark(undef);

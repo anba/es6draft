@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import org.objectweb.asm.Type;
@@ -28,7 +29,8 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * 14.3.7 Runtime Semantics: PropertyDefinitionEvaluation<br>
  * 14.4.11 Runtime Semantics: PropertyDefinitionEvaluation
  */
-class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
+class PropertyGenerator extends
+        DefaultCodeGenerator<DefaultCodeGenerator.ValType, ExpressionVisitor> {
     private static class Methods {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_EvaluatePropertyDefinition = MethodDesc.create(
@@ -92,7 +94,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
     }
 
     @Override
-    protected Void visit(Node node, ExpressionVisitor mv) {
+    protected ValType visit(Node node, ExpressionVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
@@ -102,15 +104,15 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
      * ComputedPropertyName : [ AssignmentExpression ]
      */
     @Override
-    public Void visit(ComputedPropertyName node, ExpressionVisitor mv) {
+    public ValType visit(ComputedPropertyName node, ExpressionVisitor mv) {
         ValType type = expressionValue(node.getExpression(), mv);
         ToPropertyKey(type, mv);
 
-        return null;
+        return type != ValType.Any ? ValType.String : ValType.Any;
     }
 
     @Override
-    public Void visit(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
+    public ValType visit(PropertyDefinitionsMethod node, ExpressionVisitor mv) {
         codegen.compile(node, mv);
 
         // stack: [<object>] -> [cx, <object>]
@@ -129,7 +131,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
      * 14.4.11 Runtime Semantics: PropertyDefinitionEvaluation
      */
     @Override
-    public Void visit(MethodDefinition node, ExpressionVisitor mv) {
+    public ValType visit(MethodDefinition node, ExpressionVisitor mv) {
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> MethodDefinition
@@ -195,7 +197,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
      * PropertyDefinition : IdentifierName
      */
     @Override
-    public Void visit(PropertyNameDefinition node, ExpressionVisitor mv) {
+    public ValType visit(PropertyNameDefinition node, ExpressionVisitor mv) {
         Identifier propertyName = node.getPropertyName();
         String propName = PropName(propertyName);
         assert propName != null;
@@ -214,7 +216,7 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
      * PropertyDefinition : PropertyName : AssignmentExpression
      */
     @Override
-    public Void visit(PropertyValueDefinition node, ExpressionVisitor mv) {
+    public ValType visit(PropertyValueDefinition node, ExpressionVisitor mv) {
         // Runtime Semantics: Evaluation -> Property Definition Evaluation
         // stack: [<object>]
 
@@ -224,20 +226,27 @@ class PropertyGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
         String propName = PropName(propertyName);
         if (propName == null) {
             assert propertyName instanceof ComputedPropertyName;
-            propertyName.accept(this, mv);
+            ValType type = propertyName.accept(this, mv);
 
             // stack: [<object>, pk]
             expressionBoxedValue(propertyValue, mv);
             // stack: [<object>, pk, value]
+            if (IsAnonymousFunctionDefinition(propertyValue)) {
+                SetFunctionName(propertyValue, type, mv);
+            }
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty);
         } else if ("__proto__".equals(propName)) {
             expressionBoxedValue(propertyValue, mv);
+            // TODO: SetFunctionName() ?
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else {
             mv.aconst(propName);
             expressionBoxedValue(propertyValue, mv);
+            if (IsAnonymousFunctionDefinition(propertyValue)) {
+                SetFunctionName(propertyValue, propName, mv);
+            }
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty_String);
         }

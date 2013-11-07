@@ -7,6 +7,8 @@
 package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsIdentifierRef;
 import static com.github.anba.es6draft.semantics.StaticSemantics.Substitutions;
 
 import java.util.ArrayList;
@@ -1031,6 +1033,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 ValType ltype = left.accept(this, mv);
                 ValType rtype = evalAndGetValue(right, mv);
 
+                if (IsAnonymousFunctionDefinition(right) && IsIdentifierRef(left)) {
+                    SetFunctionName(right, ((Identifier) left).getName(), mv);
+                }
+
                 // lref rval
                 mv.dupX(ltype, rtype);
                 mv.toBoxed(rtype);
@@ -1772,6 +1778,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     public ValType visit(ClassExpression node, ExpressionVisitor mv) {
         String className = (node.getName() != null ? node.getName().getName() : null);
         ClassDefinitionEvaluation(node, className, mv);
+
+        if (node.getName() != null) {
+            SetFunctionName(node, node.getName().getName(), mv);
+        }
 
         return ValType.Object;
     }

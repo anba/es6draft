@@ -19,6 +19,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.In
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 import static java.util.Arrays.asList;
@@ -1184,6 +1185,8 @@ public final class ScriptRuntime {
             ExecutionContext cx, RuntimeInfo.Function fd) {
         /* steps 1-2 */
         OrdinaryFunction f = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        // TODO: missing in spec
+        SetFunctionName(cx, f, fd.functionName());
         /* step 3 */
         MakeConstructor(cx, f);
         /* step 4 */
@@ -1208,6 +1211,10 @@ public final class ScriptRuntime {
             envRec.createImmutableBinding(fd.functionName());
         }
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        // TODO: missing in spec
+        if (!fd.functionName().isEmpty()) {
+            SetFunctionName(cx, closure, fd.functionName());
+        }
         MakeConstructor(cx, closure);
         if (fd.hasScopedName()) {
             scope.getEnvRec().initialiseBinding(fd.functionName(), closure);
@@ -1233,13 +1240,13 @@ public final class ScriptRuntime {
     /**
      * 14.3 Method Definitions, 14.5 Class Definitions
      * <p>
-     * Runtime Semantics: Property Definition Evaluation<br>
-     * Runtime Semantics: ClassDefinitionEvaluation
+     * 14.3.8 Runtime Semantics: DefineMethod<br>
+     * 14.5.15 Runtime Semantics: ClassDefinitionEvaluation
      */
     public static OrdinaryFunction EvaluateConstructorMethod(ScriptObject constructorParent,
             ScriptObject proto, RuntimeInfo.Function fd, ExecutionContext cx) {
-        // ClassDefinitionEvaluation - step 9
-        // ... Property Definition Evaluation
+        // ClassDefinitionEvaluation - steps 9-10
+        // -> calls DefineMethod
         String propKey = "constructor";
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         OrdinaryFunction constructor;
@@ -1250,16 +1257,14 @@ public final class ScriptRuntime {
             constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
                     constructorParent);
         }
-        DefinePropertyOrThrow(cx, proto, propKey, new PropertyDescriptor(constructor, true, true,
-                true));
 
-        // ClassDefinitionEvaluation - step 10
+        // ClassDefinitionEvaluation - step 11
         MakeConstructor(cx, constructor, false, proto);
 
-        // ClassDefinitionEvaluation - step 12
+        // ClassDefinitionEvaluation - step 13
         PropertyDescriptor desc = new PropertyDescriptor(constructor, true, false, true);
 
-        // ClassDefinitionEvaluation - step 13
+        // ClassDefinitionEvaluation - step 14
         proto.defineOwnProperty(cx, propKey, desc);
 
         return constructor;
@@ -1268,7 +1273,7 @@ public final class ScriptRuntime {
     /**
      * 14.3 Method Definitions
      * <p>
-     * Runtime Semantics: Property Definition Evaluation
+     * 14.3.9 Runtime Semantics: PropertyDefinitionEvaluation
      * <ul>
      * <li>PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
@@ -1285,7 +1290,7 @@ public final class ScriptRuntime {
     /**
      * 14.3 Method Definitions
      * <p>
-     * Runtime Semantics: Property Definition Evaluation
+     * 14.3.9 Runtime Semantics: PropertyDefinitionEvaluation
      * <ul>
      * <li>PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
@@ -1299,6 +1304,7 @@ public final class ScriptRuntime {
         } else {
             closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
+        SetFunctionName(cx, closure, propKey);
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
@@ -1306,7 +1312,7 @@ public final class ScriptRuntime {
     /**
      * 14.3 Method Definitions
      * <p>
-     * Runtime Semantics: Property Definition Evaluation
+     * 14.3.9 Runtime Semantics: PropertyDefinitionEvaluation
      * <ul>
      * <li>PropertyName ( StrictFormalParameters ) { FunctionBody }
      * </ul>
@@ -1320,6 +1326,7 @@ public final class ScriptRuntime {
         } else {
             closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
+        SetFunctionName(cx, closure, propKey);
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
@@ -1358,6 +1365,7 @@ public final class ScriptRuntime {
         } else {
             closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
+        SetFunctionName(cx, closure, propKey, "get");
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setGetter(closure);
         desc.setEnumerable(true);
@@ -1382,6 +1390,7 @@ public final class ScriptRuntime {
         } else {
             closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
+        SetFunctionName(cx, closure, propKey, "get");
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setGetter(closure);
         desc.setEnumerable(true);
@@ -1423,6 +1432,7 @@ public final class ScriptRuntime {
         } else {
             closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
+        SetFunctionName(cx, closure, propKey, "set");
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setSetter(closure);
         desc.setEnumerable(true);
@@ -1447,6 +1457,7 @@ public final class ScriptRuntime {
         } else {
             closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
+        SetFunctionName(cx, closure, propKey, "set");
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setSetter(closure);
         desc.setEnumerable(true);
@@ -1463,6 +1474,8 @@ public final class ScriptRuntime {
             ExecutionContext cx, RuntimeInfo.Function fd) {
         /* steps 1-3 */
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        // TODO: missing in spec
+        SetFunctionName(cx, f, fd.functionName());
         /* step 4 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 5 */
@@ -1480,6 +1493,8 @@ public final class ScriptRuntime {
             ExecutionContext cx, RuntimeInfo.Function fd) {
         /* steps 1-3 */
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        // TODO: missing in spec
+        SetFunctionName(cx, f, fd.functionName());
         /* step 4 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
         /* step 5 */
@@ -1515,11 +1530,12 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
-        /* steps 1-2 (implicit) */
-        /* step 3 */
+        /* steps 1-2 (bytecode) */
+        /* step 3 (not applicable) */
+        /* step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        /* step 4 (implicit) */
-        /* steps 5-6 */
+        /* step 5 (not applicable) */
+        /* steps 6-7 */
         OrdinaryGenerator closure;
         if (fd.hasSuperReference()) {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope, null, object,
@@ -1527,14 +1543,15 @@ public final class ScriptRuntime {
         } else {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
-        /* step 7 */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 8 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 9 */
         MakeConstructor(cx, closure, true, prototype);
-        /* steps 9-11 */
+        /* step 10 */
+        SetFunctionName(cx, closure, propKey);
+        /* steps 11-12 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         DefinePropertyOrThrow(cx, object, propKey, desc);
-        /* step 12 (implicit) */
     }
 
     /**
@@ -1547,11 +1564,12 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionGenerator(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
-        /* steps 1-2 (implicit) */
-        /* step 3 */
+        /* steps 1-2 (bytecode) */
+        /* step 3 (not applicable) */
+        /* step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        /* step 4 (implicit) */
-        /* steps 5-6 */
+        /* step 5 (not applicable) */
+        /* steps 6-7 */
         OrdinaryGenerator closure;
         if (fd.hasSuperReference()) {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope, null, object,
@@ -1559,14 +1577,15 @@ public final class ScriptRuntime {
         } else {
             closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
         }
-        /* step 7 */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 8 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 9 */
         MakeConstructor(cx, closure, true, prototype);
-        /* steps 9-11 */
+        /* step 10 */
+        SetFunctionName(cx, closure, propKey);
+        /* steps 11-12 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
         DefinePropertyOrThrow(cx, object, propKey, desc);
-        /* step 12 (implicit) */
     }
 
     /**
@@ -1587,6 +1606,10 @@ public final class ScriptRuntime {
             envRec.createImmutableBinding(fd.functionName());
         }
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        // TODO: missing in spec
+        if (!fd.functionName().isEmpty()) {
+            SetFunctionName(cx, closure, fd.functionName());
+        }
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         MakeConstructor(cx, closure, true, prototype);
         if (fd.hasScopedName()) {
@@ -1613,6 +1636,10 @@ public final class ScriptRuntime {
             envRec.createImmutableBinding(fd.functionName());
         }
         OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+        // TODO: missing in spec
+        if (!fd.functionName().isEmpty()) {
+            SetFunctionName(cx, closure, fd.functionName());
+        }
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
         MakeConstructor(cx, closure, true, prototype);
         if (fd.hasScopedName()) {
@@ -1857,10 +1884,12 @@ public final class ScriptRuntime {
      */
     public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
         if (cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
+            // FIXME: function .name and __proto__ interaction unclear
             if (Type.isNull(value) || Type.isObject(value)) {
                 object.setPrototypeOf(cx, Type.isNull(value) ? null : Type.objectValue(value));
             }
         } else {
+            // FIXME: need to set .name if IsAnonymousFunction(value)
             defineProperty(object, "__proto__", value, cx);
         }
     }

@@ -117,10 +117,36 @@ public final class StaticSemantics {
     }
 
     /**
+     * Static Semantics: IsAnonymousFunctionDefinition
+     */
+    public static boolean IsAnonymousFunctionDefinition(Expression node) {
+        if (node instanceof ArrowFunction) {
+            return true;
+        }
+        if (node instanceof FunctionExpression) {
+            return ((FunctionExpression) node).getIdentifier() == null;
+        }
+        if (node instanceof GeneratorExpression) {
+            return ((GeneratorExpression) node).getIdentifier() == null;
+        }
+        if (node instanceof ClassExpression) {
+            return ((ClassExpression) node).getName() == null;
+        }
+        return false;
+    }
+
+    /**
      * Static Semantics: IsConstantDeclaration
      */
     public static boolean IsConstantDeclaration(Declaration node) {
         return node.isConstDeclaration();
+    }
+
+    /**
+     * Static Semantics: IsIdentifierRef
+     */
+    public static boolean IsIdentifierRef(Expression node) {
+        return node instanceof Identifier && !node.isParenthesised();
     }
 
     /**
@@ -142,6 +168,30 @@ public final class StaticSemantics {
      */
     public static boolean IsStrict(FunctionNode node) {
         return node.getStrictMode() != FunctionNode.StrictMode.NonStrict;
+    }
+
+    /**
+     * Static Semantics: IsValidSimpleAssignmentTarget
+     */
+    public static boolean IsValidSimpleAssignmentTarget(Expression lhs, boolean strict) {
+        if (lhs instanceof Identifier) {
+            String name = ((Identifier) lhs).getName();
+            if (strict && ("eval".equals(name) || "arguments".equals(name))) {
+                return false;
+            }
+            return true;
+        } else if (lhs instanceof ElementAccessor) {
+            return true;
+        } else if (lhs instanceof PropertyAccessor) {
+            return true;
+        } else if (lhs instanceof SuperExpression) {
+            SuperExpression superExpr = (SuperExpression) lhs;
+            if (superExpr.getType() == SuperExpression.Type.ElementAccessor
+                    || superExpr.getType() == SuperExpression.Type.PropertyAccessor) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

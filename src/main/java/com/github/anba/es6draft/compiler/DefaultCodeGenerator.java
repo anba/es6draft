@@ -16,14 +16,8 @@ import java.util.List;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.AbruptNode;
+import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
-import com.github.anba.es6draft.ast.AssignmentPattern;
-import com.github.anba.es6draft.ast.Binding;
-import com.github.anba.es6draft.ast.ClassDefinition;
-import com.github.anba.es6draft.ast.DefaultNodeVisitor;
-import com.github.anba.es6draft.ast.Expression;
-import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.FieldType;
@@ -48,6 +42,11 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
     private static class Methods {
         // class: AbstractOperations
+        static final MethodDesc AbstractOperations_HasOwnProperty = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "HasOwnProperty", Type
+                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
+                                Types.ScriptObject, Types.String));
+
         static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc
                 .create(MethodType.Static, Types.AbstractOperations, "ToPrimitive", Type
                         .getMethodType(Types.Object, Types.ExecutionContext, Types.Object,
@@ -162,6 +161,17 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Static, Types.LexicalEnvironment, "newObjectEnvironment", Type
                         .getMethodType(Types.LexicalEnvironment, Types.ScriptObject,
                                 Types.LexicalEnvironment, Type.BOOLEAN_TYPE, Types.Set));
+
+        // class: OrdinaryFunction
+        static final MethodDesc OrdinaryFunction_SetFunctionName_String = MethodDesc
+                .create(MethodType.Static, Types.OrdinaryFunction, "SetFunctionName", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                                Types.FunctionObject, Types.String));
+        // class: OrdinaryFunction
+        static final MethodDesc OrdinaryFunction_SetFunctionName_Symbol = MethodDesc
+                .create(MethodType.Static, Types.OrdinaryFunction, "SetFunctionName", Type
+                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                                Types.FunctionObject, Types.Symbol));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_CreateDefaultConstructor = MethodDesc.create(
@@ -793,6 +803,91 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             mv.swap();
             mv.invoke(Methods.AbstractOperations_ToPropertyKey);
             return;
+        }
+    }
+
+    /**
+     * stack: [propertyKey, function] -> [propertyKey, function]
+     */
+    protected static void SetFunctionName(Node node, ValType propertyKeyType, ExpressionVisitor mv) {
+        assert node instanceof ClassDefinition || node instanceof FunctionNode;
+
+        Label hasOwnName = null;
+        if (node instanceof ClassDefinition) {
+            hasOwnName = new Label();
+            // stack: [propertyKey, function] -> [propertyKey, function, cx, function, "name"]
+            mv.dup();
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.aconst("name");
+            // stack: [propertyKey, function, cx, function, "name"] -> [propertyKey, function]
+            mv.invoke(Methods.AbstractOperations_HasOwnProperty);
+            mv.ifne(hasOwnName);
+        }
+
+        // stack: [propertyKey, function] -> [propertyKey, function, cx, function, propertyKey]
+        mv.dup2();
+        mv.swap();
+        mv.loadExecutionContext();
+        mv.dupX2();
+        mv.pop();
+
+        if (propertyKeyType == ValType.String) {
+            mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
+        } else {
+            assert propertyKeyType == ValType.Any;
+            Label isString = new Label(), afterSetFunctionName = new Label();
+            mv.dup();
+            mv.instanceOf(Types.String);
+            mv.ifeq(isString);
+            {
+                // stack: [propertyKey, function, cx, function, propertyKey] -> [propertyKey, fun.]
+                mv.checkcast(Types.String);
+                mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
+                mv.goTo(afterSetFunctionName);
+            }
+            {
+                mv.mark(isString);
+                mv.checkcast(Types.Symbol);
+                mv.invoke(Methods.OrdinaryFunction_SetFunctionName_Symbol);
+            }
+            mv.mark(afterSetFunctionName);
+        }
+
+        if (hasOwnName != null) {
+            mv.mark(hasOwnName);
+        }
+    }
+
+    /**
+     * stack: [function] -> [function]
+     */
+    protected static void SetFunctionName(Node node, String name, ExpressionVisitor mv) {
+        assert node instanceof ClassDefinition || node instanceof FunctionNode;
+
+        Label hasOwnName = null;
+        if (node instanceof ClassDefinition) {
+            hasOwnName = new Label();
+            // stack: [function] -> [function, cx, function, "name"]
+            mv.dup();
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.aconst("name");
+            // stack: [function, cx, function, "name"] -> [function]
+            mv.invoke(Methods.AbstractOperations_HasOwnProperty);
+            mv.ifne(hasOwnName);
+        }
+
+        // stack: [function] -> [function, cx, function, name]
+        mv.dup();
+        mv.loadExecutionContext();
+        mv.swap();
+        mv.aconst(name);
+        // stack: [function, cx, function, name] -> [function]
+        mv.invoke(Methods.OrdinaryFunction_SetFunctionName_String);
+
+        if (hasOwnName != null) {
+            mv.mark(hasOwnName);
         }
     }
 
