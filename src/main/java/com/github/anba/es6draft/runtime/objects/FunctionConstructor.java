@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -122,7 +123,10 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         /* step 19 */
         MakeConstructor(calleeContext, fn);
         /* step 20 */
-        SetFunctionName(calleeContext, fn, "anonymous");
+        // FIXME: if-test missing in spec
+        if (!HasOwnProperty(calleeContext, fn, "name")) {
+            SetFunctionName(calleeContext, fn, "anonymous");
+        }
         /* step 21 */
         return fn;
     }

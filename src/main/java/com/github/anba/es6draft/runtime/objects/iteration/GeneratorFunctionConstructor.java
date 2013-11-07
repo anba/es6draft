@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -125,7 +126,10 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         /* step 22 */
         MakeConstructor(calleeContext, fn, true, prototype);
         /* step 23 */
-        SetFunctionName(calleeContext, fn, "anonymous");
+        // FIXME: if-test missing in spec
+        if (!HasOwnProperty(calleeContext, fn, "name")) {
+            SetFunctionName(calleeContext, fn, "anonymous");
+        }
         /* step 24 */
         return fn;
     }
