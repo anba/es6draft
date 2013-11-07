@@ -12,6 +12,18 @@ const {
   assertBuiltinPrototype,
 } = Assert;
 
+function assertFunctionProperty(object, name, value = object[name]) {
+  return assertDataProperty(object, name, {value, writable: true, enumerable: false, configurable: true});
+}
+
+function assertConstructorProperty(object, name = "constructor", value = object[name]) {
+  return assertDataProperty(object, name, {value, writable: true, enumerable: false, configurable: true});
+}
+
+function assertPrototypeProperty(object, name = "prototype", value = object[name]) {
+  return assertDataProperty(object, name, {value, writable: false, enumerable: false, configurable: false});
+}
+
 /* 19.1  Object Objects */
 
 assertBuiltinConstructor(Object, "Object", 1);
@@ -21,34 +33,34 @@ assertSame(Object, Object.prototype.constructor);
 
 /* 19.1.3  Properties of the Object Constructor */
 
-assertDataProperty(Object, "assign", {value: Object.assign, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "create", {value: Object.create, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "defineProperties", {value: Object.defineProperties, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "defineProperty", {value: Object.defineProperty, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "freeze", {value: Object.freeze, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "getOwnPropertyDescriptor", {value: Object.getOwnPropertyDescriptor, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "getOwnPropertyNames", {value: Object.getOwnPropertyNames, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "getOwnPropertySymbols", {value: Object.getOwnPropertySymbols, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "getPrototypeOf", {value: Object.getPrototypeOf, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "is", {value: Object.is, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "isExtensible", {value: Object.isExtensible, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "isFrozen", {value: Object.isFrozen, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "isSealed", {value: Object.isSealed, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "keys", {value: Object.keys, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "mixin", {value: Object.mixin, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "preventExtensions", {value: Object.preventExtensions, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "prototype", {value: Object.prototype, writable: false, enumerable: false, configurable: false});
-assertDataProperty(Object, "seal", {value: Object.seal, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object, "setPrototypeOf", {value: Object.setPrototypeOf, writable: true, enumerable: false, configurable: true});
+assertPrototypeProperty(Object);
+assertFunctionProperty(Object, "assign");
+assertFunctionProperty(Object, "create");
+assertFunctionProperty(Object, "defineProperties");
+assertFunctionProperty(Object, "defineProperty");
+assertFunctionProperty(Object, "freeze");
+assertFunctionProperty(Object, "getOwnPropertyDescriptor");
+assertFunctionProperty(Object, "getOwnPropertyNames");
+assertFunctionProperty(Object, "getOwnPropertySymbols");
+assertFunctionProperty(Object, "getPrototypeOf");
+assertFunctionProperty(Object, "is");
+assertFunctionProperty(Object, "isExtensible");
+assertFunctionProperty(Object, "isFrozen");
+assertFunctionProperty(Object, "isSealed");
+assertFunctionProperty(Object, "keys");
+assertFunctionProperty(Object, "mixin");
+assertFunctionProperty(Object, "preventExtensions");
+assertFunctionProperty(Object, "seal");
+assertFunctionProperty(Object, "setPrototypeOf");
 
 
 /* 19.1.4  Properties of the Object Prototype Object */
 
-assertDataProperty(Object.prototype, "constructor", {value: Object.prototype.constructor, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object.prototype, "hasOwnProperty", {value: Object.prototype.hasOwnProperty, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object.prototype, "isPrototypeOf", {value: Object.prototype.isPrototypeOf, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object.prototype, "propertyIsEnumerable", {value: Object.prototype.propertyIsEnumerable, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object.prototype, "toLocaleString", {value: Object.prototype.toLocaleString, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object.prototype, "toString", {value: Object.prototype.toString, writable: true, enumerable: false, configurable: true});
-assertDataProperty(Object.prototype, "valueOf", {value: Object.prototype.valueOf, writable: true, enumerable: false, configurable: true});
+assertConstructorProperty(Object.prototype);
+assertFunctionProperty(Object.prototype, "hasOwnProperty");
+assertFunctionProperty(Object.prototype, "isPrototypeOf");
+assertFunctionProperty(Object.prototype, "propertyIsEnumerable");
+assertFunctionProperty(Object.prototype, "toLocaleString");
+assertFunctionProperty(Object.prototype, "toString");
+assertFunctionProperty(Object.prototype, "valueOf");
 
