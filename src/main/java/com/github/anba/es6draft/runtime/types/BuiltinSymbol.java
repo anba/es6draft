@@ -10,10 +10,9 @@ import java.util.EnumMap;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
- * <h2>6.1 ECMAScript Language Types</h2><br>
- * <h3>6.1.7 The Object Type</h3>
+ * <h2>6.1.5 The Symbol Type</h2>
  * <ul>
- * <li>6.1.7.4 Well-Known Symbols and Intrinsics
+ * <li>6.1.5.1 Well-Known Symbols
  * </ul>
  */
 public enum BuiltinSymbol {
@@ -28,6 +27,11 @@ public enum BuiltinSymbol {
      * &#64;&#64;hasInstance
      */
     hasInstance,
+
+    /**
+     * &#64;&#64;isConcatSpreadable
+     */
+    isConcatSpreadable,
 
     /**
      * &#64;&#64;isRegExp
@@ -50,11 +54,6 @@ public enum BuiltinSymbol {
     toStringTag,
 
     /**
-     * &#64;&#64;isConcatSpreadable
-     */
-    isConcatSpreadable,
-
-    /**
      * &#64;&#64;unscopables
      */
     unscopables,
@@ -74,7 +73,7 @@ public enum BuiltinSymbol {
         EnumMap<BuiltinSymbol, Symbol> map = new EnumMap<>(BuiltinSymbol.class);
         for (BuiltinSymbol builtin : values()) {
             if (builtin != NONE) {
-                String name = "@@" + builtin.name();
+                String name = "Symbol." + builtin.name();
                 map.put(builtin, new Symbol(name));
             }
         }

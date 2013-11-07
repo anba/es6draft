@@ -11,7 +11,7 @@ package com.github.anba.es6draft.runtime.types;
  * <h2>6.1 ECMAScript Language Types</h2><br>
  * <h3>6.1.7 The Object Type</h3>
  * <ul>
- * <li>6.1.7.4 Well-Known Symbols and Intrinsics
+ * <li>6.1.7.4 Well-Known Intrinsic Objects
  * </ul>
  */
 public enum Intrinsics {/* @formatter:off */
@@ -25,6 +25,7 @@ public enum Intrinsics {/* @formatter:off */
     ArrayIteratorPrototype,
     String,
     StringPrototype,
+    StringIteratorPrototype,
     Boolean,
     BooleanPrototype,
     Number,
@@ -62,7 +63,6 @@ public enum Intrinsics {/* @formatter:off */
     URIErrorPrototype,
 
     // not yet (?) in spec
-    StringIteratorPrototype,
     Symbol,
     SymbolPrototype,
     Math,
