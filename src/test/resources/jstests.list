@@ -98,10 +98,6 @@ js1_5/Scope/regress-185485.js
 js1_7/expressions/destructuring-scope.js
 js1_7/extensions/regress-368224.js
 
-# Special IE Function.prototype.{apply,call} behaviour not supported
-js1_5/Function/regress-222029-001.js
-js1_5/Function/regress-222029-002.js
-
 # Java-Pattern vs ECMAScript-RegExp issues
 ecma_3/RegExp/15.10.2-1.js
 ecma_3/RegExp/perlstress-001.js
@@ -197,6 +193,8 @@ js1_5/Exceptions/errstack-001.js
 
 # tail-call vs. caller
 ecma_5/extensions/function-caller-skips-eval-frames.js
+js1_5/Function/regress-222029-001.js
+js1_5/Function/regress-222029-002.js
 js1_8_5/regress/regress-577648-1.js
 js1_8_5/regress/regress-577648-2.js
 
