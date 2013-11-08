@@ -44,7 +44,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
-import com.github.anba.es6draft.runtime.objects.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
@@ -348,16 +347,6 @@ public final class ScriptRuntime {
         // inherit the function declaration instantiation code from 9.2.14
 
         /* steps 1-22 (not applicable, argumentsObjectNeeded = false) */
-    }
-
-    /**
-     * 12.1.8 Regular Expression Literals
-     * <p>
-     * 12.1.8.2 Runtime Semantics: Evaluation
-     */
-    public static ScriptObject RegExp(ExecutionContext cx, String pattern, String flags) {
-        // TODO: move call to bytecode
-        return RegExpConstructor.RegExpCreate(cx, pattern, flags);
     }
 
     /**

@@ -30,6 +30,7 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
 import com.github.anba.es6draft.runtime.objects.Eval.EvalFlags;
+import com.github.anba.es6draft.runtime.objects.RegExpConstructor;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -569,7 +570,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
     @Override
     public Object visit(RegularExpressionLiteral node, ExecutionContext cx) {
-        return ScriptRuntime.RegExp(cx, node.getRegexp(), node.getFlags());
+        return RegExpConstructor.RegExpCreate(cx, node.getRegexp(), node.getFlags());
     }
 
     @Override

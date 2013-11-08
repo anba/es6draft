@@ -25,6 +25,8 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
+import com.github.anba.es6draft.runtime.objects.RegExpConstructor;
+import com.github.anba.es6draft.runtime.objects.RegExpObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -87,6 +89,8 @@ final class Types {
 
     // runtime.objects
     static final Type Eval = Type.getType(Eval.class);
+    static final Type RegExpConstructor = Type.getType(RegExpConstructor.class);
+    static final Type RegExpObject = Type.getType(RegExpObject.class);
 
     // runtime.objects.iteration
     static final Type GeneratorObject = Type.getType(GeneratorObject.class);

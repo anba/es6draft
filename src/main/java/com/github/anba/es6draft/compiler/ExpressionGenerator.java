@@ -124,6 +124,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Types.Reference, "PutValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
+        // class: RegExpConstructor
+        static final MethodDesc RegExpConstructor_RegExpCreate = MethodDesc.create(
+                MethodType.Static, Types.RegExpConstructor, "RegExpCreate", Type.getMethodType(
+                        Types.RegExpObject, Types.ExecutionContext, Types.Object, Types.Object));
+
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_add_str = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "add", Type.getMethodType(Types.CharSequence,
@@ -250,10 +255,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         static final MethodDesc ScriptRuntime_PrepareForTailCall = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "PrepareForTailCall",
                 Type.getMethodType(Types.Object, Types.Object_, Types.Object, Types.Callable));
-
-        static final MethodDesc ScriptRuntime_RegExp = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "RegExp", Type.getMethodType(Types.ScriptObject,
-                        Types.ExecutionContext, Types.String, Types.String));
 
         static final MethodDesc ScriptRuntime_SpreadArray = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "SpreadArray",
@@ -2101,7 +2102,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         mv.loadExecutionContext();
         mv.aconst(node.getRegexp());
         mv.aconst(node.getFlags());
-        mv.invoke(Methods.ScriptRuntime_RegExp);
+        mv.invoke(Methods.RegExpConstructor_RegExpCreate);
 
         return ValType.Object;
     }
