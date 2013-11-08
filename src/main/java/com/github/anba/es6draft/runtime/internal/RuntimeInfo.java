@@ -12,7 +12,6 @@ import java.lang.invoke.MethodHandle;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
@@ -72,10 +71,10 @@ public final class RuntimeInfo {
             }
 
             @Override
-            public ExoticArguments functionDeclarationInstantiation(ExecutionContext cx,
+            public void functionDeclarationInstantiation(ExecutionContext cx,
                     FunctionObject function, Object[] args) {
                 try {
-                    return (ExoticArguments) initialisation.invokeExact(cx, function, args);
+                    initialisation.invokeExact(cx, function, args);
                 } catch (RuntimeException | Error e) {
                     throw e;
                 } catch (Throwable e) {
@@ -215,8 +214,8 @@ public final class RuntimeInfo {
 
         int expectedArgumentCount();
 
-        ExoticArguments functionDeclarationInstantiation(ExecutionContext cx,
-                FunctionObject function, Object[] args);
+        void functionDeclarationInstantiation(ExecutionContext cx, FunctionObject function,
+                Object[] args);
 
         String source();
     }

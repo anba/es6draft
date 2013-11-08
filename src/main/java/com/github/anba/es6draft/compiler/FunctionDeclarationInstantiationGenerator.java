@@ -46,18 +46,20 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
                 Type.getMethodType(Types.LexicalEnvironment));
 
         // class: ExoticArguments
-        static final MethodDesc ExoticArguments_InstantiateArgumentsObject = MethodDesc.create(
-                MethodType.Static, Types.ExoticArguments, "InstantiateArgumentsObject",
+        static final MethodDesc ExoticArguments_CreateMappedArgumentsObject = MethodDesc.create(
+                MethodType.Static, Types.ExoticArguments, "CreateMappedArgumentsObject", Type
+                        .getMethodType(Types.ExoticArguments, Types.ExecutionContext,
+                                Types.FunctionObject, Types.Object_, Types.String_,
+                                Types.LexicalEnvironment));
+
+        static final MethodDesc ExoticArguments_CreateStrictArgumentsObject = MethodDesc.create(
+                MethodType.Static, Types.ExoticArguments, "CreateStrictArgumentsObject",
                 Type.getMethodType(Types.ExoticArguments, Types.ExecutionContext, Types.Object_));
 
-        static final MethodDesc ExoticArguments_CompleteStrictArgumentsObject = MethodDesc.create(
-                MethodType.Static, Types.ExoticArguments, "CompleteStrictArgumentsObject",
-                Type.getMethodType(Type.VOID_TYPE, Types.ExecutionContext, Types.ExoticArguments));
-
-        static final MethodDesc ExoticArguments_CompleteMappedArgumentsObject = MethodDesc.create(
-                MethodType.Static, Types.ExoticArguments, "CompleteMappedArgumentsObject", Type
+        static final MethodDesc ExoticArguments_CreateLegacyArgumentsObject = MethodDesc.create(
+                MethodType.Static, Types.ExoticArguments, "CreateLegacyArgumentsObject", Type
                         .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
-                                Types.ExoticArguments, Types.FunctionObject, Types.String_,
+                                Types.FunctionObject, Types.Object_, Types.String_,
                                 Types.LexicalEnvironment));
 
         // class: List
@@ -222,32 +224,24 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             // setMutableBinding(envRec, fn, false, mv);
             initialiseBinding(envRec, fn, mv);
         }
-        // FIXME: apply spec updates from rev20
         /* steps 18-20 */
-        // stack: [] -> [ao]
-        InstantiateArgumentsObject(mv);
-        /* steps 21-22 */
         BindingInitialisation(function, iterator, mv);
-        /* step 23 */
+        /* step 21 */
         if (argumentsObjectNeeded) {
+            // stack: [] -> [ao]
             if (strict) {
-                CompleteStrictArgumentsObject(mv);
+                CreateStrictArgumentsObject(mv);
             } else {
-                CompleteMappedArgumentsObject(env, formals, mv);
+                CreateMappedArgumentsObject(env, formals, mv);
             }
-            // stack: [ao] -> [ao]
-            mv.dup();
+            // stack: [ao] -> []
             initialiseBinding(envRec, "arguments", mv);
+        } else if (!strict) {
+            // stack: [] -> []
+            CreateLegacyArguments(env, formals, mv);
         }
-        /* step 24 */
-        // stack: [ao] -> []
+        /* step 22 */
         mv.areturn();
-    }
-
-    private void InstantiateArgumentsObject(ExpressionVisitor mv) {
-        mv.loadExecutionContext();
-        mv.loadParameter(ARGUMENTS, Object[].class);
-        mv.invoke(Methods.ExoticArguments_InstantiateArgumentsObject);
     }
 
     private void BindingInitialisation(FunctionNode node, Variable<Iterator<?>> iterator,
@@ -256,24 +250,30 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         new BindingInitialisationGenerator(codegen).generate(node, iterator, mv);
     }
 
-    private void CompleteStrictArgumentsObject(ExpressionVisitor mv) {
-        // stack: [ao] -> [ao]
-        mv.dup();
+    private void CreateMappedArgumentsObject(Variable<LexicalEnvironment> env,
+            FormalParameterList formals, ExpressionVisitor mv) {
         mv.loadExecutionContext();
-        mv.swap();
-        mv.invoke(Methods.ExoticArguments_CompleteStrictArgumentsObject);
+        mv.loadParameter(FUNCTION, FunctionObject.class);
+        mv.loadParameter(ARGUMENTS, Object[].class);
+        newStringArray(mv, mappedNames(formals));
+        mv.load(env);
+        mv.invoke(Methods.ExoticArguments_CreateMappedArgumentsObject);
     }
 
-    private void CompleteMappedArgumentsObject(Variable<LexicalEnvironment> env,
-            FormalParameterList formals, ExpressionVisitor mv) {
-        // stack: [ao] -> [ao]
-        mv.dup();
+    private void CreateStrictArgumentsObject(ExpressionVisitor mv) {
         mv.loadExecutionContext();
-        mv.swap();
+        mv.loadParameter(ARGUMENTS, Object[].class);
+        mv.invoke(Methods.ExoticArguments_CreateStrictArgumentsObject);
+    }
+
+    private void CreateLegacyArguments(Variable<LexicalEnvironment> env,
+            FormalParameterList formals, ExpressionVisitor mv) {
+        mv.loadExecutionContext();
         mv.loadParameter(FUNCTION, FunctionObject.class);
-        astore_string(mv, mappedNames(formals));
+        mv.loadParameter(ARGUMENTS, Object[].class);
+        newStringArray(mv, mappedNames(formals));
         mv.load(env);
-        mv.invoke(Methods.ExoticArguments_CompleteMappedArgumentsObject);
+        mv.invoke(Methods.ExoticArguments_CreateLegacyArgumentsObject);
     }
 
     private String[] mappedNames(FormalParameterList formals) {
@@ -297,7 +297,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         return names;
     }
 
-    private void astore_string(InstructionVisitor mv, String[] strings) {
+    private void newStringArray(InstructionVisitor mv, String[] strings) {
         mv.newarray(strings.length, Types.String);
         int index = 0;
         for (String string : strings) {

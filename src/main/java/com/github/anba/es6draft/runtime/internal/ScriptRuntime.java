@@ -14,8 +14,7 @@ import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstra
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CompleteStrictArgumentsObject;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.InstantiateArgumentsObject;
+import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CreateStrictArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
@@ -49,7 +48,6 @@ import com.github.anba.es6draft.runtime.objects.RegExpConstructor;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
-import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject.FunctionKind;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
@@ -331,7 +329,7 @@ public final class ScriptRuntime {
         Lookup lookup = MethodHandles.publicLookup();
         try {
             GeneratorComprehensionInitMH = lookup.findStatic(ScriptRuntime.class,
-                    "GeneratorComprehensionInit", MethodType.methodType(ExoticArguments.class,
+                    "GeneratorComprehensionInit", MethodType.methodType(void.class,
                             ExecutionContext.class, FunctionObject.class, Object[].class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
@@ -344,20 +342,12 @@ public final class ScriptRuntime {
         }
     }
 
-    public static ExoticArguments GeneratorComprehensionInit(ExecutionContext cx, FunctionObject f,
+    public static void GeneratorComprehensionInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
-        // TODO: Apply FunctionDeclarationInstantiation changes from rev20
-
         // NB: generator comprehensions are defined in terms of generator functions which means they
-        // inherit the function declaration instantiation code from 9.1.15.11, replicate here the
-        // applicable algorithm steps (that means only steps 19-20, 24).
+        // inherit the function declaration instantiation code from 9.2.14
 
-        /* steps 1-18 (not applicable, argumentsObjectNeeded = false) */
-        /* steps 19-20 */
-        ExoticArguments ao = InstantiateArgumentsObject(cx, args);
-        /* steps 21-23 (not applicable, argumentsObjectNeeded = false) */
-        /* step 24 */
-        return ao;
+        /* steps 1-22 (not applicable, argumentsObjectNeeded = false) */
     }
 
     /**
@@ -1781,7 +1771,7 @@ public final class ScriptRuntime {
         Lookup lookup = MethodHandles.publicLookup();
         try {
             DefaultConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
-                    "DefaultConstructorInit", MethodType.methodType(ExoticArguments.class,
+                    "DefaultConstructorInit", MethodType.methodType(void.class,
                             ExecutionContext.class, FunctionObject.class, Object[].class));
             DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
                     MethodType.methodType(Object.class, ExecutionContext.class));
@@ -1796,23 +1786,16 @@ public final class ScriptRuntime {
         }
     }
 
-    public static ExoticArguments DefaultConstructorInit(ExecutionContext cx, FunctionObject f,
-            Object[] args) {
-        // TODO: Apply FunctionDeclarationInstantiation changes from rev20
+    public static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
         EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
         envRec.createMutableBinding("args", false);
         envRec.initialiseBinding("args", UNDEFINED);
-
         envRec.createImmutableBinding("arguments");
-        ExoticArguments ao = InstantiateArgumentsObject(cx, args);
 
         cx.resolveBinding("args", true).PutValue(createRestArray(asList(args).iterator(), cx), cx);
 
-        CompleteStrictArgumentsObject(cx, ao);
-        envRec.initialiseBinding("arguments", ao);
-
-        return ao;
+        envRec.initialiseBinding("arguments", CreateStrictArgumentsObject(cx, args));
     }
 
     public static Object DefaultConstructor(ExecutionContext cx) {
@@ -1835,7 +1818,7 @@ public final class ScriptRuntime {
         Lookup lookup = MethodHandles.publicLookup();
         try {
             DefaultEmptyConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
-                    "DefaultEmptyConstructorInit", MethodType.methodType(ExoticArguments.class,
+                    "DefaultEmptyConstructorInit", MethodType.methodType(void.class,
                             ExecutionContext.class, FunctionObject.class, Object[].class));
             DefaultEmptyConstructorMH = lookup.findStatic(ScriptRuntime.class,
                     "DefaultEmptyConstructor",
@@ -1851,17 +1834,12 @@ public final class ScriptRuntime {
         }
     }
 
-    public static ExoticArguments DefaultEmptyConstructorInit(ExecutionContext cx,
-            FunctionObject f, Object[] args) {
-        // TODO: Apply FunctionDeclarationInstantiation changes from rev20
+    public static void DefaultEmptyConstructorInit(ExecutionContext cx, FunctionObject f,
+            Object[] args) {
         EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
         envRec.createImmutableBinding("arguments");
-        ExoticArguments ao = InstantiateArgumentsObject(cx, args);
-        CompleteStrictArgumentsObject(cx, ao);
-        envRec.initialiseBinding("arguments", ao);
-
-        return ao;
+        envRec.initialiseBinding("arguments", CreateStrictArgumentsObject(cx, args));
     }
 
     public static Object DefaultEmptyConstructor(ExecutionContext cx) {

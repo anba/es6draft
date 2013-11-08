@@ -70,6 +70,23 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return v instanceof FunctionObject && ((FunctionObject) v).isStrict();
     }
 
+    protected final void updateLegacyCaller(FunctionObject caller) {
+        if (caller == null || caller.isStrict()) {
+            this.caller.applyValue(NULL);
+        } else {
+            this.caller.applyValue(caller);
+        }
+    }
+
+    protected final void updateLegacyArguments(ExoticArguments arguments) {
+        this.arguments.applyValue(arguments);
+    }
+
+    protected final void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
+        this.caller.applyValue(oldCaller);
+        this.arguments.applyValue(oldArguments);
+    }
+
     @Override
     public String toSource() {
         if (!isInitialised()) {

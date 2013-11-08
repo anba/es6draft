@@ -82,7 +82,7 @@ class CodeGenerator implements AutoCloseable {
 
         static final String FunctionNode_Code = Type.getMethodDescriptor(Types.Object,
                 Types.ExecutionContext);
-        static final String FunctionNode_Init = Type.getMethodDescriptor(Types.ExoticArguments,
+        static final String FunctionNode_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
         static final String FunctionNode_RTI = Type.getMethodDescriptor(Types.RuntimeInfo$Function);
 

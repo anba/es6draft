@@ -11,8 +11,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
-import static com.github.anba.es6draft.runtime.types.Null.NULL;
-import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CreateLegacyArguments;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -79,7 +77,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.1 [[Call]] Internal Method
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -104,6 +102,9 @@ public class OrdinaryFunction extends FunctionObject {
         }
     }
 
+    /**
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
+     */
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable {
@@ -131,10 +132,9 @@ public class OrdinaryFunction extends FunctionObject {
         /* steps 4-12 */
         ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(f, thisValue);
         /* steps 13-14 */
-        ExoticArguments arguments = f.getFunction().functionDeclarationInstantiation(calleeContext,
-                f, args);
+        f.getFunction().functionDeclarationInstantiation(calleeContext, f, args);
         if (f.isLegacy()) {
-            f.updateLegacyProperties(calleeContext, callerContext.getCurrentFunction(), arguments);
+            f.updateLegacyCaller(callerContext.getCurrentFunction());
         }
         return calleeContext;
     }
@@ -155,22 +155,6 @@ public class OrdinaryFunction extends FunctionObject {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private void updateLegacyProperties(ExecutionContext cx, FunctionObject caller,
-            ExoticArguments arguments) {
-        if (caller == null || caller.isStrict()) {
-            this.caller.applyValue(NULL);
-        } else {
-            this.caller.applyValue(caller);
-        }
-        ExoticArguments args = CreateLegacyArguments(cx, arguments, this);
-        this.arguments.applyValue(args);
-    }
-
-    private void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
-        this.caller.applyValue(oldCaller);
-        this.arguments.applyValue(oldArguments);
     }
 
     /* ***************************************************************************************** */
