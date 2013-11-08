@@ -14,7 +14,7 @@ Non-Goals:
 
 ### Implementation Status ###
 
-[ECMAScript 6 draft rev. 19] [es6drafts] and additionally:
+[ECMAScript 6 draft rev. 20] [es6drafts] and additionally:
 * Tail calls
 
 [ECMAScript Internationalization API 2.0, draft 2013-02-28] [intldrafts]:
