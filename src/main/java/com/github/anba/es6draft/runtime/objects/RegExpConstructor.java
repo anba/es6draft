@@ -19,8 +19,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.parser.RegExpParser;
-import com.github.anba.es6draft.parser.RegExpParser.RegExpMatcher;
+import com.github.anba.es6draft.regexp.RegExpMatcher;
+import com.github.anba.es6draft.regexp.RegExpParser;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.*;

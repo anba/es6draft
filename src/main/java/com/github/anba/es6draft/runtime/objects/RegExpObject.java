@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import com.github.anba.es6draft.parser.RegExpParser.RegExpMatcher;
+import com.github.anba.es6draft.regexp.RegExpMatcher;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 

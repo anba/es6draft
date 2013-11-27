@@ -74,6 +74,12 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         return "success";
     }
 
+    /** shell-function: {@code loadRelativeToScript(filename)} */
+    @Function(name = "loadRelativeToScript", arity = 1)
+    public Object loadRelativeToScript(ExecutionContext cx, String filename) {
+        return load(cx, Paths.get(filename), relativePath(Paths.get(filename)));
+    }
+
     /** shell-function: {@code print(message)} */
     @Function(name = "print", arity = 1)
     public void print(String message) {

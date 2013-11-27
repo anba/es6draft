@@ -107,7 +107,7 @@ public final class Messages {
         JSONInvalidNumberLiteral("json.invalid_number_literal"),
 
         // RegExpParser
-        RegExpInvalidQualifier("regexp.invalid_qualifier"),
+        RegExpInvalidQuantifier("regexp.invalid_quantifier"),
         RegExpInvalidCharacterRange("regexp.invalid_character_range"),
         RegExpTrailingSlash("regexp.trailing_slash"),
         RegExpUnmatchedCharacter("regexp.unmatched_character"),

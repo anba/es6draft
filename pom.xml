@@ -100,6 +100,11 @@
       <artifactId>icu4j</artifactId>
       <version>52.1</version>
     </dependency>
+    <dependency>
+      <groupId>org.jruby.joni</groupId>
+      <artifactId>joni</artifactId>
+      <version>2.1.0</version>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -509,7 +514,7 @@
           <excludes>
             <exclude>src/main/third_party/**</exclude>
             <exclude>src/main/resources/build-date</exclude>
-            <exclude>src/test/scripts/reflect</exclude>
+            <exclude>src/test/scripts/reflect/**</exclude>
           </excludes>
           <includes>
             <include>src/**</include>

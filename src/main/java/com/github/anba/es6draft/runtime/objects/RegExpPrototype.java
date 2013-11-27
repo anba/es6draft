@@ -20,9 +20,9 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
 
-import com.github.anba.es6draft.parser.RegExpParser.RegExpMatcher;
+import com.github.anba.es6draft.regexp.MatchState;
+import com.github.anba.es6draft.regexp.RegExpMatcher;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -164,7 +164,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             /* steps 5-6 */
             String s = ToFlatString(cx, string);
             /* steps 7-9 */
-            Matcher m = getMatcherOrNull(cx, r, s);
+            MatchResult m = getMatcherOrNull(cx, r, s);
             if (m == null) {
                 return false;
             }
@@ -241,10 +241,10 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 ScriptObject array = ArrayCreate(cx, 0);
                 int n = 0;
                 boolean lastMatch = true;
-                Matcher lastMatchResult = null;
+                MatchResult lastMatchResult = null;
                 while (lastMatch) {
                     // Object result = RegExpExec(realm, rx, s);
-                    Matcher result = getMatcherOrNull(cx, rx, s);
+                    MatchResult result = getMatcherOrNull(cx, rx, s);
                     if (result == null) {
                         lastMatch = false;
                     } else {
@@ -255,7 +255,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                             Put(cx, rx, "lastIndex", thisIndex + 1, true);
                         }
                         // Object matchStr = Get(Type.objectValue(result), "0");
-                        CharSequence matchStr = s.subSequence(result.start(), result.end());
+                        String matchStr = s.substring(result.start(), result.end());
                         CreateDataPropertyOrThrow(cx, array, ToString(n), matchStr);
                         n += 1;
                     }
@@ -282,11 +282,11 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             if (!IsCallable(replaceValue)) {
                 replaceValue = ToFlatString(cx, replaceValue);
             }
-            List<Matcher> matches = new ArrayList<>();
+            List<MatchResult> matches = new ArrayList<>();
             // cf. RegExp.prototype.match
             boolean global = ToBoolean(Get(cx, rx, "global"));
             if (!global) {
-                Matcher result = getMatcherOrNull(cx, rx, string);
+                MatchResult result = getMatcherOrNull(cx, rx, string);
                 if (result == null) {
                     return string;
                 }
@@ -298,7 +298,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 boolean lastMatch = true;
                 while (lastMatch) {
                     // Object result = RegExpExec(realm, rx, s);
-                    Matcher result = getMatcherOrNull(cx, rx, string);
+                    MatchResult result = getMatcherOrNull(cx, rx, string);
                     if (result == null) {
                         lastMatch = false;
                     } else {
@@ -320,7 +320,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 Callable fun = (Callable) replaceValue;
                 StringBuilder result = new StringBuilder();
                 int lastMatch = 0;
-                for (Matcher matchResult : matches) {
+                for (MatchResult matchResult : matches) {
                     RegExpConstructor.storeLastMatchResult(cx, rx, string, matchResult);
                     Object[] arguments = GetReplaceArguments(rx, matchResult, string);
                     CharSequence replacement = ToString(cx, fun.call(cx, UNDEFINED, arguments));
@@ -447,9 +447,9 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             /* steps 5-6 */
             String string = ToFlatString(cx, s);
             /* steps 7-8 */
-            Matcher matcher = rx.getRegExpMatcher().matcher(string);
+            MatchState matcher = rx.getRegExpMatcher().matcher(string);
             if (matcher.find()) {
-                RegExpConstructor.storeLastMatchResult(cx, rx, string, matcher);
+                RegExpConstructor.storeLastMatchResult(cx, rx, string, matcher.toMatchResult());
                 int result = matcher.start();
                 return result;
             }
@@ -482,11 +482,11 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 return a;
             }
             /* step 5 */
-            Matcher matcher = rx.getRegExpMatcher().matcher(s);
+            MatchState matcher = rx.getRegExpMatcher().matcher(s);
             /* step 15 */
             if (size == 0) {
                 if (matcher.find()) {
-                    RegExpConstructor.storeLastMatchResult(cx, rx, s, matcher);
+                    RegExpConstructor.storeLastMatchResult(cx, rx, s, matcher.toMatchResult());
                     return a;
                 }
                 CreateDataProperty(cx, a, "0", s);
@@ -500,7 +500,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 if (!match) {
                     break;
                 }
-                RegExpConstructor.storeLastMatchResult(cx, rx, s, matcher);
+                RegExpConstructor.storeLastMatchResult(cx, rx, s, matcher.toMatchResult());
                 int e = matcher.end();
                 if (e == p) {
                     q = q + 1;
@@ -594,21 +594,21 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     /**
      * Runtime Semantics: RegExpExec Abstract Operation
      */
-    public static Object RegExpExec(ExecutionContext cx, RegExpObject r, CharSequence s) {
+    public static Object RegExpExec(ExecutionContext cx, RegExpObject r, String s) {
         /* steps 1-15 */
-        Matcher m = getMatcherOrNull(cx, r, s);
+        MatchResult m = getMatcherOrNull(cx, r, s);
         if (m == null) {
             return NULL;
         }
         RegExpConstructor.storeLastMatchResult(cx, r, s, m);
-        /* steps 16-26 */
+        /* steps 16-25 */
         return toMatchResult(cx, r, s, m);
     }
 
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (1)
      */
-    private static Matcher getMatcherOrNull(ExecutionContext cx, RegExpObject r, CharSequence s) {
+    private static MatchResult getMatcherOrNull(ExecutionContext cx, RegExpObject r, String s) {
         /* step 1 */
         assert r.isInitialised();
 
@@ -634,7 +634,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         /* step 11 */
         RegExpMatcher matcher = r.getRegExpMatcher();
         /* steps 12-13 */
-        Matcher m = matcher.matcher(s);
+        MatchState m = matcher.matcher(s);
         if (!sticky) {
             boolean matchSucceeded = m.find((int) i);
             if (!matchSucceeded) {
@@ -642,8 +642,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 return null;
             }
         } else {
-            m.region((int) i, m.regionEnd());
-            boolean matchSucceeded = m.lookingAt();
+            boolean matchSucceeded = m.matches((int) i);
             if (!matchSucceeded) {
                 // FIXME: spec always sets lastIndex to 0, independant of global-flag
                 if (global) {
@@ -658,14 +657,14 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         if (global || sticky) {
             Put(cx, r, "lastIndex", e, true);
         }
-        return m;
+        return m.toMatchResult();
     }
 
     /**
      * Runtime Semantics: RegExpExec Abstract Operation (2)
      */
-    private static ScriptObject toMatchResult(ExecutionContext cx, RegExpObject r, CharSequence s,
-            Matcher m) {
+    private static ScriptObject toMatchResult(ExecutionContext cx, RegExpObject r, String s,
+            MatchResult m) {
         assert r.isInitialised();
         /* step 14 */
         int e = m.end();
