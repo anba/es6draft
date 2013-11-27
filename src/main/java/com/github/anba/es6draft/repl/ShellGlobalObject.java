@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.repl;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.internal.ScriptRuntime._throw;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
@@ -99,12 +98,12 @@ public abstract class ShellGlobalObject extends GlobalObject {
     protected static ScriptException throwError(ExecutionContext cx, String message) {
         ErrorConstructor ctor = (ErrorConstructor) cx.getIntrinsic(Intrinsics.Error);
         Object error = ctor.call(cx, UNDEFINED, Objects.toString(message, ""));
-        return _throw(error);
+        throw ScriptException.create(error);
     }
 
     protected String read(ExecutionContext cx, Path path) {
         if (!Files.exists(path)) {
-            _throw(String.format("can't open '%s'", path.toString()));
+            throw ScriptException.create(String.format("can't open '%s'", path.toString()));
         }
         try {
             byte[] bytes = Files.readAllBytes(path);
@@ -116,7 +115,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
 
     protected Object load(ExecutionContext cx, Path fileName, Path path) {
         if (!Files.exists(path)) {
-            _throw(String.format("can't open '%s'", path.toString()));
+            throw ScriptException.create(String.format("can't open '%s'", path.toString()));
         }
         try {
             eval(fileName, path);

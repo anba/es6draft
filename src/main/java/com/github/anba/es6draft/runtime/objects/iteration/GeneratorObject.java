@@ -120,14 +120,13 @@ public class GeneratorObject extends OrdinaryObject {
         case Executing:
             throw throwTypeError(cx, Messages.Key.GeneratorExecuting);
         case Completed:
-            throw ScriptRuntime._throw(value);
+            throw ScriptException.create(value);
         case SuspendedStart:
             this.state = GeneratorState.Completed;
-            throw ScriptRuntime._throw(value);
+            throw ScriptException.create(value);
         case SuspendedYield:
         default:
-            // TODO: unwrap 'value' if instance of ErrorObject?
-            resume0(new ScriptException(value));
+            resume0(ScriptException.create(value));
             return execute0(cx);
         }
     }

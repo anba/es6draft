@@ -41,7 +41,6 @@ import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
@@ -952,16 +951,6 @@ public final class ScriptRuntime {
         }
         /* step 8 */
         return list;
-    }
-
-    /**
-     * 13.13 The throw Statement
-     */
-    public static ScriptException _throw(Object val) {
-        if (val instanceof ErrorObject) {
-            throw ((ErrorObject) val).getException();
-        }
-        throw new ScriptException(val);
     }
 
     /**

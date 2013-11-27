@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import com.github.anba.es6draft.runtime.AbstractOperations;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
@@ -21,6 +22,13 @@ public class ScriptException extends RuntimeException {
 
     public ScriptException(Object value) {
         this.value = value;
+    }
+
+    public static ScriptException create(Object value) {
+        if (value instanceof ErrorObject) {
+            return ((ErrorObject) value).getException();
+        }
+        return new ScriptException(value);
     }
 
     public Object getValue() {

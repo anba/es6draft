@@ -78,6 +78,10 @@ class StatementGenerator extends
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptException
+        static final MethodDesc ScriptException_create = MethodDesc.create(MethodType.Static,
+                Types.ScriptException, "create",
+                Type.getMethodType(Types.ScriptException, Types.Object));
+
         static final MethodDesc ScriptException_getValue = MethodDesc.create(MethodType.Virtual,
                 Types.ScriptException, "getValue", Type.getMethodType(Types.Object));
 
@@ -104,10 +108,6 @@ class StatementGenerator extends
         static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "iterate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_throw = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "_throw",
-                Type.getMethodType(Types.ScriptException, Types.Object));
 
         static final MethodDesc ScriptRuntime_toInternalError = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "toInternalError", Type.getMethodType(
@@ -829,7 +829,7 @@ class StatementGenerator extends
     @Override
     public Completion visit(ThrowStatement node, StatementVisitor mv) {
         expressionBoxedValue(node.getExpression(), mv);
-        mv.invoke(Methods.ScriptRuntime_throw);
+        mv.invoke(Methods.ScriptException_create);
         mv.athrow();
 
         return Completion.Throw;
