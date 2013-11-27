@@ -23,6 +23,7 @@ function assertMethodName(o, pk, name) {
 {
   const symbolWithoutDescription = Symbol();
   const symbolWithDescription = Symbol("desc");
+  const symbolWithEmptyDescription = Symbol("");
 
   // 14.3.9  Runtime Semantics: PropertyDefinitionEvaluation
   // - MethodDefinition : PropertyName (StrictFormalParameters ) { FunctionBody }
@@ -58,10 +59,10 @@ function assertMethodName(o, pk, name) {
   assertMethodName(m2, symbolWithoutDescription, "");
 
   let g2 = class {static get [symbolWithoutDescription](){}};
-  assertMethodName(g2, symbolWithoutDescription, "get ");
+  assertMethodName(g2, symbolWithoutDescription, "");
 
   let s2 = class {static set [symbolWithoutDescription](_){}};
-  assertMethodName(s2, symbolWithoutDescription, "set ");
+  assertMethodName(s2, symbolWithoutDescription, "");
 
   let gm2 = class {static *[symbolWithoutDescription](){}};
   assertMethodName(gm2, symbolWithoutDescription, "");
@@ -77,4 +78,16 @@ function assertMethodName(o, pk, name) {
 
   let gm3 = class {static *[symbolWithDescription](){}};
   assertMethodName(gm3, symbolWithDescription, "[desc]");
+
+  let m4 = class {static [symbolWithEmptyDescription](){}};
+  assertMethodName(m4, symbolWithEmptyDescription, "[]");
+
+  let g4 = class {static get [symbolWithEmptyDescription](){}};
+  assertMethodName(g4, symbolWithEmptyDescription, "get []");
+
+  let s4 = class {static set [symbolWithEmptyDescription](_){}};
+  assertMethodName(s4, symbolWithEmptyDescription, "set []");
+
+  let gm4 = class {static *[symbolWithEmptyDescription](){}};
+  assertMethodName(gm4, symbolWithEmptyDescription, "[]");
 }
