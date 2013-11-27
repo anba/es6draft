@@ -4,6 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
+"use strict";
 
 const {
   assertTrue

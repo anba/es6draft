@@ -511,6 +511,28 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 12.2.3 The new Operator
+     * <p>
+     * 12.2.3.1 Runtime Semantics: Evaluation<br>
+     * 12.2.5.2 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>NewExpression : new NewExpression
+     * <li>MemberExpression : new MemberExpression Arguments
+     * <li>MemberExpression : new super Arguments<sub>opt</sub>
+     * </ul>
+     */
+    public static Object EvaluateConstructorTailCall(Object constructor, Object[] args,
+            ExecutionContext cx) {
+        /* steps 1-3/1-3/1-6 (generated code) */
+        /* steps 4/6/7 */
+        if (!IsConstructor(constructor)) {
+            throw throwTypeError(cx, Messages.Key.NotConstructor);
+        }
+        /* steps 5/7/8 */
+        return PrepareForTailCall(args, null, (Constructor) constructor);
+    }
+
+    /**
      * 12.2.4 Function Calls
      * <p>
      * 12.2.4.3 Runtime Semantics: EvaluateMethodCall

@@ -186,6 +186,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         .getMethodType(Types.Object, Types.Object, Types.Object_,
                                 Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_EvaluateConstructorTailCall = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorTailCall", Type
+                        .getMethodType(Types.Object, Types.Object, Types.Object_,
+                                Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_EvaluateFunctionExpression = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateFunctionExpression", Type
                         .getMethodType(Types.OrdinaryFunction, Types.RuntimeInfo$Function,
@@ -2020,8 +2025,13 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         ArgumentListEvaluation(node.getArguments(), mv);
         mv.lineInfo(node);
         mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
-
+        if (mv.isTailCall(node)) {
+            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
+            // TODO: perform direct 'areturn' instead of using completion value
+            // mv.areturn(Types.Object_);
+        } else {
+            mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
+        }
         return ValType.Any;
     }
 

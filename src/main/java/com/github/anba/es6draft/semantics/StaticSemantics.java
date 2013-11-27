@@ -373,25 +373,34 @@ public final class StaticSemantics {
 
     /**
      * Static Semantics: TailCallNodes (not in spec)
+     * <p>
+     * 14.6.1 Static Semantics: Tail Position<br>
+     * 14.6.2 Static Semantics: HasProductionInTailPosition
      */
-    public static Set<Expression> TailCallNodes(Expression expr) {
+    public static Set<Expression> TailCallNodes(Expression expr, boolean strict) {
+        if (!strict) {
+            // Tail calls are only enabled in strict-mode code [14.6.1 Tail Position, step 2]
+            return emptySet();
+        }
         while (expr instanceof CommaExpression) {
             expr = last(((CommaExpression) expr).getOperands());
         }
-        if (IsCallExpression(expr)) {
+        if (IsTailCallExpression(expr)) {
             return singleton(expr);
-        } else if (expr instanceof ConditionalExpression) {
+        } else if (expr instanceof ConditionalExpression || IsLogicalExpression(expr)) {
             HashSet<Expression> tail = new HashSet<>(8);
             for (ArrayDeque<Expression> queue = new ArrayDeque<>(singleton(expr)); !queue.isEmpty();) {
                 Expression e = queue.remove();
                 while (e instanceof CommaExpression) {
                     e = last(((CommaExpression) e).getOperands());
                 }
-                if (IsCallExpression(e)) {
+                if (IsTailCallExpression(e)) {
                     tail.add(e);
                 } else if (e instanceof ConditionalExpression) {
                     queue.add(((ConditionalExpression) e).getThen());
                     queue.add(((ConditionalExpression) e).getOtherwise());
+                } else if (IsLogicalExpression(e)) {
+                    queue.add(((BinaryExpression) e).getRight());
                 }
             }
             return tail;
@@ -400,13 +409,22 @@ public final class StaticSemantics {
         }
     }
 
-    //
+    private static boolean IsLogicalExpression(Expression expr) {
+        if (expr instanceof BinaryExpression) {
+            BinaryExpression.Operator op = ((BinaryExpression) expr).getOperator();
+            return op == BinaryExpression.Operator.AND || op == BinaryExpression.Operator.OR;
+        }
+        return false;
+    }
 
-    private static boolean IsCallExpression(Expression expr) {
+    private static boolean IsTailCallExpression(Expression expr) {
         return expr instanceof CallExpression
                 || expr instanceof TemplateCallExpression
-                || (expr instanceof SuperExpression && ((SuperExpression) expr).getType() == SuperExpression.Type.CallExpression);
+                || (expr instanceof SuperExpression && ((SuperExpression) expr).getType() == SuperExpression.Type.CallExpression)
+                || expr instanceof NewExpression;
     }
+
+    //
 
     private static <T> Set<T> emptyIfNull(Set<T> list) {
         return (list != null ? list : Collections.<T> emptySet());

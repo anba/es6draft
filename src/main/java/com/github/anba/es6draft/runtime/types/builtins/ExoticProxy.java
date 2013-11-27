@@ -129,6 +129,14 @@ public class ExoticProxy implements ScriptObject {
             }
             return Type.objectValue(newObj);
         }
+
+        /**
+         * 9.5.14 [[Construct]] Internal Method
+         */
+        @Override
+        public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
+            return construct(callerContext, args);
+        }
     }
 
     /**

@@ -36,9 +36,7 @@ public class NativeTailCallFunction extends BuiltinFunction {
             Object result = mh.invokeExact(thisValue, args);
             // tail-call with trampoline
             while (result instanceof TailCallInvocation) {
-                TailCallInvocation tc = (TailCallInvocation) result;
-                result = tc.getFunction().tailCall(callerContext, tc.getThisValue(),
-                        tc.getArgumentsList());
+                result = ((TailCallInvocation) result).apply(callerContext);
             }
             return result;
         } catch (RuntimeException | Error e) {

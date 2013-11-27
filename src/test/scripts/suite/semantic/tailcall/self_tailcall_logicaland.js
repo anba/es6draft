@@ -19,9 +19,13 @@ const stackLimit = (function() {
   return limit;
 })();
 
-function sum(n, acc) {
+function True() {
+  return true;
+}
+
+function sumAnd(n, acc) {
   if (n === 0) return acc;
-  return sum(n - 1, acc + n);
+  return True() && sumAnd(n - 1, acc + n);
 }
 
 function gauss(n) {
@@ -29,5 +33,5 @@ function gauss(n) {
 }
 
 for (let v of [1, 10, 100, 1000, 10000, stackLimit * 10]) {
-  assertSame(gauss(v), sum(v, 0));
+  assertSame(gauss(v), sumAnd(v, 0));
 }

@@ -18,11 +18,16 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
  * <p>
  * Internal Method: [[Construct]]
  */
-public interface Constructor extends ScriptObject {
+public interface Constructor extends ScriptObject, Callable {
     /**
      * [[Construct]]
      */
     ScriptObject construct(ExecutionContext callerContext, Object... args);
+
+    /**
+     * [[Construct]] in tail-call position
+     */
+    Object tailConstruct(ExecutionContext callerContext, Object... args) throws Throwable;
 
     /**
      * [[Construct]] internal method is added dynamically to objects, but interfaces cannot be added

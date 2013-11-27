@@ -6,8 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.Constructor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
@@ -24,5 +26,10 @@ public abstract class BuiltinConstructor extends BuiltinFunction implements Cons
     public final boolean isConstructor() {
         // built-in constructors are born with [[Construct]] already attached
         return true;
+    }
+
+    @Override
+    public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
+        return construct(callerContext, args);
     }
 }

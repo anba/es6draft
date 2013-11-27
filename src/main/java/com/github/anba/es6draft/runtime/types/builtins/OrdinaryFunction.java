@@ -57,6 +57,15 @@ public class OrdinaryFunction extends FunctionObject {
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
             return OrdinaryConstruct(callerContext, this, args);
         }
+
+        /**
+         * 9.2.2 [[Construct]] (argumentsList)
+         */
+        @Override
+        public Object tailConstruct(ExecutionContext callerContext, Object... args)
+                throws Throwable {
+            return OrdinaryConstructTailCall(callerContext, this, args);
+        }
     }
 
     @Override
@@ -145,9 +154,7 @@ public class OrdinaryFunction extends FunctionObject {
             Object result = code.handle().invokeExact(calleeContext);
             // tail-call with trampoline
             while (result instanceof TailCallInvocation) {
-                TailCallInvocation tc = (TailCallInvocation) result;
-                result = tc.getFunction().tailCall(callerContext, tc.getThisValue(),
-                        tc.getArgumentsList());
+                result = ((TailCallInvocation) result).apply(callerContext);
             }
             return result;
         } catch (RuntimeException | Error e) {
@@ -182,6 +189,43 @@ public class OrdinaryFunction extends FunctionObject {
         }
         /* steps 7-8 */
         Object result = f.call(cx, obj, args);
+        /* step 9 */
+        if (Type.isObject(result)) {
+            return Type.objectValue(result);
+        }
+        /* step 10 */
+        return Type.objectValue(obj);
+    }
+
+    /**
+     * 9.2.2.1 OrdinaryConstruct (F, argumentsList)
+     */
+    public static <FUNCTION extends ScriptObject & Callable & Constructor> Object OrdinaryConstructTailCall(
+            ExecutionContext cx, FUNCTION f, Object[] args) throws Throwable {
+        /* steps 1-2 */
+        Object creator = Get(cx, f, BuiltinSymbol.create.get());
+        /* steps 3-5 */
+        Object obj;
+        if (!Type.isUndefined(creator)) {
+            if (!IsCallable(creator)) {
+                throw throwTypeError(cx, Messages.Key.NotCallable);
+            }
+            obj = ((Callable) creator).call(cx, f);
+        } else {
+            obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
+        }
+        /* step 6 */
+        if (!Type.isObject(obj)) {
+            throw throwTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* steps 7-8 */
+        // Invoke 'tailCall()' instead of 'call()' to get TailCallInvocation objects
+        Object result = f.tailCall(cx, obj, args);
+        /* steps 9-10 (tail-call) */
+        if (result instanceof TailCallInvocation) {
+            // Don't unwind tail-call yet, instead store reference to 'obj'
+            return ((TailCallInvocation) result).toConstructTailCall(Type.objectValue(obj));
+        }
         /* step 9 */
         if (Type.isObject(result)) {
             return Type.objectValue(result);

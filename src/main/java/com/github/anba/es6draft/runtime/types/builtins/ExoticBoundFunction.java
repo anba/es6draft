@@ -63,6 +63,14 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
             /* step 5 */
             return ((Constructor) target).construct(callerContext, args);
         }
+
+        /**
+         * 9.4.1.2 [[Construct]]
+         */
+        @Override
+        public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
+            return construct(callerContext, args);
+        }
     }
 
     public ExoticBoundFunction(Realm realm) {
