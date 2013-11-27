@@ -2519,7 +2519,7 @@ public class Parser {
                 if ("constructor".equals(key) && SpecialMethod(def)) {
                     reportSyntaxError(def, Messages.Key.InvalidConstructorMethod);
                 }
-                // TODO: still necessary? -> SetFunctionName
+                // Give the constructor a better for name for stacktraces
                 if (className != null) {
                     def.setFunctionName(className.getName());
                 }

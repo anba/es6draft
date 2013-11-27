@@ -85,10 +85,17 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
     /**
      * 23.2.5.1 CreateSetIterator Abstract Operation
      */
-    public static OrdinaryObject CreateSetIterator(ExecutionContext cx, SetObject set,
+    public static OrdinaryObject CreateSetIterator(ExecutionContext cx, Object obj,
             SetIterationKind kind) {
-        // TODO: move type check from callers here
-        /* steps 1-3 (not applicable) */
+        /* steps 1-2 */
+        if (!(obj instanceof SetObject)) {
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        SetObject set = (SetObject) obj;
+        /* step 3 */
+        if (!set.isInitialised()) {
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
         /* step 4 */
         LinkedMap<Object, Void> entries = set.getSetData();
         /* step 5 */

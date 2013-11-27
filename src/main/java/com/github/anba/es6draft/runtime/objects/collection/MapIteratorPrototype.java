@@ -85,17 +85,24 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
     /**
      * 23.1.5.1 CreateMapIterator Abstract Operation
      */
-    public static OrdinaryObject CreateMapIterator(ExecutionContext cx, MapObject m,
+    public static OrdinaryObject CreateMapIterator(ExecutionContext cx, Object obj,
             MapIterationKind kind) {
-        // TODO: move type checks from caller here
-        /* steps 1-2 (not applicable) */
+        /* steps 1-2 */
+        if (!(obj instanceof MapObject)) {
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        MapObject map = (MapObject) obj;
         /* step 3 */
-        LinkedMap<Object, Object> entries = m.getMapData();
+        if (!map.isInitialised()) {
+            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        }
+        /* step 4 */
+        LinkedMap<Object, Object> entries = map.getMapData();
         /* step 4 */
         MapIterator iterator = ObjectCreate(cx, Intrinsics.MapIteratorPrototype,
                 MapIteratorAllocator.INSTANCE);
         /* steps 5-7 */
-        iterator.map = m;
+        iterator.map = map;
         iterator.nextIndex = 0;
         iterator.iterationKind = kind;
         iterator.iterator = entries.iterator();

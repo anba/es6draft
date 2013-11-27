@@ -783,8 +783,11 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
+            /* step 1 */
             Object obj = CheckObjectCoercible(cx, thisValue);
+            /* steps 2-3 */
             String s = ToFlatString(cx, obj);
+            /* step 4 */
             return CreateStringIterator(cx, s);
         }
     }

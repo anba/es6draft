@@ -30,7 +30,6 @@ import com.github.anba.es6draft.runtime.objects.collection.MapIteratorPrototype.
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -57,7 +56,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         ;
 
         private static MapObject thisMapValue(ExecutionContext cx, Object obj) {
-            if (Type.isObject(obj) && obj instanceof MapObject) {
+            if (obj instanceof MapObject) {
                 MapObject map = (MapObject) obj;
                 if (map.isInitialised()) {
                     return map;
@@ -164,9 +163,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator)
         public static Object entries(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            MapObject m = thisMapValue(cx, thisValue);
-            /* step 3 */
-            return CreateMapIterator(cx, m, MapIterationKind.KeyValue);
+            return CreateMapIterator(cx, thisValue, MapIterationKind.KeyValue);
         }
 
         /**
@@ -175,9 +172,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "keys", arity = 0)
         public static Object keys(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            MapObject m = thisMapValue(cx, thisValue);
-            /* step 3 */
-            return CreateMapIterator(cx, m, MapIterationKind.Key);
+            return CreateMapIterator(cx, thisValue, MapIterationKind.Key);
         }
 
         /**
@@ -214,9 +209,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "values", arity = 0)
         public static Object values(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            MapObject m = thisMapValue(cx, thisValue);
-            /* step 3 */
-            return CreateMapIterator(cx, m, MapIterationKind.Value);
+            return CreateMapIterator(cx, thisValue, MapIterationKind.Value);
         }
 
         /**

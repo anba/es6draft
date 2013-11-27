@@ -29,7 +29,6 @@ import com.github.anba.es6draft.runtime.objects.collection.SetIteratorPrototype.
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -56,7 +55,7 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
         ;
 
         private static SetObject thisSetValue(ExecutionContext cx, Object obj) {
-            if (Type.isObject(obj) && obj instanceof SetObject) {
+            if (obj instanceof SetObject) {
                 SetObject set = (SetObject) obj;
                 if (set.isInitialised()) {
                     return set;
@@ -122,10 +121,8 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "entries", arity = 0)
         public static Object entries(ExecutionContext cx, Object thisValue) {
-            /* steps 1-4 */
-            SetObject s = thisSetValue(cx, thisValue);
-            /* step 3 */
-            return CreateSetIterator(cx, s, SetIterationKind.KeyValue);
+            /* steps 1-2 */
+            return CreateSetIterator(cx, thisValue, SetIterationKind.KeyValue);
         }
 
         /**
@@ -190,9 +187,7 @@ public class SetPrototype extends OrdinaryObject implements Initialisable {
                 @AliasFunction(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator) })
         public static Object values(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
-            SetObject s = thisSetValue(cx, thisValue);
-            /* step 3 */
-            return CreateSetIterator(cx, s, SetIterationKind.Value);
+            return CreateSetIterator(cx, thisValue, SetIterationKind.Value);
         }
 
         /**
