@@ -18,8 +18,6 @@ const {
   mixin: Object_mixin,
 } = Object;
 
-const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
-
 const iteratorSym = Symbol.iterator;
 
 // pseudo-symbol in SpiderMonkey
@@ -138,41 +136,17 @@ function toProxyHandler(handler) {
   if ('keys' in handler) {
     proxyHandler['ownKeys'] = () => toArrayIterator(handler['keys']());
   }
-  proxyHandler['invoke'] = (_, pk, args, receiver) => $CallFunction(proxyHandler['get'](_, pk, receiver), receiver, ...args);
   return proxyHandler;
 }
 
-// Create a Proxy for the Proxy function in order to add an "invoke" trap while still passing Proxy surface tests
-var BuiltinProxy = Proxy;
-var NewProxy = new BuiltinProxy(BuiltinProxy, {
-  addInvokeTrap(p, handler) {
-    // Directly assign "invoke" trap to handler; this change is visible to other scripts, but tests don't complain
-    Object_mixin(handler, {
-      invoke(_, pk, args, receiver) {
-        var fn = Reflect.get(p, pk, receiver);
-        return $CallFunction(fn, p, ...args);
-      }
-    });
-    return p;
-  },
-  apply(target, thisValue, args) {
-    var p = $CallFunction(target, thisValue, ...args);
-    return this.addInvokeTrap(p, args[1]);
-  },
-  construct(target, args) {
-    var p = new target(...args);
-    return this.addInvokeTrap(p, args[1]);
-  }
-});
-
-Object.defineProperties(Object_assign(NewProxy, {
+Object.defineProperties(Object_assign(Proxy, {
   create(handler, proto = null) {
     if (Object(handler) !== handler) throw TypeError();
     var proxyTarget = Object_create(proto);
     var proxyHandler = Object_assign({
       setPrototypeOf() { throw TypeError() }
     }, toProxyHandler(handler));
-    return new BuiltinProxy(proxyTarget, proxyHandler);
+    return Proxy(proxyTarget, proxyHandler);
   },
   createFunction(handler, callTrap, constructTrap = callTrap) {
     if (Object(handler) !== handler) throw TypeError();
@@ -184,16 +158,11 @@ Object.defineProperties(Object_assign(NewProxy, {
       apply(_, thisValue, args) { return callTrap.apply(thisValue, args) },
       construct(_, args) { return new constructTrap(...args) }
     }, toProxyHandler(handler));
-    return new BuiltinProxy(proxyTarget, proxyHandler);
+    return Proxy(proxyTarget, proxyHandler);
   }
 }), {
   create: {enumerable: false},
   createFunction: {enumerable: false},
-});
-
-Object.defineProperty(global, "Proxy", {
-  value: NewProxy,
-  writable: true, enumerable: false, configurable: true
 });
 
 })(this);

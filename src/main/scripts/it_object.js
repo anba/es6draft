@@ -76,10 +76,6 @@ const it = new Proxy(it_target, {
     }
     return Reflect_set(t, pk, v, r);
   },
-  invoke(t, pk, args, r) {
-    var f = this.get(t, pk, r);
-    return $CallFunction(f, r, ...args);
-  },
   deleteProperty(t, pk) {
     delete it_mapped[pk];
     return Reflect_deleteProperty(t, pk);
