@@ -1077,7 +1077,7 @@ public class TokenStream {
             c = input.get();
             do {
                 acc = (acc << 4) | hexDigit(c);
-            } while ((acc >= 0 && acc < 0x10FFFF) && (c = input.get()) != '}');
+            } while ((acc >= 0 && acc <= 0x10FFFF) && (c = input.get()) != '}');
             if (c == '}') {
                 c = acc;
             } else {
