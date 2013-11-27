@@ -183,9 +183,6 @@ tests/basic/testBug773108.js
 # SpiderMonkey restriction test for destructuring with spread
 tests/parser/bug-889628.js
 
-# tail-call vs. caller
-tests/basic/bug709634.js
-
 
 ############################################
 # Misc proxy implementation isssues        #

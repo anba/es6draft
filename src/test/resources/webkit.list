@@ -78,6 +78,7 @@ fast/js/regexp-no-extensions.js
 fast/regex/invalid-range-in-class.js
 
 # different error message
+fast/js/caller-property.js
 fast/js/deep-recursion-test.js
 fast/js/function-constructor-error.js
 fast/js/reserved-words-strict.js
@@ -131,19 +132,6 @@ fast/js/kde/RegExp.js
 
 # various new built-in properties
 fast/js/Object-getOwnPropertyNames.js
-
-# tail-calls:
-# function foo(){return bar.arguments}
-# function bar(b){b=1; return foo()}
-# function baz(){return bar(0)}
-# baz() === null w/ tail calls...
-dfg-inline-arguments-become-double.js
-dfg-inline-arguments-become-int32.js
-dfg-inline-arguments-int32.js
-dfg-inline-arguments-reset-changetype.js
-dfg-inline-arguments-reset.js
-dfg-inline-arguments-simple.js
-fast/js/caller-property.js
 
 
 #######################################

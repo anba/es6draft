@@ -149,9 +149,6 @@ regress/regress-944.js
 # Date.prototype.toUTCString and Date.prototype.toGMTString distinct objects in V8
 function-names.js
 
-# tail call vs. arguments
-extra-arguments.js
-
 
 ############################################
 # Unsupported built-in object functions    #
