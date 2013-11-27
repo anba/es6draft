@@ -35,10 +35,8 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Reference;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * Simple interpreter to speed-up `eval` evaluation
@@ -630,31 +628,17 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * Runtime Semantics: EvaluateCall Abstract Operation
+     * 12.2.4.2 Runtime Semantics: EvaluateCall
      */
     private Object EvaluateCall(Object ref, List<Expression> arguments, boolean directEval,
             ExecutionContext cx) {
-        if (ref instanceof Reference) {
-            Reference<?, ?> rref = (Reference<?, ?>) ref;
-            if (rref.isPropertyReference()) {
-                return EvaluateMethodCall(rref, arguments, cx);
-            } else if (!rref.isUnresolvableReference()) {
-                assert rref instanceof Reference.IdentifierReference;
-                Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) rref;
-                ScriptObject thisValue = idref.getBase().withBaseObject();
-                // don't call EvaluateMethodCall if currently in direct-eval position and the
-                // base-object is an ordinary object
-                if (thisValue != null && !(directEval && thisValue instanceof OrdinaryObject)) {
-                    Reference<Object, String> newRef = new Reference.PropertyNameReference(
-                            thisValue, idref.getReferencedName(), rref.isStrictReference());
-                    return EvaluateMethodCall(newRef, arguments, cx);
-                }
-            }
-        }
-        Object thisValue = UNDEFINED;
+        /* steps 1-2 */
         Object func = GetValue(ref, cx);
+        /* steps 3-4 */
         Object[] argList = ArgumentListEvaluation(arguments, cx);
+        /* steps 5-6 */
         Callable f = CheckCallable(func, cx);
+        /* [18.2.1.1] Direct Call to Eval */
         if (directEval && IsBuiltinEval(ref, f, cx)) {
             int evalFlags = EvalFlags.Direct.getValue();
             if (strict) {
@@ -672,39 +656,24 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
             Object x = argList.length > 0 ? argList[0] : UNDEFINED;
             return Eval.directEval(x, cx, evalFlags);
         }
-        if (directEval && ref instanceof Reference) {
-            // adjust thisValue if in with-statement, counterpart to the special direct-eval logic
-            // from above
-            assert ref instanceof Reference.IdentifierReference;
-            Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) ref;
-            ScriptObject newThisValue = idref.getBase().withBaseObject();
-            if (newThisValue != null) {
-                assert newThisValue instanceof OrdinaryObject;
-                thisValue = newThisValue;
+        /* steps 7-8 */
+        Object thisValue = UNDEFINED;
+        if (ref instanceof Reference) {
+            Reference<?, ?> rref = (Reference<?, ?>) ref;
+            if (rref.isPropertyReference()) {
+                thisValue = rref.GetThisValue(cx);
+            } else {
+                assert rref instanceof Reference.IdentifierReference;
+                Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) rref;
+                ScriptObject newThisValue = idref.getBase().withBaseObject();
+                if (newThisValue != null) {
+                    thisValue = newThisValue;
+                }
             }
         }
+        /* steps 9, 11, 12 (not applicable) */
+        /* steps 10, 13 */
         return f.call(cx, thisValue, argList);
-    }
-
-    /**
-     * Runtime Semantics: EvaluateMethodCall Abstract Operation
-     */
-    private Object EvaluateMethodCall(Reference<?, ?> ref, List<Expression> arguments,
-            ExecutionContext cx) {
-        assert ref.isPropertyReference();
-        Object base = ref.getBase();
-        if (ref.hasPrimitiveBase()) {
-            base = ToObject(cx, base);
-        }
-        assert base instanceof ScriptObject;
-        Object[] argList = ArgumentListEvaluation(arguments, cx);
-        Object thisValue = ref.GetThisValue(cx);
-        Object key = ref.getReferencedName();
-        if (key instanceof String) {
-            return ((ScriptObject) base).invoke(cx, (String) key, argList, thisValue);
-        } else {
-            return ((ScriptObject) base).invoke(cx, (Symbol) key, argList, thisValue);
-        }
     }
 
     private Object[] ArgumentListEvaluation(List<Expression> arguments, ExecutionContext cx) {

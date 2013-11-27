@@ -77,9 +77,6 @@ public abstract class Reference<BASE, NAME> {
      */
     public abstract Object GetThisValue(ExecutionContext cx);
 
-    /** Helper for [[EvaluateMethodCall]] */
-    public abstract ScriptObject GetMethodCallThisValue(ExecutionContext cx);
-
     /**
      * [6.2.4.1] GetValue (V)
      */
@@ -188,15 +185,6 @@ public abstract class Reference<BASE, NAME> {
             }
             return getBase();
         }
-
-        @Override
-        public ScriptObject GetMethodCallThisValue(ExecutionContext cx) {
-            if (isUnresolvableReference()) {
-                throw throwReferenceError(cx, Messages.Key.UnresolvableReference,
-                        getReferencedName());
-            }
-            return getBase().withBaseObject();
-        }
     }
 
     protected static abstract class PropertyReference<NAME> extends Reference<Object, NAME> {
@@ -245,14 +233,6 @@ public abstract class Reference<BASE, NAME> {
         @Override
         public Object GetThisValue(ExecutionContext cx) {
             return getBase();
-        }
-
-        @Override
-        public ScriptObject GetMethodCallThisValue(ExecutionContext cx) {
-            if (hasPrimitiveBase()) {
-                return getPrimitiveBaseProto(cx);
-            }
-            return (ScriptObject) getBase();
         }
 
         protected final ScriptObject getPrimitiveBaseProto(ExecutionContext cx) {
@@ -409,11 +389,6 @@ public abstract class Reference<BASE, NAME> {
         @Override
         public Object GetThisValue(ExecutionContext cx) {
             return thisValue;
-        }
-
-        @Override
-        public ScriptObject GetMethodCallThisValue(ExecutionContext cx) {
-            return getBase();
         }
     }
 
