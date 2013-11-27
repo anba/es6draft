@@ -1184,7 +1184,11 @@ public final class AbstractOperations {
             base = ToObject(cx, object);
         }
         /* step 6 */
-        return base.invoke(cx, propertyKey, args, object);
+        Callable method = GetMethod(cx, base, propertyKey);
+        if (method == null) {
+            throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
+        }
+        return method.call(cx, object, args);
     }
 
     /**
@@ -1194,7 +1198,11 @@ public final class AbstractOperations {
             Object... args) {
         /* steps 1-5 (not applicable) */
         /* step 6 */
-        return object.invoke(cx, propertyKey, args, object);
+        Callable method = GetMethod(cx, object, propertyKey);
+        if (method == null) {
+            throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
+        }
+        return method.call(cx, object, args);
     }
 
     /**
@@ -1210,7 +1218,11 @@ public final class AbstractOperations {
             base = ToObject(cx, object);
         }
         /* step 6 */
-        return base.invoke(cx, propertyKey, args, object);
+        Callable method = GetMethod(cx, base, propertyKey);
+        if (method == null) {
+            throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
+        }
+        return method.call(cx, object, args);
     }
 
     /**
@@ -1220,7 +1232,11 @@ public final class AbstractOperations {
             Object... args) {
         /* steps 1-5 (not applicable) */
         /* step 6 */
-        return object.invoke(cx, propertyKey, args, object);
+        Callable method = GetMethod(cx, object, propertyKey);
+        if (method == null) {
+            throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
+        }
+        return method.call(cx, object, args);
     }
 
     /**

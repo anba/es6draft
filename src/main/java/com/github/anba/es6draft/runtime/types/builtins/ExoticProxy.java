@@ -707,38 +707,6 @@ public class ExoticProxy implements ScriptObject {
     }
 
     /**
-     * 9.5.10 [[Invoke]] (P, ArgumentsList, Receiver)
-     */
-    @Override
-    public Object invoke(ExecutionContext cx, String propertyKey, Object[] arguments,
-            Object receiver) {
-        ScriptObject handler = getProxyHandler(cx);
-        ScriptObject target = proxyTarget;
-        Callable trap = GetMethod(cx, handler, "invoke");
-        if (trap == null) {
-            return target.invoke(cx, propertyKey, arguments, receiver);
-        }
-        ScriptObject argArray = CreateArrayFromList(cx, Arrays.asList(arguments));
-        return trap.call(cx, handler, target, propertyKey, argArray, receiver);
-    }
-
-    /**
-     * 9.5.10 [[Invoke]] (P, ArgumentsList, Receiver)
-     */
-    @Override
-    public Object invoke(ExecutionContext cx, Symbol propertyKey, Object[] arguments,
-            Object receiver) {
-        ScriptObject handler = getProxyHandler(cx);
-        ScriptObject target = proxyTarget;
-        Callable trap = GetMethod(cx, handler, "invoke");
-        if (trap == null) {
-            return target.invoke(cx, propertyKey, arguments, receiver);
-        }
-        ScriptObject argArray = CreateArrayFromList(cx, Arrays.asList(arguments));
-        return trap.call(cx, handler, target, propertyKey, argArray, receiver);
-    }
-
-    /**
      * 9.5.10 [[Delete]] (P)
      */
     @Override

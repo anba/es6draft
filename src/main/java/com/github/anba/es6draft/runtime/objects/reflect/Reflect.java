@@ -70,7 +70,7 @@ public class Reflect extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 26.1.14 Reflect.setPrototypeOf (target, proto)
+         * 26.1.13 Reflect.setPrototypeOf (target, proto)
          */
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object target,
@@ -98,7 +98,7 @@ public class Reflect extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 26.1.12 Reflect.preventExtensions (target)
+         * 26.1.11 Reflect.preventExtensions (target)
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object target) {
@@ -193,7 +193,7 @@ public class Reflect extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 26.1.13 Reflect.set (target, propertyKey, V, receiver=target)
+         * 26.1.12 Reflect.set (target, propertyKey, V, receiver=target)
          */
         @Function(name = "set", arity = 4)
         public static Object set(ExecutionContext cx, Object thisValue, Object target,
@@ -212,33 +212,6 @@ public class Reflect extends OrdinaryObject implements Initialisable {
             } else {
                 assert key instanceof Symbol;
                 return obj.set(cx, (Symbol) key, value, receiver);
-            }
-        }
-
-        /**
-         * 26.1.10 Reflect.invoke (target, propertyKey, argumentsList, receiver=target)
-         */
-        @Function(name = "invoke", arity = 4)
-        public static Object invoke(ExecutionContext cx, Object thisValue, Object target,
-                Object propertyKey, Object argumentsList,
-                @Optional(Optional.Default.NONE) Object receiver) {
-            // FIXME: removed from rev21
-            /* steps 1-2 */
-            ScriptObject obj = ToObject(cx, target);
-            /* steps 3-4 */
-            Object key = ToPropertyKey(cx, propertyKey);
-            /* step 5 */
-            if (receiver == null) {
-                receiver = target;
-            }
-            /* steps 6-7 */
-            Object[] argList = CreateListFromArrayLike(cx, argumentsList);
-            /* step 8 */
-            if (key instanceof String) {
-                return obj.invoke(cx, (String) key, argList, receiver);
-            } else {
-                assert key instanceof Symbol;
-                return obj.invoke(cx, (Symbol) key, argList, receiver);
             }
         }
 
@@ -294,7 +267,7 @@ public class Reflect extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 26.1.11 Reflect.ownKeys (target)
+         * 26.1.10 Reflect.ownKeys (target)
          */
         @Function(name = "ownKeys", arity = 1)
         public static Object ownKeys(ExecutionContext cx, Object thisValue, Object target) {
