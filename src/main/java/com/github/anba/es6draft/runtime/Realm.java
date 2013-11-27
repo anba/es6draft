@@ -49,7 +49,7 @@ import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
-import com.github.anba.es6draft.runtime.objects.reflect.ProxyConstructor;
+import com.github.anba.es6draft.runtime.objects.reflect.ProxyFactoryFunction;
 import com.github.anba.es6draft.runtime.objects.reflect.Reflect;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -569,15 +569,15 @@ public final class Realm {
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
-        ProxyConstructor proxyConstructor = new ProxyConstructor(realm);
+        ProxyFactoryFunction proxy = new ProxyFactoryFunction(realm);
         Reflect reflect = new Reflect(realm);
 
         // registration phase
-        intrinsics.put(Intrinsics.Proxy, proxyConstructor);
+        intrinsics.put(Intrinsics.Proxy, proxy);
         intrinsics.put(Intrinsics.Reflect, reflect);
 
         // initialisation phase
-        proxyConstructor.initialise(defaultContext);
+        proxy.initialise(defaultContext);
         reflect.initialise(defaultContext);
     }
 

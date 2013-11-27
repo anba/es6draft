@@ -19,7 +19,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
@@ -34,10 +33,10 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.2.2 Properties of the Proxy Factory Function
  * </ul>
  */
-public class ProxyConstructor extends BuiltinConstructor implements Initialisable {
-    // TODO: rename, remove [[Construct]]
+public class ProxyFactoryFunction extends BuiltinConstructor implements Initialisable {
+    // TODO: remove [[Construct]] ?
 
-    public ProxyConstructor(Realm realm) {
+    public ProxyFactoryFunction(Realm realm) {
         super(realm, "Proxy");
     }
 
@@ -79,10 +78,6 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
         public static final String name = "Proxy";
-
-        // TODO: why is @@toStringTag present?
-        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
-        public static final String toStringTag = "Proxy";
 
         /**
          * 26.2.2.1 Proxy.revocable ( target, handler )

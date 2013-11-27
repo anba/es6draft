@@ -230,8 +230,6 @@ public final class PropertyDescriptor implements Cloneable {
      */
     public static Object FromPropertyDescriptor(ExecutionContext cx, PropertyDescriptor desc)
             throws IllegalArgumentException {
-        // FIXME: FromPropertyDescriptor does not assume that Desc is a fully populated descriptor!
-        // Only assert it's a valid property descriptor
         assert desc == null || !(desc.isDataDescriptor() && desc.isAccessorDescriptor());
 
         /* step 1 */

@@ -69,7 +69,7 @@ public class GeneratorObject extends OrdinaryObject {
     }
 
     /**
-     * @see IterationAbstractOperations#GeneratorStart(ExecutionContext, GeneratorObject,
+     * @see GeneratorAbstractOperations#GeneratorStart(ExecutionContext, GeneratorObject,
      *      RuntimeInfo.Code)
      */
     void start(ExecutionContext cx, RuntimeInfo.Code code) {
@@ -81,7 +81,7 @@ public class GeneratorObject extends OrdinaryObject {
     }
 
     /**
-     * @see IterationAbstractOperations#GeneratorResume(ExecutionContext, Object, Object)
+     * @see GeneratorAbstractOperations#GeneratorResume(ExecutionContext, Object, Object)
      */
     Object resume(ExecutionContext cx, Object value) {
         GeneratorState state = this.state;
@@ -133,7 +133,7 @@ public class GeneratorObject extends OrdinaryObject {
     }
 
     /**
-     * @see IterationAbstractOperations#GeneratorYield(ExecutionContext, ScriptObject)
+     * @see GeneratorAbstractOperations#GeneratorYield(ExecutionContext, ScriptObject)
      */
     Object yield(Object value) {
         assert state == GeneratorState.Executing : "yield from generator in state: " + state;

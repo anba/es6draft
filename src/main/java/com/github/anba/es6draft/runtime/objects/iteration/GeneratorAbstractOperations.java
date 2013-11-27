@@ -21,9 +21,8 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <li>25.3.3 Generator Abstract Operations
  * </ul>
  */
-public final class IterationAbstractOperations {
-    // TODO: rename class to GeneratorAbstractOperations
-    private IterationAbstractOperations() {
+public final class GeneratorAbstractOperations {
+    private GeneratorAbstractOperations() {
     }
 
     /**
