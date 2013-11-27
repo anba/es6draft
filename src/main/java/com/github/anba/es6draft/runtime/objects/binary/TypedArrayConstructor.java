@@ -36,8 +36,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
     private final ElementType elementType;
 
     public TypedArrayConstructor(Realm realm, ElementType elementType) {
-        super(realm, (elementType == ElementType.Uint8C ? "Uint8ClampedArray" : elementType.name())
-                + "Array");
+        super(realm, elementType.getConstructorName());
         this.elementType = elementType;
     }
 
@@ -132,7 +131,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final String name = "Int8Array";
+        public static final String name = ElementType.Int8.getConstructorName();
 
         /**
          * 22.2.5.2 TypedArray.prototype
@@ -164,7 +163,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final String name = "Uint8Array";
+        public static final String name = ElementType.Uint8.getConstructorName();
 
         /**
          * 22.2.5.2 TypedArray.prototype
@@ -196,7 +195,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final String name = "Uint8Clamped";
+        public static final String name = ElementType.Uint8C.getConstructorName();
 
         /**
          * 22.2.5.2 TypedArray.prototype
@@ -228,7 +227,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final String name = "Int16Array";
+        public static final String name = ElementType.Int16.getConstructorName();
 
         /**
          * 22.2.5.2 TypedArray.prototype
@@ -260,7 +259,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final String name = "Uint16Array";
+        public static final String name = ElementType.Uint16.getConstructorName();
 
         /**
          * 22.2.5.2 TypedArray.prototype
@@ -292,7 +291,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final String name = "Int32Array";
+        public static final String name = ElementType.Int32.getConstructorName();
 
         /**
          * 22.2.5.2 TypedArray.prototype
@@ -324,7 +323,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final String name = "Uint32Array";
+        public static final String name = ElementType.Uint32.getConstructorName();
 
         /**
          * 22.2.5.2 TypedArray.prototype
@@ -356,7 +355,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final String name = "Float32Array";
+        public static final String name = ElementType.Float32.getConstructorName();
 
         /**
          * 22.2.5.2 TypedArray.prototype
@@ -388,7 +387,7 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final String name = "Float64Array";
+        public static final String name = ElementType.Float64.getConstructorName();
 
         /**
          * 22.2.5.2 TypedArray.prototype

@@ -69,6 +69,7 @@ public class StringIteratorPrototype extends OrdinaryObject implements Initialis
      * 21.1.5.1 CreateStringIterator Abstract Operation
      */
     public static OrdinaryObject CreateStringIterator(ExecutionContext cx, String string) {
+        // TODO: move type coercion from callers to here
         /* steps 1-2 (omitted) */
         /* steps 3-5 */
         StringIterator iterator = ObjectCreate(cx, Intrinsics.StringIteratorPrototype,

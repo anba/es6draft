@@ -87,6 +87,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
      */
     public static OrdinaryObject CreateMapIterator(ExecutionContext cx, MapObject m,
             MapIterationKind kind) {
+        // TODO: move type checks from caller here
         /* steps 1-2 (not applicable) */
         /* step 3 */
         LinkedMap<Object, Object> entries = m.getMapData();

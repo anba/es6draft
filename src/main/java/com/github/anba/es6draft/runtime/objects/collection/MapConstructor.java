@@ -94,13 +94,18 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
         }
 
         /* steps 9-10 */
+        if (map.isInitialised()) {
+            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+        }
+
+        /* steps 11-12 */
         map.initialise(_comparator);
 
-        /* step 11 */
+        /* step 13 */
         if (iter == null) {
             return map;
         }
-        /* step 12 */
+        /* step 14 */
         for (;;) {
             ScriptObject next = IteratorStep(calleeContext, iter);
             if (next == null) {

@@ -94,10 +94,8 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-4 */
             WeakSetObject s = thisWeakSetValue(cx, thisValue);
             /* step 5 */
-            WeakHashMap<Object, Boolean> entries = s.getWeakSetData();
+            s.getWeakSetData().clear();
             /* step 6 */
-            entries.clear();
-            /* step 7 */
             return UNDEFINED;
         }
 

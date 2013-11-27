@@ -72,7 +72,7 @@ public class GeneratorPrototype extends OrdinaryObject implements Initialisable 
             if (!(thisValue instanceof GeneratorObject)) {
                 throw throwTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            /* steps 4-16 */
+            /* steps 4-18 */
             return ((GeneratorObject) thisValue)._throw(cx, exception);
         }
 

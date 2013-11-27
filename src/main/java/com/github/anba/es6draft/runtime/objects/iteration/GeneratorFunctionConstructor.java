@@ -99,13 +99,13 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
             throw e.toScriptException(calleeContext);
         }
 
-        /* step 13 */
+        /* step 12 */
         boolean strict = function.isStrict();
-        /* step 14 */
+        /* step 13 */
         LexicalEnvironment scope = calleeContext.getRealm().getGlobalEnv();
-        /* step 15 */
+        /* step 14 */
         Object f = thisValue;
-        /* steps 16-17 */
+        /* steps 15-16 */
         if (!Type.isObject(f) || !(f instanceof FunctionObject)
                 || ((FunctionObject) f).getCode() != null) {
             ScriptObject proto = calleeContext.getIntrinsic(Intrinsics.Generator);
@@ -114,23 +114,23 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
             // FIXME: this also updates uninitialised function (not generator!)
             ((FunctionObject) f).setStrict(strict);
         }
-        /* step 18 */
+        /* step 17 */
         if (!(f instanceof OrdinaryGenerator)) {
             throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
-        /* steps 19-20 */
+        /* steps 18-19 */
         FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
-        /* step 21 */
+        /* step 20 */
         ScriptObject prototype = ObjectCreate(calleeContext, Intrinsics.GeneratorPrototype);
-        /* step 22 */
+        /* step 21 */
         MakeConstructor(calleeContext, fn, true, prototype);
-        /* step 23 */
+        /* step 22 */
         // FIXME: if-test missing in spec
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(calleeContext, fn, "anonymous");
         }
-        /* step 24 */
+        /* step 23 */
         return fn;
     }
 

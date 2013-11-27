@@ -52,7 +52,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
 
         createProperties(this, cx, ValueProperties.class);
         createProperties(this, cx, FunctionProperties.class);
-        createProperties(this, cx, URIFunctionProperties.class);
+        createProperties(this, cx, URIHandlingFunctions.class);
         createProperties(this, cx, ConstructorProperties.class);
         createProperties(this, cx, OtherProperties.class);
         createProperties(this, cx, AdditionalProperties.class);
@@ -155,9 +155,9 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 18.3 URI Handling Function Properties
+     * 18.3 URI Handling Functions
      */
-    public enum URIFunctionProperties {
+    public enum URIHandlingFunctions {
         ;
 
         /**

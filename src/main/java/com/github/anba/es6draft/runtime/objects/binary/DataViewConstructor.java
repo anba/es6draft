@@ -198,8 +198,10 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
             viewByteLength = bufferByteLength - viewByteOffset;
         } else {
             double numberLength = ToNumber(calleeContext, byteLength);
+            // TODO: call ToLength() instead of ToInteger() in spec?
             double viewLength = ToInteger(numberLength);
             if (numberLength != viewLength || viewLength < 0) {
+                // TODO: correct error message -> invalid length
                 throwRangeError(calleeContext, Messages.Key.InvalidByteOffset);
             }
             viewByteLength = (long) viewLength;

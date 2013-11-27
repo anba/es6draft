@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
@@ -25,7 +25,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Type;
@@ -108,9 +107,9 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             /* step 12 */
             long newLen = Math.max(_final - first, 0);
             /* steps 13-14 */
-            Callable ctor = GetMethod(cx, obj, "constructor");
+            Object ctor = Get(cx, obj, "constructor");
             /* step 15 */
-            if (ctor == null || !IsConstructor(ctor)) {
+            if (!IsConstructor(ctor)) {
                 throw throwTypeError(cx, Messages.Key.NotConstructor);
             }
             /* steps 16-19 */
@@ -124,9 +123,9 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             ByteBuffer fromBuf = obj.getData();
             /* step 22 */
             ByteBuffer toBuf = _new.getData();
-            /* steps 23-24 */
+            /* steps 23 */
             CopyDataBlockBytes(fromBuf, first, toBuf, 0, newLen);
-            /* step 25 */
+            /* step 24 */
             return _new;
         }
 

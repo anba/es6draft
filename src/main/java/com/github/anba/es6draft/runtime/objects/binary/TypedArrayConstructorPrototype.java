@@ -110,7 +110,7 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         /* steps 11-12 */
         long elementLength = ToLength(numberLength);
         /* step 13 */
-        if (numberLength != elementLength) {
+        if (!SameValueZero(numberLength, elementLength)) {
             throw throwRangeError(cx, Messages.Key.InvalidBufferSize);
         }
         /* steps 14-16 */
@@ -173,18 +173,18 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         int elementSize = elementType.size();
         /* step 18 */
         long byteLength = elementSize * elementLength;
-        /* steps 19-21 */
-        array.setByteLength(byteLength);
-        array.setByteOffset(0);
-        array.setArrayLength(elementLength);
-        /* steps 22-23 */
+        /* steps 19-20 */
         ArrayBufferObject data;
         if (elementType == srcType) {
-            /* step 22 */
+            /* step 19 */
             data = CloneArrayBuffer(cx, srcData, srcByteOffset);
         } else {
-            /* step 23 */
-            data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
+            /* step 20 */
+            Object bufferConstructor = Get(cx, srcData, "constructor");
+            if (Type.isUndefined(bufferConstructor)) {
+                bufferConstructor = cx.getIntrinsic(Intrinsics.ArrayBuffer);
+            }
+            data = AllocateArrayBuffer(cx, bufferConstructor);
             SetArrayBufferData(cx, data, byteLength);
             long srcByteIndex = srcByteOffset;
             long targetByteIndex = 0;
@@ -195,10 +195,16 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
                 targetByteIndex += elementSize;
             }
         }
-        // FIXME: side-effects -> CloneArrayBuffer
-        /* step 24 */
+        /* steps 21-22 */
+        if (array.getBuffer() != null) {
+            throwTypeError(cx, Messages.Key.InitialisedObject);
+        }
+        /* steps 23-26 */
         array.setBuffer(data);
-        /* step 25 */
+        array.setByteLength(byteLength);
+        array.setByteOffset(0);
+        array.setArrayLength(elementLength);
+        /* step 27 */
         return array;
     }
 
@@ -231,35 +237,31 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         Object arrayLength = Get(cx, srcArray, "length");
         /* steps 11-12 */
         long elementLength = ToLength(cx, arrayLength);
-        /* step 13 */
-        if (elementLength < 0) {
-            throwRangeError(cx, Messages.Key.InvalidBufferSize);
-        }
-        /* steps 14-15 */
+        /* steps 13-14 */
         ArrayBufferObject data = AllocateArrayBuffer(cx, Intrinsics.ArrayBuffer);
-        /* step 16 */
+        /* step 15 */
         int elementSize = elementType.size();
-        /* step 17 */
+        /* step 16 */
         long byteLength = elementSize * elementLength;
-        /* steps 18-19 */
+        /* steps 17-18 */
         SetArrayBufferData(cx, data, byteLength);
-        /* steps 20-21 */
+        /* steps 19-20 */
         for (long k = 0; k < elementLength; ++k) {
             String pk = ToString(k);
             Object kValue = Get(cx, srcArray, pk);
             double kNumber = ToNumber(cx, kValue);
             SetValueInBuffer(cx, data, k * elementSize, elementType, kNumber);
         }
-        /* steps 22-23 */
+        /* steps 21-22 */
         if (array.getBuffer() != null) {
             throwTypeError(cx, Messages.Key.InitialisedObject);
         }
-        /* steps 24-27 */
+        /* steps 23-26 */
         array.setBuffer(data);
         array.setByteLength(byteLength);
         array.setByteOffset(0);
         array.setArrayLength(elementLength);
-        /* step 28 */
+        /* step 27 */
         return array;
     }
 
@@ -322,9 +324,6 @@ public class TypedArrayConstructorPrototype extends BuiltinFunction implements I
         } else {
             /* step 18 */
             long newLength = ToLength(cx, length);
-            if (newLength < 0) {
-                throwRangeError(cx, Messages.Key.InvalidBufferSize);
-            }
             newByteLength = newLength * elementSize;
             if (offset + newByteLength > bufferByteLength) {
                 throwRangeError(cx, Messages.Key.InvalidBufferSize);

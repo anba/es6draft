@@ -35,6 +35,8 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  */
 public class ProxyConstructor extends BuiltinConstructor implements Initialisable {
+    // TODO: rename, remove [[Construct]]
+
     public ProxyConstructor(Realm realm) {
         super(realm, "Proxy");
     }
@@ -78,6 +80,7 @@ public class ProxyConstructor extends BuiltinConstructor implements Initialisabl
                 configurable = true))
         public static final String name = "Proxy";
 
+        // TODO: why is @@toStringTag present?
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Proxy";
 

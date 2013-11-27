@@ -93,7 +93,7 @@ public class GeneratorObject extends OrdinaryObject {
         case Executing:
             throw throwTypeError(cx, Messages.Key.GeneratorExecuting);
         case Completed:
-            throw throwTypeError(cx, Messages.Key.GeneratorClosed);
+            return CreateIterResultObject(cx, UNDEFINED, true);
         case SuspendedStart:
             if (value != UNDEFINED) {
                 throw throwTypeError(cx, Messages.Key.GeneratorNewbornSend);
@@ -120,12 +120,13 @@ public class GeneratorObject extends OrdinaryObject {
         case Executing:
             throw throwTypeError(cx, Messages.Key.GeneratorExecuting);
         case Completed:
-            throw throwTypeError(cx, Messages.Key.GeneratorClosed);
+            throw ScriptRuntime._throw(value);
         case SuspendedStart:
             this.state = GeneratorState.Completed;
             throw ScriptRuntime._throw(value);
         case SuspendedYield:
         default:
+            // TODO: unwrap 'value' if instance of ErrorObject?
             resume0(new ScriptException(value));
             return execute0(cx);
         }

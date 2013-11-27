@@ -213,15 +213,15 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             boolean usingIterator = HasProperty(cx, items, BuiltinSymbol.iterator.get());
             /* step 8 */
             if (usingIterator) {
-                /* steps 8a-8b */
-                ScriptObject iterator = GetIterator(cx, items);
-                /* steps 8c-8e */
+                /* steps 8a-8c */
                 ScriptObject a;
                 if (IsConstructor(c)) {
                     a = ((Constructor) c).construct(cx);
                 } else {
                     a = ArrayCreate(cx, 0);
                 }
+                /* steps 8d-8e */
+                ScriptObject iterator = GetIterator(cx, items);
                 /* steps 8f-8g */
                 for (int k = 0;; ++k) {
                     String pk = ToString(k);

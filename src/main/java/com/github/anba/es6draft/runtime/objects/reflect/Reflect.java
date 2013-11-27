@@ -104,6 +104,7 @@ public class Reflect extends OrdinaryObject implements Initialisable {
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object target) {
             /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
+            /* step 3 */
             return obj.preventExtensions(cx);
         }
 
@@ -221,6 +222,7 @@ public class Reflect extends OrdinaryObject implements Initialisable {
         public static Object invoke(ExecutionContext cx, Object thisValue, Object target,
                 Object propertyKey, Object argumentsList,
                 @Optional(Optional.Default.NONE) Object receiver) {
+            // FIXME: removed from rev21
             /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
             /* steps 3-4 */

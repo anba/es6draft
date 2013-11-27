@@ -18,10 +18,11 @@ import com.github.anba.es6draft.runtime.types.Type;
  * <h1>25 Control Abstraction Objects</h1><br>
  * <h2>25.3 Generator Objects</h2>
  * <ul>
- * <li>25.3.3 Iteration Related Abstract Operations
+ * <li>25.3.3 Generator Abstract Operations
  * </ul>
  */
 public final class IterationAbstractOperations {
+    // TODO: rename class to GeneratorAbstractOperations
     private IterationAbstractOperations() {
     }
 
@@ -48,7 +49,7 @@ public final class IterationAbstractOperations {
         if (!(generator instanceof GeneratorObject)) {
             throw throwTypeError(cx, Messages.Key.IncompatibleObject);
         }
-        /* steps 3-14 */
+        /* steps 3-15 */
         return ((GeneratorObject) generator).resume(cx, value);
     }
 

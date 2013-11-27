@@ -38,7 +38,9 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -57,6 +59,16 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
     @Override
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
+    }
+
+    private static Realm getConstructorRealm(Constructor constructor) {
+        if (constructor instanceof FunctionObject) {
+            return ((FunctionObject) constructor).getRealm();
+        } else if (constructor instanceof BuiltinFunction) {
+            return ((BuiltinFunction) constructor).getRealm();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -143,8 +155,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* step 4 */
             if (o instanceof ExoticArray) {
                 Object c = Get(cx, o, "constructor");
-                // FIXME: correct [[Realm]] test
-                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
+                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, 0);
                 }
             }
@@ -438,9 +449,8 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject a = null;
             /* step 14 */
             if (o instanceof ExoticArray) {
-                // FIXME: correct [[Realm]] check
                 Object c = Get(cx, o, "constructor");
-                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
+                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, count);
                 }
             }
@@ -609,9 +619,8 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject a = null;
             /* step 13 */
             if (o instanceof ExoticArray) {
-                // FIXME: correct [[Realm]] check
                 Object c = Get(cx, o, "constructor");
-                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
+                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, actualDeleteCount);
                 }
             }
@@ -839,7 +848,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 22.1.3.5 Array.prototype.every ( callbackfn [ , thisArg ] )
+         * 22.1.3.5 Array.prototype.every ( callbackfn, thisArg = undefined )
          */
         @Function(name = "every", arity = 1)
         public static Object every(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -855,7 +864,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 22.1.3.5 Array.prototype.every ( callbackfn [ , thisArg ] )
+         * 22.1.3.5 Array.prototype.every ( callbackfn, thisArg = undefined )
          * 
          * @see ArrayPrototype.Properties#every(ExecutionContext, Object, Object, Object)
          * @see TypedArrayPrototypePrototype.Properties#every(ExecutionContext, Object, Object,
@@ -887,7 +896,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 22.1.3.23 Array.prototype.some ( callbackfn [ , thisArg ] )
+         * 22.1.3.23 Array.prototype.some ( callbackfn, thisArg = undefined )
          */
         @Function(name = "some", arity = 1)
         public static Object some(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -903,7 +912,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 22.1.3.23 Array.prototype.some ( callbackfn [ , thisArg ] )
+         * 22.1.3.23 Array.prototype.some ( callbackfn, thisArg = undefined )
          * 
          * @see ArrayPrototype.Properties#some(ExecutionContext, Object, Object, Object)
          * @see TypedArrayPrototypePrototype.Properties#some(ExecutionContext, Object, Object,
@@ -935,7 +944,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 22.1.3.10 Array.prototype.forEach ( callbackfn [ , thisArg ] )
+         * 22.1.3.10 Array.prototype.forEach ( callbackfn, thisArg = undefined )
          */
         @Function(name = "forEach", arity = 1)
         public static Object forEach(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -951,7 +960,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 22.1.3.10 Array.prototype.forEach ( callbackfn [ , thisArg ] )
+         * 22.1.3.10 Array.prototype.forEach ( callbackfn, thisArg = undefined )
          * 
          * @see ArrayPrototype.Properties#forEach(ExecutionContext, Object, Object, Object)
          * @see TypedArrayPrototypePrototype.Properties#forEach(ExecutionContext, Object, Object,
@@ -980,7 +989,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 22.1.3.15 Array.prototype.map ( callbackfn [ , thisArg ] )
+         * 22.1.3.15 Array.prototype.map ( callbackfn, thisArg = undefined )
          */
         @Function(name = "map", arity = 1)
         public static Object map(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -1001,9 +1010,8 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject a = null;
             /* step 9 */
             if (o instanceof ExoticArray) {
-                // FIXME: correct [[Realm]] check
                 Object c = Get(cx, o, "constructor");
-                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
+                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, len);
                 }
             }
@@ -1026,7 +1034,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         }
 
         /**
-         * 22.1.3.7 Array.prototype.filter ( callbackfn [ , thisArg ] )
+         * 22.1.3.7 Array.prototype.filter ( callbackfn, thisArg = undefined )
          */
         @Function(name = "filter", arity = 1)
         public static Object filter(ExecutionContext cx, Object thisValue, Object callbackfn,
@@ -1047,9 +1055,8 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject a = null;
             /* step 9 */
             if (o instanceof ExoticArray) {
-                // FIXME: correct [[Realm]] check
                 Object c = Get(cx, o, "constructor");
-                if (!(c instanceof ArrayConstructor) && IsConstructor(c)) {
+                if (IsConstructor(c) && getConstructorRealm((Constructor) c) == cx.getRealm()) {
                     a = ((Constructor) c).construct(cx, 0);
                 }
             }
@@ -1442,38 +1449,36 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         public static ScriptObject copyWithin(ExecutionContext cx, ScriptObject o, long len,
                 Object target, Object start, Object end) {
             /* steps 1-5 (not applicable) */
-            /* step 6 */
-            len = Math.max(len, 0);
-            /* steps 7-8 */
+            /* steps 6-7 */
             double relativeTarget = ToInteger(cx, target);
-            /* step 9 */
+            /* step 8 */
             long to;
             if (relativeTarget < 0) {
                 to = (long) Math.max((len + relativeTarget), 0);
             } else {
                 to = (long) Math.min(relativeTarget, len);
             }
-            /* steps 10-11 */
+            /* steps 9-10 */
             double relativeStart = ToInteger(cx, start);
-            /* step 12 */
+            /* step 11 */
             long from;
             if (relativeStart < 0) {
                 from = (long) Math.max((len + relativeStart), 0);
             } else {
                 from = (long) Math.min(relativeStart, len);
             }
-            /* steps 13-14 */
+            /* steps 12-13 */
             double relativeEnd = Type.isUndefined(end) ? len : ToInteger(cx, end);
-            /* step 15 */
+            /* step 14 */
             long finall;
             if (relativeEnd < 0) {
                 finall = (long) Math.max((len + relativeEnd), 0);
             } else {
                 finall = (long) Math.min(relativeEnd, len);
             }
-            /* step 16 */
+            /* step 15 */
             long count = Math.min(finall - from, len - to);
-            /* steps 17-18 */
+            /* steps 16-17 */
             long direction;
             if (from < to && to < from + count) {
                 direction = -1;
@@ -1482,7 +1487,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             } else {
                 direction = 1;
             }
-            /* step 19 */
+            /* step 18 */
             for (; count > 0; --count) {
                 String fromKey = ToString(from);
                 String toKey = ToString(to);
@@ -1496,7 +1501,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 from += direction;
                 to += direction;
             }
-            /* step 20 */
+            /* step 19 */
             return o;
         }
     }

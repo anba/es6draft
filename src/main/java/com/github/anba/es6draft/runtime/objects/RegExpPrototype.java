@@ -37,7 +37,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
-import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
@@ -671,24 +670,23 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         /* step 16 */
         int n = m.groupCount();
         /* step 17 */
-        ScriptObject array = ArrayCreate(cx, 0);
+        ScriptObject array = ArrayCreate(cx, n + 1);
         /* step 18 */
         int matchIndex = m.start();
-        /* steps 19-22 */
+        /* steps 19-21 */
         CreateDataProperty(cx, array, "index", matchIndex);
         CreateDataProperty(cx, array, "input", s);
-        array.defineOwnProperty(cx, "length", new PropertyDescriptor(n + 1));
+        /* step 22 */
+        String matchedSubstr = s.substring(matchIndex, e);
         /* step 23 */
-        CharSequence matchedSubstr = s.subSequence(matchIndex, e);
-        /* step 24 */
         CreateDataProperty(cx, array, "0", matchedSubstr);
-        /* step 25 */
+        /* step 24 */
         GroupIterator iterator = new GroupIterator(r.getRegExpMatcher(), m);
         for (int i = 1; iterator.hasNext(); ++i) {
             String capture = iterator.next();
             CreateDataProperty(cx, array, ToString(i), (capture != null ? capture : UNDEFINED));
         }
-        /* step 26 */
+        /* step 25 */
         return array;
     }
 

@@ -166,7 +166,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
                 l = 0;
             }
             /* step 7 */
-            f.defineOwnProperty(cx, "length", new PropertyDescriptor(l, false, false, false));
+            f.defineOwnProperty(cx, "length", new PropertyDescriptor(l, false, false, true));
             /* step 8 */
             AddRestrictedFunctionProperties(cx, f);
             /* step 9 */

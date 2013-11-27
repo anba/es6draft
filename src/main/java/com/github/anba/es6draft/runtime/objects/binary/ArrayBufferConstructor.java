@@ -6,10 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToLength;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
+import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -100,12 +97,12 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         assert fromBlock != toBlock;
         /* step 2 */
         assert fromIndex >= 0 && toIndex >= 0 && count >= 0;
-        /* step 3 */
+        /* steps 3-4 */
         assert fromIndex + count <= fromBlock.capacity();
-        /* step 4 */
+        /* steps 5-6 */
         assert toIndex + count <= toBlock.capacity();
 
-        /* step 7 */
+        /* steps 7-8 */
         fromBlock.limit((int) (fromIndex + count)).position((int) fromIndex);
         toBlock.limit((int) (toIndex + count)).position((int) toIndex);
         toBlock.put(fromBlock);
@@ -169,7 +166,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         /* steps 5-6 */
         Object bufferConstructor = Get(cx, srcBuffer, "constructor");
         /* step 7 */
-        assert srcByteOffset < srcLength;
+        assert srcByteOffset <= srcLength;
         /* step 8 */
         long cloneLength = srcLength - srcByteOffset;
         /* step 9 */
@@ -183,14 +180,8 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         /* step 13 */
         ByteBuffer targetBlock = targetBuffer.getData();
         /* step 14 */
-        long srcByteIndex = srcByteOffset;
+        CopyDataBlockBytes(srcBlock, srcByteOffset, targetBlock, 0, cloneLength);
         /* step 15 */
-        long targetByteIndex = 0;
-        /* step 16 */
-        long count = cloneLength;
-        /* step 17 */
-        CopyDataBlockBytes(srcBlock, srcByteIndex, targetBlock, targetByteIndex, count);
-        /* step 18 */
         return targetBuffer;
     }
 
@@ -347,7 +338,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         /* steps 4-5 */
         long byteLength = ToLength(numberLength);
         /* step 6 */
-        if (numberLength != byteLength || numberLength < 0) {
+        if (!SameValueZero(numberLength, byteLength)) {
             throwRangeError(calleeContext, Messages.Key.InvalidBufferSize);
         }
         /* step 7 */
