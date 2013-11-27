@@ -1552,7 +1552,6 @@ public final class AbstractOperations {
     }
 
     /**
-     * FIXME: Not in spec<br>
      * 7.4.? IteratorThrow ( iterator, value )
      */
     public static ScriptObject IteratorThrow(ExecutionContext cx, ScriptObject iterator,

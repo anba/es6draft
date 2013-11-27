@@ -130,28 +130,6 @@ public final class ExecutionContext {
     /**
      * <div>
      * <ul>
-     * <li>12 ECMAScript Language: Expressions
-     * <ul>
-     * <li>12.1 Primary Expressions
-     * <ul>
-     * <li>12.1.7 Generator Comprehensions
-     * <ul>
-     * <li>12.1.7.2 Runtime Semantics</div>
-     * <p>
-     * Runtime Semantics: Evaluation
-     */
-    public static ExecutionContext newGeneratorComprehensionContext(ExecutionContext callerContext) {
-        ExecutionContext progCxt = new ExecutionContext();
-        progCxt.realm = callerContext.realm;
-        progCxt.varEnv = callerContext.varEnv;
-        progCxt.lexEnv = callerContext.lexEnv;
-        progCxt.function = callerContext.function;
-        return progCxt;
-    }
-
-    /**
-     * <div>
-     * <ul>
      * <li>9 ECMAScript Ordinary and Exotic Objects Behaviours
      * <ul>
      * <li>9.1 Ordinary Object Internal Methods and Internal Data Properties

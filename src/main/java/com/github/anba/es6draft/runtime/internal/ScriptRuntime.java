@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
-import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorStart;
 import static com.github.anba.es6draft.runtime.objects.iteration.IterationAbstractOperations.GeneratorYield;
 import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -170,64 +169,6 @@ public final class ScriptRuntime {
     /**
      * 12.1.5 Object Initialiser
      * <p>
-     * Runtime Semantics: Property Definition Evaluation
-     */
-    public static void ensureNewProperty(ScriptObject object, Object propertyName,
-            ExecutionContext cx) {
-        boolean duplicateKey;
-        if (propertyName instanceof String) {
-            duplicateKey = HasOwnProperty(cx, object, (String) propertyName);
-        } else {
-            duplicateKey = HasOwnProperty(cx, object, (Symbol) propertyName);
-        }
-        if (duplicateKey) {
-            throwTypeError(cx, Messages.Key.DuplicatePropertyDefinition, propertyName.toString());
-        }
-    }
-
-    /**
-     * 12.1.5 Object Initialiser
-     * <p>
-     * Runtime Semantics: Property Definition Evaluation
-     */
-    public static void ensureNewPropertyGet(ScriptObject object, Object propertyName,
-            ExecutionContext cx) {
-        Property prop;
-        if (propertyName instanceof String) {
-            prop = object.getOwnProperty(cx, (String) propertyName);
-        } else {
-            prop = object.getOwnProperty(cx, (Symbol) propertyName);
-        }
-        boolean duplicateKey = prop != null
-                && !(prop.isAccessorDescriptor() && prop.getGetter() == null);
-        if (duplicateKey) {
-            throwTypeError(cx, Messages.Key.DuplicatePropertyDefinition, propertyName.toString());
-        }
-    }
-
-    /**
-     * 12.1.5 Object Initialiser
-     * <p>
-     * Runtime Semantics: Property Definition Evaluation
-     */
-    public static void ensureNewPropertySet(ScriptObject object, Object propertyName,
-            ExecutionContext cx) {
-        Property prop;
-        if (propertyName instanceof String) {
-            prop = object.getOwnProperty(cx, (String) propertyName);
-        } else {
-            prop = object.getOwnProperty(cx, (Symbol) propertyName);
-        }
-        boolean duplicateKey = prop != null
-                && !(prop.isAccessorDescriptor() && prop.getSetter() == null);
-        if (duplicateKey) {
-            throwTypeError(cx, Messages.Key.DuplicatePropertyDefinition, propertyName.toString());
-        }
-    }
-
-    /**
-     * 12.1.5 Object Initialiser
-     * <p>
      * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      */
     public static void defineProperty(ScriptObject object, Object propertyName, Object value,
@@ -245,23 +186,6 @@ public final class ScriptRuntime {
             ExecutionContext cx) {
         DefinePropertyOrThrow(cx, object, propertyName, new PropertyDescriptor(value, true, true,
                 true));
-    }
-
-    /**
-     * 12.1.7 Generator Comprehensions
-     * <p>
-     * Runtime Semantics: Evaluation
-     */
-    public static ScriptObject __EvaluateGeneratorComprehension(MethodHandle handle,
-            ExecutionContext cx) {
-        // TODO: remove this method, no longer used
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
-        ExecutionContext calleeContext = ExecutionContext.newGeneratorComprehensionContext(cx);
-        RuntimeInfo.Code newCode = RuntimeInfo.newCode(handle);
-        GeneratorObject result = new GeneratorObject(cx.getRealm());
-        result.setPrototype(prototype);
-        GeneratorStart(calleeContext, result, newCode);
-        return result;
     }
 
     /**
@@ -882,74 +806,6 @@ public final class ScriptRuntime {
             throw throwTypeError(cx, Messages.Key.NotObjectType);
         }
         return Type.objectValue(val);
-    }
-
-    /**
-     * 12.13.3.2 Runtime Semantics<br>
-     * Runtime Semantics: Destructuring Assignment Evaluation<br>
-     * Runtime Semantics: Keyed Destructuring Assignment Evaluation
-     * <p>
-     * 13.2.3.2 Runtime Semantics<br>
-     * Runtime Semantics: Indexed Binding Initialisation<br>
-     * Runtime Semantics: Keyed Binding Initialisation
-     */
-    public static Object GetIfPresentOrThrow(ScriptObject object, Object propertyKey,
-            ExecutionContext cx) {
-        if (HasProperty(cx, object, propertyKey)) {
-            return Get(cx, object, propertyKey);
-        }
-        throw throwTypeError(cx, Messages.Key.PropertyNotFound, propertyKey.toString());
-    }
-
-    /**
-     * 12.13.3.2 Runtime Semantics<br>
-     * Runtime Semantics: Destructuring Assignment Evaluation<br>
-     * Runtime Semantics: Keyed Destructuring Assignment Evaluation
-     * <p>
-     * 13.2.3.2 Runtime Semantics<br>
-     * Runtime Semantics: Indexed Binding Initialisation<br>
-     * Runtime Semantics: Keyed Binding Initialisation
-     */
-    public static Object GetIfPresentOrThrow(ScriptObject object, String propertyKey,
-            ExecutionContext cx) {
-        if (HasProperty(cx, object, propertyKey)) {
-            return Get(cx, object, propertyKey);
-        }
-        throw throwTypeError(cx, Messages.Key.PropertyNotFound, propertyKey);
-    }
-
-    /**
-     * 12.13.3.2 Runtime Semantics<br>
-     * Runtime Semantics: Destructuring Assignment Evaluation<br>
-     * Runtime Semantics: Keyed Destructuring Assignment Evaluation
-     * <p>
-     * 13.2.3.2 Runtime Semantics<br>
-     * Runtime Semantics: Indexed Binding Initialisation<br>
-     * Runtime Semantics: Keyed Binding Initialisation
-     */
-    public static Object GetIfPresentOrUndefined(ScriptObject object, Object propertyKey,
-            ExecutionContext cx) {
-        if (HasProperty(cx, object, propertyKey)) {
-            return Get(cx, object, propertyKey);
-        }
-        return UNDEFINED;
-    }
-
-    /**
-     * 12.13.3.2 Runtime Semantics<br>
-     * Runtime Semantics: Destructuring Assignment Evaluation<br>
-     * Runtime Semantics: Keyed Destructuring Assignment Evaluation
-     * <p>
-     * 13.2.3.2 Runtime Semantics<br>
-     * Runtime Semantics: Indexed Binding Initialisation<br>
-     * Runtime Semantics: Keyed Binding Initialisation
-     */
-    public static Object GetIfPresentOrUndefined(ScriptObject object, String propertyKey,
-            ExecutionContext cx) {
-        if (HasProperty(cx, object, propertyKey)) {
-            return Get(cx, object, propertyKey);
-        }
-        return UNDEFINED;
     }
 
     /**
