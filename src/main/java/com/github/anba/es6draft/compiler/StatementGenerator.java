@@ -202,9 +202,10 @@ class StatementGenerator extends
      */
     @Override
     public Completion visit(ClassDeclaration node, StatementVisitor mv) {
-        ClassDefinitionEvaluation(node, null, mv);
+        String className = node.getName().getName();
+        ClassDefinitionEvaluation(node, className, mv);
 
-        SetFunctionName(node, node.getName().getName(), mv);
+        SetFunctionName(node, className, mv);
 
         // stack: [envRec, value] -> []
         getEnvironmentRecord(mv);
@@ -768,11 +769,11 @@ class StatementGenerator extends
         Expression expr = node.getExpression();
         if (expr != null) {
             if (!mv.isWrapped()) {
-                mv.setTailCall(TailCallNodes(expr));
+                mv.setTailCall(TailCallNodes(expr, mv.isStrict()));
             }
             expressionBoxedValue(expr, mv);
             if (!mv.isWrapped()) {
-                mv.setTailCall(TailCallNodes(null));
+                mv.setTailCall(TailCallNodes(null, mv.isStrict()));
             }
         } else {
             mv.loadUndefined();

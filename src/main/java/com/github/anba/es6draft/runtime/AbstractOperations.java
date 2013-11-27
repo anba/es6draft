@@ -279,7 +279,26 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.7 ToUint16: (Unsigned 16 Bit Integer)
+     * 7.1.7 ToInt16: (Signed 16 Bit Integer)
+     */
+    public static short ToInt16(ExecutionContext cx, Object val) {
+        /* steps 1-2 */
+        double number = ToNumber(cx, val);
+        /* steps 3-6 */
+        return (short) DoubleConversion.doubleToInt32(number);
+    }
+
+    /**
+     * 7.1.7 ToInt16: (Signed 16 Bit Integer)
+     */
+    public static short ToInt16(double number) {
+        /* steps 1-2 (not applicable) */
+        /* steps 3-6 */
+        return (short) DoubleConversion.doubleToInt32(number);
+    }
+
+    /**
+     * 7.1.8 ToUint16: (Unsigned 16 Bit Integer)
      */
     public static char ToUint16(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -289,7 +308,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.7 ToUint16: (Unsigned 16 Bit Integer)
+     * 7.1.8 ToUint16: (Unsigned 16 Bit Integer)
      */
     public static char ToUint16(double number) {
         /* steps 1-2 (not applicable) */
@@ -298,7 +317,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.8 ToInt8: (Signed 8 Bit Integer)
+     * 7.1.9 ToInt8: (Signed 8 Bit Integer)
      */
     public static byte ToInt8(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -308,7 +327,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.8 ToInt8: (Signed 8 Bit Integer)
+     * 7.1.9 ToInt8: (Signed 8 Bit Integer)
      */
     public static byte ToInt8(double number) {
         /* steps 1-2 (not applicable) */
@@ -317,7 +336,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.9 ToUint8: (Unsigned 8 Bit Integer)
+     * 7.1.10 ToUint8: (Unsigned 8 Bit Integer)
      */
     public static int ToUint8(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -327,7 +346,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.9 ToUint8: (Unsigned 8 Bit Integer)
+     * 7.1.10 ToUint8: (Unsigned 8 Bit Integer)
      */
     public static int ToUint8(double number) {
         /* steps 1-2 (not applicable) */
@@ -336,7 +355,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.10 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
+     * 7.1.11 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
      */
     public static int ToUint8Clamp(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -346,7 +365,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.10 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
+     * 7.1.11 ToUint8Clamp: (Unsigned 8 Bit Integer, Clamped)
      */
     public static int ToUint8Clamp(double number) {
         /* steps 1-2 (not applicable) */
@@ -355,14 +374,14 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.11 ToString
+     * 7.1.12 ToString
      */
     public static String ToFlatString(ExecutionContext cx, Object val) {
         return ToString(cx, val).toString();
     }
 
     /**
-     * 7.1.11 ToString
+     * 7.1.12 ToString
      */
     public static CharSequence ToString(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
@@ -386,14 +405,14 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.11.1 ToString Applied to the Number Type
+     * 7.1.12.1 ToString Applied to the Number Type
      */
     public static String ToString(int val) {
         return Integer.toString(val);
     }
 
     /**
-     * 7.1.11.1 ToString Applied to the Number Type
+     * 7.1.12.1 ToString Applied to the Number Type
      */
     public static String ToString(long val) {
         if ((int) val == val) {
@@ -405,7 +424,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.11.1 ToString Applied to the Number Type
+     * 7.1.12.1 ToString Applied to the Number Type
      */
     public static String ToString(double val) {
         /* steps 1-4 (+ shortcut for integer values) */
@@ -432,7 +451,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.12 ToObject
+     * 7.1.13 ToObject
      */
     public static ScriptObject ToObject(ExecutionContext cx, Object val) {
         switch (Type.of(val)) {
@@ -454,7 +473,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.13 ToPropertyKey
+     * 7.1.14 ToPropertyKey
      */
     public static Object ToPropertyKey(ExecutionContext cx, Object val) {
         if (val instanceof Symbol) {
@@ -464,7 +483,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.14 ToLength
+     * 7.1.15 ToLength
      */
     public static long ToLength(ExecutionContext cx, Object val) {
         /* steps 1-2 */
@@ -478,7 +497,7 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.1.14 ToLength
+     * 7.1.15 ToLength
      */
     public static long ToLength(double len) {
         /* steps 1-2 (not applicable) */
@@ -614,6 +633,21 @@ public final class AbstractOperations {
         /* steps 9-10 */
         assert tx == Type.Object || tx == Type.Symbol;
         return (x == y);
+    }
+
+    /**
+     * 7.2.4 SameValueZero(x, y)
+     */
+    public static boolean SameValueZero(double x, double y) {
+        /* steps 1-5 (not applicable) */
+        /* steps 7-10 (not applicable) */
+        /* step 6 */
+        double dx = Type.numberValue(x);
+        double dy = Type.numberValue(y);
+        if (dx == 0) {
+            return (dy == 0);
+        }
+        return Double.compare(dx, dy) == 0;
     }
 
     /**

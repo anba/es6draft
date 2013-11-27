@@ -170,7 +170,7 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         /* step 11 */
         for (StatementListItem d : varDeclarations) {
             if (d instanceof VariableStatement) {
-                for (String vn : BoundNames(d)) {
+                for (String vn : BoundNames((VariableStatement) d)) {
                     if (!declaredFunctionNames.contains(vn)) {
                         canDeclareGlobalVarOrThrow(context, envRec, vn, mv);
                         if (!declaredVarNames.contains(vn)) {

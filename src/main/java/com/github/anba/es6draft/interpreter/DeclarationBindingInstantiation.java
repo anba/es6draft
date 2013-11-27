@@ -54,7 +54,7 @@ final class DeclarationBindingInstantiation {
         Set<String> declaredVarNames = new HashSet<>();
         for (StatementListItem d : varDeclarations) {
             assert d instanceof VariableStatement;
-            for (String vn : BoundNames(d)) {
+            for (String vn : BoundNames((VariableStatement) d)) {
                 boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
                 if (!vnDefinable) {
                     throw throwTypeError(cx, Messages.Key.InvalidDeclaration, vn);
@@ -81,7 +81,7 @@ final class DeclarationBindingInstantiation {
         // boolean strict = script.isStrict();
         for (StatementListItem d : VarScopedDeclarations(script)) {
             assert d instanceof VariableStatement;
-            for (String dn : BoundNames(d)) {
+            for (String dn : BoundNames((VariableStatement) d)) {
                 boolean varAlreadyDeclared = envRec.hasBinding(dn);
                 if (!varAlreadyDeclared) {
                     envRec.createMutableBinding(dn, deletableBindings);

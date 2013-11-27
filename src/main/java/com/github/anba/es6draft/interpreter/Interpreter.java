@@ -756,7 +756,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
 
     @Override
     public Object visit(ThisExpression node, ExecutionContext cx) {
-        return cx.thisResolution();
+        return cx.resolveThisBinding();
     }
 
     static class ScriptBodyImpl implements RuntimeInfo.ScriptBody {

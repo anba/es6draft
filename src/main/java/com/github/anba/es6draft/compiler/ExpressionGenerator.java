@@ -76,8 +76,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         static final MethodDesc ExecutionContext_getRealm = MethodDesc.create(MethodType.Virtual,
                 Types.ExecutionContext, "getRealm", Type.getMethodType(Types.Realm));
 
-        static final MethodDesc ExecutionContext_thisResolution = MethodDesc.create(
-                MethodType.Virtual, Types.ExecutionContext, "thisResolution",
+        static final MethodDesc ExecutionContext_resolveThisBinding = MethodDesc.create(
+                MethodType.Virtual, Types.ExecutionContext, "resolveThisBinding",
                 Type.getMethodType(Types.Object));
 
         // class: ExoticArray
@@ -389,6 +389,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
      */
     private void EvaluateCall(Expression call, Expression base, ValType type,
             List<Expression> arguments, boolean directEval, ExpressionVisitor mv) {
+        // TODO: Remove EvaluateMethodCall
         if (type == ValType.Reference) {
             if (isPropertyReference(base, type)) {
                 EvaluateMethodCall(call, base, type, arguments, mv);
@@ -2284,7 +2285,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     @Override
     public ValType visit(ThisExpression node, ExpressionVisitor mv) {
         mv.loadExecutionContext();
-        mv.invoke(Methods.ExecutionContext_thisResolution);
+        mv.invoke(Methods.ExecutionContext_resolveThisBinding);
 
         return ValType.Any;
     }

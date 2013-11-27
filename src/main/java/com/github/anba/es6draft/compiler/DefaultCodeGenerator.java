@@ -918,6 +918,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected void ClassDefinitionEvaluation(ClassDefinition def, String className,
             ExpressionVisitor mv) {
+        // steps 1-3
         // stack: [] -> [<proto,ctor>]
         if (def.getHeritage() == null) {
             mv.loadExecutionContext();
@@ -974,12 +975,13 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             }
         }
 
-        // steps 9-10, steps 12-13
+        // step 8 (empty)
+        // steps 9-11, steps 13-14
         // stack: [proto, ctor, proto, <rti>] -> [proto, F]
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateConstructorMethod);
 
-        // step 11
+        // step 12
         if (className != null) {
             // stack: [proto, F] -> [proto, F, F, envRec]
             mv.dup();
@@ -998,7 +1000,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // stack: [proto, F] -> [F, proto]
         mv.swap();
 
-        // steps 14-15
+        // steps 15-16
         List<MethodDefinition> protoMethods = PrototypeMethodDefinitions(def);
         for (MethodDefinition method : protoMethods) {
             if (method == constructor) {
@@ -1011,18 +1013,19 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         // stack: [F, proto] -> [F]
         mv.pop();
 
-        // steps 16-17
+        // steps 17-18
         List<MethodDefinition> staticMethods = StaticMethodDefinitions(def);
         for (MethodDefinition method : staticMethods) {
             mv.dup();
             codegen.propertyDefinition(method, mv);
         }
 
-        // step 18
+        // step 19
         if (className != null) {
             // restore previous lexical environment
             popLexicalEnvironment(mv);
             // implicit: mv.exitScope()
         }
+        // step 20 (empty)
     }
 }

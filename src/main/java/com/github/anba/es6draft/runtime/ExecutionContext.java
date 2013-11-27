@@ -234,9 +234,9 @@ public final class ExecutionContext {
     }
 
     /**
-     * 8.3.3 This Resolution
+     * 8.3.3 ResolveThisBinding
      */
-    public Object thisResolution() {
+    public Object resolveThisBinding() {
         /* step 1 */
         EnvironmentRecord env = getThisEnvironment();
         /* step 2 */

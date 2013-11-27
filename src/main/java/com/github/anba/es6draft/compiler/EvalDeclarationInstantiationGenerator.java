@@ -147,7 +147,7 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         /* step 8 */
         for (StatementListItem d : varDeclarations) {
             if (d instanceof VariableStatement) {
-                for (String dn : BoundNames(d)) {
+                for (String dn : BoundNames((VariableStatement) d)) {
                     hasBinding(envRec, dn, mv);
 
                     Label varAlreadyDeclared = new Label();
