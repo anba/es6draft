@@ -201,6 +201,7 @@ third_party/object-keys.js
 
 # Function.length is configurable
 regress/regress-function-length-strict.js
+regress/regress-1419.js
 regress/regress-1530.js
 
 # ToLength() moved array length restriction to 2^53-1

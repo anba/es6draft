@@ -102,6 +102,10 @@ feature/Destructuring/Rest.js
 feature/Spread/Type.js
 feature/TempVarTransformer/UseStrictDirective.js
 
+# ClassDeclaration binds name
+feature/Classes/ClassNameBinding.js
+feature/Classes/Constructor.js
+
 
 #######################################
 # Test for syntax extensions          #
@@ -115,7 +119,6 @@ feature/TemplateLiterals/resources/f.js
 feature/TemplateLiterals/resources/m.js
 feature/TemplateLiterals/resources/n.js
 feature/Yield/Tree.js
-feature/Yield/TreeUsingPrivateNameSyntax.js
 
 # generators without *
 feature/Yield/UnstarredGenerators.js

@@ -319,6 +319,7 @@ ecma/String/15.5.4.8-1.js
 ecma/String/15.5.4.9-1.js
 ecma/String/15.5.4.10-1.js
 ecma/String/15.5.4.11-1.js
+ecma_5/Function/function-bind.js
 ecma_5/Object/15.2.3.6-function-length.js
 ecma_5/strict/15.3.5.1.js
 
@@ -340,6 +341,10 @@ js1_8_5/regress/regress-646820-3.js
 # String.prototype.split changed to use ToLength instead of ToUint32
 ecma_2/String/split-002.js
 ecma_5/String/split-undefined-separator.js
+
+# Generator.prototype.next does not throw TypeError after iteration finished
+ecma_6/Generators/iteration.js
+ecma_6/Generators/delegating-yield-6.js
 
 
 #######################################

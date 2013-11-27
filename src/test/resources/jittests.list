@@ -138,6 +138,7 @@ tests/sunspider/check-date-format-xparb.js
 tests/basic/bug827104.js
 tests/basic/bug839420.js
 tests/basic/bug882416.js
+tests/basic/bug934997.js
 tests/basic/expression-autopsy.js
 tests/basic/spread-call-maxarg.js
 tests/basic/testBug566556.js
@@ -148,6 +149,7 @@ tests/basic/testDontClobberScannerError.js
 tests/basic/testErrorReportIn_getPrototypeOf.js
 tests/basic/testInitSingletons.js
 tests/basic/testSlowNativeBail.js
+tests/generators/bug931414.js
 tests/self-hosting/invoke-self-hosted-with-primitive-this.js
 
 # Different Parser strategy
@@ -494,6 +496,8 @@ tests/basic/decompile-script.js
 tests/basic/bug923390.js
 # neuter
 tests/basic/testNeutering.js
+# enableSPSProfilingAssertions
+tests/profiler/bug925309.js
 
 # Unsupported 'Testing' functions
 # gcparam
