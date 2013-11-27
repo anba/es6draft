@@ -99,21 +99,21 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 9.4.2.2 ArrayCreate Abstract Operation
+     * 9.4.2.2 ArrayCreate(length) Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length) {
         return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
     }
 
     /**
-     * 9.4.2.2 ArrayCreate Abstract Operation
+     * 9.4.2.2 ArrayCreate(length) Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, Intrinsics proto) {
         return ArrayCreate(cx, length, cx.getIntrinsic(proto));
     }
 
     /**
-     * 9.4.2.2 ArrayCreate Abstract Operation
+     * 9.4.2.2 ArrayCreate(length) Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
         assert proto != null;
@@ -167,7 +167,7 @@ public class ExoticArray extends OrdinaryObject {
     }
 
     /**
-     * 9.4.2.3 ArraySetLength Abstract Operation
+     * 9.4.2.3 ArraySetLength(A, Desc) Abstract Operation
      */
     public static boolean ArraySetLength(ExecutionContext cx, ExoticArray array,
             PropertyDescriptor desc) {

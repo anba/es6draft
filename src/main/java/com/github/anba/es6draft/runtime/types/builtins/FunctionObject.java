@@ -140,16 +140,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.3 [[Get]] (P, Receiver)
-     */
-    @Override
-    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
-        // no override necessary (!)
-        return super.get(cx, propertyKey, receiver);
-    }
-
-    /**
-     * 9.2.4 [[GetOwnProperty]] (P)
+     * 9.2.3 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {

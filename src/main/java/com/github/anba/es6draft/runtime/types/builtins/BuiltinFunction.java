@@ -91,24 +91,7 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
     }
 
     /**
-     * 9.2.3 [[Get]] (P, Receiver)
-     */
-    @Override
-    public Object get(ExecutionContext cx, String propertyKey, Object receiver) {
-        /* steps 1-2 */
-        Object v = super.get(cx, propertyKey, receiver);
-        /* step 3 */
-        if ("caller".equals(propertyKey) && isStrictFunction(v)) {
-            // TODO: spec bug? [[Get]] override necessary, cf. AddRestrictedFunctionProperties
-            // (Bug 1223)
-            return NULL;
-        }
-        /* step 4 */
-        return v;
-    }
-
-    /**
-     * 9.2.4 [[GetOwnProperty]] (P)
+     * 9.2.3 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {

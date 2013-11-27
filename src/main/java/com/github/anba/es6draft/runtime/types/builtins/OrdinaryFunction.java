@@ -476,12 +476,13 @@ public class OrdinaryFunction extends FunctionObject {
         f.isConstructor = true;
         /* step 6 */
         if (installNeeded) {
-            prototype.defineOwnProperty(cx, "constructor", new PropertyDescriptor(f,
+            DefinePropertyOrThrow(cx, prototype, "constructor", new PropertyDescriptor(f,
                     writablePrototype, false, writablePrototype));
         }
-        /* step 7 */
-        f.defineOwnProperty(cx, "prototype", new PropertyDescriptor(prototype, writablePrototype,
-                false, false));
+        /* steps 7-8 */
+        DefinePropertyOrThrow(cx, f, "prototype", new PropertyDescriptor(prototype,
+                writablePrototype, false, false));
+        /* step 9 (return) */
     }
 
     /**
@@ -501,7 +502,7 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 2 (implicit) */
         /* step 3 (not applicable) */
         /* step 4 */
-        if (prefix != null) {
+        if (!name.isEmpty() && prefix != null) {
             name = prefix + " " + name;
         }
         /* step 5 */
