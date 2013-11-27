@@ -465,26 +465,26 @@ assertSyntaxError(`function* g(){const yield = 0}`);
 assertSyntaxError(`function* g(){yield = 0}`);
 assertSyntaxError(`function* g(){++yield}`);
 assertSyntaxError(`function* g(){yield + yield}`);
-assertSyntaxError(`function* g(){yield: 0}`);
-assertSyntaxError(`function* g(){a: yield: 0}`);
-assertSyntaxError(`function* g(){yield: a: 0}`);
-assertSyntaxError(`function* g(){yield: break yield}`);
-assertSyntaxError(`function* g(){yield: do break yield; while(false)}`);
-assertSyntaxError(`function* g(){yield: do continue yield; while(false)}`);
+function* g0(){yield: 0}
+function* g1(){a: yield: 0}
+function* g2(){yield: a: 0}
+function* g3(){yield: break yield}
+function* g4(){yield: do break yield; while(false)}
+function* g5(){yield: do continue yield; while(false)}
 // yield statement/expression
-function* g0(){yield + 2}
-function* g1(){yield 0}
-function* g2(){yield yield 0}
-function* g3(){yield (yield 0)}
+function* g6(){yield + 2}
+function* g7(){yield 0}
+function* g8(){yield yield 0}
+function* g9(){yield (yield 0)}
 // yield and ASI
-function* g4(){
+function* g10(){
   /* parsed as 'yield 0' */
   yield
   0;
 }
 // AssignmentExpression optional in yield
-function* g5(){yield}
-function* g6(){yield(yield)}
+function* g11(){yield}
+function* g12(){yield(yield)}
 
 // try some combinations
 assertSyntaxError(`function* yield(yield){var yield}`);
@@ -544,12 +544,12 @@ assertSyntaxError(`(function* (){const yield = 0});`);
 assertSyntaxError(`(function* (){yield = 0});`);
 assertSyntaxError(`(function* (){++yield});`);
 assertSyntaxError(`(function* (){yield + yield});`);
-assertSyntaxError(`(function* (){yield: 0});`);
-assertSyntaxError(`(function* (){a: yield: 0});`);
-assertSyntaxError(`(function* (){yield: a: 0});`);
-assertSyntaxError(`(function* (){yield: break yield});`);
-assertSyntaxError(`(function* (){yield: do break yield; while(false)});`);
-assertSyntaxError(`(function* (){yield: do continue yield; while(false)});`);
+(function* (){yield: 0});
+(function* (){a: yield: 0});
+(function* (){yield: a: 0});
+(function* (){yield: break yield});
+(function* (){yield: do break yield; while(false)});
+(function* (){yield: do continue yield; while(false)});
 // yield statement/expression
 (function* (){yield + 2});
 (function* (){yield 0});
@@ -956,12 +956,12 @@ assertSyntaxError(`({ * g(){const yield = 0} });`);
 assertSyntaxError(`({ * g(){yield = 0} });`);
 assertSyntaxError(`({ * g(){++yield} });`);
 assertSyntaxError(`({ * g(){yield + yield} });`);
-assertSyntaxError(`({ * g(){yield: 0} });`);
-assertSyntaxError(`({ * g(){a: yield: 0} });`);
-assertSyntaxError(`({ * g(){yield: a: 0} });`);
-assertSyntaxError(`({ * g(){yield: break yield} });`);
-assertSyntaxError(`({ * g(){yield: do break yield; while(false) } });`);
-assertSyntaxError(`({ * g(){yield: do continue yield; while(false) } });`);
+({ * g(){yield: 0} });
+({ * g(){a: yield: 0} });
+({ * g(){yield: a: 0} });
+({ * g(){yield: break yield} });
+({ * g(){yield: do break yield; while(false) } });
+({ * g(){yield: do continue yield; while(false) } });
 // yield statement/expression
 ({ * g(){yield + 2} });
 ({ * g(){yield 0} });
