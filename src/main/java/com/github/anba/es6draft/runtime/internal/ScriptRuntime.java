@@ -991,13 +991,13 @@ public final class ScriptRuntime {
      */
     public static OrdinaryFunction InstantiateFunctionObject(LexicalEnvironment scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
-        /* steps 1-2 */
+        /* steps 1-3 */
         OrdinaryFunction f = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        // TODO: missing in spec
-        SetFunctionName(cx, f, fd.functionName());
-        /* step 3 */
-        MakeConstructor(cx, f);
         /* step 4 */
+        MakeConstructor(cx, f);
+        /* step 5 */
+        SetFunctionName(cx, f, fd.functionName());
+        /* step 6 */
         return f;
     }
 
@@ -1019,11 +1019,10 @@ public final class ScriptRuntime {
             envRec.createImmutableBinding(fd.functionName());
         }
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        // TODO: missing in spec
+        MakeConstructor(cx, closure);
         if (!fd.functionName().isEmpty()) {
             SetFunctionName(cx, closure, fd.functionName());
         }
-        MakeConstructor(cx, closure);
         if (fd.hasScopedName()) {
             scope.getEnvRec().initialiseBinding(fd.functionName(), closure);
         }
@@ -1478,29 +1477,36 @@ public final class ScriptRuntime {
      * </ul>
      */
     public static Object delegatedYield(Object value, ExecutionContext cx) {
+        /* steps 1-3 (generated code) */
+        /* steps 4-5 */
         ScriptObject iterator = GetIterator(cx, value);
-        boolean next = true;
+        /* step 6 */
+        boolean normalCompletion = true;
         Object received = UNDEFINED;
+        /* step 7 */
         for (;;) {
             ScriptObject innerResult;
-            if (next) {
+            if (normalCompletion) {
+                /* step 7a */
                 innerResult = IteratorNext(cx, iterator, received);
             } else {
+                /* step 7b */
                 innerResult = IteratorThrow(cx, iterator, received);
             }
+            /* steps 7c-7d */
             boolean done = IteratorComplete(cx, innerResult);
+            /* step 7e */
             if (done) {
-                Object innerValue = IteratorValue(cx, innerResult);
-                return innerValue;
+                return IteratorValue(cx, innerResult);
             }
+            /* step 7f */
             try {
                 received = GeneratorYield(cx, innerResult);
-                next = true;
+                normalCompletion = true;
             } catch (ScriptException e) {
                 if (HasProperty(cx, iterator, "throw")) {
-                    // FIXME: spec bug - 'throw' handler somewhat incomplete
                     received = e.getValue();
-                    next = false;
+                    normalCompletion = false;
                 } else {
                     throw e;
                 }
