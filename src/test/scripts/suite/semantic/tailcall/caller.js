@@ -16,7 +16,27 @@ const {
   }
 
   function tail() {
+    "use strict";
     return returnCaller();
+  }
+
+  function start() {
+    let caller = tail();
+    assertSame(start, caller);
+  }
+
+  start();
+}
+
+// Ensure tailcall removes intermediate caller from stack
+{
+  function returnCaller() {
+    return returnCaller.caller;
+  }
+
+  function tail() {
+    "use strict";
+    return new returnCaller();
   }
 
   function start() {
@@ -34,6 +54,7 @@ const {
   }
 
   function tail() {
+    "use strict";
     return returnCaller.call();
   }
 
@@ -52,6 +73,7 @@ const {
   }
 
   function tail() {
+    "use strict";
     return returnCaller.apply();
   }
 
@@ -70,6 +92,7 @@ const {
   }
 
   function tail() {
+    "use strict";
     return returnCaller();
   }
 
@@ -88,6 +111,7 @@ const {
   }
 
   function tail() {
+    "use strict";
     return returnCaller.call();
   }
 
@@ -106,6 +130,7 @@ const {
   }
 
   function tail() {
+    "use strict";
     return returnCaller.call();
   }
 
