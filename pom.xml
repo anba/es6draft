@@ -455,6 +455,7 @@
                     <include name="internal-error.js" />
                     <include name="proxy.js" />
                     <include name="stacktrace.js" />
+                    <include name="regexp.js" />
                     <include name="typed-array.js" />
                   </fileset>
                 </concat>
