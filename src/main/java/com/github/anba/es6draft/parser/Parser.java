@@ -5329,23 +5329,18 @@ public class Parser {
                 lhs = new SuperExpression(begin, ts.endPosition(), expr);
                 break;
             case LP:
-                if (!allowCall) {
-                    lhs = new SuperExpression(begin, ts.endPosition());
-                } else {
+                if (allowCall) {
                     List<Expression> args = arguments();
                     lhs = new SuperExpression(begin, ts.endPosition(), args);
+                    break;
                 }
-                break;
+                // fall-through
             case TEMPLATE:
-                // handle "new super``" case
-                throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
             default:
                 if (!allowCall) {
-                    lhs = new SuperExpression(begin, ts.endPosition());
-                } else {
-                    throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
+                    return new SuperExpression(begin, ts.endPosition());
                 }
-                break;
+                throw reportSyntaxError(Messages.Key.InvalidToken, token().toString());
             }
         } else {
             lhs = primaryExpression();
