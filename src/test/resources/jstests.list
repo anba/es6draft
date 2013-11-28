@@ -105,8 +105,9 @@ ecma_3/RegExp/regress-209919.js
 ecma_5/RegExp/regress-613820-2.js
 ecma_5/RegExp/regress-613820-3.js
 ecma_5/String/split-xregexp.js
+
+# Works in Joni
 js1_5/Regress/regress-247179.js
-js1_5/Regress/regress-440926.js
 
 # __noSuchMethod__ not supported
 js1_5/extensions/no-such-method.js

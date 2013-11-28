@@ -64,15 +64,17 @@ regexp-capture.js
 regexp-lookahead.js
 regexp-loop-capture.js
 regexp-UC16.js
-regexp.js
-regress/regress-126412.js
 regress/regress-176.js
-regress/regress-187.js
-string-match.js
-string-slices-regexp.js
 third_party/regexp-pcre.js
+
+# Works with Joni
+regress/regress-187.js
 unicodelctest.js
 unicodelctest-no-optimization.js
+
+# repeat in qualifier too large
+regexp.js
+regress/regress-126412.js
 
 
 ############################################
