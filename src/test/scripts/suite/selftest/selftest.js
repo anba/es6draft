@@ -17,6 +17,7 @@ const exports = {
   assertConstructor, assertNotConstructor,
   assertDataProperty, assertAccessorProperty,
   assertBuiltinFunction, assertBuiltinConstructor, assertBuiltinPrototype,
+  assertEquals,
 };
 
 if (typeof Assert === "undefined") {
@@ -47,6 +48,7 @@ const {
   assertConstructor, assertNotConstructor,
   assertDataProperty, assertAccessorProperty,
   assertBuiltinFunction, assertBuiltinConstructor, assertBuiltinPrototype,
+  assertEquals,
 } = Assert;
 
 try {
@@ -331,3 +333,23 @@ for (let [o, p] of [[Object.prototype], [Object.prototype, Function.prototype], 
   }
   fail("assertBuiltinPrototype() failure");
 }
+
+for (let v of values) {
+  assertEquals(v, v);
+}
+
+for (let [a, b] of [for (a of values) for (b of values) if (!Object.is(a, b)) [a, b]]) {
+  try {
+    assertEquals(a, b);
+  } catch (e) {
+    if (e instanceof AssertionError) continue;
+  }
+  fail("assertEquals() failure");
+}
+
+assertEquals({}, {});
+assertEquals({a: 1, b: 2, c: 3}, {a: 1, b: 2, c: 3});
+assertEquals({a: 1, b: {}, c: []}, {a: 1, b: {}, c: []});
+assertEquals([], []);
+assertEquals([1, 2, 3], [1, 2, 3]);
+assertEquals([1, {}, []], [1, {}, []]);

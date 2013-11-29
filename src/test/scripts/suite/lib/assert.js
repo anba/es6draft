@@ -9,11 +9,13 @@
 "use strict";
 
 const {
-  Object, Function, Proxy, String, SyntaxError
+  Object, Function, Proxy, Set, String, SyntaxError
 } = global;
 
 const {
   getOwnPropertyDescriptor: Object_getOwnPropertyDescriptor,
+  getOwnPropertyNames: Object_getOwnPropertyNames,
+  getOwnPropertySymbols: Object_getOwnPropertySymbols,
   getPrototypeOf: Object_getPrototypeOf,
   is: Object_is,
 } = Object;
@@ -21,6 +23,10 @@ const {
 const {
   toString: Object_prototype_toString,
 } = Object.prototype;
+
+const {
+  toString: Symbol_prototype_toString,
+} = Symbol.prototype;
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
@@ -44,13 +50,28 @@ function IsConstructor(o) {
   }
 }
 
-function PropertyKeyToString(pk) {
-  switch(typeof pk) {
+function IsPrimitive(v) {
+  switch (typeof v) {
+    case "undefined":
+    case "boolean":
+    case "number":
+    case "string":
+    case "symbol":
+      return true;
+    case "object":
+      return v === null;
+    default:
+      return false;
+  }
+}
+
+function PropertyKeyToString(propertyKey) {
+  switch (typeof propertyKey) {
     case 'symbol':
-      return Object(pk).toString();
+      return $CallFunction(Symbol_prototype_toString, Object(propertyKey));
     case 'string':
     default:
-      return String(pk);
+      return String(propertyKey);
   }
 }
 
@@ -182,7 +203,7 @@ function assertDataProperty(object, propertyKey, {value, writable, enumerable, c
 function assertAccessorProperty(object, propertyKey, {get, set, enumerable, configurable}) {
   let desc = Object_getOwnPropertyDescriptor(object, propertyKey);
   assertNotUndefined(desc, `${PropertyKeyToString(propertyKey)} not found`);
-  assertTrue('get' in desc);
+  assertFalse('value' in desc);
   assertSame(get, desc.get, `${PropertyKeyToString(propertyKey)}.[[Get]]`);
   assertSame(set, desc.set, `${PropertyKeyToString(propertyKey)}.[[Set]]`);
   assertSame(enumerable, desc.enumerable, `${PropertyKeyToString(propertyKey)}.[[Enumerable]]`);
@@ -223,6 +244,44 @@ function assertBuiltinPrototype(o, proto = Object.prototype) {
   assertSame(proto, Object_getPrototypeOf(o), `[[Prototype]]`);
 }
 
+function assertEquals(expected, actual, message = "") {
+  if (IsPrimitive(expected)) {
+    return assertSame(expected, actual, message);
+  }
+  assertNotNull(actual, message);
+  assertSame(typeof expected, typeof actual, message);
+  if (Object_is(expected, actual)) {
+    return;
+  }
+
+  for (let fn of [Object_getOwnPropertyNames, Object_getOwnPropertySymbols]) {
+    let expectedOwnNames = fn(expected), actualOwnNames = fn(actual);
+    // assertSame(expectedOwnNames.length, actualOwnNames.length);
+    let actualOwnNamesSet = new Set(actualOwnNames);
+    for (let i = 0, len = expectedOwnNames.length; i < len; ++i) {
+      let propertyKey = expectedOwnNames[i];
+      let actualHas = actualOwnNamesSet.delete(propertyKey);
+      assertTrue(actualHas, `${PropertyKeyToString(propertyKey)} not present`);
+
+      let expectedDesc = Object_getOwnPropertyDescriptor(expected, propertyKey);
+      let actualDesc = Object_getOwnPropertyDescriptor(actual, propertyKey);
+      assertNotUndefined(expectedDesc, `${PropertyKeyToString(propertyKey)} not present`);
+      assertNotUndefined(actualDesc, `${PropertyKeyToString(propertyKey)} not present`);
+
+      assertSame('value' in expectedDesc, 'value' in actualDesc, `${PropertyKeyToString(propertyKey)}`);
+      assertEquals(expectedDesc.value, actualDesc.value, `${PropertyKeyToString(propertyKey)}.[[Value]]`);
+      assertEquals(expectedDesc.get, actualDesc.get, `${PropertyKeyToString(propertyKey)}.[[Get]]`);
+      assertEquals(expectedDesc.set, actualDesc.set, `${PropertyKeyToString(propertyKey)}.[[Set]]`);
+      assertSame(expectedDesc.writable, actualDesc.writable, `${PropertyKeyToString(propertyKey)}.[[Writable]]`);
+      assertSame(expectedDesc.enumerable, actualDesc.enumerable, `${PropertyKeyToString(propertyKey)}.[[Enumerable]]`);
+      assertSame(expectedDesc.configurable, actualDesc.configurable, `${PropertyKeyToString(propertyKey)}.[[Configurable]]`);
+    }
+    assertSame(0, actualOwnNamesSet.size, {toString: () => `[${[...actualOwnNamesSet].map(PropertyKeyToString)}]`});
+  }
+
+  return assertEquals(Object_getPrototypeOf(expected), Object_getPrototypeOf(actual));
+}
+
 // export...
 Object.defineProperty(global, "Assert", {value: {
   AssertionError, fail,
@@ -236,6 +295,7 @@ Object.defineProperty(global, "Assert", {value: {
   assertConstructor, assertNotConstructor,
   assertDataProperty, assertAccessorProperty,
   assertBuiltinFunction, assertBuiltinConstructor, assertBuiltinPrototype,
+  assertEquals,
 }});
 
 })(this);
