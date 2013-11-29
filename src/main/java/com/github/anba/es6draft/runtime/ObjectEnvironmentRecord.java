@@ -13,11 +13,11 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.util.Set;
-
 import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1><br>
@@ -31,14 +31,12 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
     private final ExecutionContext cx;
     private final ScriptObject bindings;
     private final boolean withEnvironment;
-    private final Set<String> unscopables;
 
     public ObjectEnvironmentRecord(ExecutionContext cx, ScriptObject bindings,
-            boolean withEnvironment, Set<String> unscopables) {
+            boolean withEnvironment) {
         this.cx = cx;
         this.bindings = bindings;
         this.withEnvironment = withEnvironment;
-        this.unscopables = unscopables;
     }
 
     @Override
@@ -51,12 +49,18 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
      */
     @Override
     public boolean hasBinding(String name) {
-        /* step 1 (omitted) */
-        /* step 2 */
-        if (unscopables.contains(name)) {
-            return false;
+        /* steps 1-2 (omitted) */
+        /* step 3 */
+        if (withEnvironment) {
+            Object unscopables = Get(cx, bindings, BuiltinSymbol.unscopables.get());
+            if (Type.isObject(unscopables)) {
+                boolean found = HasProperty(cx, Type.objectValue(unscopables), name);
+                if (found) {
+                    return false;
+                }
+            }
         }
-        /* steps 3-4 */
+        /* steps 4 */
         return HasProperty(cx, bindings, name);
     }
 

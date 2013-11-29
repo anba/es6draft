@@ -1353,16 +1353,16 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object unscopables(ExecutionContext cx) {
             /* step 1 */
-            ScriptObject blackList = ArrayCreate(cx, 7, Intrinsics.ArrayPrototype);
+            ScriptObject blackList = ObjectCreate(cx, Intrinsics.ObjectPrototype);
             /* steps 2-8 */
             boolean status = true;
-            status &= CreateDataProperty(cx, blackList, "0", "find");
-            status &= CreateDataProperty(cx, blackList, "1", "findIndex");
-            status &= CreateDataProperty(cx, blackList, "2", "fill");
-            status &= CreateDataProperty(cx, blackList, "3", "copyWithin");
-            status &= CreateDataProperty(cx, blackList, "4", "entries");
-            status &= CreateDataProperty(cx, blackList, "5", "keys");
-            status &= CreateDataProperty(cx, blackList, "6", "values");
+            status &= CreateDataProperty(cx, blackList, "find", true);
+            status &= CreateDataProperty(cx, blackList, "findIndex", true);
+            status &= CreateDataProperty(cx, blackList, "fill", true);
+            status &= CreateDataProperty(cx, blackList, "copyWithin", true);
+            status &= CreateDataProperty(cx, blackList, "entries", true);
+            status &= CreateDataProperty(cx, blackList, "keys", true);
+            status &= CreateDataProperty(cx, blackList, "values", true);
             /* step 9 */
             assert status;
             /* step 10 */

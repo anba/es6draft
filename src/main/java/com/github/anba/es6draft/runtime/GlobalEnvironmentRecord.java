@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,8 +34,7 @@ public final class GlobalEnvironmentRecord implements EnvironmentRecord {
     public GlobalEnvironmentRecord(ExecutionContext cx, ScriptObject globalObject) {
         this.cx = cx;
         this.globalObject = globalObject;
-        objectEnv = new ObjectEnvironmentRecord(cx, globalObject, false,
-                Collections.<String> emptySet());
+        objectEnv = new ObjectEnvironmentRecord(cx, globalObject, false);
         declEnv = new DeclarativeEnvironmentRecord(cx);
     }
 
