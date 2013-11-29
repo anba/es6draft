@@ -25,9 +25,9 @@ assertNotUndefined(global["v1"]);
 }
 {
 eval("function* v2(){}");
-assertSame("undefined", typeof v2);
-assertFalse("v2" in global);
-assertUndefined(global["v2"]);
+assertSame("function", typeof v2);
+assertTrue("v2" in global);
+assertNotUndefined(global["v2"]);
 }
 {
 eval("class v3{}");

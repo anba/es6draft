@@ -124,12 +124,16 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
         /* step 5 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(evalScript);
         for (StatementListItem item : varDeclarations) {
-            if (item instanceof FunctionDeclaration) {
-                FunctionDeclaration f = (FunctionDeclaration) item;
+            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration) {
+                Declaration f = (Declaration) item;
                 String fn = BoundName(f);
 
                 // stack: [] -> [fo]
-                InstantiateFunctionObject(context, lexEnv, f, mv);
+                if (f instanceof GeneratorDeclaration) {
+                    InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) f, mv);
+                } else {
+                    InstantiateFunctionObject(context, lexEnv, (FunctionDeclaration) f, mv);
+                }
 
                 hasBinding(envRec, fn, mv);
 
@@ -163,19 +167,13 @@ class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiat
 
         // begin-modification
         for (Declaration d : LexicallyScopedDeclarations(evalScript)) {
+            assert !(d instanceof GeneratorDeclaration);
             for (String dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
                     createImmutableBinding(lexEnvRec, dn, mv);
                 } else {
                     createMutableBinding(lexEnvRec, dn, false, mv);
                 }
-            }
-            if (d instanceof GeneratorDeclaration) {
-                String fn = BoundName(d);
-                // stack: [] -> [fo]
-                InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) d, mv);
-                // setMutableBinding(lexEnvRec, fn, false, mv);
-                initialiseBinding(lexEnvRec, fn, mv);
             }
         }
         // end-modification

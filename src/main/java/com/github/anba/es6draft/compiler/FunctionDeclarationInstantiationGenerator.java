@@ -146,8 +146,8 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         }
         /* step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
-            if (item instanceof FunctionDeclaration) {
-                FunctionDeclaration d = (FunctionDeclaration) item;
+            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration) {
+                Declaration d = (Declaration) item;
                 String fn = BoundName(d);
                 if ("arguments".equals(fn)) {
                     argumentsObjectNeeded = false;
@@ -200,15 +200,13 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(function);
         /* step 16 */
         for (Declaration d : lexDeclarations) {
+            assert !(d instanceof GeneratorDeclaration);
             for (String dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
                     createImmutableBinding(envRec, dn, mv);
                 } else {
                     createMutableBinding(envRec, dn, false, mv);
                 }
-            }
-            if (d instanceof GeneratorDeclaration) {
-                functionsToInitialise.add(d);
             }
         }
         /* step 17 */

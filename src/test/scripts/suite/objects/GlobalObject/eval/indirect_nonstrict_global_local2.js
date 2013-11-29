@@ -29,8 +29,8 @@ assertUndefined(obj["v1"]);
 with (obj = {}) {
 (1,eval)("function* v2(){}");
 assertSame("function", typeof v2);
-assertFalse("v2" in global);
-assertUndefined(global["v2"]);
+assertTrue("v2" in global);
+assertNotUndefined(global["v2"]);
 assertFalse("v2" in obj);
 assertUndefined(obj["v2"]);
 }

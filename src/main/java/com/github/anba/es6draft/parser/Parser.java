@@ -452,14 +452,7 @@ public class Parser {
     }
 
     private void addGeneratorDeclaration(GeneratorDeclaration decl) {
-        // FIXME: spec is inconsistent how to treat top-level generator declarations
-        // addDeclaration(decl, BoundName(decl.getIdentifier()));
-        String name = BoundName(decl.getIdentifier());
-        ScopeContext parentScope = context.parent.scopeContext;
-        parentScope.addLexScopedDeclaration(decl);
-        if (!parentScope.addLexDeclaredName(name)) {
-            reportSyntaxError(decl, Messages.Key.VariableRedeclaration, name);
-        }
+        addDeclaration(decl, BoundName(decl.getIdentifier()));
     }
 
     private <DECLARATION extends Declaration & FunctionNode> void addDeclaration(DECLARATION decl,

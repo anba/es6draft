@@ -24,7 +24,7 @@ const global = this;
 })();
 (function(){
   eval("function* v2(){}");
-  assertSame("undefined", typeof v2);
+  assertSame("function", typeof v2);
   assertFalse("v2" in global);
   assertUndefined(global["v2"]);
 })();

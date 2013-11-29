@@ -150,13 +150,13 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         /* step 6 */
         List<StatementListItem> varDeclarations = VarScopedDeclarations(script);
         /* step 7 */
-        List<FunctionDeclaration> functionsToInitialise = new ArrayList<>();
+        List<Declaration> functionsToInitialise = new ArrayList<>();
         /* step 8 */
         Set<String> declaredFunctionNames = new HashSet<>();
         /* step 9 */
         for (StatementListItem item : reverse(varDeclarations)) {
-            if (item instanceof FunctionDeclaration) {
-                FunctionDeclaration d = (FunctionDeclaration) item;
+            if (item instanceof FunctionDeclaration || item instanceof GeneratorDeclaration) {
+                Declaration d = (Declaration) item;
                 String fn = BoundName(d);
                 if (!declaredFunctionNames.contains(fn)) {
                     canDeclareGlobalFunctionOrThrow(context, envRec, fn, mv);
@@ -181,10 +181,14 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
             }
         }
         /* steps 12-13 */
-        for (FunctionDeclaration f : functionsToInitialise) {
+        for (Declaration f : functionsToInitialise) {
             String fn = BoundName(f);
             // stack: [] -> [fo]
-            InstantiateFunctionObject(context, lexEnv, f, mv);
+            if (f instanceof GeneratorDeclaration) {
+                InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) f, mv);
+            } else {
+                InstantiateFunctionObject(context, lexEnv, (FunctionDeclaration) f, mv);
+            }
             createGlobalFunctionBinding(envRec, fn, deletableBindings, mv);
         }
         /* step 14 */
@@ -195,19 +199,13 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         List<Declaration> lexDeclarations = LexicallyScopedDeclarations(script);
         /* step 16 */
         for (Declaration d : lexDeclarations) {
+            assert !(d instanceof GeneratorDeclaration);
             for (String dn : BoundNames(d)) {
                 if (d.isConstDeclaration()) {
                     createImmutableBinding(lexEnvRec, dn, mv);
                 } else {
                     createMutableBinding(lexEnvRec, dn, false, mv);
                 }
-            }
-            if (d instanceof GeneratorDeclaration) {
-                String fn = BoundName(d);
-                // stack: [] -> [fo]
-                InstantiateGeneratorObject(context, lexEnv, (GeneratorDeclaration) d, mv);
-                // setMutableBinding(lexEnvRec, fn, false, mv);
-                initialiseBinding(lexEnvRec, fn, mv);
             }
         }
         /* step 17 */
