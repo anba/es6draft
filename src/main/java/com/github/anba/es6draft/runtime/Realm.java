@@ -47,6 +47,8 @@ import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor;
+import com.github.anba.es6draft.runtime.objects.promise.PromisePrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.ProxyFactoryFunction;
 import com.github.anba.es6draft.runtime.objects.reflect.Reflect;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -291,6 +293,9 @@ public final class Realm {
         initialiseCollectionModule(realm);
         initialiseReflectModule(realm);
         initialiseIterationModule(realm);
+
+        // intrinsics: Promise Objects
+        initialisePromiseObjects(realm);
 
         // intrinsics: Internationalization API
         initialiseInternationalisation(realm);
@@ -688,6 +693,26 @@ public final class Realm {
         float64ArrayPrototype.initialise(defaultContext);
         dataViewConstructor.initialise(defaultContext);
         dataViewPrototype.initialise(defaultContext);
+    }
+
+    /**
+     * <h1>Promise Objects</h1>
+     */
+    private static void initialisePromiseObjects(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
+        PromiseConstructor promiseConstructor = new PromiseConstructor(realm);
+        PromisePrototype promisePrototype = new PromisePrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.Promise, promiseConstructor);
+        intrinsics.put(Intrinsics.PromisePrototype, promisePrototype);
+
+        // initialisation phase
+        promiseConstructor.initialise(defaultContext);
+        promisePrototype.initialise(defaultContext);
     }
 
     /**

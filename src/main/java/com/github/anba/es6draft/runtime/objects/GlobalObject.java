@@ -418,6 +418,12 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Value(name = "DataView")
         public static final Intrinsics DataView = Intrinsics.DataView;
+
+        /**
+         * Promise ( . . . )
+         */
+        @Value(name = "Promise")
+        public static final Intrinsics Promise = Intrinsics.Promise;
     }
 
     /**

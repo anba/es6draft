@@ -98,6 +98,10 @@ public enum Intrinsics {/* @formatter:off */
     Float64Array,
     Float64ArrayPrototype,
 
+    // Promise Objects
+    Promise,
+    PromisePrototype,
+
     // Internationalization API
     Intl,
     Intl_Collator,
