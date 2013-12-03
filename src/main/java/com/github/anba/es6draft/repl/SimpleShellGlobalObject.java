@@ -16,6 +16,7 @@ import java.util.Set;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.Compiler;
+import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -61,6 +62,19 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
             }
         }, options, compilerOptions);
         return (SimpleShellGlobalObject) realm.getGlobalThis();
+    }
+
+    /** shell-function: {@code parseModule(source)} */
+    @Function(name = "parseModule", arity = 1)
+    public String parseModule(ExecutionContext cx, String source) {
+        EnumSet<Parser.Option> options = Parser.Option.from(getRealm().getOptions());
+        Parser parser = new Parser("<module>", 1, options);
+        try {
+            parser.parseModule(source);
+            return "success";
+        } catch (ParserException e) {
+            throw e.toScriptException(cx);
+        }
     }
 
     /** shell-function: {@code compile(filename)} */
