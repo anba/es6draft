@@ -23,6 +23,16 @@ const {
 const $Reflect = Object.mixin(Object.create(null), Reflect);
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
+// Reflect.apply and Reflect.construct are not defined?!
+Object.mixin($Reflect, {
+  apply(target, thisArgument, argumentsList) {
+    return $CallFunction(target, thisArgument, ...argumentsList);
+  },
+  construct(target, argumentsList) {
+    return new target(...argumentsList);
+  }
+});
+
 function PropertyKeyToString(propertyKey) {
   switch (typeof propertyKey) {
     case 'symbol':
