@@ -99,10 +99,15 @@ public final class RuntimeInfo {
         };
     }
 
-    public static ScriptBody newScriptBody(final boolean isStrict,
+    public static ScriptBody newScriptBody(final String sourceFile, final boolean isStrict,
             final MethodHandle initialisation, final MethodHandle evalinitialisation,
             final MethodHandle handle) {
         return new ScriptBody() {
+            @Override
+            public String sourceFile() {
+                return sourceFile;
+            }
+
             @Override
             public boolean isStrict() {
                 return isStrict;
@@ -151,6 +156,8 @@ public final class RuntimeInfo {
      * Compiled script body information
      */
     public interface ScriptBody {
+        String sourceFile();
+
         boolean isStrict();
 
         void globalDeclarationInstantiation(ExecutionContext cx, LexicalEnvironment globalEnv,

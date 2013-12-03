@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.LexicalEnvironment.newDeclarative
 import static com.github.anba.es6draft.runtime.LexicalEnvironment.newFunctionEnvironment;
 import static java.util.Objects.requireNonNull;
 
+import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -30,6 +31,7 @@ public final class ExecutionContext {
     private Realm realm;
     private LexicalEnvironment lexEnv;
     private LexicalEnvironment varEnv;
+    private Script script = null;
     private FunctionObject function = null;
     private GeneratorObject generator = null;
 
@@ -55,6 +57,10 @@ public final class ExecutionContext {
 
     public ScriptObject getIntrinsic(Intrinsics id) {
         return realm.getIntrinsic(id);
+    }
+
+    public Script getCurrentScript() {
+        return script;
     }
 
     public FunctionObject getCurrentFunction() {
@@ -98,12 +104,13 @@ public final class ExecutionContext {
      * <p>
      * Runtime Semantics: Script Evaluation
      */
-    public static ExecutionContext newScriptExecutionContext(Realm realm) {
+    public static ExecutionContext newScriptExecutionContext(Script script, Realm realm) {
         /* steps 3-6 */
         ExecutionContext progCxt = new ExecutionContext();
         progCxt.realm = realm;
         progCxt.varEnv = realm.getGlobalEnv();
         progCxt.lexEnv = realm.getGlobalEnv();
+        progCxt.script = script;
         return progCxt;
     }
 
@@ -123,6 +130,7 @@ public final class ExecutionContext {
         progCxt.realm = callerContext.realm;
         progCxt.varEnv = varEnv;
         progCxt.lexEnv = lexEnv;
+        progCxt.script = callerContext.script;
         progCxt.function = callerContext.function;
         return progCxt;
     }

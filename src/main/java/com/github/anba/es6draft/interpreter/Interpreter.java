@@ -736,6 +736,11 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
 
         @Override
+        public String sourceFile() {
+            return parsedScript.getSourceFile();
+        }
+
+        @Override
         public boolean isStrict() {
             return parsedScript.isStrict();
         }

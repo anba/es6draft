@@ -86,6 +86,7 @@ public final class Realm {
     private Callable builtinEval;
 
     private ExecutionContext defaultContext;
+    private ExecutionContext scriptContext;
 
     private Set<CompatibilityOption> options;
     private EnumSet<Option> compilerOptions;
@@ -134,6 +135,20 @@ public final class Realm {
      */
     public ExecutionContext defaultContext() {
         return defaultContext;
+    }
+
+    /**
+     * Returns the current script execution context for this realm
+     */
+    public ExecutionContext getScriptContext() {
+        return scriptContext;
+    }
+
+    /**
+     * Sets a new script execution context for this realm
+     */
+    public void setScriptContext(ExecutionContext scriptContext) {
+        this.scriptContext = scriptContext;
     }
 
     private AtomicInteger evalCounter = new AtomicInteger(0);
@@ -273,7 +288,7 @@ public final class Realm {
             Set<CompatibilityOption> options, Set<Compiler.Option> compilerOptions) {
         Realm realm = new Realm();
         GlobalObject globalThis = allocator.newInstance(realm);
-        ExecutionContext defaultContext = newScriptExecutionContext(realm);
+        ExecutionContext defaultContext = newScriptExecutionContext(null, realm);
         GlobalEnvironmentRecord envRec = new GlobalEnvironmentRecord(defaultContext, globalThis);
         LexicalEnvironment globalEnv = new LexicalEnvironment(defaultContext, envRec);
 

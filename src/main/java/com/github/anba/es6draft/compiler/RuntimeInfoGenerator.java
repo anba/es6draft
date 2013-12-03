@@ -34,8 +34,8 @@ class RuntimeInfoGenerator {
         // class: RuntimeInfo
         static final MethodDesc RTI_newScriptBody = MethodDesc.create(MethodType.Static,
                 Types.RuntimeInfo, "newScriptBody", Type.getMethodType(
-                        Types.RuntimeInfo$ScriptBody, Type.BOOLEAN_TYPE, Types.MethodHandle,
-                        Types.MethodHandle, Types.MethodHandle));
+                        Types.RuntimeInfo$ScriptBody, Types.String, Type.BOOLEAN_TYPE,
+                        Types.MethodHandle, Types.MethodHandle, Types.MethodHandle));
 
         static final MethodDesc RTI_newFunction = MethodDesc.create(MethodType.Static,
                 Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
@@ -131,6 +131,7 @@ class RuntimeInfoGenerator {
 
         mv.begin();
 
+        mv.aconst(node.getSourceFile());
         mv.iconst(IsStrict(node));
         mv.invokeStaticMH(className, codegen.methodName(node, ScriptName.Init),
                 codegen.methodDescriptor(node, ScriptName.Init));

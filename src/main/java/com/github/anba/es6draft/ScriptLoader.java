@@ -46,11 +46,17 @@ public class ScriptLoader {
         scriptBody.globalDeclarationInstantiation(realm.defaultContext(), globalEnv, globalEnv,
                 deletableBindings);
         /* steps 6-9 */
-        ExecutionContext progCxt = newScriptExecutionContext(realm);
-        /* steps 10-14 */
-        Object result = script.evaluate(progCxt);
-        /* step 15 */
-        return result;
+        ExecutionContext progCxt = newScriptExecutionContext(script, realm);
+        ExecutionContext oldScriptContext = realm.getScriptContext();
+        try {
+            realm.setScriptContext(progCxt);
+            /* steps 10-14 */
+            Object result = script.evaluate(progCxt);
+            /* step 15 */
+            return result;
+        } finally {
+            realm.setScriptContext(oldScriptContext);
+        }
     }
 
     /**
