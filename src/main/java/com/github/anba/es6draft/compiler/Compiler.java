@@ -23,6 +23,7 @@ import org.objectweb.asm.util.TraceClassVisitor;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.Scope;
 import com.github.anba.es6draft.ast.Script;
+import com.github.anba.es6draft.ast.ScriptScope;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodAllocation;
@@ -135,8 +136,8 @@ public class Compiler {
 
     private static EnumSet<Parser.Option> optionsFrom(FunctionNode function) {
         Scope enclosingScope = function.getScope().getEnclosingScope();
-        if (enclosingScope != null && enclosingScope.getNode() instanceof Script) {
-            return ((Script) enclosingScope.getNode()).getOptions();
+        if (enclosingScope instanceof ScriptScope) {
+            return ((ScriptScope) enclosingScope).getNode().getOptions();
         }
         return EnumSet.noneOf(Parser.Option.class);
     }

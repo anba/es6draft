@@ -4,10 +4,12 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.modules;
+package com.github.anba.es6draft.ast;
 
 /**
- * TODO: Modules
+ * Scope class for {@link Module} objects
  */
-public interface Loader {
+public interface ModuleScope extends TopLevelScope {
+    @Override
+    Module getNode();
 }

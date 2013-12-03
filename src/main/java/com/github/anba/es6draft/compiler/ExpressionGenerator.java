@@ -343,10 +343,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                     return true;
                 }
                 nextScope = scope.getParent();
-            } else if (scope instanceof FunctionScope) {
-                FunctionScope funScope = (FunctionScope) scope;
-                assert funScope.getParent() == null;
-                nextScope = funScope.getEnclosingScope();
+            } else if (scope instanceof TopLevelScope) {
+                TopLevelScope topScope = (TopLevelScope) scope;
+                assert topScope.getParent() == null;
+                nextScope = topScope.getEnclosingScope();
             } else {
                 assert false : "unknown scope class: " + scope.getClass().getName();
                 return false;

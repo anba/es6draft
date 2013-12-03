@@ -225,4 +225,88 @@ class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>> {
     public List<String> visit(ClassDeclaration node, List<String> value) {
         return node.getName().accept(this, value);
     }
+
+    /**
+     * <pre>
+     * ImportDeclaration : ModuleImport
+     * ImportDeclaration : import ImportClause FromClause ;
+     * ImportDeclaration : import ModuleSpecifier ;
+     * </pre>
+     */
+    @Override
+    public List<String> visit(ImportDeclaration node, List<String> value) {
+        switch (node.getType()) {
+        case ModuleImport:
+            return node.getModuleImport().accept(this, value);
+        case ImportFrom:
+            return node.getImportClause().accept(this, value);
+        case ImportModule:
+        default:
+            return value;
+        }
+    }
+
+    /**
+     * <pre>
+     * ModuleImport : module ImportedBinding FromClause ;
+     * </pre>
+     */
+    @Override
+    public List<String> visit(ModuleImport node, List<String> value) {
+        return node.getImportedBinding().accept(this, value);
+    }
+
+    /**
+     * <pre>
+     * ImportClause : ImportedBinding , NamedImports
+     * ImportsList : ImportsList , ImportSpecifier
+     * </pre>
+     */
+    @Override
+    public List<String> visit(ImportClause node, List<String> value) {
+        if (node.getDefaultEntry() != null) {
+            node.getDefaultEntry().accept(this, value);
+        }
+        forEach(this, node.getNamedImports(), value);
+        return value;
+    }
+
+    /**
+     * <pre>
+     * ImportSpecifier : IdentifierName as ImportedBinding
+     * </pre>
+     */
+    @Override
+    public List<String> visit(ImportSpecifier node, List<String> value) {
+        return node.getLocalName().accept(this, value);
+    }
+
+    /**
+     * <pre>
+     * ExportDeclaration :
+     *     export * FromClause ;
+     *     export ExportClause FromClause ;
+     *     export ExportClause ;
+     * ExportDeclaration : export VariableStatement ;
+     * ExportDeclaration : export Declaration ;
+     * ExportDeclaration : export default AssignmentExpression ;
+     * </pre>
+     */
+    @Override
+    public List<String> visit(ExportDeclaration node, List<String> value) {
+        switch (node.getType()) {
+        case Variable:
+            return node.getVariableStatement().accept(this, value);
+        case Declaration:
+            return node.getDeclaration().accept(this, value);
+        case Default:
+            value.add("default");
+            return value;
+        case All:
+        case External:
+        case Local:
+        default:
+            return value;
+        }
+    }
 }

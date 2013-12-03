@@ -12,28 +12,16 @@ import java.util.List;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.3 Modules</h2>
  */
-public class ExportSpecifierSet extends AstNode {
+public class ExportsClause extends AstNode {
     private List<ExportSpecifier> exports;
-    private String sourceModule;
 
-    public ExportSpecifierSet(long beginPosition, long endPosition, String sourceModule) {
-        super(beginPosition, endPosition);
-        this.sourceModule = sourceModule;
-    }
-
-    public ExportSpecifierSet(long beginPosition, long endPosition, List<ExportSpecifier> exports,
-            String sourceModule) {
+    public ExportsClause(long beginPosition, long endPosition, List<ExportSpecifier> exports) {
         super(beginPosition, endPosition);
         this.exports = exports;
-        this.sourceModule = sourceModule;
     }
 
     public List<ExportSpecifier> getExports() {
         return exports;
-    }
-
-    public String getSourceModule() {
-        return sourceModule;
     }
 
     @Override

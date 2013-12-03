@@ -10,24 +10,46 @@ package com.github.anba.es6draft.ast;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.3 Modules</h2>
  */
-public class ImportDeclaration extends StatementListItem {
-    private ImportSpecifierSet importSpecifierSet;
+public class ImportDeclaration extends ModuleItem {
+    private Type type;
+    private ModuleImport moduleImport;
+    private ImportClause importClause;
     private String moduleSpecifier;
+
+    public enum Type {
+        ModuleImport, ImportModule, ImportFrom
+    }
+
+    public ImportDeclaration(long beginPosition, long endPosition, ModuleImport moduleImport) {
+        super(beginPosition, endPosition);
+        this.type = Type.ModuleImport;
+        this.moduleImport = moduleImport;
+    }
+
+    public ImportDeclaration(long beginPosition, long endPosition, ImportClause importClause,
+            String moduleSpecifier) {
+        super(beginPosition, endPosition);
+        this.type = Type.ImportFrom;
+        this.importClause = importClause;
+        this.moduleSpecifier = moduleSpecifier;
+    }
 
     public ImportDeclaration(long beginPosition, long endPosition, String moduleSpecifier) {
         super(beginPosition, endPosition);
+        this.type = Type.ImportModule;
         this.moduleSpecifier = moduleSpecifier;
     }
 
-    public ImportDeclaration(long beginPosition, long endPosition,
-            ImportSpecifierSet importSpecifierSet, String moduleSpecifier) {
-        super(beginPosition, endPosition);
-        this.importSpecifierSet = importSpecifierSet;
-        this.moduleSpecifier = moduleSpecifier;
+    public Type getType() {
+        return type;
     }
 
-    public ImportSpecifierSet getImportSpecifierSet() {
-        return importSpecifierSet;
+    public ModuleImport getModuleImport() {
+        return moduleImport;
+    }
+
+    public ImportClause getImportClause() {
+        return importClause;
     }
 
     public String getModuleSpecifier() {

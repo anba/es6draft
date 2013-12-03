@@ -65,8 +65,12 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
         return visit((Expression) node, value);
     }
 
-    protected R visit(StatementListItem node, V value) {
+    protected R visit(ModuleItem node, V value) {
         return visit((Node) node, value);
+    }
+
+    protected R visit(StatementListItem node, V value) {
+        return visit((ModuleItem) node, value);
     }
 
     protected R visit(Declaration node, V value) {
@@ -261,7 +265,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(ExportDeclaration node, V value) {
-        return visit((StatementListItem) node, value);
+        return visit((ModuleItem) node, value);
     }
 
     @Override
@@ -270,7 +274,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(ExportSpecifierSet node, V value) {
+    public R visit(ExportsClause node, V value) {
         return visit((Node) node, value);
     }
 
@@ -356,7 +360,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
 
     @Override
     public R visit(ImportDeclaration node, V value) {
-        return visit((StatementListItem) node, value);
+        return visit((ModuleItem) node, value);
     }
 
     @Override
@@ -365,7 +369,7 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(ImportSpecifierSet node, V value) {
+    public R visit(ImportClause node, V value) {
         return visit((Node) node, value);
     }
 
@@ -435,8 +439,13 @@ public abstract class DefaultNodeVisitor<R, V> implements NodeVisitor<R, V> {
     }
 
     @Override
-    public R visit(ModuleDeclaration node, V value) {
-        return visit((StatementListItem) node, value);
+    public R visit(Module node, V value) {
+        return visit((Node) node, value);
+    }
+
+    @Override
+    public R visit(ModuleImport node, V value) {
+        return visit((Node) node, value);
     }
 
     @Override

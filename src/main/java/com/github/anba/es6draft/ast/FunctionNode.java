@@ -6,6 +6,8 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.List;
+
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1>
  */
@@ -25,6 +27,11 @@ public interface FunctionNode extends TopLevelNode, ScopedNode {
     String getHeaderSource();
 
     String getBodySource();
+
+    @Override
+    public List<StatementListItem> getStatements();
+
+    void setStatements(List<StatementListItem> statements);
 
     @Override
     FunctionScope getScope();

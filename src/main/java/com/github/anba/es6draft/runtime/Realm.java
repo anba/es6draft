@@ -25,7 +25,6 @@ import com.github.anba.es6draft.compiler.Compiler.Option;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
@@ -80,11 +79,6 @@ public final class Realm {
     private LexicalEnvironment globalEnv;
 
     /**
-     * [[loader]]
-     */
-    private Loader loader;
-
-    /**
      * [[ThrowTypeError]]
      */
     private Callable throwTypeError;
@@ -125,13 +119,6 @@ public final class Realm {
      */
     public LexicalEnvironment getGlobalEnv() {
         return globalEnv;
-    }
-
-    /**
-     * [[loader]]
-     */
-    public Loader getLoader() {
-        return loader;
     }
 
     /**

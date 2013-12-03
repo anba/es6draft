@@ -11,21 +11,21 @@ package com.github.anba.es6draft.ast;
  * <h2>15.3 Modules</h2>
  */
 public class ImportSpecifier extends AstNode {
-    private String externalName;
-    private String localName;
+    private String importName;
+    private BindingIdentifier localName;
 
-    public ImportSpecifier(long beginPosition, long endPosition, String externalName,
-            String localName) {
+    public ImportSpecifier(long beginPosition, long endPosition, String importName,
+            BindingIdentifier localName) {
         super(beginPosition, endPosition);
-        this.externalName = externalName;
+        this.importName = importName;
         this.localName = localName;
     }
 
-    public String getExternalName() {
-        return externalName;
+    public String getImportName() {
+        return importName;
     }
 
-    public String getLocalName() {
+    public BindingIdentifier getLocalName() {
         return localName;
     }
 

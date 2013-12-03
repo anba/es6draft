@@ -4,11 +4,12 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.modules;
+package com.github.anba.es6draft.ast;
 
 /**
- * Placeholder for actual modules
- * 
+ * Scope class for {@link Script} objects
  */
-public interface Module {
+public interface ScriptScope extends TopLevelScope {
+    @Override
+    Script getNode();
 }

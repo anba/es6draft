@@ -53,7 +53,29 @@ public class Parser {
     }
 
     private enum ContextKind {
-        Script, Module, Function, Generator, ArrowFunction, Method
+        Script, Module, Function, Generator, ArrowFunction, Method;
+
+        final boolean isScript() {
+            return this == Script;
+        }
+
+        final boolean isModule() {
+            return this == Module;
+        }
+
+        final boolean isFunction() {
+            switch (this) {
+            case ArrowFunction:
+            case Function:
+            case Generator:
+            case Method:
+                return true;
+            case Module:
+            case Script:
+            default:
+                return false;
+            }
+        }
     }
 
     private static class ParseContext {
@@ -74,20 +96,42 @@ public class Parser {
         LabelContext labels = null;
 
         ScopeContext scopeContext;
+        final TopContext topContext;
+        final ScriptContext scriptContext;
+        final ModuleContext modContext;
         final FunctionContext funContext;
 
         ParseContext() {
             this.parent = null;
             this.kind = null;
+            this.topContext = null;
+            this.scriptContext = null;
+            this.modContext = null;
             this.funContext = null;
         }
 
         ParseContext(ParseContext parent, ContextKind kind) {
             this.parent = parent;
             this.kind = kind;
-            this.funContext = new FunctionContext(this);
-            this.scopeContext = funContext;
-            this.returnAllowed = isFunction();
+            if (kind.isScript()) {
+                this.scriptContext = new ScriptContext(this);
+                this.modContext = null;
+                this.funContext = null;
+                this.topContext = scriptContext;
+            } else if (kind.isModule()) {
+                this.scriptContext = null;
+                this.modContext = new ModuleContext(this);
+                this.funContext = null;
+                this.topContext = modContext;
+            } else {
+                assert kind.isFunction();
+                this.scriptContext = null;
+                this.modContext = null;
+                this.funContext = new FunctionContext(this);
+                this.topContext = funContext;
+            }
+            this.scopeContext = topContext;
+            this.returnAllowed = kind.isFunction();
             if (parent.strictMode == StrictMode.Strict) {
                 this.strictMode = parent.strictMode;
             }
@@ -109,20 +153,6 @@ public class Parser {
             return superReference;
         }
 
-        final boolean isFunction() {
-            switch (kind) {
-            case ArrowFunction:
-            case Function:
-            case Generator:
-            case Method:
-                return true;
-            case Module:
-            case Script:
-            default:
-                return false;
-            }
-        }
-
         int countLiterals() {
             return (objectLiterals != null ? objectLiterals.size() : 0);
         }
@@ -139,25 +169,86 @@ public class Parser {
         }
     }
 
-    // TODO: rename - not used exclusively for functions, also used for scripts and modules
-    private static class FunctionContext extends ScopeContext implements FunctionScope {
-        final ScopeContext enclosing;
+    private static class FunctionContext extends TopContext implements FunctionScope {
+        FunctionNode node = null;
         HashSet<String> parameterNames = null;
-        boolean directEval = false;
 
         FunctionContext(ParseContext context) {
+            super(context);
+        }
+
+        @Override
+        protected boolean isStrict() {
+            return IsStrict(node);
+        }
+
+        @Override
+        public FunctionNode getNode() {
+            return node;
+        }
+
+        @Override
+        public Set<String> parameterNames() {
+            return parameterNames;
+        }
+    }
+
+    private static class ScriptContext extends TopContext implements ScriptScope {
+        Script node = null;
+
+        ScriptContext(ParseContext context) {
+            super(context);
+        }
+
+        @Override
+        protected boolean isStrict() {
+            return IsStrict(node);
+        }
+
+        @Override
+        public Script getNode() {
+            return node;
+        }
+    }
+
+    private static class ModuleContext extends TopContext implements ModuleScope {
+        LinkedHashSet<String> moduleRequests = new LinkedHashSet<>();
+        HashSet<String> exportBindings = new HashSet<>();
+        Module node = null;
+
+        ModuleContext(ParseContext context) {
+            super(context);
+        }
+
+        @Override
+        protected boolean isStrict() {
+            return true;
+        }
+
+        @Override
+        public Module getNode() {
+            return node;
+        }
+
+        void addModuleRequest(String moduleSpecifier) {
+            moduleRequests.add(moduleSpecifier);
+        }
+
+        boolean addExportBinding(String binding) {
+            return exportBindings.add(binding);
+        }
+    }
+
+    private static abstract class TopContext extends ScopeContext implements TopLevelScope {
+        final ScopeContext enclosing;
+        boolean directEval = false;
+
+        TopContext(ParseContext context) {
             super(null);
             this.enclosing = context.parent.scopeContext;
         }
 
-        private boolean isStrict() {
-            if (node instanceof FunctionNode) {
-                return IsStrict((FunctionNode) node);
-            } else {
-                assert node instanceof Script;
-                return IsStrict((Script) node);
-            }
-        }
+        protected abstract boolean isStrict();
 
         @Override
         public ScopeContext getEnclosingScope() {
@@ -167,11 +258,6 @@ public class Parser {
         @Override
         public boolean isDynamic() {
             return directEval && !isStrict();
-        }
-
-        @Override
-        public Set<String> parameterNames() {
-            return parameterNames;
         }
 
         @Override
@@ -197,10 +283,16 @@ public class Parser {
 
     private static class BlockContext extends ScopeContext implements BlockScope {
         final boolean dynamic;
+        ScopedNode node = null;
 
         BlockContext(ScopeContext parent, boolean dynamic) {
             super(parent);
             this.dynamic = dynamic;
+        }
+
+        @Override
+        public ScopedNode getNode() {
+            return node;
         }
 
         @Override
@@ -221,7 +313,6 @@ public class Parser {
 
     private abstract static class ScopeContext implements Scope {
         final ScopeContext parent;
-        ScopedNode node = null;
 
         HashSet<String> varDeclaredNames = null;
         HashSet<String> lexDeclaredNames = null;
@@ -235,11 +326,6 @@ public class Parser {
         @Override
         public Scope getParent() {
             return parent;
-        }
-
-        @Override
-        public ScopedNode getNode() {
-            return node;
         }
 
         @Override
@@ -457,15 +543,16 @@ public class Parser {
 
     private <DECLARATION extends Declaration & FunctionNode> void addDeclaration(DECLARATION decl,
             String name) {
-        ScopeContext parentScope = context.parent.scopeContext;
-        if (parentScope.isTopLevel()) {
-            // top-level function declaration
+        ParseContext parentContext = context.parent;
+        ScopeContext parentScope = parentContext.scopeContext;
+        if (parentScope.isTopLevel() && !parentContext.kind.isModule()) {
+            // top-level function declaration in scripts/functions context
             parentScope.addVarScopedDeclaration(decl);
             if (!parentScope.addVarDeclaredName(name)) {
                 reportSyntaxError(decl, Messages.Key.VariableRedeclaration, name);
             }
         } else {
-            // block-scoped function declaration
+            // lexical-scoped function declaration in module/block context
             parentScope.addLexScopedDeclaration(decl);
             if (!parentScope.addLexDeclaredName(name)) {
                 reportSyntaxError(decl, Messages.Key.VariableRedeclaration, name);
@@ -478,7 +565,7 @@ public class Parser {
     }
 
     private void addVarScopedDeclaration(VariableStatement decl) {
-        context.funContext.addVarScopedDeclaration(decl);
+        context.topContext.addVarScopedDeclaration(decl);
     }
 
     private void addVarDeclaredName(ScopeContext scope, String name) {
@@ -586,6 +673,25 @@ public class Parser {
                 lexDeclaredNames.remove(name);
             }
         }
+    }
+
+    private void addExportBindings(List<String> bindings) {
+        for (String binding : bindings) {
+            addExportBinding(binding);
+        }
+    }
+
+    private void addExportBinding(String binding) {
+        assert context.scopeContext == context.modContext : "not in module scope";
+        if (!context.modContext.addExportBinding(binding)) {
+            // TODO: error location
+            reportSyntaxError(Messages.Key.VariableRedeclaration, binding);
+        }
+    }
+
+    private void addModuleRequest(String moduleSpecifier) {
+        assert context.scopeContext == context.modContext : "not in module scope";
+        context.modContext.addModuleRequest(moduleSpecifier);
     }
 
     private LabelContext enterLabelled(long sourcePosition, StatementType type, Set<String> labelSet) {
@@ -832,13 +938,11 @@ public class Parser {
         return script();
     }
 
-    public ModuleDeclaration parseModule(CharSequence source) throws ParserException {
+    public Module parseModule(CharSequence source) throws ParserException {
         if (ts != null)
             throw new IllegalStateException();
-
-        module();
-
-        return null;
+        ts = new TokenStream(this, new TokenStreamInput(source));
+        return module();
     }
 
     public FunctionDefinition parseFunction(CharSequence formals, CharSequence bodyText)
@@ -954,7 +1058,7 @@ public class Parser {
         List<StatementListItem> statements = singletonList(statement);
         boolean strict = (context.strictMode == StrictMode.Strict);
 
-        FunctionContext scope = context.funContext;
+        ScriptContext scope = context.scriptContext;
         Script script = new Script(beginSource(), ts.endPosition(), sourceFile, scope, statements,
                 options, strict);
         scope.node = script;
@@ -983,7 +1087,7 @@ public class Parser {
             List<StatementListItem> statements = merge(prologue, body);
             boolean strict = (context.strictMode == StrictMode.Strict);
 
-            FunctionContext scope = context.funContext;
+            ScriptContext scope = context.scriptContext;
             Script script = new Script(beginSource(), ts.endPosition(), sourceFile, scope,
                     statements, options, strict);
             scope.node = script;
@@ -1004,8 +1108,22 @@ public class Parser {
      *     ModuleItemList
      * </pre>
      */
-    private void module() {
-        moduleItemList();
+    private Module module() {
+        newContext(ContextKind.Module);
+        context.strictMode = StrictMode.Strict;
+        try {
+            ts.initialise();
+            List<ModuleItem> statements = moduleItemList();
+
+            ModuleContext scope = context.modContext;
+            Module module = new Module(beginSource(), ts.endPosition(), sourceFile, scope,
+                    statements, options);
+            scope.node = module;
+
+            return module;
+        } finally {
+            restoreContext();
+        }
     }
 
     /**
@@ -1014,25 +1132,27 @@ public class Parser {
      * <pre>
      * ModuleItemList :
      *     ModuleItem
-     *     ModuleItemList  ModuleItem
+     *     ModuleItemList ModuleItem
      * ModuleItem :
      *     ImportDeclaration
      *     ExportDeclaration
      *     StatementListItem
      * </pre>
      */
-    private void moduleItemList() {
+    private List<ModuleItem> moduleItemList() {
+        List<ModuleItem> moduleItemList = newList();
         while (token() != Token.EOF) {
             if (token() == Token.EXPORT) {
-                exportDeclaration();
+                moduleItemList.add(exportDeclaration());
             } else if (token() == Token.IMPORT) {
-                importDeclaration();
+                moduleItemList.add(importDeclaration());
             } else if (isName("module") && isIdentifierReference(peek()) && noNextLineTerminator()) {
-                importDeclaration();
+                moduleItemList.add(importDeclaration());
             } else {
-                statementListItem();
+                moduleItemList.add(statementListItem());
             }
         }
+        return moduleItemList;
     }
 
     /**
@@ -1045,18 +1165,34 @@ public class Parser {
      *     import ModuleSpecifier ;
      * </pre>
      */
-    private void importDeclaration() {
+    private ImportDeclaration importDeclaration() {
+        long beginPosition = ts.beginPosition();
         if (token() != Token.IMPORT) {
-            moduleImport();
+            ModuleImport moduleImport = moduleImport();
+            // TODO: add lex declared
+            return new ImportDeclaration(beginPosition, ts.endPosition(), moduleImport);
         } else {
             consume(Token.IMPORT);
             if (token() != Token.STRING) {
-                importClause();
-                fromClause();
+                ImportClause importClause = importClause();
+                String moduleSpecifier = fromClause();
                 semicolon();
+
+                addModuleRequest(moduleSpecifier);
+                if (importClause.getDefaultEntry() != null
+                        || !importClause.getNamedImports().isEmpty()) {
+                    // TODO: add lex declared
+                }
+
+                return new ImportDeclaration(beginPosition, ts.endPosition(), importClause,
+                        moduleSpecifier);
             } else {
-                moduleSpecifier();
+                String moduleSpecifier = moduleSpecifier();
                 semicolon();
+
+                addModuleRequest(moduleSpecifier);
+
+                return new ImportDeclaration(beginPosition, ts.endPosition(), moduleSpecifier);
             }
         }
     }
@@ -1069,14 +1205,20 @@ public class Parser {
      *     module [no <i>LineTerminator</i> here] ImportedBinding FromClause ;
      * </pre>
      */
-    private void moduleImport() {
+    private ModuleImport moduleImport() {
+        long beginPosition = ts.beginPosition();
         consume("module");
         if (!noLineTerminator()) {
             reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
         }
-        importedBinding();
-        fromClause();
+        BindingIdentifier importedBinding = importedBinding();
+        String moduleSpecifier = fromClause();
         semicolon();
+
+        addModuleRequest(moduleSpecifier);
+        addLexDeclaredName(importedBinding);
+
+        return new ModuleImport(beginPosition, ts.endPosition(), importedBinding, moduleSpecifier);
     }
 
     /**
@@ -1087,9 +1229,9 @@ public class Parser {
      *     from ModuleSpecifier
      * </pre>
      */
-    private void fromClause() {
+    private String fromClause() {
         consume("from");
-        moduleSpecifier();
+        return moduleSpecifier();
     }
 
     /**
@@ -1102,16 +1244,22 @@ public class Parser {
      *     NamedImports
      * </pre>
      */
-    private void importClause() {
+    private ImportClause importClause() {
+        long beginPosition = ts.beginPosition();
+        BindingIdentifier defaultEntry = null;
+        List<ImportSpecifier> namedImports = emptyList();
         if (token() != Token.LC) {
-            importedBinding();
+            defaultEntry = importedBinding();
+            addLexDeclaredName(defaultEntry);
+
             if (token() == Token.COMMA) {
                 consume(Token.COMMA);
-                namedImports();
+                namedImports = namedImports();
             }
         } else {
-            namedImports();
+            namedImports = namedImports();
         }
+        return new ImportClause(beginPosition, ts.endPosition(), defaultEntry, namedImports);
     }
 
     /**
@@ -1127,10 +1275,11 @@ public class Parser {
      *     ImportsList , ImportSpecifier
      * </pre>
      */
-    private void namedImports() {
+    private List<ImportSpecifier> namedImports() {
+        List<ImportSpecifier> namedImports = newList();
         consume(Token.LC);
         while (token() != Token.RC) {
-            importSpecifier();
+            namedImports.add(importSpecifier());
             if (token() == Token.COMMA) {
                 consume(Token.COMMA);
             } else {
@@ -1138,6 +1287,7 @@ public class Parser {
             }
         }
         consume(Token.RC);
+        return namedImports;
     }
 
     /**
@@ -1152,21 +1302,26 @@ public class Parser {
     private ImportSpecifier importSpecifier() {
         assert context.strictMode != StrictMode.Unknown : "undefined strict-mode in import specifier";
         long begin = ts.beginPosition();
-        String externalName, localName;
+        String importName;
+        BindingIdentifier localName;
         if (!isReservedWord(token())) {
-            externalName = importedBinding().getName();
+            BindingIdentifier binding = importedBinding();
+            importName = binding.getName();
             if (isName("as")) {
                 consume("as");
-                localName = importedBinding().getName();
+                localName = importedBinding();
             } else {
-                localName = externalName;
+                localName = binding;
             }
         } else {
-            externalName = identifierName();
+            importName = identifierName();
             consume("as");
-            localName = importedBinding().getName();
+            localName = importedBinding();
         }
-        return new ImportSpecifier(begin, ts.endPosition(), externalName, localName);
+
+        addLexDeclaredName(localName);
+
+        return new ImportSpecifier(begin, ts.endPosition(), importName, localName);
     }
 
     /**
@@ -1206,32 +1361,48 @@ public class Parser {
      *     export default AssignmentExpression ;
      * </pre>
      */
-    private void exportDeclaration() {
+    private ExportDeclaration exportDeclaration() {
+        long beginPosition = ts.beginPosition();
         consume(Token.EXPORT);
         switch (token()) {
         case MUL: {
             // export * FromClause ;
             consume(Token.MUL);
-            fromClause();
+            String moduleSpecifier = fromClause();
             semicolon();
-            return;
+
+            addModuleRequest(moduleSpecifier);
+
+            return new ExportDeclaration(beginPosition, ts.endPosition(), moduleSpecifier);
         }
 
         case LC: {
             // export ExportsClause[NoReference] FromClause ;
             // export ExportsClause ;
-            exportsClause();
+            long position = ts.position(), lineinfo = ts.lineinfo();
+            ExportsClause exportsClause = exportsClause(true);
             if (isName("from")) {
-                fromClause();
+                String moduleSpecifier = fromClause();
+                semicolon();
+
+                addModuleRequest(moduleSpecifier);
+
+                return new ExportDeclaration(beginPosition, ts.endPosition(), exportsClause,
+                        moduleSpecifier);
             }
+            ts.reset(position, lineinfo);
+            exportsClause = exportsClause(false);
             semicolon();
-            return;
+            return new ExportDeclaration(beginPosition, ts.endPosition(), exportsClause);
         }
 
         case VAR: {
             // export VariableStatement
-            variableStatement();
-            return;
+            VariableStatement variableStatement = variableStatement();
+
+            addExportBindings(BoundNames(variableStatement));
+
+            return new ExportDeclaration(beginPosition, ts.endPosition(), variableStatement);
         }
 
         case FUNCTION:
@@ -1239,17 +1410,28 @@ public class Parser {
         case CONST:
         case LET: {
             // export Declaration[Default]
-            declaration();
-            return;
+            Declaration declaration = declaration(true);
+
+            addExportBindings(BoundNames(declaration));
+
+            return new ExportDeclaration(beginPosition, ts.endPosition(), declaration);
         }
 
         case DEFAULT:
         default: {
             // export default AssignmentExpression ;
             consume(Token.DEFAULT);
-            assignmentExpression(true);
+            Expression expression = assignmentExpression(true);
             semicolon();
-            return;
+
+            // FIXME: default exports add a lexical declared name with value "default" (spec bug?)
+            // BindingIdentifier id = new BindingIdentifier(beginPosition, ts.endPosition(),
+            // "default");
+            // addLexDeclaredName(id);
+
+            addExportBinding("default");
+
+            return new ExportDeclaration(beginPosition, ts.endPosition(), expression);
         }
         }
     }
@@ -1267,10 +1449,12 @@ public class Parser {
      *     ExportsList<sub>[?NoReference]</sub> , ExportSpecifier<sub>[?NoReference]</sub>
      * </pre>
      */
-    private void exportsClause() {
+    private ExportsClause exportsClause(boolean noReference) {
+        long beginPosition = ts.beginPosition();
+        List<ExportSpecifier> exports = newList();
         consume(Token.LC);
         while (token() != Token.RC) {
-            exportSpecifier();
+            exports.add(exportSpecifier(noReference));
             if (token() == Token.COMMA) {
                 consume(Token.COMMA);
             } else {
@@ -1278,6 +1462,7 @@ public class Parser {
             }
         }
         consume(Token.RC);
+        return new ExportsClause(beginPosition, ts.endPosition(), exports);
     }
 
     /**
@@ -1291,13 +1476,34 @@ public class Parser {
      *     <sub>[+NoReference]</sub>IdentifierName as IdentifierName
      * </pre>
      */
-    private void exportSpecifier() {
-        // TODO: need to defer [NoReference] after 'from' was detected
-        identifierName();
-        if (isName("as")) {
-            consume("as");
-            identifierName();
+    private ExportSpecifier exportSpecifier(boolean noReference) {
+        long beginPosition = ts.beginPosition();
+        String importName, localName, exportName;
+        if (noReference) {
+            String sourceName = identifierName();
+            if (isName("as")) {
+                consume("as");
+                exportName = identifierName();
+            } else {
+                exportName = sourceName;
+            }
+            importName = sourceName;
+            localName = null;
+        } else {
+            importName = null;
+            localName = identifierReference();
+            if (isName("as")) {
+                consume("as");
+                exportName = identifierName();
+            } else {
+                exportName = localName;
+            }
         }
+
+        addExportBinding(exportName);
+
+        return new ExportSpecifier(beginPosition, ts.endPosition(), importName, localName,
+                exportName);
     }
 
     /**
@@ -1410,40 +1616,20 @@ public class Parser {
     }
 
     /**
-     * Special case for {@link Token#YIELD} as {@link BindingIdentifier} in functions and generators
-     */
-    private BindingIdentifier bindingIdentifierFunctionName() {
-        // FIXME: Preliminary solution to provide SpiderMonkey/V8 compatibility
-        // 'yield' is always a keyword in strict-mode and in generators, but parse function name
-        // in the context of the surrounding environment
-        if (token() == Token.YIELD) {
-            long begin = ts.beginPosition();
-            if (isYieldName(context.parent)) {
-                consume(Token.YIELD);
-                return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
-            }
-            reportStrictModeSyntaxError(begin, Messages.Key.StrictModeInvalidIdentifier,
-                    getName(Token.YIELD));
-            reportTokenNotIdentifier(Token.YIELD);
-        }
-        return bindingIdentifier();
-    }
-
-    /**
      * <strong>[14.1] Function Definitions</strong>
      * 
      * <pre>
-     * FunctionDeclaration :
-     *     function BindingIdentifier ( FormalParameters ) { FunctionBody }
+     * FunctionDeclaration<sub>[Default]</sub> :
+     *     function BindingIdentifier<sub>[?Default]</sub> ( FormalParameters ) { FunctionBody }
      * </pre>
      */
-    private FunctionDeclaration functionDeclaration() {
+    private FunctionDeclaration functionDeclaration(boolean allowDefault) {
         newContext(ContextKind.Function);
         try {
             long begin = ts.beginPosition();
             consume(Token.FUNCTION);
             int startFunction = ts.position() - "function".length();
-            BindingIdentifier identifier = bindingIdentifierFunctionName();
+            BindingIdentifier identifier = bindingIdentifierFunctionName(allowDefault);
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
@@ -1499,7 +1685,7 @@ public class Parser {
             int startFunction = ts.position() - "function".length();
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifierFunctionName();
+                identifier = bindingIdentifierFunctionName(false);
             }
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -2138,11 +2324,11 @@ public class Parser {
      * <strong>[14.4] Generator Function Definitions</strong>
      * 
      * <pre>
-     * GeneratorDeclaration :
-     *     function * BindingIdentifier ( FormalParameters ) { FunctionBody<sub>[Yield]</sub> }
+     * GeneratorDeclaration<sub>[Default]</sub> :
+     *     function * BindingIdentifier<sub>[?Default]</sub> ( FormalParameters ) { FunctionBody<sub>[Yield]</sub> }
      * </pre>
      */
-    private GeneratorDeclaration generatorDeclaration(boolean starless) {
+    private GeneratorDeclaration generatorDeclaration(boolean allowDefault, boolean starless) {
         newContext(ContextKind.Generator);
         try {
             long begin = ts.beginPosition();
@@ -2151,7 +2337,7 @@ public class Parser {
             if (!starless) {
                 consume(Token.MUL);
             }
-            BindingIdentifier identifier = bindingIdentifierFunctionName();
+            BindingIdentifier identifier = bindingIdentifierFunctionName(allowDefault);
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
             consume(Token.RP);
@@ -2204,7 +2390,7 @@ public class Parser {
             }
             BindingIdentifier identifier = null;
             if (token() != Token.LP) {
-                identifier = bindingIdentifierFunctionName();
+                identifier = bindingIdentifierFunctionName(false);
             }
             consume(Token.LP);
             FormalParameterList parameters = formalParameters(Token.RP);
@@ -2391,11 +2577,11 @@ public class Parser {
      *     extends AssignmentExpression
      * </pre>
      */
-    private ClassDeclaration classDeclaration() {
+    private ClassDeclaration classDeclaration(boolean allowDefault) {
         long begin = ts.beginPosition();
         consume(Token.CLASS);
         // 10.2.1 - ClassDeclaration and ClassExpression is always strict code
-        BindingIdentifier name = bindingIdentifierPureStrict();
+        BindingIdentifier name = bindingIdentifierClassName(allowDefault);
         Expression heritage = null;
         if (token() == Token.EXTENDS) {
             consume(Token.EXTENDS);
@@ -2435,7 +2621,7 @@ public class Parser {
         BindingIdentifier name = null;
         if (token() != Token.EXTENDS && token() != Token.LC) {
             // 10.2.1 - ClassDeclaration and ClassExpression is always strict code
-            name = bindingIdentifierPureStrict();
+            name = bindingIdentifierClassName(false);
         }
         Expression heritage = null;
         if (token() == Token.EXTENDS) {
@@ -2679,10 +2865,10 @@ public class Parser {
         case FUNCTION:
         case CLASS:
         case CONST:
-            return declaration();
+            return declaration(false);
         case LET:
             if (lexicalBindingFirstSet(peek())) {
-                return declaration();
+                return declaration(false);
             }
             // 'let' as identifier, e.g. `let + 1`
             // fall-through
@@ -2695,19 +2881,19 @@ public class Parser {
      * <strong>[13] ECMAScript Language: Statements and Declarations</strong>
      * 
      * <pre>
-     * Declaration<sub>[Yield]</sub> :
-     *     FunctionDeclaration
-     *     GeneratorDeclaration
-     *     ClassDeclaration
+     * Declaration<sub>[Yield, Default]</sub> :
+     *     FunctionDeclaration<sub>[?Default]</sub>
+     *     GeneratorDeclaration<sub>[?Default]</sub>
+     *     ClassDeclaration<sub>[?Default]</sub>
      *     LexicalDeclaration<sub>[In, ?Yield]</sub>
      * </pre>
      */
-    private Declaration declaration() {
+    private Declaration declaration(boolean allowDefault) {
         switch (token()) {
         case FUNCTION:
-            return functionOrGeneratorDeclaration();
+            return functionOrGeneratorDeclaration(allowDefault);
         case CLASS:
-            return classDeclaration();
+            return classDeclaration(allowDefault);
         case LET:
         case CONST:
             return lexicalDeclaration(true);
@@ -2716,16 +2902,16 @@ public class Parser {
         }
     }
 
-    private Declaration functionOrGeneratorDeclaration() {
+    private Declaration functionOrGeneratorDeclaration(boolean allowDefault) {
         if (LOOKAHEAD(Token.MUL)) {
-            return generatorDeclaration(false);
+            return generatorDeclaration(allowDefault, false);
         } else {
             long position = ts.position(), lineinfo = ts.lineinfo();
             try {
-                return functionDeclaration();
+                return functionDeclaration(allowDefault);
             } catch (RetryGenerator e) {
                 ts.reset(position, lineinfo);
-                return generatorDeclaration(true);
+                return generatorDeclaration(allowDefault, true);
             }
         }
     }
@@ -2909,13 +3095,51 @@ public class Parser {
      *     Identifier
      * </pre>
      */
-    private BindingIdentifier bindingIdentifierPureStrict() {
+    private BindingIdentifier bindingIdentifierClassName(boolean allowDefault) {
         long begin = ts.beginPosition();
+        if (allowDefault && token() == Token.DEFAULT) {
+            consume(Token.DEFAULT);
+            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
+        }
         String identifier = strictIdentifierReference();
         if ("arguments".equals(identifier) || "eval".equals(identifier)) {
             reportSyntaxError(begin, Messages.Key.StrictModeRestrictedIdentifier);
         }
         return new BindingIdentifier(begin, ts.endPosition(), identifier);
+    }
+
+    /**
+     * <strong>[13.2.1] Let and Const Declarations</strong>
+     * <p>
+     * Special case for {@link Token#YIELD} as {@link BindingIdentifier} in functions and generators
+     * 
+     * <pre>
+     * BindingIdentifier<sub>[Default, Yield]</sub> :
+     *     <sub>[+Default]</sub> default
+     *     <sub>[~Yield]</sub> yield
+     *     Identifier
+     * </pre>
+     */
+    private BindingIdentifier bindingIdentifierFunctionName(boolean allowDefault) {
+        // FIXME: Preliminary solution to provide SpiderMonkey/V8 compatibility
+        // 'yield' is always a keyword in strict-mode and in generators, but parse function name
+        // in the context of the surrounding environment
+        if (token() == Token.YIELD) {
+            long begin = ts.beginPosition();
+            if (isYieldName(context.parent)) {
+                consume(Token.YIELD);
+                return new BindingIdentifier(begin, ts.endPosition(), getName(Token.YIELD));
+            }
+            reportStrictModeSyntaxError(begin, Messages.Key.StrictModeInvalidIdentifier,
+                    getName(Token.YIELD));
+            reportTokenNotIdentifier(Token.YIELD);
+        }
+        if (allowDefault && token() == Token.DEFAULT) {
+            long begin = ts.beginPosition();
+            consume(Token.DEFAULT);
+            return new BindingIdentifier(begin, ts.endPosition(), getName(Token.DEFAULT));
+        }
+        return bindingIdentifier();
     }
 
     /**
@@ -5359,7 +5583,7 @@ public class Parser {
                     return lhs;
                 }
                 if (lhs instanceof Identifier && "eval".equals(((Identifier) lhs).getName())) {
-                    context.funContext.directEval = true;
+                    context.topContext.directEval = true;
                 }
                 begin = ts.beginPosition();
                 List<Expression> args = arguments();

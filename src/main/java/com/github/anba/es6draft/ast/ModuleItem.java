@@ -7,13 +7,13 @@
 package com.github.anba.es6draft.ast;
 
 /**
- * <h1>13 ECMAScript Language: Statements and Declarations</h1>
+ * <h1>15 ECMAScript Language: Modules and Scripts</h1>
  * <ul>
- * <li>13.1 Block
+ * <li>15.1 Modules
  * </ul>
  */
-public abstract class StatementListItem extends ModuleItem {
-    protected StatementListItem(long beginPosition, long endPosition) {
+public abstract class ModuleItem extends AstNode {
+    protected ModuleItem(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
     }
 }

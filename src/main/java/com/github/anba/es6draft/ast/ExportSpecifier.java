@@ -11,22 +11,28 @@ package com.github.anba.es6draft.ast;
  * <h2>15.3 Modules</h2>
  */
 public class ExportSpecifier extends AstNode {
-    private String localName;
-    private String externalName;
+    private final String importName;
+    private final String localName;
+    private final String exportName;
 
-    public ExportSpecifier(long beginPosition, long endPosition, String localName,
-            String externalName) {
+    public ExportSpecifier(long beginPosition, long endPosition, String importName,
+            String localName, String exportName) {
         super(beginPosition, endPosition);
+        this.importName = importName;
         this.localName = localName;
-        this.externalName = externalName;
+        this.exportName = exportName;
+    }
+
+    public String getImportName() {
+        return importName;
     }
 
     public String getLocalName() {
         return localName;
     }
 
-    public String getExternalName() {
-        return externalName;
+    public String getExportName() {
+        return exportName;
     }
 
     @Override

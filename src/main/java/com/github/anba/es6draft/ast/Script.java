@@ -19,12 +19,12 @@ import com.github.anba.es6draft.parser.Parser;
  */
 public class Script extends AstNode implements TopLevelNode, ScopedNode {
     private String sourceFile;
-    private FunctionScope scope;
+    private ScriptScope scope;
     private List<StatementListItem> statements;
     private EnumSet<Parser.Option> options;
     private boolean strict;
 
-    public Script(long beginPosition, long endPosition, String sourceFile, FunctionScope scope,
+    public Script(long beginPosition, long endPosition, String sourceFile, ScriptScope scope,
             List<StatementListItem> statements, EnumSet<Parser.Option> options, boolean strict) {
         super(beginPosition, endPosition);
         this.sourceFile = sourceFile;
@@ -39,7 +39,7 @@ public class Script extends AstNode implements TopLevelNode, ScopedNode {
     }
 
     @Override
-    public FunctionScope getScope() {
+    public ScriptScope getScope() {
         return scope;
     }
 
@@ -48,7 +48,6 @@ public class Script extends AstNode implements TopLevelNode, ScopedNode {
         return statements;
     }
 
-    @Override
     public void setStatements(List<StatementListItem> statements) {
         this.statements = statements;
     }

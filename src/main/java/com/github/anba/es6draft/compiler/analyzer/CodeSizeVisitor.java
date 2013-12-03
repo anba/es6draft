@@ -341,8 +341,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(ExportDeclaration node, CodeSizeHandler value) {
-        return analyze(node, node.getDeclaration(), node.getExportSpecifierSet(),
-                node.getExpression(), node.getVariableStatement(), 0, value);
+        return 0;
     }
 
     @Override
@@ -351,7 +350,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
-    public Integer visit(ExportSpecifierSet node, CodeSizeHandler value) {
+    public Integer visit(ExportsClause node, CodeSizeHandler value) {
         return 0;
     }
 
@@ -453,7 +452,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
-    public Integer visit(ImportSpecifierSet node, CodeSizeHandler value) {
+    public Integer visit(ImportClause node, CodeSizeHandler value) {
         return 0;
     }
 
@@ -509,7 +508,12 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     }
 
     @Override
-    public Integer visit(ModuleDeclaration node, CodeSizeHandler value) {
+    public Integer visit(Module node, CodeSizeHandler value) {
+        return 0;
+    }
+
+    @Override
+    public Integer visit(ModuleImport node, CodeSizeHandler value) {
         return 0;
     }
 

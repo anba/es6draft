@@ -11,8 +11,6 @@ import java.util.List;
 /**
  * Super-interface for {@link Script} and {@link FunctionNode}
  */
-public interface TopLevelNode extends Node {
-    List<StatementListItem> getStatements();
-
-    void setStatements(List<StatementListItem> statements);
+public interface TopLevelNode extends ScopedNode {
+    List<? extends ModuleItem> getStatements();
 }

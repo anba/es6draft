@@ -96,7 +96,7 @@ public interface NodeVisitor<R, V> {
 
     R visit(ExportSpecifier node, V value);
 
-    R visit(ExportSpecifierSet node, V value);
+    R visit(ExportsClause node, V value);
 
     R visit(ExpressionMethod node, V value);
 
@@ -134,7 +134,7 @@ public interface NodeVisitor<R, V> {
 
     R visit(ImportSpecifier node, V value);
 
-    R visit(ImportSpecifierSet node, V value);
+    R visit(ImportClause node, V value);
 
     R visit(SpreadArrayLiteral node, V value);
 
@@ -162,7 +162,9 @@ public interface NodeVisitor<R, V> {
 
     R visit(MethodDefinition node, V value);
 
-    R visit(ModuleDeclaration node, V value);
+    R visit(Module node, V value);
+
+    R visit(ModuleImport node, V value);
 
     R visit(NewExpression node, V value);
 
