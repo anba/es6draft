@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
@@ -69,6 +70,12 @@ public abstract class ShellGlobalObject extends GlobalObject {
 
     protected Path relativePath(Path file) {
         return baseDir.resolve(script.getParent().resolve(file));
+    }
+
+    protected Path relativePathToScript(Path file) {
+        Script currentScript = getRealm().getScriptContext().getCurrentScript();
+        String sourceFile = currentScript.getScriptBody().sourceFile();
+        return baseDir.resolve(Paths.get(sourceFile).getParent().resolve(file));
     }
 
     /**

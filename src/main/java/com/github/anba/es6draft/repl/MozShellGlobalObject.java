@@ -137,7 +137,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code loadRelativeToScript(filename)} */
     @Function(name = "loadRelativeToScript", arity = 1)
     public Object loadRelativeToScript(ExecutionContext cx, String filename) {
-        return load(cx, Paths.get(filename), relativePath(Paths.get(filename)));
+        return load(cx, Paths.get(filename), relativePathToScript(Paths.get(filename)));
     }
 
     /** shell-function: {@code evaluate(code, [options])} */
