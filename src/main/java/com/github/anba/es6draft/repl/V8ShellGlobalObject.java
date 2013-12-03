@@ -10,13 +10,10 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.EnumSet;
-import java.util.Set;
 
-import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -40,24 +37,14 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     /**
      * Returns a new instance of this class
      */
-    public static V8ShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
-            final Path script, final ScriptCache scriptCache, final Set<CompatibilityOption> options) {
-        return newGlobal(console, baseDir, script, scriptCache, options,
-                EnumSet.noneOf(Compiler.Option.class));
-    }
-
-    /**
-     * Returns a new instance of this class
-     */
-    public static V8ShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
-            final Path script, final ScriptCache scriptCache,
-            final Set<CompatibilityOption> options, final Set<Compiler.Option> compilerOptions) {
-        Realm realm = Realm.newRealm(new ObjectAllocator<V8ShellGlobalObject>() {
+    public static V8ShellGlobalObject newGlobal(World world, final ShellConsole console,
+            final Path baseDir, final Path script, final ScriptCache scriptCache) {
+        Realm realm = world.newRealm(new ObjectAllocator<V8ShellGlobalObject>() {
             @Override
             public V8ShellGlobalObject newInstance(Realm realm) {
                 return new V8ShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
-        }, options, compilerOptions);
+        });
         return (V8ShellGlobalObject) realm.getGlobalThis();
     }
 

@@ -36,6 +36,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.StopExecutionException.Reason;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -306,6 +307,7 @@ public class Repl {
 
         Realm realm = global.getRealm();
         for (int line = 1;; line += 1) {
+            drainTaskQueue(realm);
             try {
                 console.printf("js> ");
                 com.github.anba.es6draft.ast.Script parsedScript = read(realm, line);
@@ -330,6 +332,25 @@ public class Repl {
         }
     }
 
+    private void drainTaskQueue(Realm realm) {
+        World world = realm.getWorld();
+        while (world.hasTasks()) {
+            try {
+                world.executeTasks(realm.defaultContext());
+            } catch (StopExecutionException e) {
+                if (e.getReason() == Reason.Quit) {
+                    System.exit(0);
+                }
+            } catch (ScriptException e) {
+                handleException(realm, e);
+            } catch (StackOverflowError e) {
+                handleException(e);
+            } catch (BootstrapMethodError e) {
+                handleException(e.getCause());
+            }
+        }
+    }
+
     private ShellGlobalObject newGlobal() {
         ReplConsole console = new ReplConsole(this.console);
         Path baseDir = Paths.get("").toAbsolutePath();
@@ -347,22 +368,22 @@ public class Repl {
             compilerOptions.add(Compiler.Option.Debug);
         }
         ScriptCache scriptCache = new ScriptCache(Parser.Option.from(compatibilityOptions));
+        World world = new World(compatibilityOptions, compilerOptions);
 
         List<String> initScripts;
         ShellGlobalObject global;
         if (options.contains(Option.MozillaShell)) {
             Path libDir = Paths.get("");
             initScripts = asList("mozlegacy.js");
-            global = MozShellGlobalObject.newGlobal(console, baseDir, script, libDir, scriptCache,
-                    compatibilityOptions, compilerOptions);
+            global = MozShellGlobalObject.newGlobal(world, console, baseDir, script, libDir,
+                    scriptCache);
         } else if (options.contains(Option.V8Shell)) {
             initScripts = asList("v8legacy.js");
-            global = V8ShellGlobalObject.newGlobal(console, baseDir, script, scriptCache,
-                    compatibilityOptions, compilerOptions);
+            global = V8ShellGlobalObject.newGlobal(world, console, baseDir, script, scriptCache);
         } else {
             initScripts = emptyList();
-            global = SimpleShellGlobalObject.newGlobal(console, baseDir, script, scriptCache,
-                    compatibilityOptions, compilerOptions);
+            global = SimpleShellGlobalObject
+                    .newGlobal(world, console, baseDir, script, scriptCache);
         }
 
         for (String name : initScripts) {

@@ -51,6 +51,7 @@ import com.github.anba.es6draft.repl.MozShellGlobalObject;
 import com.github.anba.es6draft.repl.ShellGlobalObject;
 import com.github.anba.es6draft.repl.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -123,9 +124,10 @@ public class MozillaJSTest {
         // filter disabled tests
         assumeTrue(moztest.enable);
 
+        World world = new World(options);
         MozTestConsole console = new MozTestConsole();
-        MozShellGlobalObject global = newGlobal(console, testDir(), moztest.script,
-                Paths.get("test402/lib"), scriptCache, options);
+        MozShellGlobalObject global = newGlobal(world, console, testDir(), moztest.script,
+                Paths.get("test402/lib"), scriptCache);
         ExecutionContext cx = global.getRealm().defaultContext();
 
         // apply scripted conditions

@@ -35,6 +35,7 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.SimpleShellGlobalObject;
+import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -78,9 +79,11 @@ public class ScriptTest {
 
         // TODO: collect multiple failures
         List<Throwable> failures = new ArrayList<Throwable>();
+
+        World world = new World(options);
         ScriptTestConsole console = new ScriptTestConsole();
-        SimpleShellGlobalObject global = newGlobal(console, testDir(), test.script, scriptCache,
-                options);
+        SimpleShellGlobalObject global = newGlobal(world, console, testDir(), test.script,
+                scriptCache);
 
         // load and execute assert.js file
         global.include(Paths.get("lib/assert.js"));
@@ -99,6 +102,16 @@ public class ScriptTest {
             failures.add(new AssertionError(message, e));
         } catch (IOException e) {
             fail(e.getMessage());
+        }
+
+        while (world.hasTasks()) {
+            try {
+                world.executeTasks(global.getRealm().defaultContext());
+            } catch (ScriptException e) {
+                // count towards the overall failure count (?)
+                String message = e.getMessage(global.getRealm().defaultContext());
+                failures.add(new AssertionError(message, e));
+            }
         }
 
         if (test.expect) {

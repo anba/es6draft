@@ -45,6 +45,7 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.ShellGlobalObject;
 import com.github.anba.es6draft.repl.V8ShellGlobalObject;
+import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -103,9 +104,10 @@ public class TraceurTest {
 
         // TODO: collect multiple failures
         List<Throwable> failures = new ArrayList<Throwable>();
+
+        World world = new World(options);
         TraceurConsole console = new TraceurConsole();
-        V8ShellGlobalObject global = newGlobal(console, testDir(), test.script, scriptCache,
-                options);
+        V8ShellGlobalObject global = newGlobal(world, console, testDir(), test.script, scriptCache);
 
         // load legacy.js file
         global.eval(legacyJS);

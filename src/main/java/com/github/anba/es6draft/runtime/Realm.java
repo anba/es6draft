@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.compiler.Compiler.Option;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -88,17 +87,13 @@ public final class Realm {
     private ExecutionContext defaultContext;
     private ExecutionContext scriptContext;
 
-    private Set<CompatibilityOption> options;
-    private EnumSet<Option> compilerOptions;
-
-    private Locale locale = Locale.getDefault();
-    private TimeZone timezone = TimeZone.getDefault();
-    private Messages messages = Messages.create(locale);
+    private final World world;
 
     // TODO: move into function source object
     private Map<String, ScriptObject> templateCallSites = new HashMap<>();
 
-    private Realm() {
+    private Realm(World world) {
+        this.world = world;
     }
 
     /**
@@ -128,6 +123,13 @@ public final class Realm {
     public Callable getThrowTypeError() {
         assert throwTypeError != null : "throwTypeError not yet initialised";
         return throwTypeError;
+    }
+
+    /**
+     * Returns the {@link World} for this realm
+     */
+    public World getWorld() {
+        return world;
     }
 
     /**
@@ -177,21 +179,21 @@ public final class Realm {
      * Returns this realm's locale
      */
     public Locale getLocale() {
-        return locale;
+        return world.getLocale();
     }
 
     /**
      * Returns this realm's timezone
      */
     public TimeZone getTimezone() {
-        return timezone;
+        return world.getTimezone();
     }
 
     /**
      * Returns the localised message for {@code key}
      */
     public String message(Messages.Key key) {
-        return messages.getString(key);
+        return world.message(key);
     }
 
     /**
@@ -205,21 +207,21 @@ public final class Realm {
      * Returns the compatibility options for this realm instance
      */
     public Set<CompatibilityOption> getOptions() {
-        return options;
+        return world.getOptions();
     }
 
     /**
      * Tests whether the requested compatibility option is enabled in this code realm
      */
     public boolean isEnabled(CompatibilityOption option) {
-        return options.contains(option);
+        return world.getOptions().contains(option);
     }
 
     /**
      * Returns the compiler options for this realm instance
      */
     public EnumSet<Option> getCompilerOptions() {
-        return compilerOptions;
+        return world.getCompilerOptions();
     }
 
     /**
@@ -243,7 +245,7 @@ public final class Realm {
      */
     @Deprecated
     public Collator getCollator() {
-        Collator collator = Collator.getInstance(locale);
+        Collator collator = Collator.getInstance(getLocale());
         // Use Normalised Form D for comparison (cf. 21.1.3.10, Note 2)
         collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
         // `"\u0001".localeCompare("\u0002") == -1` should yield true
@@ -259,34 +261,11 @@ public final class Realm {
         return symbols.getDecimalSeparator() == ',' ? ";" : ",";
     }
 
-    private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
-        @Override
-        public GlobalObject newInstance(Realm realm) {
-            return new GlobalObject(realm);
-        }
-    };
-
-    /**
-     * Creates a new {@link Realm} object with the default settings
-     */
-    public static Realm newRealm() {
-        return newRealm(DEFAULT_GLOBAL_OBJECT, CompatibilityOption.WebCompatibility());
-    }
-
     /**
      * Creates a new {@link Realm} object
      */
-    public static Realm newRealm(ObjectAllocator<? extends GlobalObject> allocator,
-            Set<CompatibilityOption> options) {
-        return newRealm(allocator, options, EnumSet.noneOf(Compiler.Option.class));
-    }
-
-    /**
-     * Creates a new {@link Realm} object
-     */
-    public static Realm newRealm(ObjectAllocator<? extends GlobalObject> allocator,
-            Set<CompatibilityOption> options, Set<Compiler.Option> compilerOptions) {
-        Realm realm = new Realm();
+    static Realm newRealm(World world, ObjectAllocator<? extends GlobalObject> allocator) {
+        Realm realm = new Realm(world);
         GlobalObject globalThis = allocator.newInstance(realm);
         ExecutionContext defaultContext = newScriptExecutionContext(null, realm);
         GlobalEnvironmentRecord envRec = new GlobalEnvironmentRecord(defaultContext, globalThis);
@@ -300,8 +279,6 @@ public final class Realm {
         realm.globalThis = globalThis;
         realm.globalEnv = globalEnv;
         realm.defaultContext = defaultContext;
-        realm.options = EnumSet.copyOf(options);
-        realm.compilerOptions = EnumSet.copyOf(compilerOptions);
 
         // intrinsics: 19, 20, 21, 22.1, 24.3
         initialiseFundamentalObjects(realm);

@@ -12,15 +12,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
-import java.util.Set;
 
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -43,24 +41,14 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     /**
      * Returns a new instance of this class
      */
-    public static SimpleShellGlobalObject newGlobal(ShellConsole console, Path baseDir,
-            Path script, ScriptCache scriptCache, Set<CompatibilityOption> options) {
-        return newGlobal(console, baseDir, script, scriptCache, options,
-                EnumSet.noneOf(Compiler.Option.class));
-    }
-
-    /**
-     * Returns a new instance of this class
-     */
-    public static SimpleShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
-            final Path script, final ScriptCache scriptCache,
-            final Set<CompatibilityOption> options, final Set<Compiler.Option> compilerOptions) {
-        Realm realm = Realm.newRealm(new ObjectAllocator<SimpleShellGlobalObject>() {
+    public static SimpleShellGlobalObject newGlobal(World world, final ShellConsole console,
+            final Path baseDir, final Path script, final ScriptCache scriptCache) {
+        Realm realm = world.newRealm(new ObjectAllocator<SimpleShellGlobalObject>() {
             @Override
             public SimpleShellGlobalObject newInstance(Realm realm) {
                 return new SimpleShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
-        }, options, compilerOptions);
+        });
         return (SimpleShellGlobalObject) realm.getGlobalThis();
     }
 

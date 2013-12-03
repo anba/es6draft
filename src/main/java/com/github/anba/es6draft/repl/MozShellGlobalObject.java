@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
@@ -28,12 +27,11 @@ import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.ast.ExpressionStatement;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -68,25 +66,15 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     /**
      * Returns a new instance of this class
      */
-    public static MozShellGlobalObject newGlobal(ShellConsole console, Path baseDir, Path script,
-            Path libdir, ScriptCache scriptCache, Set<CompatibilityOption> options) {
-        return newGlobal(console, baseDir, script, libdir, scriptCache, options,
-                EnumSet.noneOf(Compiler.Option.class));
-    }
-
-    /**
-     * Returns a new instance of this class
-     */
-    public static MozShellGlobalObject newGlobal(final ShellConsole console, final Path baseDir,
-            final Path script, final Path libdir, final ScriptCache scriptCache,
-            final Set<CompatibilityOption> options, final Set<Compiler.Option> compilerOptions) {
-        Realm realm = Realm.newRealm(new ObjectAllocator<MozShellGlobalObject>() {
+    public static MozShellGlobalObject newGlobal(World world, final ShellConsole console,
+            final Path baseDir, final Path script, final Path libdir, final ScriptCache scriptCache) {
+        Realm realm = world.newRealm(new ObjectAllocator<MozShellGlobalObject>() {
             @Override
             public MozShellGlobalObject newInstance(Realm realm) {
                 return new MozShellGlobalObject(realm, console, baseDir, script, scriptCache,
                         libdir);
             }
-        }, options, compilerOptions);
+        });
         return (MozShellGlobalObject) realm.getGlobalThis();
     }
 
@@ -367,8 +355,8 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code newGlobal()} */
     @Function(name = "newGlobal", arity = 0)
     public GlobalObject newGlobal(ExecutionContext cx) {
-        MozShellGlobalObject global = newGlobal(console, baseDir, script, libdir, scriptCache,
-                getRealm().getOptions());
+        MozShellGlobalObject global = newGlobal(getRealm().getWorld(), console, baseDir, script,
+                libdir, scriptCache);
         try {
             global.eval(compileScript(scriptCache, "mozlegacy.js"));
         } catch (ParserException | CompilationException | IOException e) {

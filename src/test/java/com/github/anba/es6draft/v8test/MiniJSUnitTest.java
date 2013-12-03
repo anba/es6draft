@@ -44,6 +44,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.ShellGlobalObject;
 import com.github.anba.es6draft.repl.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -99,9 +100,9 @@ public class MiniJSUnitTest {
         assumeTrue(test.enable);
 
         // TODO: collect multiple failures
+        World world = new World(options);
         V8TestConsole console = new V8TestConsole();
-        V8ShellGlobalObject global = newGlobal(console, testDir(), test.script, scriptCache,
-                options);
+        V8ShellGlobalObject global = newGlobal(world, console, testDir(), test.script, scriptCache);
 
         // load legacy.js file
         global.eval(legacyJS);
