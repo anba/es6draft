@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.Realm;
 
 /**
  * <h1>6 ECMAScript Data Types and Values</h1><br>
@@ -70,4 +71,10 @@ public interface ScriptObject {
 
     /** [[OwnPropertyKeys]] ( ) */
     ScriptObject ownPropertyKeys(ExecutionContext cx);
+
+    /** ThenableCoercionsGet ( realm, thenable ) */
+    ScriptObject thenableCoercionsGet(Realm realm);
+
+    /** ThenableCoercionsSet ( realm, thenable, promise ) */
+    void thenableCoercionsSet(Realm realm, ScriptObject promise);
 }

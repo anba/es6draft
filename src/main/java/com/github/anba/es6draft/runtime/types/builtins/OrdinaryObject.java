@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -41,6 +42,9 @@ import com.github.anba.es6draft.runtime.types.Type;
 public class OrdinaryObject implements ScriptObject {
     // Map<String|Symbol, Property> properties
     private LinkedHashMap<Object, Property> properties = new LinkedHashMap<>();
+
+    // thenable coercions weakmap
+    private WeakHashMap<Realm, ScriptObject> thenableCoercions;
 
     /** [[Realm]] */
     @SuppressWarnings("unused")
@@ -85,6 +89,24 @@ public class OrdinaryObject implements ScriptObject {
     protected boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)
         return __has__(propertyKey);
+    }
+
+    @Override
+    public ScriptObject thenableCoercionsGet(Realm realm) {
+        WeakHashMap<Realm, ScriptObject> coercions = thenableCoercions;
+        if (coercions == null) {
+            return null;
+        }
+        return coercions.get(realm);
+    }
+
+    @Override
+    public void thenableCoercionsSet(Realm realm, ScriptObject promise) {
+        WeakHashMap<Realm, ScriptObject> coercions = thenableCoercions;
+        if (coercions == null) {
+            thenableCoercions = coercions = new WeakHashMap<>();
+        }
+        coercions.put(realm, promise);
     }
 
     private void __put__(Object propertyKey, Property property) {
