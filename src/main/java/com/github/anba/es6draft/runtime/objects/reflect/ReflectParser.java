@@ -130,6 +130,13 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         TaggedTemplateExpression(),
         TemplateLiteral(),
 
+        // Modules
+        ExportDeclaration(),
+        ExportSpecifier(),
+        ExportBatchSpecifier(),
+        ImportDeclaration(),
+        ImportSpecifier(),
+
         ;
         /* @formatter:on */
 
@@ -218,16 +225,23 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     public static Object parse(ExecutionContext cx, String source, boolean location,
             String sourceInfo, int line, EnumMap<Type, Callable> builder) {
+        Realm realm = cx.getRealm();
+        EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
         ReflectParser reflect = new ReflectParser(cx, location, sourceInfo, line, builder);
+        Node parsedNode = null;
         try {
-            Realm realm = cx.getRealm();
-            EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
             Parser parser = new Parser("<parse>", line, options);
-            com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
-            return parsedScript.accept(reflect, null);
-        } catch (ParserException e) {
-            throw e.toScriptException(cx);
+            parsedNode = parser.parseScript(source);
+        } catch (ParserException ignore) {
+            // TODO: Reflect.parse() currently accepts scripts and modules...
+            try {
+                Parser parser = new Parser("<parse>", line, options);
+                parsedNode = parser.parseModule(source);
+            } catch (ParserException e) {
+                throw e.toScriptException(cx);
+            }
         }
+        return parsedNode.accept(reflect, null);
     }
 
     private ScriptObject createEmptyNode() {
@@ -279,6 +293,16 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         return object;
     }
 
+    private ScriptObject createNode(Type type) {
+        ScriptObject object = createEmptyNode();
+        addNodeInfo(object, type);
+        return object;
+    }
+
+    private ScriptObject createModuleItem(ModuleItem node, Type type) {
+        return createNode(node, type);
+    }
+
     private ScriptObject createStatement(Statement node, Type type) {
         return createNode(node, type);
     }
@@ -328,6 +352,15 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         return literal;
     }
 
+    private Object createLiteral(String value) {
+        if (hasBuilder(Type.Literal)) {
+            return call(Type.Literal, null, value);
+        }
+        ScriptObject literal = createNode(Type.Literal);
+        addProperty(literal, "value", value);
+        return literal;
+    }
+
     private Object createIdentifierOrNull(String name) {
         return name != null ? createIdentifier(name) : NULL;
     }
@@ -336,9 +369,8 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
         if (hasBuilder(Type.Identifier)) {
             return call(Type.Identifier, null, name);
         }
-        ScriptObject identifier = createEmptyNode();
+        ScriptObject identifier = createNode(Type.Identifier);
         addProperty(identifier, "name", name);
-        addNodeInfo(identifier, Type.Identifier);
         return identifier;
     }
 
@@ -835,7 +867,7 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     @Override
     public Object visit(ClassExpression node, Void value) {
         Object id = acceptOrNull(node.getName(), value);
-        Object superClass = node.getHeritage().accept(this, value);
+        Object superClass = acceptOrNull(node.getHeritage(), value);
         Object body = createClassBody(node, value);
         ScriptObject classDef = createClass(node, Type.ClassExpression);
         addProperty(classDef, "id", id);
@@ -983,17 +1015,58 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ExportDeclaration node, Void value) {
-        throw new NotImplementedExpception(node);
+        Object declaration = NULL;
+        Object expression = NULL;
+        Object specifiers = NULL;
+        Object source = NULL;
+        switch (node.getType()) {
+        case All:
+            specifiers = createListFromValues(Collections
+                    .singletonList(createNode(Type.ExportBatchSpecifier)));
+            source = createLiteral(node.getModuleSpecifier());
+            break;
+        case External:
+            specifiers = node.getExportsClause().accept(this, value);
+            source = createLiteral(node.getModuleSpecifier());
+            break;
+        case Local:
+            specifiers = node.getExportsClause().accept(this, value);
+            break;
+        case Default:
+            expression = node.getExpression().accept(this, value);
+            break;
+        case Declaration:
+            declaration = node.getDeclaration().accept(this, value);
+            break;
+        case Variable:
+            declaration = node.getVariableStatement().accept(this, value);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
+
+        ScriptObject exportDecl = createModuleItem(node, Type.ExportDeclaration);
+        addProperty(exportDecl, "declaration", declaration);
+        addProperty(exportDecl, "expression", expression);
+        addProperty(exportDecl, "specifiers", specifiers);
+        addProperty(exportDecl, "source", source);
+        return exportDecl;
     }
 
     @Override
     public Object visit(ExportSpecifier node, Void value) {
-        throw new NotImplementedExpception(node);
+        Object id = createIdentifier(node.getLocalName() != null ? node.getLocalName() : node
+                .getImportName());
+        Object name = createIdentifier(node.getExportName());
+        ScriptObject exportSpec = createNode(node, Type.ExportSpecifier);
+        addProperty(exportSpec, "id", id);
+        addProperty(exportSpec, "name", name);
+        return exportSpec;
     }
 
     @Override
-    public Object visit(ExportSpecifierSet node, Void value) {
-        throw new NotImplementedExpception(node);
+    public Object visit(ExportsClause node, Void value) {
+        return createList(node.getExports(), value);
     }
 
     @Override
@@ -1249,17 +1322,53 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
 
     @Override
     public Object visit(ImportDeclaration node, Void value) {
-        throw new NotImplementedExpception(node);
+        Object specifiers = NULL;
+        Object source = NULL;
+        switch (node.getType()) {
+        case ModuleImport:
+            node.getModuleImport().accept(this, value);
+            break;
+        case ImportFrom:
+            specifiers = node.getImportClause().accept(this, value);
+            source = createLiteral(node.getModuleSpecifier());
+            break;
+        case ImportModule:
+            specifiers = createList(Collections.<Node> emptyList(), value);
+            source = createLiteral(node.getModuleSpecifier());
+            break;
+        default:
+            throw new IllegalStateException();
+        }
+        ScriptObject importDecl = createModuleItem(node, Type.ImportDeclaration);
+        addProperty(importDecl, "specifiers", specifiers);
+        addProperty(importDecl, "source", source);
+        return importDecl;
     }
 
     @Override
     public Object visit(ImportSpecifier node, Void value) {
-        throw new NotImplementedExpception(node);
+        Object id = createIdentifier(node.getImportName());
+        Object name = node.getLocalName().accept(this, value);
+        ScriptObject importSpec = createNode(node, Type.ImportSpecifier);
+        addProperty(importSpec, "id", id);
+        addProperty(importSpec, "name", name);
+        return importSpec;
     }
 
     @Override
-    public Object visit(ImportSpecifierSet node, Void value) {
-        throw new NotImplementedExpception(node);
+    public Object visit(ImportClause node, Void value) {
+        if (node.getDefaultEntry() != null && !node.getNamedImports().isEmpty()) {
+            throw new NotImplementedExpception(node);
+        }
+        if (node.getDefaultEntry() != null) {
+            Object id = createIdentifier("default");
+            Object name = node.getDefaultEntry().accept(this, value);
+            ScriptObject importSpec = createNode(node, Type.ImportSpecifier);
+            addProperty(importSpec, "id", id);
+            addProperty(importSpec, "name", name);
+            return createListFromValues(Collections.singletonList(importSpec));
+        }
+        return createList(node.getNamedImports(), value);
     }
 
     @Override
@@ -1402,7 +1511,18 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     }
 
     @Override
-    public Object visit(ModuleDeclaration node, Void value) {
+    public Object visit(Module node, Void value) {
+        ScriptObject body = createList(node.getStatements(), value);
+        if (hasBuilder(Type.Program)) {
+            return call(Type.Program, node, body);
+        }
+        ScriptObject program = createNode(node, Type.Program);
+        addProperty(program, "body", body);
+        return program;
+    }
+
+    @Override
+    public Object visit(ModuleImport node, Void value) {
         throw new NotImplementedExpception(node);
     }
 
