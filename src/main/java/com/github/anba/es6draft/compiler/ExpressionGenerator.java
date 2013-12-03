@@ -75,9 +75,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Type.getMethodType(Types.ScriptObject));
 
         // class: ExecutionContext
-        static final MethodDesc ExecutionContext_getRealm = MethodDesc.create(MethodType.Virtual,
-                Types.ExecutionContext, "getRealm", Type.getMethodType(Types.Realm));
-
         static final MethodDesc ExecutionContext_resolveThisBinding = MethodDesc.create(
                 MethodType.Virtual, Types.ExecutionContext, "resolveThisBinding",
                 Type.getMethodType(Types.Object));
@@ -104,10 +101,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         static final MethodDesc OrdinaryObject_ObjectCreate = MethodDesc.create(MethodType.Static,
                 Types.OrdinaryObject, "ObjectCreate",
                 Type.getMethodType(Types.OrdinaryObject, Types.ExecutionContext, Types.Intrinsics));
-
-        // class: Realm
-        static final MethodDesc Realm_getBuiltinEval = MethodDesc.create(MethodType.Virtual,
-                Types.Realm, "getBuiltinEval", Type.getMethodType(Types.Callable));
 
         // class: Reference
         static final MethodDesc Reference_getBase = MethodDesc.create(MethodType.Virtual,
@@ -234,6 +227,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 MethodType.Static, Types.ScriptRuntime, "getPropertyValue", Type.getMethodType(
                         Types.Object, Types.Object, Types.String, Types.ExecutionContext,
                         Type.BOOLEAN_TYPE));
+
+        static final MethodDesc ScriptRuntime_IsBuiltinEval = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "IsBuiltinEval",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Callable, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_MakeSuperReference = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "MakeSuperReference", Type.getMethodType(
@@ -575,9 +572,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         // stack: [args, thisValue, func(Callable)] -> [args, thisValue, func(Callable)]
         mv.dup();
         mv.loadExecutionContext();
-        mv.invoke(Methods.ExecutionContext_getRealm);
-        mv.invoke(Methods.Realm_getBuiltinEval);
-        mv.ifacmpne(notEval);
+        mv.invoke(Methods.ScriptRuntime_IsBuiltinEval);
+        mv.ifeq(notEval);
 
         // stack: [args, thisValue, func(Callable)] -> [args]
         mv.pop2();

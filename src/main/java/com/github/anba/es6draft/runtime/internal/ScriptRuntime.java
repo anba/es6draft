@@ -511,6 +511,15 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 12.2.3 Function Calls
+     * <p>
+     * Runtime Semantics: EvaluateCall Abstract Operation
+     */
+    public static boolean IsBuiltinEval(Callable f, ExecutionContext cx) {
+        return (f == cx.getRealm().getBuiltinEval());
+    }
+
+    /**
      * 12.2.4 The super Keyword
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
