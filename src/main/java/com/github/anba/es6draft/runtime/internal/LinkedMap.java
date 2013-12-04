@@ -39,6 +39,10 @@ public class LinkedMap<KEY, VALUE> {
     private final Map<KEY, Entry<KEY, VALUE>> map;
     private final Entry<KEY, VALUE> head;
 
+    public LinkedMap() {
+        this(HashMapBuilder);
+    }
+
     public LinkedMap(MapBuilder builder) {
         map = builder.create();
         head = new Entry<KEY, VALUE>(null, null);
@@ -76,6 +80,21 @@ public class LinkedMap<KEY, VALUE> {
         }
         head.next = head;
         head.prev = head;
+    }
+
+    // java.util.Map compatibility
+    public boolean remove(KEY key) {
+        return delete(key);
+    }
+
+    // java.util.Map compatibility
+    public boolean containsKey(KEY key) {
+        return has(key);
+    }
+
+    // java.util.Map compatibility
+    public void put(KEY key, VALUE value) {
+        set(key, value);
     }
 
     public boolean delete(KEY key) {
