@@ -1166,11 +1166,11 @@ public class Parser {
      * </pre>
      */
     private ImportDeclaration importDeclaration() {
-        long beginPosition = ts.beginPosition();
+        long begin = ts.beginPosition();
         if (token() != Token.IMPORT) {
             ModuleImport moduleImport = moduleImport();
             // TODO: add lex declared
-            return new ImportDeclaration(beginPosition, ts.endPosition(), moduleImport);
+            return new ImportDeclaration(begin, ts.endPosition(), moduleImport);
         } else {
             consume(Token.IMPORT);
             if (token() != Token.STRING) {
@@ -1184,15 +1184,14 @@ public class Parser {
                     // TODO: add lex declared
                 }
 
-                return new ImportDeclaration(beginPosition, ts.endPosition(), importClause,
-                        moduleSpecifier);
+                return new ImportDeclaration(begin, ts.endPosition(), importClause, moduleSpecifier);
             } else {
                 String moduleSpecifier = moduleSpecifier();
                 semicolon();
 
                 addModuleRequest(moduleSpecifier);
 
-                return new ImportDeclaration(beginPosition, ts.endPosition(), moduleSpecifier);
+                return new ImportDeclaration(begin, ts.endPosition(), moduleSpecifier);
             }
         }
     }
@@ -1206,7 +1205,7 @@ public class Parser {
      * </pre>
      */
     private ModuleImport moduleImport() {
-        long beginPosition = ts.beginPosition();
+        long begin = ts.beginPosition();
         consume("module");
         if (!noLineTerminator()) {
             reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
@@ -1218,7 +1217,7 @@ public class Parser {
         addModuleRequest(moduleSpecifier);
         addLexDeclaredName(importedBinding);
 
-        return new ModuleImport(beginPosition, ts.endPosition(), importedBinding, moduleSpecifier);
+        return new ModuleImport(begin, ts.endPosition(), importedBinding, moduleSpecifier);
     }
 
     /**
@@ -1245,7 +1244,7 @@ public class Parser {
      * </pre>
      */
     private ImportClause importClause() {
-        long beginPosition = ts.beginPosition();
+        long begin = ts.beginPosition();
         BindingIdentifier defaultEntry = null;
         List<ImportSpecifier> namedImports = emptyList();
         if (token() != Token.LC) {
@@ -1259,7 +1258,7 @@ public class Parser {
         } else {
             namedImports = namedImports();
         }
-        return new ImportClause(beginPosition, ts.endPosition(), defaultEntry, namedImports);
+        return new ImportClause(begin, ts.endPosition(), defaultEntry, namedImports);
     }
 
     /**
@@ -1362,7 +1361,7 @@ public class Parser {
      * </pre>
      */
     private ExportDeclaration exportDeclaration() {
-        long beginPosition = ts.beginPosition();
+        long begin = ts.beginPosition();
         consume(Token.EXPORT);
         switch (token()) {
         case MUL: {
@@ -1373,7 +1372,7 @@ public class Parser {
 
             addModuleRequest(moduleSpecifier);
 
-            return new ExportDeclaration(beginPosition, ts.endPosition(), moduleSpecifier);
+            return new ExportDeclaration(begin, ts.endPosition(), moduleSpecifier);
         }
 
         case LC: {
@@ -1387,13 +1386,13 @@ public class Parser {
 
                 addModuleRequest(moduleSpecifier);
 
-                return new ExportDeclaration(beginPosition, ts.endPosition(), exportsClause,
+                return new ExportDeclaration(begin, ts.endPosition(), exportsClause,
                         moduleSpecifier);
             }
             ts.reset(position, lineinfo);
             exportsClause = exportsClause(false);
             semicolon();
-            return new ExportDeclaration(beginPosition, ts.endPosition(), exportsClause);
+            return new ExportDeclaration(begin, ts.endPosition(), exportsClause);
         }
 
         case VAR: {
@@ -1402,7 +1401,7 @@ public class Parser {
 
             addExportBindings(BoundNames(variableStatement));
 
-            return new ExportDeclaration(beginPosition, ts.endPosition(), variableStatement);
+            return new ExportDeclaration(begin, ts.endPosition(), variableStatement);
         }
 
         case FUNCTION:
@@ -1414,7 +1413,7 @@ public class Parser {
 
             addExportBindings(BoundNames(declaration));
 
-            return new ExportDeclaration(beginPosition, ts.endPosition(), declaration);
+            return new ExportDeclaration(begin, ts.endPosition(), declaration);
         }
 
         case DEFAULT:
@@ -1431,7 +1430,7 @@ public class Parser {
 
             addExportBinding("default");
 
-            return new ExportDeclaration(beginPosition, ts.endPosition(), expression);
+            return new ExportDeclaration(begin, ts.endPosition(), expression);
         }
         }
     }
@@ -1450,7 +1449,7 @@ public class Parser {
      * </pre>
      */
     private ExportsClause exportsClause(boolean noReference) {
-        long beginPosition = ts.beginPosition();
+        long begin = ts.beginPosition();
         List<ExportSpecifier> exports = newList();
         consume(Token.LC);
         while (token() != Token.RC) {
@@ -1462,7 +1461,7 @@ public class Parser {
             }
         }
         consume(Token.RC);
-        return new ExportsClause(beginPosition, ts.endPosition(), exports);
+        return new ExportsClause(begin, ts.endPosition(), exports);
     }
 
     /**
@@ -1477,7 +1476,7 @@ public class Parser {
      * </pre>
      */
     private ExportSpecifier exportSpecifier(boolean noReference) {
-        long beginPosition = ts.beginPosition();
+        long begin = ts.beginPosition();
         String importName, localName, exportName;
         if (noReference) {
             String sourceName = identifierName();
@@ -1502,8 +1501,7 @@ public class Parser {
 
         addExportBinding(exportName);
 
-        return new ExportSpecifier(beginPosition, ts.endPosition(), importName, localName,
-                exportName);
+        return new ExportSpecifier(begin, ts.endPosition(), importName, localName, exportName);
     }
 
     /**
