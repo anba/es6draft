@@ -85,6 +85,7 @@ public class Parser {
         boolean superReference = false;
         boolean yieldAllowed = false;
         boolean returnAllowed = false;
+        boolean noDivAfterYield = false;
 
         StrictMode strictMode = StrictMode.Unknown;
         boolean explicitStrict = false;
@@ -1925,7 +1926,10 @@ public class Parser {
             if (token() == Token.LP) {
                 consume(Token.LP);
                 int start = ts.position() - 1;
+                // handle `YieldExpression = yield RegExp` in ArrowParameters
+                context.noDivAfterYield = context.parent.kind == ContextKind.Generator;
                 parameters = strictFormalParameters(Token.RP);
+                context.noDivAfterYield = false;
                 consume(Token.RP);
 
                 source.append(ts.range(start, ts.position()));
@@ -4628,6 +4632,11 @@ public class Parser {
             if (isEnabled(Option.LetExpression)) {
                 return letExpression();
             }
+        case YIELD:
+            if (context.noDivAfterYield && LOOKAHEAD(Token.DIV)) {
+                consume(Token.YIELD);
+                reportTokenMismatch(Token.DIV, Token.REGEXP);
+            }
         default:
             String ident = identifierReference();
             return new Identifier(begin, ts.endPosition(), ident);
@@ -5942,12 +5951,11 @@ public class Parser {
         } else if (tok == Token.ARROW) {
             // discard parsed object literals
             if (oldCount < context.countLiterals()) {
-                ArrayDeque<ObjectLiteral> literals = context.objectLiterals;
-                for (int i = oldCount, newCount = literals.size(); i < newCount; ++i) {
-                    literals.pop();
-                }
+                // TODO: still need to verify this
+                // perform Static Semantics early error detection since the parameter production is
+                // first parsed as an Expression
+                objectLiteral_StaticSemantics(oldCount);
             }
-            // FIXME: reset() may violate the 'reinterpret lexical token sequence' term
             ts.reset(position, lineinfo);
             return arrowFunction(allowIn);
         } else if (tok == Token.ASSIGN) {
