@@ -37,19 +37,21 @@ import com.github.anba.es6draft.runtime.types.Type;
  * </ul>
  */
 public class ExoticProxy implements ScriptObject {
-    protected final Realm realm;
     /** [[ProxyTarget]] */
-    protected ScriptObject proxyTarget;
+    private ScriptObject proxyTarget;
     /** [[ProxyHandler]] */
     private ScriptObject proxyHandler;
 
     // thenable coercions weakmap
     private WeakHashMap<Realm, ScriptObject> thenableCoercions;
 
-    public ExoticProxy(Realm realm, ScriptObject target, ScriptObject handler) {
-        this.realm = realm;
+    public ExoticProxy(ScriptObject target, ScriptObject handler) {
         this.proxyTarget = target;
         this.proxyHandler = handler;
+    }
+
+    protected final ScriptObject getProxyTarget() {
+        return proxyTarget;
     }
 
     protected final ScriptObject getProxyHandler(ExecutionContext cx) {
@@ -89,8 +91,8 @@ public class ExoticProxy implements ScriptObject {
     }
 
     private static class CallabeExoticProxy extends ExoticProxy implements Callable {
-        public CallabeExoticProxy(Realm realm, ScriptObject target, ScriptObject handler) {
-            super(realm, target, handler);
+        public CallabeExoticProxy(ScriptObject target, ScriptObject handler) {
+            super(target, handler);
         }
 
         /**
@@ -101,7 +103,7 @@ public class ExoticProxy implements ScriptObject {
             /* steps 1-2 */
             ScriptObject handler = getProxyHandler(callerContext);
             /* step 3 */
-            ScriptObject target = proxyTarget;
+            ScriptObject target = getProxyTarget();
             /* steps 4-5 */
             Callable trap = GetMethod(callerContext, handler, "apply");
             /* step 6 */
@@ -124,13 +126,13 @@ public class ExoticProxy implements ScriptObject {
 
         @Override
         public String toSource() {
-            return ((Callable) proxyTarget).toSource();
+            return ((Callable) getProxyTarget()).toSource();
         }
     }
 
     private static class ConstructorExoticProxy extends CallabeExoticProxy implements Constructor {
-        public ConstructorExoticProxy(Realm realm, ScriptObject target, ScriptObject handler) {
-            super(realm, target, handler);
+        public ConstructorExoticProxy(ScriptObject target, ScriptObject handler) {
+            super(target, handler);
         }
 
         @Override
@@ -147,7 +149,7 @@ public class ExoticProxy implements ScriptObject {
             /* steps 1-2 */
             ScriptObject handler = getProxyHandler(callerContext);
             /* step 3 */
-            ScriptObject target = proxyTarget;
+            ScriptObject target = getProxyTarget();
             /* steps 4-5 */
             Callable trap = GetMethod(callerContext, handler, "construct");
             /* step 6 */
@@ -193,12 +195,12 @@ public class ExoticProxy implements ScriptObject {
         ExoticProxy proxy;
         if (IsCallable(proxyTarget)) {
             if (IsConstructor(proxyTarget)) {
-                proxy = new ConstructorExoticProxy(cx.getRealm(), proxyTarget, proxyHandler);
+                proxy = new ConstructorExoticProxy(proxyTarget, proxyHandler);
             } else {
-                proxy = new CallabeExoticProxy(cx.getRealm(), proxyTarget, proxyHandler);
+                proxy = new CallabeExoticProxy(proxyTarget, proxyHandler);
             }
         } else {
-            proxy = new ExoticProxy(cx.getRealm(), proxyTarget, proxyHandler);
+            proxy = new ExoticProxy(proxyTarget, proxyHandler);
         }
         /* step 8 */
         return proxy;
@@ -285,7 +287,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 1-2 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 3 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 4-5 */
         Callable trap = GetMethod(cx, handler, "getPrototypeOf");
         /* step 6 */
@@ -324,7 +326,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 2-3 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 4 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "setPrototypeOf");
         /* step 7 */
@@ -359,7 +361,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 1-2 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 3 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 4-5 */
         Callable trap = GetMethod(cx, handler, "isExtensible");
         /* step 6 */
@@ -388,7 +390,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 1-2 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 3 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 4-5 */
         Callable trap = GetMethod(cx, handler, "preventExtensions");
         /* step 6 */
@@ -433,7 +435,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 2-3 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 4 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "getOwnPropertyDescriptor");
         /* step 7 */
@@ -516,7 +518,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 2-3 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 4 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "defineProperty");
         /* step 7 */
@@ -587,7 +589,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 2-3 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 4 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "has");
         /* step 7 */
@@ -639,7 +641,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 2-3 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 4 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "get");
         /* step 7 */
@@ -693,7 +695,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 2-3 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 4 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "set");
         /* step 7 */
@@ -752,7 +754,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 2-3 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 4 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 5-6 */
         Callable trap = GetMethod(cx, handler, "deleteProperty");
         /* step 7 */
@@ -789,7 +791,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 1-2 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 3 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 4-5 */
         Callable trap = GetMethod(cx, handler, "enumerate");
         /* step 6 */
@@ -814,7 +816,7 @@ public class ExoticProxy implements ScriptObject {
         /* steps 1-2 */
         ScriptObject handler = getProxyHandler(cx);
         /* step 3 */
-        ScriptObject target = proxyTarget;
+        ScriptObject target = getProxyTarget();
         /* steps 4-5 */
         Callable trap = GetMethod(cx, handler, "ownKeys");
         /* step 6 */
