@@ -88,6 +88,14 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         console.print(message);
     }
 
+    /** shell-function: {@code dump(object)} */
+    @Function(name = "dump", arity = 1)
+    public void dump(ScriptObject object) {
+        String id = String.format("%s@%d", object.getClass().getSimpleName(),
+                System.identityHashCode(object));
+        console.print(id);
+    }
+
     /** shell-function: {@code quit()} */
     @Function(name = "quit", arity = 0)
     public void quit() {
