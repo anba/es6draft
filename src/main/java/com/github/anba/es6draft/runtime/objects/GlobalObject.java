@@ -431,6 +431,18 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Value(name = "Promise")
         public static final Intrinsics Promise = Intrinsics.Promise;
+
+        /**
+         * Loader ( . . . )
+         */
+        @Value(name = "Loader")
+        public static final Intrinsics Loader = Intrinsics.Loader;
+
+        /**
+         * Realm ( . . . )
+         */
+        @Value(name = "Realm")
+        public static final Intrinsics Realm = Intrinsics.Realm;
     }
 
     /**
@@ -462,6 +474,12 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          */
         @Value(name = "Reflect")
         public static final Intrinsics Reflect = Intrinsics.Reflect;
+
+        /**
+         * Module Factory Function
+         */
+        @Value(name = "Module")
+        public static final Intrinsics Module = Intrinsics.Module;
 
         // Internationalization API
 
