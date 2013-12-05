@@ -39,6 +39,11 @@ public final class PromiseAbstractOperations {
     private PromiseAbstractOperations() {
     }
 
+    private static ScriptException newTypeError(ExecutionContext cx, String message) {
+        // TODO: error message
+        return Errors.newError(cx, Intrinsics.TypeError, message);
+    }
+
     /**
      * RejectIfAbrupt
      */
@@ -361,9 +366,10 @@ public final class PromiseAbstractOperations {
             /* step 5 */
             if (SameValue(x, promise)) {
                 // TODO: error message
-                ScriptException selfResolutionError = Errors.newError(calleeContext,
-                        Intrinsics.TypeError, "self-resolution-error");
-                return rejectionHandler.call(calleeContext, UNDEFINED, selfResolutionError);
+                ScriptException selfResolutionError = newTypeError(calleeContext,
+                        "self-resolution-error");
+                return rejectionHandler.call(calleeContext, UNDEFINED,
+                        selfResolutionError.getValue());
             }
             /* step 6 */
             Constructor c = promise.getConstructor();
@@ -515,9 +521,8 @@ public final class PromiseAbstractOperations {
             /* step 7 */
             if (SameValue(handlerResult, deferred.getPromise())) {
                 // TODO: error message
-                ScriptException selfResolutionError = Errors.newError(cx, Intrinsics.TypeError,
-                        "self-resolution-error");
-                deferred.getReject().call(cx, UNDEFINED, selfResolutionError);
+                ScriptException selfResolutionError = newTypeError(cx, "self-resolution-error");
+                deferred.getReject().call(cx, UNDEFINED, selfResolutionError.getValue());
                 return;
             }
             /* steps 8-9 */
