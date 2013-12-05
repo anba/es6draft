@@ -24,6 +24,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtensi
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -49,13 +50,19 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
     public void initialise(ExecutionContext cx) {
         // implementation defined behaviour
         setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
+        defineBuiltinProperties(cx, this);
+    }
 
-        createProperties(this, cx, ValueProperties.class);
-        createProperties(this, cx, FunctionProperties.class);
-        createProperties(this, cx, URIHandlingFunctions.class);
-        createProperties(this, cx, ConstructorProperties.class);
-        createProperties(this, cx, OtherProperties.class);
-        createProperties(this, cx, AdditionalProperties.class);
+    /**
+     * Initialise {@code object} with the default properties of the Global Object
+     */
+    public static void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
+        createProperties(object, cx, ValueProperties.class);
+        createProperties(object, cx, FunctionProperties.class);
+        createProperties(object, cx, URIHandlingFunctions.class);
+        createProperties(object, cx, ConstructorProperties.class);
+        createProperties(object, cx, OtherProperties.class);
+        createProperties(object, cx, AdditionalProperties.class);
     }
 
     /**
