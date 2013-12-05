@@ -103,6 +103,10 @@ public enum Intrinsics {/* @formatter:off */
     PromisePrototype,
 
     // Loader, Module, Realm Objects
+    Loader,
+    LoaderPrototype,
+    LoaderIteratorPrototype,
+    Module,
     Realm,
     RealmPrototype,
 
