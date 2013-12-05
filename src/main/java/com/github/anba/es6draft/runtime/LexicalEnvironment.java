@@ -132,4 +132,16 @@ public final class LexicalEnvironment {
         /* step 9 */
         return env;
     }
+
+    /**
+     * 8.1.2.? NewModuleEnvironment (E)
+     */
+    public static LexicalEnvironment newModuleEnvironment(LexicalEnvironment e) {
+        /* step 2 */
+        EnvironmentRecord envRec = new DeclarativeEnvironmentRecord(e.cx);
+        /* steps 1, 3-4 */
+        LexicalEnvironment env = new LexicalEnvironment(e, envRec);
+        /* step 5 */
+        return env;
+    }
 }

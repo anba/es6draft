@@ -115,6 +115,17 @@ public final class ExecutionContext {
     }
 
     /**
+     * Runtime Semantics: Module Evaluation
+     */
+    public static ExecutionContext newModuleExecutionContext(Realm realm, LexicalEnvironment env) {
+        ExecutionContext progCxt = new ExecutionContext();
+        progCxt.realm = realm;
+        progCxt.varEnv = env;
+        progCxt.lexEnv = env;
+        return progCxt;
+    }
+
+    /**
      * <div>
      * <ul>
      * <li>18 The Global Object
