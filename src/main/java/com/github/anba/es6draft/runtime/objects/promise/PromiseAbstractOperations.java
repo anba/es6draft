@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.promise;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Microtask;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -74,6 +76,102 @@ public final class PromiseAbstractOperations {
      */
     public static void ThenableCoercionsSet(Realm realm, ScriptObject thenable, ScriptObject promise) {
         thenable.thenableCoercionsSet(realm, promise);
+    }
+
+    /**
+     * <h2>Modules</h2>
+     * <p>
+     * PromiseCreate ( f )
+     */
+    public static ScriptObject PromiseCreate(ExecutionContext cx, Callable f) {
+        // TODO: make safe
+        ScriptObject p = OrdinaryConstruct(cx,
+                (PromiseConstructor) cx.getIntrinsic(Intrinsics.Promise), new Object[] { f });
+        return p;
+    }
+
+    /**
+     * <h2>Modules</h2>
+     * <p>
+     * PromiseThen ( promise, onFulfilled )
+     */
+    public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
+            Callable onFulfilled) {
+        // TODO: make safe
+        Object p = PromisePrototype.Properties.then(cx, promise, onFulfilled, UNDEFINED);
+        assert p instanceof ScriptObject;
+        return (ScriptObject) p;
+    }
+
+    /**
+     * <h2>Modules</h2>
+     * <p>
+     * PromiseThen ( promise, onFulfilled, onRejected )
+     */
+    public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
+            Callable onFulfilled, Callable onRejected) {
+        // TODO: make safe
+        Object p = PromisePrototype.Properties.then(cx, promise, onFulfilled, onRejected);
+        assert p instanceof ScriptObject;
+        return (ScriptObject) p;
+    }
+
+    /**
+     * <h2>Modules</h2>
+     * <p>
+     * PromiseCatch ( promise, onRejected )
+     */
+    public static ScriptObject PromiseCatch(ExecutionContext cx, ScriptObject promise,
+            Callable onRejected) {
+        // TODO: make safe
+        Object p = PromisePrototype.Properties._catch(cx, promise, onRejected);
+        assert p instanceof ScriptObject;
+        return (ScriptObject) p;
+    }
+
+    /**
+     * <h2>Modules</h2>
+     * <p>
+     * PromiseResolve ( x )
+     */
+    public static ScriptObject PromiseResolve(ExecutionContext cx, Object x) {
+        // TODO: make safe
+        ScriptObject promiseConstructor = cx.getIntrinsic(Intrinsics.Promise);
+        Object p = PromiseConstructor.Properties.resolve(cx, promiseConstructor, x);
+        assert p instanceof ScriptObject;
+        return (ScriptObject) p;
+    }
+
+    /**
+     * <h2>Modules</h2>
+     * <p>
+     * PromiseAll ( x )
+     */
+    public static ScriptObject PromiseAll(ExecutionContext cx, List<ScriptObject> list) {
+        // TODO: make safe
+        ScriptObject promiseConstructor = cx.getIntrinsic(Intrinsics.Promise);
+        ScriptObject iterator = CreateListIterator(cx, list);
+        // Promote Iterator to Iterable
+        CreateDataProperty(cx, iterator, BuiltinSymbol.iterator.get(),
+                new ConstantFunction(cx.getRealm(), iterator));
+        Object p = PromiseConstructor.Properties.all(cx, promiseConstructor, iterator);
+        assert p instanceof ScriptObject;
+        return (ScriptObject) p;
+    }
+
+    private static class ConstantFunction extends BuiltinFunction {
+        /** [[ConstantValue]] */
+        private final Object constantValue;
+
+        public ConstantFunction(Realm realm, Object constantValue) {
+            super(realm, ANONYMOUS, 0);
+            this.constantValue = constantValue;
+        }
+
+        @Override
+        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            return constantValue;
+        }
     }
 
     /**
