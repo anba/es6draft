@@ -231,6 +231,16 @@ public class Parser {
             return node;
         }
 
+        @Override
+        public Set<String> getModuleRequests() {
+            return moduleRequests;
+        }
+
+        @Override
+        public Set<String> getExportBindings() {
+            return exportBindings;
+        }
+
         void addModuleRequest(String moduleSpecifier) {
             moduleRequests.add(moduleSpecifier);
         }

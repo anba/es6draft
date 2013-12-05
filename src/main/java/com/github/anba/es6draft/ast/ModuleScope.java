@@ -6,10 +6,16 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.Set;
+
 /**
  * Scope class for {@link Module} objects
  */
 public interface ModuleScope extends TopLevelScope {
     @Override
     Module getNode();
+
+    Set<String> getModuleRequests();
+
+    Set<String> getExportBindings();
 }
