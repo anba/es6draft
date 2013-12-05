@@ -38,6 +38,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
@@ -333,7 +334,7 @@ public class Repl {
     }
 
     private void drainTaskQueue(Realm realm) {
-        World world = realm.getWorld();
+        World<?> world = realm.getWorld();
         while (world.hasTasks()) {
             try {
                 world.executeTasks(realm.defaultContext());
@@ -368,23 +369,27 @@ public class Repl {
             compilerOptions.add(Compiler.Option.Debug);
         }
         ScriptCache scriptCache = new ScriptCache(Parser.Option.from(compatibilityOptions));
-        World world = new World(compatibilityOptions, compilerOptions);
 
         List<String> initScripts;
-        ShellGlobalObject global;
+        ObjectAllocator<? extends ShellGlobalObject> allocator;
         if (options.contains(Option.MozillaShell)) {
             Path libDir = Paths.get("");
             initScripts = asList("mozlegacy.js");
-            global = MozShellGlobalObject.newGlobal(world, console, baseDir, script, libDir,
-                    scriptCache);
+            allocator = MozShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
+                    libDir, scriptCache);
         } else if (options.contains(Option.V8Shell)) {
             initScripts = asList("v8legacy.js");
-            global = V8ShellGlobalObject.newGlobal(world, console, baseDir, script, scriptCache);
+            allocator = V8ShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
+                    scriptCache);
         } else {
             initScripts = emptyList();
-            global = SimpleShellGlobalObject
-                    .newGlobal(world, console, baseDir, script, scriptCache);
+            allocator = SimpleShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
+                    scriptCache);
         }
+
+        World<? extends ShellGlobalObject> world = new World<>(allocator, compatibilityOptions,
+                compilerOptions);
+        ShellGlobalObject global = world.newGlobal();
 
         for (String name : initScripts) {
             try {

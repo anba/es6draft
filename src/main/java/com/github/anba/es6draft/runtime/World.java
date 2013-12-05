@@ -19,11 +19,13 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Microtask;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
+import com.github.anba.es6draft.runtime.objects.modules.RealmObject;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1>
  */
-public final class World {
+public final class World<GLOBAL extends GlobalObject> {
+    private final ObjectAllocator<GLOBAL> allocator;
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Option> compilerOptions;
 
@@ -34,24 +36,41 @@ public final class World {
     private TimeZone timezone = TimeZone.getDefault();
     private Messages messages = Messages.create(locale);
 
+    private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
+        @Override
+        public GlobalObject newInstance(Realm realm) {
+            return new GlobalObject(realm);
+        }
+    };
+
+    /**
+     * Returns an {@link ObjectAllocator} which creates standard {@link GlobalObject} instances
+     */
+    public static ObjectAllocator<GlobalObject> getDefaultGlobalObjectAllocator() {
+        return DEFAULT_GLOBAL_OBJECT;
+    }
+
     /**
      * Creates a new {@link World} object with the default settings
      */
-    public World() {
-        this(CompatibilityOption.WebCompatibility(), EnumSet.noneOf(Compiler.Option.class));
+    public World(ObjectAllocator<GLOBAL> allocator) {
+        this(allocator, CompatibilityOption.WebCompatibility(), EnumSet
+                .noneOf(Compiler.Option.class));
     }
 
     /**
      * Creates a new {@link World} object
      */
-    public World(Set<CompatibilityOption> options) {
-        this(options, EnumSet.noneOf(Compiler.Option.class));
+    public World(ObjectAllocator<GLOBAL> allocator, Set<CompatibilityOption> options) {
+        this(allocator, options, EnumSet.noneOf(Compiler.Option.class));
     }
 
     /**
      * Creates a new {@link World} object
      */
-    public World(Set<CompatibilityOption> options, Set<Compiler.Option> compilerOptions) {
+    public World(ObjectAllocator<GLOBAL> allocator, Set<CompatibilityOption> options,
+            Set<Compiler.Option> compilerOptions) {
+        this.allocator = allocator;
         this.options = EnumSet.copyOf(options);
         this.compilerOptions = EnumSet.copyOf(compilerOptions);
     }
@@ -104,6 +123,13 @@ public final class World {
     }
 
     /**
+     * Returns the global object allocator for this instance
+     */
+    public ObjectAllocator<GLOBAL> getAllocator() {
+        return allocator;
+    }
+
+    /**
      * Returns the compatibility options for this instance
      */
     public Set<CompatibilityOption> getOptions() {
@@ -124,24 +150,14 @@ public final class World {
         return compilerOptions;
     }
 
-    private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
-        @Override
-        public GlobalObject newInstance(Realm realm) {
-            return new GlobalObject(realm);
-        }
-    };
-
     /**
-     * Creates a new {@link Realm} object with the default settings
+     * Creates a new {@link Realm} object and returns its {@link GlobalObject}
      */
-    public Realm newRealm() {
-        return newRealm(DEFAULT_GLOBAL_OBJECT);
-    }
-
-    /**
-     * Creates a new {@link Realm} object
-     */
-    public Realm newRealm(ObjectAllocator<? extends GlobalObject> allocator) {
-        return Realm.newRealm(this, allocator);
+    public GLOBAL newGlobal() {
+        Realm realm = Realm.newRealm(this);
+        realm.initialiseGlobalObject();
+        @SuppressWarnings("unchecked")
+        GLOBAL global = (GLOBAL) realm.getGlobalThis();
+        return global;
     }
 }

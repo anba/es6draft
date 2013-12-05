@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.moztest;
 
-import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobal;
+import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.util.TestInfo.filterTests;
 import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
@@ -124,10 +124,10 @@ public class MozillaJSTest {
         // filter disabled tests
         assumeTrue(moztest.enable);
 
-        World world = new World(options);
         MozTestConsole console = new MozTestConsole();
-        MozShellGlobalObject global = newGlobal(world, console, testDir(), moztest.script,
-                Paths.get("test402/lib"), scriptCache);
+        World<MozShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console,
+                testDir(), moztest.script, Paths.get("test402/lib"), scriptCache), options);
+        MozShellGlobalObject global = world.newGlobal();
         ExecutionContext cx = global.getRealm().defaultContext();
 
         // apply scripted conditions

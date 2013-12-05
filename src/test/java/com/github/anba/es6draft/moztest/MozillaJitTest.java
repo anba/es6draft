@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.moztest;
 
-import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobal;
+import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.TestInfo.filterTests;
 import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
 import static java.util.Arrays.asList;
@@ -113,10 +113,10 @@ public class MozillaJitTest {
         // filter disabled tests
         assumeTrue(moztest.enable);
 
-        World world = new World(options);
         MozTestConsole console = new MozTestConsole();
-        MozShellGlobalObject global = newGlobal(world, console, testDir(), moztest.script,
-                Paths.get(""), scriptCache);
+        World<MozShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console,
+                testDir(), moztest.script, Paths.get(""), scriptCache), options);
+        MozShellGlobalObject global = world.newGlobal();
 
         // load legacy.js file
         global.eval(legacyMozilla);
@@ -174,8 +174,8 @@ public class MozillaJitTest {
     // Any file who's basename matches something in this set is ignored
     private static final Set<String> excludeFiles = new HashSet<>();
     private static final Set<String> excludeDirs = new HashSet<>(asList("asm.js", "baseline",
-            "debug", "gc", "ion", "jaeger", "modules", "parallel", "parallelarray", "truthiness",
-            "TypedObject", "v8-v5"));
+            "debug", "gc", "ion", "jaeger", "modules", "parallel", "parallelarray", "profiler",
+            "truthiness", "TypedObject", "v8-v5"));
 
     private static List<MozTest> loadTests(Path searchdir, Path basedir) throws IOException {
         BiFunction<Path, BufferedReader, MozTest> create = new BiFunction<Path, BufferedReader, MozTest>() {

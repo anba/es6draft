@@ -18,10 +18,10 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  *
@@ -39,17 +39,17 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * Returns a new instance of this class
+     * Returns an object to allocate new instances of this class
      */
-    public static SimpleShellGlobalObject newGlobal(World world, final ShellConsole console,
-            final Path baseDir, final Path script, final ScriptCache scriptCache) {
-        Realm realm = world.newRealm(new ObjectAllocator<SimpleShellGlobalObject>() {
+    public static ObjectAllocator<SimpleShellGlobalObject> newGlobalObjectAllocator(
+            final ShellConsole console, final Path baseDir, final Path script,
+            final ScriptCache scriptCache) {
+        return new ObjectAllocator<SimpleShellGlobalObject>() {
             @Override
             public SimpleShellGlobalObject newInstance(Realm realm) {
                 return new SimpleShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
-        });
-        return (SimpleShellGlobalObject) realm.getGlobalThis();
+        };
     }
 
     /** shell-function: {@code parseModule(source)} */

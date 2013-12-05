@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft;
 
-import static com.github.anba.es6draft.repl.SimpleShellGlobalObject.newGlobal;
+import static com.github.anba.es6draft.repl.SimpleShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertFalse;
@@ -80,10 +80,10 @@ public class ScriptTest {
         // TODO: collect multiple failures
         List<Throwable> failures = new ArrayList<Throwable>();
 
-        World world = new World(options);
         ScriptTestConsole console = new ScriptTestConsole();
-        SimpleShellGlobalObject global = newGlobal(world, console, testDir(), test.script,
-                scriptCache);
+        World<SimpleShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console,
+                testDir(), test.script, scriptCache), options);
+        SimpleShellGlobalObject global = world.newGlobal();
 
         // load and execute assert.js file
         global.include(Paths.get("lib/assert.js"));

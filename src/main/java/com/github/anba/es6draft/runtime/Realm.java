@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.github.anba.es6draft.compiler.Compiler.Option;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.objects.*;
 import com.github.anba.es6draft.runtime.objects.NativeErrorConstructor.ErrorType;
 import com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor;
@@ -109,12 +108,12 @@ public final class Realm {
     private ExecutionContext defaultContext;
     private ExecutionContext scriptContext;
 
-    private final World world;
+    private final World<? extends GlobalObject> world;
 
     // TODO: move into function source object
     private Map<String, ScriptObject> templateCallSites = new HashMap<>();
 
-    private Realm(World world) {
+    private Realm(World<? extends GlobalObject> world) {
         this.world = world;
     }
 
@@ -178,7 +177,7 @@ public final class Realm {
     /**
      * Returns the {@link World} for this realm
      */
-    public World getWorld() {
+    public World<? extends GlobalObject> getWorld() {
         return world;
     }
 
@@ -323,11 +322,39 @@ public final class Realm {
     }
 
     /**
+     * Defines the built-in objects as properties of the global object
+     */
+    public void initialiseGlobalObject() {
+        assert this.builtinEval == null : "global object already initialised";
+        ExecutionContext defaultContext = this.defaultContext;
+
+        // finish initialising global object
+        globalThis.initialise(defaultContext);
+
+        // store reference to built-in eval
+        this.builtinEval = (Callable) Get(defaultContext, globalThis, "eval");
+    }
+
+    /**
+     * Defines the built-in objects as properties of the supplied object
+     */
+    public void defineBuiltinProperties(ScriptObject builtins) {
+        assert this.builtinEval == null : "built-ins already initialised";
+        ExecutionContext defaultContext = this.defaultContext;
+
+        // finish initialising global object
+        GlobalObject.defineBuiltinProperties(defaultContext, builtins);
+
+        // store reference to built-in eval
+        this.builtinEval = (Callable) Get(defaultContext, builtins, "eval");
+    }
+
+    /**
      * Creates a new {@link Realm} object
      */
-    static Realm newRealm(World world, ObjectAllocator<? extends GlobalObject> allocator) {
+    static <GLOBAL extends GlobalObject> Realm newRealm(World<GLOBAL> world) {
         Realm realm = new Realm(world);
-        GlobalObject globalThis = allocator.newInstance(realm);
+        GlobalObject globalThis = world.getAllocator().newInstance(realm);
         ExecutionContext defaultContext = newScriptExecutionContext(null, realm);
         GlobalEnvironmentRecord envRec = new GlobalEnvironmentRecord(defaultContext, globalThis);
         LexicalEnvironment globalEnv = new LexicalEnvironment(defaultContext, envRec);
@@ -358,12 +385,6 @@ public final class Realm {
 
         // intrinsics: Internationalization API
         initialiseInternationalisation(realm);
-
-        // finish initialising global object
-        globalThis.initialise(defaultContext);
-
-        // store reference to built-in eval
-        realm.builtinEval = (Callable) Get(defaultContext, globalThis, "eval");
 
         return realm;
     }

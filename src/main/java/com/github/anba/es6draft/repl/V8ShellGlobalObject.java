@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -35,17 +34,17 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
     }
 
     /**
-     * Returns a new instance of this class
+     * Returns an object to allocate new instances of this class
      */
-    public static V8ShellGlobalObject newGlobal(World world, final ShellConsole console,
-            final Path baseDir, final Path script, final ScriptCache scriptCache) {
-        Realm realm = world.newRealm(new ObjectAllocator<V8ShellGlobalObject>() {
+    public static ObjectAllocator<V8ShellGlobalObject> newGlobalObjectAllocator(
+            final ShellConsole console, final Path baseDir, final Path script,
+            final ScriptCache scriptCache) {
+        return new ObjectAllocator<V8ShellGlobalObject>() {
             @Override
             public V8ShellGlobalObject newInstance(Realm realm) {
                 return new V8ShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
-        });
-        return (V8ShellGlobalObject) realm.getGlobalThis();
+        };
     }
 
     private String concat(String... strings) {

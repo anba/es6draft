@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.traceur;
 
-import static com.github.anba.es6draft.repl.V8ShellGlobalObject.newGlobal;
+import static com.github.anba.es6draft.repl.V8ShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.TestInfo.filterTests;
 import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
 import static java.util.Arrays.asList;
@@ -105,9 +105,10 @@ public class TraceurTest {
         // TODO: collect multiple failures
         List<Throwable> failures = new ArrayList<Throwable>();
 
-        World world = new World(options);
         TraceurConsole console = new TraceurConsole();
-        V8ShellGlobalObject global = newGlobal(world, console, testDir(), test.script, scriptCache);
+        World<V8ShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console, testDir(),
+                test.script, scriptCache), options);
+        V8ShellGlobalObject global = world.newGlobal();
 
         // load legacy.js file
         global.eval(legacyJS);

@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.moztest;
 
-import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobal;
+import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertFalse;
@@ -92,10 +92,10 @@ public class ReflectTest {
         // filter disabled tests
         assumeTrue(test.enable);
 
-        World world = new World(options);
         MozTestConsole console = new MozTestConsole();
-        MozShellGlobalObject global = newGlobal(world, console, testDir(), test.script, testDir(),
-                scriptCache);
+        World<MozShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console,
+                testDir(), test.script, testDir(), scriptCache), options);
+        MozShellGlobalObject global = world.newGlobal();
         ExecutionContext cx = global.getRealm().defaultContext();
 
         // simplistic reportCompare

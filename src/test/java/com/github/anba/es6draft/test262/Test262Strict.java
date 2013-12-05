@@ -92,16 +92,16 @@ public final class Test262Strict extends BaseTest262 {
         Path testfile = Paths.get(path);
         final Test262Info info = Test262Info.from(testfile);
 
-        World world = new World(options);
-        Realm realm = world.newRealm(new ObjectAllocator<Test262GlobalObject>() {
+        World<Test262GlobalObject> world = new World<>(new ObjectAllocator<Test262GlobalObject>() {
             @Override
             public Test262GlobalObject newInstance(Realm realm) {
                 return new Test262GlobalObject(realm, libpath, cache, info, sourceName);
             }
-        });
+        }, options);
+        Test262GlobalObject global = world.newGlobal();
+        Realm realm = global.getRealm();
 
         // start initialization
-        Test262GlobalObject global = (Test262GlobalObject) realm.getGlobalThis();
         global.include("sta.js");
         createProperties(global, realm.defaultContext(), Test262GlobalObject.class);
 
