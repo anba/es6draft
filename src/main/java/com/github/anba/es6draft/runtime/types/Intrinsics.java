@@ -102,6 +102,10 @@ public enum Intrinsics {/* @formatter:off */
     Promise,
     PromisePrototype,
 
+    // Loader, Module, Realm Objects
+    Realm,
+    RealmPrototype,
+
     // Internationalization API
     Intl,
     Intl_Collator,

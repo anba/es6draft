@@ -46,6 +46,9 @@ import com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionConstructor;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorFunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
+import com.github.anba.es6draft.runtime.objects.modules.RealmConstructor;
+import com.github.anba.es6draft.runtime.objects.modules.RealmObject;
+import com.github.anba.es6draft.runtime.objects.modules.RealmPrototype;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor;
 import com.github.anba.es6draft.runtime.objects.promise.PromisePrototype;
 import com.github.anba.es6draft.runtime.objects.reflect.ProxyFactoryFunction;
@@ -67,6 +70,11 @@ public final class Realm {
      * [[intrinsics]]
      */
     private Map<Intrinsics, ScriptObject> intrinsics = new EnumMap<>(Intrinsics.class);
+
+    /**
+     * [[realmObject]]
+     */
+    private RealmObject realmObject;
 
     /**
      * [[globalThis]]
@@ -122,6 +130,13 @@ public final class Realm {
      */
     public ScriptObject getIntrinsic(Intrinsics id) {
         return intrinsics.get(id);
+    }
+
+    /**
+     * [[realmObject]]
+     */
+    public RealmObject getRealmObject() {
+        return realmObject;
     }
 
     /**
@@ -353,6 +368,13 @@ public final class Realm {
      * Creates a new {@link Realm} object
      */
     static <GLOBAL extends GlobalObject> Realm newRealm(World<GLOBAL> world) {
+        return newRealm(world, null);
+    }
+
+    /**
+     * Creates a new {@link Realm} object
+     */
+    static <GLOBAL extends GlobalObject> Realm newRealm(World<GLOBAL> world, RealmObject realmObject) {
         Realm realm = new Realm(world);
         GlobalObject globalThis = world.getAllocator().newInstance(realm);
         ExecutionContext defaultContext = newScriptExecutionContext(null, realm);
@@ -364,6 +386,14 @@ public final class Realm {
         defaultContext.setLexicalEnvironment(globalEnv);
 
         //
+        boolean defaultRealmObject = realmObject == null;
+        if (defaultRealmObject) {
+            realmObject = new RealmObject(realm);
+        }
+        realmObject.setRealm(realm);
+
+        //
+        realm.realmObject = realmObject;
         realm.globalThis = globalThis;
         realm.globalEnv = globalEnv;
         realm.defaultContext = defaultContext;
@@ -383,8 +413,16 @@ public final class Realm {
         // intrinsics: Promise Objects
         initialisePromiseObjects(realm);
 
+        // intrinsics: Loader, Module, Realm Objects
+        initialiseModuleModules(realm);
+
         // intrinsics: Internationalization API
         initialiseInternationalisation(realm);
+
+        if (defaultRealmObject) {
+            realmObject.setPrototypeOf(defaultContext,
+                    realm.getIntrinsic(Intrinsics.RealmPrototype));
+        }
 
         return realm;
     }
@@ -793,6 +831,26 @@ public final class Realm {
         // initialisation phase
         promiseConstructor.initialise(defaultContext);
         promisePrototype.initialise(defaultContext);
+    }
+
+    /**
+     * <h1>Loader, Module, Realm Objects</h1>
+     */
+    private static void initialiseModuleModules(Realm realm) {
+        Map<Intrinsics, ScriptObject> intrinsics = realm.intrinsics;
+        ExecutionContext defaultContext = realm.defaultContext;
+
+        // allocation phase
+        RealmConstructor realmConstructor = new RealmConstructor(realm);
+        RealmPrototype realmPrototype = new RealmPrototype(realm);
+
+        // registration phase
+        intrinsics.put(Intrinsics.Realm, realmConstructor);
+        intrinsics.put(Intrinsics.RealmPrototype, realmPrototype);
+
+        // initialisation phase
+        realmConstructor.initialise(defaultContext);
+        realmPrototype.initialise(defaultContext);
     }
 
     /**

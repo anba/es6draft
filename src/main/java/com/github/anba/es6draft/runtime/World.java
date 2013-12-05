@@ -151,6 +151,13 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
+     * Creates a new {@link Realm} object
+     */
+    public Realm newRealm(RealmObject realmObject) {
+        return Realm.newRealm(this, realmObject);
+    }
+
+    /**
      * Creates a new {@link Realm} object and returns its {@link GlobalObject}
      */
     public GLOBAL newGlobal() {
