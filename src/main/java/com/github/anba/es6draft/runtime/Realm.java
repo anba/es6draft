@@ -84,6 +84,26 @@ public final class Realm {
      */
     private Callable throwTypeError;
 
+    /**
+     * [[TranslateDirectEvalHook]]
+     */
+    private Callable translateDirectEvalHook;
+
+    /**
+     * [[FallbackDirectEvalHook]]
+     */
+    private Callable fallbackDirectEvalHook;
+
+    /**
+     * [[IndirectEvalHook]]
+     */
+    private Callable indirectEvalHook;
+
+    /**
+     * [[FunctionHook]]
+     */
+    private Callable functionHook;
+
     private Callable builtinEval;
 
     private ExecutionContext defaultContext;
@@ -125,6 +145,34 @@ public final class Realm {
     public Callable getThrowTypeError() {
         assert throwTypeError != null : "throwTypeError not yet initialised";
         return throwTypeError;
+    }
+
+    /**
+     * [[TranslateDirectEvalHook]]
+     */
+    public Callable getTranslateDirectEvalHook() {
+        return translateDirectEvalHook;
+    }
+
+    /**
+     * [[FallbackDirectEvalHook]]
+     */
+    public Callable getFallbackDirectEvalHook() {
+        return fallbackDirectEvalHook;
+    }
+
+    /**
+     * [[IndirectEvalHook]]
+     */
+    public Callable getIndirectEvalHook() {
+        return indirectEvalHook;
+    }
+
+    /**
+     * [[FunctionHook]]
+     */
+    public Callable getFunctionHook() {
+        return functionHook;
     }
 
     /**
@@ -261,6 +309,17 @@ public final class Realm {
     public String getListSeparator() {
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
         return symbols.getDecimalSeparator() == ',' ? ";" : ",";
+    }
+
+    /**
+     * Initialises the custom extension points
+     */
+    public void setExtensionHooks(Callable translateDirectEvalHook,
+            Callable fallbackDirectEvalHook, Callable indirectEvalHook, Callable functionHook) {
+        this.translateDirectEvalHook = translateDirectEvalHook;
+        this.fallbackDirectEvalHook = fallbackDirectEvalHook;
+        this.indirectEvalHook = indirectEvalHook;
+        this.functionHook = functionHook;
     }
 
     /**

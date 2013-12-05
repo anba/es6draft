@@ -21,6 +21,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Type;
 
 /**
@@ -78,8 +79,36 @@ public final class Eval {
     /**
      * 18.2.1 eval (x)
      */
+    public static Object indirectEval(ExecutionContext cx, Object... arguments) {
+        Object source;
+        Callable indirectEval = cx.getRealm().getIndirectEvalHook();
+        if (indirectEval != null) {
+            source = indirectEval.call(cx, UNDEFINED, arguments);
+        } else {
+            source = arguments.length > 0 ? arguments[0] : UNDEFINED;
+        }
+        return eval(cx, source, EvalFlags.GlobalCode.getValue() | EvalFlags.GlobalScope.getValue());
+    }
+
+    /**
+     * 18.2.1 eval (x)
+     */
     public static Object indirectEval(ExecutionContext cx, Object source) {
         return eval(cx, source, EvalFlags.GlobalCode.getValue() | EvalFlags.GlobalScope.getValue());
+    }
+
+    /**
+     * 18.2.1 eval (x)
+     */
+    public static Object directEval(Object[] arguments, ExecutionContext cx, int flags) {
+        Object source;
+        Callable translate = cx.getRealm().getTranslateDirectEvalHook();
+        if (translate != null) {
+            source = translate.call(cx, UNDEFINED, arguments);
+        } else {
+            source = arguments.length > 0 ? arguments[0] : UNDEFINED;
+        }
+        return eval(cx, source, flags | EvalFlags.Direct.getValue());
     }
 
     /**
