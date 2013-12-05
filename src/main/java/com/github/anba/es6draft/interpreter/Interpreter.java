@@ -638,6 +638,21 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         Object[] argList = ArgumentListEvaluation(arguments, cx);
         /* steps 5-6 */
         Callable f = CheckCallable(func, cx);
+        /* steps 7-8 */
+        Object thisValue = UNDEFINED;
+        if (ref instanceof Reference) {
+            Reference<?, ?> rref = (Reference<?, ?>) ref;
+            if (rref.isPropertyReference()) {
+                thisValue = rref.GetThisValue(cx);
+            } else {
+                assert rref instanceof Reference.IdentifierReference;
+                Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) rref;
+                ScriptObject newThisValue = idref.getBase().withBaseObject();
+                if (newThisValue != null) {
+                    thisValue = newThisValue;
+                }
+            }
+        }
         /* [18.2.1.1] Direct Call to Eval */
         if (directEval && IsBuiltinEval(ref, f, cx)) {
             int evalFlags = EvalFlags.Direct.getValue();
@@ -653,23 +668,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
             if (enclosedByWithStatement) {
                 evalFlags |= EvalFlags.EnclosedByWithStatement.getValue();
             }
-            Object x = argList.length > 0 ? argList[0] : UNDEFINED;
-            return Eval.directEval(x, cx, evalFlags);
-        }
-        /* steps 7-8 */
-        Object thisValue = UNDEFINED;
-        if (ref instanceof Reference) {
-            Reference<?, ?> rref = (Reference<?, ?>) ref;
-            if (rref.isPropertyReference()) {
-                thisValue = rref.GetThisValue(cx);
-            } else {
-                assert rref instanceof Reference.IdentifierReference;
-                Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) rref;
-                ScriptObject newThisValue = idref.getBase().withBaseObject();
-                if (newThisValue != null) {
-                    thisValue = newThisValue;
-                }
-            }
+            return Eval.directEval(argList, cx, evalFlags);
         }
         /* steps 9, 11, 12 (not applicable) */
         /* steps 10, 13 */

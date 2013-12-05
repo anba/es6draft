@@ -62,7 +62,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         // class: Eval
         static final MethodDesc Eval_directEval = MethodDesc.create(MethodType.Static, Types.Eval,
-                "directEval", Type.getMethodType(Types.Object, Types.Object,
+                "directEval", Type.getMethodType(Types.Object, Types.Object_,
                         Types.ExecutionContext, Type.INT_TYPE));
 
         // class: EnvironmentRecord
@@ -280,6 +280,10 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
         mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
                 Bootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
+    }
+
+    private boolean isDirectEvalHookSupported() {
+        return true;
     }
 
     /**
@@ -578,25 +582,27 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         // stack: [args, thisValue, func(Callable)] -> [args]
         mv.pop2();
 
-        // stack: [args] -> [arg0]
-        if (hasSpread) {
-            Label isEmpty = new Label(), after = new Label();
-            mv.dup();
-            mv.arraylength();
-            mv.ifeq(isEmpty);
-            mv.iconst(0);
-            mv.aload(Types.Object);
-            mv.goTo(after);
-            mv.mark(isEmpty);
-            mv.pop();
-            mv.loadUndefined();
-            mv.mark(after);
-        } else if (arguments.isEmpty()) {
-            mv.pop();
-            mv.loadUndefined();
-        } else {
-            mv.iconst(0);
-            mv.aload(Types.Object);
+        if (!isDirectEvalHookSupported()) {
+            // stack: [args] -> [arg0]
+            if (hasSpread) {
+                Label isEmpty = new Label(), after = new Label();
+                mv.dup();
+                mv.arraylength();
+                mv.ifeq(isEmpty);
+                mv.iconst(0);
+                mv.aload(Types.Object);
+                mv.goTo(after);
+                mv.mark(isEmpty);
+                mv.pop();
+                mv.loadUndefined();
+                mv.mark(after);
+            } else if (arguments.isEmpty()) {
+                mv.pop();
+                mv.loadUndefined();
+            } else {
+                mv.iconst(0);
+                mv.aload(Types.Object);
+            }
         }
 
         // stack: [args0] -> [result]

@@ -103,8 +103,8 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
          * 18.2.1 eval (x)
          */
         @Function(name = "eval", arity = 1)
-        public static Object eval(ExecutionContext cx, Object thisValue, Object x) {
-            return indirectEval(cx, x);
+        public static Object eval(ExecutionContext cx, Object thisValue, Object... args) {
+            return indirectEval(cx, args);
         }
 
         /**
