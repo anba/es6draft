@@ -45,7 +45,7 @@ class WrapperProxy implements ScriptObject {
     // thenable coercions weakmap
     private WeakHashMap<Realm, ScriptObject> thenableCoercions;
 
-    public WrapperProxy(Realm realm, ScriptObject target, ScriptObject prototype, boolean withProto) {
+    public WrapperProxy(ScriptObject target, ScriptObject prototype, boolean withProto) {
         this.proxyTarget = target;
         this.prototype = prototype;
         this.withProto = withProto;
@@ -70,9 +70,8 @@ class WrapperProxy implements ScriptObject {
     }
 
     private static class CallabeWrapperProxy extends WrapperProxy implements Callable {
-        public CallabeWrapperProxy(Realm realm, ScriptObject target, ScriptObject prototype,
-                boolean withProto) {
-            super(realm, target, prototype, withProto);
+        public CallabeWrapperProxy(ScriptObject target, ScriptObject prototype, boolean withProto) {
+            super(target, prototype, withProto);
         }
 
         /**
@@ -108,9 +107,9 @@ class WrapperProxy implements ScriptObject {
         ScriptObject prototype = proxyTarget.getPrototypeOf(cx);
         WrapperProxy proxy;
         if (IsCallable(proxyTarget)) {
-            proxy = new CallabeWrapperProxy(cx.getRealm(), proxyTarget, prototype, false);
+            proxy = new CallabeWrapperProxy(proxyTarget, prototype, false);
         } else {
-            proxy = new WrapperProxy(cx.getRealm(), proxyTarget, prototype, false);
+            proxy = new WrapperProxy(proxyTarget, prototype, false);
         }
         return proxy;
     }
@@ -129,9 +128,9 @@ class WrapperProxy implements ScriptObject {
         ScriptObject prototype = Type.isObject(proto) ? Type.objectValue(proto) : null;
         WrapperProxy proxy;
         if (IsCallable(proxyTarget)) {
-            proxy = new CallabeWrapperProxy(cx.getRealm(), proxyTarget, prototype, true);
+            proxy = new CallabeWrapperProxy(proxyTarget, prototype, true);
         } else {
-            proxy = new WrapperProxy(cx.getRealm(), proxyTarget, prototype, true);
+            proxy = new WrapperProxy(proxyTarget, prototype, true);
         }
         return proxy;
     }
