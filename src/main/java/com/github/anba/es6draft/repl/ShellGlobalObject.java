@@ -23,9 +23,9 @@ import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.objects.ErrorConstructor;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 
@@ -103,9 +103,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     protected static ScriptException throwError(ExecutionContext cx, String message) {
-        ErrorConstructor ctor = (ErrorConstructor) cx.getIntrinsic(Intrinsics.Error);
-        Object error = ctor.call(cx, UNDEFINED, Objects.toString(message, ""));
-        throw ScriptException.create(error);
+        throw Errors.newError(cx, Intrinsics.Error, Objects.toString(message, ""));
     }
 
     protected String read(ExecutionContext cx, Path path) {
