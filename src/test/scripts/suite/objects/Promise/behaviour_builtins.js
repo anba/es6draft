@@ -6,7 +6,10 @@
  */
 
 const {
+  fail,
   assertTrue,
+  assertSame,
+  assertUndefined,
   assertNativeFunction,
 } = Assert;
 
@@ -46,14 +49,42 @@ function reportFailure(e) {
 // Access to 'IdentityFunction' and 'ThrowerFunction'
 // Access to 'ResolvePromiseFunction' and 'RejectPromiseFunction'
 {
-  let skip = 2; // 2 = then + catch
+  let stepCount = 0;
+  let builtins = {
+    identity: void 0,
+    thrower: void 0,
+    resolvePromise: void 0,
+    rejectPromise: void 0,
+  };
   class XPromise extends Promise {
     then(fulfill, reject) {
-      if (skip > 0) {
-        skip -= 1;
-      } else {
-        assertNativeFunction(fulfill, undefined, 1);
-        assertNativeFunction(reject, undefined, 1);
+      let step = ++stepCount;
+      assertTrue(1 <= step && step <= 5, `step = ${step}`);
+      switch (step) {
+        case 1:
+          assertUndefined(fulfill);
+          assertUndefined(reject);
+          break;
+        case 2:
+          assertSame(testBuiltinFunctions, fulfill);
+          assertUndefined(reject);
+          break;
+        case 3:
+          assertUndefined(fulfill);
+          assertSame(reportFailure, reject);
+          break;
+        case 4:
+          builtins.identity = fulfill;
+          builtins.thrower = reject;
+          assertNativeFunction(fulfill, undefined, 1);
+          assertNativeFunction(reject, undefined, 1);
+          break;
+        case 5:
+          builtins.resolvePromise = fulfill;
+          builtins.rejectPromise = reject;
+          assertNativeFunction(fulfill, undefined, 1);
+          assertNativeFunction(reject, undefined, 1);
+          break;
       }
       return super(fulfill, reject);
     }
@@ -66,7 +97,38 @@ function reportFailure(e) {
       return result;
     }
   }
+
+  function testBuiltinFunctions() {
+    assertSame(5, stepCount);
+    testIdentityFunction(builtins.identity);
+    testThrowerFunction(builtins.thrower);
+
+    // calling these functions should have no effect
+    builtins.resolvePromise();
+    builtins.rejectPromise();
+  }
+
+  function testIdentityFunction(f) {
+    for (let v of [void 0, null, 1, "", {}, [], () => {}]) {
+      assertSame(v, f(v));
+    }
+  }
+
+  function testThrowerFunction(f) {
+    for (let v of [void 0, null, 1, "", {}, [], () => {}]) {
+      try {
+        f(v);
+      } catch (e) {
+        assertSame(v, e);
+        continue;
+      }
+      fail `expected error: ${v}`;
+    }
+  }
+
   let d = XPromise.deferred();
-  d.promise.then().catch(reportFailure);
+  d.promise.then()
+           .then(testBuiltinFunctions)
+           .catch(reportFailure);
   d.resolve(XPromise.resolve());
 }
