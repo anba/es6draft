@@ -17,6 +17,7 @@ const exports = {
   assertConstructor, assertNotConstructor,
   assertDataProperty, assertAccessorProperty,
   assertBuiltinFunction, assertBuiltinConstructor, assertBuiltinPrototype,
+  assertNativeFunction,
   assertEquals,
 };
 
@@ -48,6 +49,7 @@ const {
   assertConstructor, assertNotConstructor,
   assertDataProperty, assertAccessorProperty,
   assertBuiltinFunction, assertBuiltinConstructor, assertBuiltinPrototype,
+  assertNativeFunction,
   assertEquals,
 } = Assert;
 
@@ -353,3 +355,19 @@ assertEquals({a: 1, b: {}, c: []}, {a: 1, b: {}, c: []});
 assertEquals([], []);
 assertEquals([1, 2, 3], [1, 2, 3]);
 assertEquals([1, {}, []], [1, {}, []]);
+
+assertNativeFunction(eval, "eval", 1);
+{
+  let result = {};
+  new Promise((resolve, reject) => { Object.assign(result, {resolve, reject}) });
+  assertNativeFunction(result.resolve, undefined, 1);
+  assertNativeFunction(result.reject, undefined, 1);
+}
+L1: {
+  try {
+    assertNativeFunction(() => {}, undefined, 0);
+  } catch (e) {
+    if (e instanceof AssertionError) break L1;
+  }
+  fail("assertNativeFunction() failure");
+}

@@ -21,8 +21,17 @@ const {
 } = Object;
 
 const {
+  hasOwnProperty: Object_prototype_hasOwnProperty,
   toString: Object_prototype_toString,
 } = Object.prototype;
+
+const {
+  toString: Function_prototype_toString,
+} = Function.prototype;
+
+const {
+  contains: String_prototype_contains,
+} = String.prototype;
 
 const {
   toString: Symbol_prototype_toString,
@@ -216,9 +225,20 @@ function assertBuiltinFunction(fun, name, arity) {
   assertNotConstructor(fun);
   assertSame(Function.prototype, Object_getPrototypeOf(fun), `${name}.[[Prototype]]`);
   assertDataProperty(fun, "length", {value: arity, writable: false, enumerable: false, configurable: true});
-  assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: true});
+  if (name !== void 0) {
+    assertDataProperty(fun, "name", {value: name, writable: false, enumerable: false, configurable: true});
+  } else {
+    // anonymous function
+    assertFalse($CallFunction(Object_prototype_hasOwnProperty, fun, "name"));
+  }
   assertAccessorProperty(fun, "arguments", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
   assertAccessorProperty(fun, "caller", {get: ThrowTypeError, set: ThrowTypeError, enumerable: false, configurable: false});
+}
+
+function assertNativeFunction(fun, name, arity) {
+  assertBuiltinFunction(fun, name, arity);
+  let source = $CallFunction(Function_prototype_toString, fun);
+  assertTrue($CallFunction(String_prototype_contains, source, "native code"));
 }
 
 function assertBuiltinConstructor(fun, name, arity) {
@@ -295,6 +315,7 @@ Object.defineProperty(global, "Assert", {value: {
   assertConstructor, assertNotConstructor,
   assertDataProperty, assertAccessorProperty,
   assertBuiltinFunction, assertBuiltinConstructor, assertBuiltinPrototype,
+  assertNativeFunction,
   assertEquals,
 }});
 
