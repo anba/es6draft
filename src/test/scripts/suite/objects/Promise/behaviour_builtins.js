@@ -13,17 +13,18 @@ const {
   assertNativeFunction,
 } = Assert;
 
+loadRelativeToScript("../../lib/promises.js");
+
+const {
+  reportFailure
+} = Promises;
+
 // Test access to built-in functions:
 // - DeferredConstructionFunction
 // - ResolvePromiseFunction
 // - RejectPromiseFunction
 // - IdentityFunction
 // - ThrowerFunction
-
-// Simple, hack-ish way to break out of promise error handling...
-function reportFailure(e) {
-  nextTick(() => { throw e });
-}
 
 // Access to 'DeferredConstructionFunction'
 {
