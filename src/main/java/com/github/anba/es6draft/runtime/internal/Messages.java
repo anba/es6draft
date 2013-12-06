@@ -214,6 +214,14 @@ public final class Messages {
         ProxyNoGetter("proxy.no_getter"),
         ProxyNoSetter("proxy.no_setter"),
         ProxyNoOwnProperty("proxy.no_own_property"),
+        // Promise Object
+        PromiseSelfResolution("promise.self_resolution"),
+        // Modules
+        ModulesUnresolvedModule("modules.unresolved_module"),
+        ModulesUnresolvedImport("modules.unresolved_import"),
+        ModulesUnresolvedExport("modules.unresolved_export"),
+        ModulesDuplicateExport("modules.duplicate_export"),
+        ModulesCyclicExport("cyclic_export"),
 
         // Intl
         IntlStructurallyInvalidLanguageTag("intl.structurally_invalid_language_tag"),

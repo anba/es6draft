@@ -44,14 +44,14 @@ public final class ModuleAbstractOperations {
     private ModuleAbstractOperations() {
     }
 
-    private static ScriptException newReferenceError(ExecutionContext cx, String message) {
-        // TODO: error message
-        return Errors.newError(cx, Intrinsics.ReferenceError, message);
+    private static ScriptException newReferenceError(ExecutionContext cx, Messages.Key key,
+            String... args) {
+        return Errors.newError(cx, Intrinsics.ReferenceError, key, args);
     }
 
-    private static ScriptException newSyntaxError(ExecutionContext cx, String message) {
-        // TODO: error message
-        return Errors.newError(cx, Intrinsics.SyntaxError, message);
+    private static ScriptException newSyntaxError(ExecutionContext cx, Messages.Key key,
+            String... args) {
+        return Errors.newError(cx, Intrinsics.SyntaxError, key, args);
     }
 
     public static void CreateImportBinding(EnvironmentRecord envRec, String name,
@@ -157,7 +157,8 @@ public final class ModuleAbstractOperations {
             // FIXME: spec bug - entry.[[Module]] does not exist
             if (entry.moduleRequest == null && entry.localName != null
                     && !boundNames.contains(entry.localName)) {
-                ScriptException error = newReferenceError(cx, "bad export");
+                ScriptException error = newReferenceError(cx, Messages.Key.ModulesUnresolvedExport,
+                        entry.localName);
                 module.getLinkErrors().add(error);
             }
             // FIXME: spec bug? - otherwise take these steps?
@@ -172,7 +173,7 @@ public final class ModuleAbstractOperations {
             String modReq = entry.moduleRequest;
             ModuleObject otherMod = LookupModuleDependency(module, modReq);
             if (visited.contains(otherMod)) {
-                ScriptException error = newSyntaxError(cx, "bad export");
+                ScriptException error = newSyntaxError(cx, Messages.Key.ModulesCyclicExport);
                 module.getLinkErrors().add(error);
             } else {
                 visited.add(otherMod);
@@ -216,14 +217,15 @@ public final class ModuleAbstractOperations {
         }
         /* steps 3-4 */
         if (visited.containsKey(module) && visited.get(module).contains(exportName)) {
-            ScriptException error = newSyntaxError(cx, "bad export");
+            ScriptException error = newSyntaxError(cx, Messages.Key.ModulesDuplicateExport,
+                    exportName);
             module.getLinkErrors().add(error);
             return /* error */;
         }
         /* step 5 */
         List<ExportDefinition> exportDefinitions = module.getExportDefinitions();
         /* steps 6-8 */
-        boolean multipleExplicit = false, multiImplicit = false;
+        boolean multipleExplicit = false, multipleImplicit = false;
         ExportDefinition definition = null;
         for (ExportDefinition def : exportDefinitions) {
             if (def.exportName.equals(exportName)) {
@@ -234,19 +236,21 @@ public final class ModuleAbstractOperations {
                         multipleExplicit = true;
                         break;
                     }
-                    multiImplicit = true;
+                    multipleImplicit = true;
                 }
             }
         }
         /* step 7 */
         if (definition == null) {
-            ScriptException error = newReferenceError(cx, "bad export");
+            ScriptException error = newReferenceError(cx, Messages.Key.ModulesUnresolvedExport,
+                    exportName);
             module.getLinkErrors().add(error);
             return /* error */;
         }
         /* step 8 */
-        if (multipleExplicit || (!definition.explicit && multiImplicit)) {
-            ScriptException error = newSyntaxError(cx, "bad export");
+        if (multipleExplicit || (!definition.explicit && multipleImplicit)) {
+            ScriptException error = newSyntaxError(cx, Messages.Key.ModulesDuplicateExport,
+                    exportName);
             module.getLinkErrors().add(error);
             return /* error */;
         }
@@ -310,7 +314,8 @@ public final class ModuleAbstractOperations {
                 // FIXME: spec bug - LookupExport instead of ResolveExport
                 ExportBinding binding = LookupExport(def.module, def.importName);
                 if (binding == null) {
-                    ScriptException error = newReferenceError(cx, "bad export");
+                    ScriptException error = newReferenceError(cx,
+                            Messages.Key.ModulesUnresolvedImport, def.importName);
                     module.getLinkErrors().add(error);
                 } else {
                     CreateImportBinding(envRec, def.localName, binding);
@@ -363,7 +368,8 @@ public final class ModuleAbstractOperations {
                 } else {
                     ModuleObject module = LoaderRegistryLookup(loader, normalizedName);
                     if (module == null) {
-                        ScriptException error = newReferenceError(cx, "bad export");
+                        ScriptException error = newReferenceError(cx,
+                                Messages.Key.ModulesUnresolvedModule, normalizedName);
                         pair.getValue().getLinkErrors().add(error);
                     } else {
                         resolvedDeps.put(requestName, module);

@@ -41,9 +41,8 @@ public final class PromiseAbstractOperations {
     private PromiseAbstractOperations() {
     }
 
-    private static ScriptException newTypeError(ExecutionContext cx, String message) {
-        // TODO: error message
-        return Errors.newError(cx, Intrinsics.TypeError, message);
+    private static ScriptException newTypeError(ExecutionContext cx, Messages.Key key) {
+        return Errors.newError(cx, Intrinsics.TypeError, key);
     }
 
     /**
@@ -463,9 +462,8 @@ public final class PromiseAbstractOperations {
             Realm realm = getRealm();
             /* step 5 */
             if (SameValue(x, promise)) {
-                // TODO: error message
                 ScriptException selfResolutionError = newTypeError(calleeContext,
-                        "self-resolution-error");
+                        Messages.Key.PromiseSelfResolution);
                 return rejectionHandler.call(calleeContext, UNDEFINED,
                         selfResolutionError.getValue());
             }
@@ -618,8 +616,8 @@ public final class PromiseAbstractOperations {
             }
             /* step 7 */
             if (SameValue(handlerResult, deferred.getPromise())) {
-                // TODO: error message
-                ScriptException selfResolutionError = newTypeError(cx, "self-resolution-error");
+                ScriptException selfResolutionError = newTypeError(cx,
+                        Messages.Key.PromiseSelfResolution);
                 deferred.getReject().call(cx, UNDEFINED, selfResolutionError.getValue());
                 return;
             }
