@@ -190,7 +190,7 @@ public class LoaderPrototype extends OrdinaryObject implements Initialisable {
             ScriptObject p = PromiseThen(cx, linkSet.getDone(), successCallback);
             /* step 12 */
             // FIXME: spec bug - PromiseOf
-            ScriptObject sourcePromise = PromiseResolve(cx, p);
+            ScriptObject sourcePromise = PromiseResolve(cx, source);
             /* step 13 */
             ProceedToTranslate(cx, loader, load, sourcePromise);
             /* step 14 */
