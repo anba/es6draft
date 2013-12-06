@@ -6,7 +6,9 @@
  */
 package com.github.anba.es6draft.repl;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
+import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,9 +20,13 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Errors;
+import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.internal.Microtask;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
@@ -94,6 +100,20 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         String id = String.format("%s@%d", object.getClass().getSimpleName(),
                 System.identityHashCode(object));
         console.print(id);
+    }
+
+    /** shell-function: {@code nextTick(function)} */
+    @Function(name = "nextTick", arity = 1)
+    public void nextTick(ExecutionContext cx, final ScriptObject function) {
+        if (!IsCallable(function)) {
+            throw Errors.throwTypeError(cx, Messages.Key.NotCallable);
+        }
+        cx.getRealm().getWorld().enqueueTask(new Microtask() {
+            @Override
+            public void execute(ExecutionContext cx) {
+                ((Callable) function).call(cx, UNDEFINED);
+            }
+        });
     }
 
     /** shell-function: {@code quit()} */
