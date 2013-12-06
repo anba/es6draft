@@ -19,13 +19,16 @@ class ScriptTestConsole implements ShellConsole {
 
     @Override
     public void putstr(String s) {
+        System.out.print(s);
     }
 
     @Override
     public void print(String s) {
+        System.out.println(s);
     }
 
     @Override
     public void printErr(String s) {
+        System.err.println(s);
     }
 }
