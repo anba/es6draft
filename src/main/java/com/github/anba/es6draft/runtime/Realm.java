@@ -393,8 +393,8 @@ public final class Realm {
         boolean defaultRealmObject = realmObject == null;
         if (defaultRealmObject) {
             realmObject = new RealmObject(realm);
+            realmObject.setRealm(realm);
         }
-        realmObject.setRealm(realm);
 
         //
         realm.realmObject = realmObject;
