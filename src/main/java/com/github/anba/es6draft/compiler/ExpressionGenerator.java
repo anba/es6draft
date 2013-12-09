@@ -55,11 +55,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                         Types.ExecutionContext, Types.ScriptObject, Types.String, Types.Object,
                         Type.BOOLEAN_TYPE));
 
-        // class: Callable
-        static final MethodDesc Callable_call = MethodDesc.create(MethodType.Interface,
-                Types.Callable, "call", Type.getMethodType(Types.Object, Types.ExecutionContext,
-                        Types.Object, Types.Object_));
-
         // class: Eval
         static final MethodDesc Eval_directEval = MethodDesc.create(MethodType.Static, Types.Eval,
                 "directEval", Type.getMethodType(Types.Object, Types.Object_,
@@ -278,6 +273,11 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     }
 
     private static final Object[] EMPTY_BSM_ARGS = new Object[] {};
+
+    private void invokeDynamicCall(ExpressionVisitor mv) {
+        mv.invokedynamic(Bootstrap.getCallName(), Bootstrap.getCallMethodDescriptor(),
+                Bootstrap.getCallBootstrap(), EMPTY_BSM_ARGS);
+    }
 
     private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
         mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
@@ -650,7 +650,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         /* steps 11, 14 */
         // stack: [func(Callable), cx, thisValue, args] -> [result]
-        mv.invoke(Methods.Callable_call);
+        invokeDynamicCall(mv);
     }
 
     /**
