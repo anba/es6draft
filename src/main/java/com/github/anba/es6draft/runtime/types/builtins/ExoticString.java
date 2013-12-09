@@ -100,7 +100,7 @@ public class ExoticString extends OrdinaryObject {
             return null;
         }
         CharSequence resultStr = str.subSequence((int) index, (int) index + 1);
-        return new PropertyDescriptor(resultStr, false, true, false).toProperty();
+        return new Property(resultStr, false, true, false);
     }
 
     /**

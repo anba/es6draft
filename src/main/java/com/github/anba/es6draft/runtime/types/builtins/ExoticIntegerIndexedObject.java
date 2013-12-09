@@ -72,7 +72,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
                 return null;
             }
             boolean writable = getWritable();
-            return new PropertyDescriptor(value, writable, true, false).toProperty();
+            return new Property(value, writable, true, false);
         }
         /* step 4 */
         return ordinaryGetOwnProperty(propertyKey);
