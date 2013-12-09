@@ -191,13 +191,15 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                                 Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorComprehension = MethodDesc.create(
-                MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorComprehension",
-                Type.getMethodType(Types.ScriptObject, Types.MethodHandle, Types.ExecutionContext));
+                MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorComprehension", Type
+                        .getMethodType(Types.ScriptObject, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateLegacyGeneratorComprehension = MethodDesc
                 .create(MethodType.Static, Types.ScriptRuntime,
                         "EvaluateLegacyGeneratorComprehension", Type.getMethodType(
-                                Types.ScriptObject, Types.MethodHandle, Types.ExecutionContext));
+                                Types.ScriptObject, Types.RuntimeInfo$Function,
+                                Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_EvaluateGeneratorExpression = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateGeneratorExpression", Type
@@ -1798,8 +1800,8 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     public ValType visit(GeneratorComprehension node, ExpressionVisitor mv) {
         codegen.compile(node, mv);
 
-        mv.invokeStaticMH(codegen.getClassName(), codegen.methodName(node),
-                codegen.methodDescriptor(node));
+        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
+                codegen.methodDescriptor(node, FunctionName.RTI));
         mv.loadExecutionContext();
         if (!(node.getComprehension() instanceof LegacyComprehension)) {
             mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorComprehension);

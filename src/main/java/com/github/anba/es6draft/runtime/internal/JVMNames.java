@@ -15,6 +15,32 @@ public final class JVMNames {
     }
 
     /**
+     * Adds the given prefix/suffix pair to the bytecode name, neither prefix nor suffix may contain
+     * characters which require additional escapes
+     */
+    public static String addPrefixSuffix(String name, String prefix, String suffix) {
+        assert name.length() >= 2 : "expected bytecode name";
+        assert prefix.isEmpty() || toBytecodeName(prefix) == prefix : "prefix needs escapes";
+        assert suffix.isEmpty() || toBytecodeName(suffix) == suffix : "suffix needs escapes";
+        StringBuilder sb = new StringBuilder(2 + name.length() + prefix.length() + suffix.length());
+        if (name.charAt(0) != '\\' || prefix.isEmpty()) {
+            // simple concat if name is not mangled or prefix is empty
+            sb.append(prefix).append(name);
+        } else {
+            // add \= indicator before adding prefix
+            sb.append("\\=").append(prefix);
+            if (name.charAt(1) == '=') {
+                // \= indicator was already present, append remaining characters
+                sb.append(name, 2, name.length());
+            } else {
+                sb.append(name);
+            }
+        }
+        // add suffix and return result
+        return sb.append(suffix).toString();
+    }
+
+    /**
      * Returns the corresponding bytecode name of the input string
      */
     public static String toBytecodeName(String n) {
