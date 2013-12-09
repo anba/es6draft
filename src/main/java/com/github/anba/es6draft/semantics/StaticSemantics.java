@@ -434,11 +434,7 @@ public final class StaticSemantics {
      * 14.6.1 Static Semantics: Tail Position<br>
      * 14.6.2 Static Semantics: HasProductionInTailPosition
      */
-    public static Set<Expression> TailCallNodes(Expression expr, boolean strict) {
-        if (!strict) {
-            // Tail calls are only enabled in strict-mode code [14.6.1 Tail Position, step 2]
-            return emptySet();
-        }
+    public static Set<Expression> TailCallNodes(Expression expr) {
         while (expr instanceof CommaExpression) {
             expr = last(((CommaExpression) expr).getOperands());
         }
