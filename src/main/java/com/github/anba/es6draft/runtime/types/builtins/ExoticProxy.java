@@ -16,10 +16,8 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.IsCompatiblePropertyDescriptor;
 
 import java.util.Arrays;
-import java.util.WeakHashMap;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -42,9 +40,6 @@ public class ExoticProxy implements ScriptObject {
     /** [[ProxyHandler]] */
     private ScriptObject proxyHandler;
 
-    // thenable coercions weakmap
-    private WeakHashMap<Realm, ScriptObject> thenableCoercions;
-
     public ExoticProxy(ScriptObject target, ScriptObject handler) {
         this.proxyTarget = target;
         this.proxyHandler = handler;
@@ -59,24 +54,6 @@ public class ExoticProxy implements ScriptObject {
             throw throwTypeError(cx, Messages.Key.ProxyRevoked);
         }
         return proxyHandler;
-    }
-
-    @Override
-    public ScriptObject thenableCoercionsGet(Realm realm) {
-        WeakHashMap<Realm, ScriptObject> coercions = thenableCoercions;
-        if (coercions == null) {
-            return null;
-        }
-        return coercions.get(realm);
-    }
-
-    @Override
-    public void thenableCoercionsSet(Realm realm, ScriptObject promise) {
-        WeakHashMap<Realm, ScriptObject> coercions = thenableCoercions;
-        if (coercions == null) {
-            thenableCoercions = coercions = new WeakHashMap<>();
-        }
-        coercions.put(realm, promise);
     }
 
     /**

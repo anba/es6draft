@@ -18,35 +18,29 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  */
 public final class Deferred {
     /** [[Promise]] */
-    private ScriptObject promise;
+    private final ScriptObject promise;
 
     /** [[Resolve]] */
-    private Callable resolve;
+    private final Callable resolve;
 
     /** [[Reject]] */
-    private Callable reject;
+    private final Callable reject;
 
     /**
-     * Creates an empty Deferred record
+     * Creates a new Deferred record
      */
-    public Deferred() {
+    public Deferred(ScriptObject promise, Callable resolve, Callable reject) {
+        assert promise != null && resolve != null && reject != null;
+        this.promise = promise;
+        this.resolve = resolve;
+        this.reject = reject;
     }
 
     /**
      * Returns the [[Promise]] field of this Deferred record
      */
     public ScriptObject getPromise() {
-        assert promise != null;
         return promise;
-    }
-
-    /**
-     * Sets the [[Promise]] field of this Deferred record to {@code promise}
-     */
-    public void setPromise(ScriptObject promise) {
-        assert this.promise == null && promise != null;
-        assert resolve != null && reject != null;
-        this.promise = promise;
     }
 
     /**
@@ -57,25 +51,9 @@ public final class Deferred {
     }
 
     /**
-     * Sets the [[Resolve]] field of this Deferred record to {@code resolve}
-     */
-    public void setResolve(Callable resolve) {
-        // assert this.resolve == null && resolve != null;
-        this.resolve = resolve;
-    }
-
-    /**
      * Returns the [[Reject]] field of this Deferred record
      */
     public Callable getReject() {
         return reject;
-    }
-
-    /**
-     * Sets the [[Reject]] field of this Deferred record to {@code reject}
-     */
-    public void setReject(Callable reject) {
-        // assert this.reject == null && reject != null;
-        this.reject = reject;
     }
 }

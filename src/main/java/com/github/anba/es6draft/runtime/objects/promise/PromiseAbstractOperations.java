@@ -27,7 +27,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>Promise Objects</h1><br>
@@ -61,20 +60,6 @@ public final class PromiseAbstractOperations {
      */
     public static void QueueMicrotask(ExecutionContext cx, Microtask task) {
         cx.getRealm().getWorld().enqueueTask(task);
-    }
-
-    /**
-     * ThenableCoercionsGet ( realm, thenable )
-     */
-    public static ScriptObject ThenableCoercionsGet(Realm realm, ScriptObject thenable) {
-        return thenable.thenableCoercionsGet(realm);
-    }
-
-    /**
-     * ThenableCoercionsSet ( realm, thenable, promise )
-     */
-    public static void ThenableCoercionsSet(Realm realm, ScriptObject thenable, ScriptObject promise) {
-        thenable.thenableCoercionsSet(realm, promise);
     }
 
     /**
@@ -184,24 +169,23 @@ public final class PromiseAbstractOperations {
             throw throwTypeError(cx, Messages.Key.NotConstructor);
         }
         /* step 2 */
-        Deferred deferred = new Deferred();
+        DeferredConstructionFunction resolver = new DeferredConstructionFunction(cx.getRealm());
         /* steps 3-4 */
-        DeferredConstructionFunction resolver = new DeferredConstructionFunction(cx.getRealm(),
-                deferred);
-        /* steps 5-6 */
         ScriptObject promise = ((Constructor) c).construct(cx, resolver);
-        /* step 7 */
-        if (deferred.getResolve() == null) {
+        /* step 5 */
+        Object resolve = resolver.resolve;
+        /* step 6 */
+        if (!IsCallable(resolve)) {
             throw throwTypeError(cx, Messages.Key.NotCallable);
         }
+        /* step 7 */
+        Object reject = resolver.reject;
         /* step 8 */
-        if (deferred.getReject() == null) {
+        if (!IsCallable(reject)) {
             throw throwTypeError(cx, Messages.Key.NotCallable);
         }
         /* step 9 */
-        deferred.setPromise(promise);
-        /* step 10 */
-        return deferred;
+        return new Deferred(promise, (Callable) resolve, (Callable) reject);
     }
 
     /**
@@ -276,39 +260,30 @@ public final class PromiseAbstractOperations {
      * UpdateDeferredFromPotentialThenable ( x, deferred, realm )
      */
     public static boolean UpdateDeferredFromPotentialThenable(ExecutionContext cx, Object x,
-            Deferred deferred, Realm realm) {
+            Deferred deferred) {
         /* step 1 */
         if (!Type.isObject(x)) {
             return false; /* "not a thenable" */
         }
         ScriptObject thenable = Type.objectValue(x);
-        /* step 2 */
-        ScriptObject coercedAlready = ThenableCoercionsGet(realm, thenable);
-        /* step 3 */
-        if (coercedAlready != null) {
-            Invoke(cx, coercedAlready, "then", deferred.getResolve(), deferred.getReject());
-            return true;
-        }
-        /* step 4, 6 */
+        /* steps 2-4 */
         Object then;
         try {
             then = Get(cx, thenable, "then");
         } catch (ScriptException e) {
-            /* step 5 */
+            /* step 3 */
             deferred.getReject().call(cx, UNDEFINED, e.getValue());
             return true;
         }
-        /* step 7 */
+        /* step 5 */
         if (!IsCallable(then)) {
             return false; /* "not a thenable" */
         }
-        /* step 8 */
-        ThenableCoercionsSet(realm, thenable, deferred.getPromise());
-        /* step 9 */
+        /* steps 6-7 */
         try {
             ((Callable) then).call(cx, thenable, deferred.getResolve(), deferred.getReject());
         } catch (ScriptException e) {
-            /* step 10 */
+            /* step 7 */
             deferred.getReject().call(cx, UNDEFINED, e.getValue());
         }
         return true;
@@ -320,12 +295,14 @@ public final class PromiseAbstractOperations {
      * Deferred Construction Functions
      */
     public static final class DeferredConstructionFunction extends BuiltinFunction {
-        /** [[Deferred]] */
-        private final Deferred deferred;
+        /** [[Resolve]] */
+        private Object resolve;
 
-        public DeferredConstructionFunction(Realm realm, Deferred deferred) {
+        /** [[Reject]] */
+        private Object reject;
+
+        public DeferredConstructionFunction(Realm realm) {
             super(realm, ANONYMOUS, 2);
-            this.deferred = deferred;
         }
 
         @Override
@@ -333,20 +310,10 @@ public final class PromiseAbstractOperations {
             Object resolve = args.length > 0 ? args[0] : UNDEFINED;
             Object reject = args.length > 1 ? args[1] : UNDEFINED;
             /* step 1 */
-            Deferred deferred = this.deferred;
+            this.resolve = resolve;
             /* step 2 */
-            if (IsCallable(resolve)) {
-                deferred.setResolve((Callable) resolve);
-            } else {
-                deferred.setResolve(null);
-            }
+            this.reject = reject;
             /* step 3 */
-            if (IsCallable(reject)) {
-                deferred.setReject((Callable) reject);
-            } else {
-                deferred.setReject(null);
-            }
-            /* step 4 */
             return UNDEFINED;
         }
     }
@@ -420,7 +387,6 @@ public final class PromiseAbstractOperations {
                 return deferred.getResolve().call(calleeContext, UNDEFINED, values);
             }
             /* step 9 */
-            // FIXME: missing in spec
             return UNDEFINED;
         }
     }
@@ -459,17 +425,15 @@ public final class PromiseAbstractOperations {
             /* step 3 */
             Callable rejectionHandler = this.rejectionHandler;
             /* step 4 */
-            Realm realm = getRealm();
-            /* step 5 */
             if (SameValue(x, promise)) {
                 ScriptException selfResolutionError = newTypeError(calleeContext,
                         Messages.Key.PromiseSelfResolution);
                 return rejectionHandler.call(calleeContext, UNDEFINED,
                         selfResolutionError.getValue());
             }
-            /* step 6 */
+            /* step 5 */
             Constructor c = promise.getConstructor();
-            /* step 7 */
+            /* step 6 */
             if (IsPromise(x)) {
                 PromiseObject xPromise = (PromiseObject) x;
                 Constructor xConstructor = xPromise.getConstructor();
@@ -478,25 +442,16 @@ public final class PromiseAbstractOperations {
                             rejectionHandler);
                 }
             }
-            /* step 8 */
-            if (Type.isObject(x)) {
-                ScriptObject coercedAlready = ThenableCoercionsGet(realm, Type.objectValue(x));
-                if (coercedAlready != null) {
-                    return Invoke(calleeContext, coercedAlready, "then", fulfillmentHandler,
-                            rejectionHandler);
-                }
-            }
-            /* steps 9-10 */
+            /* steps 7-8 */
             Deferred deferred = GetDeferred(calleeContext, c);
-            /* steps 11-12 */
-            boolean updateResult = UpdateDeferredFromPotentialThenable(calleeContext, x, deferred,
-                    realm);
-            /* step 13 */
+            /* steps 9-10 */
+            boolean updateResult = UpdateDeferredFromPotentialThenable(calleeContext, x, deferred);
+            /* step 11 */
             if (updateResult) {
                 return Invoke(calleeContext, deferred.getPromise(), "then", fulfillmentHandler,
                         rejectionHandler);
             }
-            /* step 14 */
+            /* step 12 */
             return fulfillmentHandler.call(calleeContext, UNDEFINED, x);
         }
     }
@@ -523,7 +478,6 @@ public final class PromiseAbstractOperations {
             PromiseObject promise = this.promise;
             /* step 2 */
             PromiseReject(calleeContext, promise, reason);
-            // FIXME: missing in spec, PromiseReject does not return a completion value
             return UNDEFINED;
         }
     }
@@ -550,7 +504,6 @@ public final class PromiseAbstractOperations {
             PromiseObject promise = this.promise;
             /* step 2 */
             PromiseResolve(calleeContext, promise, resolution);
-            // FIXME: missing in spec, PromiseResolve does not return a completion value
             return UNDEFINED;
         }
     }
@@ -594,37 +547,25 @@ public final class PromiseAbstractOperations {
             Deferred deferred = reaction.getDeferred();
             /* step 2 */
             Callable handler = reaction.getHandler();
-            /* step 3 */
-            // FIXME: spec bug [[Realm]] not mandatory property for Callable objects
-            // Realm realm = handler.getRealm();
-            Realm realm;
-            if (handler instanceof FunctionObject) {
-                realm = ((FunctionObject) handler).getRealm();
-            } else if (handler instanceof BuiltinFunction) {
-                realm = ((BuiltinFunction) handler).getRealm();
-            } else {
-                realm = cx.getRealm();
-            }
-            /* step 4, 6 */
+            /* steps 3-5 */
             Object handlerResult;
             try {
                 handlerResult = handler.call(cx, UNDEFINED, argument);
             } catch (ScriptException e) {
-                /* step 5 */
+                /* step 4 */
                 deferred.getReject().call(cx, UNDEFINED, e.getValue());
                 return;
             }
-            /* step 7 */
+            /* step 6 */
             if (SameValue(handlerResult, deferred.getPromise())) {
                 ScriptException selfResolutionError = newTypeError(cx,
                         Messages.Key.PromiseSelfResolution);
                 deferred.getReject().call(cx, UNDEFINED, selfResolutionError.getValue());
                 return;
             }
-            /* steps 8-9 */
-            boolean updateResult = UpdateDeferredFromPotentialThenable(cx, handlerResult, deferred,
-                    realm);
-            /* step 10 */
+            /* steps 7-8 */
+            boolean updateResult = UpdateDeferredFromPotentialThenable(cx, handlerResult, deferred);
+            /* step 9 */
             if (!updateResult) {
                 deferred.getResolve().call(cx, UNDEFINED, handlerResult);
             }

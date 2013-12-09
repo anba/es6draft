@@ -16,10 +16,8 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.WeakHashMap;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.SimpleIterator;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -42,31 +40,10 @@ class WrapperProxy implements ScriptObject {
     protected final ScriptObject prototype;
     protected final boolean withProto;
 
-    // thenable coercions weakmap
-    private WeakHashMap<Realm, ScriptObject> thenableCoercions;
-
     public WrapperProxy(ScriptObject target, ScriptObject prototype, boolean withProto) {
         this.proxyTarget = target;
         this.prototype = prototype;
         this.withProto = withProto;
-    }
-
-    @Override
-    public ScriptObject thenableCoercionsGet(Realm realm) {
-        WeakHashMap<Realm, ScriptObject> coercions = thenableCoercions;
-        if (coercions == null) {
-            return null;
-        }
-        return coercions.get(realm);
-    }
-
-    @Override
-    public void thenableCoercionsSet(Realm realm, ScriptObject promise) {
-        WeakHashMap<Realm, ScriptObject> coercions = thenableCoercions;
-        if (coercions == null) {
-            thenableCoercions = coercions = new WeakHashMap<>();
-        }
-        coercions.put(realm, promise);
     }
 
     private static class CallabeWrapperProxy extends WrapperProxy implements Callable {
