@@ -188,26 +188,20 @@ public final class ScriptRuntime {
      * <p>
      * 12.1.7.2 Runtime Semantics: Evaluation
      */
-    public static ScriptObject EvaluateGeneratorComprehension(MethodHandle handle,
+    public static ScriptObject EvaluateGeneratorComprehension(RuntimeInfo.Function fd,
             ExecutionContext cx) {
+        /* step 1 (omitted) */
         /* step 2 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        /* steps 1, 3-4 */
-        String functionName = "";
-        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
-                | RuntimeInfo.FunctionFlags.Generator.getValue();
-        int expectedArgumentCount = 0;
-        RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
-                expectedArgumentCount, GeneratorComprehensionInitMH, handle,
-                GeneratorComprehensionInitSource);
+        /* steps 3-4 (not applicable) */
         /* step 5 */
-        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Arrow, function, scope);
+        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 7 */
         MakeConstructor(cx, closure, true, prototype);
         /* step 8 */
-        GeneratorObject iterator = closure.call(cx, UNDEFINED);
+        GeneratorObject iterator = (GeneratorObject) closure.call(cx, UNDEFINED);
         /* step 9 */
         return iterator;
     }
@@ -217,55 +211,22 @@ public final class ScriptRuntime {
      * <p>
      * Runtime Semantics: Evaluation
      */
-    public static ScriptObject EvaluateLegacyGeneratorComprehension(MethodHandle handle,
+    public static ScriptObject EvaluateLegacyGeneratorComprehension(RuntimeInfo.Function fd,
             ExecutionContext cx) {
+        /* step 1 (omitted) */
         /* step 2 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        /* steps 1, 3-4 */
-        String functionName = "";
-        int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
-                | RuntimeInfo.FunctionFlags.Generator.getValue();
-        int expectedArgumentCount = 0;
-        RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
-                expectedArgumentCount, GeneratorComprehensionInitMH, handle,
-                GeneratorComprehensionInitSource);
+        /* steps 3-4 (not applicable) */
         /* step 5 */
-        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Arrow, function, scope);
+        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Arrow, fd, scope);
         /* step 6 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
         /* step 7 */
         MakeConstructor(cx, closure, true, prototype);
         /* step 8 */
-        GeneratorObject iterator = closure.call(cx, UNDEFINED);
+        GeneratorObject iterator = (GeneratorObject) closure.call(cx, UNDEFINED);
         /* step 9 */
         return iterator;
-    }
-
-    private static final MethodHandle GeneratorComprehensionInitMH;
-    private static final String GeneratorComprehensionInitSource;
-    static {
-        Lookup lookup = MethodHandles.publicLookup();
-        try {
-            GeneratorComprehensionInitMH = lookup.findStatic(ScriptRuntime.class,
-                    "GeneratorComprehensionInit", MethodType.methodType(void.class,
-                            ExecutionContext.class, FunctionObject.class, Object[].class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new IllegalStateException(e);
-        }
-        try {
-            String source = "";
-            GeneratorComprehensionInitSource = SourceCompressor.compress(source).call();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    public static void GeneratorComprehensionInit(ExecutionContext cx, FunctionObject f,
-            Object[] args) {
-        // NB: generator comprehensions are defined in terms of generator functions which means they
-        // inherit the function declaration instantiation code from 9.2.14
-
-        /* steps 1-22 (not applicable, argumentsObjectNeeded = false) */
     }
 
     /**
@@ -1523,8 +1484,8 @@ public final class ScriptRuntime {
                 | RuntimeInfo.FunctionFlags.Super.getValue();
         int expectedArguments = 0;
         RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
-                expectedArguments, DefaultConstructorInitMH, DefaultConstructorMH,
-                DefaultConstructorSource);
+                expectedArguments, DefaultConstructorSource, DefaultConstructorMH,
+                DefaultConstructorCallMH);
 
         return function;
     }
@@ -1539,23 +1500,23 @@ public final class ScriptRuntime {
         int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue();
         int expectedArguments = 0;
         RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
-                expectedArguments, DefaultEmptyConstructorInitMH, DefaultEmptyConstructorMH,
-                DefaultEmptyConstructorSource);
+                expectedArguments, DefaultEmptyConstructorSource, DefaultEmptyConstructorMH,
+                DefaultEmptyConstructorCallMH);
 
         return function;
     }
 
-    private static final MethodHandle DefaultConstructorInitMH;
     private static final MethodHandle DefaultConstructorMH;
+    private static final MethodHandle DefaultConstructorCallMH;
     private static final String DefaultConstructorSource;
     static {
         Lookup lookup = MethodHandles.publicLookup();
         try {
-            DefaultConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
-                    "DefaultConstructorInit", MethodType.methodType(void.class,
-                            ExecutionContext.class, FunctionObject.class, Object[].class));
             DefaultConstructorMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
                     MethodType.methodType(Object.class, ExecutionContext.class));
+            DefaultConstructorCallMH = lookup.findStatic(ScriptRuntime.class, "DefaultConstructor",
+                    MethodType.methodType(Object.class, OrdinaryFunction.class,
+                            ExecutionContext.class, Object.class, Object[].class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
@@ -1567,7 +1528,7 @@ public final class ScriptRuntime {
         }
     }
 
-    public static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
+    private static void DefaultConstructorInit(ExecutionContext cx, FunctionObject f, Object[] args) {
         EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
         envRec.createMutableBinding("args", false);
@@ -1592,18 +1553,27 @@ public final class ScriptRuntime {
         return UNDEFINED;
     }
 
-    private static final MethodHandle DefaultEmptyConstructorInitMH;
+    public static Object DefaultConstructor(OrdinaryFunction callee,
+            ExecutionContext callerContext, Object thisValue, Object[] args) {
+        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(callee,
+                thisValue);
+        DefaultConstructorInit(calleeContext, callee, args);
+        return DefaultConstructor(calleeContext);
+    }
+
     private static final MethodHandle DefaultEmptyConstructorMH;
+    private static final MethodHandle DefaultEmptyConstructorCallMH;
     private static final String DefaultEmptyConstructorSource;
     static {
         Lookup lookup = MethodHandles.publicLookup();
         try {
-            DefaultEmptyConstructorInitMH = lookup.findStatic(ScriptRuntime.class,
-                    "DefaultEmptyConstructorInit", MethodType.methodType(void.class,
-                            ExecutionContext.class, FunctionObject.class, Object[].class));
             DefaultEmptyConstructorMH = lookup.findStatic(ScriptRuntime.class,
                     "DefaultEmptyConstructor",
                     MethodType.methodType(Object.class, ExecutionContext.class));
+            DefaultEmptyConstructorCallMH = lookup.findStatic(ScriptRuntime.class,
+                    "DefaultEmptyConstructor", MethodType.methodType(Object.class,
+                            OrdinaryFunction.class, ExecutionContext.class, Object.class,
+                            Object[].class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
@@ -1615,7 +1585,7 @@ public final class ScriptRuntime {
         }
     }
 
-    public static void DefaultEmptyConstructorInit(ExecutionContext cx, FunctionObject f,
+    private static void DefaultEmptyConstructorInit(ExecutionContext cx, FunctionObject f,
             Object[] args) {
         EnvironmentRecord envRec = cx.getVariableEnvironment().getEnvRec();
 
@@ -1625,6 +1595,14 @@ public final class ScriptRuntime {
 
     public static Object DefaultEmptyConstructor(ExecutionContext cx) {
         return UNDEFINED;
+    }
+
+    public static Object DefaultEmptyConstructor(OrdinaryFunction callee,
+            ExecutionContext callerContext, Object thisValue, Object[] args) {
+        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(callee,
+                thisValue);
+        DefaultEmptyConstructorInit(calleeContext, callee, args);
+        return DefaultEmptyConstructor(calleeContext);
     }
 
     /**
@@ -1642,14 +1620,9 @@ public final class ScriptRuntime {
      * B.3.1 __proto___ Property Names in Object Initialisers
      */
     public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
-        if (cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
-            // FIXME: function .name and __proto__ interaction unclear
-            if (Type.isNull(value) || Type.isObject(value)) {
-                object.setPrototypeOf(cx, Type.isNull(value) ? null : Type.objectValue(value));
-            }
-        } else {
-            // FIXME: need to set .name if IsAnonymousFunction(value)
-            defineProperty(object, "__proto__", value, cx);
+        // FIXME: function .name and __proto__ interaction unclear
+        if (Type.isNull(value) || Type.isObject(value)) {
+            object.setPrototypeOf(cx, Type.isNull(value) ? null : Type.objectValue(value));
         }
     }
 }
