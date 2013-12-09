@@ -311,12 +311,12 @@ public class OrdinaryObject implements ScriptObject {
                 }
                 if (desc.isGenericDescriptor() || desc.isDataDescriptor()) {
                     if (object != null) {
-                        object.__put__(propertyKey, desc.toProperty());
+                        object.__put__(propertyKey, desc.toPlainProperty());
                     }
                 } else {
                     assert desc.isAccessorDescriptor();
                     if (object != null) {
-                        object.__put__(propertyKey, desc.toProperty());
+                        object.__put__(propertyKey, desc.toPlainProperty());
                     }
                 }
                 return true;
@@ -504,7 +504,7 @@ public class OrdinaryObject implements ScriptObject {
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
-                ownDesc = new PropertyDescriptor(UNDEFINED, true, true, true).toProperty();
+                ownDesc = new Property(UNDEFINED, true, true, true);
             }
         }
         /* step 5 */
@@ -546,7 +546,7 @@ public class OrdinaryObject implements ScriptObject {
             if (parent != null) {
                 return parent.set(cx, propertyKey, value, receiver);
             } else {
-                ownDesc = new PropertyDescriptor(UNDEFINED, true, true, true).toProperty();
+                ownDesc = new Property(UNDEFINED, true, true, true);
             }
         }
         /* step 5 */

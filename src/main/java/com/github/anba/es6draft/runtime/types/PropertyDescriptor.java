@@ -71,7 +71,7 @@ public final class PropertyDescriptor implements Cloneable {
         writable = original.isWritable();
         enumerable = original.isEnumerable();
         configurable = original.isConfigurable();
-        origin = null;
+        origin = original.getOrigin();
     }
 
     /**
@@ -125,8 +125,15 @@ public final class PropertyDescriptor implements Cloneable {
     /**
      * Converts this property descriptor to a {@link Property} object
      */
-    public Property toProperty() {
+    public Property toPlainProperty() {
         return new Property(this);
+    }
+
+    /**
+     * Converts this property descriptor to a {@link Property} object
+     */
+    public Property toProperty() {
+        return new Property(this, null);
     }
 
     @Override
@@ -205,6 +212,10 @@ public final class PropertyDescriptor implements Cloneable {
         /* step 1 */
         if (desc == null) {
             return UNDEFINED;
+        }
+        /* step 2 */
+        if (desc.getOrigin() != null) {
+            return desc.getOrigin();
         }
         /* steps 3-4 */
         ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
@@ -566,5 +577,12 @@ public final class PropertyDescriptor implements Cloneable {
     public final void setConfigurable(boolean configurable) {
         present |= CONFIGURABLE;
         this.configurable = configurable;
+    }
+
+    /**
+     * Returns the <tt>[[Origin]]</tt> field
+     */
+    public ScriptObject getOrigin() {
+        return origin;
     }
 }
