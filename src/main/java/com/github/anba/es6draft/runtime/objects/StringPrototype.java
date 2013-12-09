@@ -654,8 +654,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* step 4 */
             if (Type.isObject(searchString)
                     && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
-                // TODO: better error message
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
             /* steps 5-6 */
             String searchStr = ToFlatString(cx, searchString);
@@ -688,8 +687,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* step 4 */
             if (Type.isObject(searchString)
                     && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
-                // TODO: better error message
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw throwTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
             /* steps 5-6 */
             String searchStr = ToFlatString(cx, searchString);

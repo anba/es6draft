@@ -179,6 +179,7 @@ public final class Messages {
         InvalidStringRepeat("string.invalid_string_repeat"),
         InvalidCodePoint("string.invalid_codepoint"),
         InvalidNormalizationForm("string.invalid_normalization_form"),
+        InvalidRegExpArgument("string.invalid_regexp_argument"),
         // 20.1 Number Objects
         InvalidRadix("number.invalid_radix"),
         InvalidPrecision("number.invalid_precision"),
@@ -205,15 +206,21 @@ public final class Messages {
         // 23.2 Set Objects
         SetInvalidComparator("set.invalid_comparator"),
         // 26.2 Proxy Objects
-        ProxySameValue("proxy.same_value"),
-        ProxyIncompatibleDescriptor("proxy.incompatible_descriptor"),
+        ProxyRevoked("proxy.revoked"),
+        ProxySamePrototype("proxy.same_prototype"),
         ProxyNotObject("proxy.not_object"),
         ProxyNotObjectOrUndefined("proxy.not_object_or_undefined"),
+        ProxyIncompatibleDescriptor("proxy.incompatible_descriptor"),
+        ProxyDeleteNonConfigurable("proxy.delete_non_configurable"),
+        ProxySameValue("proxy.same_value"),
+        ProxyNoSetter("proxy.no_setter"),
+        ProxyNoGetter("proxy.no_getter"),
+        ProxyExtensible("proxy.extensible"),
         ProxyNotExtensible("proxy.not_extensible"),
         ProxyNotConfigurable("proxy.not_configurable"),
-        ProxyNoGetter("proxy.no_getter"),
-        ProxyNoSetter("proxy.no_setter"),
-        ProxyNoOwnProperty("proxy.no_own_property"),
+        ProxyAbsentOrConfigurable("proxy.absent_or_configurable"),
+        ProxyAbsentNotExtensible("proxy.absent_not_extensible"),
+
         // Promise Object
         PromiseSelfResolution("promise.self_resolution"),
         // Modules

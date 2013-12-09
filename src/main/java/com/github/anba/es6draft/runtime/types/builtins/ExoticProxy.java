@@ -56,8 +56,7 @@ public class ExoticProxy implements ScriptObject {
 
     protected final ScriptObject getProxyHandler(ExecutionContext cx) {
         if (proxyHandler == null) {
-            // FIXME: use better error message
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw throwTypeError(cx, Messages.Key.ProxyRevoked);
         }
         return proxyHandler;
     }
@@ -311,7 +310,7 @@ public class ExoticProxy implements ScriptObject {
         ScriptObject targetProto = target.getPrototypeOf(cx);
         /* step 14 */
         if (!SameValue(handlerProto_, targetProto)) {
-            throw throwTypeError(cx, Messages.Key.ProxySameValue);
+            throw throwTypeError(cx, Messages.Key.ProxySamePrototype);
         }
         /* step 15 */
         return handlerProto_;
@@ -347,7 +346,7 @@ public class ExoticProxy implements ScriptObject {
         ScriptObject targetProto = target.getPrototypeOf(cx);
         /* step 16 */
         if (booleanTrapResult && !SameValue(prototype, targetProto)) {
-            throw throwTypeError(cx, Messages.Key.ProxySameValue);
+            throw throwTypeError(cx, Messages.Key.ProxySamePrototype);
         }
         /* step 17 */
         return booleanTrapResult;
@@ -376,7 +375,7 @@ public class ExoticProxy implements ScriptObject {
         boolean targetResult = target.isExtensible(cx);
         /* step 12 */
         if (booleanTrapResult != targetResult) {
-            throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
+            throw throwTypeError(cx, Messages.Key.ProxyExtensible);
         }
         /* step 13 */
         return booleanTrapResult;
@@ -405,7 +404,7 @@ public class ExoticProxy implements ScriptObject {
         boolean targetIsExtensible = target.isExtensible(cx);
         /* step 12 */
         if (booleanTrapResult && targetIsExtensible) {
-            throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
+            throw throwTypeError(cx, Messages.Key.ProxyExtensible);
         }
         /* step 13 */
         return booleanTrapResult;
@@ -483,10 +482,9 @@ public class ExoticProxy implements ScriptObject {
         /* step 21 */
         if (!resultDesc.isConfigurable()) {
             if (targetDesc == null || targetDesc.isConfigurable()) {
-                throw throwTypeError(cx, Messages.Key.ProxyNotConfigurable);
+                throw throwTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
             }
         }
-        // TODO: [[Origin]] ???
         /* step 22 */
         return resultDesc.toProperty();
     }
@@ -548,17 +546,17 @@ public class ExoticProxy implements ScriptObject {
         /* steps 20-21 */
         if (targetDesc == null) {
             if (!extensibleTarget) {
-                throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
+                throw throwTypeError(cx, Messages.Key.ProxyAbsentNotExtensible);
             }
             if (!desc.isConfigurable()) {
-                throw throwTypeError(cx, Messages.Key.ProxyNotConfigurable);
+                throw throwTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
             }
         } else {
             if (!IsCompatiblePropertyDescriptor(extensibleTarget, desc, targetDesc)) {
                 throw throwTypeError(cx, Messages.Key.ProxyIncompatibleDescriptor);
             }
             if (settingConfigFalse && targetDesc.isConfigurable()) {
-                throw throwTypeError(cx, Messages.Key.ProxyNotConfigurable);
+                throw throwTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
             }
         }
         /* step 22 */
@@ -777,7 +775,7 @@ public class ExoticProxy implements ScriptObject {
         }
         /* step 15 */
         if (!targetDesc.isConfigurable()) {
-            throw throwTypeError(cx, Messages.Key.ProxyNotConfigurable);
+            throw throwTypeError(cx, Messages.Key.ProxyDeleteNonConfigurable);
         }
         /* step 16 */
         return true;
