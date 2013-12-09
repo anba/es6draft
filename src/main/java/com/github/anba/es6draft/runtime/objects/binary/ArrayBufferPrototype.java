@@ -124,7 +124,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
             /* step 22 */
             ByteBuffer toBuf = _new.getData();
             /* steps 23 */
-            CopyDataBlockBytes(fromBuf, first, toBuf, 0, newLen);
+            CopyDataBlockBytes(toBuf, 0, fromBuf, first, newLen);
             /* step 24 */
             return _new;
         }

@@ -88,11 +88,10 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
     }
 
     /**
-     * FIXME: switch parameter order!<br>
      * 6.2.6.2 CopyDataBlockBytes(toBlock, toIndex, fromBlock, fromIndex, count)
      */
-    public static void CopyDataBlockBytes(ByteBuffer fromBlock, long fromIndex, ByteBuffer toBlock,
-            long toIndex, long count) {
+    public static void CopyDataBlockBytes(ByteBuffer toBlock, long toIndex, ByteBuffer fromBlock,
+            long fromIndex, long count) {
         /* step 1 */
         assert fromBlock != toBlock;
         /* step 2 */
@@ -180,7 +179,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         /* step 13 */
         ByteBuffer targetBlock = targetBuffer.getData();
         /* step 14 */
-        CopyDataBlockBytes(srcBlock, srcByteOffset, targetBlock, 0, cloneLength);
+        CopyDataBlockBytes(targetBlock, 0, srcBlock, srcByteOffset, cloneLength);
         /* step 15 */
         return targetBuffer;
     }
