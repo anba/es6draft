@@ -17,7 +17,11 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 
 /**
- * 12.1.4.2 Array Comprehension
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.1 Primary Expressions</h2>
+ * <ul>
+ * <li>12.1.4.2 Array Comprehension
+ * </ul>
  */
 class ArrayComprehensionGenerator extends ComprehensionGenerator {
     private static class Methods {
@@ -71,7 +75,7 @@ class ArrayComprehensionGenerator extends ComprehensionGenerator {
     /**
      * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
      * <p>
-     * ComprehensionQualifierTail : AssignmentExpression
+     * ComprehensionTail : AssignmentExpression
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {

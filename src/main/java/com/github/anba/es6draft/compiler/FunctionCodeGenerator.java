@@ -28,7 +28,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 /**
  * 
  */
-class FunctionCodeGenerator extends DeclarationBindingInstantiationGenerator {
+class FunctionCodeGenerator {
     private static class Methods {
         // ExecutionContext
         static final MethodDesc ExecutionContext_newFunctionExecutionContext = MethodDesc.create(
@@ -140,8 +140,10 @@ class FunctionCodeGenerator extends DeclarationBindingInstantiationGenerator {
         }
     }
 
+    private final CodeGenerator codegen;
+
     FunctionCodeGenerator(CodeGenerator codegen) {
-        super(codegen);
+        this.codegen = codegen;
     }
 
     void generate(FunctionNode node) {

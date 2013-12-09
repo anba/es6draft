@@ -11,21 +11,62 @@ import org.objectweb.asm.Label;
 /**
  * Enhanced {@link Label} to track usage
  */
-class JumpLabel extends Label {
-    private boolean used = false;
+abstract class JumpLabel extends Label {
+    protected boolean used = false;
+
+    /**
+     * Label for {@code break} statements
+     */
+    static final class BreakLabel extends JumpLabel {
+        /**
+         * Returns {@code true} if this label is used, otherwise {@code false}
+         */
+        boolean isUsed() {
+            return used;
+        }
+    }
+
+    /**
+     * Label for {@code continue} statements
+     */
+    static final class ContinueLabel extends JumpLabel {
+        /**
+         * Returns {@code true} if this label is used, otherwise {@code false}
+         */
+        boolean isUsed() {
+            return used;
+        }
+    }
+
+    /**
+     * Label for {@code return} statements
+     */
+    static final class ReturnLabel extends JumpLabel {
+    }
+
+    /**
+     * Wraps an existing {@link JumpLabel}
+     */
+    static final class TempLabel extends JumpLabel {
+        private final JumpLabel actual;
+
+        TempLabel(JumpLabel actual) {
+            this.actual = actual;
+        }
+
+        /**
+         * Returns the wrapped {@link JumpLabel}
+         */
+        JumpLabel getActual() {
+            return actual;
+        }
+    }
 
     /**
      * Mark this label as being used
      */
-    JumpLabel mark() {
+    final JumpLabel mark() {
         used = true;
         return this;
-    }
-
-    /**
-     * Returns {@code true} if this label is used, otherwise {@code false}
-     */
-    boolean isUsed() {
-        return used;
     }
 }

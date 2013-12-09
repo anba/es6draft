@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.*;
+import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -22,7 +25,11 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.compiler.JumpLabel.BreakLabel;
+import com.github.anba.es6draft.compiler.JumpLabel.ContinueLabel;
+import com.github.anba.es6draft.compiler.JumpLabel.TempLabel;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 
 /**
@@ -238,7 +245,8 @@ class StatementGenerator extends
     @Override
     public Completion visit(DoWhileStatement node, StatementVisitor mv) {
         Label lblNext = new Label();
-        JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
+        ContinueLabel lblContinue = new ContinueLabel();
+        BreakLabel lblBreak = new BreakLabel();
 
         // L1: <statement>
         // IFNE ToBoolean(<expr>) L1
@@ -335,7 +343,8 @@ class StatementGenerator extends
     private <FORSTATEMENT extends IterationStatement & ScopedNode> Completion visitForInOfLoop(
             FORSTATEMENT node, Expression expr, Node lhs, Statement stmt,
             IterationKind iterationKind, StatementVisitor mv) {
-        JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
+        ContinueLabel lblContinue = new ContinueLabel();
+        BreakLabel lblBreak = new BreakLabel();
         Label loopstart = new Label(), loopbody = new Label();
 
         mv.enterVariableScope();
@@ -537,7 +546,8 @@ class StatementGenerator extends
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
         Label lblTest = new Label(), lblStmt = new Label();
-        JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
+        ContinueLabel lblContinue = new ContinueLabel();
+        BreakLabel lblBreak = new BreakLabel();
 
         Completion result;
         mv.goTo(lblTest);
@@ -649,7 +659,7 @@ class StatementGenerator extends
         mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
 
-        JumpLabel label = new JumpLabel();
+        BreakLabel label = new BreakLabel();
         mv.enterLabelled(node, label);
         Completion result = node.getStatement().accept(this, mv);
         mv.exitLabelled(node);
@@ -764,18 +774,13 @@ class StatementGenerator extends
     public Completion visit(ReturnStatement node, StatementVisitor mv) {
         Expression expr = node.getExpression();
         if (expr != null) {
-            if (!mv.isWrapped()) {
-                mv.setTailCall(TailCallNodes(expr, mv.isStrict()));
-            }
+            mv.enterTailCallPosition(expr);
             expressionBoxedValue(expr, mv);
-            if (!mv.isWrapped()) {
-                mv.setTailCall(TailCallNodes(null, mv.isStrict()));
-            }
+            mv.exitTailCallPosition();
         } else {
             mv.loadUndefined();
         }
-        mv.storeCompletionValue();
-        mv.goTo(mv.returnLabel());
+        mv.returnCompletion();
 
         return Completion.Return;
     }
@@ -800,8 +805,7 @@ class StatementGenerator extends
             Label noReturn = new Label();
             mv.dup();
             mv.ifnull(noReturn);
-            mv.storeCompletionValue();
-            mv.goTo(mv.returnLabel());
+            mv.returnCompletion();
             mv.mark(noReturn);
             mv.pop();
         } else {
@@ -926,7 +930,8 @@ class StatementGenerator extends
         // restore temp abrupt targets
         List<TempLabel> tempLabels = mv.exitFinallyScoped();
 
-        // various finally blocks
+        // various finally blocks (1 - 4)
+        // (1) finally block if 'catch' did not complete abruptly
         if (!catchResult.isAbrupt()) {
             mv.enterFinally();
             Completion finallyResult = finallyBlock.accept(this, mv);
@@ -936,6 +941,7 @@ class StatementGenerator extends
             }
         }
 
+        // (2) finally block for abrupt completions within 'try-catch'
         mv.mark(handlerFinallyStackOverflow);
         mv.mark(handlerFinally);
         mv.store(throwable);
@@ -948,6 +954,7 @@ class StatementGenerator extends
             mv.athrow();
         }
 
+        // (3) finally block if 'try' did not complete abruptly
         if (!tryResult.isAbrupt()) {
             mv.mark(noException);
             mv.enterFinally();
@@ -958,7 +965,7 @@ class StatementGenerator extends
             }
         }
 
-        // abrupt completion (return, break, continue) finally blocks
+        // (4) finally blocks for other abrupt completion (return, break, continue)
         for (TempLabel temp : tempLabels) {
             mv.mark(temp);
             restoreEnvironment(savedEnv, mv);
@@ -966,7 +973,7 @@ class StatementGenerator extends
             finallyBlock.accept(this, mv);
             mv.exitFinally();
             if (!finallyResult.isAbrupt()) {
-                mv.goTo(temp.getActual().mark());
+                mv.goTo(temp);
             }
         }
 
@@ -1097,6 +1104,8 @@ class StatementGenerator extends
         // restore temp abrupt targets
         List<TempLabel> tempLabels = mv.exitFinallyScoped();
 
+        // various finally blocks (1 - 3)
+        // (1) finally block for abrupt completions within 'try-catch'
         mv.mark(handlerFinallyStackOverflow);
         mv.mark(handlerFinally);
         mv.store(throwable);
@@ -1109,6 +1118,7 @@ class StatementGenerator extends
             mv.athrow();
         }
 
+        // (2) finally block if 'try' did not complete abruptly
         if (!tryResult.isAbrupt()) {
             mv.mark(noException);
             mv.enterFinally();
@@ -1119,7 +1129,7 @@ class StatementGenerator extends
             }
         }
 
-        // abrupt completion (return, break, continue) finally blocks
+        // (3) finally blocks for other abrupt completion (return, break, continue)
         for (TempLabel temp : tempLabels) {
             mv.mark(temp);
             restoreEnvironment(savedEnv, mv);
@@ -1127,7 +1137,7 @@ class StatementGenerator extends
             finallyBlock.accept(this, mv);
             mv.exitFinally();
             if (!finallyResult.isAbrupt()) {
-                mv.goTo(temp.getActual().mark());
+                mv.goTo(temp);
             }
         }
 
@@ -1293,7 +1303,8 @@ class StatementGenerator extends
     @Override
     public Completion visit(WhileStatement node, StatementVisitor mv) {
         Label lblNext = new Label();
-        JumpLabel lblContinue = new JumpLabel(), lblBreak = new JumpLabel();
+        ContinueLabel lblContinue = new ContinueLabel();
+        BreakLabel lblBreak = new BreakLabel();
 
         mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
@@ -1338,7 +1349,7 @@ class StatementGenerator extends
 
         // create new object lexical environment (withEnvironment-flag = true)
         mv.enterScope(node);
-        newObjectEnvironment(mv, true); // withEnvironment-flag = true
+        newObjectEnvironment(mv, true);
         pushLexicalEnvironment(mv);
 
         Completion result = node.getStatement().accept(this, mv);

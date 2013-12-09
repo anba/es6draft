@@ -6,8 +6,10 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.TailCallNodes;
 import static java.util.Collections.emptySet;
 
+import java.util.Collections;
 import java.util.Set;
 
 import org.objectweb.asm.Type;
@@ -37,7 +39,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private Variable<ExecutionContext> executionContext;
     private Scope scope;
     // tail-call support
-    private Set<Expression> tail = emptySet();
+    private Set<Expression> tailCallNodes = emptySet();
 
     protected ExpressionVisitor(CodeGenerator codeGenerator, String methodName,
             Type methodDescriptor, boolean strict, boolean globalCode) {
@@ -103,12 +105,30 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         lineInfo(node.getBeginLine());
     }
 
-    boolean isTailCall(Expression expr) {
-        return tail.contains(expr);
+    void enterTailCallPosition(Expression expr) {
+        if (isStrict()) {
+            // Tail calls are only enabled in strict-mode code [14.6.1 Tail Position, step 2]
+            this.tailCallNodes = TailCallNodes(expr);
+        }
     }
 
-    void setTailCall(Set<Expression> tail) {
-        assert tail != null;
-        this.tail = tail;
+    final void exitTailCallPosition() {
+        this.tailCallNodes = Collections.emptySet();
+    }
+
+    private boolean hasTailCalls = false;
+
+    final boolean hasTailCalls() {
+        return hasTailCalls;
+    }
+
+    final void updateTailCalls(ExpressionVisitor other) {
+        hasTailCalls |= other.hasTailCalls;
+    }
+
+    final boolean isTailCall(Expression expr) {
+        boolean isTaillCall = tailCallNodes.contains(expr);
+        hasTailCalls |= isTaillCall;
+        return isTaillCall;
     }
 }

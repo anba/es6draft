@@ -18,15 +18,12 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
-import com.github.anba.es6draft.ast.BreakStatement;
-import com.github.anba.es6draft.ast.BreakableStatement;
-import com.github.anba.es6draft.ast.ContinueStatement;
-import com.github.anba.es6draft.ast.GuardedCatchNode;
-import com.github.anba.es6draft.ast.IterationStatement;
-import com.github.anba.es6draft.ast.LabelledStatement;
-import com.github.anba.es6draft.ast.TopLevelNode;
-import com.github.anba.es6draft.ast.TryStatement;
+import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.JumpLabel.BreakLabel;
+import com.github.anba.es6draft.compiler.JumpLabel.ContinueLabel;
+import com.github.anba.es6draft.compiler.JumpLabel.ReturnLabel;
+import com.github.anba.es6draft.compiler.JumpLabel.TempLabel;
 
 /**
  * 
@@ -125,6 +122,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     private final TopLevelNode topLevelNode;
     private final CodeType codeType;
     private final boolean isScriptCode;
+    private final boolean isGenerator;
     private Variable<Object> completionValue;
     private Labels labels = new Labels(null);
     private int finallyDepth = 0;
@@ -139,8 +137,15 @@ abstract class StatementVisitor extends ExpressionVisitor {
         this.topLevelNode = topLevelNode;
         this.codeType = codeType;
         this.isScriptCode = codeType != CodeType.Function;
+        this.isGenerator = codeType == CodeType.Function && isGeneratorNode(topLevelNode);
         // no return in script code
-        this.labels.returnLabel = codeType == CodeType.Function ? new JumpLabel() : null;
+        this.labels.returnLabel = codeType == CodeType.Function ? new ReturnLabel() : null;
+    }
+
+    private static boolean isGeneratorNode(TopLevelNode node) {
+        return node instanceof GeneratorDeclaration
+                || node instanceof GeneratorExpression
+                || (node instanceof MethodDefinition && ((MethodDefinition) node).getType() == MethodDefinition.MethodType.Generator);
     }
 
     @Override
@@ -191,6 +196,21 @@ abstract class StatementVisitor extends ExpressionVisitor {
         }
     }
 
+    @Override
+    void enterTailCallPosition(Expression expr) {
+        if (!isWrapped() && !isGenerator) {
+            assert !isScriptCode;
+            super.enterTailCallPosition(expr);
+        }
+    }
+
+    /**
+     * Returns <code>true</code> when currently within a finally scoped block
+     */
+    private boolean isFinallyScoped() {
+        return labels.parent != null;
+    }
+
     /**
      * Enter a finally scoped block
      */
@@ -212,7 +232,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Returns <code>true</code> when currently within a wrapped block
      */
-    boolean isWrapped() {
+    private boolean isWrapped() {
         return wrapped != 0;
     }
 
@@ -247,7 +267,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Start code generation for {@link IterationStatement} nodes
      */
-    void enterIteration(IterationStatement node, JumpLabel lblBreak, JumpLabel lblContinue) {
+    void enterIteration(IterationStatement node, BreakLabel lblBreak, ContinueLabel lblContinue) {
         boolean hasBreak = node.getAbrupt().contains(Abrupt.Break);
         boolean hasContinue = node.getAbrupt().contains(Abrupt.Continue);
         if (!(hasBreak || hasContinue))
@@ -289,7 +309,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Start code generation for {@link BreakableStatement} nodes
      */
-    void enterBreakable(BreakableStatement node, JumpLabel lblBreak) {
+    void enterBreakable(BreakableStatement node, BreakLabel lblBreak) {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
         Labels labels = this.labels;
@@ -315,7 +335,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Start code generation for {@link LabelledStatement} nodes
      */
-    void enterLabelled(LabelledStatement node, JumpLabel lblBreak) {
+    void enterLabelled(LabelledStatement node, BreakLabel lblBreak) {
         if (!node.getAbrupt().contains(Abrupt.Break))
             return;
         Labels labels = this.labels;
@@ -351,24 +371,25 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     /**
+     * Pops the stack's top element and emits a return instruction
+     */
+    void returnCompletion() {
+        if (isFinallyScoped()) {
+            // If currently enclosed by a finally scoped block, store value in completion register
+            // and jump to (temporary) return label
+            storeCompletionValue();
+            goTo(returnLabel());
+        } else {
+            // Otherwise emit direct return instruction
+            areturn();
+        }
+    }
+
+    /**
      * Returns the current return-label
      */
-    Label returnLabel() {
+    private Label returnLabel() {
         return labels.returnLabel().mark();
-    }
-
-    /**
-     * Returns the current return-label, but does not increase the use-count
-     */
-    Label returnLabelImmediate() {
-        return labels.returnLabel();
-    }
-
-    /**
-     * Returns <code>true</code> iff the current return-label has a positive use-count
-     */
-    boolean hasReturn() {
-        return labels.returnLabel().isUsed();
     }
 
     /**
@@ -392,5 +413,19 @@ abstract class StatementVisitor extends ExpressionVisitor {
      */
     Label catchWithGuardedLabel() {
         return labels.catchLabels.peek();
+    }
+
+    /**
+     * Emit goto instruction to jump to {@code label}'s actual target
+     */
+    void goTo(TempLabel label) {
+        JumpLabel actual = label.getActual();
+        if (actual instanceof ReturnLabel) {
+            // specialize return label to emit direct return instruction
+            loadCompletionValue();
+            areturn();
+        } else {
+            goTo(actual.mark());
+        }
     }
 }

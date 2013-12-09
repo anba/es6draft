@@ -28,11 +28,15 @@ import com.github.anba.es6draft.ast.SwitchStatement;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
+import com.github.anba.es6draft.compiler.JumpLabel.BreakLabel;
 import com.github.anba.es6draft.compiler.StatementGenerator.Completion;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
- * 13.11 The switch Statement
+ * <h1>13 ECMAScript Language: Statements and Declarations</h1>
+ * <ul>
+ * <li>13.11 The switch Statement
+ * </ul>
  */
 class SwitchStatementGenerator extends
         DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
@@ -209,7 +213,7 @@ class SwitchStatementGenerator extends
             pushLexicalEnvironment(mv);
         }
 
-        JumpLabel lblBreak = new JumpLabel();
+        BreakLabel lblBreak = new BreakLabel();
         Completion result = CaseBlockEvaluation(node, type, lblBreak, switchValue, mv);
 
         if (!declarations.isEmpty() && !result.isAbrupt()) {
@@ -230,7 +234,7 @@ class SwitchStatementGenerator extends
      * 13.11.5 Runtime Semantics: CaseBlockEvaluation
      */
     private Completion CaseBlockEvaluation(SwitchStatement node, SwitchType type,
-            JumpLabel lblBreak, Variable<?> switchValue, StatementVisitor mv) {
+            BreakLabel lblBreak, Variable<?> switchValue, StatementVisitor mv) {
         List<SwitchClause> clauses = node.getClauses();
         Label lblDefault = null;
         Label[] labels = new Label[clauses.size()];

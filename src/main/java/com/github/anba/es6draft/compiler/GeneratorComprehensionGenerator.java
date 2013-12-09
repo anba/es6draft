@@ -14,7 +14,11 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
- * 12.1.7 Generator Comprehensions
+ * <h1>12 ECMAScript Language: Expressions</h1><br>
+ * <h2>12.1 Primary Expressions</h2>
+ * <ul>
+ * <li>12.1.7 Generator Comprehensions
+ * </ul>
  */
 class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     private static class Methods {
@@ -49,15 +53,15 @@ class GeneratorComprehensionGenerator extends ComprehensionGenerator {
     /**
      * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
      * <p>
-     * ComprehensionQualifierTail : AssignmentExpression
+     * ComprehensionTail : AssignmentExpression
      */
     @Override
     protected Void visit(Expression node, ExpressionVisitor mv) {
         assert initialised : "generator-comprehension generator not initialised";
 
         expressionBoxedValue(node, mv);
-        mv.loadExecutionContext();
         mv.lineInfo(node);
+        mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_yield);
         mv.pop();
 
