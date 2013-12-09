@@ -10,7 +10,8 @@ import static com.github.anba.es6draft.runtime.ExecutionContext.newScriptExecuti
 
 import java.util.EnumSet;
 
-import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.FunctionDefinition;
+import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.compiler.CompiledFunction;
 import com.github.anba.es6draft.compiler.CompiledScript;
@@ -90,13 +91,43 @@ public class ScriptLoader {
     public static CompiledScript compile(String className,
             com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options)
             throws CompilationException {
+        // prepend '#' to mark generated classes, cf. ErrorPrototype
+        String clazzName = "#" + className;
+        Compiler compiler = new Compiler(options);
+        byte[] bytes = compiler.compile(parsedScript, clazzName);
+        return getScript(clazzName, bytes);
+    }
+
+    /**
+     * Compiles the given {@link FunctionDefinition} to a
+     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function} object
+     */
+    public static RuntimeInfo.Function compile(String className, FunctionDefinition function,
+            EnumSet<Compiler.Option> options) throws CompilationException {
+        // prepend '#' to mark generated classes, cf. ErrorPrototype
+        String clazzName = "#" + className;
+        Compiler compiler = new Compiler(options);
+        byte[] bytes = compiler.compile(function, clazzName);
+        return getFunction(clazzName, bytes);
+    }
+
+    /**
+     * Compiles the given {@link GeneratorDefinition} to a
+     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function} object
+     */
+    public static RuntimeInfo.Function compile(String className, GeneratorDefinition generator,
+            EnumSet<Compiler.Option> options) throws CompilationException {
+        // prepend '#' to mark generated classes, cf. ErrorPrototype
+        String clazzName = "#" + className;
+        Compiler compiler = new Compiler(options);
+        byte[] bytes = compiler.compile(generator, clazzName);
+        return getFunction(clazzName, bytes);
+    }
+
+    private static CompiledScript getScript(String className, byte[] bytes) {
         try {
-            // prepend '#' to mark generated classes, cf. ErrorPrototype
-            String clazzName = "#" + className;
-            Compiler compiler = new Compiler(options);
-            byte[] bytes = compiler.compile(parsedScript, clazzName);
-            ClassLoader cl = new ByteClassLoader(clazzName, bytes);
-            Class<?> c = cl.loadClass(clazzName);
+            ClassLoader cl = new ByteClassLoader(className, bytes);
+            Class<?> c = cl.loadClass(className);
             CompiledScript instance = (CompiledScript) c.newInstance();
             return instance;
         } catch (ReflectiveOperationException e) {
@@ -104,19 +135,10 @@ public class ScriptLoader {
         }
     }
 
-    /**
-     * Compiles the given {@link FunctionNode} to a
-     * {@link com.github.anba.es6draft.runtime.internal.RuntimeInfo.Function} object
-     */
-    public static RuntimeInfo.Function compile(String className, FunctionNode function,
-            EnumSet<Compiler.Option> options) throws CompilationException {
+    private static RuntimeInfo.Function getFunction(String className, byte[] bytes) {
         try {
-            // prepend '#' to mark generated classes, cf. ErrorPrototype
-            String clazzName = "#" + className;
-            Compiler compiler = new Compiler(options);
-            byte[] bytes = compiler.compile(function, clazzName);
-            ClassLoader cl = new ByteClassLoader(clazzName, bytes);
-            Class<?> c = cl.loadClass(clazzName);
+            ClassLoader cl = new ByteClassLoader(className, bytes);
+            Class<?> c = cl.loadClass(className);
             CompiledFunction instance = (CompiledFunction) c.newInstance();
             return instance.getFunction();
         } catch (ReflectiveOperationException e) {

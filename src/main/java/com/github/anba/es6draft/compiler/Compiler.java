@@ -20,7 +20,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.util.TraceClassVisitor;
 
+import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.ast.Scope;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.ScriptScope;
@@ -96,7 +98,15 @@ public class Compiler {
         return bytes;
     }
 
-    public byte[] compile(FunctionNode function, String className) {
+    public byte[] compile(FunctionDefinition function, String className) {
+        return compile((FunctionNode) function, className);
+    }
+
+    public byte[] compile(GeneratorDefinition generator, String className) {
+        return compile((FunctionNode) generator, className);
+    }
+
+    private byte[] compile(FunctionNode function, String className) {
         final int flags = ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS;
         String superClassName = Types.CompiledFunction.getInternalName();
         String[] interfaces = null;
@@ -115,7 +125,12 @@ public class Compiler {
 
         try (CodeGenerator codegen = new CodeGenerator(cw, className, optionsFrom(function))) {
             // generate code
-            codegen.compile(function);
+            if (function instanceof FunctionDefinition) {
+                codegen.compile((FunctionDefinition) function);
+            } else {
+                assert function instanceof GeneratorDefinition;
+                codegen.compile((GeneratorDefinition) function);
+            }
 
             // add default constructor
             defaultFunctionConstructor(cw, className,
