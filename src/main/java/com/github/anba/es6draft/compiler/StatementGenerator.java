@@ -152,6 +152,16 @@ class StatementGenerator extends
         mv.invoke(Methods.EnvironmentRecord_createMutableBinding);
     }
 
+    /**
+     * stack: [value] -> [value]
+     */
+    private void ensureObjectOrThrow(ValType type, StatementVisitor mv) {
+        if (type != ValType.Object) {
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_ensureObject);
+        }
+    }
+
     @Override
     protected Completion visit(Node node, StatementVisitor mv) {
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
@@ -404,8 +414,7 @@ class StatementGenerator extends
         if (lhs instanceof Expression) {
             assert lhs instanceof LeftHandSideExpression;
             if (lhs instanceof AssignmentPattern) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+                ensureObjectOrThrow(ValType.Any, mv);
                 DestructuringAssignment((AssignmentPattern) lhs, mv);
             } else {
                 ValType lhsType = expression((Expression) lhs, mv);
@@ -417,8 +426,7 @@ class StatementGenerator extends
             Binding binding = varDecl.getBinding();
             // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
             if (binding instanceof BindingPattern) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+                ensureObjectOrThrow(ValType.Any, mv);
             }
             BindingInitialisation(binding, mv);
         } else {
@@ -453,8 +461,7 @@ class StatementGenerator extends
 
                 // 12.1.4.2.2 Runtime Semantics: BindingInitialisation :: ForBinding
                 if (lexicalBinding.getBinding() instanceof BindingPattern) {
-                    mv.loadExecutionContext();
-                    mv.invoke(Methods.ScriptRuntime_ensureObject);
+                    ensureObjectOrThrow(ValType.Any, mv);
                 }
 
                 // stack: [iterEnv, envRec, nextValue] -> [iterEnv]
@@ -748,9 +755,8 @@ class StatementGenerator extends
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
             ValType type = expressionBoxedValue(initialiser, mv);
-            if (binding instanceof BindingPattern && type != ValType.Object) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+            if (binding instanceof BindingPattern) {
+                ensureObjectOrThrow(type, mv);
             }
             if (binding instanceof BindingIdentifier && IsAnonymousFunctionDefinition(initialiser)) {
                 SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
@@ -1180,8 +1186,7 @@ class StatementGenerator extends
             mv.swap();
 
             if (catchParameter instanceof BindingPattern) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+                ensureObjectOrThrow(ValType.Any, mv);
             }
 
             // stack: [catchEnv, envRec, ex] -> [catchEnv]
@@ -1229,8 +1234,7 @@ class StatementGenerator extends
             mv.swap();
 
             if (catchParameter instanceof BindingPattern) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+                ensureObjectOrThrow(ValType.Any, mv);
             }
 
             // stack: [catchEnv, envRec, ex] -> [catchEnv]
@@ -1270,9 +1274,8 @@ class StatementGenerator extends
         Expression initialiser = node.getInitialiser();
         if (initialiser != null) {
             ValType type = expressionBoxedValue(initialiser, mv);
-            if (binding instanceof BindingPattern && type != ValType.Object) {
-                mv.loadExecutionContext();
-                mv.invoke(Methods.ScriptRuntime_ensureObject);
+            if (binding instanceof BindingPattern) {
+                ensureObjectOrThrow(type, mv);
             }
             if (binding instanceof BindingIdentifier && IsAnonymousFunctionDefinition(initialiser)) {
                 SetFunctionName(initialiser, ((BindingIdentifier) binding).getName(), mv);
