@@ -18,7 +18,11 @@ import org.objectweb.asm.Opcodes;
 
 import com.github.anba.es6draft.ast.BinaryExpression;
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Type;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
+import com.github.anba.es6draft.runtime.types.builtins.NativeFunction;
+import com.github.anba.es6draft.runtime.types.builtins.NativeTailCallFunction;
 
 /**
  *
@@ -29,11 +33,16 @@ public final class Bootstrap {
 
     private static class Types {
         static final org.objectweb.asm.Type Object = org.objectweb.asm.Type.getType(Object.class);
+        static final org.objectweb.asm.Type Object_ = org.objectweb.asm.Type
+                .getType(Object[].class);
         static final org.objectweb.asm.Type ExecutionContext = org.objectweb.asm.Type
                 .getType(ExecutionContext.class);
+        static final org.objectweb.asm.Type Callable = org.objectweb.asm.Type
+                .getType(Callable.class);
     }
 
     private static class CallNames {
+        static final String CALL = "expression::call";
         static final String ADD = "expression::add";
         static final String EQ = "expression::equals";
         static final String SHEQ = "expression::strictEquals";
@@ -52,14 +61,105 @@ public final class Bootstrap {
                     Types.ExecutionContext);
     private static final String OP_STRICT_EQ = org.objectweb.asm.Type.getMethodDescriptor(
             org.objectweb.asm.Type.BOOLEAN_TYPE, Types.Object, Types.Object);
+    private static final String OP_CALL = org.objectweb.asm.Type.getMethodDescriptor(Types.Object,
+            Types.Callable, Types.ExecutionContext, Types.Object, Types.Object_);
 
-    private static final Handle BINARY_BOOTSTRAP;
+    private static final Handle BOOTSTRAP;
     static {
         MethodType mt = MethodType.methodType(CallSite.class, MethodHandles.Lookup.class,
                 String.class, MethodType.class);
-        BINARY_BOOTSTRAP = new Handle(Opcodes.H_INVOKESTATIC,
+        BOOTSTRAP = new Handle(Opcodes.H_INVOKESTATIC,
                 org.objectweb.asm.Type.getInternalName(Bootstrap.class), "bootstrapDynamic",
                 mt.toMethodDescriptorString());
+    }
+
+    public static String getCallName() {
+        return CallNames.CALL;
+    }
+
+    public static String getCallMethodDescriptor() {
+        return OP_CALL;
+    }
+
+    public static Handle getCallBootstrap() {
+        return BOOTSTRAP;
+    }
+
+    private static final MethodHandle callSetupMH;
+    private static final MethodHandle callGenericMH;
+    private static final MethodHandle testFunctionObjectMH, testNativeFunctionMH,
+            testNativeTailCallFunctionMH;
+
+    static {
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        Class<?> thisClass = lookup.lookupClass();
+
+        try {
+            testFunctionObjectMH = lookup.findStatic(thisClass, "testFunctionObject",
+                    MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+            testNativeFunctionMH = lookup.findStatic(thisClass, "testNativeFunction",
+                    MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+            testNativeTailCallFunctionMH = lookup.findStatic(thisClass,
+                    "testNativeTailCallFunction",
+                    MethodType.methodType(boolean.class, Callable.class, MethodHandle.class));
+
+            callGenericMH = lookup.findStatic(thisClass, "callGeneric", MethodType.methodType(
+                    Object.class, Callable.class, ExecutionContext.class, Object.class,
+                    Object[].class));
+
+            callSetupMH = lookup.findStatic(thisClass, "callSetup", MethodType.methodType(
+                    MethodHandle.class, MutableCallSite.class, Callable.class,
+                    ExecutionContext.class, Object.class, Object[].class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new Error(e);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static MethodHandle callSetup(MutableCallSite callsite, Callable function,
+            ExecutionContext cx, Object thisValue, Object[] arguments) {
+        MethodHandle generic = callGenericMH;
+        MethodHandle target, test;
+        if (function instanceof FunctionObject) {
+            MethodHandle mh = ((FunctionObject) function).getCallMethod();
+            test = MethodHandles.insertArguments(testFunctionObjectMH, 1, mh);
+            target = mh;
+        } else if (function instanceof NativeFunction) {
+            MethodHandle mh = ((NativeFunction) function).getCallMethod();
+            test = MethodHandles.insertArguments(testNativeFunctionMH, 1, mh);
+            target = MethodHandles.dropArguments(mh, 0, Callable.class, ExecutionContext.class);
+        } else if (function instanceof NativeTailCallFunction) {
+            MethodHandle mh = ((NativeTailCallFunction) function).getCallMethod();
+            test = MethodHandles.insertArguments(testNativeTailCallFunctionMH, 1, mh);
+            target = MethodHandles.dropArguments(mh, 0, Callable.class);
+        } else {
+            target = test = null;
+        }
+        return setCallSiteTarget(callsite, target, test, generic);
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testFunctionObject(Callable function, MethodHandle callMethod) {
+        return function instanceof FunctionObject
+                && ((FunctionObject) function).getCallMethod() == callMethod;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testNativeFunction(Callable function, MethodHandle callMethod) {
+        return function instanceof NativeFunction
+                && ((NativeFunction) function).getCallMethod() == callMethod;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testNativeTailCallFunction(Callable function, MethodHandle callMethod) {
+        return function instanceof NativeTailCallFunction
+                && ((NativeTailCallFunction) function).getCallMethod() == callMethod;
+    }
+
+    @SuppressWarnings("unused")
+    private static Object callGeneric(Callable function, ExecutionContext callerContext,
+            Object thisValue, Object[] arguments) {
+        return function.call(callerContext, thisValue, arguments);
     }
 
     public static String getName(BinaryExpression.Operator binary) {
@@ -116,7 +216,7 @@ public final class Bootstrap {
         case GT:
         case LE:
         case GE:
-            return BINARY_BOOTSTRAP;
+            return BOOTSTRAP;
         default:
             throw new UnsupportedOperationException(binary.toString());
         }
@@ -145,44 +245,52 @@ public final class Bootstrap {
             addStringMH = lookup.findStatic(thisClass, "addString", MethodType.methodType(
                     CharSequence.class, CharSequence.class, CharSequence.class,
                     ExecutionContext.class));
-            addNumberMH = lookup.findStatic(thisClass, "addNumber",
+            MethodHandle addNumber = lookup.findStatic(thisClass, "addNumber",
                     MethodType.methodType(Double.class, Number.class, Number.class));
+            addNumberMH = MethodHandles.dropArguments(addNumber, 2, ExecutionContext.class);
             addGenericMH = lookup.findStatic(thisClass, "addGeneric", MethodType.methodType(
                     Object.class, Object.class, Object.class, ExecutionContext.class));
 
-            relCmpStringMH = lookup.findStatic(thisClass, "relCmpString",
+            MethodHandle relCmpString = lookup.findStatic(thisClass, "relCmpString",
                     MethodType.methodType(int.class, CharSequence.class, CharSequence.class));
-            relCmpNumberMH = lookup.findStatic(thisClass, "relCmpNumber",
+            relCmpStringMH = MethodHandles.dropArguments(relCmpString, 2, ExecutionContext.class);
+            MethodHandle relCmpNumber = lookup.findStatic(thisClass, "relCmpNumber",
                     MethodType.methodType(int.class, Number.class, Number.class));
+            relCmpNumberMH = MethodHandles.dropArguments(relCmpNumber, 2, ExecutionContext.class);
             relCmpGenericMH = lookup.findStatic(thisClass, "relCmpGeneric", MethodType.methodType(
                     int.class, Object.class, Object.class, boolean.class, ExecutionContext.class));
 
-            eqCmpStringMH = lookup.findStatic(thisClass, "eqCmpString",
+            MethodHandle eqCmpString = lookup.findStatic(thisClass, "eqCmpString",
                     MethodType.methodType(boolean.class, CharSequence.class, CharSequence.class));
-            eqCmpNumberMH = lookup.findStatic(thisClass, "eqCmpNumber",
+            MethodHandle eqCmpNumber = lookup.findStatic(thisClass, "eqCmpNumber",
                     MethodType.methodType(boolean.class, Number.class, Number.class));
-            eqCmpBooleanMH = lookup.findStatic(thisClass, "eqCmpBoolean",
+            MethodHandle eqCmpBoolean = lookup.findStatic(thisClass, "eqCmpBoolean",
                     MethodType.methodType(boolean.class, Boolean.class, Boolean.class));
+
+            eqCmpStringMH = MethodHandles.dropArguments(eqCmpString, 2, ExecutionContext.class);
+            eqCmpNumberMH = MethodHandles.dropArguments(eqCmpNumber, 2, ExecutionContext.class);
+            eqCmpBooleanMH = MethodHandles.dropArguments(eqCmpBoolean, 2, ExecutionContext.class);
             eqCmpGenericMH = lookup.findStatic(thisClass, "eqCmpGeneric", MethodType.methodType(
                     boolean.class, Object.class, Object.class, ExecutionContext.class));
 
-            strictEqCmpStringMH = eqCmpStringMH;
-            strictEqCmpNumberMH = eqCmpNumberMH;
-            strictEqCmpBooleanMH = eqCmpBooleanMH;
+            strictEqCmpStringMH = eqCmpString;
+            strictEqCmpNumberMH = eqCmpNumber;
+            strictEqCmpBooleanMH = eqCmpBoolean;
             strictEqCmpGenericMH = lookup.findStatic(thisClass, "strictEqCmpGeneric",
                     MethodType.methodType(boolean.class, Object.class, Object.class));
 
             addSetupMH = lookup.findStatic(thisClass, "addSetup", MethodType.methodType(
-                    Object.class, MutableCallSite.class, Object.class, Object.class,
+                    MethodHandle.class, MutableCallSite.class, Object.class, Object.class,
                     ExecutionContext.class));
             relCmpSetupMH = lookup.findStatic(thisClass, "relCmpSetup", MethodType.methodType(
-                    int.class, MutableCallSite.class, boolean.class, Object.class, Object.class,
-                    ExecutionContext.class));
+                    MethodHandle.class, MutableCallSite.class, boolean.class, Object.class,
+                    Object.class, ExecutionContext.class));
             eqCmpSetupMH = lookup.findStatic(thisClass, "eqCmpSetup", MethodType.methodType(
-                    boolean.class, MutableCallSite.class, Object.class, Object.class,
+                    MethodHandle.class, MutableCallSite.class, Object.class, Object.class,
                     ExecutionContext.class));
             strictEqCmpSetupMH = lookup.findStatic(thisClass, "strictEqCmpSetup", MethodType
-                    .methodType(boolean.class, MutableCallSite.class, Object.class, Object.class));
+                    .methodType(MethodHandle.class, MutableCallSite.class, Object.class,
+                            Object.class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new Error(e);
         }
@@ -260,98 +368,96 @@ public final class Bootstrap {
     }
 
     @SuppressWarnings("unused")
-    private static Object addSetup(MutableCallSite callsite, Object arg1, Object arg2,
-            ExecutionContext cx) throws Throwable {
-        MethodHandle callSiteTarget, target;
+    private static MethodHandle addSetup(MutableCallSite callsite, Object arg1, Object arg2,
+            ExecutionContext cx) {
+        MethodHandle generic = addGenericMH;
+        MethodHandle target, test;
         if (testString(arg1, arg2)) {
-            target = addStringMH.asType(callsite.type());
-            callSiteTarget = MethodHandles.guardWithTest(testStringMH, target, addGenericMH);
+            target = addStringMH;
+            test = testStringMH;
         } else if (testNumber(arg1, arg2)) {
-            target = MethodHandles.dropArguments(addNumberMH, 2, ExecutionContext.class).asType(
-                    callsite.type());
-            callSiteTarget = MethodHandles.guardWithTest(testNumberMH, target, addGenericMH);
+            target = addNumberMH;
+            test = testNumberMH;
         } else {
-            callSiteTarget = target = addGenericMH;
+            target = test = null;
         }
-
-        callsite.setTarget(callSiteTarget);
-        return target.invokeExact(arg1, arg2, cx);
+        return setCallSiteTarget(callsite, target, test, generic);
     }
 
     @SuppressWarnings("unused")
-    private static int relCmpSetup(MutableCallSite callsite, boolean leftFirst, Object arg1,
-            Object arg2, ExecutionContext cx) throws Throwable {
-        MethodHandle callSiteTarget, target;
+    private static MethodHandle relCmpSetup(MutableCallSite callsite, boolean leftFirst,
+            Object arg1, Object arg2, ExecutionContext cx) {
+        MethodHandle generic = MethodHandles.insertArguments(relCmpGenericMH, 2, leftFirst);
+        MethodHandle target, test;
         if (testString(arg1, arg2)) {
-            target = MethodHandles.dropArguments(relCmpStringMH, 2, ExecutionContext.class).asType(
-                    callsite.type());
-            callSiteTarget = MethodHandles.guardWithTest(testStringMH, target,
-                    MethodHandles.insertArguments(relCmpGenericMH, 2, leftFirst));
+            target = relCmpStringMH;
+            test = testStringMH;
         } else if (testNumber(arg1, arg2)) {
-            target = MethodHandles.dropArguments(relCmpNumberMH, 2, ExecutionContext.class).asType(
-                    callsite.type());
-            callSiteTarget = MethodHandles.guardWithTest(testNumberMH, target,
-                    MethodHandles.insertArguments(relCmpGenericMH, 2, leftFirst));
+            target = relCmpNumberMH;
+            test = testNumberMH;
         } else {
-            callSiteTarget = target = MethodHandles.insertArguments(relCmpGenericMH, 2, leftFirst);
+            target = test = null;
         }
-
-        callsite.setTarget(callSiteTarget);
-        return (int) target.invokeExact(arg1, arg2, cx);
+        return setCallSiteTarget(callsite, target, test, generic);
     }
 
     @SuppressWarnings("unused")
-    private static boolean eqCmpSetup(MutableCallSite callsite, Object arg1, Object arg2,
-            ExecutionContext cx) throws Throwable {
-        MethodHandle callSiteTarget, target;
+    private static MethodHandle eqCmpSetup(MutableCallSite callsite, Object arg1, Object arg2,
+            ExecutionContext cx) {
+        MethodHandle generic = eqCmpGenericMH;
+        MethodHandle target, test;
         if (testString(arg1, arg2)) {
-            target = MethodHandles.dropArguments(eqCmpStringMH, 2, ExecutionContext.class).asType(
-                    callsite.type());
-            callSiteTarget = MethodHandles.guardWithTest(testStringMH, target, eqCmpGenericMH);
+            target = eqCmpStringMH;
+            test = testStringMH;
         } else if (testNumber(arg1, arg2)) {
-            target = MethodHandles.dropArguments(eqCmpNumberMH, 2, ExecutionContext.class).asType(
-                    callsite.type());
-            callSiteTarget = MethodHandles.guardWithTest(testNumberMH, target, eqCmpGenericMH);
+            target = eqCmpNumberMH;
+            test = testNumberMH;
         } else if (testBoolean(arg1, arg2)) {
-            target = MethodHandles.dropArguments(eqCmpBooleanMH, 2, ExecutionContext.class).asType(
-                    callsite.type());
-            callSiteTarget = MethodHandles.guardWithTest(testBooleanMH, target, eqCmpGenericMH);
+            target = eqCmpBooleanMH;
+            test = testBooleanMH;
         } else {
-            callSiteTarget = target = eqCmpGenericMH;
+            target = test = null;
         }
-
-        callsite.setTarget(callSiteTarget);
-        return (boolean) target.invokeExact(arg1, arg2, cx);
+        return setCallSiteTarget(callsite, target, test, generic);
     }
 
     @SuppressWarnings("unused")
-    private static boolean strictEqCmpSetup(MutableCallSite callsite, Object arg1, Object arg2)
-            throws Throwable {
-        MethodHandle callSiteTarget, target;
+    private static MethodHandle strictEqCmpSetup(MutableCallSite callsite, Object arg1, Object arg2) {
+        MethodHandle generic = strictEqCmpGenericMH;
+        MethodHandle target, test;
         if (testString(arg1, arg2)) {
-            target = strictEqCmpStringMH.asType(callsite.type());
-            callSiteTarget = MethodHandles
-                    .guardWithTest(testStringMH, target, strictEqCmpGenericMH);
+            target = strictEqCmpStringMH;
+            test = testStringMH;
         } else if (testNumber(arg1, arg2)) {
-            target = strictEqCmpNumberMH.asType(callsite.type());
-            callSiteTarget = MethodHandles
-                    .guardWithTest(testNumberMH, target, strictEqCmpGenericMH);
+            target = strictEqCmpNumberMH;
+            test = testNumberMH;
         } else if (testBoolean(arg1, arg2)) {
-            target = strictEqCmpBooleanMH.asType(callsite.type());
-            callSiteTarget = MethodHandles.guardWithTest(testBooleanMH, target,
-                    strictEqCmpGenericMH);
+            target = strictEqCmpBooleanMH;
+            test = testBooleanMH;
         } else {
-            callSiteTarget = target = strictEqCmpGenericMH;
+            target = test = null;
         }
+        return setCallSiteTarget(callsite, target, test, generic);
+    }
 
+    private static MethodHandle setCallSiteTarget(MutableCallSite callsite, MethodHandle target,
+            MethodHandle test, MethodHandle generic) {
+        MethodHandle callSiteTarget;
+        if (target != null) {
+            target = target.asType(callsite.type());
+            callSiteTarget = MethodHandles.guardWithTest(test, target, generic);
+        } else {
+            callSiteTarget = target = generic;
+        }
         callsite.setTarget(callSiteTarget);
-        return (boolean) target.invokeExact(arg1, arg2);
+        return target;
     }
 
     private static final ConstantCallSite stackOverFlow_Add;
     private static final ConstantCallSite stackOverFlow_Cmp;
     private static final ConstantCallSite stackOverFlow_Eq;
     private static final ConstantCallSite stackOverFlow_StrictEq;
+    private static final ConstantCallSite stackOverFlow_Call;
     static {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         Class<?> thisClass = lookup.lookupClass();
@@ -368,6 +474,9 @@ public final class Bootstrap {
             stackOverFlow_StrictEq = new ConstantCallSite(lookup.findStatic(thisClass,
                     "stackOverFlow_StrictEq",
                     MethodType.methodType(boolean.class, Object.class, Object.class)));
+            stackOverFlow_Call = new ConstantCallSite(lookup.findStatic(thisClass,
+                    "stackOverFlow_Call", MethodType.methodType(Object.class, Callable.class,
+                            ExecutionContext.class, Object.class, Object[].class)));
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new Error(e);
         }
@@ -393,6 +502,12 @@ public final class Bootstrap {
         throw new StackOverflowError("bootstrap stack overflow");
     }
 
+    @SuppressWarnings("unused")
+    private static Object stackOverFlow_Call(Callable fun, ExecutionContext cx, Object thisValue,
+            Object[] arguments) {
+        throw new StackOverflowError("bootstrap stack overflow");
+    }
+
     public static CallSite bootstrapDynamic(MethodHandles.Lookup caller, String name,
             MethodType type) {
         // System.out.printf("caller: %s\n", caller);
@@ -401,41 +516,49 @@ public final class Bootstrap {
         try {
             MutableCallSite callsite = new MutableCallSite(type);
 
-            MethodHandle target;
+            MethodHandle setup;
             switch (name) {
+            case CallNames.CALL:
+                setup = MethodHandles.insertArguments(callSetupMH, 0, callsite);
+                break;
             case CallNames.ADD:
-                target = MethodHandles.insertArguments(addSetupMH, 0, callsite);
+                setup = MethodHandles.insertArguments(addSetupMH, 0, callsite);
                 break;
             case CallNames.EQ:
-                target = MethodHandles.insertArguments(eqCmpSetupMH, 0, callsite);
+                setup = MethodHandles.insertArguments(eqCmpSetupMH, 0, callsite);
                 break;
             case CallNames.SHEQ:
-                target = MethodHandles.insertArguments(strictEqCmpSetupMH, 0, callsite);
+                setup = MethodHandles.insertArguments(strictEqCmpSetupMH, 0, callsite);
                 break;
             case CallNames.LT:
-                target = MethodHandles
+                setup = MethodHandles
                         .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
                 break;
             case CallNames.GT:
-                target = MethodHandles
+                setup = MethodHandles
                         .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
                 break;
             case CallNames.LE:
-                target = MethodHandles
+                setup = MethodHandles
                         .insertArguments(relCmpSetupMH, 0, callsite, false /* leftFirst */);
                 break;
             case CallNames.GE:
-                target = MethodHandles
+                setup = MethodHandles
                         .insertArguments(relCmpSetupMH, 0, callsite, true /* leftFirst */);
                 break;
             default:
                 throw new IllegalArgumentException(name);
             }
 
+            MethodHandle target = MethodHandles.foldArguments(MethodHandles.exactInvoker(type),
+                    setup);
             callsite.setTarget(target);
+
             return callsite;
         } catch (StackOverflowError e) {
             switch (name) {
+            case CallNames.CALL:
+                return stackOverFlow_Call;
             case CallNames.ADD:
                 return stackOverFlow_Add;
             case CallNames.EQ:
