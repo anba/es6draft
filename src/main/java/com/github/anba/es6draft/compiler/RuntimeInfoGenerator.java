@@ -16,6 +16,7 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
+import com.github.anba.es6draft.ast.GeneratorComprehension;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.ast.GeneratorExpression;
 import com.github.anba.es6draft.ast.MethodDefinition;
@@ -24,6 +25,7 @@ import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo.FunctionFlags;
 
 /**
@@ -39,8 +41,8 @@ class RuntimeInfoGenerator {
 
         static final MethodDesc RTI_newFunction = MethodDesc.create(MethodType.Static,
                 Types.RuntimeInfo, "newFunction", Type.getMethodType(Types.RuntimeInfo$Function,
-                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.MethodHandle,
-                        Types.MethodHandle, Types.String));
+                        Types.String, Type.INT_TYPE, Type.INT_TYPE, Types.String,
+                        Types.MethodHandle, Types.MethodHandle));
     }
 
     private final CodeGenerator codegen;
@@ -49,9 +51,20 @@ class RuntimeInfoGenerator {
         this.codegen = codegen;
     }
 
-    private static int functionFlags(FunctionNode node) {
+    private int functionFlags(GeneratorComprehension node) {
         int functionFlags = 0;
-        if (IsStrict(node)) {
+        // TODO: revisit decision to censor .caller by making generator expr strict by default?
+        functionFlags |= FunctionFlags.Strict.getValue();
+        functionFlags |= FunctionFlags.Generator.getValue();
+        return functionFlags;
+    }
+
+    private int functionFlags(FunctionNode node, boolean tailCall) {
+        boolean strict = IsStrict(node);
+        boolean generator = isGenerator(node);
+        boolean legacy = codegen.isEnabled(CompatibilityOption.FunctionPrototype);
+        int functionFlags = 0;
+        if (strict) {
             functionFlags |= FunctionFlags.Strict.getValue();
         }
         if (hasSuperReference(node)) {
@@ -60,8 +73,15 @@ class RuntimeInfoGenerator {
         if (hasScopedName(node)) {
             functionFlags |= FunctionFlags.ScopedName.getValue();
         }
-        if (isGenerator(node)) {
+        if (generator) {
             functionFlags |= FunctionFlags.Generator.getValue();
+        }
+        if (tailCall) {
+            assert !generator && strict;
+            functionFlags |= FunctionFlags.TailCall.getValue();
+        }
+        if (!strict && legacy) {
+            functionFlags |= FunctionFlags.Legacy.getValue();
         }
         return functionFlags;
     }
@@ -102,7 +122,32 @@ class RuntimeInfoGenerator {
         }
     }
 
-    void runtimeInfo(FunctionNode node, Future<String> source) {
+    void runtimeInfo(GeneratorComprehension node, Future<String> source) {
+        String className = codegen.getClassName();
+        InstructionVisitor mv = codegen.publicStaticMethod(
+                codegen.methodName(node, FunctionName.RTI),
+                codegen.methodType(node, FunctionName.RTI));
+
+        mv.begin();
+
+        String functionName = "";
+        int expectedArgumentCount = 0;
+
+        mv.aconst(functionName);
+        mv.iconst(functionFlags(node));
+        mv.iconst(expectedArgumentCount);
+        mv.aconst(get(source));
+        mv.invokeStaticMH(className, codegen.methodName(node, FunctionName.Code),
+                codegen.methodDescriptor(node, FunctionName.Code));
+        mv.invokeStaticMH(className, codegen.methodName(node, FunctionName.Call),
+                codegen.methodDescriptor(node, FunctionName.Call));
+        mv.invoke(Methods.RTI_newFunction);
+        mv.areturn();
+
+        mv.end();
+    }
+
+    void runtimeInfo(FunctionNode node, boolean tailCall, Future<String> source) {
         String className = codegen.getClassName();
         InstructionVisitor mv = codegen.publicStaticMethod(
                 codegen.methodName(node, FunctionName.RTI),
@@ -111,13 +156,13 @@ class RuntimeInfoGenerator {
         mv.begin();
 
         mv.aconst(node.getFunctionName());
-        mv.iconst(functionFlags(node));
+        mv.iconst(functionFlags(node, tailCall));
         mv.iconst(ExpectedArgumentCount(node.getParameters()));
-        mv.invokeStaticMH(className, codegen.methodName(node, FunctionName.Init),
-                codegen.methodDescriptor(node, FunctionName.Init));
+        mv.aconst(get(source));
         mv.invokeStaticMH(className, codegen.methodName(node, FunctionName.Code),
                 codegen.methodDescriptor(node, FunctionName.Code));
-        mv.aconst(get(source));
+        mv.invokeStaticMH(className, codegen.methodName(node, FunctionName.Call),
+                codegen.methodDescriptor(node, FunctionName.Call));
         mv.invoke(Methods.RTI_newFunction);
         mv.areturn();
 

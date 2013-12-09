@@ -6,13 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.EvaluateBody;
-
 import java.lang.invoke.MethodHandle;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * Classes for bootstrapping of functions and script code
@@ -22,23 +19,9 @@ public final class RuntimeInfo {
     private RuntimeInfo() {
     }
 
-    public static Code newCode(final MethodHandle handle) {
-        return new Code() {
-            @Override
-            public MethodHandle handle() {
-                return handle;
-            }
-
-            @Override
-            public Object evaluate(ExecutionContext cx) {
-                return EvaluateBody(cx, cx, this);
-            }
-        };
-    }
-
     public static Function newFunction(final String functionName, final int functionFlags,
-            final int expectedArgumentCount, final MethodHandle initialisation,
-            final MethodHandle handle, final String source) {
+            final int expectedArgumentCount, final String source, final MethodHandle handle,
+            final MethodHandle callMethod) {
         return new Function() {
             @Override
             public String functionName() {
@@ -66,20 +49,23 @@ public final class RuntimeInfo {
             }
 
             @Override
+            public boolean hasTailCall() {
+                return FunctionFlags.TailCall.isSet(functionFlags);
+            }
+
+            @Override
+            public boolean isLegacy() {
+                return FunctionFlags.Legacy.isSet(functionFlags);
+            }
+
+            @Override
             public int expectedArgumentCount() {
                 return expectedArgumentCount;
             }
 
             @Override
-            public void functionDeclarationInstantiation(ExecutionContext cx,
-                    FunctionObject function, Object[] args) {
-                try {
-                    initialisation.invokeExact(cx, function, args);
-                } catch (RuntimeException | Error e) {
-                    throw e;
-                } catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
+            public String source() {
+                return source;
             }
 
             @Override
@@ -88,13 +74,8 @@ public final class RuntimeInfo {
             }
 
             @Override
-            public Object evaluate(ExecutionContext cx) {
-                return EvaluateBody(cx, cx, this);
-            }
-
-            @Override
-            public String source() {
-                return source;
+            public MethodHandle callMethod() {
+                return callMethod;
             }
         };
     }
@@ -173,22 +154,32 @@ public final class RuntimeInfo {
         /**
          * Flag for strict-mode functions
          */
-        Strict(0b0001),
+        Strict(0b00_0001),
 
         /**
          * Flag for functions with super-binding
          */
-        Super(0b0010),
+        Super(0b00_0010),
 
         /**
          * Flag for functions which have their name in scope
          */
-        ScopedName(0b0100),
+        ScopedName(0b00_0100),
 
         /**
          * Flag for generator functions
          */
-        Generator(0b1000);
+        Generator(0b00_1000),
+
+        /**
+         * Flag for tail-call functions
+         */
+        TailCall(0b01_0000),
+
+        /**
+         * Flag for legacy functions
+         */
+        Legacy(0b10_0000);
 
         private final int value;
 
@@ -219,20 +210,27 @@ public final class RuntimeInfo {
 
         boolean isGenerator();
 
+        boolean hasTailCall();
+
+        boolean isLegacy();
+
         int expectedArgumentCount();
 
-        void functionDeclarationInstantiation(ExecutionContext cx, FunctionObject function,
-                Object[] args);
-
         String source();
+
+        /**
+         * (? extends FunctionObject, ExecutionContext, Object, Object[]) -> Object
+         */
+        MethodHandle callMethod();
     }
 
     /**
      * Compiled function code information
      */
     public interface Code {
+        /**
+         * (ExecutionContext) -> Object
+         */
         MethodHandle handle();
-
-        Object evaluate(ExecutionContext cx);
     }
 }

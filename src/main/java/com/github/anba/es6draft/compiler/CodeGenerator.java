@@ -506,6 +506,9 @@ class CodeGenerator implements AutoCloseable {
 
     void compile(GeneratorComprehension node, ExpressionVisitor mv) {
         if (!isCompiled(node)) {
+            Future<String> source = getSource(node);
+
+            // runtime method
             ExpressionVisitor body = new GeneratorComprehensionVisitor(this, node, mv);
             body.lineInfo(node);
             body.begin();
@@ -516,43 +519,77 @@ class CodeGenerator implements AutoCloseable {
             body.loadUndefined();
             body.areturn();
             body.end();
-        }
-    }
 
-    void compile(FunctionNode node) {
-        if (!isCompiled(node)) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(node.getHeaderSource());
-            sb.append('{');
-            if (node.getStrictMode() == StrictMode.ImplicitStrict) {
-                sb.append("\n\"use strict\";\n");
-            }
-            sb.append(node.getBodySource());
-            sb.append('}');
-            Future<String> source = compressed(sb.toString());
-
-            // initialisation method
-            new FunctionDeclarationInstantiationGenerator(this).generate(node);
-
-            // runtime method
-            if (node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null) {
-                conciseFunctionBody((ArrowFunction) node);
-            } else {
-                functionBody(node);
-            }
+            // call method
+            new FunctionCodeGenerator(this).generate(node);
 
             // runtime-info method
             new RuntimeInfoGenerator(this).runtimeInfo(node, source);
         }
     }
 
-    private void conciseFunctionBody(ArrowFunction node) {
+    void compile(FunctionDefinition node) {
+        compile((FunctionNode) node);
+    }
+
+    void compile(ArrowFunction node) {
+        compile((FunctionNode) node);
+    }
+
+    void compile(GeneratorDefinition node) {
+        compile((FunctionNode) node);
+    }
+
+    void compile(MethodDefinition node) {
+        compile((FunctionNode) node);
+    }
+
+    private void compile(FunctionNode node) {
+        if (!isCompiled(node)) {
+            Future<String> source = getSource(node);
+
+            // initialisation method
+            new FunctionDeclarationInstantiationGenerator(this).generate(node);
+
+            // runtime method
+            boolean tailCalls;
+            if (node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null) {
+                tailCalls = conciseFunctionBody((ArrowFunction) node);
+            } else {
+                tailCalls = functionBody(node);
+            }
+
+            // call method
+            new FunctionCodeGenerator(this).generate(node);
+
+            // runtime-info method
+            new RuntimeInfoGenerator(this).runtimeInfo(node, tailCalls, source);
+        }
+    }
+
+    private Future<String> getSource(GeneratorComprehension node) {
+        return compressed("");
+    }
+
+    private Future<String> getSource(FunctionNode node) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(node.getHeaderSource());
+        sb.append('{');
+        if (node.getStrictMode() == StrictMode.ImplicitStrict) {
+            sb.append("\n\"use strict\";\n");
+        }
+        sb.append(node.getBodySource());
+        sb.append('}');
+        return compressed(sb.toString());
+    }
+
+    private boolean conciseFunctionBody(ArrowFunction node) {
         ExpressionVisitor body = new ArrowFunctionVisitor(this, node);
         body.lineInfo(node);
         body.begin();
 
         // call expression in concise function body is always in tail-call position
-        body.setTailCall(TailCallNodes(node.getExpression(), body.isStrict()));
+        body.enterTailCallPosition(node.getExpression());
 
         body.enterScope(node);
         expressionBoxedValue(node.getExpression(), body);
@@ -560,9 +597,11 @@ class CodeGenerator implements AutoCloseable {
 
         body.areturn();
         body.end();
+
+        return body.hasTailCalls();
     }
 
-    private void functionBody(FunctionNode node) {
+    private boolean functionBody(FunctionNode node) {
         StatementVisitor body = new FunctionStatementVisitor(this, node);
         body.lineInfo(node);
         body.begin();
@@ -577,17 +616,14 @@ class CodeGenerator implements AutoCloseable {
         body.exitScope();
 
         if (!result.isAbrupt()) {
-            // fall-thru, clear any previously stored entry in completion-value
+            // fall-thru, return `undefined` from function
             body.loadUndefined();
             body.areturn();
         }
 
-        if (body.hasReturn()) {
-            body.mark(body.returnLabelImmediate());
-            body.loadCompletionValue();
-            body.areturn();
-        }
         body.end();
+
+        return body.hasTailCalls();
     }
 
     void compile(StatementListMethod node, StatementVisitor mv) {
@@ -607,17 +643,16 @@ class CodeGenerator implements AutoCloseable {
 
             if (body.getCodeType() == StatementVisitor.CodeType.Function) {
                 // function case
+
+                // fall-thru, return `null` sentinel from function
                 if (!result.isAbrupt()) {
                     body.aconst(null);
                     body.areturn();
                 }
 
-                // emit return-label if nested in function
-                if (body.hasReturn()) {
-                    body.mark(body.returnLabelImmediate());
-                    body.loadCompletionValue();
-                    body.areturn();
-                }
+                // propagate tail-call return from nested statement-list-method
+                mv.updateTailCalls(body);
+                // TODO: normal return
             } else {
                 // script case
                 if (!result.isAbrupt()) {
