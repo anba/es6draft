@@ -427,7 +427,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         /* steps 9-13 */
         // stack: [args, thisValue, func(Callable)] -> result
-        stdCall(call, mv);
+        standardCall(call, mv);
     }
 
     /**
@@ -460,7 +460,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         /* steps 9-13 */
         // stack: [args, thisValue, func(Callable)] -> result
-        stdCall(call, mv);
+        standardCall(call, mv);
     }
 
     /**
@@ -500,7 +500,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         /* steps 9-13 */
         // stack: [args, thisValue, func(Callable)] -> result
-        stdCall(call, mv);
+        standardCall(call, mv);
 
         mv.mark(afterCall);
     }
@@ -558,7 +558,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
 
         /* steps 9-13 */
         // stack: [args, thisValue, func(Callable)] -> result
-        stdCall(call, mv);
+        standardCall(call, mv);
 
         mv.mark(afterCall);
     }
@@ -630,15 +630,13 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
     /**
      * [12.2.3 EvaluateCall Abstract Operation]
      */
-    private void stdCall(Expression call, ExpressionVisitor mv) {
+    private void standardCall(Expression call, ExpressionVisitor mv) {
         // stack: [args, thisValue, func(Callable)]
 
         /* steps 10, 12-13 */
         if (mv.isTailCall(call)) {
             // stack: [args, thisValue, func(Callable)] -> [<func(Callable), thisValue, args>]
             mv.invoke(Methods.ScriptRuntime_PrepareForTailCall);
-            // TODO: perform direct 'areturn' instead of using completion value
-            // mv.areturn(Types.Object_);
             return;
         }
 
@@ -1923,8 +1921,6 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
         mv.loadExecutionContext();
         if (mv.isTailCall(node)) {
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorTailCall);
-            // TODO: perform direct 'areturn' instead of using completion value
-            // mv.areturn(Types.Object_);
         } else {
             mv.invoke(Methods.ScriptRuntime_EvaluateConstructorCall);
         }
