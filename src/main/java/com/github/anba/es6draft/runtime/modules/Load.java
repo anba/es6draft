@@ -19,13 +19,11 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.Obj
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 
 import com.github.anba.es6draft.ast.Module;
 import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.parser.Parser.Option;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -645,8 +643,7 @@ public final class Load {
             Iterable<String> depsList;
             if (Type.isUndefined(instantiateResult)) {
                 /* step 4 */
-                EnumSet<Option> options = Parser.Option.from(calleeContext.getRealm().getOptions());
-                Parser parser = new Parser("", 1, options);
+                Parser parser = new Parser("", 1, calleeContext.getRealm().getOptions());
                 Module parsedModule;
                 try {
                     parsedModule = parser.parseModule(load.source);
