@@ -23,6 +23,7 @@ import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 
 /**
  * 12.1.5.7 Runtime Semantics: PropertyDefinitionEvaluation<br>
@@ -236,7 +237,8 @@ class PropertyGenerator extends
             }
             mv.loadExecutionContext();
             mv.invoke(Methods.ScriptRuntime_defineProperty);
-        } else if ("__proto__".equals(propName)) {
+        } else if ("__proto__".equals(propName)
+                && codegen.isEnabled(CompatibilityOption.ProtoInitialiser)) {
             expressionBoxedValue(propertyValue, mv);
             // TODO: SetFunctionName() ?
             mv.loadExecutionContext();

@@ -41,7 +41,6 @@ import org.junit.runners.model.MultipleFailureException;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.ShellGlobalObject;
 import com.github.anba.es6draft.repl.V8ShellGlobalObject;
@@ -79,7 +78,7 @@ public class TraceurTest {
     }
 
     private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
-    private static ScriptCache scriptCache = new ScriptCache(Parser.Option.from(options));
+    private static ScriptCache scriptCache = new ScriptCache(options);
     private static Script legacyJS, chaiJS;
 
     @Rule

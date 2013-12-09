@@ -29,7 +29,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -48,7 +47,7 @@ public final class Test262 extends BaseTest262 {
     private static final String TEST_SUITE = "test.suite.test262";
 
     private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
-    private static final ScriptCache cache = new ScriptCache(Parser.Option.from(options));
+    private static final ScriptCache cache = new ScriptCache(options);
 
     private static final LazyInit<Configuration> configuration = new LazyInit<Configuration>() {
         @Override

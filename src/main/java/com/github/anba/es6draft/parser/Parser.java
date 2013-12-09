@@ -40,7 +40,8 @@ public class Parser {
 
     private final String sourceFile;
     private final int sourceLine;
-    private final EnumSet<Option> options;
+    private final EnumSet<CompatibilityOption> options;
+    private final EnumSet<Option> parserOptions;
     private TokenStream ts;
     private ParseContext context;
 
@@ -405,80 +406,21 @@ public class Parser {
     }
 
     public enum Option {
-        Strict, FunctionCode, LocalScope, DirectEval, EvalScript, EnclosedByWithStatement,
-
-        /** B.1.1 Numeric Literals */
-        LegacyOctalIntegerLiteral,
-
-        /** B.1.2 String Literals */
-        OctalEscapeSequence,
-
-        /** B.1.3 HTML-like Comments */
-        HTMLComments,
-
-        /** Moz-Extension: for-each statement */
-        ForEachStatement,
-
-        /** Moz-Extension: guarded catch */
-        GuardedCatch,
-
-        /** Moz-Extension: expression closure */
-        ExpressionClosure,
-
-        /** Moz-Extension: let statement */
-        LetStatement,
-
-        /** Moz-Extension: let expression */
-        LetExpression,
-
-        /** Moz-Extension: legacy (star-less) generators */
-        LegacyGenerator,
-
-        /** Moz-Extension: legacy comprehension forms */
-        LegacyComprehension;
-
-        public static EnumSet<Option> from(Set<CompatibilityOption> compatOptions) {
-            EnumSet<Option> options = EnumSet.noneOf(Option.class);
-            if (compatOptions.contains(CompatibilityOption.LegacyOctalIntegerLiteral)) {
-                options.add(Option.LegacyOctalIntegerLiteral);
-            }
-            if (compatOptions.contains(CompatibilityOption.OctalEscapeSequence)) {
-                options.add(Option.OctalEscapeSequence);
-            }
-            if (compatOptions.contains(CompatibilityOption.HTMLComments)) {
-                options.add(Option.HTMLComments);
-            }
-            if (compatOptions.contains(CompatibilityOption.ForEachStatement)) {
-                options.add(Option.ForEachStatement);
-            }
-            if (compatOptions.contains(CompatibilityOption.GuardedCatch)) {
-                options.add(Option.GuardedCatch);
-            }
-            if (compatOptions.contains(CompatibilityOption.ExpressionClosure)) {
-                options.add(Option.ExpressionClosure);
-            }
-            if (compatOptions.contains(CompatibilityOption.LetStatement)) {
-                options.add(Option.LetStatement);
-            }
-            if (compatOptions.contains(CompatibilityOption.LetExpression)) {
-                options.add(Option.LetExpression);
-            }
-            if (compatOptions.contains(CompatibilityOption.LegacyGenerator)) {
-                options.add(Option.LegacyGenerator);
-            }
-            if (compatOptions.contains(CompatibilityOption.LegacyComprehension)) {
-                options.add(Option.LegacyComprehension);
-            }
-            return options;
-        }
+        Strict, FunctionCode, LocalScope, DirectEval, EvalScript, EnclosedByWithStatement;
     }
 
-    public Parser(String sourceFile, int sourceLine, Set<Option> options) {
+    public Parser(String sourceFile, int sourceLine, Set<CompatibilityOption> options) {
+        this(sourceFile, sourceLine, options, EnumSet.noneOf(Option.class));
+    }
+
+    public Parser(String sourceFile, int sourceLine, Set<CompatibilityOption> compatOptions,
+            EnumSet<Option> options) {
         this.sourceFile = sourceFile;
         this.sourceLine = sourceLine;
-        this.options = EnumSet.copyOf(options);
+        this.options = EnumSet.copyOf(compatOptions);
+        this.parserOptions = EnumSet.copyOf(options);
         context = new ParseContext();
-        context.strictMode = this.options.contains(Option.Strict) ? StrictMode.Strict
+        context.strictMode = this.parserOptions.contains(Option.Strict) ? StrictMode.Strict
                 : StrictMode.NonStrict;
     }
 
@@ -490,8 +432,12 @@ public class Parser {
         return sourceLine;
     }
 
-    boolean isEnabled(Option option) {
+    boolean isEnabled(CompatibilityOption option) {
         return options.contains(option);
+    }
+
+    boolean isEnabled(Option option) {
+        return parserOptions.contains(option);
     }
 
     private ParseContext newContext(ContextKind kind) {
@@ -1071,7 +1017,7 @@ public class Parser {
 
         ScriptContext scope = context.scriptContext;
         Script script = new Script(beginSource(), ts.endPosition(), sourceFile, scope, statements,
-                options, strict);
+                options, parserOptions, strict);
         scope.node = script;
 
         return script;
@@ -1100,7 +1046,7 @@ public class Parser {
 
             ScriptContext scope = context.scriptContext;
             Script script = new Script(beginSource(), ts.endPosition(), sourceFile, scope,
-                    statements, options, strict);
+                    statements, options, parserOptions, strict);
             scope.node = script;
 
             return script;
@@ -1128,7 +1074,7 @@ public class Parser {
 
             ModuleContext scope = context.modContext;
             Module module = new Module(beginSource(), ts.endPosition(), sourceFile, scope,
-                    statements, options);
+                    statements, options, parserOptions);
             scope.node = module;
 
             return module;
@@ -1645,7 +1591,7 @@ public class Parser {
 
             String header, body;
             List<StatementListItem> statements;
-            if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+            if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
                 int startBody = ts.position();
                 statements = expressionClosureBody();
                 int endFunction = ts.position();
@@ -1702,7 +1648,7 @@ public class Parser {
 
             String header, body;
             List<StatementListItem> statements;
-            if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+            if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
                 int startBody = ts.position();
                 statements = expressionClosureBody();
                 int endFunction = ts.position();
@@ -2113,7 +2059,7 @@ public class Parser {
 
             List<StatementListItem> statements;
             String header, body;
-            if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+            if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
                 int startBody = ts.position();
                 statements = expressionClosureBody();
                 int endFunction = ts.position();
@@ -2171,7 +2117,7 @@ public class Parser {
 
             List<StatementListItem> statements;
             String header, body;
-            if (token() != Token.LC && isEnabled(Option.ExpressionClosure)) {
+            if (token() != Token.LC && isEnabled(CompatibilityOption.ExpressionClosure)) {
                 int startBody = ts.position();
                 statements = expressionClosureBody();
                 int endFunction = ts.position();
@@ -2471,7 +2417,8 @@ public class Parser {
      */
     private YieldExpression yieldExpression(boolean allowIn) {
         if (!context.yieldAllowed) {
-            if (context.kind == ContextKind.Function && isEnabled(Option.LegacyGenerator)) {
+            if (context.kind == ContextKind.Function
+                    && isEnabled(CompatibilityOption.LegacyGenerator)) {
                 throw new RetryGenerator();
             }
             reportSyntaxError(Messages.Key.InvalidYieldExpression);
@@ -2487,7 +2434,7 @@ public class Parser {
         Expression expr;
         if (delegatedYield) {
             expr = assignmentExpression(allowIn);
-        } else if (!isEnabled(Option.LegacyGenerator)) {
+        } else if (!isEnabled(CompatibilityOption.LegacyGenerator)) {
             // FIXME: take this path based on the actual generator type, not based on options
             if (noLineTerminator() && assignmentExpressionFirstSet(token())) {
                 expr = assignmentExpression(allowIn);
@@ -2796,7 +2743,8 @@ public class Parser {
         case DEBUGGER:
             return debuggerStatement();
         case LET:
-            if (isEnabled(Option.LetStatement) || isEnabled(Option.LetExpression)) {
+            if (isEnabled(CompatibilityOption.LetStatement)
+                    || isEnabled(CompatibilityOption.LetExpression)) {
                 return letStatement();
             }
             // fall-through
@@ -3757,7 +3705,8 @@ public class Parser {
         long begin = ts.beginPosition();
         consume(Token.FOR);
         boolean each = false;
-        if (token() != Token.LP && isName("each") && isEnabled(Option.ForEachStatement)) {
+        if (token() != Token.LP && isName("each")
+                && isEnabled(CompatibilityOption.ForEachStatement)) {
             consume("each");
             each = true;
         }
@@ -4339,7 +4288,8 @@ public class Parser {
             case SWITCH:
                 return switchStatement(labelSet);
             case LET:
-                if (isEnabled(Option.LetStatement) || isEnabled(Option.LetExpression)) {
+                if (isEnabled(CompatibilityOption.LetStatement)
+                        || isEnabled(CompatibilityOption.LetExpression)) {
                     break labels;
                 }
                 // fall-through
@@ -4433,7 +4383,7 @@ public class Parser {
         tryBlock = block(NO_INHERITED_BINDING);
         Token tok = token();
         if (tok == Token.CATCH) {
-            if (isEnabled(Option.GuardedCatch)) {
+            if (isEnabled(CompatibilityOption.GuardedCatch)) {
                 guardedCatchNodes = newSmallList();
                 while (token() == Token.CATCH && catchNode == null) {
                     long beginCatch = ts.beginPosition();
@@ -4540,7 +4490,7 @@ public class Parser {
         List<LexicalBinding> bindings = bindingList(false, true);
         consume(Token.RP);
 
-        if (token() != Token.LC && isEnabled(Option.LetExpression)) {
+        if (token() != Token.LC && isEnabled(CompatibilityOption.LetExpression)) {
             // let expression disguised as let statement - also error in strict mode(!)
             reportStrictModeSyntaxError(begin, Messages.Key.UnexpectedToken, token().toString());
             Expression expression = assignmentExpression(true);
@@ -4639,7 +4589,7 @@ public class Parser {
         case TEMPLATE:
             return templateLiteral(false);
         case LET:
-            if (isEnabled(Option.LetExpression)) {
+            if (isEnabled(CompatibilityOption.LetExpression)) {
                 return letExpression();
             }
         case YIELD:
@@ -4689,7 +4639,7 @@ public class Parser {
         } else {
             // inlined `expression(true)`
             expr = assignmentExpressionNoValidation(true);
-            if (token() == Token.FOR && isEnabled(Option.LegacyComprehension)) {
+            if (token() == Token.FOR && isEnabled(CompatibilityOption.LegacyComprehension)) {
                 ts.reset(position, lineinfo);
                 return legacyGeneratorComprehension();
             }
@@ -4904,7 +4854,7 @@ public class Parser {
             return arrayComprehension();
         } else {
             long begin = ts.beginPosition();
-            if (isEnabled(Option.LegacyComprehension)) {
+            if (isEnabled(CompatibilityOption.LegacyComprehension)) {
                 switch (peek()) {
                 case RB:
                 case COMMA:
@@ -5636,7 +5586,7 @@ public class Parser {
         long position = ts.position(), lineinfo = ts.lineinfo();
         consume(Token.LP);
         if (token() != Token.RP) {
-            if (token() != Token.TRIPLE_DOT && isEnabled(Option.LegacyComprehension)) {
+            if (token() != Token.TRIPLE_DOT && isEnabled(CompatibilityOption.LegacyComprehension)) {
                 Expression expr = assignmentExpression(true);
                 if (token() == Token.FOR) {
                     ts.reset(position, lineinfo);
@@ -5945,7 +5895,8 @@ public class Parser {
         if (token() == Token.YIELD) {
             if (context.kind == ContextKind.Generator) {
                 return yieldExpression(allowIn);
-            } else if (context.kind == ContextKind.Function && isEnabled(Option.LegacyGenerator)) {
+            } else if (context.kind == ContextKind.Function
+                    && isEnabled(CompatibilityOption.LegacyGenerator)) {
                 throw new RetryGenerator();
             }
         }

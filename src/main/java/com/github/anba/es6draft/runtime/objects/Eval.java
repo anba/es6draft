@@ -232,8 +232,7 @@ public final class Eval {
             boolean globalCode, boolean directEval, boolean globalScope, boolean withStatement) {
         try {
             Realm realm = cx.getRealm();
-            EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
-            options.add(Parser.Option.EvalScript);
+            EnumSet<Parser.Option> options = EnumSet.of(Parser.Option.EvalScript);
             if (strict) {
                 options.add(Parser.Option.Strict);
             }
@@ -249,7 +248,7 @@ public final class Eval {
             if (withStatement) {
                 options.add(Parser.Option.EnclosedByWithStatement);
             }
-            Parser parser = new Parser("<eval>", 1, options);
+            Parser parser = new Parser("<eval>", 1, realm.getOptions(), options);
             com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
             if (parsedScript.getStatements().isEmpty()) {
                 return null;

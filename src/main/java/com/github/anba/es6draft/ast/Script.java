@@ -10,6 +10,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1>
@@ -21,16 +22,19 @@ public class Script extends AstNode implements TopLevelNode, ScopedNode {
     private String sourceFile;
     private ScriptScope scope;
     private List<StatementListItem> statements;
-    private EnumSet<Parser.Option> options;
+    private EnumSet<CompatibilityOption> options;
+    private EnumSet<Parser.Option> parserOptions;
     private boolean strict;
 
     public Script(long beginPosition, long endPosition, String sourceFile, ScriptScope scope,
-            List<StatementListItem> statements, EnumSet<Parser.Option> options, boolean strict) {
+            List<StatementListItem> statements, EnumSet<CompatibilityOption> options,
+            EnumSet<Parser.Option> parserOptions, boolean strict) {
         super(beginPosition, endPosition);
         this.sourceFile = sourceFile;
         this.scope = scope;
         this.statements = statements;
         this.options = options;
+        this.parserOptions = parserOptions;
         this.strict = strict;
     }
 
@@ -56,28 +60,32 @@ public class Script extends AstNode implements TopLevelNode, ScopedNode {
         return strict;
     }
 
-    public EnumSet<Parser.Option> getOptions() {
+    public EnumSet<CompatibilityOption> getOptions() {
         return options;
     }
 
+    public EnumSet<Parser.Option> getParserOptions() {
+        return parserOptions;
+    }
+
     public boolean isEvalScript() {
-        return options.contains(Parser.Option.EvalScript);
+        return parserOptions.contains(Parser.Option.EvalScript);
     }
 
     public boolean isDirectEval() {
-        return options.contains(Parser.Option.DirectEval);
+        return parserOptions.contains(Parser.Option.DirectEval);
     }
 
     public boolean isGlobalScope() {
-        return !options.contains(Parser.Option.LocalScope);
+        return !parserOptions.contains(Parser.Option.LocalScope);
     }
 
     public boolean isGlobalCode() {
-        return !options.contains(Parser.Option.FunctionCode);
+        return !parserOptions.contains(Parser.Option.FunctionCode);
     }
 
     public boolean isEnclosedByWithStatement() {
-        return options.contains(Parser.Option.EnclosedByWithStatement);
+        return parserOptions.contains(Parser.Option.EnclosedByWithStatement);
     }
 
     @Override

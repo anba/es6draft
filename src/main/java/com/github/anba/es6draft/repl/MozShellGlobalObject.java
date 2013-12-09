@@ -19,7 +19,6 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
@@ -328,8 +327,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             return UNDEFINED;
         }
         String source = ((Callable) function).toSource();
-        EnumSet<Parser.Option> options = Parser.Option.from(getRealm().getOptions());
-        Parser parser = new Parser("<decompileBody>", 1, options);
+        Parser parser = new Parser("<decompileBody>", 1, getRealm().getOptions());
         com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript("(" + source + ")");
         ExpressionStatement expr = (ExpressionStatement) parsedScript.getStatements().get(0);
         FunctionNode fnode = (FunctionNode) expr.getExpression();

@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.parser.NumberParser.parseOctal;
 import java.util.Arrays;
 
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 
 /**
@@ -692,7 +693,7 @@ public class TokenStream {
             } else if (match('=')) {
                 return Token.LE;
             } else if (input.peek(0) == '!' && input.peek(1) == '-' && input.peek(2) == '-'
-                    && parser.isEnabled(Parser.Option.HTMLComments)) {
+                    && parser.isEnabled(CompatibilityOption.HTMLComments)) {
                 // html start-comment
                 mustMatch('!');
                 mustMatch('-');
@@ -753,7 +754,7 @@ public class TokenStream {
         case '-':
             if (match('-')) {
                 if (input.peek(0) == '>' && hasLineTerminator
-                        && parser.isEnabled(Parser.Option.HTMLComments)) {
+                        && parser.isEnabled(CompatibilityOption.HTMLComments)) {
                     // html end-comment at line start
                     mustMatch('>');
                     readSingleComment();
@@ -1405,7 +1406,7 @@ public class TokenStream {
                 break;
             case '0':
                 if (isDecimalDigit(input.peek(0))) {
-                    if (!parser.isEnabled(Parser.Option.OctalEscapeSequence)) {
+                    if (!parser.isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                         throw error(Messages.Key.InvalidNULLEscape);
                     }
                     c = readOctalEscape(c);
@@ -1420,7 +1421,7 @@ public class TokenStream {
             case '5':
             case '6':
             case '7':
-                if (!parser.isEnabled(Parser.Option.OctalEscapeSequence)) {
+                if (!parser.isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                     throw error(Messages.Key.StrictModeOctalEscapeSequence);
                 }
                 c = readOctalEscape(c);
@@ -1428,7 +1429,7 @@ public class TokenStream {
             case '8':
             case '9':
                 // FIXME: spec bug - undefined behaviour for \8 and \9
-                if (!parser.isEnabled(Parser.Option.OctalEscapeSequence)) {
+                if (!parser.isEnabled(CompatibilityOption.OctalEscapeSequence)) {
                     throw error(Messages.Key.StrictModeOctalEscapeSequence);
                 }
                 // fall-through
@@ -1503,7 +1504,7 @@ public class TokenStream {
             } else if (d == 'o' || d == 'O') {
                 number = readOctalIntegerLiteral();
             } else if (isDecimalDigit(d)
-                    && parser.isEnabled(Parser.Option.LegacyOctalIntegerLiteral)) {
+                    && parser.isEnabled(CompatibilityOption.LegacyOctalIntegerLiteral)) {
                 input.unget(d);
                 number = readLegacyOctalIntegerLiteral();
             } else {

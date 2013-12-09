@@ -265,8 +265,7 @@ public class Repl {
             }
             source.append(s).append('\n');
             try {
-                EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
-                Parser parser = new Parser("typein", line, options);
+                Parser parser = new Parser("typein", line, realm.getOptions());
                 return parser.parseScript(source);
             } catch (ParserEOFException e) {
                 continue;
@@ -368,7 +367,7 @@ public class Repl {
         if (options.contains(Option.Debug)) {
             compilerOptions.add(Compiler.Option.Debug);
         }
-        ScriptCache scriptCache = new ScriptCache(Parser.Option.from(compatibilityOptions));
+        ScriptCache scriptCache = new ScriptCache(compatibilityOptions);
 
         List<String> initScripts;
         ObjectAllocator<? extends ShellGlobalObject> allocator;

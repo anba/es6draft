@@ -31,7 +31,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeAnalysis;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeException;
-import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 
 /**
  *
@@ -53,10 +53,10 @@ public class Compiler {
         Debug, SourceMap
     }
 
-    private final EnumSet<Option> options;
+    private final EnumSet<Option> compilerOptions;
 
-    public Compiler(EnumSet<Option> options) {
-        this.options = EnumSet.copyOf(options);
+    public Compiler(EnumSet<Option> compilerOptions) {
+        this.compilerOptions = EnumSet.copyOf(compilerOptions);
     }
 
     public byte[] compile(Script script, String className) {
@@ -89,7 +89,7 @@ public class Compiler {
         cw.visitEnd();
 
         byte[] bytes = cw.toByteArray();
-        if (options.contains(Option.Debug)) {
+        if (compilerOptions.contains(Option.Debug)) {
             debug(bytes);
         }
 
@@ -127,19 +127,19 @@ public class Compiler {
         cw.visitEnd();
 
         byte[] bytes = cw.toByteArray();
-        if (options.contains(Option.Debug)) {
+        if (compilerOptions.contains(Option.Debug)) {
             debug(bytes);
         }
 
         return bytes;
     }
 
-    private static EnumSet<Parser.Option> optionsFrom(FunctionNode function) {
+    private static EnumSet<CompatibilityOption> optionsFrom(FunctionNode function) {
         Scope enclosingScope = function.getScope().getEnclosingScope();
         if (enclosingScope instanceof ScriptScope) {
             return ((ScriptScope) enclosingScope).getNode().getOptions();
         }
-        return EnumSet.noneOf(Parser.Option.class);
+        return EnumSet.noneOf(CompatibilityOption.class);
     }
 
     private static void debug(byte[] b) {
@@ -148,7 +148,7 @@ public class Compiler {
     }
 
     private String sourceMap(Script script) {
-        if (!options.contains(Option.SourceMap)) {
+        if (!compilerOptions.contains(Option.SourceMap)) {
             return null;
         }
         String sourceFile = script.getSourceFile();

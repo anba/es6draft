@@ -14,8 +14,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
 
-import java.util.EnumSet;
-
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.compiler.CompilationException;
@@ -90,8 +88,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         /* steps 8-12 */
         RuntimeInfo.Function function;
         try {
-            EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
-            Parser parser = new Parser("<GeneratorFunction>", 1, options);
+            Parser parser = new Parser("<GeneratorFunction>", 1, realm.getOptions());
             GeneratorDefinition generatorDef = parser.parseGenerator(p, bodyText);
             String className = calleeContext.getRealm().nextFunctionName();
             function = ScriptLoader.compile(className, generatorDef, realm.getCompilerOptions());

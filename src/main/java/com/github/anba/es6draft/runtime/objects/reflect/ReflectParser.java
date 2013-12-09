@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -226,16 +225,15 @@ public final class ReflectParser implements NodeVisitor<Object, Void> {
     public static Object parse(ExecutionContext cx, String source, boolean location,
             String sourceInfo, int line, EnumMap<Type, Callable> builder) {
         Realm realm = cx.getRealm();
-        EnumSet<Parser.Option> options = Parser.Option.from(realm.getOptions());
         ReflectParser reflect = new ReflectParser(cx, location, sourceInfo, line, builder);
         Node parsedNode = null;
         try {
-            Parser parser = new Parser("<parse>", line, options);
+            Parser parser = new Parser("<parse>", line, realm.getOptions());
             parsedNode = parser.parseScript(source);
         } catch (ParserException ignore) {
             // TODO: Reflect.parse() currently accepts scripts and modules...
             try {
-                Parser parser = new Parser("<parse>", line, options);
+                Parser parser = new Parser("<parse>", line, realm.getOptions());
                 parsedNode = parser.parseModule(source);
             } catch (ParserException e) {
                 throw e.toScriptException(cx);

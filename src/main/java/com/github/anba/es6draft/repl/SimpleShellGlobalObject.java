@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.EnumSet;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
@@ -61,8 +60,7 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code parseModule(source)} */
     @Function(name = "parseModule", arity = 1)
     public String parseModule(ExecutionContext cx, String source) {
-        EnumSet<Parser.Option> options = Parser.Option.from(getRealm().getOptions());
-        Parser parser = new Parser("<module>", 1, options);
+        Parser parser = new Parser("<module>", 1, getRealm().getOptions());
         try {
             parser.parseModule(source);
             return "success";

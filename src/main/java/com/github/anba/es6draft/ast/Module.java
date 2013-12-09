@@ -10,6 +10,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.github.anba.es6draft.parser.Parser;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 
 /**
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
@@ -19,15 +20,18 @@ public class Module extends AstNode implements TopLevelNode, ScopedNode {
     private String sourceFile;
     private ModuleScope scope;
     private List<ModuleItem> statements;
-    private EnumSet<Parser.Option> options;
+    private EnumSet<CompatibilityOption> options;
+    private EnumSet<Parser.Option> parserOptions;
 
     public Module(long beginPosition, long endPosition, String sourceFile, ModuleScope scope,
-            List<ModuleItem> statements, EnumSet<Parser.Option> options) {
+            List<ModuleItem> statements, EnumSet<CompatibilityOption> options,
+            EnumSet<Parser.Option> parserOptions) {
         super(beginPosition, endPosition);
         this.sourceFile = sourceFile;
         this.scope = scope;
         this.statements = statements;
         this.options = options;
+        this.parserOptions = parserOptions;
     }
 
     public String getSourceFile() {
@@ -48,8 +52,12 @@ public class Module extends AstNode implements TopLevelNode, ScopedNode {
         this.statements = statements;
     }
 
-    public EnumSet<Parser.Option> getOptions() {
+    public EnumSet<CompatibilityOption> getOptions() {
         return options;
+    }
+
+    public EnumSet<Parser.Option> getParserOptions() {
+        return parserOptions;
     }
 
     @Override

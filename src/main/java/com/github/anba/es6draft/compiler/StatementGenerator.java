@@ -24,7 +24,6 @@ import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
-import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.compiler.JumpLabel.BreakLabel;
 import com.github.anba.es6draft.compiler.JumpLabel.ContinueLabel;
 import com.github.anba.es6draft.compiler.JumpLabel.TempLabel;
@@ -373,7 +372,7 @@ class StatementGenerator extends
         mv.mark(loopstart);
 
         if ((iterationKind == IterationKind.Enumerate || iterationKind == IterationKind.EnumerateValues)
-                && codegen.isEnabled(Parser.Option.LegacyGenerator)) {
+                && codegen.isEnabled(CompatibilityOption.LegacyGenerator)) {
             // legacy generator mode, both, for-in and for-each, perform Iterate on generators
             Label l0 = new Label(), l1 = new Label();
             mv.dup();

@@ -18,13 +18,13 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.parser.Parser.Option;
 import com.github.anba.es6draft.parser.ParserException;
 
 /**
@@ -42,15 +42,15 @@ public class ScriptCache {
         }
     });
 
-    private EnumSet<Option> options;
+    private Set<CompatibilityOption> options;
     private AtomicInteger scriptCounter = new AtomicInteger(0);
 
     private String nextScriptName() {
         return "Script_" + scriptCounter.incrementAndGet();
     }
 
-    public ScriptCache(EnumSet<Parser.Option> options) {
-        this.options = options;
+    public ScriptCache(Set<CompatibilityOption> options) {
+        this.options = EnumSet.copyOf(options);
     }
 
     /**
