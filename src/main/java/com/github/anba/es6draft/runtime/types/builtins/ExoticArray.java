@@ -215,27 +215,17 @@ public class ExoticArray extends OrdinaryObject {
         /* step 15 */
         if ((oldLen - newLen) > 1000) {
             oldLen = SparseArraySetLength(cx, array, newLen);
-            if (oldLen >= 0) {
-                newLenDesc.setValue(oldLen + 1);
-                if (!newWritable) {
-                    newLenDesc.setWritable(false);
-                }
-                array.ordinaryDefineOwnProperty("length", newLenDesc);
-                return false;
-            }
         } else {
-            while (newLen < oldLen) {
-                oldLen -= 1;
-                boolean deleteSucceeded = array.delete(cx, ToString(oldLen));
-                if (!deleteSucceeded) {
-                    newLenDesc.setValue(oldLen + 1);
-                    if (!newWritable) {
-                        newLenDesc.setWritable(false);
-                    }
-                    array.ordinaryDefineOwnProperty("length", newLenDesc);
-                    return false;
-                }
+            oldLen = DenseArraySetLength(cx, array, oldLen, newLen);
+        }
+        /* step 15.d */
+        if (oldLen >= 0) {
+            newLenDesc.setValue(oldLen + 1);
+            if (!newWritable) {
+                newLenDesc.setWritable(false);
             }
+            array.ordinaryDefineOwnProperty("length", newLenDesc);
+            return false;
         }
         /* step 16 */
         if (!newWritable) {
@@ -245,6 +235,18 @@ public class ExoticArray extends OrdinaryObject {
         }
         /* step 17 */
         return true;
+    }
+
+    private static long DenseArraySetLength(ExecutionContext cx, ExoticArray array, long oldLen,
+            long newLen) {
+        while (newLen < oldLen) {
+            oldLen -= 1;
+            boolean deleteSucceeded = array.delete(cx, ToString(oldLen));
+            if (!deleteSucceeded) {
+                return oldLen;
+            }
+        }
+        return -1;
     }
 
     private static long SparseArraySetLength(ExecutionContext cx, ExoticArray array, long newLen) {
