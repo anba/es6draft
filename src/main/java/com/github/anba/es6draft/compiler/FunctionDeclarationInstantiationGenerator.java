@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
  * <h2>9.2 ECMAScript Function Objects</h2>
  * <ul>
- * <li>9.2.14 Function Declaration Instantiation
+ * <li>9.2.13 Function Declaration Instantiation
  * </ul>
  */
 class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
@@ -118,11 +118,15 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         mv.loadUndefined();
         mv.store(undef);
 
-        Variable<Iterator<?>> iterator = uncheckedCast(mv.newVariable("iterator", Iterator.class));
-        mv.loadParameter(ARGUMENTS, Object[].class);
-        mv.invoke(Methods.Arrays_asList);
-        mv.invoke(Methods.List_iterator);
-        mv.store(iterator);
+        boolean hasParameters = !function.getParameters().getFormals().isEmpty();
+        Variable<Iterator<?>> iterator = null;
+        if (hasParameters) {
+            iterator = uncheckedCast(mv.newVariable("iterator", Iterator.class));
+            mv.loadParameter(ARGUMENTS, Object[].class);
+            mv.invoke(Methods.Arrays_asList);
+            mv.invoke(Methods.List_iterator);
+            mv.store(iterator);
+        }
 
         Set<String> bindings = new HashSet<>();
         /* step 1 */
@@ -223,7 +227,9 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             initialiseBinding(envRec, fn, mv);
         }
         /* steps 18-20 */
-        BindingInitialisation(function, iterator, mv);
+        if (hasParameters) {
+            BindingInitialisation(function, iterator, mv);
+        }
         /* step 21 */
         if (argumentsObjectNeeded) {
             // stack: [] -> [ao]
