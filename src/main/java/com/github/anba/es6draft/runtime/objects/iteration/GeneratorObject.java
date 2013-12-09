@@ -11,6 +11,7 @@ import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.GeneratorThread.newGeneratorThreadFactory;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.lang.invoke.MethodHandle;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -155,7 +156,7 @@ public class GeneratorObject extends OrdinaryObject {
             public Object call() throws Exception {
                 Object result;
                 try {
-                    result = code.evaluate(context);
+                    result = evaluate(context, code.handle());
                 } catch (ScriptException | StackOverflowError e) {
                     result = e;
                 } catch (Throwable t) {
@@ -167,6 +168,16 @@ public class GeneratorObject extends OrdinaryObject {
             }
         });
         executor.shutdown();
+    }
+
+    private static Object evaluate(ExecutionContext cx, MethodHandle handle) {
+        try {
+            return handle.invokeExact(cx);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void resume0(Object value) {
