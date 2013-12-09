@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -18,13 +19,33 @@ import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
  * <li>9.3 Built-in Function Objects
  * </ul>
  */
-public class NativeTailCallFunction extends BuiltinFunction {
-    // (Object, Object[]) -> Object
+public final class NativeTailCallFunction extends BuiltinFunction {
+    // (ExecutionContext, Object, Object[]) -> Object
     private final MethodHandle mh;
+
+    // (Object, Object[]) -> Object
+    private final MethodHandle tmh;
 
     public NativeTailCallFunction(Realm realm, String name, int arity, MethodHandle mh) {
         super(realm, name, arity);
-        this.mh = mh;
+        this.mh = tailCallAdapter(mh);
+        this.tmh = mh;
+    }
+
+    private static MethodHandle tailCallAdapter(MethodHandle mh) {
+        mh = MethodHandles.dropArguments(mh, 0, ExecutionContext.class);
+
+        MethodHandle result = TailCallInvocation.getTailCallHandler();
+        result = MethodHandles.dropArguments(result, 2, Object.class, Object[].class);
+        result = MethodHandles.foldArguments(result, mh);
+        return result;
+    }
+
+    /**
+     * Returns `(ExecutionContext, Object, Object[]) -> Object` method-handle
+     */
+    public MethodHandle getCallMethod() {
+        return mh;
     }
 
     /**
@@ -33,12 +54,7 @@ public class NativeTailCallFunction extends BuiltinFunction {
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         try {
-            Object result = mh.invokeExact(thisValue, args);
-            // tail-call with trampoline
-            while (result instanceof TailCallInvocation) {
-                result = ((TailCallInvocation) result).apply(callerContext);
-            }
-            return result;
+            return mh.invokeExact(callerContext, thisValue, args);
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
@@ -52,6 +68,6 @@ public class NativeTailCallFunction extends BuiltinFunction {
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable {
-        return mh.invokeExact(thisValue, args);
+        return tmh.invokeExact(thisValue, args);
     }
 }

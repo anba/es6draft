@@ -6,6 +6,11 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
+
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -43,7 +48,7 @@ public final class TailCallInvocation {
         this.object = object;
     }
 
-    public Object apply(ExecutionContext callerContext) throws Throwable {
+    private Object apply(ExecutionContext callerContext) throws Throwable {
         Object result;
         if (thisValue == null) {
             // cf. ScriptRuntime#EvaluateConstructorTailCall
@@ -64,5 +69,34 @@ public final class TailCallInvocation {
             return this;
         }
         return new TailCallInvocation(function, thisValue, argumentsList, object);
+    }
+
+    private static final MethodHandle tailCallTrampolineMH;
+    static {
+        Lookup lookup = MethodHandles.lookup();
+        try {
+            tailCallTrampolineMH = lookup.findStatic(TailCallInvocation.class,
+                    "tailCallTrampoline",
+                    MethodType.methodType(Object.class, Object.class, ExecutionContext.class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * (Object, ExecutionContext) -> Object
+     */
+    public static MethodHandle getTailCallHandler() {
+        return tailCallTrampolineMH;
+    }
+
+    @SuppressWarnings("unused")
+    private static Object tailCallTrampoline(Object result, ExecutionContext callerContext)
+            throws Throwable {
+        // tail-call with trampoline
+        while (result instanceof TailCallInvocation) {
+            result = ((TailCallInvocation) result).apply(callerContext);
+        }
+        return result;
     }
 }

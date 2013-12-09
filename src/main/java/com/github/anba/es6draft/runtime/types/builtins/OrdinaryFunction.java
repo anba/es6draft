@@ -17,7 +17,6 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.RuntimeInfo.Code;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -69,20 +68,9 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     @Override
-    public OrdinaryFunction rebind(ExecutionContext cx, ScriptObject newHomeObject) {
-        assert isInitialised() : "uninitialised function object";
-        Object methodName = getMethodName();
-        OrdinaryFunction f;
-        if (methodName instanceof String) {
-            f = FunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
-                    getPrototypeOf(cx), newHomeObject, (String) methodName);
-        } else {
-            assert methodName instanceof Symbol;
-            f = FunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
-                    getPrototypeOf(cx), newHomeObject, (Symbol) methodName);
-        }
-        f.isConstructor = this.isConstructor;
-        return f;
+    protected OrdinaryFunction allocateCopy() {
+        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
+                getFunctionKind());
     }
 
     /**
@@ -90,24 +78,12 @@ public class OrdinaryFunction extends FunctionObject {
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        /* step 1 */
-        if (!isInitialised()) {
-            throw throwTypeError(callerContext, Messages.Key.UninitialisedObject);
-        }
-        /* steps 2-3 (implicit) */
-        Object oldCaller = caller.getValue();
-        Object oldArguments = arguments.getValue();
         try {
-            /* steps 4-14 */
-            ExecutionContext calleeContext = EvaluateArguments(callerContext, this, thisValue, args);
-            /* steps 15-16 */
-            Object result = EvaluateBody(callerContext, calleeContext, getCode());
-            /* step 17 */
-            return result;
-        } finally {
-            if (isLegacy()) {
-                restoreLegacyProperties(oldCaller, oldArguments);
-            }
+            return getCallMethod().invokeExact(this, callerContext, thisValue, args);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -117,51 +93,7 @@ public class OrdinaryFunction extends FunctionObject {
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable {
-        /* step 1 */
-        if (!isInitialised()) {
-            throw throwTypeError(callerContext, Messages.Key.UninitialisedObject);
-        }
-        /* steps 2-3 (implicit) */
-        Object oldCaller = caller.getValue();
-        Object oldArguments = arguments.getValue();
-        try {
-            /* steps 4-14 */
-            ExecutionContext calleeContext = EvaluateArguments(callerContext, this, thisValue, args);
-            /* steps 15-17 */
-            return getCode().handle().invokeExact(calleeContext);
-        } finally {
-            if (isLegacy()) {
-                restoreLegacyProperties(oldCaller, oldArguments);
-            }
-        }
-    }
-
-    private static ExecutionContext EvaluateArguments(ExecutionContext callerContext,
-            OrdinaryFunction f, Object thisValue, Object[] args) {
-        /* steps 4-12 */
-        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(f, thisValue);
-        /* steps 13-14 */
-        f.getFunction().functionDeclarationInstantiation(calleeContext, f, args);
-        if (f.isLegacy()) {
-            f.updateLegacyCaller(callerContext.getCurrentFunction());
-        }
-        return calleeContext;
-    }
-
-    public static Object EvaluateBody(ExecutionContext callerContext,
-            ExecutionContext calleeContext, Code code) {
-        try {
-            Object result = code.handle().invokeExact(calleeContext);
-            // tail-call with trampoline
-            while (result instanceof TailCallInvocation) {
-                result = ((TailCallInvocation) result).apply(callerContext);
-            }
-            return result;
-        } catch (RuntimeException | Error e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
+        return getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
     }
 
     /* ***************************************************************************************** */
@@ -248,16 +180,8 @@ public class OrdinaryFunction extends FunctionObject {
         } else {
             f = new OrdinaryFunction(realm);
         }
-        /* step 13 (moved) */
-        f.realm = realm;
-        /* step 9 */
-        f.setStrict(strict);
-        /* step 10 */
-        f.functionKind = kind;
-        /* step 11 */
-        f.setPrototype(functionPrototype);
-        /* step 12 */
-        // f.[[Extensible]] = true (implicit)
+        /* steps 9-13 */
+        f.allocate(realm, functionPrototype, strict, kind, uninitialisedFunctionMH);
         /* step 14 */
         return f;
     }
@@ -280,28 +204,15 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 */
-        boolean strict = f.strict;
+        boolean strict = f.isStrict();
         /* steps 3-4 */
         DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
         /* step 5 */
         if (strict) {
             AddRestrictedFunctionProperties(cx, f);
         }
-        /* step 6 */
-        f.scope = scope;
-        /* steps 7-8 */
-        f.function = function;
-        /* step 9 */
-        f.homeObject = homeObject;
-        f.methodName = methodName;
-        /* steps 10-12 */
-        if (kind == FunctionKind.Arrow) {
-            f.thisMode = ThisMode.Lexical;
-        } else if (strict) {
-            f.thisMode = ThisMode.Strict;
-        } else {
-            f.thisMode = ThisMode.Global;
-        }
+        /* steps 6-12 */
+        f.initialise(kind, function, scope, homeObject, methodName);
         /* step 13 */
         return f;
     }
@@ -315,28 +226,15 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 */
-        boolean strict = f.strict;
+        boolean strict = f.isStrict();
         /* steps 3-4 */
         DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
         /* step 5 */
         if (strict) {
             AddRestrictedFunctionProperties(cx, f);
         }
-        /* step 6 */
-        f.scope = scope;
-        /* steps 7-8 */
-        f.function = function;
-        /* step 9 */
-        f.homeObject = homeObject;
-        f.methodName = methodName;
-        /* steps 10-12 */
-        if (kind == FunctionKind.Arrow) {
-            f.thisMode = ThisMode.Lexical;
-        } else if (strict) {
-            f.thisMode = ThisMode.Strict;
-        } else {
-            f.thisMode = ThisMode.Global;
-        }
+        /* steps 6-12 */
+        f.initialise(kind, function, scope, homeObject, methodName);
         /* step 13 */
         return f;
     }
@@ -395,6 +293,7 @@ public class OrdinaryFunction extends FunctionObject {
      * 9.2.9 AddRestrictedFunctionProperties Abstract Operation
      */
     public static void AddRestrictedFunctionProperties(ExecutionContext cx, ScriptObject obj) {
+        // TODO: %ThrowTypeError% from current realm or function's realm? (current realm per spec)
         /* step 1 */
         Callable thrower = cx.getRealm().getThrowTypeError();
         /* step 2 */
@@ -554,6 +453,6 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 2 */
         assert newHome != null;
         /* steps 3-6 */
-        return function.rebind(cx, newHome);
+        return function.rebind(newHome);
     }
 }

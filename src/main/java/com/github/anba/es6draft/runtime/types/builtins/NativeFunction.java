@@ -17,13 +17,20 @@ import com.github.anba.es6draft.runtime.Realm;
  * <li>9.3 Built-in Function Objects
  * </ul>
  */
-public class NativeFunction extends BuiltinFunction {
+public final class NativeFunction extends BuiltinFunction {
     // (Object, Object[]) -> Object
     private final MethodHandle mh;
 
     public NativeFunction(Realm realm, String name, int arity, MethodHandle mh) {
         super(realm, name, arity);
         this.mh = mh;
+    }
+
+    /**
+     * Returns `(Object, Object[]) -> Object` method-handle
+     */
+    public MethodHandle getCallMethod() {
+        return mh;
     }
 
     /**

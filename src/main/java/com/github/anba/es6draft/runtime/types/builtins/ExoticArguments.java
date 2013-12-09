@@ -120,7 +120,7 @@ public class ExoticArguments extends OrdinaryObject {
         ExoticArguments arguments = InstantiateArgumentsObject(cx, args);
         CompleteMappedArgumentsObject(cx, arguments, func, formals, env);
         if (func.isLegacy()) {
-            func.updateLegacyArguments(createLegacyArguments(cx, func, args, arguments.parameterMap));
+            func.setLegacyArguments(createLegacyArguments(cx, func, args, arguments.parameterMap));
         }
         return arguments;
     }
@@ -141,7 +141,7 @@ public class ExoticArguments extends OrdinaryObject {
             Object[] args, String[] formals, LexicalEnvironment env) {
         if (func.isLegacy()) {
             ParameterMap map = createParameterMap(args.length, formals, env);
-            func.updateLegacyArguments(createLegacyArguments(cx, func, args, map));
+            func.setLegacyArguments(createLegacyArguments(cx, func, args, map));
         }
     }
 

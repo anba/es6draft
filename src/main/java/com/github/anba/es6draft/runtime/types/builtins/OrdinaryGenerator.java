@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialise;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -17,7 +16,6 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.FunctionEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
@@ -66,52 +64,32 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     @Override
-    public OrdinaryGenerator rebind(ExecutionContext cx, ScriptObject newHomeObject) {
-        assert isInitialised() : "uninitialised function object";
-        Object methodName = getMethodName();
-        OrdinaryGenerator f;
-        if (methodName instanceof String) {
-            f = GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
-                    getPrototypeOf(cx), newHomeObject, (String) methodName);
-        } else {
-            assert methodName instanceof Symbol;
-            f = GeneratorFunctionCreate(cx, getFunctionKind(), getFunction(), getScope(),
-                    getPrototypeOf(cx), newHomeObject, (Symbol) methodName);
-        }
-        f.isConstructor = this.isConstructor;
-        return f;
+    protected OrdinaryGenerator allocateCopy() {
+        return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
+                getFunctionKind());
     }
 
     /**
-     * 9.2.1 [[Call]] Internal Method
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public GeneratorObject call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        if (!isInitialised()) {
-            throw throwTypeError(callerContext, Messages.Key.UninitialisedObject);
+    public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+        try {
+            return getCallMethod().invokeExact(this, callerContext, thisValue, args);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
-        /* steps 1-12 */
-        ExecutionContext calleeContext = ExecutionContext.newFunctionExecutionContext(this,
-                thisValue);
-        /* steps 13-14 */
-        getFunction().functionDeclarationInstantiation(calleeContext, this, args);
-        /* steps 15-16 */
-        GeneratorObject result;
-        if (getFunctionKind() != FunctionKind.Arrow) {
-            result = EvaluateBody(calleeContext, this);
-        } else {
-            result = EvaluateBodyComprehension(calleeContext, this);
-        }
-        /* step 17 */
-        return result;
     }
 
     /**
-     * 9.2.1 [[Call]] Internal Method
+     * 9.2.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
-    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args) {
-        return call(callerContext, thisValue, args);
+    public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
+            throws Throwable {
+        return getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
     }
 
     /**
@@ -133,9 +111,8 @@ public class OrdinaryGenerator extends FunctionObject {
         /* step 4 */
         GeneratorObject gen;
         if (!(g instanceof GeneratorObject) || ((GeneratorObject) g).getState() != null) {
-            GeneratorObject newG = OrdinaryCreateFromConstructor(cx, functionObject,
-                    Intrinsics.GeneratorPrototype, GeneratorObjectAllocator.INSTANCE);
-            gen = newG;
+            gen = OrdinaryCreateFromConstructor(cx, functionObject, Intrinsics.GeneratorPrototype,
+                    GeneratorObjectAllocator.INSTANCE);
         } else {
             gen = (GeneratorObject) g;
         }
@@ -186,16 +163,8 @@ public class OrdinaryGenerator extends FunctionObject {
         /* steps 1-3 (implicit) */
         /* steps 4-8 */
         OrdinaryGenerator f = new OrdinaryConstructorGenerator(realm);
-        /* step 13 (moved) */
-        f.realm = realm;
-        /* step 9 */
-        f.setStrict(strict);
-        /* step 10 */
-        f.functionKind = kind;
-        /* step 11 */
-        f.setPrototype(functionPrototype);
-        /* step 12 */
-        // f.[[Extensible]] = true (implicit)
+        /* steps 9-13 */
+        f.allocate(realm, functionPrototype, strict, kind, uninitialisedGeneratorMH);
         /* step 14 */
         return f;
     }

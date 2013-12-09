@@ -6,16 +6,23 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 import java.util.Collection;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
+import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
@@ -30,29 +37,53 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 public abstract class FunctionObject extends OrdinaryObject implements Callable {
     private static final String SOURCE_NOT_AVAILABLE = "function F() { /* source not available */ }";
 
+    protected static final MethodHandle uninitialisedFunctionMH;
+    protected static final MethodHandle uninitialisedGeneratorMH;
+    static {
+        Lookup lookup = MethodHandles.lookup();
+        try {
+            MethodHandle mh = lookup.findStatic(FunctionObject.class,
+                    "uninitialisedFunctionObject",
+                    MethodType.methodType(Object.class, ExecutionContext.class));
+            mh = MethodHandles.dropArguments(mh, 1, Object.class, Object[].class);
+            uninitialisedFunctionMH = MethodHandles.dropArguments(mh, 0, OrdinaryFunction.class);
+            uninitialisedGeneratorMH = MethodHandles.dropArguments(mh, 0, OrdinaryGenerator.class);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static final Object uninitialisedFunctionObject(ExecutionContext cx) {
+        throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+    }
+
     /** [[Scope]] */
-    protected LexicalEnvironment scope;
+    private LexicalEnvironment scope;
     /** [[FunctionKind]] */
-    protected FunctionKind functionKind;
+    private FunctionKind functionKind;
     /** [[FormalParameters]] / [[Code]] */
-    protected RuntimeInfo.Function function;
+    private RuntimeInfo.Function function;
     /** [[Realm]] */
-    protected Realm realm;
+    private Realm realm;
     /** [[ThisMode]] */
-    protected ThisMode thisMode;
+    private ThisMode thisMode;
     /** [[Strict]] */
-    protected boolean strict;
+    private boolean strict;
     /** [[HomeObject]] */
-    protected ScriptObject homeObject;
+    private ScriptObject homeObject;
     /** [[MethodName]] */
-    protected Object /* String|ExoticSymbol */methodName;
+    private Object /* String|ExoticSymbol */methodName;
 
     protected boolean isConstructor = false;
     private boolean legacy;
     private String source = null;
 
-    protected Property caller = new PropertyDescriptor(NULL, false, false, false).toProperty();
-    protected Property arguments = new PropertyDescriptor(NULL, false, false, false).toProperty();
+    private MethodHandle callMethod;
+    private MethodHandle tailCallMethod;
+
+    private Property caller = new Property(NULL, false, false, false);
+    private Property arguments = new Property(NULL, false, false, false);
 
     protected FunctionObject(Realm realm) {
         super(realm);
@@ -70,7 +101,23 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return v instanceof FunctionObject && ((FunctionObject) v).isStrict();
     }
 
-    protected final void updateLegacyCaller(FunctionObject caller) {
+    public final MethodHandle getCallMethod() {
+        return callMethod;
+    }
+
+    public final MethodHandle getTailCallMethod() {
+        return tailCallMethod;
+    }
+
+    public final Object getLegacyCaller() {
+        return caller.getValue();
+    }
+
+    public final Object getLegacyArguments() {
+        return arguments.getValue();
+    }
+
+    public final void setLegacyCaller(FunctionObject caller) {
         if (caller == null || caller.isStrict()) {
             this.caller.applyValue(NULL);
         } else {
@@ -78,17 +125,17 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         }
     }
 
-    protected final void updateLegacyArguments(ExoticArguments arguments) {
+    public final void setLegacyArguments(ExoticArguments arguments) {
         this.arguments.applyValue(arguments);
     }
 
-    protected final void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
+    public final void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
         this.caller.applyValue(oldCaller);
         this.arguments.applyValue(oldArguments);
     }
 
     @Override
-    public String toSource() {
+    public final String toSource() {
         if (!isInitialised()) {
             return SOURCE_NOT_AVAILABLE;
         }
@@ -164,17 +211,86 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * Returns a copy of this function object with the [[HomeObject]] property set to
      * {@code newHomeObject}
      */
-    public abstract FunctionObject rebind(ExecutionContext cx, ScriptObject newHomeObject);
+    protected final FunctionObject rebind(ScriptObject newHomeObject) {
+        assert isInitialised() : "uninitialised function object";
+        Object methodName = getMethodName();
+        FunctionObject copy = allocateCopy();
+        copy.initialise(getFunctionKind(), getFunction(), getScope(), newHomeObject, methodName);
+        copy.isConstructor = isConstructor;
+        return copy;
+    }
+
+    /**
+     * Allocates a new, uninitialised copy of this function object
+     */
+    protected abstract FunctionObject allocateCopy();
+
+    /**
+     * 9.2.5 FunctionAllocate Abstract Operation
+     */
+    protected final void allocate(Realm realm, ScriptObject functionPrototype, boolean strict,
+            FunctionKind kind, MethodHandle defaultCallMethod) {
+        this.callMethod = defaultCallMethod;
+        this.tailCallMethod = defaultCallMethod;
+        /* step 13 (moved) */
+        this.realm = realm;
+        /* step 9 */
+        this.setStrict(strict);
+        /* step 10 */
+        this.functionKind = kind;
+        /* step 11 */
+        this.setPrototype(functionPrototype);
+        /* step 12 */
+        // f.[[Extensible]] = true (implicit)
+    }
+
+    /**
+     * 9.2.6 FunctionInitialise Abstract Operation
+     */
+    protected final void initialise(FunctionKind kind, RuntimeInfo.Function function,
+            LexicalEnvironment scope, ScriptObject homeObject, Object methodName) {
+        assert this.function == null && function != null;
+        /* step 6 */
+        this.scope = scope;
+        /* steps 7-8 */
+        this.function = function;
+        this.callMethod = tailCallAdapter(function);
+        this.tailCallMethod = function.callMethod();
+        /* step 9 */
+        this.homeObject = homeObject;
+        this.methodName = methodName;
+        /* steps 10-12 */
+        if (kind == FunctionKind.Arrow) {
+            this.thisMode = ThisMode.Lexical;
+        } else if (strict) {
+            this.thisMode = ThisMode.Strict;
+        } else {
+            this.thisMode = ThisMode.Global;
+        }
+    }
+
+    private static MethodHandle tailCallAdapter(RuntimeInfo.Function function) {
+        MethodHandle mh = function.callMethod();
+        if (function.hasTailCall()) {
+            assert !function.isGenerator() && function.isStrict();
+            MethodHandle result = TailCallInvocation.getTailCallHandler();
+            result = MethodHandles.dropArguments(result, 1, OrdinaryFunction.class);
+            result = MethodHandles.dropArguments(result, 3, Object.class, Object[].class);
+            result = MethodHandles.foldArguments(result, mh);
+            return result;
+        }
+        return mh;
+    }
 
     public final FunctionKind getFunctionKind() {
         return functionKind;
     }
 
-    public final RuntimeInfo.Function getFunction() {
+    protected final RuntimeInfo.Function getFunction() {
         return function;
     }
 
-    public final boolean isInitialised() {
+    protected final boolean isInitialised() {
         return function != null;
     }
 
@@ -192,7 +308,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /**
      * [[Code]]
      */
-    public final RuntimeInfo.Code getCode() {
+    public final RuntimeInfo.Function getCode() {
         return function;
     }
 
@@ -220,7 +336,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /**
      * [[Strict]]
      */
-    public void setStrict(boolean strict) {
+    public final void setStrict(boolean strict) {
         assert realm != null : "[[Realm]] not set";
         this.strict = strict;
         // support for legacy 'caller' and 'arguments' properties
