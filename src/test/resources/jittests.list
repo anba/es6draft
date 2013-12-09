@@ -56,6 +56,9 @@ tests/basic/typed-array-sealed-frozen.js
 # ES6: invalid destructuring is SyntaxError
 tests/basic/spread-call-setcall.js
 
+# Global property name conflict: 'Module'
+tests/bug830943.js
+
 
 ###################
 # Misc issues     #
@@ -493,8 +496,6 @@ tests/basic/decompile-script.js
 tests/basic/bug923390.js
 # neuter
 tests/basic/testNeutering.js
-# enableSPSProfilingAssertions
-tests/profiler/bug925309.js
 
 # Unsupported 'Testing' functions
 # gcparam
