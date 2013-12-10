@@ -19,27 +19,22 @@ import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
  * Handles statements which are not at top-level.
  */
 abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
-    static class StatementSubMethod extends NestedSubMethod<Statement> {
+    static final class StatementSubMethod extends NestedSubMethod<Statement> {
         @Override
         int processNode(Statement node, int oldSize) {
             return super.visitNested(node, oldSize);
         }
     }
 
-    static class SwitchClauseSubMethod extends NestedSubMethod<SwitchClause> {
+    static final class SwitchClauseSubMethod extends NestedSubMethod<SwitchClause> {
         @Override
         int processNode(SwitchClause node, int oldSize) {
             return super.visitNested(node, oldSize);
         }
     }
 
-    private enum ExportState {
-        NotExported, Exported, MaybeExported, Empty;
-    }
-
     private static class StatementElement extends NodeElement<StatementListItem> {
         static final StatementElement EMPTY = new StatementElement(null, -1, 0, ExportState.Empty);
-        ExportState state;
 
         StatementElement(StatementListItem node, int index, int size, ExportState state) {
             super(node, index, size);
@@ -47,22 +42,18 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
 
         void maybeExport(List<StatementListItem> statements, int size) {
-            assert state == ExportState.NotExported;
-            assert size < MAX_STATEMENT_SIZE;
-            this.state = ExportState.MaybeExported;
-            this.size = size;
-            this.node = new StatementListMethod(statements);
+            assert state == ExportState.NotExported && size < MAX_STATEMENT_SIZE;
+            update(new StatementListMethod(statements), size, ExportState.MaybeExported);
         }
 
-        int export() {
-            assert state == ExportState.NotExported || state == ExportState.MaybeExported;
-            if (state == ExportState.NotExported) {
-                this.node = new StatementListMethod(singletonList(node));
-            }
-            int savedSize = -size + STMT_METHOD_SIZE;
-            this.size = STMT_METHOD_SIZE;
-            this.state = ExportState.Exported;
-            return savedSize;
+        @Override
+        protected final StatementListItem getReplacement(StatementListItem node) {
+            return new StatementListMethod(singletonList(node));
+        }
+
+        @Override
+        protected final int getReplacementSize() {
+            return STMT_METHOD_SIZE;
         }
 
         static List<StatementElement> from(List<StatementListItem> statements,
@@ -98,11 +89,11 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         List<StatementListItem> exportable = findExport.exportable;
         List<Node> parents = findExport.parents;
 
-        List<StatementElement> list = StatementElement.from(exportable, codeSizes);
+        List<StatementElement> elements = StatementElement.from(exportable, codeSizes);
         int accSize = oldSize;
 
         // replace single big elements with method-statements
-        PriorityQueue<StatementElement> pq = new PriorityQueue<>(list);
+        PriorityQueue<StatementElement> pq = new PriorityQueue<>(elements);
         while (!pq.isEmpty() && pq.peek().size > MAX_STATEMENT_SIZE) {
             StatementElement element = pq.remove();
             accSize += element.export();
@@ -111,20 +102,24 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         if (accSize > MAX_STATEMENT_SIZE) {
             // if statement size still too large, try to export more statements, possibly with
             // compacting sibling elements
-            for (int i = 0, len = list.size(); i < len; i++) {
-                StatementElement element = list.get(i);
+            for (int i = 0, len = elements.size(); i < len; i++) {
+                StatementElement element = elements.get(i);
                 if (element.state != ExportState.NotExported) {
                     continue;
                 }
                 assert element.node == exportable.get(i);
                 Node parent = parents.get(i);
-                if (i + 1 < len && parents.get(i + 1) == parent && !(parent instanceof IfStatement)) {
+                if (i + 1 < len && parents.get(i + 1) == parent) {
                     // siblings, try to compact
-                    tryCompactSibling(list, parent, i);
+                    if (parent instanceof BlockStatement) {
+                        tryCompactSibling(elements, (BlockStatement) parent, i);
+                    } else if (parent instanceof SwitchClause) {
+                        tryCompactSibling(elements, (SwitchClause) parent, i);
+                    }
                 }
             }
 
-            pq = new PriorityQueue<>(list);
+            pq = new PriorityQueue<>(elements);
             while (!pq.isEmpty() && accSize > MAX_STATEMENT_SIZE) {
                 StatementElement element = pq.remove();
                 if (element.state == ExportState.Exported || element.state == ExportState.Empty) {
@@ -137,8 +132,8 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
 
         // update all entries which were marked as exported
         StatementUpdater updater = new StatementUpdater();
-        for (int i = 0, len = list.size(); i < len; i++) {
-            StatementElement element = list.get(i);
+        for (int i = 0, len = elements.size(); i < len; i++) {
+            StatementElement element = elements.get(i);
             if (element.state != ExportState.Exported) {
                 continue;
             }
@@ -155,26 +150,25 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         return validateSize(node);
     }
 
-    private boolean tryCompactSibling(List<StatementElement> list, Node parent, int index) {
-        assert parent instanceof BlockStatement || parent instanceof SwitchClause : parent
-                .getClass();
+    private boolean tryCompactSibling(List<StatementElement> list, BlockStatement parent, int index) {
+        return tryCompactSibling(list, parent.getStatements(), index);
+    }
 
-        List<StatementListItem> statements;
-        if (parent instanceof BlockStatement) {
-            statements = ((BlockStatement) parent).getStatements();
-        } else {
-            statements = ((SwitchClause) parent).getStatements();
-        }
+    private boolean tryCompactSibling(List<StatementElement> list, SwitchClause parent, int index) {
+        return tryCompactSibling(list, parent.getStatements(), index);
+    }
 
-        StatementElement element = list.get(index);
+    private boolean tryCompactSibling(List<StatementElement> elements,
+            List<StatementListItem> statements, int index) {
+        StatementElement element = elements.get(index);
         int startIndex = statements.indexOf(element.node);
         assert startIndex != -1;
         int endIndex = startIndex + 1;
         int accSize = element.size;
 
-        for (int i = index + 1; endIndex < statements.size() && i < list.size(); ++endIndex, ++i) {
+        for (int i = index + 1; endIndex < statements.size() && i < elements.size(); ++endIndex, ++i) {
             StatementListItem statement = statements.get(endIndex);
-            StatementElement elem = list.get(i);
+            StatementElement elem = elements.get(i);
             if (statement == elem.node && accSize + elem.size < MAX_STATEMENT_SIZE) {
                 accSize += elem.size;
             } else {
@@ -188,7 +182,8 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         // compact multiple siblings and mark the next elements in list as empty
         List<StatementListItem> siblings = statements.subList(startIndex, endIndex);
         element.maybeExport(new ArrayList<>(siblings), accSize);
-        Collections.fill(list.subList(index + 1, index + siblings.size()), StatementElement.EMPTY);
+        Collections.fill(elements.subList(index + 1, index + siblings.size()),
+                StatementElement.EMPTY);
 
         return true;
     }
@@ -248,7 +243,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
     }
 
     @SuppressWarnings("serial")
-    private static class MyArrayList<E> extends ArrayList<E> {
+    private static class RangeArrayList<E> extends ArrayList<E> {
         public void replaceRange(E element, int fromIndex, int toIndex) {
             if (fromIndex == toIndex) {
                 add(fromIndex, element);
@@ -261,8 +256,8 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
 
     private static class FindExportableStatement extends
             DefaultNodeVisitor<Boolean, ArrayDeque<Node>> {
-        MyArrayList<StatementListItem> exportable = new MyArrayList<>();
-        MyArrayList<Node> parents = new MyArrayList<>();
+        RangeArrayList<StatementListItem> exportable = new RangeArrayList<>();
+        RangeArrayList<Node> parents = new RangeArrayList<>();
         HashSet<Node> nonExportable = new HashSet<>();
         Map<StatementListItem, Integer> codeSizes;
 

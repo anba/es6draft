@@ -15,8 +15,8 @@ import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 /**
  * Subdivides statements into {@link StatementListMethod} elements
  */
-abstract class TopLevelSubMethod<NODE extends Node> extends SubMethod<NODE> {
-    static class FunctionSubMethod extends TopLevelSubMethod<FunctionNode> {
+abstract class TopLevelSubMethod<NODE extends TopLevelNode> extends SubMethod<NODE> {
+    static final class FunctionSubMethod extends TopLevelSubMethod<FunctionNode> {
         @Override
         int processNode(FunctionNode node, int oldSize) {
             assert !(node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null);
@@ -27,7 +27,7 @@ abstract class TopLevelSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
     }
 
-    static class ScriptSubMethod extends TopLevelSubMethod<Script> {
+    static final class ScriptSubMethod extends TopLevelSubMethod<Script> {
         @Override
         int processNode(Script node, int oldSize) {
             List<StatementListItem> newStatements = super.visitTopLevel(node.getStatements());

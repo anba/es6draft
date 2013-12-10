@@ -6,9 +6,7 @@
  */
 package com.github.anba.es6draft.compiler.analyzer;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.PriorityQueue;
 
 import com.github.anba.es6draft.ast.ArrayLiteral;
 import com.github.anba.es6draft.ast.Expression;
@@ -19,7 +17,7 @@ import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 /**
  * Inserts {@link SpreadElementMethod}s into {@link ArrayLiteral} nodes
  */
-class ArrayLiteralSubMethod extends SubMethod<ArrayLiteral> {
+final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
     private static final int MAX_ARRAY_ELEMENT_SIZE = MAX_EXPR_SIZE;
     private static final int MAX_ARRAY_SIZE = 8 * MAX_ARRAY_ELEMENT_SIZE;
     private static final int MAX_SPREAD_SIZE = 4 * MAX_ARRAY_ELEMENT_SIZE;
@@ -29,23 +27,21 @@ class ArrayLiteralSubMethod extends SubMethod<ArrayLiteral> {
             super(node, index, size);
         }
 
-        int export() {
-            int savedSize = -size + EXPR_METHOD_SIZE;
-            this.node = new ExpressionMethod(node);
-            this.size = EXPR_METHOD_SIZE;
-            return savedSize;
+        @Override
+        protected final Expression getReplacement(Expression node) {
+            return new ExpressionMethod(node);
         }
 
-        static List<ArrayElement> from(List<Expression> elements) {
-            CodeSizeVisitor visitor = new CodeSizeVisitor();
-            CodeSizeHandler handler = new EmptyHandler();
-            List<ArrayElement> list = new ArrayList<>(elements.size());
-            for (int i = 0, len = elements.size(); i < len; i++) {
-                Expression expression = elements.get(i);
-                int size = expression.accept(visitor, handler);
-                list.add(new ArrayElement(expression, i, size));
-            }
-            return list;
+        @Override
+        protected final int getReplacementSize() {
+            return EXPR_METHOD_SIZE;
+        }
+    }
+
+    private static class ArrayElementMapper implements NodeElementMapper<Expression, ArrayElement> {
+        @Override
+        public ArrayElement map(Expression node, int index, int size) {
+            return new ArrayElement(node, index, size);
         }
     }
 
@@ -63,27 +59,10 @@ class ArrayLiteralSubMethod extends SubMethod<ArrayLiteral> {
 
     @Override
     int processNode(ArrayLiteral node, int oldSize) {
-        List<Expression> newElements = new ArrayList<>(node.getElements());
-        List<ArrayElement> list = ArrayElement.from(newElements);
-        int accSize = oldSize;
-
-        // replace single big elements with method-expressions
-        PriorityQueue<ArrayElement> pq = new PriorityQueue<>(list);
-        while (!pq.isEmpty() && pq.peek().size > MAX_ARRAY_ELEMENT_SIZE) {
-            ArrayElement element = pq.remove();
-
-            // export and update entry
-            accSize += element.export();
-            newElements.set(element.index, element.node);
-        }
-
-        if (accSize > MAX_ARRAY_SIZE) {
-            // compact multiple elements with array-spreads
-            new ArrayConflater().conflate(list, newElements, MAX_SPREAD_SIZE);
-        }
-
+        List<Expression> newElements = newNodes(oldSize, node.getElements(),
+                new ArrayElementMapper(), new ArrayConflater(), MAX_ARRAY_ELEMENT_SIZE,
+                MAX_ARRAY_SIZE, MAX_SPREAD_SIZE);
         node.setElements(newElements);
-
         return validateSize(node);
     }
 }

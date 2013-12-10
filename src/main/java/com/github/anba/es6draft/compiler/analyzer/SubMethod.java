@@ -34,11 +34,11 @@ abstract class SubMethod<NODE extends Node> {
      */
     abstract int processNode(NODE node, int oldSize);
 
-    protected void abortCompilation(int size) {
+    protected final void abortCompilation(int size) {
         throw new CodeSizeException(size);
     }
 
-    protected int validateSize(NODE node) {
+    protected final int validateSize(NODE node) {
         CodeSizeVisitor visitor = new CodeSizeVisitor();
         int newSize = visitor.startAnalyze(node, new EmptyHandler());
         if (newSize >= MAX_SIZE) {
@@ -47,7 +47,7 @@ abstract class SubMethod<NODE extends Node> {
         return newSize;
     }
 
-    protected int validateSize(NODE node, List<? extends Node> children) {
+    protected final int validateSize(NODE node, List<? extends Node> children) {
         CodeSizeVisitor visitor = new CodeSizeVisitor();
         int newSize = visitor.startAnalyze(node, children, new EmptyHandler());
         if (newSize >= MAX_SIZE) {
@@ -56,7 +56,13 @@ abstract class SubMethod<NODE extends Node> {
         return newSize;
     }
 
-    protected static class NodeElement<NODE extends Node> implements Comparable<NodeElement<?>> {
+    protected enum ExportState {
+        NotExported, Exported, MaybeExported, Empty;
+    }
+
+    protected static abstract class NodeElement<NODE extends Node> implements
+            Comparable<NodeElement<?>> {
+        ExportState state = ExportState.NotExported;
         NODE node;
         int index;
         int size;
@@ -65,6 +71,28 @@ abstract class SubMethod<NODE extends Node> {
             this.node = node;
             this.index = index;
             this.size = size;
+        }
+
+        protected final void update(NODE newNode, int newSize, ExportState newState) {
+            this.node = newNode;
+            this.size = newSize;
+            this.state = newState;
+        }
+
+        protected abstract NODE getReplacement(NODE node);
+
+        protected abstract int getReplacementSize();
+
+        final int export() {
+            assert state == ExportState.NotExported || state == ExportState.MaybeExported;
+            NODE replacement = this.node;
+            if (state == ExportState.NotExported) {
+                replacement = getReplacement(replacement);
+            }
+            int replacementSize = getReplacementSize();
+            int savedSize = -size + replacementSize;
+            update(replacement, replacementSize, ExportState.Exported);
+            return savedSize;
         }
 
         @Override
@@ -85,7 +113,7 @@ abstract class SubMethod<NODE extends Node> {
             newElements.add(start, chunk);
         }
 
-        void conflate(List<Source> sourceElements, List<Target> targetElements, final int maxSize) {
+        final void conflate(List<Source> sourceElements, List<Target> targetElements, int maxSize) {
             int chunkSize = 0, end = sourceElements.size();
             for (int i = sourceElements.size() - 1; i >= 0; --i) {
                 Source source = sourceElements.get(i);

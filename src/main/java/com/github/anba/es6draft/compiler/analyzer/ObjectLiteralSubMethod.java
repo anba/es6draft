@@ -6,9 +6,7 @@
  */
 package com.github.anba.es6draft.compiler.analyzer;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.PriorityQueue;
 
 import com.github.anba.es6draft.ast.ObjectLiteral;
 import com.github.anba.es6draft.ast.PropertyDefinition;
@@ -19,7 +17,7 @@ import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 /**
  * Inserts {@link PropertyDefinitionsMethod}s into {@link ObjectLiteral} nodes
  */
-public class ObjectLiteralSubMethod extends SubMethod<ObjectLiteral> {
+final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
     private static final int MAX_OBJECT_ELEMENT_SIZE = MAX_EXPR_SIZE;
     private static final int MAX_OBJECT_SIZE = 8 * MAX_OBJECT_ELEMENT_SIZE;
     private static final int MAX_SPREAD_SIZE = 4 * MAX_OBJECT_ELEMENT_SIZE;
@@ -29,28 +27,25 @@ public class ObjectLiteralSubMethod extends SubMethod<ObjectLiteral> {
             super(node, index, size);
         }
 
-        int export() {
+        @Override
+        protected final PropertyDefinition getReplacement(PropertyDefinition node) {
             assert node instanceof PropertyValueDefinition : node.getClass();
             PropertyValueDefinition valDef = (PropertyValueDefinition) node;
-
-            int savedSize = -size + EXPR_METHOD_SIZE;
-            this.node = new PropertyValueDefinition(valDef.getBeginPosition(),
-                    valDef.getEndPosition(), valDef.getPropertyName(), new ExpressionMethod(
-                            valDef.getPropertyValue()));
-            this.size = EXPR_METHOD_SIZE;
-            return savedSize;
+            return new PropertyValueDefinition(valDef.getBeginPosition(), valDef.getEndPosition(),
+                    valDef.getPropertyName(), new ExpressionMethod(valDef.getPropertyValue()));
         }
 
-        static List<ObjectElement> from(List<PropertyDefinition> properties) {
-            CodeSizeVisitor visitor = new CodeSizeVisitor();
-            CodeSizeHandler handler = new EmptyHandler();
-            List<ObjectElement> list = new ArrayList<>(properties.size());
-            for (int i = 0, len = properties.size(); i < len; i++) {
-                PropertyDefinition property = properties.get(i);
-                int size = property.accept(visitor, handler);
-                list.add(new ObjectElement(property, i, size));
-            }
-            return list;
+        @Override
+        protected final int getReplacementSize() {
+            return EXPR_METHOD_SIZE;
+        }
+    }
+
+    private static class ObjectElementMapper implements
+            NodeElementMapper<PropertyDefinition, ObjectElement> {
+        @Override
+        public ObjectElement map(PropertyDefinition node, int index, int size) {
+            return new ObjectElement(node, index, size);
         }
     }
 
@@ -68,27 +63,10 @@ public class ObjectLiteralSubMethod extends SubMethod<ObjectLiteral> {
 
     @Override
     int processNode(ObjectLiteral node, int oldSize) {
-        List<PropertyDefinition> newProperties = new ArrayList<>(node.getProperties());
-        List<ObjectElement> list = ObjectElement.from(newProperties);
-        int accSize = oldSize;
-
-        // replace single big elements with method-expressions
-        PriorityQueue<ObjectElement> pq = new PriorityQueue<>(list);
-        while (!pq.isEmpty() && pq.peek().size > MAX_OBJECT_ELEMENT_SIZE) {
-            ObjectElement element = pq.remove();
-
-            // export and update entry
-            accSize += element.export();
-            newProperties.set(element.index, element.node);
-        }
-
-        if (accSize > MAX_OBJECT_SIZE) {
-            // compact multiple elements with object-spreads
-            new ObjectConflater().conflate(list, newProperties, MAX_SPREAD_SIZE);
-        }
-
+        List<PropertyDefinition> newProperties = newNodes(oldSize, node.getProperties(),
+                new ObjectElementMapper(), new ObjectConflater(), MAX_OBJECT_ELEMENT_SIZE,
+                MAX_OBJECT_SIZE, MAX_SPREAD_SIZE);
         node.setProperties(newProperties);
-
         return validateSize(node);
     }
 }
