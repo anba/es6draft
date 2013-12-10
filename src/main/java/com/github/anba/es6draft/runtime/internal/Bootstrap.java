@@ -118,7 +118,6 @@ public final class Bootstrap {
     @SuppressWarnings("unused")
     private static MethodHandle callSetup(MutableCallSite callsite, Callable function,
             ExecutionContext cx, Object thisValue, Object[] arguments) {
-        MethodHandle generic = callGenericMH;
         MethodHandle target, test;
         if (function instanceof FunctionObject) {
             MethodHandle mh = ((FunctionObject) function).getCallMethod();
@@ -135,7 +134,7 @@ public final class Bootstrap {
         } else {
             target = test = null;
         }
-        return setCallSiteTarget(callsite, target, test, generic);
+        return setCallSiteTarget(callsite, target, test, callGenericMH);
     }
 
     @SuppressWarnings("unused")
@@ -367,77 +366,94 @@ public final class Bootstrap {
         return Type.isBoolean(arg1) && Type.isBoolean(arg2);
     }
 
+    private static Type getType(Object arg1, Object arg2) {
+        if (testString(arg1, arg2)) {
+            return Type.String;
+        }
+        if (testNumber(arg1, arg2)) {
+            return Type.Number;
+        }
+        if (testBoolean(arg1, arg2)) {
+            return Type.Boolean;
+        }
+        return Type.Object;
+    }
+
+    private static MethodHandle getTestFor(Type type) {
+        switch (type) {
+        case Boolean:
+            return testBooleanMH;
+        case Number:
+            return testNumberMH;
+        case String:
+            return testStringMH;
+        default:
+            return null;
+        }
+    }
+
     @SuppressWarnings("unused")
     private static MethodHandle addSetup(MutableCallSite callsite, Object arg1, Object arg2,
             ExecutionContext cx) {
-        MethodHandle generic = addGenericMH;
-        MethodHandle target, test;
-        if (testString(arg1, arg2)) {
+        Type type = getType(arg1, arg2);
+        MethodHandle target;
+        if (type == Type.String) {
             target = addStringMH;
-            test = testStringMH;
-        } else if (testNumber(arg1, arg2)) {
+        } else if (type == Type.Number) {
             target = addNumberMH;
-            test = testNumberMH;
         } else {
-            target = test = null;
+            target = null;
         }
-        return setCallSiteTarget(callsite, target, test, generic);
+        return setCallSiteTarget(callsite, target, getTestFor(type), addGenericMH);
     }
 
     @SuppressWarnings("unused")
     private static MethodHandle relCmpSetup(MutableCallSite callsite, boolean leftFirst,
             Object arg1, Object arg2, ExecutionContext cx) {
-        MethodHandle generic = MethodHandles.insertArguments(relCmpGenericMH, 2, leftFirst);
-        MethodHandle target, test;
-        if (testString(arg1, arg2)) {
+        Type type = getType(arg1, arg2);
+        MethodHandle target;
+        if (type == Type.String) {
             target = relCmpStringMH;
-            test = testStringMH;
-        } else if (testNumber(arg1, arg2)) {
+        } else if (type == Type.Number) {
             target = relCmpNumberMH;
-            test = testNumberMH;
         } else {
-            target = test = null;
+            target = null;
         }
-        return setCallSiteTarget(callsite, target, test, generic);
+        return setCallSiteTarget(callsite, target, getTestFor(type),
+                MethodHandles.insertArguments(relCmpGenericMH, 2, leftFirst));
     }
 
     @SuppressWarnings("unused")
     private static MethodHandle eqCmpSetup(MutableCallSite callsite, Object arg1, Object arg2,
             ExecutionContext cx) {
-        MethodHandle generic = eqCmpGenericMH;
-        MethodHandle target, test;
-        if (testString(arg1, arg2)) {
+        Type type = getType(arg1, arg2);
+        MethodHandle target;
+        if (type == Type.String) {
             target = eqCmpStringMH;
-            test = testStringMH;
-        } else if (testNumber(arg1, arg2)) {
+        } else if (type == Type.Number) {
             target = eqCmpNumberMH;
-            test = testNumberMH;
-        } else if (testBoolean(arg1, arg2)) {
+        } else if (type == Type.Boolean) {
             target = eqCmpBooleanMH;
-            test = testBooleanMH;
         } else {
-            target = test = null;
+            target = null;
         }
-        return setCallSiteTarget(callsite, target, test, generic);
+        return setCallSiteTarget(callsite, target, getTestFor(type), eqCmpGenericMH);
     }
 
     @SuppressWarnings("unused")
     private static MethodHandle strictEqCmpSetup(MutableCallSite callsite, Object arg1, Object arg2) {
-        MethodHandle generic = strictEqCmpGenericMH;
-        MethodHandle target, test;
-        if (testString(arg1, arg2)) {
+        Type type = getType(arg1, arg2);
+        MethodHandle target;
+        if (type == Type.String) {
             target = strictEqCmpStringMH;
-            test = testStringMH;
-        } else if (testNumber(arg1, arg2)) {
+        } else if (type == Type.Number) {
             target = strictEqCmpNumberMH;
-            test = testNumberMH;
-        } else if (testBoolean(arg1, arg2)) {
+        } else if (type == Type.Boolean) {
             target = strictEqCmpBooleanMH;
-            test = testBooleanMH;
         } else {
-            target = test = null;
+            target = null;
         }
-        return setCallSiteTarget(callsite, target, test, generic);
+        return setCallSiteTarget(callsite, target, getTestFor(type), strictEqCmpGenericMH);
     }
 
     private static MethodHandle setCallSiteTarget(MutableCallSite callsite, MethodHandle target,
@@ -445,12 +461,42 @@ public final class Bootstrap {
         MethodHandle callSiteTarget;
         if (target != null) {
             target = target.asType(callsite.type());
-            callSiteTarget = MethodHandles.guardWithTest(test, target, generic);
+            MethodHandle fallback = getFallback(callsite, generic);
+            callSiteTarget = MethodHandles.guardWithTest(test, target, fallback);
         } else {
             callSiteTarget = target = generic;
         }
         callsite.setTarget(callSiteTarget);
         return target;
+    }
+
+    private static MethodHandle getFallback(MutableCallSite callsite, MethodHandle generic) {
+        // only perform fallback to generic for now
+        MethodHandle fallback = MethodHandles.insertArguments(switchToGenericMH, 0, callsite,
+                generic);
+        return getSetupCallSiteTarget(callsite.type(), fallback);
+    }
+
+    private static MethodHandle getSetupCallSiteTarget(MethodType type, MethodHandle target) {
+        return MethodHandles.foldArguments(MethodHandles.exactInvoker(type), target);
+    }
+
+    private static final MethodHandle switchToGenericMH;
+    static {
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        Class<?> thisClass = lookup.lookupClass();
+        try {
+            switchToGenericMH = lookup.findStatic(thisClass, "switchToGeneric", MethodType
+                    .methodType(MethodHandle.class, MutableCallSite.class, MethodHandle.class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new Error(e);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static MethodHandle switchToGeneric(MutableCallSite callsite, MethodHandle generic) {
+        callsite.setTarget(generic);
+        return generic;
     }
 
     private static final ConstantCallSite stackOverFlow_Add;
@@ -550,10 +596,7 @@ public final class Bootstrap {
                 throw new IllegalArgumentException(name);
             }
 
-            MethodHandle target = MethodHandles.foldArguments(MethodHandles.exactInvoker(type),
-                    setup);
-            callsite.setTarget(target);
-
+            callsite.setTarget(getSetupCallSiteTarget(type, setup));
             return callsite;
         } catch (StackOverflowError e) {
             switch (name) {
