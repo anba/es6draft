@@ -641,27 +641,20 @@ class CodeGenerator implements AutoCloseable {
                 }
             }
 
-            if (body.getCodeType() == StatementVisitor.CodeType.Function) {
-                // function case
-
-                // fall-thru, return `null` sentinel from function
-                if (!result.isAbrupt()) {
+            if (!result.isAbrupt()) {
+                // fall-thru, return `null` sentinel or completion value
+                if (body.getCodeType() == StatementVisitor.CodeType.Function) {
                     body.aconst(null);
-                    body.areturn();
-                }
-
-                // propagate tail-call return from nested statement-list-method
-                mv.updateTailCalls(body);
-                // TODO: normal return
-            } else {
-                // script case
-                if (!result.isAbrupt()) {
+                } else {
                     body.loadCompletionValue();
-                    body.areturn();
                 }
+                body.areturn();
             }
 
             body.end();
+
+            // propagate tail-call return from nested statement-list-method
+            mv.updateInfo(body);
         }
     }
 

@@ -39,6 +39,7 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private Variable<ExecutionContext> executionContext;
     private Scope scope;
     // tail-call support
+    private boolean hasTailCalls = false;
     private Set<Expression> tailCallNodes = emptySet();
 
     protected ExpressionVisitor(CodeGenerator codeGenerator, String methodName,
@@ -53,6 +54,14 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     public void begin() {
         super.begin();
         this.executionContext = getParameter(CONTEXT_SLOT, ExecutionContext.class);
+    }
+
+    /**
+     * Update additional state information after nested {@link ExpressionVisitor} has finished its
+     * pass
+     */
+    void updateInfo(ExpressionVisitor nested) {
+        hasTailCalls |= nested.hasTailCalls;
     }
 
     /**
@@ -116,14 +125,8 @@ abstract class ExpressionVisitor extends InstructionVisitor {
         this.tailCallNodes = Collections.emptySet();
     }
 
-    private boolean hasTailCalls = false;
-
     final boolean hasTailCalls() {
         return hasTailCalls;
-    }
-
-    final void updateTailCalls(ExpressionVisitor other) {
-        hasTailCalls |= other.hasTailCalls;
     }
 
     final boolean isTailCall(Expression expr) {
