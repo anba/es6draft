@@ -24,7 +24,9 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.runtime.types.builtins.ExoticArguments;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
@@ -58,9 +60,19 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
 
         static final MethodDesc ExoticArguments_CreateLegacyArgumentsObject = MethodDesc.create(
                 MethodType.Static, Types.ExoticArguments, "CreateLegacyArgumentsObject", Type
-                        .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
+                        .getMethodType(Types.ExoticArguments, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Object_, Types.String_,
                                 Types.LexicalEnvironment));
+
+        static final MethodDesc ExoticArguments_CreateLegacyArgumentsObjectFrom = MethodDesc
+                .create(MethodType.Static, Types.ExoticArguments, "CreateLegacyArgumentsObject",
+                        Type.getMethodType(Types.ExoticArguments, Types.ExecutionContext,
+                                Types.FunctionObject, Types.Object_, Types.ExoticArguments));
+
+        // FunctionObject
+        static final MethodDesc FunctionObject_setLegacyArguments = MethodDesc.create(
+                MethodType.Virtual, Types.FunctionObject, "setLegacyArguments",
+                Type.getMethodType(Type.VOID_TYPE, Types.ExoticArguments));
 
         // class: List
         static final MethodDesc List_iterator = MethodDesc.create(MethodType.Interface, Types.List,
@@ -133,6 +145,7 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
         // RuntimeInfo.Code code = func.getCode();
         /* step 2 */
         boolean strict = IsStrict(function);
+        boolean legacy = !strict && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
         /* step 3 */
         FormalParameterList formals = function.getParameters();
         /* step 4 */
@@ -238,9 +251,16 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
             } else {
                 CreateMappedArgumentsObject(env, formals, mv);
             }
+            if (legacy) {
+                Variable<ExoticArguments> argumentsObj = mv.newVariable("argumentsObj",
+                        ExoticArguments.class);
+                mv.store(argumentsObj);
+                CreateLegacyArguments(argumentsObj, mv);
+                mv.load(argumentsObj);
+            }
             // stack: [ao] -> []
             initialiseBinding(envRec, "arguments", mv);
-        } else if (!strict) {
+        } else if (legacy) {
             // stack: [] -> []
             CreateLegacyArguments(env, formals, mv);
         }
@@ -272,12 +292,32 @@ class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstan
 
     private void CreateLegacyArguments(Variable<LexicalEnvironment> env,
             FormalParameterList formals, ExpressionVisitor mv) {
-        mv.loadExecutionContext();
+        // function.setLegacyArguments(<legacy-arguments>)
         mv.loadParameter(FUNCTION, FunctionObject.class);
-        mv.loadParameter(ARGUMENTS, Object[].class);
-        newStringArray(mv, mappedNames(formals));
-        mv.load(env);
-        mv.invoke(Methods.ExoticArguments_CreateLegacyArgumentsObject);
+        {
+            // CreateLegacyArgumentsObject(cx, function, arguments, formals, scope)
+            mv.loadExecutionContext();
+            mv.loadParameter(FUNCTION, FunctionObject.class);
+            mv.loadParameter(ARGUMENTS, Object[].class);
+            newStringArray(mv, mappedNames(formals));
+            mv.load(env);
+            mv.invoke(Methods.ExoticArguments_CreateLegacyArgumentsObject);
+        }
+        mv.invoke(Methods.FunctionObject_setLegacyArguments);
+    }
+
+    private void CreateLegacyArguments(Variable<ExoticArguments> argumentsObj, ExpressionVisitor mv) {
+        // function.setLegacyArguments(<legacy-arguments>)
+        mv.loadParameter(FUNCTION, FunctionObject.class);
+        {
+            // CreateLegacyArgumentsObject(cx, function, arguments, argumentsObj)
+            mv.loadExecutionContext();
+            mv.loadParameter(FUNCTION, FunctionObject.class);
+            mv.loadParameter(ARGUMENTS, Object[].class);
+            mv.load(argumentsObj);
+            mv.invoke(Methods.ExoticArguments_CreateLegacyArgumentsObjectFrom);
+        }
+        mv.invoke(Methods.FunctionObject_setLegacyArguments);
     }
 
     private String[] mappedNames(FormalParameterList formals) {

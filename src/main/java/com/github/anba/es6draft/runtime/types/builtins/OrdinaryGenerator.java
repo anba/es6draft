@@ -64,7 +64,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     @Override
-    protected OrdinaryGenerator allocateCopy() {
+    protected OrdinaryGenerator allocateNew() {
         return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
                 getFunctionKind());
     }

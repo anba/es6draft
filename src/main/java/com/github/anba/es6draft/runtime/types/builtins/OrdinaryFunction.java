@@ -68,7 +68,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     @Override
-    protected OrdinaryFunction allocateCopy() {
+    protected OrdinaryFunction allocateNew() {
         return FunctionAllocate(getRealm().defaultContext(), getPrototype(), isStrict(),
                 getFunctionKind());
     }

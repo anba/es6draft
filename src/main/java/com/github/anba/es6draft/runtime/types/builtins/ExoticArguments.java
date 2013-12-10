@@ -96,7 +96,7 @@ public class ExoticArguments extends OrdinaryObject {
         }
 
         /**
-         * Makes {@code arguments[propertyKey]} no longer a mapped argument
+         * Removes mapping for {@code arguments[propertyKey]}
          */
         boolean delete(String propertyKey) {
             int index = toArgumentIndex(propertyKey);
@@ -114,19 +114,20 @@ public class ExoticArguments extends OrdinaryObject {
 
     /**
      * Creates a mapped {@link ExoticArguments} object
+     * <p>
+     * [Called from generated code]
      */
     public static ExoticArguments CreateMappedArgumentsObject(ExecutionContext cx,
             FunctionObject func, Object[] args, String[] formals, LexicalEnvironment env) {
         ExoticArguments arguments = InstantiateArgumentsObject(cx, args);
         CompleteMappedArgumentsObject(cx, arguments, func, formals, env);
-        if (func.isLegacy()) {
-            func.setLegacyArguments(createLegacyArguments(cx, func, args, arguments.parameterMap));
-        }
         return arguments;
     }
 
     /**
      * Creates a strict {@link ExoticArguments} object
+     * <p>
+     * [Called from generated code]
      */
     public static ExoticArguments CreateStrictArgumentsObject(ExecutionContext cx, Object[] args) {
         ExoticArguments arguments = InstantiateArgumentsObject(cx, args);
@@ -136,13 +137,23 @@ public class ExoticArguments extends OrdinaryObject {
 
     /**
      * Creates a legacy {@link ExoticArguments} object
+     * <p>
+     * [Called from generated code]
      */
-    public static void CreateLegacyArgumentsObject(ExecutionContext cx, FunctionObject func,
-            Object[] args, String[] formals, LexicalEnvironment env) {
-        if (func.isLegacy()) {
-            ParameterMap map = createParameterMap(args.length, formals, env);
-            func.setLegacyArguments(createLegacyArguments(cx, func, args, map));
-        }
+    public static ExoticArguments CreateLegacyArgumentsObject(ExecutionContext cx,
+            FunctionObject func, Object[] args, String[] formals, LexicalEnvironment env) {
+        ParameterMap map = createParameterMap(args.length, formals, env);
+        return createLegacyArguments(cx, func, args, map);
+    }
+
+    /**
+     * Creates a legacy {@link ExoticArguments} object
+     * <p>
+     * [Called from generated code]
+     */
+    public static ExoticArguments CreateLegacyArgumentsObject(ExecutionContext cx,
+            FunctionObject func, Object[] args, ExoticArguments arguments) {
+        return createLegacyArguments(cx, func, args, arguments.parameterMap);
     }
 
     /**

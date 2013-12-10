@@ -109,14 +109,23 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return tailCallMethod;
     }
 
+    /**
+     * [Called from generated code]
+     */
     public final Object getLegacyCaller() {
         return caller.getValue();
     }
 
+    /**
+     * [Called from generated code]
+     */
     public final Object getLegacyArguments() {
         return arguments.getValue();
     }
 
+    /**
+     * [Called from generated code]
+     */
     public final void setLegacyCaller(FunctionObject caller) {
         if (caller == null || caller.isStrict()) {
             this.caller.applyValue(NULL);
@@ -125,10 +134,16 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         }
     }
 
+    /**
+     * [Called from generated code]
+     */
     public final void setLegacyArguments(ExoticArguments arguments) {
         this.arguments.applyValue(arguments);
     }
 
+    /**
+     * [Called from generated code]
+     */
     public final void restoreLegacyProperties(Object oldCaller, Object oldArguments) {
         this.caller.applyValue(oldCaller);
         this.arguments.applyValue(oldArguments);
@@ -214,8 +229,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected final FunctionObject rebind(ScriptObject newHomeObject) {
         assert isInitialised() : "uninitialised function object";
         Object methodName = getMethodName();
-        FunctionObject copy = allocateCopy();
-        copy.initialise(getFunctionKind(), getFunction(), getScope(), newHomeObject, methodName);
+        FunctionObject copy = allocateNew();
+        copy.initialise(getFunctionKind(), getCode(), getScope(), newHomeObject, methodName);
         copy.isConstructor = isConstructor;
         return copy;
     }
@@ -223,7 +238,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /**
      * Allocates a new, uninitialised copy of this function object
      */
-    protected abstract FunctionObject allocateCopy();
+    protected abstract FunctionObject allocateNew();
 
     /**
      * 9.2.5 FunctionAllocate Abstract Operation
@@ -282,19 +297,11 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return mh;
     }
 
-    public final FunctionKind getFunctionKind() {
-        return functionKind;
-    }
-
-    protected final RuntimeInfo.Function getFunction() {
-        return function;
-    }
-
-    protected final boolean isInitialised() {
+    private final boolean isInitialised() {
         return function != null;
     }
 
-    public final boolean isLegacy() {
+    private final boolean isLegacy() {
         return legacy;
     }
 
@@ -303,6 +310,13 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      */
     public final LexicalEnvironment getScope() {
         return scope;
+    }
+
+    /**
+     * [[FunctionKind]]
+     */
+    public final FunctionKind getFunctionKind() {
+        return functionKind;
     }
 
     /**
