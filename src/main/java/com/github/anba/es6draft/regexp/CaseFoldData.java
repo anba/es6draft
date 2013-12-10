@@ -10,6 +10,9 @@ package com.github.anba.es6draft.regexp;
  * Additional case fold support class
  */
 final class CaseFoldData {
+    private CaseFoldData() {
+    }
+
     /**
      * Is {@code codePoint} a code point which is applicable for case folding
      */

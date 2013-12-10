@@ -94,7 +94,7 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     /**
      * 12.1.4.2.3 Runtime Semantics: ComprehensionEvaluation
      * <p>
-     * ComprehensionQualifierTail : AssignmentExpression
+     * ComprehensionTail : AssignmentExpression
      */
     @Override
     protected abstract Void visit(Expression node, ExpressionVisitor mv);

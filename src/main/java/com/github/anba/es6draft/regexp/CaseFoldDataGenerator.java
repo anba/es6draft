@@ -18,6 +18,9 @@ import java.util.TreeMap;
  * Utility class to generate the case folding data used in {@link CaseFoldData}
  */
 final class CaseFoldDataGenerator {
+    private CaseFoldDataGenerator() {
+    }
+
     public static void main(String[] args) {
         // generateSpaceRange();
         // generateInvalidToLowerCases();

@@ -74,6 +74,7 @@ public class GeneratorFunctionPrototype extends OrdinaryObject implements Initia
         @Function(name = "[Symbol.create]", arity = 0, symbol = BuiltinSymbol.create,
                 attributes = @Attributes(writable = true, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
+            // FIXME: spec bug? change to configurable=false?
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.GeneratorPrototype,
                     GeneratorObjectAllocator.INSTANCE);
         }

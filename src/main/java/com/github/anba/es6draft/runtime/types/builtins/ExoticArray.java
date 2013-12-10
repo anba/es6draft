@@ -131,8 +131,8 @@ public class ExoticArray extends OrdinaryObject {
             length = 0;
         }
         /* step 9 */
-        // enfore array index invariant
         if (length > 0xFFFF_FFFFL) {
+            // enfore array index invariant
             throw throwRangeError(cx, Messages.Key.InvalidArrayLength);
         }
         /* step 10 */

@@ -62,7 +62,7 @@ class RuntimeInfoGenerator {
     private int functionFlags(FunctionNode node, boolean tailCall) {
         boolean strict = IsStrict(node);
         boolean generator = isGenerator(node);
-        boolean legacy = codegen.isEnabled(CompatibilityOption.FunctionPrototype);
+        boolean legacy = !strict && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
         int functionFlags = 0;
         if (strict) {
             functionFlags |= FunctionFlags.Strict.getValue();
@@ -80,7 +80,7 @@ class RuntimeInfoGenerator {
             assert !generator && strict;
             functionFlags |= FunctionFlags.TailCall.getValue();
         }
-        if (!strict && legacy) {
+        if (legacy) {
             functionFlags |= FunctionFlags.Legacy.getValue();
         }
         return functionFlags;

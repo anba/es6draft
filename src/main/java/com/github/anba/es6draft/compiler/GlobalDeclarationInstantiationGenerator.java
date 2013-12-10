@@ -31,11 +31,10 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
- * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
- * <h2>15.1 Script</h2><br>
- * <h3>15.1.2 Runtime Semantics</h3>
+ * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h2>15.2 Scripts</h2>
  * <ul>
- * <li>15.1.2.1 Global Declaration Instantiation
+ * <li>15.2.8 Runtime Semantics: GlobalDeclarationInstantiation
  * </ul>
  */
 class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {

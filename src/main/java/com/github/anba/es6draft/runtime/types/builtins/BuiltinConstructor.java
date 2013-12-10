@@ -29,7 +29,7 @@ public abstract class BuiltinConstructor extends BuiltinFunction implements Cons
     }
 
     @Override
-    public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
+    public final ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
         return construct(callerContext, args);
     }
 }
