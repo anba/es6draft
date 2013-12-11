@@ -47,12 +47,10 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 public final class MozShellGlobalObject extends ShellGlobalObject {
     private final long startMilli = System.currentTimeMillis();
     private final long startNano = System.nanoTime();
-    private final Path libdir;
 
     private MozShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
-            ScriptCache scriptCache, Path libdir) {
+            ScriptCache scriptCache) {
         super(realm, console, baseDir, script, scriptCache);
-        this.libdir = libdir;
     }
 
     @Override
@@ -65,13 +63,12 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
      * Returns an object to allocate new instances of this class
      */
     public static ObjectAllocator<MozShellGlobalObject> newGlobalObjectAllocator(
-            final ShellConsole console, final Path baseDir, final Path script, final Path libdir,
+            final ShellConsole console, final Path baseDir, final Path script,
             final ScriptCache scriptCache) {
         return new ObjectAllocator<MozShellGlobalObject>() {
             @Override
             public MozShellGlobalObject newInstance(Realm realm) {
-                return new MozShellGlobalObject(realm, console, baseDir, script, scriptCache,
-                        libdir);
+                return new MozShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
         };
     }
@@ -84,21 +81,6 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         } catch (ParserException | CompilationException e) {
             // create a script exception from the requested code realm, not from the caller's realm!
             throw e.toScriptException(realm.defaultContext());
-        }
-    }
-
-    /**
-     * {@code $INCLUDE} function to load scripts from library directory
-     */
-    @Function(name = "__$INCLUDE", arity = 1)
-    public void $INCLUDE(ExecutionContext cx, String file) {
-        try {
-            // resolve the input file against the lib-path
-            include(libdir.resolve(file));
-        } catch (IOException e) {
-            throw throwError(cx, e.getMessage());
-        } catch (ParserException | CompilationException e) {
-            throw e.toScriptException(cx);
         }
     }
 

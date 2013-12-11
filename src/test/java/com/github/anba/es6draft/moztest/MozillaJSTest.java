@@ -123,7 +123,7 @@ public class MozillaJSTest {
 
         MozTestConsole console = new MozTestConsole();
         World<MozShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console,
-                testDir(), moztest.script, Paths.get("test402/lib"), scriptCache), options);
+                testDir(), moztest.script, scriptCache), options);
         MozShellGlobalObject global = world.newGlobal();
         ExecutionContext cx = global.getRealm().defaultContext();
 
@@ -140,9 +140,6 @@ public class MozillaJSTest {
         for (Path shell : shellJS(moztest)) {
             global.include(shell);
         }
-
-        // patch $INCLUDE
-        global.set(cx, "$INCLUDE", global.get(cx, "__$INCLUDE", global), global);
 
         // evaluate actual test-script
         Path js = testDir().resolve(moztest.script);

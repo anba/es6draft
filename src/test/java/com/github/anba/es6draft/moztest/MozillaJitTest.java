@@ -113,7 +113,7 @@ public class MozillaJitTest {
 
         MozTestConsole console = new MozTestConsole();
         World<MozShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console,
-                testDir(), moztest.script, Paths.get(""), scriptCache), options);
+                testDir(), moztest.script, scriptCache), options);
         MozShellGlobalObject global = world.newGlobal();
 
         // load legacy.js file

@@ -93,7 +93,7 @@ public class ReflectTest {
 
         MozTestConsole console = new MozTestConsole();
         World<MozShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console,
-                testDir(), test.script, testDir(), scriptCache), options);
+                testDir(), test.script, scriptCache), options);
         MozShellGlobalObject global = world.newGlobal();
         ExecutionContext cx = global.getRealm().defaultContext();
 

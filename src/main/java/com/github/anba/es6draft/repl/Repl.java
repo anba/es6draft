@@ -379,10 +379,9 @@ public class Repl {
         List<String> initScripts;
         ObjectAllocator<? extends ShellGlobalObject> allocator;
         if (options.contains(Option.MozillaShell)) {
-            Path libDir = Paths.get("");
             initScripts = asList("mozlegacy.js");
             allocator = MozShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
-                    libDir, scriptCache);
+                    scriptCache);
         } else if (options.contains(Option.V8Shell)) {
             initScripts = asList("v8legacy.js");
             allocator = V8ShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
