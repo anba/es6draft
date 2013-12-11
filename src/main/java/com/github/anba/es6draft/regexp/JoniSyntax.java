@@ -17,6 +17,9 @@ import org.joni.constants.SyntaxProperties;
  * Joni {@link Syntax} configuration
  */
 final class JoniSyntax implements SyntaxProperties {
+    private JoniSyntax() {
+    }
+
     // - OP_ESC_W_WORD, OP_ESC_S_WHITE_SPACE and OP_ESC_D_DIGIT are not enabled, because they
     // require an ASCII-compatible encoding
     // - OP_ESC_OCTAL3 is not enabled, because it's semantics are not compatible
