@@ -16,13 +16,13 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +51,6 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.UncheckedIOException;
 
 /**
  *
@@ -146,44 +145,37 @@ public class TraceurTest {
             "PropertyMethodAssignment", "PropertyOptionalComma", "Types"));
 
     private static List<TestInfo> loadTests(Path searchdir, Path basedir) throws IOException {
-        BiFunction<Path, BufferedReader, TestInfo> create = new BiFunction<Path, BufferedReader, TestInfo>() {
-            @Override
-            public TestInfo apply(Path script, BufferedReader reader) {
-                try {
-                    return createTestInfo(script, reader);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-        };
-
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, create);
+        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, new TestInfos());
     }
 
-    private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*(.*)\\s*");
+    private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
+        private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*(.*)\\s*");
 
-    private static TestInfo createTestInfo(Path script, BufferedReader reader) throws IOException {
-        TestInfo test = new TestInfo(script);
-        Pattern p = FlagsPattern;
-        for (String line; (line = reader.readLine()) != null;) {
-            Matcher m = p.matcher(line);
-            if (m.matches()) {
-                String s = m.group(1);
-                if ("Should not compile.".equals(s)) {
-                    test.expect = false;
-                } else if ("Only in browser.".equals(s) || s.startsWith("Skip.")) {
-                    test.enable = false;
-                } else if (s.startsWith("Error:")) {
-                    // ignore
-                } else if (s.startsWith("Options:")) {
-                    // ignore
+        @Override
+        public TestInfo apply(Path script, Iterator<String> lines) {
+            TestInfo test = new TestInfo(script);
+            Pattern p = FlagsPattern;
+            while (lines.hasNext()) {
+                String line = lines.next();
+                Matcher m = p.matcher(line);
+                if (m.matches()) {
+                    String s = m.group(1);
+                    if ("Should not compile.".equals(s)) {
+                        test.expect = false;
+                    } else if ("Only in browser.".equals(s) || s.startsWith("Skip.")) {
+                        test.enable = false;
+                    } else if (s.startsWith("Error:")) {
+                        // ignore
+                    } else if (s.startsWith("Options:")) {
+                        // ignore
+                    } else {
+                        break;
+                    }
                 } else {
                     break;
                 }
-            } else {
-                break;
             }
+            return test;
         }
-        return test;
     }
 }

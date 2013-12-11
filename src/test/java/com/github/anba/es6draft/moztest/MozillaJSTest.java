@@ -17,7 +17,6 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,7 +57,6 @@ import com.github.anba.es6draft.runtime.types.Undefined;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.UncheckedIOException;
 
 /**
  * Test suite for the Mozilla js-tests.
@@ -238,77 +236,69 @@ public class MozillaJSTest {
     private static final Set<String> excludeDirs = new HashSet<>(asList("supporting", "test262"));
 
     private static List<MozTest> loadTests(Path searchdir, Path basedir) throws IOException {
-        BiFunction<Path, BufferedReader, MozTest> create = new BiFunction<Path, BufferedReader, MozTest>() {
-            @Override
-            public MozTest apply(Path script, BufferedReader reader) {
-                try {
-                    return createTestInfo(script, reader);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
+        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, new TestInfos());
+    }
+
+    private static class TestInfos implements BiFunction<Path, Iterator<String>, MozTest> {
+        private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
+
+        @Override
+        public MozTest apply(Path script, Iterator<String> lines) {
+            MozTest test = new MozTest(script);
+            // negative tests end with "-n"
+            if (script.getFileName().toString().endsWith("-n.js")) {
+                test.expect = false;
+            }
+            String line = lines.next();
+            Matcher m = testInfoPattern.matcher(line);
+            if (!m.matches()) {
+                // ignore if pattern invalid or not present
+                return test;
+            }
+            if (!"reftest".equals(m.group(1))) {
+                System.err.printf("invalid tag '%s' in line: %s\n", m.group(1), line);
+                return test;
+            }
+            String content = m.group(2);
+            for (String p : split(content)) {
+                if (p.equals("fails")) {
+                    test.expect = false;
+                } else if (p.equals("skip")) {
+                    test.enable = false;
+                } else if (p.equals("random")) {
+                    test.random = true;
+                } else if (p.equals("slow")) {
+                    // don't run slow tests
+                    test.enable = false;
+                } else if (p.equals("silentfail")) {
+                    // ignore for now...
+                } else if (p.startsWith("fails-if")) {
+                    test.addCondition(Condition.FailsIf, p.substring("fails-if".length()));
+                } else if (p.startsWith("skip-if")) {
+                    test.addCondition(Condition.SkipIf, p.substring("skip-if".length()));
+                } else if (p.startsWith("random-if")) {
+                    test.addCondition(Condition.RandomIf, p.substring("random-if".length()));
+                } else if (p.startsWith("asserts-if")) {
+                    // ignore for now...
+                } else if (p.startsWith("require-or")) {
+                    // ignore for now...
+                } else {
+                    System.err.printf("invalid manifest line: %s\n", p);
                 }
             }
-        };
-
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, create);
-    }
-
-    private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
-
-    private static MozTest createTestInfo(Path script, BufferedReader reader) throws IOException {
-        MozTest test = new MozTest(script);
-        // negative tests end with "-n"
-        if (script.getFileName().toString().endsWith("-n.js")) {
-            test.expect = false;
-        }
-        String line = reader.readLine();
-        Matcher m = testInfoPattern.matcher(line);
-        if (!m.matches()) {
-            // ignore if pattern invalid or not present
             return test;
         }
-        if (!"reftest".equals(m.group(1))) {
-            System.err.printf("invalid tag '%s' in line: %s\n", m.group(1), line);
-            return test;
-        }
-        String content = m.group(2);
-        for (String p : split(content)) {
-            if (p.equals("fails")) {
-                test.expect = false;
-            } else if (p.equals("skip")) {
-                test.enable = false;
-            } else if (p.equals("random")) {
-                test.random = true;
-            } else if (p.equals("slow")) {
-                // don't run slow tests
-                test.enable = false;
-            } else if (p.equals("silentfail")) {
-                // ignore for now...
-            } else if (p.startsWith("fails-if")) {
-                test.addCondition(Condition.FailsIf, p.substring("fails-if".length()));
-            } else if (p.startsWith("skip-if")) {
-                test.addCondition(Condition.SkipIf, p.substring("skip-if".length()));
-            } else if (p.startsWith("random-if")) {
-                test.addCondition(Condition.RandomIf, p.substring("random-if".length()));
-            } else if (p.startsWith("asserts-if")) {
-                // ignore for now...
-            } else if (p.startsWith("require-or")) {
-                // ignore for now...
-            } else {
-                System.err.printf("invalid manifest line: %s\n", p);
+
+        private static String[] split(String line) {
+            final String comment = "--";
+            final String ws = "[ \t\n\r\f\013]+";
+            // remove comment if any
+            int k = line.indexOf(comment);
+            if (k != -1) {
+                line = line.substring(0, k);
             }
+            // split at whitespace
+            return line.trim().split(ws);
         }
-        return test;
-    }
-
-    private static String[] split(String line) {
-        final String comment = "--";
-        final String ws = "[ \t\n\r\f\013]+";
-        // remove comment if any
-        int k = line.indexOf(comment);
-        if (k != -1) {
-            line = line.substring(0, k);
-        }
-        // split at whitespace
-        return line.trim().split(ws);
     }
 }

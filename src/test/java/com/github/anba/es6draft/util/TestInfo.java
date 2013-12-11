@@ -19,9 +19,11 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.junit.runners.Parameterized;
@@ -62,7 +64,7 @@ public class TestInfo {
      */
     public static <T extends TestInfo> List<T> loadTests(Path searchdir, final Path basedir,
             final Set<String> excludeDirs, final Set<String> excludeFiles,
-            final BiFunction<Path, BufferedReader, T> create) throws IOException {
+            final BiFunction<Path, Iterator<String>, T> create) throws IOException {
         return loadTests(searchdir, basedir, excludeDirs, excludeFiles, StandardCharsets.UTF_8,
                 create);
     }
@@ -72,19 +74,55 @@ public class TestInfo {
      */
     public static <T extends TestInfo> List<T> loadTests(Path searchdir, final Path basedir,
             Set<String> excludeDirs, Set<String> excludeFiles, final Charset charset,
-            final BiFunction<Path, BufferedReader, T> create) throws IOException {
+            final BiFunction<Path, Iterator<String>, T> create) throws IOException {
         final List<T> tests = new ArrayList<>();
         Files.walkFileTree(searchdir, new TestFileVisitor(excludeDirs, excludeFiles) {
             @Override
             public void visitFile(Path file) throws IOException {
                 try (BufferedReader reader = Files.newBufferedReader(file, charset)) {
-                    tests.add(create.apply(basedir.relativize(file), reader));
+                    tests.add(create.apply(basedir.relativize(file), new LineIterator(reader)));
                 } catch (UncheckedIOException e) {
                     throw e.getCause();
                 }
             }
         });
         return tests;
+    }
+
+    private static final class LineIterator implements Iterator<String> {
+        private final BufferedReader reader;
+        private String line = null;
+
+        LineIterator(BufferedReader reader) {
+            this.reader = reader;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (line == null) {
+                try {
+                    line = reader.readLine();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+            return line != null;
+        }
+
+        @Override
+        public String next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            String line = this.line;
+            this.line = null;
+            return line;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     private static final Function<Path, TestInfo> defaultCreate = new Function<Path, TestInfo>() {

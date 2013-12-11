@@ -15,12 +15,12 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +50,6 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.UncheckedIOException;
 
 /**
  *
@@ -136,60 +135,53 @@ public class MiniJSUnitTest {
     private static final Set<String> excludeDirs = new HashSet<>(asList("bugs", "tools"));
 
     private static List<TestInfo> loadTests(Path searchdir, final Path basedir) throws IOException {
-        BiFunction<Path, BufferedReader, TestInfo> create = new BiFunction<Path, BufferedReader, TestInfo>() {
-            @Override
-            public TestInfo apply(Path script, BufferedReader reader) {
-                try {
-                    return createTestInfo(script, reader);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-        };
-
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, create);
+        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, new TestInfos());
     }
 
-    private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*Flags:\\s*(.*)\\s*");
+    private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
+        private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*Flags:\\s*(.*)\\s*");
 
-    private static TestInfo createTestInfo(Path script, BufferedReader reader) throws IOException {
-        TestInfo test = new TestInfo(script);
-        Pattern p = FlagsPattern;
-        for (String line; (line = reader.readLine()) != null;) {
-            Matcher m = p.matcher(line);
-            if (m.matches()) {
-                String[] flags = m.group(1).split("\\s+");
-                for (int i = 0, len = flags.length; i < len; ++i) {
-                    String flag = flags[i].replace('_', '-');
-                    if (flag.startsWith("--expose-debug-as")) {
-                        if (flag.equals("--expose-debug-as")) {
-                            // two arguments form, consume next argument as well
-                            ++i;
+        @Override
+        public TestInfo apply(Path script, Iterator<String> lines) {
+            TestInfo test = new TestInfo(script);
+            Pattern p = FlagsPattern;
+            while (lines.hasNext()) {
+                String line = lines.next();
+                Matcher m = p.matcher(line);
+                if (m.matches()) {
+                    String[] flags = m.group(1).split("\\s+");
+                    for (int i = 0, len = flags.length; i < len; ++i) {
+                        String flag = flags[i].replace('_', '-');
+                        if (flag.startsWith("--expose-debug-as")) {
+                            if (flag.equals("--expose-debug-as")) {
+                                // two arguments form, consume next argument as well
+                                ++i;
+                            }
+                            // don't run debug-mode tests
+                            test.enable = false;
+                        } else if (flag.startsWith("--expose-natives-as")) {
+                            // don't run tests with natives or lazy compilation
+                            if (flag.equals("--expose-natives-as")) {
+                                // two arguments form, consume next argument as well
+                                ++i;
+                            }
+                            test.enable = false;
+                        } else if (flag.equals("--expose-externalize-string")) {
+                            // don't run tests with natives or lazy compilation
+                            test.enable = false;
+                        } else if (flag.equals("--allow-natives-syntax")) {
+                            // don't run tests with natives or lazy compilation
+                            test.enable = false;
+                        } else if (flag.equals("--lazy")) {
+                            // don't run tests with natives or lazy compilation
+                            test.enable = false;
+                        } else {
+                            // ignore other flags
                         }
-                        // don't run debug-mode tests
-                        test.enable = false;
-                    } else if (flag.startsWith("--expose-natives-as")) {
-                        // don't run tests with natives or lazy compilation
-                        if (flag.equals("--expose-natives-as")) {
-                            // two arguments form, consume next argument as well
-                            ++i;
-                        }
-                        test.enable = false;
-                    } else if (flag.equals("--expose-externalize-string")) {
-                        // don't run tests with natives or lazy compilation
-                        test.enable = false;
-                    } else if (flag.equals("--allow-natives-syntax")) {
-                        // don't run tests with natives or lazy compilation
-                        test.enable = false;
-                    } else if (flag.equals("--lazy")) {
-                        // don't run tests with natives or lazy compilation
-                        test.enable = false;
-                    } else {
-                        // ignore other flags
                     }
                 }
             }
+            return test;
         }
-        return test;
     }
 }

@@ -16,13 +16,13 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +55,6 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
 import com.github.anba.es6draft.util.TestInfo;
-import com.github.anba.es6draft.util.UncheckedIOException;
 
 /**
  *
@@ -177,80 +176,72 @@ public class MozillaJitTest {
             "truthiness", "TypedObject", "v8-v5"));
 
     private static List<MozTest> loadTests(Path searchdir, Path basedir) throws IOException {
-        BiFunction<Path, BufferedReader, MozTest> create = new BiFunction<Path, BufferedReader, MozTest>() {
-            @Override
-            public MozTest apply(Path script, BufferedReader reader) {
-                try {
-                    return createTestInfo(script, reader);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-        };
-
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, create);
+        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, new TestInfos());
     }
 
-    private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
+    private static class TestInfos implements BiFunction<Path, Iterator<String>, MozTest> {
+        private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
 
-    private static MozTest createTestInfo(Path script, BufferedReader reader) throws IOException {
-        MozTest test = new MozTest(script);
-        String line = reader.readLine();
-        Matcher m = testInfoPattern.matcher(line);
-        if (!m.matches()) {
-            // ignore if pattern invalid or not present
-            return test;
-        }
-        if (!"jit-test".equals(m.group(1))) {
-            System.err.printf("invalid tag '%s' in line: %s\n", m.group(1), line);
-            return test;
-        }
-        String content = m.group(2);
-        for (String p : content.split(";")) {
-            int sep = p.indexOf(':');
-            if (sep != -1) {
-                String name = p.substring(0, sep).trim();
-                String value = p.substring(sep + 1).trim();
-                switch (name) {
-                case "error":
-                    test.error = value;
-                    break;
-                case "exitstatus":
-                    // ignore for now...
-                    break;
-                default:
-                    System.err.printf("unknown option '%s' in line: %s\n", name, content);
-                }
-            } else {
-                String name = p.trim();
-                switch (name) {
-                case "slow":
-                    // don't run slow tests
-                    test.enable = false;
-                    break;
-                case "debug":
-                    // don't run debug-mode tests
-                    test.enable = false;
-                    break;
-                case "allow-oom":
-                case "valgrind":
-                case "tz-pacific":
-                case "mjitalways":
-                case "mjit":
-                case "no-jm":
-                case "no-ion":
-                case "ion-eager":
-                case "dump-bytecode":
-                    // ignore for now...
-                    break;
-                case "":
-                    // ignore empty string
-                    break;
-                default:
-                    System.err.printf("unknown option '%s' in line: %s\n", name, content);
+        @Override
+        public MozTest apply(Path script, Iterator<String> lines) {
+            MozTest test = new MozTest(script);
+            String line = lines.next();
+            Matcher m = testInfoPattern.matcher(line);
+            if (!m.matches()) {
+                // ignore if pattern invalid or not present
+                return test;
+            }
+            if (!"jit-test".equals(m.group(1))) {
+                System.err.printf("invalid tag '%s' in line: %s\n", m.group(1), line);
+                return test;
+            }
+            String content = m.group(2);
+            for (String p : content.split(";")) {
+                int sep = p.indexOf(':');
+                if (sep != -1) {
+                    String name = p.substring(0, sep).trim();
+                    String value = p.substring(sep + 1).trim();
+                    switch (name) {
+                    case "error":
+                        test.error = value;
+                        break;
+                    case "exitstatus":
+                        // ignore for now...
+                        break;
+                    default:
+                        System.err.printf("unknown option '%s' in line: %s\n", name, content);
+                    }
+                } else {
+                    String name = p.trim();
+                    switch (name) {
+                    case "slow":
+                        // don't run slow tests
+                        test.enable = false;
+                        break;
+                    case "debug":
+                        // don't run debug-mode tests
+                        test.enable = false;
+                        break;
+                    case "allow-oom":
+                    case "valgrind":
+                    case "tz-pacific":
+                    case "mjitalways":
+                    case "mjit":
+                    case "no-jm":
+                    case "no-ion":
+                    case "ion-eager":
+                    case "dump-bytecode":
+                        // ignore for now...
+                        break;
+                    case "":
+                        // ignore empty string
+                        break;
+                    default:
+                        System.err.printf("unknown option '%s' in line: %s\n", name, content);
+                    }
                 }
             }
+            return test;
         }
-        return test;
     }
 }
