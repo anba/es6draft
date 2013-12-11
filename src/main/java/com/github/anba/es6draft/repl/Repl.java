@@ -74,7 +74,7 @@ public class Repl {
     }
 
     private enum Option {
-        CompileOnly, Debug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell;
+        CompileOnly, Debug, FullDebug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell;
 
         static EnumSet<Option> fromArgs(String[] args) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -83,6 +83,9 @@ public class Repl {
                 case "--compile-only":
                     options.add(CompileOnly);
                     break;
+                case "--full-debug":
+                    options.add(FullDebug);
+                    // fall-thru
                 case "--debug":
                     options.add(CompileOnly);
                     options.add(Debug);
@@ -125,6 +128,7 @@ public class Repl {
         sb.append("Options: \n");
         sb.append("  --compile-only    Disable interpreter\n");
         sb.append("  --debug           Print generated Java bytecode\n");
+        sb.append("  --full-debug      Print generated Java bytecode (full Java type descriptors)\n");
         sb.append("  --stacktrace      Print stack-trace on error\n");
         sb.append("  --strict          Strict semantics without web compatibility\n");
         sb.append("  --shell=[mode]    Set default shell emulation [simple, mozilla, v8] (default = simple)\n");
@@ -366,6 +370,9 @@ public class Repl {
         Set<Compiler.Option> compilerOptions = EnumSet.noneOf(Compiler.Option.class);
         if (options.contains(Option.Debug)) {
             compilerOptions.add(Compiler.Option.Debug);
+        }
+        if (options.contains(Option.FullDebug)) {
+            compilerOptions.add(Compiler.Option.FullDebug);
         }
         ScriptCache scriptCache = new ScriptCache(compatibilityOptions);
 
