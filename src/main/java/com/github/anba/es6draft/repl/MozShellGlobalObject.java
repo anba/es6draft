@@ -12,11 +12,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
@@ -96,12 +93,6 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         return "";
     }
 
-    /** shell-function: {@code load(filename)} */
-    @Function(name = "load", arity = 1)
-    public Object load(ExecutionContext cx, String filename) {
-        return load(cx, Paths.get(filename), absolutePath(Paths.get(filename)));
-    }
-
     /** shell-function: {@code loadRelativeToScript(filename)} */
     @Function(name = "loadRelativeToScript", arity = 1)
     public Object loadRelativeToScript(ExecutionContext cx, String filename) {
@@ -166,18 +157,6 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         return (double) TimeUnit.NANOSECONDS.toMillis(end - start);
     }
 
-    /** shell-function: {@code readline()} */
-    @Function(name = "readline", arity = 0)
-    public String readline() {
-        return console.readLine();
-    }
-
-    /** shell-function: {@code print(message)} */
-    @Function(name = "print", arity = 1)
-    public void print(String message) {
-        console.print(message);
-    }
-
     /** shell-function: {@code printErr(message)} */
     @Function(name = "printErr", arity = 1)
     public void printErr(String message) {
@@ -197,12 +176,6 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         double date = startMilli + TimeUnit.MICROSECONDS.toMillis(elapsed);
         double subdate = (elapsed % 1000) / 1000d;
         return date + subdate;
-    }
-
-    /** shell-function: {@code quit()} */
-    @Function(name = "quit", arity = 0)
-    public void quit() {
-        throw new StopExecutionException(StopExecutionException.Reason.Quit);
     }
 
     /** shell-function: {@code assertEq()} */
@@ -228,13 +201,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code build()} */
     @Function(name = "build", arity = 0)
     public String build(ExecutionContext cx) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                MozShellGlobalObject.class.getResourceAsStream("/build-date"),
-                StandardCharsets.UTF_8))) {
-            return reader.readLine();
-        } catch (IOException e) {
-            throw throwError(cx, "could not read build-date file");
-        }
+        return getResourceInfo("/build-date", "<unknown build>");
     }
 
     /** shell-function: {@code evalcx(s, [o])} */
@@ -273,12 +240,6 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     @Function(name = "snarf", arity = 1)
     public Object snarf(ExecutionContext cx, String filename) {
         return read(cx, filename);
-    }
-
-    /** shell-function: {@code read(filename)} */
-    @Function(name = "read", arity = 1)
-    public Object read(ExecutionContext cx, String filename) {
-        return read(cx, absolutePath(Paths.get(filename)));
     }
 
     /** shell-function: {@code readRelativeToScript(filename)} */

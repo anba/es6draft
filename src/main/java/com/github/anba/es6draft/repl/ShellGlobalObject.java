@@ -9,8 +9,10 @@ package com.github.anba.es6draft.repl;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +28,7 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 
@@ -64,15 +67,24 @@ public abstract class ShellGlobalObject extends GlobalObject {
         }
     }
 
-    protected Path absolutePath(Path file) {
+    protected static String getResourceInfo(String resourceName, String defaultValue) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                ShellGlobalObject.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
+            return reader.readLine();
+        } catch (IOException e) {
+            return defaultValue;
+        }
+    }
+
+    protected final Path absolutePath(Path file) {
         return baseDir.resolve(file);
     }
 
-    protected Path relativePath(Path file) {
+    protected final Path relativePath(Path file) {
         return baseDir.resolve(script.getParent().resolve(file));
     }
 
-    protected Path relativePathToScript(Path file) {
+    protected final Path relativePathToScript(Path file) {
         Script currentScript = getRealm().getScriptContext().getCurrentScript();
         String sourceFile = currentScript.getScriptBody().sourceFile();
         return baseDir.resolve(Paths.get(sourceFile).getParent().resolve(file));
@@ -130,5 +142,35 @@ public abstract class ShellGlobalObject extends GlobalObject {
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }
+    }
+
+    /** shell-function: {@code readline()} */
+    @Function(name = "readline", arity = 0)
+    public String readline() {
+        return console.readLine();
+    }
+
+    /** shell-function: {@code print(message)} */
+    @Function(name = "print", arity = 1)
+    public void print(String message) {
+        console.print(message);
+    }
+
+    /** shell-function: {@code load(filename)} */
+    @Function(name = "load", arity = 1)
+    public Object load(ExecutionContext cx, String filename) {
+        return load(cx, Paths.get(filename), absolutePath(Paths.get(filename)));
+    }
+
+    /** shell-function: {@code read(filename)} */
+    @Function(name = "read", arity = 1)
+    public Object read(ExecutionContext cx, String filename) {
+        return read(cx, absolutePath(Paths.get(filename)));
+    }
+
+    /** shell-function: {@code quit()} */
+    @Function(name = "quit", arity = 0)
+    public void quit() {
+        throw new StopExecutionException(StopExecutionException.Reason.Quit);
     }
 }

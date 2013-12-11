@@ -63,10 +63,10 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         Parser parser = new Parser("<module>", 1, getRealm().getOptions());
         try {
             parser.parseModule(source);
-            return "success";
         } catch (ParserException e) {
             throw e.toScriptException(cx);
         }
+        return "success";
     }
 
     /** shell-function: {@code compile(filename)} */
@@ -84,12 +84,6 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     @Function(name = "loadRelativeToScript", arity = 1)
     public Object loadRelativeToScript(ExecutionContext cx, String filename) {
         return load(cx, Paths.get(filename), relativePath(Paths.get(filename)));
-    }
-
-    /** shell-function: {@code print(message)} */
-    @Function(name = "print", arity = 1)
-    public void print(String message) {
-        console.print(message);
     }
 
     /** shell-function: {@code dump(object)} */
@@ -114,9 +108,4 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         });
     }
 
-    /** shell-function: {@code quit()} */
-    @Function(name = "quit", arity = 0)
-    public void quit() {
-        throw new StopExecutionException(StopExecutionException.Reason.Quit);
-    }
 }
