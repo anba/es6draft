@@ -5,6 +5,10 @@
 # <https://github.com/anba/es6draft>
 #
 
+# ES6 open issue: CoverInitialisedName and ArrowParameters
+feature/ArrowFunctions/ArrowFunctions.js
+feature/ArrowFunctions/CoverInitialiser.js
+
 # ES6 spec bug? 'extends null' and default constructor
 feature/Classes/DefaultConstructor.js
 feature/Classes/ExtendStrange.js
@@ -16,6 +20,16 @@ feature/Classes/NestedFunctionSuper.js
 feature/Scope/BlockBinding4.js
 feature/Scope/BlockBinding5.js
 feature/Scope/BlockBinding11.js
+
+# invalid test, symbol-valued properties are not strict properties
+feature/Symbol/Inherited.js
+
+# invalid test, Symbol.prototype.toString() throws when thisArg is primitive symbol
+feature/Symbol/ObjectModel.js
+
+# invalid test, expects global "o" object
+feature/Symbol/Object.js
+feature/Symbol/TransformationOff.js
 
 
 ############################################
@@ -38,6 +52,7 @@ feature/Classes/ClassNameInStack.js
 # traceur specific tests
 feature/FreeVariableChecker/Error_With.js
 feature/FreeVariableChecker/WithVarDecl.js
+feature/Tools/FreeVariableChecker.js
 
 # actually runtime exception
 feature/Scope/Error_BlockBinding1.js
@@ -90,6 +105,7 @@ feature/Scope/LetForInInitializers1.js
 feature/Destructuring/ArrowFunction.js
 feature/Destructuring/Catch.js
 feature/Destructuring/Class.js
+feature/Destructuring/Empty.js
 feature/Destructuring/ForInLoop.js
 feature/Destructuring/ForOfLoop.js
 feature/Destructuring/Method.js
@@ -122,3 +138,6 @@ feature/Yield/Tree.js
 
 # generators without *
 feature/Yield/UnstarredGenerators.js
+
+# Type declaration syntax
+feature/Classes/Types.js

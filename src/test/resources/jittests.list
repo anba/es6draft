@@ -93,6 +93,7 @@ tests/basic/bug732087.js
 # __iterator__ not supported
 tests/basic/bug684922.js
 tests/basic/bug885648.js
+tests/basic/bug942390.js
 tests/basic/testArrayComp1.js
 tests/basic/testArrayComp2.js
 tests/basic/testBrandedVsGeneric.js
@@ -321,6 +322,9 @@ tests/basic/testSetPropNeitherMissNorHit.js
 # ToLength() moved array length restriction to 2^53-1
 tests/for-of/array-iterator-generic.js
 
+# String.prototype.split changed to use ToLength instead of ToUint32
+tests/basic/bug943126.js
+
 # Missing properties in destructuring throw TypeError
 tests/auto-regress/bug785776.js
 tests/basic/bug641229.js
@@ -527,6 +531,8 @@ tests/basic/metadata-hook.js
 # getBuildConfiguration
 tests/basic/bug815652.js
 tests/basic/testOOMInAutoEnterCompartment.js
+# workerThreadCount
+tests/basic/offThreadCompileScript.js
 
 
 #######################################

@@ -54,6 +54,9 @@ regress/regress-2711.js
 # spec issue/invalid test, GetViewValue() throws RangeError instead of TypeError for invalid indices
 harmony/dataview-accessors.js
 
+# invalid test, Math.cosh(-Infinity) == Infinity, test expects Math.cosh(-Infinity) == -Infinity
+harmony/math-hyperbolic.js
+
 
 ###################
 # Misc issues     #
@@ -150,6 +153,12 @@ regress/regress-944.js
 
 # Date.prototype.toUTCString and Date.prototype.toGMTString distinct objects in V8
 function-names.js
+
+# different maximum arguments size
+regress/regress-3027.js
+
+# Error.prototype.message is limited to 350 characters in V8
+error-tostring-omit.js
 
 
 ############################################
