@@ -89,9 +89,8 @@ public class LoaderPrototype extends OrdinaryObject implements Initialisable {
         /**
          * Loader.prototype.constructor
          */
-        // TODO: Intrinsics.Loader
         @Value(name = "constructor")
-        public static final Intrinsics constructor = null;
+        public static final Intrinsics constructor = Intrinsics.Loader;
 
         /**
          * 1.6.3.1 get Loader.prototype.realm
