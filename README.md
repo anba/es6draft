@@ -31,7 +31,7 @@ The following environment variables need to be set to run the test cases:
     
 Alternatively skip the tests with `mvn -DskipTests=true package`. 
 
-To start the shell, use `./src/main/bin/repl.sh`.
+To start the shell, use `./bin/es6draft` (or `.\bin\es6draft.bat` on Windows&reg;).
 
 
 [es6drafts]: http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts "Draft Specification for ES.next"
