@@ -8,13 +8,8 @@ package com.github.anba.es6draft.moztest;
 
 import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
-import static com.github.anba.es6draft.util.TestInfo.filterTests;
-import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
-import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
+import static com.github.anba.es6draft.util.Resources.loadConfiguration;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
@@ -23,70 +18,98 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.configuration.Configuration;
+import org.hamcrest.Matchers;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExternalResource;
+import org.junit.rules.ErrorCollector;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.model.MultipleFailureException;
 
-import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.MozShellGlobalObject;
-import com.github.anba.es6draft.repl.ShellGlobalObject;
-import com.github.anba.es6draft.repl.StopExecutionException;
+import com.github.anba.es6draft.repl.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.World;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.Undefined;
+import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
+import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
+import com.github.anba.es6draft.util.ExceptionHandlers.StopExecutionHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
+import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  * Test suite for the Mozilla js-tests.
  */
 @RunWith(Parallelized.class)
+@TestConfiguration(name = "mozilla.test.jstests", file = "resource:test-configuration.properties")
 public class MozillaJSTest {
-
-    /**
-     * Returns a {@link Path} which points to the test directory 'MOZ_JSTESTS'
-     */
-    private static Path testDir() {
-        String testPath = System.getenv("MOZ_JSTESTS");
-        return (testPath != null ? Paths.get(testPath) : null);
-    }
+    private static final Configuration configuration = loadConfiguration(MozillaJSTest.class);
 
     @Parameters(name = "{0}")
-    public static Iterable<TestInfo[]> mozillaSuiteValues() throws IOException {
-        Path testdir = testDir();
-        assumeThat("missing system property 'MOZ_JSTESTS'", testdir, notNullValue());
-        assumeTrue("directy 'MOZ_JSTESTS' does not exist", Files.exists(testdir));
-        List<MozTest> tests = filterTests(loadTests(testdir, testdir), "/jstests.list");
-        return toObjectArray(tests);
+    public static Iterable<TestInfo[]> suiteValues() throws IOException {
+        return loadTests(configuration,
+                new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
+                    @Override
+                    public TestInfos apply(Path basedir) {
+                        return new TestInfos(basedir);
+                    }
+                });
     }
+
+    @ClassRule
+    public static TestShellGlobals<MozShellGlobalObject> globals = new TestShellGlobals<MozShellGlobalObject>(
+            configuration) {
+        @Override
+        protected ObjectAllocator<MozShellGlobalObject> newAllocator(ShellConsole console,
+                TestInfo test, ScriptCache scriptCache) {
+            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+        }
+    };
+
+    @Rule
+    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
+
+    @Rule
+    public ErrorCollector collector = new ErrorCollector();
+
+    @Rule
+    public StandardErrorHandler errorHandler = StandardErrorHandler.none();
+
+    @Rule
+    public ScriptExceptionHandler exceptionHandler = ScriptExceptionHandler.none();
+
+    @Rule
+    public StopExecutionHandler stopHandler = new StopExecutionHandler();
+
+    @Rule
+    public ExpectedException expected = ExpectedException.none();
+
+    @Parameter(0)
+    public MozTest moztest;
 
     private static class MozTest extends TestInfo {
         List<Entry<Condition, String>> conditions = new ArrayList<>();
         boolean random = false;
 
-        public MozTest(Path script) {
-            super(script);
+        public MozTest(Path basedir, Path script) {
+            super(basedir, script);
         }
 
         void addCondition(Condition c, String s) {
@@ -98,34 +121,14 @@ public class MozillaJSTest {
         FailsIf, SkipIf, RandomIf
     }
 
-    private static Set<CompatibilityOption> options = CompatibilityOption.MozCompatibility();
-    private static ScriptCache scriptCache = new ScriptCache(options);
-    private static Script legacyMozilla;
-
-    @Rule
-    public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
-
-    @Parameter(0)
-    public MozTest moztest;
-
-    @ClassRule
-    public static ExternalResource resource = new ExternalResource() {
-        @Override
-        protected void before() throws Throwable {
-            legacyMozilla = ShellGlobalObject.compileScript(scriptCache, "mozlegacy.js");
-        }
-    };
-
     @Test
     public void runTest() throws Throwable {
         // filter disabled tests
         assumeTrue(moztest.enable);
 
-        MozTestConsole console = new MozTestConsole();
-        World<MozShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console,
-                testDir(), moztest.script, scriptCache), options);
-        MozShellGlobalObject global = world.newGlobal();
+        MozShellGlobalObject global = globals.newGlobal(new MozTestConsole(collector), moztest);
         ExecutionContext cx = global.getRealm().defaultContext();
+        exceptionHandler.setExecutionContext(cx);
 
         // apply scripted conditions
         scriptConditions(cx, global);
@@ -133,8 +136,16 @@ public class MozillaJSTest {
         // filter disabled tests (may have changed after applying scripted conditions)
         assumeTrue(moztest.enable);
 
-        // load legacy.js file
-        global.eval(legacyMozilla);
+        if (moztest.random) {
+            // results from random tests are ignored...
+        } else if (moztest.expect) {
+            errorHandler.match(StandardErrorHandler.defaultMatcher());
+            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
+        } else {
+            expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
+                    .or(ScriptExceptionHandler.defaultMatcher())
+                    .or(Matchers.instanceOf(MultipleFailureException.class)));
+        }
 
         // load and execute shell.js files
         for (Path shell : shellJS(moztest)) {
@@ -142,34 +153,7 @@ public class MozillaJSTest {
         }
 
         // evaluate actual test-script
-        Path js = testDir().resolve(moztest.script);
-        try {
-            global.eval(moztest.script, js);
-        } catch (ParserException | CompilationException e) {
-            // count towards the overall failure count
-            console.getFailures().add(new AssertionError(e.getMessage(), e));
-        } catch (ScriptException e) {
-            // count towards the overall failure count
-            console.getFailures().add(new AssertionError(e.getMessage(cx), e));
-        } catch (StackOverflowError e) {
-            // count towards the overall failure count
-            console.getFailures().add(new AssertionError(e.getMessage(), e));
-        } catch (StopExecutionException e) {
-            // ignore
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
-
-        // fail if any test returns with errors
-        List<Throwable> failures = new ArrayList<Throwable>();
-        failures.addAll(console.getFailures());
-        if (moztest.random) {
-            // results from random tests are ignored...
-        } else if (moztest.expect) {
-            MultipleFailureException.assertEmpty(failures);
-        } else {
-            assertFalse("Expected test to throw error", failures.isEmpty());
-        }
+        global.eval(moztest.script, moztest.toFile());
     }
 
     /**
@@ -178,7 +162,7 @@ public class MozillaJSTest {
     private static Iterable<Path> shellJS(MozTest test) {
         // add 'shell.js' files from each directory
         List<Path> files = new ArrayList<>();
-        Path testDir = testDir();
+        Path testDir = test.basedir;
         Path dir = Paths.get("");
         for (Iterator<Path> iterator = test.script.iterator(); iterator.hasNext(); dir = dir
                 .resolve(iterator.next())) {
@@ -226,24 +210,20 @@ public class MozillaJSTest {
         return sb.toString();
     }
 
-    // Any file who's basename matches something in this set is ignored
-    private static final Set<String> excludeFiles = new HashSet<>(asList("browser.js", "shell.js",
-            "jsref.js", "template.js", "user.js", "js-test-driver-begin.js",
-            "js-test-driver-end.js"));
-    private static final Set<String> excludeDirs = new HashSet<>(asList("supporting", "test262"));
-
-    private static List<MozTest> loadTests(Path searchdir, Path basedir) throws IOException {
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, new TestInfos());
-    }
-
-    private static class TestInfos implements BiFunction<Path, Iterator<String>, MozTest> {
+    private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
         private static final Pattern testInfoPattern = Pattern.compile("//\\s*\\|(.+?)\\|\\s*(.*)");
 
+        private final Path basedir;
+
+        public TestInfos(Path basedir) {
+            this.basedir = basedir;
+        }
+
         @Override
-        public MozTest apply(Path script, Iterator<String> lines) {
-            MozTest test = new MozTest(script);
+        public TestInfo apply(Path file, Iterator<String> lines) {
+            MozTest test = new MozTest(basedir, file);
             // negative tests end with "-n"
-            if (script.getFileName().toString().endsWith("-n.js")) {
+            if (file.getFileName().toString().endsWith("-n.js")) {
                 test.expect = false;
             }
             String line = lines.next();

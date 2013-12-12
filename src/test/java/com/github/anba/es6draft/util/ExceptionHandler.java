@@ -20,10 +20,22 @@ import org.junit.runners.model.Statement;
  * 
  */
 public abstract class ExceptionHandler implements TestRule {
-    private Matcher<?> matcher = not(anything());
+    private Matcher<?> matcher;
+
+    public ExceptionHandler() {
+        this(nothing());
+    }
+
+    public ExceptionHandler(Matcher<?> matcher) {
+        match(matcher);
+    }
 
     public void match(Matcher<?> matcher) {
         this.matcher = requireNonNull(matcher);
+    }
+
+    protected static final Matcher<?> nothing() {
+        return not(anything());
     }
 
     /**

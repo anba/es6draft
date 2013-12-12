@@ -1221,6 +1221,7 @@ Pattern(["Program", {},
            ["UnaryExpr", {op: "-"}, ["IdExpr", {name: "x"}]],
            ["IdExpr", {name: "y"}]]]]).match(Reflect.parse("2 + (-x * y)", {loc: false, builder: JsonMLAst}));
 
-reportCompare(true, true);
+// #disable: reportCompare() not needed
+// reportCompare(true, true);
 
 });

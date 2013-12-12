@@ -16,7 +16,6 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,24 +24,45 @@ import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.io.input.BOMInputStream;
 
+import com.github.anba.es6draft.util.TestInfo;
+
 /**
  * Parses and returns test case information from test262 js-doc comments
  * 
  * {@link http://wiki.ecmascript.org/doku.php?id=test262:test_case_format}
  * 
  */
-class Test262Info {
-    // private static final Pattern tags = Pattern
-    // .compile("\\s*\\*\\s*@(\\w+)\\s*(?:\\:\\s*(.*);|;)?\\s*");
+class Test262Info extends TestInfo {
+    private static final Pattern fileNamePattern = Pattern.compile("(.+?)(?:\\.([^.]*)$|$)");
     private static final Pattern tags = Pattern.compile("\\s*\\*\\s*@(\\w+)\\s*(.+)?\\s*");
     private static final Pattern start = Pattern.compile("\\s*/\\*\\*.*");
     private static final Pattern end = Pattern.compile("\\s*\\*/.*");
 
-    private String description, errorType;
+    private String testName, description, errorType;
     private boolean onlyStrict, noStrict, negative;
 
-    private Test262Info() {
-        // private constructor
+    public Test262Info(Path basedir, Path script) {
+        super(basedir, script);
+    }
+
+    @Override
+    public String toString() {
+        return getTestName();
+    }
+
+    /**
+     * Returns the test-name for the test case
+     */
+    public String getTestName() {
+        if (testName == null) {
+            String filename = script.getFileName().toString();
+            Matcher matcher = fileNamePattern.matcher(filename);
+            if (!matcher.matches()) {
+                assert false : "regexp failure";
+            }
+            testName = matcher.group(1);
+        }
+        return testName;
     }
 
     /**
@@ -90,21 +110,14 @@ class Test262Info {
     }
 
     /**
-     * Returns an empty test-info object
+     * Parses the test file information for this test case
      */
-    public static Test262Info empty() {
-        return new Test262Info();
-    }
-
-    /**
-     * Parses the test-info from the input file and returns a {@link Test262Info} object
-     */
-    public static Test262Info from(Path path) throws IOException {
-        Test262Info info = new Test262Info();
-        Reader reader = newReader(Files.newInputStream(path));
+    public void readFileInformation() throws IOException {
+        Reader reader = newReader(Files.newInputStream(toFile()));
         try ($LineIterator lines = new $LineIterator(reader)) {
             boolean preamble = true;
-            for (String line : iterable(lines)) {
+            while (lines.hasNext()) {
+                String line = lines.next();
                 if (preamble) {
                     if (start.matcher(line).matches()) {
                         preamble = false;
@@ -118,19 +131,19 @@ class Test262Info {
                         String val = m.group(2);
                         switch (type) {
                         case "description":
-                            info.description = requireNonNull(val, "description must not be null");
+                            this.description = requireNonNull(val, "description must not be null");
                             break;
                         case "noStrict":
                             requireNull(val);
-                            info.noStrict = true;
+                            this.noStrict = true;
                             break;
                         case "onlyStrict":
                             requireNull(val);
-                            info.onlyStrict = true;
+                            this.onlyStrict = true;
                             break;
                         case "negative":
-                            info.negative = true;
-                            info.errorType = Objects.toString(val, info.errorType);
+                            this.negative = true;
+                            this.errorType = Objects.toString(val, this.errorType);
                             break;
                         case "hostObject":
                         case "reviewers":
@@ -144,16 +157,16 @@ class Test262Info {
                             break;
                         // legacy
                         case "strict_mode_negative":
-                            info.negative = true;
-                            info.onlyStrict = true;
-                            info.errorType = Objects.toString(val, info.errorType);
+                            this.negative = true;
+                            this.onlyStrict = true;
+                            this.errorType = Objects.toString(val, this.errorType);
                             break;
                         case "strict_only":
                             requireNull(val);
-                            info.onlyStrict = true;
+                            this.onlyStrict = true;
                             break;
                         case "errortype":
-                            info.errorType = requireNonNull(val, "error-type must not be null");
+                            this.errorType = requireNonNull(val, "error-type must not be null");
                             break;
                         case "assertion":
                         case "section":
@@ -164,22 +177,12 @@ class Test262Info {
                             break;
                         default:
                             // error
-                            System.err.printf("unhandled type '%s' (%s)\n", type, path);
+                            System.err.printf("unhandled type '%s' (%s)\n", type, this);
                         }
                     }
                 }
             }
         }
-        return info;
-    }
-
-    private static final <T> Iterable<T> iterable(final Iterator<T> iterator) {
-        return new Iterable<T>() {
-            @Override
-            public Iterator<T> iterator() {
-                return iterator;
-            }
-        };
     }
 
     // inject AutoCloseable into LineIterator

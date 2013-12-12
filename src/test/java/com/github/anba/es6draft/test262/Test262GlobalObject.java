@@ -29,25 +29,22 @@ import com.github.anba.es6draft.runtime.types.Callable;
 public class Test262GlobalObject extends GlobalObject {
     private final Realm realm;
     private final Path libpath;
-    private final ScriptCache cache;
-    private final Test262Info info;
-    private final String sourceName;
+    private final ScriptCache scriptCache;
+    private final Test262Info test;
 
-    public Test262GlobalObject(Realm realm, Path libpath, ScriptCache cache, Test262Info info,
-            String sourceName) {
+    public Test262GlobalObject(Realm realm, Path libpath, ScriptCache scriptCache, Test262Info test) {
         super(realm);
         this.realm = realm;
         this.libpath = libpath;
-        this.cache = cache;
-        this.info = info;
-        this.sourceName = sourceName;
+        this.scriptCache = scriptCache;
+        this.test = test;
     }
 
     /**
      * Parses, compiles and executes the javascript file
      */
     public void eval(Path file) throws IOException {
-        Script script = cache.script(sourceName, 1, file);
+        Script script = scriptCache.script(file.getFileName().toString(), 1, file);
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
@@ -55,7 +52,7 @@ public class Test262GlobalObject extends GlobalObject {
      * Process test failure with message
      */
     private void failure(String message) {
-        String msg = String.format("%s [file: %s]", message, sourceName);
+        String msg = String.format("%s [file: %s]", message, test);
         throw new Test262AssertionError(msg);
     }
 
@@ -94,7 +91,7 @@ public class Test262GlobalObject extends GlobalObject {
     public void include(String file) throws IOException {
         // resolve the input file against the library path
         Path path = libpath.resolve(Paths.get(file));
-        Script script = cache.get(path);
+        Script script = scriptCache.get(path);
         ScriptLoader.ScriptEvaluation(script, realm, false);
     }
 
@@ -103,11 +100,10 @@ public class Test262GlobalObject extends GlobalObject {
      */
     @Function(name = "runTestCase", arity = 1, attributes = @Attributes(writable = false,
             enumerable = true, configurable = false))
-    public void runTestCase(ExecutionContext cx, Object testcase) {
-        Callable fn = (Callable) testcase;
-        Object value = fn.call(cx, UNDEFINED);
+    public void runTestCase(ExecutionContext cx, Callable testcase) {
+        Object value = testcase.call(cx, UNDEFINED);
         if (!ToBoolean(value)) {
-            failure(info.getDescription());
+            failure(test.getDescription());
         }
     }
 }

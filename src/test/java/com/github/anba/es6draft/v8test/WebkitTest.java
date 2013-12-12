@@ -7,130 +7,85 @@
 package com.github.anba.es6draft.v8test;
 
 import static com.github.anba.es6draft.repl.V8ShellGlobalObject.newGlobalObjectAllocator;
-import static com.github.anba.es6draft.util.TestInfo.filterTests;
-import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
-import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
+import static com.github.anba.es6draft.util.Resources.loadConfiguration;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.configuration.Configuration;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExternalResource;
+import org.junit.rules.ErrorCollector;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-import org.junit.runners.model.MultipleFailureException;
 
-import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.ShellGlobalObject;
+import com.github.anba.es6draft.repl.ShellConsole;
 import com.github.anba.es6draft.repl.V8ShellGlobalObject;
-import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.World;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
+import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  *
  */
 @RunWith(Parallelized.class)
+@TestConfiguration(name = "v8.test.webkit", file = "resource:test-configuration.properties")
 public class WebkitTest {
-
-    /**
-     * Returns a {@link Path} which points to the test directory 'v8.test.webkit'
-     */
-    private static Path testDir() {
-        String testPath = System.getenv("V8_WEBKIT");
-        return (testPath != null ? Paths.get(testPath) : null);
-    }
+    private static final Configuration configuration = loadConfiguration(WebkitTest.class);
 
     @Parameters(name = "{0}")
     public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        Path testdir = testDir();
-        assumeThat("missing system property 'V8_WEBKIT'", testdir, notNullValue());
-        assumeTrue("directy 'V8_WEBKIT' does not exist", Files.exists(testdir));
-        List<TestInfo> tests = filterTests(loadTests(testdir, testdir), "/webkit.list");
-        return toObjectArray(tests);
+        return loadTests(configuration);
     }
 
-    private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
-    private static ScriptCache scriptCache = new ScriptCache(options);
-    private static Script legacyJS;
+    @ClassRule
+    public static TestShellGlobals<V8ShellGlobalObject> globals = new TestShellGlobals<V8ShellGlobalObject>(
+            configuration) {
+        @Override
+        protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
+                TestInfo test, ScriptCache scriptCache) {
+            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+        }
+    };
 
     @Rule
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
 
+    @Rule
+    public ErrorCollector collector = new ErrorCollector();
+
+    @Rule
+    public StandardErrorHandler errorHandler = new StandardErrorHandler();
+
+    @Rule
+    public ScriptExceptionHandler exceptionHandler = new ScriptExceptionHandler();
+
     @Parameter(0)
     public TestInfo test;
-
-    @ClassRule
-    public static ExternalResource resource = new ExternalResource() {
-        @Override
-        protected void before() throws Throwable {
-            legacyJS = ShellGlobalObject.compileScript(scriptCache, "v8legacy.js");
-        }
-    };
 
     @Test
     public void runTest() throws Throwable {
         // filter disabled tests
         assumeTrue(test.enable);
 
-        V8TestConsole console = new V8TestConsole();
-        World<V8ShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console, testDir(),
-                test.script, scriptCache), options);
-        V8ShellGlobalObject global = world.newGlobal();
-
-        // load legacy.js file
-        global.eval(legacyJS);
+        V8ShellGlobalObject global = globals.newGlobal(new V8TestConsole(collector), test);
+        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         // evaluate actual test-script
-        Path js = testDir().resolve(test.script);
-        try {
-            // load and execute pre and post before resp. after test-script
-            global.include(Paths.get("resources/standalone-pre.js"));
-            global.eval(test.script, js);
-            global.include(Paths.get("resources/standalone-post.js"));
-        } catch (ParserException | CompilationException e) {
-            // count towards the overall failure count
-            console.getFailures().add(new AssertionError(e.getMessage(), e));
-        } catch (ScriptException e) {
-            // count towards the overall failure count
-            ExecutionContext cx = global.getRealm().defaultContext();
-            console.getFailures().add(new AssertionError(e.getMessage(cx), e));
-        } catch (StackOverflowError e) {
-            // count towards the overall failure count
-            console.getFailures().add(new AssertionError(e.getMessage(), e));
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
-
-        // fail if any test returns with errors
-        MultipleFailureException.assertEmpty(console.getFailures());
-    }
-
-    private static final Set<String> excludeFiles = new HashSet<>();
-    private static final Set<String> excludeDirs = new HashSet<>(asList("resources"));
-
-    private static List<TestInfo> loadTests(Path searchdir, Path basedir) throws IOException {
-        // no special flags present in v8-webkit tests
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles);
+        // - load and execute pre and post before resp. after test-script
+        global.include(Paths.get("resources/standalone-pre.js"));
+        global.eval(test.script, test.toFile());
+        global.include(Paths.get("resources/standalone-post.js"));
     }
 }

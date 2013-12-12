@@ -128,7 +128,6 @@ feature/Classes/Constructor.js
 #######################################
 
 # module syntax
-feature/ComputedPropertyNames/PrivateName.js
 feature/Syntax/Error_WithInModule.module.js
 feature/TemplateLiterals/InModule.js
 feature/TemplateLiterals/resources/f.js

@@ -7,153 +7,116 @@
 package com.github.anba.es6draft.traceur;
 
 import static com.github.anba.es6draft.repl.V8ShellGlobalObject.newGlobalObjectAllocator;
-import static com.github.anba.es6draft.util.TestInfo.filterTests;
-import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
-import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
+import static com.github.anba.es6draft.util.Resources.loadConfiguration;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.configuration.Configuration;
+import org.hamcrest.Matchers;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExternalResource;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-import org.junit.runners.model.MultipleFailureException;
 
-import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.ShellGlobalObject;
+import com.github.anba.es6draft.repl.ShellConsole;
 import com.github.anba.es6draft.repl.V8ShellGlobalObject;
-import com.github.anba.es6draft.runtime.World;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
+import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
+import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  *
  */
 @RunWith(Parallelized.class)
+@TestConfiguration(name = "traceur.test", file = "resource:test-configuration.properties")
 public class TraceurTest {
-
-    /**
-     * Returns a {@link Path} which points to the test directory 'traceur.test'
-     */
-    private static Path testDir() {
-        String testPath = System.getenv("TRACEUR_TEST");
-        return (testPath != null ? Paths.get(testPath) : null);
-    }
+    private static final Configuration configuration = loadConfiguration(TraceurTest.class);
 
     @Parameters(name = "{0}")
     public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        Path testdir = testDir();
-        assumeThat("missing system property 'TRACEUR_TEST'", testdir, notNullValue());
-        assumeTrue("directy 'TRACEUR_TEST' does not exist", Files.exists(testdir));
-        Path searchdir = testdir.resolve("feature");
-        List<TestInfo> tests = filterTests(loadTests(searchdir, testdir), "/traceur.list");
-        return toObjectArray(tests);
+        return loadTests(configuration,
+                new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
+                    @Override
+                    public TestInfos apply(Path basedir) {
+                        return new TestInfos(basedir);
+                    }
+                });
     }
 
-    private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
-    private static ScriptCache scriptCache = new ScriptCache(options);
-    private static Script legacyJS, chaiJS;
+    @ClassRule
+    public static TestShellGlobals<V8ShellGlobalObject> globals = new TestShellGlobals<V8ShellGlobalObject>(
+            configuration) {
+        @Override
+        protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
+                TestInfo test, ScriptCache scriptCache) {
+            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+        }
+    };
 
     @Rule
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
 
+    @Rule
+    public StandardErrorHandler errorHandler = StandardErrorHandler.none();
+
+    @Rule
+    public ScriptExceptionHandler exceptionHandler = ScriptExceptionHandler.none();
+
+    @Rule
+    public ExpectedException expected = ExpectedException.none();
+
     @Parameter(0)
     public TestInfo test;
-
-    @ClassRule
-    public static ExternalResource resource = new ExternalResource() {
-        @Override
-        protected void before() throws Throwable {
-            legacyJS = ShellGlobalObject.compileScript(scriptCache, "v8legacy.js");
-            chaiJS = ShellGlobalObject.compileScript(scriptCache, "chai.js");
-        }
-    };
 
     @Test
     public void runTest() throws Throwable {
         // filter disabled tests
         assumeTrue(test.enable);
 
-        // TODO: collect multiple failures
-        List<Throwable> failures = new ArrayList<Throwable>();
-
-        TraceurConsole console = new TraceurConsole();
-        World<V8ShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console, testDir(),
-                test.script, scriptCache), options);
-        V8ShellGlobalObject global = world.newGlobal();
-
-        // load legacy.js file
-        global.eval(legacyJS);
-        global.eval(chaiJS);
-
-        // load and execute test-utils.js file
-        global.include(Paths.get("test-utils.js"));
-
-        // evaluate actual test-script
-        Path js = testDir().resolve(test.script);
-        try {
-            global.eval(test.script, js);
-        } catch (ParserException | CompilationException e) {
-            // count towards the overall failure count
-            String message = e.getMessage();
-            failures.add(new AssertionError(message, e));
-        } catch (ScriptException e) {
-            // count towards the overall failure count
-            String message = e.getMessage(global.getRealm().defaultContext());
-            failures.add(new AssertionError(message, e));
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
+        V8ShellGlobalObject global = globals.newGlobal(new TraceurConsole(), test);
+        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         if (test.expect) {
-            // fail if any test returns with errors
-            MultipleFailureException.assertEmpty(failures);
+            errorHandler.match(StandardErrorHandler.defaultMatcher());
+            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         } else {
-            assertFalse("Expected test to throw error", failures.isEmpty());
+            expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher()).or(
+                    ScriptExceptionHandler.defaultMatcher()));
         }
-    }
 
-    private static final Set<String> excludeFiles = new HashSet<>();
-    private static final Set<String> excludeDirs = new HashSet<>(asList("Await", "Cascade",
-            "Collection", "LegacyModules", "Modules", "PrivateNames", "PrivateNameSyntax",
-            "PropertyMethodAssignment", "PropertyOptionalComma", "Types"));
-
-    private static List<TestInfo> loadTests(Path searchdir, Path basedir) throws IOException {
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, new TestInfos());
+        // evaluate actual test-script
+        global.eval(test.script, test.toFile());
     }
 
     private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
         private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*(.*)\\s*");
+        private final Path basedir;
+
+        public TestInfos(Path basedir) {
+            this.basedir = basedir;
+        }
 
         @Override
-        public TestInfo apply(Path script, Iterator<String> lines) {
-            TestInfo test = new TestInfo(script);
+        public TestInfo apply(Path file, Iterator<String> lines) {
+            TestInfo test = new TestInfo(basedir, file);
             Pattern p = FlagsPattern;
             while (lines.hasNext()) {
                 String line = lines.next();

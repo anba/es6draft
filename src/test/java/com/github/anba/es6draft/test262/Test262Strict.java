@@ -6,21 +6,20 @@
  */
 package com.github.anba.es6draft.test262;
 
-import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.test262.Resources.loadConfiguration;
-import static com.github.anba.es6draft.test262.Resources.loadTestCases;
-import static org.hamcrest.Matchers.either;
+import static com.github.anba.es6draft.util.ErrorMessageMatcher.hasErrorMessage;
+import static com.github.anba.es6draft.util.PatternMatcher.matchesPattern;
+import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -29,93 +28,76 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.World;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.util.ExceptionHandler;
-import com.github.anba.es6draft.util.LazyInit;
+import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
+import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
+import com.github.anba.es6draft.util.Functional.BiFunction;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.Resources;
+import com.github.anba.es6draft.util.TestConfiguration;
+import com.github.anba.es6draft.util.TestInfo;
 
 /**
  * The standard test262 test suite (strict)
  * 
  */
 @RunWith(Parallelized.class)
-public final class Test262Strict extends BaseTest262 {
-    private static final String TEST_SUITE = "test.suite.test262-strict";
-
-    private static Set<CompatibilityOption> options = CompatibilityOption.StrictCompatibility();
-    private static final ScriptCache cache = new ScriptCache(options);
-
-    private static final LazyInit<Configuration> configuration = new LazyInit<Configuration>() {
-        @Override
-        protected Configuration initialize() {
-            return loadConfiguration("resource:test262.properties").subset(TEST_SUITE);
-        }
-    };
+@TestConfiguration(name = "test.suite.test262-strict", file = "resource:test262.properties")
+public final class Test262Strict {
+    private static final Configuration configuration = loadConfiguration(Test262Strict.class);
 
     @Parameters(name = "{0}")
-    public static List<Object[]> files() throws IOException {
-        List<Object[]> testCases = loadTestCases(configuration.get());
-        if (testCases.isEmpty()) {
-            System.err.println("no testcases selected!");
-        }
-        return testCases;
+    public static Iterable<TestInfo[]> suiteValues() throws IOException {
+        return Resources.loadXMLTests(configuration, new BiFunction<Path, Path, TestInfo>() {
+            @Override
+            public TestInfo apply(Path basedir, Path file) {
+                return new Test262Info(basedir, file);
+            }
+        });
     }
 
-    @Parameter(0)
-    public String sourceName;
-
-    @Parameter(1)
-    public String path;
+    @ClassRule
+    public static Test262Globals globals = new Test262Globals(configuration);
 
     @Rule
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
 
     @Rule
-    public ExpectedException expected = ExpectedException.none().handleAssertionErrors();
+    public StandardErrorHandler errorHandler = StandardErrorHandler.none();
 
     @Rule
-    public ExceptionHandler handler = new ExceptionHandler() {
-        @Override
-        protected void handle(Throwable t) {
-            throw new AssertionError(t.getMessage(), t);
-        }
-    };
+    public ScriptExceptionHandler exceptionHandler = ScriptExceptionHandler.none();
+
+    @Rule
+    public ExpectedException expected = ExpectedException.none().handleAssertionErrors();
+
+    @Parameter(0)
+    public Test262Info test;
 
     @Test
     public void runTest() throws Throwable {
-        final Path libpath = Paths.get(configuration.get().getString("lib_path"));
-        Path testfile = Paths.get(path);
-        final Test262Info info = Test262Info.from(testfile);
+        // filter disabled tests
+        assumeTrue(test.enable);
 
-        World<Test262GlobalObject> world = new World<>(new ObjectAllocator<Test262GlobalObject>() {
-            @Override
-            public Test262GlobalObject newInstance(Realm realm) {
-                return new Test262GlobalObject(realm, libpath, cache, info, sourceName);
-            }
-        }, options);
-        Test262GlobalObject global = world.newGlobal();
-        Realm realm = global.getRealm();
+        Test262GlobalObject global = globals.newGlobal(test);
+        ExecutionContext cx = global.getRealm().defaultContext();
+        exceptionHandler.setExecutionContext(cx);
 
-        // start initialization
-        global.include("sta.js");
-        createProperties(global, realm.defaultContext(), Test262GlobalObject.class);
-
-        Matcher<Object> m = anyInstanceOf(exceptions());
-        if (info.isNegative()) {
-            m = either(m).or(instanceOf(Test262AssertionError.class));
-            expected.expect(m);
-            String errorType = info.getErrorType();
-            if (errorType != null) {
-                expected.expect(hasErrorType(errorType));
-            }
+        if (!test.isNegative()) {
+            errorHandler.match(StandardErrorHandler.defaultMatcher());
+            exceptionHandler.match(ScriptExceptionHandler.defaultMatcher());
         } else {
-            handler.match(m);
+            expected.expect(Matchers.either(StandardErrorHandler.defaultMatcher())
+                    .or(ScriptExceptionHandler.defaultMatcher())
+                    .or(instanceOf(Test262AssertionError.class)));
+            String errorType = test.getErrorType();
+            if (errorType != null) {
+                expected.expect(hasErrorMessage(cx,
+                        matchesPattern(errorType, Pattern.CASE_INSENSITIVE)));
+            }
         }
 
-        global.eval(testfile);
+        // evaluate actual test-script
+        global.eval(test.toFile());
     }
 }

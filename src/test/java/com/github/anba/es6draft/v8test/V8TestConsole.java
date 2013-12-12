@@ -6,8 +6,7 @@
  */
 package com.github.anba.es6draft.v8test;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.junit.rules.ErrorCollector;
 
 import com.github.anba.es6draft.repl.ShellConsole;
 
@@ -15,10 +14,10 @@ import com.github.anba.es6draft.repl.ShellConsole;
  *
  */
 class V8TestConsole implements ShellConsole {
-    private List<Throwable> failures = new ArrayList<Throwable>();
+    private final ErrorCollector collector;
 
-    public List<Throwable> getFailures() {
-        return failures;
+    V8TestConsole(ErrorCollector collector) {
+        this.collector = collector;
     }
 
     @Override
@@ -34,7 +33,7 @@ class V8TestConsole implements ShellConsole {
     public void print(String s) {
         if (s.startsWith("FAIL ")) {
             // collect all failures instead of calling fail() directly
-            failures.add(new AssertionError(s));
+            collector.addError(new AssertionError(s));
         }
     }
 

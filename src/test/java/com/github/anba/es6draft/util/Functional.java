@@ -88,6 +88,27 @@ public final class Functional {
     }
 
     /**
+     * Converts the untyped Iterable {@code values} to an Iterable of Strings
+     */
+    public static final Iterable<String> toStrings(Iterable<?> values) {
+        return filterMap(values, notEmptyString, toString);
+    }
+
+    private static final Predicate<Object> notEmptyString = new Predicate<Object>() {
+        @Override
+        public boolean test(Object value) {
+            return (value != null && !value.toString().isEmpty());
+        }
+    };
+
+    private static final Function<Object, String> toString = new Function<Object, String>() {
+        @Override
+        public String apply(Object t) {
+            return t.toString();
+        }
+    };
+
+    /**
      * {@link FilterMap} based on {@link Predicate} and {@link Mapper}
      */
     private static final class $FilterMap<T, U> extends FilterMap<T, U> {

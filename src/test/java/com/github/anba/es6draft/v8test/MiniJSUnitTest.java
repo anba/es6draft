@@ -7,143 +7,107 @@
 package com.github.anba.es6draft.v8test;
 
 import static com.github.anba.es6draft.repl.V8ShellGlobalObject.newGlobalObjectAllocator;
-import static com.github.anba.es6draft.util.TestInfo.filterTests;
-import static com.github.anba.es6draft.util.TestInfo.toObjectArray;
-import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
+import static com.github.anba.es6draft.util.Resources.loadConfiguration;
+import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.configuration.Configuration;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExternalResource;
+import org.junit.rules.ErrorCollector;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-import org.junit.runners.model.MultipleFailureException;
 
-import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.ShellGlobalObject;
+import com.github.anba.es6draft.repl.ShellConsole;
 import com.github.anba.es6draft.repl.V8ShellGlobalObject;
-import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.World;
-import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
+import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
-import com.github.anba.es6draft.runtime.internal.ScriptException;
+import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
+import com.github.anba.es6draft.util.ExceptionHandlers.StandardErrorHandler;
 import com.github.anba.es6draft.util.Functional.BiFunction;
+import com.github.anba.es6draft.util.Functional.Function;
 import com.github.anba.es6draft.util.Parallelized;
+import com.github.anba.es6draft.util.TestConfiguration;
 import com.github.anba.es6draft.util.TestInfo;
+import com.github.anba.es6draft.util.TestShellGlobals;
 
 /**
  *
  */
 @RunWith(Parallelized.class)
+@TestConfiguration(name = "v8.test.mjsunit", file = "resource:test-configuration.properties")
 public class MiniJSUnitTest {
-
-    /**
-     * Returns a {@link Path} which points to the test directory 'v8.test.mjsunit'
-     */
-    private static Path testDir() {
-        String testPath = System.getenv("V8_MJSUNIT");
-        return (testPath != null ? Paths.get(testPath) : null);
-    }
+    private static final Configuration configuration = loadConfiguration(MiniJSUnitTest.class);
 
     @Parameters(name = "{0}")
     public static Iterable<TestInfo[]> suiteValues() throws IOException {
-        Path testdir = testDir();
-        assumeThat("missing system property 'V8_MJSUNIT'", testdir, notNullValue());
-        assumeTrue("directy 'V8_MJSUNIT' does not exist", Files.exists(testdir));
-        List<TestInfo> tests = filterTests(loadTests(testdir, testdir), "/mjsunit.list");
-        return toObjectArray(tests);
+        return loadTests(configuration,
+                new Function<Path, BiFunction<Path, Iterator<String>, TestInfo>>() {
+                    @Override
+                    public TestInfos apply(Path basedir) {
+                        return new TestInfos(basedir);
+                    }
+                });
     }
 
-    private static Set<CompatibilityOption> options = CompatibilityOption.WebCompatibility();
-    private static ScriptCache scriptCache = new ScriptCache(options);
-    private static Script legacyJS;
+    @ClassRule
+    public static TestShellGlobals<V8ShellGlobalObject> globals = new TestShellGlobals<V8ShellGlobalObject>(
+            configuration) {
+        @Override
+        protected ObjectAllocator<V8ShellGlobalObject> newAllocator(ShellConsole console,
+                TestInfo test, ScriptCache scriptCache) {
+            return newGlobalObjectAllocator(console, test.basedir, test.script, scriptCache);
+        }
+    };
 
     @Rule
     public Timeout maxTime = new Timeout((int) TimeUnit.SECONDS.toMillis(120));
 
+    @Rule
+    public ErrorCollector collector = new ErrorCollector();
+
+    @Rule
+    public StandardErrorHandler errorHandler = new StandardErrorHandler();
+
+    @Rule
+    public ScriptExceptionHandler exceptionHandler = new ScriptExceptionHandler();
+
     @Parameter(0)
     public TestInfo test;
-
-    @ClassRule
-    public static ExternalResource resource = new ExternalResource() {
-        @Override
-        protected void before() throws Throwable {
-            legacyJS = ShellGlobalObject.compileScript(scriptCache, "v8legacy.js");
-        }
-    };
 
     @Test
     public void runTest() throws Throwable {
         // filter disabled tests
         assumeTrue(test.enable);
 
-        // TODO: collect multiple failures
-        V8TestConsole console = new V8TestConsole();
-        World<V8ShellGlobalObject> world = new World<>(newGlobalObjectAllocator(console, testDir(),
-                test.script, scriptCache), options);
-        V8ShellGlobalObject global = world.newGlobal();
-
-        // load legacy.js file
-        global.eval(legacyJS);
-
-        // load and execute mjsunit.js file
-        global.include(Paths.get("mjsunit.js"));
+        V8ShellGlobalObject global = globals.newGlobal(new V8TestConsole(collector), test);
+        exceptionHandler.setExecutionContext(global.getRealm().defaultContext());
 
         // evaluate actual test-script
-        Path js = testDir().resolve(test.script);
-        try {
-            global.eval(test.script, js);
-        } catch (ParserException | CompilationException e) {
-            // count towards the overall failure count
-            console.getFailures().add(new AssertionError(e.getMessage(), e));
-        } catch (ScriptException e) {
-            // count towards the overall failure count
-            ExecutionContext cx = global.getRealm().defaultContext();
-            console.getFailures().add(new AssertionError(e.getMessage(cx), e));
-        } catch (StackOverflowError e) {
-            // count towards the overall failure count
-            console.getFailures().add(new AssertionError(e.getMessage(), e));
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
-
-        // fail if any test returns with errors
-        MultipleFailureException.assertEmpty(console.getFailures());
-    }
-
-    private static final Set<String> excludeFiles = new HashSet<>(asList("mjsunit.js"));
-    private static final Set<String> excludeDirs = new HashSet<>(asList("bugs", "tools"));
-
-    private static List<TestInfo> loadTests(Path searchdir, final Path basedir) throws IOException {
-        return TestInfo.loadTests(searchdir, basedir, excludeDirs, excludeFiles, new TestInfos());
+        global.eval(test.script, test.toFile());
     }
 
     private static class TestInfos implements BiFunction<Path, Iterator<String>, TestInfo> {
         private static final Pattern FlagsPattern = Pattern.compile("\\s*//\\s*Flags:\\s*(.*)\\s*");
+        private final Path basedir;
+
+        public TestInfos(Path basedir) {
+            this.basedir = basedir;
+        }
 
         @Override
-        public TestInfo apply(Path script, Iterator<String> lines) {
-            TestInfo test = new TestInfo(script);
+        public TestInfo apply(Path file, Iterator<String> lines) {
+            TestInfo test = new TestInfo(basedir, file);
             Pattern p = FlagsPattern;
             while (lines.hasNext()) {
                 String line = lines.next();
@@ -174,6 +138,9 @@ public class MiniJSUnitTest {
                             test.enable = false;
                         } else if (flag.equals("--lazy")) {
                             // don't run tests with natives or lazy compilation
+                            test.enable = false;
+                        } else if (flag.equals("--expose-trigger-failure")) {
+                            // don't run tests with trigger-failure
                             test.enable = false;
                         } else {
                             // ignore other flags
