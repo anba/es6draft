@@ -6,17 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.GeneratorThread;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -72,14 +67,6 @@ public class ErrorObject extends OrdinaryObject {
 
     @Override
     public String toString() {
-        try {
-            ExecutionContext cx = realm.defaultContext();
-            Object toString = Get(cx, this, "toString");
-            if (toString instanceof Callable) {
-                return ToFlatString(cx, ((Callable) toString).call(cx, this));
-            }
-        } catch (ScriptException e) {
-        }
-        return "???";
+        return getException().getMessage(realm.defaultContext());
     }
 }
