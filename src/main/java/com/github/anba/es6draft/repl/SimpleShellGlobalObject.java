@@ -102,4 +102,9 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         });
     }
 
+    /** shell-function: {@code version()} */
+    @Function(name = "version", arity = 1)
+    public String version() {
+        return String.format("%s", getResourceInfo("/version", "<unknown version>"));
+    }
 }

@@ -49,6 +49,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * Simple REPL
  */
 public class Repl {
+    private static final String PROGRAM_NAME = "es6draft";
     private static final int STACKTRACE_DEPTH = 20;
 
     public static void main(String[] args) {
@@ -124,7 +125,7 @@ public class Repl {
 
     private static String getHelp() {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("es6draft (%s)\n\n", getBuildDate()));
+        sb.append(String.format("%s\n\n", getResourceInfo("/version", PROGRAM_NAME)));
         sb.append("Options: \n");
         sb.append("  --compile-only    Disable interpreter\n");
         sb.append("  --debug           Print generated Java bytecode\n");
@@ -136,12 +137,12 @@ public class Repl {
         return sb.toString();
     }
 
-    private static String getBuildDate() {
+    private static String getResourceInfo(String resourceName, String defaultValue) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                Repl.class.getResourceAsStream("/build-date"), StandardCharsets.UTF_8))) {
+                Repl.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
             return reader.readLine();
         } catch (IOException e) {
-            return "<unknown build>";
+            return defaultValue;
         }
     }
 

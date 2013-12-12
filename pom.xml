@@ -44,9 +44,11 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven.build.timestamp.format>yyyy MM dd</maven.build.timestamp.format>
+    <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss</maven.build.timestamp.format>
+    <build.timestamp>${maven.build.timestamp}</build.timestamp>
     <currentYear>2013</currentYear>
     <owner>André Bargull</owner>
+    <spec.version>rev21</spec.version>
     <test.user.language>en</test.user.language>
     <test.user.country>US</test.user.country>
     <test.user.timezone>America/Los_Angeles</test.user.timezone>
@@ -157,6 +159,7 @@
         <directory>${project.basedir}/src/main/resources</directory>
         <excludes>
           <exclude>build-date</exclude>
+          <exclude>version</exclude>
         </excludes>
       </resource>
       <resource>
@@ -164,6 +167,7 @@
         <filtering>true</filtering>
         <includes>
           <include>build-date</include>
+          <include>version</include>
         </includes>
       </resource>
       <resource>
@@ -515,6 +519,7 @@
           <excludes>
             <exclude>src/main/third_party/**</exclude>
             <exclude>src/main/resources/build-date</exclude>
+            <exclude>src/main/resources/version</exclude>
             <exclude>src/test/scripts/reflect/**</exclude>
           </excludes>
           <includes>
