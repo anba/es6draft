@@ -17,11 +17,28 @@ CLASSES="${BUILD_DIR}/classes"
 DEP_DIR="${BUILD_DIR}/dependencies"
 DEPENDENCIES=`ls -1 "${DEP_DIR}" | sed 's,^,'"${DEP_DIR}"'/&,' | sed ':a;{N; s/\n/:/; ta}'`
 CLASSPATH="${CLASSES}:${DEPENDENCIES}"
+case "`uname`" in
+  "CYGWIN"*) CLASSPATH=`cygpath -wp "${CLASSPATH}"` ;;
+esac
 MAINCLASS="com.github.anba.es6draft.repl.Repl"
-JAVA_OPTS="${JAVA_OPTS:-""}"
 
-if [[ $OSTYPE == "cygwin" ]] ; then
-  CLASSPATH=`cygpath -wp "${CLASSPATH}"`
+if [[ -z "$JAVA_HOME" ]] ; then
+  JAVA_CMD="java"
+else
+  case "`uname`" in
+    "CYGWIN"*) JAVA_HOME=`cygpath -u "${JAVA_HOME}"` ;;
+  esac
+  JAVA_CMD="${JAVA_HOME}/bin/java"
+fi
+JAVA_OPTS="${JAVA_OPTS:-""}"
+JAVA_OPTS="${JAVA_OPTS} -ea -server -XX:+TieredCompilation"
+JAVA_VERSION=`${JAVA_CMD} -version 2>&1 | sed 's/java version "\([0-9._]*\).*"/\1/; 1q'`
+
+if [[ "$JAVA_VERSION" < "1.7.0_45" ]] ; then
+  JAVA_OPTS="${JAVA_OPTS} -esa"
+  JAVA_CLASSPATH="-Xbootclasspath/a:${CLASSPATH}"
+else
+  JAVA_CLASSPATH="-cp ${CLASSPATH}"
 fi
 
-java ${JAVA_OPTS} -ea -esa -Xbootclasspath/a:"${CLASSPATH}" "${MAINCLASS}" "$@"
+${JAVA_CMD} ${JAVA_OPTS} ${JAVA_CLASSPATH} "${MAINCLASS}" "$@"
