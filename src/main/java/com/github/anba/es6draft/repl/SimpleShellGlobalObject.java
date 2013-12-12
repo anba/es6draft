@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.repl;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -19,8 +18,6 @@ import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Errors;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Microtask;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -96,14 +93,11 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code nextTick(function)} */
     @Function(name = "nextTick", arity = 1)
-    public void nextTick(ExecutionContext cx, final ScriptObject function) {
-        if (!IsCallable(function)) {
-            throw Errors.throwTypeError(cx, Messages.Key.NotCallable);
-        }
+    public void nextTick(ExecutionContext cx, final Callable function) {
         cx.getRealm().getWorld().enqueueTask(new Microtask() {
             @Override
             public void execute(ExecutionContext cx) {
-                ((Callable) function).call(cx, UNDEFINED);
+                function.call(cx, UNDEFINED);
             }
         });
     }
