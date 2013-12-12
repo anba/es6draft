@@ -235,6 +235,11 @@
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>2.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
           <version>3.3</version>
         </plugin>
@@ -501,6 +506,23 @@
               <outputDirectory>${project.build.outputDirectory}/scripts/</outputDirectory>
               <sha1>b6325b2c35dda7f7a793cbba09ef18a9e025a1ca</sha1>
               <md5>ba5d0cf12d9dccb6be4187202e8208a1</md5>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <outputFile>${project.build.directory}/${project.artifactId}.jar</outputFile>
             </configuration>
           </execution>
         </executions>
