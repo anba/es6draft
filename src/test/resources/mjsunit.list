@@ -173,6 +173,9 @@ stack-traces-2.js
 stack-traces-custom-lazy.js
 eval-stack-trace.js
 
+# V8 Realm API
+regress/regress-280531.js
+
 
 ###############################################################
 # ES6 (rev14) <Object>.prototype no longer instance of <Type> #
@@ -289,6 +292,10 @@ regress/regress-parse-object-literal.js
 limit-locals.js
 # too many arguments
 regress/regress-1122.js
+
+# StackOverflowError during invokedynamic linking (intermittent)
+regress/regress-1132.js
+regress/regress-148378.js
 
 # Timeout
 array-concat.js
