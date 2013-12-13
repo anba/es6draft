@@ -885,6 +885,20 @@ public final class ScriptRuntime {
     /**
      * 13.14 The try Statement
      */
+    public static StackOverflowError getStackOverflowError(Error e) {
+        if (e instanceof StackOverflowError) {
+            return ((StackOverflowError) e);
+        }
+        Throwable cause = e.getCause();
+        if (cause instanceof StackOverflowError) {
+            return ((StackOverflowError) cause);
+        }
+        throw e;
+    }
+
+    /**
+     * 13.14 The try Statement
+     */
     public static ScriptException toInternalError(StackOverflowError e, ExecutionContext cx) {
         ScriptException exception = Errors.newError(cx, Intrinsics.InternalError,
                 Messages.Key.StackOverflow, "StackOverflow");

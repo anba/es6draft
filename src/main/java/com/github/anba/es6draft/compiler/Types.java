@@ -53,6 +53,7 @@ final class Types {
     static final Type Boolean = Type.getType(Boolean.class);
     static final Type CharSequence = Type.getType(CharSequence.class);
     static final Type Double = Type.getType(Double.class);
+    static final Type Error = Type.getType(Error.class);
     static final Type IllegalStateException = Type.getType(IllegalStateException.class);
     static final Type Integer = Type.getType(Integer.class);
     static final Type Long = Type.getType(Long.class);

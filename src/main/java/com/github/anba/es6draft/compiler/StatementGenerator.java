@@ -107,6 +107,10 @@ class StatementGenerator extends
                 MethodType.Static, Types.ScriptRuntime, "enumerateValues",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_getStackOverflowError = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "getStackOverflowError",
+                Type.getMethodType(Types.StackOverflowError, Types.Error));
+
         static final MethodDesc ScriptRuntime_iterate = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "iterate",
                 Type.getMethodType(Types.Iterator, Types.Object, Types.ExecutionContext));
@@ -895,6 +899,7 @@ class StatementGenerator extends
 
         // StackOverflowError -> ScriptException
         mv.mark(handlerCatchStackOverflow);
+        mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_toInternalError);
 
@@ -948,6 +953,7 @@ class StatementGenerator extends
 
         // (2) finally block for abrupt completions within 'try-catch'
         mv.mark(handlerFinallyStackOverflow);
+        mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
         mv.mark(handlerFinally);
         mv.store(throwable);
         restoreEnvironment(savedEnv, mv);
@@ -988,11 +994,11 @@ class StatementGenerator extends
         mv.visitTryCatchBlock(startCatchFinally, endCatch, handlerCatch,
                 Types.ScriptException.getInternalName());
         mv.visitTryCatchBlock(startCatchFinally, endCatch, handlerCatchStackOverflow,
-                Types.StackOverflowError.getInternalName());
+                Types.Error.getInternalName());
         mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinally,
                 Types.ScriptException.getInternalName());
         mv.visitTryCatchBlock(startCatchFinally, endFinally, handlerFinallyStackOverflow,
-                Types.StackOverflowError.getInternalName());
+                Types.Error.getInternalName());
 
         return finallyResult.then(tryResult.select(catchResult));
     }
@@ -1030,6 +1036,7 @@ class StatementGenerator extends
 
         // StackOverflowError -> ScriptException
         mv.mark(handlerCatchStackOverflow);
+        mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_toInternalError);
 
@@ -1069,7 +1076,7 @@ class StatementGenerator extends
         mv.visitTryCatchBlock(startCatch, endCatch, handlerCatch,
                 Types.ScriptException.getInternalName());
         mv.visitTryCatchBlock(startCatch, endCatch, handlerCatchStackOverflow,
-                Types.StackOverflowError.getInternalName());
+                Types.Error.getInternalName());
 
         return tryResult.select(catchResult);
     }
@@ -1112,6 +1119,7 @@ class StatementGenerator extends
         // various finally blocks (1 - 3)
         // (1) finally block for abrupt completions within 'try-catch'
         mv.mark(handlerFinallyStackOverflow);
+        mv.invoke(Methods.ScriptRuntime_getStackOverflowError);
         mv.mark(handlerFinally);
         mv.store(throwable);
         restoreEnvironment(savedEnv, mv);
@@ -1152,7 +1160,7 @@ class StatementGenerator extends
         mv.visitTryCatchBlock(startFinally, endFinally, handlerFinally,
                 Types.ScriptException.getInternalName());
         mv.visitTryCatchBlock(startFinally, endFinally, handlerFinallyStackOverflow,
-                Types.StackOverflowError.getInternalName());
+                Types.Error.getInternalName());
 
         return finallyResult.then(tryResult);
     }
