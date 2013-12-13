@@ -530,7 +530,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* steps 2-3 */
             String s = ToFlatString(cx, obj);
             /* steps 4-9 */
-            return s.toLowerCase(Locale.ROOT);
+            return replaceIWithDot(s).toLowerCase(Locale.ROOT);
         }
 
         /**
@@ -966,5 +966,39 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             Object s = thisValue;
             return CreateHTML(cx, s, "sup", "", "");
         }
+    }
+
+    /**
+     * SpecialCasing support for u+0130 (LATIN CAPITAL LETTER I WITH DOT ABOVE) was removed in
+     * Java8: https://bugs.openjdk.java.net/browse/JDK-8020037
+     */
+    private static String replaceIWithDot(String s) {
+        int index = s.indexOf('\u0130');
+        if (index < 0) {
+            return s;
+        }
+
+        // string contains at least one u+0130 character, translate to u+0069 u+0307
+        final int length = s.length();
+        final int space = Math.min(10, length);
+        int offset = 0, remaining = space;
+        char[] replacement = new char[length + space];
+        s.getChars(0, index, replacement, 0);
+        for (; index < length; ++index) {
+            char c = s.charAt(index);
+            if (c == '\u0130') {
+                if (remaining == 0) {
+                    replacement = Arrays.copyOf(replacement, replacement.length + space);
+                    remaining = space;
+                }
+                replacement[offset + index + 0] = '\u0069';
+                replacement[offset + index + 1] = '\u0307';
+                offset += 1;
+                remaining -= 1;
+            } else {
+                replacement[offset + index] = c;
+            }
+        }
+        return new String(replacement, 0, length + offset);
     }
 }
