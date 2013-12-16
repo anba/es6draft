@@ -13,8 +13,6 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
-import com.github.anba.es6draft.ast.GeneratorDefinition;
-import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -402,13 +400,7 @@ final class FunctionCodeGenerator {
     }
 
     private static boolean isGenerator(FunctionNode node) {
-        if (node instanceof GeneratorDefinition) {
-            return true;
-        } else if (node instanceof MethodDefinition) {
-            return ((MethodDefinition) node).getType() == MethodDefinition.MethodType.Generator;
-        } else {
-            return false;
-        }
+        return node.isGenerator();
     }
 
     private boolean isLegacy(FunctionNode node) {

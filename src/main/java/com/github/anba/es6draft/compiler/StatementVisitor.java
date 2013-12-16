@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.objectweb.asm.Label;
-import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
@@ -143,9 +142,8 @@ abstract class StatementVisitor extends ExpressionVisitor {
     }
 
     private static boolean isGeneratorNode(TopLevelNode node) {
-        return node instanceof GeneratorDeclaration
-                || node instanceof GeneratorExpression
-                || (node instanceof MethodDefinition && ((MethodDefinition) node).getType() == MethodDefinition.MethodType.Generator);
+        assert node instanceof FunctionNode;
+        return ((FunctionNode) node).isGenerator();
     }
 
     @Override
