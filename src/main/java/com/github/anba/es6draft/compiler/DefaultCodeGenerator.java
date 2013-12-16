@@ -35,12 +35,12 @@ import com.github.anba.es6draft.runtime.types.Undefined;
  */
 abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         DefaultNodeVisitor<R, V> {
-    private static class Fields {
+    private static final class Fields {
         static final FieldDesc Double_NaN = FieldDesc.create(FieldType.Static, Types.Double, "NaN",
                 Type.DOUBLE_TYPE);
     }
 
-    private static class Methods {
+    private static final class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_HasOwnProperty = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "HasOwnProperty", Type

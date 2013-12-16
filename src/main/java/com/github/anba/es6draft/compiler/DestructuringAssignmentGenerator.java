@@ -27,8 +27,8 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
  * <li>12.13.1 Destructuring Assignment (Runtime Semantics)
  * </ul>
  */
-class DestructuringAssignmentGenerator {
-    private static class Methods {
+final class DestructuringAssignmentGenerator {
+    private static final class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,

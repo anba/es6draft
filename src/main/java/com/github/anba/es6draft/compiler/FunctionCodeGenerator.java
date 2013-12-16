@@ -26,10 +26,10 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 
 /**
- * 
+ * Generates bytecode for the function entry method
  */
-class FunctionCodeGenerator {
-    private static class Methods {
+final class FunctionCodeGenerator {
+    private static final class Methods {
         // ExecutionContext
         static final MethodDesc ExecutionContext_newFunctionExecutionContext = MethodDesc.create(
                 MethodType.Static, Types.ExecutionContext, "newFunctionExecutionContext",
@@ -188,6 +188,22 @@ class FunctionCodeGenerator {
         mv.end();
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * oldCaller = function.getLegacyCaller()
+     * oldArguments = function.getLegacyArguments()
+     * function.setLegacyCaller(callerContext.getCurrentFunction())
+     * try {
+     *   calleeContext = newFunctionExecutionContext(function, thisValue)
+     *   function_init(calleeContext, function, arguments)
+     *   return function_code(calleeContext)
+     * } finally {
+     *   function.restoreLegacyProperties(oldCaller, oldArguments)
+     * }
+     * </pre>
+     */
     private void generateLegacyFunction(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryFunction> function = mv.getParameter(FUNCTION, OrdinaryFunction.class);
         Variable<ExecutionContext> callerContext = mv.getParameter(EXECUTION_CONTEXT,
@@ -244,6 +260,15 @@ class FunctionCodeGenerator {
                 Types.ScriptException.getInternalName());
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * calleeContext = newFunctionExecutionContext(function, thisValue)
+     * function_init(calleeContext, function, arguments)
+     * return function_code(calleeContext)
+     * </pre>
+     */
     private void generateFunction(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryFunction> function = mv.getParameter(FUNCTION, OrdinaryFunction.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
@@ -265,6 +290,15 @@ class FunctionCodeGenerator {
         mv.areturn(Types.Object);
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * calleeContext = newFunctionExecutionContext(generator, thisValue)
+     * function_init(calleeContext, generator, arguments)
+     * return EvaluateBody(calleeContext, generator)
+     * </pre>
+     */
     private void generateGenerator(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
@@ -288,6 +322,15 @@ class FunctionCodeGenerator {
         mv.areturn(Types.Object);
     }
 
+    /**
+     * Generate bytecode for:
+     * 
+     * <pre>
+     * calleeContext = newFunctionExecutionContext(generator, thisValue)
+     * function_init(calleeContext, generator, arguments)
+     * return EvaluateBodyComprehension(calleeContext, generator)
+     * </pre>
+     */
     private void generateGeneratorComprehension(GeneratorComprehension node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
@@ -311,16 +354,25 @@ class FunctionCodeGenerator {
         mv.areturn(Types.Object);
     }
 
+    /**
+     * <code>
+     * calleeContext = newFunctionExecutionContext(function, thisValue)
+     * </code>
+     */
     private void newFunctionExecutionContext(Variable<ExecutionContext> calleeContext,
             Variable<? extends FunctionObject> function, Variable<Object> thisValue,
             InstructionVisitor mv) {
-        // calleeContext = newFunctionExecutionContext(function, thisValue)
         mv.load(function);
         mv.load(thisValue);
         mv.invoke(Methods.ExecutionContext_newFunctionExecutionContext);
         mv.store(calleeContext);
     }
 
+    /**
+     * <code>
+     * function_init(calleeContext, function, arguments)
+     * </code>
+     */
     private void functionDeclarationInstantiation(FunctionNode node,
             Variable<ExecutionContext> calleeContext, Variable<? extends FunctionObject> function,
             Variable<Object[]> arguments, InstructionVisitor mv) {
@@ -343,6 +395,11 @@ class FunctionCodeGenerator {
         /* steps 1-22 (not applicable, argumentsObjectNeeded = false) */
     }
 
+    /**
+     * <code>
+     * function_code(calleeContext)
+     * </code>
+     */
     private void evaluateBody(FunctionNode node, Variable<ExecutionContext> calleeContext,
             InstructionVisitor mv) {
         String className = codegen.getClassName();
@@ -353,18 +410,26 @@ class FunctionCodeGenerator {
         mv.invokestatic(className, methodName, desc);
     }
 
+    /**
+     * <code>
+     * function.setLegacyCaller(callerContext.getCurrentFunction())
+     * </code>
+     */
     private void setLegacyCaller(Variable<? extends FunctionObject> function,
             Variable<ExecutionContext> callerContext, InstructionVisitor mv) {
-        // function.setLegacyCaller(callerContext.getCurrentFunction())
         mv.load(function);
         mv.load(callerContext);
         mv.invoke(Methods.ExecutionContext_getCurrentFunction);
         mv.invoke(Methods.FunctionObject_setLegacyCaller);
     }
 
+    /**
+     * <code>
+     * function.restoreLegacyProperties(oldCaller, oldArguments)
+     * </code>
+     */
     private void restoreLegacyProperties(Variable<? extends FunctionObject> function,
             Variable<Object> oldCaller, Variable<Object> oldArguments, InstructionVisitor mv) {
-        // function.restoreLegacyProperties(oldCaller, oldArguments)
         mv.load(function);
         mv.load(oldCaller);
         mv.load(oldArguments);

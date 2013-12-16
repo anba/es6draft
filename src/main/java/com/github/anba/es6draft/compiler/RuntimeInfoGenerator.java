@@ -31,8 +31,8 @@ import com.github.anba.es6draft.runtime.internal.RuntimeInfo.FunctionFlags;
 /**
  * 
  */
-class RuntimeInfoGenerator {
-    private static class Methods {
+final class RuntimeInfoGenerator {
+    private static final class Methods {
         // class: RuntimeInfo
         static final MethodDesc RTI_newScriptBody = MethodDesc.create(MethodType.Static,
                 Types.RuntimeInfo, "newScriptBody", Type.getMethodType(

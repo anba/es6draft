@@ -36,8 +36,9 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <li>9.2.13 Function Declaration Instantiation
  * </ul>
  */
-class FunctionDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
-    private static class Methods {
+final class FunctionDeclarationInstantiationGenerator extends
+        DeclarationBindingInstantiationGenerator {
+    private static final class Methods {
         // class: Arrays
         static final MethodDesc Arrays_asList = MethodDesc.create(MethodType.Static, Types.Arrays,
                 "asList", Type.getMethodType(Types.List, Types.Object_));

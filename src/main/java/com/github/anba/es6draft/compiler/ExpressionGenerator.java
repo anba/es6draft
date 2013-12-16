@@ -39,8 +39,8 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 /**
  *
  */
-class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisitor> {
-    private static class Fields {
+final class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisitor> {
+    private static final class Fields {
         static final FieldDesc Intrinsics_ObjectPrototype = FieldDesc.create(FieldType.Static,
                 Types.Intrinsics, "ObjectPrototype", Types.Intrinsics);
 
@@ -48,7 +48,7 @@ class ExpressionGenerator extends DefaultCodeGenerator<ValType, ExpressionVisito
                 Types.ScriptRuntime, "EMPTY_ARRAY", Types.Object_);
     }
 
-    private static class Methods {
+    private static final class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Put = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "Put", Type.getMethodType(Type.VOID_TYPE,

@@ -30,9 +30,9 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  * 14.3.7 Runtime Semantics: PropertyDefinitionEvaluation<br>
  * 14.4.11 Runtime Semantics: PropertyDefinitionEvaluation
  */
-class PropertyGenerator extends
+final class PropertyGenerator extends
         DefaultCodeGenerator<DefaultCodeGenerator.ValType, ExpressionVisitor> {
-    private static class Methods {
+    private static final class Methods {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_EvaluatePropertyDefinition = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluatePropertyDefinition", Type

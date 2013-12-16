@@ -38,9 +38,9 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
  * <li>13.11 The switch Statement
  * </ul>
  */
-class SwitchStatementGenerator extends
+final class SwitchStatementGenerator extends
         DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
-    private static class Methods {
+    private static final class Methods {
         // class: CharSequence
         static final MethodDesc CharSequence_charAt = MethodDesc.create(MethodType.Interface,
                 Types.CharSequence, "charAt", Type.getMethodType(Type.CHAR_TYPE, Type.INT_TYPE));

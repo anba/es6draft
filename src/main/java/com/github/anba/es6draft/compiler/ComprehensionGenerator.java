@@ -33,7 +33,7 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
  * 12.1.4.2 Array Comprehension
  */
 abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, ExpressionVisitor> {
-    private static class Methods {
+    private static final class Methods {
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",

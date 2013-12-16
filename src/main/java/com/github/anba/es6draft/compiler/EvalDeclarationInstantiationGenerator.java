@@ -35,8 +35,8 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
  * <li>18.2.1.2 Eval Declaration Instantiation
  * </ul>
  */
-class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
-    private static class Methods {
+final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
+    private static final class Methods {
         // class: IllegalStateException
         static final MethodDesc IllegalStateException_init = MethodDesc.create(MethodType.Special,
                 Types.IllegalStateException, "<init>", Type.getMethodType(Type.VOID_TYPE));

@@ -17,8 +17,8 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 /**
  * 8.3.1 ResolveBinding(name)
  */
-class IdentifierResolution {
-    private static class Methods {
+final class IdentifierResolution {
+    private static final class Methods {
         // identifierResolution()
         static final MethodDesc ExecutionContext_resolveBinding = MethodDesc.create(
                 MethodType.Virtual, Types.ExecutionContext, "resolveBinding",

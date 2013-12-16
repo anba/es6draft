@@ -29,7 +29,7 @@ import com.github.anba.es6draft.compiler.JumpLabel.TempLabel;
  * 
  */
 abstract class StatementVisitor extends ExpressionVisitor {
-    private static class Labels {
+    private static final class Labels {
         // unlabelled breaks and continues
         final Deque<JumpLabel> breakTargets = new ArrayDeque<>(4);
         final Deque<JumpLabel> continueTargets = new ArrayDeque<>(4);

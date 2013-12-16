@@ -23,8 +23,8 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
  * <li>12.1.4.2 Array Comprehension
  * </ul>
  */
-class ArrayComprehensionGenerator extends ComprehensionGenerator {
-    private static class Methods {
+final class ArrayComprehensionGenerator extends ComprehensionGenerator {
+    private static final class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_CreateArrayFromList = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "CreateArrayFromList",

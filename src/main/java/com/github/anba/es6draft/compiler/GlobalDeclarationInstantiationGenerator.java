@@ -37,8 +37,9 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
  * <li>15.2.8 Runtime Semantics: GlobalDeclarationInstantiation
  * </ul>
  */
-class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
-    private static class Methods {
+final class GlobalDeclarationInstantiationGenerator extends
+        DeclarationBindingInstantiationGenerator {
+    private static final class Methods {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_canDeclareLexicalScopedOrThrow = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "canDeclareLexicalScopedOrThrow", Type
@@ -211,6 +212,11 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.areturn();
     }
 
+    /**
+     * <code>
+     * ScriptRuntime.canDeclareLexicalScopedOrThrow(cx, envRec, name)
+     * </code>
+     */
     private void canDeclareLexicalScopedOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
         mv.load(context);
@@ -219,6 +225,11 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.invoke(Methods.ScriptRuntime_canDeclareLexicalScopedOrThrow);
     }
 
+    /**
+     * <code>
+     * ScriptRuntime.canDeclareVarScopedOrThrow(cx, envRec, name)
+     * </code>
+     */
     private void canDeclareVarScopedOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
         mv.load(context);
@@ -227,6 +238,11 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.invoke(Methods.ScriptRuntime_canDeclareVarScopedOrThrow);
     }
 
+    /**
+     * <code>
+     * ScriptRuntime.canDeclareGlobalFunctionOrThrow(cx, envRec, name)
+     * </code>
+     */
     private void canDeclareGlobalFunctionOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
         mv.load(context);
@@ -235,6 +251,11 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.invoke(Methods.ScriptRuntime_canDeclareGlobalFunctionOrThrow);
     }
 
+    /**
+     * <code>
+     * ScriptRuntime.canDeclareGlobalVarOrThrow(cx, envRec, name)
+     * </code>
+     */
     private void canDeclareGlobalVarOrThrow(Variable<ExecutionContext> context,
             Variable<GlobalEnvironmentRecord> envRec, String name, InstructionVisitor mv) {
         mv.load(context);
@@ -243,15 +264,24 @@ class GlobalDeclarationInstantiationGenerator extends DeclarationBindingInstanti
         mv.invoke(Methods.ScriptRuntime_canDeclareGlobalVarOrThrow);
     }
 
+    /**
+     * <code>
+     * envRec.createGlobalVarBinding(name, deletableBindings)
+     * </code>
+     */
     private void createGlobalVarBinding(Variable<GlobalEnvironmentRecord> envRec, String name,
             Variable<Boolean> deletableBindings, InstructionVisitor mv) {
-        // stack: [] -> []
         mv.load(envRec);
         mv.aconst(name);
         mv.load(deletableBindings);
         mv.invoke(Methods.GlobalEnvironmentRecord_createGlobalVarBinding);
     }
 
+    /**
+     * <code>
+     * envRec.createGlobalFunctionBinding(name, functionObject, deletableBindings)
+     * </code>
+     */
     private void createGlobalFunctionBinding(Variable<GlobalEnvironmentRecord> envRec, String name,
             Variable<Boolean> deletableBindings, InstructionVisitor mv) {
         // stack: [fo] -> []

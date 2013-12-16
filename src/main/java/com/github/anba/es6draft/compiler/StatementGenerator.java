@@ -34,8 +34,11 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 /**
  *
  */
-class StatementGenerator extends
+final class StatementGenerator extends
         DefaultCodeGenerator<StatementGenerator.Completion, StatementVisitor> {
+    /**
+     * 6.2.2 The Completion Record Specification Type
+     */
     enum Completion {
         Normal, Return, Throw, Break, Continue, Abrupt;
 
@@ -56,7 +59,7 @@ class StatementGenerator extends
         }
     }
 
-    private static class Methods {
+    private static final class Methods {
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_createMutableBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "createMutableBinding",
@@ -171,7 +174,7 @@ class StatementGenerator extends
     }
 
     /**
-     * 13.1.9 Runtime Semantics: Evaluation
+     * 13.1.10 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(BlockStatement node, StatementVisitor mv) {
@@ -209,25 +212,30 @@ class StatementGenerator extends
      */
     @Override
     public Completion visit(BreakStatement node, StatementVisitor mv) {
+        /* steps 1-2 */
         mv.goTo(mv.breakLabel(node));
         return Completion.Break;
     }
 
     /**
-     * 14.5.15 Runtime Semantics: Evaluation
+     * 14.5.16 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(ClassDeclaration node, StatementVisitor mv) {
+        /* step 1 */
         String className = node.getName().getName();
+        /* steps 2-3 */
         ClassDefinitionEvaluation(node, className, mv);
-
+        /* steps 4-6 */
         SetFunctionName(node, className, mv);
 
-        // stack: [envRec, value] -> []
+        /* steps 7-9 */
         getEnvironmentRecord(mv);
         mv.swap();
+        // stack: [envRec, value] -> []
         BindingInitialisationWithEnvironment(node.getName(), mv);
 
+        /* step 10 */
         return Completion.Normal;
     }
 
@@ -236,6 +244,7 @@ class StatementGenerator extends
      */
     @Override
     public Completion visit(ContinueStatement node, StatementVisitor mv) {
+        /* steps 1-2 */
         mv.goTo(mv.continueLabel(node));
         return Completion.Continue;
     }
@@ -245,6 +254,7 @@ class StatementGenerator extends
      */
     @Override
     public Completion visit(DebuggerStatement node, StatementVisitor mv) {
+        /* steps 1-3 */
         mv.lineInfo(node);
         mv.invoke(Methods.ScriptRuntime_debugger);
         return Completion.Normal;

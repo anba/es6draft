@@ -20,8 +20,8 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * <li>12.1.7 Generator Comprehensions
  * </ul>
  */
-class GeneratorComprehensionGenerator extends ComprehensionGenerator {
-    private static class Methods {
+final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
+    private static final class Methods {
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "yield",

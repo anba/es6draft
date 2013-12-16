@@ -33,8 +33,8 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
  * <li>Runtime Semantics: Keyed Binding Initialisation
  * </ul>
  */
-class BindingInitialisationGenerator {
-    private static class Methods {
+final class BindingInitialisationGenerator {
+    private static final class Methods {
         // class: AbstractOperations
         static final MethodDesc AbstractOperations_Get = MethodDesc.create(MethodType.Static,
                 Types.AbstractOperations, "Get", Type.getMethodType(Types.Object,

@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
  * 
  */
 abstract class ExpressionVisitor extends InstructionVisitor {
-    private static class Fields {
+    private static final class Fields {
         static final FieldDesc Null_NULL = FieldDesc.create(FieldType.Static, Types.Null, "NULL",
                 Types.Null);
 

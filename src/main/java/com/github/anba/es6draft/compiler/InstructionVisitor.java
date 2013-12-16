@@ -26,7 +26,7 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
  *
  */
 class InstructionVisitor extends InstructionAdapter {
-    private static class Variables {
+    private static final class Variables {
         private static final Type RESERVED = Type.getType("reserved");
         private static final int INITIAL_SIZE = 8;
         private final AtomicInteger id = new AtomicInteger();
@@ -150,7 +150,7 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
-    private static class VariableScope implements Iterable<Variable<?>> {
+    private static final class VariableScope implements Iterable<Variable<?>> {
         final VariableScope parent;
         final int firstSlot;
         final ArrayDeque<Variable<?>> variables = new ArrayDeque<>(6);

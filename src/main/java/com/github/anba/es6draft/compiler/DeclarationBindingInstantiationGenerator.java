@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
  * Base class for Binding Instantiation generators
  */
 abstract class DeclarationBindingInstantiationGenerator {
-    private static class Methods {
+    private static final class Methods {
         // class: EnvironmentRecord
         static final MethodDesc EnvironmentRecord_hasBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "hasBinding",
