@@ -55,7 +55,7 @@ import com.ibm.icu.util.ULocale;
  */
 public class NumberFormatConstructor extends BuiltinConstructor implements Initialisable {
     /** [[availableLocales]] */
-    Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
+    private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
         protected Set<String> computeValue() {
             return GetAvailableLocales(NumberFormat.getAvailableULocales());
