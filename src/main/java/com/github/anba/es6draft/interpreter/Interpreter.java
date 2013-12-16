@@ -26,6 +26,7 @@ import com.github.anba.es6draft.ast.BinaryExpression.Operator;
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 import com.github.anba.es6draft.runtime.internal.ScriptRuntime;
 import com.github.anba.es6draft.runtime.objects.Eval;
@@ -68,7 +69,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /* ----------------------------------------------------------------------------------------- */
 
     /**
-     * 12.3.1 Postfix Increment Operator
+     * 12.3.4 Postfix Increment Operator
      */
     private static Double postIncrement(Object lhs, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(lhs, cx));
@@ -78,7 +79,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 12.3.2 Postfix Decrement Operator
+     * 12.3.5 Postfix Decrement Operator
      */
     private static Double postDecrement(Object lhs, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(lhs, cx));
@@ -88,14 +89,14 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 12.4.2 The void Operator
+     * 12.4.5 The void Operator
      */
     private static Undefined _void(Object value, ExecutionContext cx) {
         return UNDEFINED;
     }
 
     /**
-     * 12.4.4 Prefix Increment Operator
+     * 12.4.7 Prefix Increment Operator
      */
     private static Double preIncrement(Object expr, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(expr, cx));
@@ -105,7 +106,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 12.4.5 Prefix Decrement Operator
+     * 12.4.8 Prefix Decrement Operator
      */
     private static Double preDecrement(Object expr, ExecutionContext cx) {
         double oldValue = ToNumber(cx, GetValue(expr, cx));
@@ -115,14 +116,14 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 12.4.6 Unary + Operator
+     * 12.4.9 Unary + Operator
      */
     private static Double pos(Object value, ExecutionContext cx) {
         return ToNumber(cx, value);
     }
 
     /**
-     * 12.4.7 Unary - Operator
+     * 12.4.10 Unary - Operator
      */
     private static Double neg(Object value, ExecutionContext cx) {
         double oldValue = ToNumber(cx, value);
@@ -130,7 +131,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 12.4.8 Bitwise NOT Operator ( ~ )
+     * 12.4.11 Bitwise NOT Operator ( ~ )
      */
     private static Integer bitnot(Object value, ExecutionContext cx) {
         int oldValue = ToInt32(cx, value);
@@ -138,7 +139,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
-     * 12.4.9 Logical NOT Operator ( ! )
+     * 12.4.12 Logical NOT Operator ( ! )
      */
     private static Boolean not(Object value, ExecutionContext cx) {
         boolean oldValue = ToBoolean(value);
@@ -593,7 +594,8 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
                 Object value = propertyValue.accept(this, cx);
                 value = GetValue(value, cx);
 
-                if ("__proto__".equals(propName)) {
+                if ("__proto__".equals(propName)
+                        && cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
                     ScriptRuntime.defineProtoProperty(obj, value, cx);
                 } else {
                     ScriptRuntime.defineProperty(obj, propName, value, cx);
