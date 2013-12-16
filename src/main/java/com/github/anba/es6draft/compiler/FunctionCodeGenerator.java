@@ -197,14 +197,14 @@ final class FunctionCodeGenerator {
         mv.invoke(Methods.FunctionObject_getLegacyArguments);
         mv.store(oldArguments);
 
+        // (2) Update 'caller' property
+        setLegacyCaller(function, callerContext, mv);
+
         Label startFinally = new Label(), endFinally = new Label(), handlerFinally = new Label();
         mv.mark(startFinally);
         {
-            // (2) Create a new ExecutionContext
+            // (3) Create a new ExecutionContext
             newFunctionExecutionContext(calleeContext, function, thisValue, mv);
-
-            // (3) Update 'caller' property
-            setLegacyCaller(function, callerContext, mv);
 
             // (4) Perform FunctionDeclarationInstantiation
             functionDeclarationInstantiation(node, calleeContext, function, arguments, mv);
@@ -228,7 +228,7 @@ final class FunctionCodeGenerator {
         mv.athrow();
 
         mv.visitTryCatchBlock(startFinally, endFinally, handlerFinally,
-                Types.ScriptException.getInternalName());
+                Types.Throwable.getInternalName());
     }
 
     /**

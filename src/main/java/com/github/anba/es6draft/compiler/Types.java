@@ -64,6 +64,7 @@ final class Types {
     static final Type String = Type.getType(String.class);
     static final Type String_ = Type.getType(String[].class);
     static final Type StringBuilder = Type.getType(StringBuilder.class);
+    static final Type Throwable = Type.getType(Throwable.class);
 
     // java.lang.invoke
     static final Type MethodHandle = Type.getType(MethodHandle.class);
