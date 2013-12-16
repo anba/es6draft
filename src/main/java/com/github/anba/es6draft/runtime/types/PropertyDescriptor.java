@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * <h1>6 ECMAScript Data Types and Values</h1><br>
  * <h2>6.2 ECMAScript Specification Types</h2>
  * <ul>
- * <li>6.2.5 The Property Descriptor Specification Type
+ * <li>6.2.4 The Property Descriptor Specification Type
  * </ul>
  */
 public final class PropertyDescriptor implements Cloneable {
@@ -142,7 +142,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.1 IsAccessorDescriptor ( Desc )
+     * 6.2.4.1 IsAccessorDescriptor ( Desc )
      */
     public static boolean IsAccessorDescriptor(PropertyDescriptor desc) {
         /* step 1 */
@@ -154,7 +154,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.1 IsAccessorDescriptor ( Desc )<br>
+     * 6.2.4.1 IsAccessorDescriptor ( Desc )<br>
      * Returns {@code true} if this object is an accessor property descriptor
      */
     public final boolean isAccessorDescriptor() {
@@ -162,7 +162,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.2 IsDataDescriptor ( Desc )
+     * 6.2.4.2 IsDataDescriptor ( Desc )
      */
     public static boolean IsDataDescriptor(PropertyDescriptor desc) {
         /* step 1 */
@@ -174,7 +174,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.2 IsDataDescriptor ( Desc )<br>
+     * 6.2.4.2 IsDataDescriptor ( Desc )<br>
      * Returns {@code true} if this object is a data property descriptor
      */
     public final boolean isDataDescriptor() {
@@ -182,7 +182,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.3 IsGenericDescriptor ( Desc )
+     * 6.2.4.3 IsGenericDescriptor ( Desc )
      */
     public static boolean IsGenericDescriptor(PropertyDescriptor desc) {
         /* step 1 */
@@ -194,7 +194,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.3 IsGenericDescriptor ( Desc )<br>
+     * 6.2.4.3 IsGenericDescriptor ( Desc )<br>
      * Returns {@code true} if this object is a generic property descriptor
      */
     public final boolean isGenericDescriptor() {
@@ -202,7 +202,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.4 FromPropertyDescriptor ( Desc )
+     * 6.2.4.4 FromPropertyDescriptor ( Desc )
      * <p>
      * Returns {@code undefined} if the input property descriptor is {@code null}, otherwise returns
      * a {@link ScriptObject} representing the fields of this property descriptor.
@@ -234,7 +234,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.4 FromPropertyDescriptor ( Desc )
+     * 6.2.4.4 FromPropertyDescriptor ( Desc )
      * <p>
      * Returns {@code undefined} if the input property descriptor is {@code null}, otherwise returns
      * a {@link ScriptObject} representing the fields of this property descriptor.
@@ -285,7 +285,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.5 ToPropertyDescriptor ( Obj )
+     * 6.2.4.5 ToPropertyDescriptor ( Obj )
      * <p>
      * Returns a new property descriptor from the input argument {@code object}, if {@code object}
      * is not an instance of {@link ScriptObject}, a TypeError is thrown.
@@ -346,7 +346,7 @@ public final class PropertyDescriptor implements Cloneable {
     }
 
     /**
-     * 6.2.5.6 CompletePropertyDescriptor ( Desc, LikeDesc )
+     * 6.2.4.6 CompletePropertyDescriptor ( Desc, LikeDesc )
      */
     public static PropertyDescriptor CompletePropertyDescriptor(PropertyDescriptor desc,
             Property likeDesc) {

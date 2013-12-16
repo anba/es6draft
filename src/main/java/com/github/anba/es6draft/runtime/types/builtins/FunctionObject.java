@@ -75,9 +75,9 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     /** [[MethodName]] */
     private Object /* String|ExoticSymbol */methodName;
 
-    protected boolean isConstructor = false;
+    private boolean isConstructor;
     private boolean legacy;
-    private String source = null;
+    private String source;
 
     private MethodHandle callMethod;
     private MethodHandle tailCallMethod;
@@ -101,10 +101,42 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         return v instanceof FunctionObject && ((FunctionObject) v).isStrict();
     }
 
+    private final boolean isInitialised() {
+        return function != null;
+    }
+
+    /**
+     * Returns {@code true} iff legacy .caller and .arguments properties are available for this
+     * function object
+     */
+    private final boolean isLegacy() {
+        return legacy;
+    }
+
+    /**
+     * Returns {@code true} iff the [[Construct]] method is attached to this function object
+     */
+    protected boolean isConstructor() {
+        return isConstructor;
+    }
+
+    /**
+     * Sets the [[Construct]] flag for this function object
+     */
+    protected final void setConstructor(boolean isConstructor) {
+        this.isConstructor = isConstructor;
+    }
+
+    /**
+     * Returns the {@link MethodHandle} for the function entry method
+     */
     public final MethodHandle getCallMethod() {
         return callMethod;
     }
 
+    /**
+     * Returns the {@link MethodHandle} for the function tail-call entry method
+     */
     public final MethodHandle getTailCallMethod() {
         return tailCallMethod;
     }
@@ -231,7 +263,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         Object methodName = getMethodName();
         FunctionObject copy = allocateNew();
         copy.initialise(getFunctionKind(), getCode(), getScope(), newHomeObject, methodName);
-        copy.isConstructor = isConstructor;
+        copy.setConstructor(isConstructor());
         return copy;
     }
 
@@ -295,14 +327,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
             return result;
         }
         return mh;
-    }
-
-    private final boolean isInitialised() {
-        return function != null;
-    }
-
-    private final boolean isLegacy() {
-        return legacy;
     }
 
     /**

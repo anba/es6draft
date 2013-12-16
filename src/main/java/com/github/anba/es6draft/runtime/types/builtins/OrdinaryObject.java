@@ -56,6 +56,9 @@ public class OrdinaryObject implements ScriptObject {
         this.realm = realm;
     }
 
+    /**
+     * Internal hook for ExoticArray
+     */
     final void addProperty(String propertyKey, Property property) {
         __put__(propertyKey, property);
     }
@@ -607,6 +610,9 @@ public class OrdinaryObject implements ScriptObject {
         return propList;
     }
 
+    /**
+     * Subclasses need to override this method if they have virtual, enumerable properties
+     */
     protected boolean isEnumerableOwnProperty(String key) {
         Property prop = ordinaryGetOwnProperty(key);
         return (prop != null && prop.isEnumerable());

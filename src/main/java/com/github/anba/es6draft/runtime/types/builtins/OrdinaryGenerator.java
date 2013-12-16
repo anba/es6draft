@@ -43,7 +43,7 @@ public class OrdinaryGenerator extends FunctionObject {
 
         @Override
         public final boolean isConstructor() {
-            return isConstructor;
+            return super.isConstructor();
         }
 
         /**
@@ -95,7 +95,7 @@ public class OrdinaryGenerator extends FunctionObject {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * Runtime Semantics EvaluateBody
+     * 14.4.11 Runtime Semantics: EvaluateBody
      * 
      * <pre>
      * GeneratorBody : FunctionBody
@@ -123,7 +123,7 @@ public class OrdinaryGenerator extends FunctionObject {
     /**
      * 14.4 Generator Function Definitions
      * <p>
-     * Runtime Semantics EvaluateBody
+     * 14.4.11 Runtime Semantics: EvaluateBody
      * 
      * <pre>
      * GeneratorBody : Comprehension
@@ -154,7 +154,7 @@ public class OrdinaryGenerator extends FunctionObject {
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.5 FunctionAllocate Abstract Operation
+     * 9.2.4 FunctionAllocate Abstract Operation
      */
     public static OrdinaryGenerator FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {
@@ -170,7 +170,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 9.2.8 GeneratorFunctionCreate Abstract Operation
+     * 9.2.7 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
@@ -178,7 +178,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 9.2.8 GeneratorFunctionCreate Abstract Operation
+     * 9.2.7 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
@@ -187,7 +187,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 9.2.8 GeneratorFunctionCreate Abstract Operation
+     * 9.2.7 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,
@@ -204,7 +204,7 @@ public class OrdinaryGenerator extends FunctionObject {
     }
 
     /**
-     * 9.2.8 GeneratorFunctionCreate Abstract Operation
+     * 9.2.7 GeneratorFunctionCreate Abstract Operation
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope,

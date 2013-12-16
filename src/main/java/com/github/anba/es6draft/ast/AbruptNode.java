@@ -14,7 +14,7 @@ import java.util.Set;
  */
 public interface AbruptNode extends Node {
     /**
-     * Returns the set of labels for this node
+     * Returns the label set for this node
      */
     Set<String> getLabelSet();
 

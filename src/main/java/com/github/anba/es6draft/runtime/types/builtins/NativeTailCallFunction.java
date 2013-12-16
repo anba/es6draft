@@ -49,7 +49,7 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     }
 
     /**
-     * [[Call]]
+     * 9.3.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -63,7 +63,7 @@ public final class NativeTailCallFunction extends BuiltinFunction {
     }
 
     /**
-     * [[Call]]
+     * 9.3.1 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)

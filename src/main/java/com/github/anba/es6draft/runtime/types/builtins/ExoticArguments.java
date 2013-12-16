@@ -34,6 +34,7 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * </ul>
  */
 public class ExoticArguments extends OrdinaryObject {
+    // = `this instanceof ExoticLegacyArguments`
     private final boolean isLegacy;
 
     /** [[ParameterMap]] */

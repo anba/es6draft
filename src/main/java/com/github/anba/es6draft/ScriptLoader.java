@@ -24,17 +24,17 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
 
 /**
- * <h1>15 ECMAScript Language: Scripts and Modules</h1>
+ * <h1>15 ECMAScript Language: Modules and Scripts</h1>
  * <ul>
- * <li>15.1 Script
+ * <li>15.2 Script
  * </ul>
  */
-public class ScriptLoader {
+public final class ScriptLoader {
     private ScriptLoader() {
     }
 
     /**
-     * [15.1.2 ScriptEvaluation]
+     * [15.2.7 Runtime Semantics: Script Evaluation]
      */
     public static Object ScriptEvaluation(Script script, Realm realm, boolean deletableBindings) {
         /* steps 1-2 */

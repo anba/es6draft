@@ -13,7 +13,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
  * <h2>6.1 ECMAScript Language Types</h2><br>
  * <h3>6.1.7 The Object Type</h3>
  * <ul>
- * <li>6.1.7.2 Object Internal Methods and Internal Data Properties
+ * <li>6.1.7.2 Object Internal Methods and Internal Slots
  * </ul>
  */
 public interface ScriptObject {

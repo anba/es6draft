@@ -74,27 +74,37 @@ public class ExoticArray extends OrdinaryObject {
     @Override
     public boolean defineOwnProperty(ExecutionContext cx, String propertyKey,
             PropertyDescriptor desc) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
         if ("length".equals(propertyKey)) {
+            /* step 2 */
             return ArraySetLength(cx, this, desc);
         } else if (isArrayIndex(propertyKey)) {
+            /* step 3 */
+            /* steps 3.a-3.d */
             Property oldLenDesc = getOwnProperty(cx, "length");
             assert oldLenDesc != null && !oldLenDesc.isAccessorDescriptor();
             long oldLen = ToUint32(cx, oldLenDesc.getValue());
             long index = ToUint32(cx, propertyKey);
+            /* steps 3.e */
             if (index >= oldLen && !oldLenDesc.isWritable()) {
                 return false;
             }
+            /* steps 3.f-3.h */
             boolean succeeded = ordinaryDefineOwnProperty(propertyKey, desc);
             if (!succeeded) {
                 return false;
             }
+            /* step 3.i */
             if (index >= oldLen) {
                 PropertyDescriptor lenDesc = oldLenDesc.toPropertyDescriptor();
                 lenDesc.setValue(index + 1);
                 ordinaryDefineOwnProperty("length", lenDesc);
             }
+            /* step 3.j */
             return true;
         }
+        /* step 4 */
         return ordinaryDefineOwnProperty(propertyKey, desc);
     }
 
@@ -144,6 +154,8 @@ public class ExoticArray extends OrdinaryObject {
 
     /**
      * Helper method to create dense arrays
+     * <p>
+     * [Called from generated code]
      */
     public static ExoticArray DenseArrayCreate(ExecutionContext cx, Object[] values) {
         ExoticArray array = ArrayCreate(cx, values.length);
@@ -155,6 +167,8 @@ public class ExoticArray extends OrdinaryObject {
 
     /**
      * Helper method to create sparse arrays
+     * <p>
+     * [Called from generated code]
      */
     public static ExoticArray SparseArrayCreate(ExecutionContext cx, Object[] values) {
         ExoticArray array = ArrayCreate(cx, values.length);

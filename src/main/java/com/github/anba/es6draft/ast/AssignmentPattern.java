@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.13 Assignment Operators</h2>
  * <ul>
- * <li>12.13.1 Destructuring Assignment
+ * <li>12.13.5 Destructuring Assignment
  * </ul>
  */
 public abstract class AssignmentPattern extends LeftHandSideExpression {
