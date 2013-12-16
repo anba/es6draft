@@ -32,22 +32,22 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  */
 public class ExoticArray extends OrdinaryObject {
     /** [[ArrayInitialisationState]] */
-    private boolean arrayInitialisationState = false;
+    private boolean initialisationState = false;
 
     public ExoticArray(Realm realm) {
         super(realm);
     }
 
     /** [[ArrayInitialisationState]] */
-    public boolean getArrayInitialisationState() {
-        return arrayInitialisationState;
+    public boolean getInitialisationState() {
+        return initialisationState;
     }
 
     /** [[ArrayInitialisationState]] */
-    public void setArrayInitialisationState(boolean arrayInitialisationState) {
-        assert arrayInitialisationState : "cannot de-initialise an array";
-        assert !this.arrayInitialisationState : "array already initialised";
-        this.arrayInitialisationState = arrayInitialisationState;
+    public void setInitialisationState(boolean initialisationState) {
+        assert initialisationState : "cannot de-initialise an array";
+        assert !this.initialisationState : "array already initialised";
+        this.initialisationState = initialisationState;
     }
 
     /**
@@ -112,39 +112,51 @@ public class ExoticArray extends OrdinaryObject {
      * 9.4.2.2 ArrayCreate(length) Abstract Operation
      */
     public static ExoticArray ArrayCreate(ExecutionContext cx, long length) {
+        assert length >= 0;
         return ArrayCreate(cx, length, cx.getIntrinsic(Intrinsics.ArrayPrototype));
     }
 
     /**
      * 9.4.2.2 ArrayCreate(length) Abstract Operation
      */
-    public static ExoticArray ArrayCreate(ExecutionContext cx, long length, Intrinsics proto) {
-        return ArrayCreate(cx, length, cx.getIntrinsic(proto));
-    }
-
-    /**
-     * 9.4.2.2 ArrayCreate(length) Abstract Operation
-     */
-    public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
+    public static ExoticArray ArrayCreate(ExecutionContext cx, ScriptObject proto) {
         assert proto != null;
         /* step 1 (not applicable) */
         /* steps 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(cx.getRealm());
         /* step 5 */
         array.setPrototype(proto);
-        /* steps 7-8 */
-        if (length >= 0) {
-            array.arrayInitialisationState = true;
-        } else {
-            // negative values represent 'undefined'
-            array.arrayInitialisationState = false;
-            length = 0;
-        }
-        /* step 9 */
+        /* step 7 (not applicable) */
+        /* step 8 */
+        array.initialisationState = false;
+        long length = 0;
+        /* step 9 (not applicable) */
+        /* step 10 */
+        array.ordinaryDefineOwnProperty("length",
+                new PropertyDescriptor(length, true, false, false));
+        /* step 11 */
+        return array;
+    }
+
+    /**
+     * 9.4.2.2 ArrayCreate(length) Abstract Operation
+     */
+    public static ExoticArray ArrayCreate(ExecutionContext cx, long length, ScriptObject proto) {
+        assert proto != null && length >= 0;
+        /* step 1 (not applicable) */
+        /* step 9 (moved) */
         if (length > 0xFFFF_FFFFL) {
             // enfore array index invariant
             throw throwRangeError(cx, Messages.Key.InvalidArrayLength);
         }
+        /* steps 2-4, 6 (implicit) */
+        ExoticArray array = new ExoticArray(cx.getRealm());
+        /* step 5 */
+        array.setPrototype(proto);
+        /* step 7 */
+        array.initialisationState = true;
+        /* step 8 (not applicable) */
+        /* step 9 (see above) */
         /* step 10 */
         array.ordinaryDefineOwnProperty("length",
                 new PropertyDescriptor(length, true, false, false));

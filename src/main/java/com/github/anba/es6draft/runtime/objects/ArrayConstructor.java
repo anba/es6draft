@@ -101,8 +101,8 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
         /* [22.1.1.2] steps 3-6 */
         if (thisValue instanceof ExoticArray) {
             ExoticArray array = (ExoticArray) thisValue;
-            if (!array.getArrayInitialisationState()) {
-                array.setArrayInitialisationState(true);
+            if (!array.getInitialisationState()) {
+                array.setInitialisationState(true);
                 return array;
             }
         }
@@ -283,7 +283,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
             ScriptObject proto = GetPrototypeFromConstructor(cx, thisValue,
                     Intrinsics.ArrayPrototype);
             /* steps 4-5 */
-            return ArrayCreate(cx, -1, proto);
+            return ArrayCreate(cx, proto);
         }
     }
 }
