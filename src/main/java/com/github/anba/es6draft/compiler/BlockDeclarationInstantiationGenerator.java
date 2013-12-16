@@ -8,14 +8,16 @@ package com.github.anba.es6draft.compiler;
 
 import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
+import com.github.anba.es6draft.ast.BlockStatement;
 import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.FunctionDeclaration;
 import com.github.anba.es6draft.ast.GeneratorDeclaration;
+import com.github.anba.es6draft.ast.SwitchStatement;
 
 /**
  * <h1>13 ECMAScript Language: Statements and Declarations</h1><br>
@@ -24,7 +26,9 @@ import com.github.anba.es6draft.ast.GeneratorDeclaration;
  * <li>13.1.11 Runtime Semantics: Block Declaration Instantiation
  * </ul>
  */
-class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
+final class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantiationGenerator {
+    private static final int INLINE_LIMIT = 1 << 5;
+
     BlockDeclarationInstantiationGenerator(CodeGenerator codegen) {
         super(codegen);
     }
@@ -32,7 +36,55 @@ class BlockDeclarationInstantiationGenerator extends DeclarationBindingInstantia
     /**
      * stack: [env] -> [env]
      */
-    void generate(Collection<Declaration> declarations, StatementVisitor mv) {
+    void generate(BlockStatement node, StatementVisitor mv) {
+        int declarations = node.getScope().lexicallyDeclaredNames().size();
+        if (declarations > INLINE_LIMIT) {
+            codegen.compile(node, mv, this);
+
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invoke(codegen.methodDesc(node));
+        } else {
+            generateInline(LexicalDeclarations(node), mv);
+        }
+    }
+
+    /**
+     * stack: [env] -> [env]
+     */
+    void generate(SwitchStatement node, StatementVisitor mv) {
+        int declarations = node.getScope().lexicallyDeclaredNames().size();
+        if (declarations > INLINE_LIMIT) {
+            codegen.compile(node, mv, this);
+
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invoke(codegen.methodDesc(node));
+        } else {
+            generateInline(LexicalDeclarations(node), mv);
+        }
+    }
+
+    /**
+     * stack: [env] -> [env]
+     */
+    void generateMethod(BlockStatement node, ExpressionVisitor mv) {
+        // TODO: split into multiple methods if there are still too many declarations
+        generateInline(LexicalDeclarations(node), mv);
+    }
+
+    /**
+     * stack: [env] -> [env]
+     */
+    void generateMethod(SwitchStatement node, ExpressionVisitor mv) {
+        // TODO: split into multiple methods if there are still too many declarations
+        generateInline(LexicalDeclarations(node), mv);
+    }
+
+    /**
+     * stack: [env] -> [env]
+     */
+    private void generateInline(List<Declaration> declarations, ExpressionVisitor mv) {
         /* steps 1-2 */
         List<Declaration> functionsToInitialise = new ArrayList<>();
 

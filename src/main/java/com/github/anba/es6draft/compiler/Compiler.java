@@ -12,10 +12,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Formatter;
+import java.util.List;
 import java.util.Locale;
 
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -29,11 +29,7 @@ import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.ast.Scope;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.ScriptScope;
-import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
-import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodAllocation;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
+import com.github.anba.es6draft.compiler.Code.ClassCode;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeAnalysis;
 import com.github.anba.es6draft.compiler.analyzer.CodeSizeException;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
@@ -41,19 +37,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 /**
  *
  */
-public class Compiler {
-    private static class Methods {
-        // class: CompiledFunction
-        static final MethodDesc CompiledFunction_Constructor = MethodDesc.create(
-                MethodType.Special, Types.CompiledFunction, "<init>",
-                Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$Function));
-
-        // class: CompiledScript
-        static final MethodDesc CompiledScript_Constructor = MethodDesc.create(MethodType.Special,
-                Types.CompiledScript, "<init>",
-                Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
-    }
-
+public final class Compiler {
     public enum Option {
         Debug, FullDebug, SourceMap
     }
@@ -64,92 +48,88 @@ public class Compiler {
         this.compilerOptions = EnumSet.copyOf(compilerOptions);
     }
 
-    public byte[] compile(Script script, String className) {
-        final int flags = ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS;
-        String superClassName = Types.CompiledScript.getInternalName();
-        String[] interfaces = null;
-
-        // set-up
-        ClassWriter cw = new ClassWriter(flags);
-        cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, className, null,
-                superClassName, interfaces);
-        cw.visitSource(script.getSourceFile(), sourceMap(script));
-
+    public CompiledScript compile(Script script, String className) {
         try (CodeSizeAnalysis analysis = new CodeSizeAnalysis()) {
             analysis.submit(script);
         } catch (CodeSizeException e) {
+            e.printStackTrace();
             throw new CompilationException(e.getMessage());
         }
 
-        try (CodeGenerator codegen = new CodeGenerator(cw, className, script.getOptions())) {
-            // generate code
-            codegen.compile(script);
+        // set-up
+        // prepend '#' to mark generated classes, cf. ErrorPrototype
+        String clazzName = "#" + className;
+        String superClassName = Types.CompiledScript.getInternalName();
+        Code code = new Code(clazzName, superClassName, script.getSourceFile(), sourceMap(script));
 
-            // add default constructor
-            defaultScriptConstructor(cw, className, codegen.methodName(script, ScriptName.RTI),
-                    codegen.methodDescriptor(script, ScriptName.RTI));
+        // generate code
+        try (CodeGenerator codegen = new CodeGenerator(code, script.getOptions())) {
+            codegen.compile(script);
         }
 
         // finalize
-        cw.visitEnd();
-
-        byte[] bytes = cw.toByteArray();
-        if (compilerOptions.contains(Option.Debug)) {
-            debug(bytes);
+        CodeLoader loader = new CodeLoader();
+        List<ClassCode> classes = code.getClasses();
+        for (ClassCode classCode : classes) {
+            byte[] bytes = classCode.toByteArray();
+            if (compilerOptions.contains(Option.Debug)) {
+                debug(bytes);
+            }
+            // System.out.printf("define class '%s'%n", classCode.className);
+            loader.defineClass(classCode.className, bytes);
         }
 
-        return bytes;
+        try {
+            Class<?> c = loader.loadClass(clazzName);
+            return (CompiledScript) c.newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public byte[] compile(FunctionDefinition function, String className) {
+    public CompiledFunction compile(FunctionDefinition function, String className) {
         return compile((FunctionNode) function, className);
     }
 
-    public byte[] compile(GeneratorDefinition generator, String className) {
+    public CompiledFunction compile(GeneratorDefinition generator, String className) {
         return compile((FunctionNode) generator, className);
     }
 
-    private byte[] compile(FunctionNode function, String className) {
-        final int flags = ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS;
-        String superClassName = Types.CompiledFunction.getInternalName();
-        String[] interfaces = null;
-
-        // set-up
-        ClassWriter cw = new ClassWriter(flags);
-        cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, className, null,
-                superClassName, interfaces);
-        cw.visitSource("<Function>", null);
-
+    private CompiledFunction compile(FunctionNode function, String className) {
         try (CodeSizeAnalysis analysis = new CodeSizeAnalysis()) {
             analysis.submit(function);
         } catch (CodeSizeException e) {
             throw new CompilationException(e.getMessage());
         }
 
-        try (CodeGenerator codegen = new CodeGenerator(cw, className, optionsFrom(function))) {
-            // generate code
-            if (function instanceof FunctionDefinition) {
-                codegen.compile((FunctionDefinition) function);
-            } else {
-                assert function instanceof GeneratorDefinition;
-                codegen.compile((GeneratorDefinition) function);
-            }
+        // set-up
+        // prepend '#' to mark generated classes, cf. ErrorPrototype
+        String clazzName = "#" + className;
+        String superClassName = Types.CompiledFunction.getInternalName();
+        Code code = new Code(clazzName, superClassName, "<Function>", null);
 
-            // add default constructor
-            defaultFunctionConstructor(cw, className,
-                    codegen.methodName(function, FunctionName.RTI),
-                    codegen.methodDescriptor(function, FunctionName.RTI));
+        // generate code
+        try (CodeGenerator codegen = new CodeGenerator(code, optionsFrom(function))) {
+            codegen.compileFunction(function);
         }
 
         // finalize
-        cw.visitEnd();
-
-        byte[] bytes = cw.toByteArray();
-        if (compilerOptions.contains(Option.Debug)) {
-            debug(bytes);
+        CodeLoader loader = new CodeLoader();
+        List<ClassCode> classes = code.getClasses();
+        for (ClassCode classCode : classes) {
+            byte[] bytes = classCode.toByteArray();
+            if (compilerOptions.contains(Option.Debug)) {
+                debug(bytes);
+            }
+            loader.defineClass(classCode.className, bytes);
         }
 
-        return bytes;
+        try {
+            Class<?> c = loader.loadClass(clazzName);
+            return (CompiledFunction) c.newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static EnumSet<CompatibilityOption> optionsFrom(FunctionNode function) {
@@ -158,6 +138,20 @@ public class Compiler {
             return ((ScriptScope) enclosingScope).getNode().getOptions();
         }
         return EnumSet.noneOf(CompatibilityOption.class);
+    }
+
+    private static final class CodeLoader extends ClassLoader {
+        public CodeLoader() {
+            this(ClassLoader.getSystemClassLoader());
+        }
+
+        public CodeLoader(ClassLoader parent) {
+            super(parent);
+        }
+
+        void defineClass(String className, byte[] bytes) {
+            defineClass(className, bytes, 0, bytes.length);
+        }
     }
 
     private void debug(byte[] b) {
@@ -174,7 +168,7 @@ public class Compiler {
         pw.flush();
     }
 
-    private static class SimpleTypeTextifier extends Textifier {
+    private static final class SimpleTypeTextifier extends Textifier {
         SimpleTypeTextifier() {
             super(Opcodes.ASM4);
         }
@@ -293,35 +287,4 @@ public class Compiler {
         }
     }
 
-    private static void defaultScriptConstructor(ClassWriter cw, String className,
-            String methodNameRTI, String methodDescriptorRTI) {
-        String methodName = "<init>";
-        Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE);
-
-        InstructionVisitor mv = new InstructionVisitor(cw.visitMethod(Opcodes.ACC_PUBLIC,
-                methodName, "()V", null, null), methodName, methodDescriptor,
-                MethodAllocation.Instance);
-        mv.begin();
-        mv.loadThis();
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI, methodDescriptorRTI);
-        mv.invoke(Methods.CompiledScript_Constructor);
-        mv.areturn();
-        mv.end();
-    }
-
-    private static void defaultFunctionConstructor(ClassWriter cw, String className,
-            String methodNameRTI, String methodDescriptorRTI) {
-        String methodName = "<init>";
-        Type methodDescriptor = Type.getMethodType(Type.VOID_TYPE);
-
-        InstructionVisitor mv = new InstructionVisitor(cw.visitMethod(Opcodes.ACC_PUBLIC,
-                methodName, "()V", null, null), methodName, methodDescriptor,
-                MethodAllocation.Instance);
-        mv.begin();
-        mv.loadThis();
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, className, methodNameRTI, methodDescriptorRTI);
-        mv.invoke(Methods.CompiledFunction_Constructor);
-        mv.areturn();
-        mv.end();
-    }
 }

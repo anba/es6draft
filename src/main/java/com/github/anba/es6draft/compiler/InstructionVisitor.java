@@ -20,6 +20,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.InstructionAdapter;
 
+import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 
 /**
@@ -206,7 +207,22 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     enum MethodType {
-        Interface, Virtual, Special, Static
+        Interface, Virtual, Special, Static;
+
+        final int toTag() {
+            switch (this) {
+            case Interface:
+                return Opcodes.H_INVOKEINTERFACE;
+            case Special:
+                return Opcodes.H_INVOKESPECIAL;
+            case Static:
+                return Opcodes.H_INVOKESTATIC;
+            case Virtual:
+                return Opcodes.H_INVOKEVIRTUAL;
+            default:
+                throw new IllegalStateException();
+            }
+        }
     }
 
     static final class MethodDesc {
@@ -224,6 +240,14 @@ class InstructionVisitor extends InstructionAdapter {
 
         static MethodDesc create(MethodType type, Type owner, String name, Type desc) {
             return new MethodDesc(type, owner.getInternalName(), name, desc.getDescriptor());
+        }
+
+        static MethodDesc create(MethodType type, String owner, String name, Type desc) {
+            return new MethodDesc(type, owner, name, desc.getDescriptor());
+        }
+
+        static MethodDesc create(MethodType type, String owner, String name, String desc) {
+            return new MethodDesc(type, owner, name, desc);
         }
     }
 
@@ -282,6 +306,14 @@ class InstructionVisitor extends InstructionAdapter {
 
     private Type getType(Class<?> c) {
         return typeCache.get(c);
+    }
+
+    protected InstructionVisitor(MethodCode method) {
+        super(Opcodes.ASM4, method.methodVisitor);
+        this.methodName = method.methodName;
+        this.methodDescriptor = Type.getMethodType(method.methodDescriptor);
+        this.methodAllocation = (method.access & Opcodes.ACC_STATIC) != 0 ? MethodAllocation.Class
+                : MethodAllocation.Instance;
     }
 
     protected InstructionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
@@ -643,6 +675,10 @@ class InstructionVisitor extends InstructionAdapter {
         default:
             throw new IllegalStateException();
         }
+    }
+
+    public void handle(MethodDesc method) {
+        hconst(new Handle(method.type.toTag(), method.owner, method.name, method.desc));
     }
 
     public void invokeStaticMH(String className, String name, String desc) {

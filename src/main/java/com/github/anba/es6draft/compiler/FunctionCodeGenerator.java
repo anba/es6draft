@@ -15,6 +15,7 @@ import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.ast.MethodDefinition;
+import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -73,16 +74,9 @@ final class FunctionCodeGenerator {
     private static final int THIS_VALUE = 2;
     private static final int ARGUMENTS = 3;
 
-    private static class FunctionCodeMethodGenerator extends InstructionVisitor {
-        FunctionCodeMethodGenerator(CodeGenerator codeGenerator, FunctionNode node) {
-            this(codeGenerator, codeGenerator.methodName(node, FunctionName.Call), codeGenerator
-                    .methodType(node, FunctionName.Call));
-        }
-
-        FunctionCodeMethodGenerator(CodeGenerator codeGenerator, String methodName,
-                Type methodDescriptor) {
-            super(codeGenerator.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, MethodAllocation.Class);
+    private static final class FunctionCodeMethodGenerator extends InstructionVisitor {
+        FunctionCodeMethodGenerator(MethodCode method) {
+            super(method);
         }
 
         @Override
@@ -95,16 +89,9 @@ final class FunctionCodeGenerator {
         }
     }
 
-    private static class GeneratorCodeMethodGenerator extends InstructionVisitor {
-        GeneratorCodeMethodGenerator(CodeGenerator codeGenerator, FunctionNode node) {
-            this(codeGenerator, codeGenerator.methodName(node, FunctionName.Call), codeGenerator
-                    .methodType(node, FunctionName.Call));
-        }
-
-        GeneratorCodeMethodGenerator(CodeGenerator codeGenerator, String methodName,
-                Type methodDescriptor) {
-            super(codeGenerator.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, MethodAllocation.Class);
+    private static final class GeneratorCodeMethodGenerator extends InstructionVisitor {
+        GeneratorCodeMethodGenerator(MethodCode method) {
+            super(method);
         }
 
         @Override
@@ -117,17 +104,9 @@ final class FunctionCodeGenerator {
         }
     }
 
-    private static class GeneratorComprehensionCodeMethodGenerator extends InstructionVisitor {
-        GeneratorComprehensionCodeMethodGenerator(CodeGenerator codeGenerator,
-                GeneratorComprehension node) {
-            this(codeGenerator, codeGenerator.methodName(node, FunctionName.Call), codeGenerator
-                    .methodType(node, FunctionName.Call));
-        }
-
-        GeneratorComprehensionCodeMethodGenerator(CodeGenerator codeGenerator, String methodName,
-                Type methodDescriptor) {
-            super(codeGenerator.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                    methodName, methodDescriptor, MethodAllocation.Class);
+    private static final class GeneratorComprehensionCodeMethodGenerator extends InstructionVisitor {
+        GeneratorComprehensionCodeMethodGenerator(MethodCode method) {
+            super(method);
         }
 
         @Override
@@ -147,43 +126,37 @@ final class FunctionCodeGenerator {
     }
 
     void generate(FunctionNode node) {
+        MethodCode method = codegen.newMethod(node, FunctionName.Call);
         if (isGenerator(node)) {
-            generateGenerator(node);
+            InstructionVisitor mv = new GeneratorCodeMethodGenerator(method);
+            mv.lineInfo(node.getBeginLine());
+            mv.begin();
+
+            generateGenerator(node, mv);
+
+            mv.end();
         } else {
-            generateFunction(node);
+            InstructionVisitor mv = new FunctionCodeMethodGenerator(method);
+            mv.lineInfo(node.getBeginLine());
+            mv.begin();
+
+            if (isLegacy(node)) {
+                generateLegacyFunction(node, mv);
+            } else {
+                generateFunction(node, mv);
+            }
+
+            mv.end();
         }
     }
 
     void generate(GeneratorComprehension node) {
-        InstructionVisitor mv = new GeneratorComprehensionCodeMethodGenerator(codegen, node);
+        MethodCode method = codegen.newMethod(node, FunctionName.Call);
+        InstructionVisitor mv = new GeneratorComprehensionCodeMethodGenerator(method);
         mv.lineInfo(node.getBeginLine());
         mv.begin();
 
         generateGeneratorComprehension(node, mv);
-
-        mv.end();
-    }
-
-    private void generateFunction(FunctionNode node) {
-        InstructionVisitor mv = new FunctionCodeMethodGenerator(codegen, node);
-        mv.lineInfo(node.getBeginLine());
-        mv.begin();
-
-        if (isLegacy(node)) {
-            generateLegacyFunction(node, mv);
-        } else {
-            generateFunction(node, mv);
-        }
-
-        mv.end();
-    }
-
-    private void generateGenerator(FunctionNode node) {
-        InstructionVisitor mv = new GeneratorCodeMethodGenerator(codegen, node);
-        mv.lineInfo(node.getBeginLine());
-        mv.begin();
-
-        generateGenerator(node, mv);
 
         mv.end();
     }
@@ -376,14 +349,10 @@ final class FunctionCodeGenerator {
     private void functionDeclarationInstantiation(FunctionNode node,
             Variable<ExecutionContext> calleeContext, Variable<? extends FunctionObject> function,
             Variable<Object[]> arguments, InstructionVisitor mv) {
-        String className = codegen.getClassName();
-        String methodName = codegen.methodName(node, FunctionName.Init);
-        String desc = codegen.methodDescriptor(node, FunctionName.Init);
-
         mv.load(calleeContext);
         mv.load(function);
         mv.load(arguments);
-        mv.invokestatic(className, methodName, desc);
+        mv.invoke(codegen.methodDesc(node, FunctionName.Init));
     }
 
     private void functionDeclarationInstantiation(GeneratorComprehension node,
@@ -402,12 +371,8 @@ final class FunctionCodeGenerator {
      */
     private void evaluateBody(FunctionNode node, Variable<ExecutionContext> calleeContext,
             InstructionVisitor mv) {
-        String className = codegen.getClassName();
-        String methodName = codegen.methodName(node, FunctionName.Code);
-        String desc = codegen.methodDescriptor(node, FunctionName.Code);
-
         mv.load(calleeContext);
-        mv.invokestatic(className, methodName, desc);
+        mv.invoke(codegen.methodDesc(node, FunctionName.Code));
     }
 
     /**

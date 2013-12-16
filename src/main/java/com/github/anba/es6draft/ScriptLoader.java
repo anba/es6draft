@@ -13,7 +13,6 @@ import java.util.EnumSet;
 import com.github.anba.es6draft.ast.FunctionDefinition;
 import com.github.anba.es6draft.ast.GeneratorDefinition;
 import com.github.anba.es6draft.compiler.CompilationException;
-import com.github.anba.es6draft.compiler.CompiledFunction;
 import com.github.anba.es6draft.compiler.CompiledScript;
 import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.interpreter.InterpretedScript;
@@ -91,11 +90,8 @@ public final class ScriptLoader {
     public static CompiledScript compile(String className,
             com.github.anba.es6draft.ast.Script parsedScript, EnumSet<Compiler.Option> options)
             throws CompilationException {
-        // prepend '#' to mark generated classes, cf. ErrorPrototype
-        String clazzName = "#" + className;
         Compiler compiler = new Compiler(options);
-        byte[] bytes = compiler.compile(parsedScript, clazzName);
-        return getScript(clazzName, bytes);
+        return compiler.compile(parsedScript, className);
     }
 
     /**
@@ -104,11 +100,8 @@ public final class ScriptLoader {
      */
     public static RuntimeInfo.Function compile(String className, FunctionDefinition function,
             EnumSet<Compiler.Option> options) throws CompilationException {
-        // prepend '#' to mark generated classes, cf. ErrorPrototype
-        String clazzName = "#" + className;
         Compiler compiler = new Compiler(options);
-        byte[] bytes = compiler.compile(function, clazzName);
-        return getFunction(clazzName, bytes);
+        return compiler.compile(function, className).getFunction();
     }
 
     /**
@@ -117,57 +110,7 @@ public final class ScriptLoader {
      */
     public static RuntimeInfo.Function compile(String className, GeneratorDefinition generator,
             EnumSet<Compiler.Option> options) throws CompilationException {
-        // prepend '#' to mark generated classes, cf. ErrorPrototype
-        String clazzName = "#" + className;
         Compiler compiler = new Compiler(options);
-        byte[] bytes = compiler.compile(generator, clazzName);
-        return getFunction(clazzName, bytes);
-    }
-
-    private static CompiledScript getScript(String className, byte[] bytes) {
-        try {
-            ClassLoader cl = new ByteClassLoader(className, bytes);
-            Class<?> c = cl.loadClass(className);
-            CompiledScript instance = (CompiledScript) c.newInstance();
-            return instance;
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static RuntimeInfo.Function getFunction(String className, byte[] bytes) {
-        try {
-            ClassLoader cl = new ByteClassLoader(className, bytes);
-            Class<?> c = cl.loadClass(className);
-            CompiledFunction instance = (CompiledFunction) c.newInstance();
-            return instance.getFunction();
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static class ByteClassLoader extends ClassLoader {
-        private final String className;
-        private byte[] bytes;
-
-        public ByteClassLoader(String className, byte[] bytes) {
-            this(ClassLoader.getSystemClassLoader(), className, bytes);
-        }
-
-        public ByteClassLoader(ClassLoader parent, String className, byte[] bytes) {
-            super(parent);
-            this.className = className;
-            this.bytes = bytes;
-        }
-
-        @Override
-        protected Class<?> findClass(String name) throws ClassNotFoundException {
-            if (className.equals(name)) {
-                byte[] bytes = this.bytes;
-                this.bytes = null;
-                return this.defineClass(name, bytes, 0, bytes.length);
-            }
-            return super.findClass(name);
-        }
+        return compiler.compile(generator, className).getFunction();
     }
 }

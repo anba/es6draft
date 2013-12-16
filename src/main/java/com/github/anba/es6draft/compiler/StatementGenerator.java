@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunc
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsConstantDeclaration;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -185,25 +184,34 @@ final class StatementGenerator extends
         }
 
         mv.enterScope(node);
-        Collection<Declaration> declarations = LexicalDeclarations(node);
-        if (!declarations.isEmpty()) {
+        /* steps 1-4 */
+        boolean hasDeclarations = !LexicalDeclarations(node).isEmpty();
+        if (hasDeclarations) {
             newDeclarativeEnvironment(mv);
-            new BlockDeclarationInstantiationGenerator(codegen).generate(declarations, mv);
+            new BlockDeclarationInstantiationGenerator(codegen).generate(node, mv);
             pushLexicalEnvironment(mv);
         }
 
+        /* step 5 */
         Completion result = Completion.Normal;
-        for (StatementListItem statement : node.getStatements()) {
-            if ((result = result.then(statement.accept(this, mv))).isAbrupt()) {
-                break;
+        {
+            // 13.1.10 Runtime Semantics: Evaluation
+            // StatementList : StatementList StatementListItem
+            /* steps 1-6 */
+            for (StatementListItem statement : node.getStatements()) {
+                if ((result = result.then(statement.accept(this, mv))).isAbrupt()) {
+                    break;
+                }
             }
         }
 
-        if (!declarations.isEmpty() && !result.isAbrupt()) {
+        /* step 6 */
+        if (hasDeclarations && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
         mv.exitScope();
 
+        /* steps 7-8 */
         return result;
     }
 
@@ -816,8 +824,7 @@ final class StatementGenerator extends
             mv.loadCompletionValue();
         }
 
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node),
-                codegen.methodDescriptor(node));
+        mv.invoke(codegen.methodDesc(node));
 
         if (mv.getCodeType() == StatementVisitor.CodeType.Function) {
             // TODO: only emit when `return` used in StatementListMethod

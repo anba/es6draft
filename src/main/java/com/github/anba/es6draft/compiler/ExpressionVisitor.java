@@ -12,12 +12,11 @@ import static java.util.Collections.emptySet;
 import java.util.Collections;
 import java.util.Set;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.Scope;
 import com.github.anba.es6draft.ast.ScopedNode;
+import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 
 /**
@@ -42,10 +41,8 @@ abstract class ExpressionVisitor extends InstructionVisitor {
     private boolean hasTailCalls = false;
     private Set<Expression> tailCallNodes = emptySet();
 
-    protected ExpressionVisitor(CodeGenerator codeGenerator, String methodName,
-            Type methodDescriptor, boolean strict, boolean globalCode) {
-        super(codeGenerator.publicStaticMethod(methodName, methodDescriptor.getInternalName()),
-                methodName, methodDescriptor, MethodAllocation.Class);
+    protected ExpressionVisitor(MethodCode method, boolean strict, boolean globalCode) {
+        super(method);
         this.strict = strict;
         this.globalCode = globalCode;
     }

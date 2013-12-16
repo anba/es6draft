@@ -9,7 +9,6 @@ package com.github.anba.es6draft.compiler;
 import static com.github.anba.es6draft.semantics.StaticSemantics.LexicalDeclarations;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,11 +16,9 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
-import com.github.anba.es6draft.ast.Declaration;
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.NumericLiteral;
-import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.StringLiteral;
 import com.github.anba.es6draft.ast.SwitchClause;
 import com.github.anba.es6draft.ast.SwitchStatement;
@@ -137,23 +134,12 @@ final class SwitchStatementGenerator extends
         throw new IllegalStateException(String.format("node-class: %s", node.getClass()));
     }
 
-    @Override
-    protected Completion visit(StatementListItem node, StatementVisitor mv) {
-        return codegen.statement(node, mv);
-    }
-
     /**
      * 13.11.7 Runtime Semantics: Evaluation
      */
     @Override
     public Completion visit(SwitchClause node, StatementVisitor mv) {
-        Completion result = Completion.Normal;
-        for (StatementListItem stmt : node.getStatements()) {
-            if ((result = result.then(stmt.accept(this, mv))).isAbrupt()) {
-                break;
-            }
-        }
-        return result;
+        return codegen.statements(node.getStatements(), mv);
     }
 
     /**
@@ -206,17 +192,17 @@ final class SwitchStatementGenerator extends
         }
 
         mv.enterScope(node);
-        Collection<Declaration> declarations = LexicalDeclarations(node);
-        if (!declarations.isEmpty()) {
+        boolean hasDeclarations = !LexicalDeclarations(node).isEmpty();
+        if (hasDeclarations) {
             newDeclarativeEnvironment(mv);
-            new BlockDeclarationInstantiationGenerator(codegen).generate(declarations, mv);
+            new BlockDeclarationInstantiationGenerator(codegen).generate(node, mv);
             pushLexicalEnvironment(mv);
         }
 
         BreakLabel lblBreak = new BreakLabel();
         Completion result = CaseBlockEvaluation(node, type, lblBreak, switchValue, mv);
 
-        if (!declarations.isEmpty() && !result.isAbrupt()) {
+        if (hasDeclarations && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
         mv.exitScope();

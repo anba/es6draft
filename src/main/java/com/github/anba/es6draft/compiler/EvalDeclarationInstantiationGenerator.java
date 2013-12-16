@@ -6,7 +6,10 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import static com.github.anba.es6draft.semantics.StaticSemantics.*;
+import static com.github.anba.es6draft.semantics.StaticSemantics.BoundNames;
+import static com.github.anba.es6draft.semantics.StaticSemantics.IsStrict;
+import static com.github.anba.es6draft.semantics.StaticSemantics.LexicallyScopedDeclarations;
+import static com.github.anba.es6draft.semantics.StaticSemantics.VarScopedDeclarations;
 
 import java.util.List;
 
@@ -19,6 +22,7 @@ import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
+import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -47,10 +51,9 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
     private static final int LEX_ENV = 2;
     private static final int DELETABLE_BINDINGS = 3;
 
-    private static class EvalDeclInitMethodGenerator extends ExpressionVisitor {
-        EvalDeclInitMethodGenerator(CodeGenerator codegen, Script node) {
-            super(codegen, codegen.methodName(node, ScriptName.EvalInit), codegen.methodType(node,
-                    ScriptName.EvalInit), IsStrict(node), false);
+    private static final class EvalDeclInitMethodGenerator extends ExpressionVisitor {
+        EvalDeclInitMethodGenerator(MethodCode method, Script node) {
+            super(method, IsStrict(node), false);
         }
 
         @Override
@@ -68,7 +71,8 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
     }
 
     void generate(Script evalScript) {
-        ExpressionVisitor mv = new EvalDeclInitMethodGenerator(codegen, evalScript);
+        MethodCode method = codegen.newMethod(evalScript, ScriptName.EvalInit);
+        ExpressionVisitor mv = new EvalDeclInitMethodGenerator(method, evalScript);
 
         mv.lineInfo(evalScript);
         mv.begin();

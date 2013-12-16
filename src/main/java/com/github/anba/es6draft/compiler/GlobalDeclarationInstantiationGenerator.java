@@ -21,6 +21,7 @@ import com.github.anba.es6draft.ast.GeneratorDeclaration;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.ast.StatementListItem;
 import com.github.anba.es6draft.ast.VariableStatement;
+import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -77,10 +78,9 @@ final class GlobalDeclarationInstantiationGenerator extends
     private static final int LEXICAL_ENV = 2;
     private static final int DELETABLE_BINDINGS = 3;
 
-    private static class GlobalDeclInitMethodGenerator extends ExpressionVisitor {
-        GlobalDeclInitMethodGenerator(CodeGenerator codegen, Script node) {
-            super(codegen, codegen.methodName(node, ScriptName.Init), codegen.methodType(node,
-                    ScriptName.Init), IsStrict(node), false);
+    private static final class GlobalDeclInitMethodGenerator extends ExpressionVisitor {
+        GlobalDeclInitMethodGenerator(MethodCode method, Script node) {
+            super(method, IsStrict(node), false);
         }
 
         @Override
@@ -98,7 +98,8 @@ final class GlobalDeclarationInstantiationGenerator extends
     }
 
     void generate(Script script) {
-        ExpressionVisitor mv = new GlobalDeclInitMethodGenerator(codegen, script);
+        MethodCode method = codegen.newMethod(script, ScriptName.Init);
+        ExpressionVisitor mv = new GlobalDeclInitMethodGenerator(method, script);
 
         mv.lineInfo(script);
         mv.begin();

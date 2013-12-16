@@ -17,6 +17,7 @@ import java.util.Set;
 import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
@@ -84,10 +85,9 @@ final class FunctionDeclarationInstantiationGenerator extends
     private static final int FUNCTION = 1;
     private static final int ARGUMENTS = 2;
 
-    private static class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
-        FunctionDeclInitMethodGenerator(CodeGenerator codegen, FunctionNode node) {
-            super(codegen, codegen.methodName(node, FunctionName.Init), codegen.methodType(node,
-                    FunctionName.Init), IsStrict(node), false);
+    private static final class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
+        FunctionDeclInitMethodGenerator(MethodCode method, FunctionNode node) {
+            super(method, IsStrict(node), false);
         }
 
         @Override
@@ -104,7 +104,8 @@ final class FunctionDeclarationInstantiationGenerator extends
     }
 
     void generate(FunctionNode function) {
-        ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(codegen, function);
+        MethodCode method = codegen.newMethod(function, FunctionName.Init);
+        ExpressionVisitor mv = new FunctionDeclInitMethodGenerator(method, function);
 
         mv.lineInfo(function);
         mv.begin();

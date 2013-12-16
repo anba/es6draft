@@ -960,9 +960,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         if (constructor != null) {
             codegen.compile(constructor);
             // Runtime Semantics: Evaluation -> MethodDefinition
-            mv.invokestatic(codegen.getClassName(),
-                    codegen.methodName(constructor, FunctionName.RTI),
-                    codegen.methodDescriptor(constructor, FunctionName.RTI));
+            mv.invoke(codegen.methodDesc(constructor, FunctionName.RTI));
         } else {
             // step 7
             if (def.getHeritage() != null) {

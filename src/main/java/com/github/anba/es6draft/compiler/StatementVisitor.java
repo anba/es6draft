@@ -19,6 +19,7 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.AbruptNode.Abrupt;
 import com.github.anba.es6draft.ast.*;
+import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.JumpLabel.BreakLabel;
 import com.github.anba.es6draft.compiler.JumpLabel.ContinueLabel;
@@ -130,10 +131,9 @@ abstract class StatementVisitor extends ExpressionVisitor {
     // tail-call support
     private int wrapped = 0;
 
-    protected StatementVisitor(CodeGenerator codeGenerator, String methodName,
-            Type methodDescriptor, boolean strict, TopLevelNode topLevelNode, CodeType codeType) {
-        super(codeGenerator, methodName, methodDescriptor, strict,
-                codeType == CodeType.GlobalScript);
+    protected StatementVisitor(MethodCode method, boolean strict, TopLevelNode topLevelNode,
+            CodeType codeType) {
+        super(method, strict, codeType == CodeType.GlobalScript);
         this.topLevelNode = topLevelNode;
         this.codeType = codeType;
         this.isScriptCode = codeType != CodeType.Function;

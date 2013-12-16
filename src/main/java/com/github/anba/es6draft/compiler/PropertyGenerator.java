@@ -121,8 +121,7 @@ final class PropertyGenerator extends
         mv.swap();
 
         // stack: [<object>] -> []
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node),
-                codegen.methodDescriptor(node));
+        mv.invoke(codegen.methodDesc(node));
 
         return null;
     }
@@ -143,8 +142,7 @@ final class PropertyGenerator extends
             assert node.getPropertyName() instanceof ComputedPropertyName;
             node.getPropertyName().accept(this, mv);
 
-            mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                    codegen.methodDescriptor(node, FunctionName.RTI));
+            mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
             mv.loadExecutionContext();
 
             switch (node.getType()) {
@@ -166,8 +164,7 @@ final class PropertyGenerator extends
             }
         } else {
             mv.aconst(propName);
-            mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                    codegen.methodDescriptor(node, FunctionName.RTI));
+            mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
             mv.loadExecutionContext();
 
             switch (node.getType()) {

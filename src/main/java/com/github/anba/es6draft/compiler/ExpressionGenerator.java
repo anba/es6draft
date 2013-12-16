@@ -888,8 +888,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         mv.pop();
 
         // stack: [array, cx, array, nextIndex] -> [array, nextIndex']
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node),
-                codegen.methodDescriptor(node));
+        mv.invoke(codegen.methodDesc(node));
 
         return ValType.Any;
     }
@@ -902,8 +901,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> ArrowFunction
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                codegen.methodDescriptor(node, FunctionName.RTI));
+        mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateArrowFunction);
 
@@ -1771,8 +1769,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         codegen.compile(node, mv);
 
         mv.loadExecutionContext();
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node),
-                codegen.methodDescriptor(node));
+        mv.invoke(codegen.methodDesc(node));
 
         return ValType.Any;
     }
@@ -1785,8 +1782,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> FunctionExpression
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                codegen.methodDescriptor(node, FunctionName.RTI));
+        mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateFunctionExpression);
 
@@ -1800,8 +1796,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     public ValType visit(GeneratorComprehension node, ExpressionVisitor mv) {
         codegen.compile(node, mv);
 
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                codegen.methodDescriptor(node, FunctionName.RTI));
+        mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         if (!(node.getComprehension() instanceof LegacyComprehension)) {
             mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorComprehension);
@@ -1820,8 +1815,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> FunctionExpression
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                codegen.methodDescriptor(node, FunctionName.RTI));
+        mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateGeneratorExpression);
 
@@ -1836,8 +1830,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         codegen.compile(node);
 
         // Runtime Semantics: Evaluation -> FunctionExpression
-        mv.invokestatic(codegen.getClassName(), codegen.methodName(node, FunctionName.RTI),
-                codegen.methodDescriptor(node, FunctionName.RTI));
+        mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();
         mv.invoke(Methods.ScriptRuntime_EvaluateLegacyGeneratorExpression);
 
