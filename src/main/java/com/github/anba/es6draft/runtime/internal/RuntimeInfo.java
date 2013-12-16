@@ -12,7 +12,7 @@ import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
- * Classes for bootstrapping of functions and script code
+ * Classes for bootstrapping of function and script code
  * 
  */
 public final class RuntimeInfo {

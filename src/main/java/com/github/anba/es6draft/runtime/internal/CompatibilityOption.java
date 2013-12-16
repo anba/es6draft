@@ -110,10 +110,14 @@ public enum CompatibilityOption {
      */
     LegacyGenerator,
 
-    /** Moz-Extension: legacy comprehension forms */
+    /**
+     * Moz-Extension: legacy comprehension forms
+     */
     LegacyComprehension,
 
-    /** Moz-Extension: Reflect.parse() function */
+    /**
+     * Moz-Extension: Reflect.parse() function
+     */
     ReflectParse;
 
     /**

@@ -31,7 +31,7 @@ public final class Bootstrap {
     private Bootstrap() {
     }
 
-    private static class Types {
+    private static final class Types {
         static final org.objectweb.asm.Type Object = org.objectweb.asm.Type.getType(Object.class);
         static final org.objectweb.asm.Type Object_ = org.objectweb.asm.Type
                 .getType(Object[].class);
@@ -41,7 +41,7 @@ public final class Bootstrap {
                 .getType(Callable.class);
     }
 
-    private static class CallNames {
+    private static final class CallNames {
         static final String CALL = "expression::call";
         static final String ADD = "expression::add";
         static final String EQ = "expression::equals";
