@@ -85,6 +85,11 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     }
 
     @Override
+    public boolean isGenerator() {
+        return true;
+    }
+
+    @Override
     public boolean isConstDeclaration() {
         return false;
     }

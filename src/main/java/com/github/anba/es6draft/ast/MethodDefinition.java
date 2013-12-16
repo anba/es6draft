@@ -105,6 +105,11 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
         return bodySource;
     }
 
+    @Override
+    public boolean isGenerator() {
+        return getType() == MethodType.Generator;
+    }
+
     public boolean hasSuperReference() {
         return superReference;
     }

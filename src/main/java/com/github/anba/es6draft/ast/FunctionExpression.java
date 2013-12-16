@@ -100,6 +100,11 @@ public class FunctionExpression extends Expression implements FunctionDefinition
     }
 
     @Override
+    public boolean isGenerator() {
+        return false;
+    }
+
+    @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
     }

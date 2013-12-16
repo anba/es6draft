@@ -72,7 +72,7 @@ public class ArrowFunction extends Expression implements FunctionNode {
 
     @Override
     public void setStatements(List<StatementListItem> statements) {
-        assert expression != null;
+        assert expression == null;
         this.statements = statements;
     }
 
@@ -94,6 +94,11 @@ public class ArrowFunction extends Expression implements FunctionNode {
     @Override
     public String getBodySource() {
         return bodySource;
+    }
+
+    @Override
+    public boolean isGenerator() {
+        return false;
     }
 
     @Override

@@ -100,6 +100,11 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     }
 
     @Override
+    public boolean isGenerator() {
+        return true;
+    }
+
+    @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
     }

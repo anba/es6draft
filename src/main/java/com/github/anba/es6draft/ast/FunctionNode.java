@@ -35,4 +35,6 @@ public interface FunctionNode extends TopLevelNode, ScopedNode {
 
     @Override
     FunctionScope getScope();
+
+    boolean isGenerator();
 }

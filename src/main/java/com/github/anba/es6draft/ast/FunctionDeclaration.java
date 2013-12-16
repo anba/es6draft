@@ -85,6 +85,11 @@ public class FunctionDeclaration extends Declaration implements FunctionDefiniti
     }
 
     @Override
+    public boolean isGenerator() {
+        return false;
+    }
+
+    @Override
     public boolean isConstDeclaration() {
         return false;
     }
