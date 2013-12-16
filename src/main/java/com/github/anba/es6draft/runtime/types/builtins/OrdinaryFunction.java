@@ -332,8 +332,6 @@ public class OrdinaryFunction extends FunctionObject {
         f.setPrototype(functionPrototype);
         // inlined FunctionInitialise()
         DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(0, false, false, true));
-        DefinePropertyOrThrow(cx, f, "name", new PropertyDescriptor("ThrowTypeError", false, false,
-                false));
         // inlined AddRestrictedFunctionProperties()
         DefinePropertyOrThrow(cx, f, "caller", new PropertyDescriptor(f, f, false, false));
         DefinePropertyOrThrow(cx, f, "arguments", new PropertyDescriptor(f, f, false, false));
