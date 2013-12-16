@@ -95,6 +95,7 @@ public class CodeSizeAnalysis implements AutoCloseable {
         @Override
         public int reportSize(Node node, int size) {
             if (size > MAX_SIZE_ALLOWED) {
+                // System.out.printf("reportSize(%s, %d)%n", node, size);
                 return node.accept(this, size);
             }
             return size;

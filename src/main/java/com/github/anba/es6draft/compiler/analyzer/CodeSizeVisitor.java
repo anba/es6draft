@@ -179,6 +179,11 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(ArrowFunction node, CodeSizeHandler value) {
+        if (node.getExpression() != null) {
+            submit(node, singletonList(node.getExpression()), value);
+        } else {
+            submit(node, node.getStatements(), value);
+        }
         return 10;
     }
 
@@ -249,7 +254,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(CallExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getArguments(), node.getBase(), 25, 5, value);
+        return analyze(node, node.getArguments(), node.getBase(), 30, 5, value);
     }
 
     @Override
@@ -493,7 +498,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(LexicalBinding node, CodeSizeHandler value) {
-        return analyze(node, node.getInitialiser(), 5, value);
+        return analyze(node, node.getInitialiser(), 20, value);
     }
 
     @Override
@@ -648,7 +653,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(TemplateCallExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getBase(), node.getTemplate(), 25, value);
+        return analyze(node, node.getBase(), node.getTemplate(), 30, value);
     }
 
     @Override
@@ -658,7 +663,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(TemplateLiteral node, CodeSizeHandler value) {
-        return analyze(node, node.getElements(), 20, 10, value);
+        return analyze(node, node.getElements(), 25, 10, value);
     }
 
     @Override
@@ -674,7 +679,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     @Override
     public Integer visit(TryStatement node, CodeSizeHandler value) {
         return analyze(node, node.getTryBlock(), node.getCatchNode(), node.getFinallyBlock(),
-                node.getGuardedCatchNodes(), 35, 15, value);
+                node.getGuardedCatchNodes(), 40, 20, value);
     }
 
     @Override
@@ -684,7 +689,7 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(VariableDeclaration node, CodeSizeHandler value) {
-        return analyze(node, node.getInitialiser(), 5, value);
+        return analyze(node, node.getInitialiser(), 15, value);
     }
 
     @Override

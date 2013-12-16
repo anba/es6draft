@@ -100,7 +100,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
 
         if (accSize > MAX_STATEMENT_SIZE) {
-            // if statement size still too large, try to export more statements, possibly with
+            // if statement size still too large, try to export more statements, possibly by
             // compacting sibling elements
             for (int i = 0, len = elements.size(); i < len; i++) {
                 StatementElement element = elements.get(i);
@@ -495,7 +495,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
 
         @Override
         public Boolean visit(TryStatement node, ArrayDeque<Node> stack) {
-            // don't export try/catch/finally blocks individually
+            // don't export individual try/catch/finally blocks
             neverExport(node.getTryBlock());
             neverExport(node.getGuardedCatchNodes());
             if (node.getCatchNode() != null) {

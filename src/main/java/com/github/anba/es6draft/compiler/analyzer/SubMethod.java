@@ -24,6 +24,8 @@ abstract class SubMethod<NODE extends Node> {
     protected static final int MAX_EXPR_SIZE = 1024;
 
     protected static final int STMT_METHOD_SIZE = 15;
+    protected static final int SPREAD_METHOD_SIZE = 10;
+    protected static final int PROPDEF_METHOD_SIZE = 10;
     protected static final int EXPR_METHOD_SIZE = 5;
 
     protected SubMethod() {
@@ -102,39 +104,51 @@ abstract class SubMethod<NODE extends Node> {
     }
 
     protected static abstract class Conflater<Source, Target> {
-        protected abstract int getSize(Source source);
+        protected abstract int getSourceSize(Source source);
+
+        protected abstract int getTargetSize();
 
         protected abstract Target newTarget(List<Target> list);
 
-        private void conflate(List<Target> newElements, int start, int end) {
+        private int conflate(List<Target> newElements, int start, int end) {
             List<Target> view = newElements.subList(start, end);
             Target chunk = newTarget(new ArrayList<>(view));
             view.clear();
             newElements.add(start, chunk);
+            return getTargetSize();
         }
 
-        final void conflate(List<Source> sourceElements, List<Target> targetElements, int maxSize) {
-            int chunkSize = 0, end = sourceElements.size();
+        final boolean conflate(List<Source> sourceElements, List<Target> targetElements, int maxSize) {
+            boolean conflated = false;
+            int chunkSize = 0, newSize = 0, end = sourceElements.size();
             for (int i = sourceElements.size() - 1; i >= 0; --i) {
                 Source source = sourceElements.get(i);
-                int size = getSize(source);
+                int size = getSourceSize(source);
                 if (chunkSize + size < maxSize) {
                     chunkSize += size;
                 } else {
                     // insert new chunk
                     int start = i + 1;
                     if (start < end) {
-                        conflate(targetElements, start, end);
+                        newSize += conflate(targetElements, start, end);
+                        conflated |= true;
                     }
-
                     chunkSize = size;
                     end = start;
                 }
             }
 
             if (chunkSize > maxSize) {
-                conflate(targetElements, 0, end);
+                newSize += conflate(targetElements, 0, end);
+                conflated |= true;
+            } else {
+                newSize += chunkSize;
             }
+            if (newSize > maxSize) {
+                // System.out.printf("newSize = %d, maxSize = %d%n", newSize, maxSize);
+                return conflated;
+            }
+            return false;
         }
     }
 

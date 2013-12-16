@@ -41,8 +41,13 @@ abstract class TopLevelSubMethod<NODE extends TopLevelNode> extends SubMethod<NO
         CodeSizeHandler handler = new EmptyHandler();
 
         @Override
-        protected int getSize(StatementListItem source) {
+        protected int getSourceSize(StatementListItem source) {
             return source.accept(visitor, handler);
+        }
+
+        @Override
+        protected int getTargetSize() {
+            return STMT_METHOD_SIZE;
         }
 
         @Override
@@ -54,8 +59,13 @@ abstract class TopLevelSubMethod<NODE extends TopLevelNode> extends SubMethod<NO
     private List<StatementListItem> visitTopLevel(List<StatementListItem> statements) {
         // don't need to consider break/continue statements at top-level, simply
         // subdivide statement list into smaller parts
-        List<StatementListItem> newStatements = new ArrayList<>(statements);
-        new StatementConflater().conflate(newStatements, newStatements, MAX_STATEMENT_SIZE);
-        return newStatements;
+        StatementConflater conflater = new StatementConflater();
+        boolean needsRerun;
+        do {
+            List<StatementListItem> newStatements = new ArrayList<>(statements);
+            needsRerun = conflater.conflate(newStatements, newStatements, MAX_STATEMENT_SIZE);
+            statements = newStatements;
+        } while (needsRerun);
+        return statements;
     }
 }

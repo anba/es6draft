@@ -53,7 +53,12 @@ abstract class ListSubMethod<NODE extends Node> extends SubMethod<NODE> {
 
         if (accSize > maxAccSize) {
             // compact multiple elements with inner expressions
-            conflater.conflate(elements, newNodes, maxConflateSize);
+            boolean needsRerun = conflater.conflate(elements, newNodes, maxConflateSize);
+            while (needsRerun) {
+                newNodes = new ArrayList<>(newNodes);
+                elements = from(newNodes, mapper);
+                needsRerun = conflater.conflate(elements, newNodes, maxConflateSize);
+            }
         }
 
         return newNodes;

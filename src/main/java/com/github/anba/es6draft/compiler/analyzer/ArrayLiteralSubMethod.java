@@ -47,8 +47,13 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
 
     private static class ArrayConflater extends Conflater<ArrayElement, Expression> {
         @Override
-        protected int getSize(ArrayElement source) {
+        protected int getSourceSize(ArrayElement source) {
             return source.size;
+        }
+
+        @Override
+        protected int getTargetSize() {
+            return SPREAD_METHOD_SIZE;
         }
 
         @Override

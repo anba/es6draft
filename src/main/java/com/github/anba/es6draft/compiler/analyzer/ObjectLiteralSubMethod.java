@@ -51,8 +51,13 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
 
     private static class ObjectConflater extends Conflater<ObjectElement, PropertyDefinition> {
         @Override
-        protected int getSize(ObjectElement source) {
+        protected int getSourceSize(ObjectElement source) {
             return source.size;
+        }
+
+        @Override
+        protected int getTargetSize() {
+            return PROPDEF_METHOD_SIZE;
         }
 
         @Override

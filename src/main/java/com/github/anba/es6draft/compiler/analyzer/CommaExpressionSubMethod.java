@@ -42,8 +42,13 @@ final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
 
     private static class ExpressionConflater extends Conflater<ExpressionElement, Expression> {
         @Override
-        protected int getSize(ExpressionElement source) {
+        protected int getSourceSize(ExpressionElement source) {
             return source.size;
+        }
+
+        @Override
+        protected int getTargetSize() {
+            return EXPR_METHOD_SIZE;
         }
 
         @Override
