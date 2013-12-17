@@ -101,16 +101,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         static final MethodDesc Reference_getBase = MethodDesc.create(MethodType.Virtual,
                 Types.Reference, "getBase", Type.getMethodType(Types.Object));
 
-        static final MethodDesc Reference_GetThisValue = MethodDesc.create(MethodType.Virtual,
-                Types.Reference, "GetThisValue",
+        static final MethodDesc Reference_getThisValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "getThisValue",
                 Type.getMethodType(Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Virtual,
-                Types.Reference, "GetValue",
+        static final MethodDesc Reference_getValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "getValue",
                 Type.getMethodType(Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
-                Types.Reference, "PutValue",
+        static final MethodDesc Reference_putValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "putValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: RegExpConstructor
@@ -314,13 +314,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     private void GetValue(Expression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
-        mv.invoke(Methods.Reference_GetValue);
+        mv.invoke(Methods.Reference_getValue);
     }
 
     private void PutValue(Expression node, ValType type, ExpressionVisitor mv) {
         assert type == ValType.Reference : "type is not reference: " + type;
         mv.loadExecutionContext();
-        mv.invoke(Methods.Reference_PutValue);
+        mv.invoke(Methods.Reference_putValue);
     }
 
     /**
@@ -424,7 +424,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // stack: [args, ref, func(Callable)] -> [args, thisValue, func(Callable)]
         mv.swap();
         mv.loadExecutionContext();
-        mv.invoke(Methods.Reference_GetThisValue);
+        mv.invoke(Methods.Reference_getThisValue);
         mv.swap();
 
         /* steps 9-13 */

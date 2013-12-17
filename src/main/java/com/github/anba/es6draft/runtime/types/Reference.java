@@ -65,17 +65,17 @@ public abstract class Reference<BASE, NAME> {
     /**
      * [6.2.3.1] GetValue (V)
      */
-    public abstract Object GetValue(ExecutionContext cx);
+    public abstract Object getValue(ExecutionContext cx);
 
     /**
      * [6.2.3.1] PutValue (V, W)
      */
-    public abstract void PutValue(Object w, ExecutionContext cx);
+    public abstract void putValue(Object w, ExecutionContext cx);
 
     /**
      * [6.2.3.3] GetThisValue (V)
      */
-    public abstract Object GetThisValue(ExecutionContext cx);
+    public abstract Object getThisValue(ExecutionContext cx);
 
     /**
      * [6.2.3.1] GetValue (V)
@@ -83,7 +83,7 @@ public abstract class Reference<BASE, NAME> {
     public static Object GetValue(Object v, ExecutionContext cx) {
         if (!(v instanceof Reference))
             return v;
-        return ((Reference<?, ?>) v).GetValue(cx);
+        return ((Reference<?, ?>) v).getValue(cx);
     }
 
     /**
@@ -93,7 +93,7 @@ public abstract class Reference<BASE, NAME> {
         if (!(v instanceof Reference)) {
             throw throwReferenceError(cx, Messages.Key.InvalidReference);
         }
-        ((Reference<?, ?>) v).PutValue(w, cx);
+        ((Reference<?, ?>) v).putValue(w, cx);
     }
 
     /**
@@ -102,7 +102,7 @@ public abstract class Reference<BASE, NAME> {
     public static Object GetThisValue(ExecutionContext cx, Object v) {
         if (!(v instanceof Reference))
             return v;
-        return ((Reference<?, ?>) v).GetThisValue(cx);
+        return ((Reference<?, ?>) v).getThisValue(cx);
     }
 
     public static final class IdentifierReference extends Reference<EnvironmentRecord, String> {
@@ -153,7 +153,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public Object GetValue(ExecutionContext cx) {
+        public Object getValue(ExecutionContext cx) {
             if (isUnresolvableReference()) {
                 throw throwReferenceError(cx, Messages.Key.UnresolvableReference,
                         getReferencedName());
@@ -162,7 +162,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public void PutValue(Object w, ExecutionContext cx) {
+        public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
             if (isUnresolvableReference()) {
@@ -178,7 +178,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public EnvironmentRecord GetThisValue(ExecutionContext cx) {
+        public EnvironmentRecord getThisValue(ExecutionContext cx) {
             if (isUnresolvableReference()) {
                 throw throwReferenceError(cx, Messages.Key.UnresolvableReference,
                         getReferencedName());
@@ -231,7 +231,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public Object GetThisValue(ExecutionContext cx) {
+        public Object getThisValue(ExecutionContext cx) {
             return getBase();
         }
 
@@ -266,21 +266,21 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public Object GetValue(ExecutionContext cx) {
+        public Object getValue(ExecutionContext cx) {
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
                 return GetValuePrimitive(cx);
             }
-            return ((ScriptObject) getBase()).get(cx, getReferencedName(), GetThisValue(cx));
+            return ((ScriptObject) getBase()).get(cx, getReferencedName(), getThisValue(cx));
         }
 
         @Override
-        public void PutValue(Object w, ExecutionContext cx) {
+        public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
             ScriptObject base = (hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase());
-            boolean succeeded = base.set(cx, getReferencedName(), w, GetThisValue(cx));
+            boolean succeeded = base.set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
                 throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
             }
@@ -319,21 +319,21 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public Object GetValue(ExecutionContext cx) {
+        public Object getValue(ExecutionContext cx) {
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
                 return GetValuePrimitive(cx);
             }
-            return ((ScriptObject) getBase()).get(cx, getReferencedName(), GetThisValue(cx));
+            return ((ScriptObject) getBase()).get(cx, getReferencedName(), getThisValue(cx));
         }
 
         @Override
-        public void PutValue(Object w, ExecutionContext cx) {
+        public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
             ScriptObject base = (hasPrimitiveBase() ? ToObject(cx, getBase())
                     : (ScriptObject) getBase());
-            boolean succeeded = base.set(cx, getReferencedName(), w, GetThisValue(cx));
+            boolean succeeded = base.set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
                 throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
@@ -387,7 +387,7 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public Object GetThisValue(ExecutionContext cx) {
+        public Object getThisValue(ExecutionContext cx) {
             return thisValue;
         }
     }
@@ -407,15 +407,15 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public Object GetValue(ExecutionContext cx) {
-            return getBase().get(cx, getReferencedName(), GetThisValue(cx));
+        public Object getValue(ExecutionContext cx) {
+            return getBase().get(cx, getReferencedName(), getThisValue(cx));
         }
 
         @Override
-        public void PutValue(Object w, ExecutionContext cx) {
+        public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            boolean succeeded = getBase().set(cx, getReferencedName(), w, GetThisValue(cx));
+            boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
                 throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
@@ -438,15 +438,15 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public Object GetValue(ExecutionContext cx) {
-            return getBase().get(cx, getReferencedName(), GetThisValue(cx));
+        public Object getValue(ExecutionContext cx) {
+            return getBase().get(cx, getReferencedName(), getThisValue(cx));
         }
 
         @Override
-        public void PutValue(Object w, ExecutionContext cx) {
+        public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
-            boolean succeeded = getBase().set(cx, getReferencedName(), w, GetThisValue(cx));
+            boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
                 throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());

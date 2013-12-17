@@ -39,8 +39,8 @@ final class DestructuringAssignmentGenerator {
                         Types.Object, Types.ExecutionContext, Types.ScriptObject, Types.String));
 
         // class: Reference
-        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
-                Types.Reference, "PutValue",
+        static final MethodDesc Reference_putValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "putValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
@@ -84,7 +84,7 @@ final class DestructuringAssignmentGenerator {
         assert type == ValType.Reference : "lhs is not reference: " + type;
 
         mv.loadExecutionContext();
-        mv.invoke(Methods.Reference_PutValue);
+        mv.invoke(Methods.Reference_putValue);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

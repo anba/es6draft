@@ -57,8 +57,8 @@ final class CodeGenerator implements AutoCloseable {
                 Type.getMethodType(Type.VOID_TYPE, Types.RuntimeInfo$ScriptBody));
 
         // class: Reference
-        static final MethodDesc Reference_GetValue = MethodDesc.create(MethodType.Virtual,
-                Types.Reference, "GetValue",
+        static final MethodDesc Reference_getValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "getValue",
                 Type.getMethodType(Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
@@ -854,7 +854,7 @@ final class CodeGenerator implements AutoCloseable {
         ValType type = nodeValue.accept(exprgen, mv);
         if (type == ValType.Reference) {
             mv.loadExecutionContext();
-            mv.invoke(Methods.Reference_GetValue);
+            mv.invoke(Methods.Reference_getValue);
         }
         return (type != ValType.Reference ? type : ValType.Any);
     }

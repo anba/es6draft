@@ -315,7 +315,7 @@ public final class ScriptRuntime {
         /* steps 8-10 */
         Reference<Object, String> ref = new Reference.PropertyNameReference(baseValue,
                 propertyNameString, strict);
-        return ref.GetValue(cx);
+        return ref.getValue(cx);
     }
 
     /**
@@ -361,11 +361,11 @@ public final class ScriptRuntime {
         if (propertyKey instanceof String) {
             Reference<Object, String> ref = new Reference.PropertyNameReference(baseValue,
                     (String) propertyKey, strict);
-            return ref.GetValue(cx);
+            return ref.getValue(cx);
         }
         Reference<Object, Symbol> ref = new Reference.PropertySymbolReference(baseValue,
                 (Symbol) propertyKey, strict);
-        return ref.GetValue(cx);
+        return ref.getValue(cx);
     }
 
     /**
@@ -640,7 +640,7 @@ public final class ScriptRuntime {
             if (ref.isUnresolvableReference()) {
                 return "undefined";
             }
-            val = ref.GetValue(cx);
+            val = ref.getValue(cx);
         }
         switch (Type.of(val)) {
         case Undefined:
@@ -1549,7 +1549,7 @@ public final class ScriptRuntime {
         envRec.initialiseBinding("args", UNDEFINED);
         envRec.createImmutableBinding("arguments");
 
-        cx.resolveBinding("args", true).PutValue(createRestArray(asList(args).iterator(), cx), cx);
+        cx.resolveBinding("args", true).putValue(createRestArray(asList(args).iterator(), cx), cx);
 
         envRec.initialiseBinding("arguments", CreateStrictArgumentsObject(cx, args));
     }
@@ -1558,7 +1558,7 @@ public final class ScriptRuntime {
         // super()
         Reference<ScriptObject, ?> ref = MakeSuperReference(cx, (Object) null, true);
         // EvaluateCall: super(...args)
-        Object func = ref.GetValue(cx);
+        Object func = ref.getValue(cx);
         Object[] argList = SpreadArray(cx.resolveBindingValue("args", true), cx);
         Callable f = CheckCallable(func, cx);
         Object thisValue = GetCallThisValue(ref, cx);

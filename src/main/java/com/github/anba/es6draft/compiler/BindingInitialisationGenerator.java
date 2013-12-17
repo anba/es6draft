@@ -55,8 +55,8 @@ final class BindingInitialisationGenerator {
                 Type.getMethodType(Types.EnvironmentRecord));
 
         // class: Reference
-        static final MethodDesc Reference_PutValue = MethodDesc.create(MethodType.Virtual,
-                Types.Reference, "PutValue",
+        static final MethodDesc Reference_putValue = MethodDesc.create(MethodType.Virtual,
+                Types.Reference, "putValue",
                 Type.getMethodType(Type.VOID_TYPE, Types.Object, Types.ExecutionContext));
 
         // class: ScriptRuntime
@@ -293,7 +293,7 @@ final class BindingInitialisationGenerator {
                 mv.swap();
                 // stack: [ref, value] -> []
                 mv.loadExecutionContext();
-                mv.invoke(Methods.Reference_PutValue);
+                mv.invoke(Methods.Reference_putValue);
             }
 
             return null;

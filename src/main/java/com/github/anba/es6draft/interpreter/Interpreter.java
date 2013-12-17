@@ -340,7 +340,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         if (initialiser != null) {
             Object val = initialiser.accept(this, cx);
             val = GetValue(val, cx);
-            cx.resolveBinding(binding.getName(), strict).PutValue(val, cx);
+            cx.resolveBinding(binding.getName(), strict).putValue(val, cx);
         }
         return null;
     }
@@ -629,7 +629,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         if (ref instanceof Reference) {
             Reference<?, ?> rref = (Reference<?, ?>) ref;
             if (rref.isPropertyReference()) {
-                thisValue = rref.GetThisValue(cx);
+                thisValue = rref.getThisValue(cx);
             } else {
                 assert rref instanceof Reference.IdentifierReference;
                 Reference<EnvironmentRecord, String> idref = (Reference.IdentifierReference) rref;
