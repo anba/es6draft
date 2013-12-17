@@ -528,13 +528,6 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     @Override
-    public Object visit(ComputedPropertyName node, ExecutionContext cx) {
-        Object exprValue = node.getExpression().accept(this, cx);
-        Object propName = GetValue(exprValue, cx);
-        return ToPropertyKey(cx, propName);
-    }
-
-    @Override
     public Object visit(ConditionalExpression node, ExecutionContext cx) {
         Object test = node.getTest().accept(this, cx);
         test = GetValue(test, cx);
@@ -582,24 +575,15 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
             Expression propertyValue = propValDef.getPropertyValue();
 
             String propName = PropName(propertyName);
-            if (propName == null) {
-                assert propertyName instanceof ComputedPropertyName;
-                Object pk = propertyName.accept(this, cx);
+            assert propName != null && !(propertyName instanceof ComputedPropertyName);
+            Object value = propertyValue.accept(this, cx);
+            value = GetValue(value, cx);
 
-                Object value = propertyValue.accept(this, cx);
-                value = GetValue(value, cx);
-
-                ScriptRuntime.defineProperty(obj, pk, value, cx);
+            if ("__proto__".equals(propName)
+                    && cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
+                ScriptRuntime.defineProtoProperty(obj, value, cx);
             } else {
-                Object value = propertyValue.accept(this, cx);
-                value = GetValue(value, cx);
-
-                if ("__proto__".equals(propName)
-                        && cx.getRealm().isEnabled(CompatibilityOption.ProtoInitialiser)) {
-                    ScriptRuntime.defineProtoProperty(obj, value, cx);
-                } else {
-                    ScriptRuntime.defineProperty(obj, propName, value, cx);
-                }
+                ScriptRuntime.defineProperty(obj, propName, value, cx);
             }
         }
         return obj;
@@ -766,6 +750,9 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
     }
 
+    /**
+     * {@link NodeVisitor} to test whether or not the given nodes can be executed by the interpreter
+     */
     private static class InterpreterTest extends DefaultNodeVisitor<Boolean, Void> {
         static final DefaultNodeVisitor<Boolean, Void> INSTANCE = new InterpreterTest();
 
@@ -852,11 +839,6 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         }
 
         @Override
-        public Boolean visit(ComputedPropertyName node, Void value) {
-            return node.getExpression().accept(this, value);
-        }
-
-        @Override
         public Boolean visit(ElementAccessor node, Void value) {
             return node.getBase().accept(this, value) && node.getElement().accept(this, value);
         }
@@ -889,11 +871,6 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
                 }
             }
             return true;
-        }
-
-        @Override
-        protected Boolean visit(PropertyDefinition node, Void value) {
-            return false;
         }
 
         @Override
