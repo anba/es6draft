@@ -24,7 +24,7 @@ public final class SourceCompressor {
     private SourceCompressor() {
     }
 
-    private static class ByteOutputStream extends ByteArrayOutputStream {
+    private static final class ByteOutputStream extends ByteArrayOutputStream {
         public ByteOutputStream(int size) {
             super(size);
         }
@@ -34,7 +34,7 @@ public final class SourceCompressor {
         }
     }
 
-    private static class CompressedSource implements Callable<String> {
+    private static final class CompressedSource implements Callable<String> {
         final String source;
 
         CompressedSource(String source) {
@@ -52,7 +52,7 @@ public final class SourceCompressor {
         }
     }
 
-    private static class DecompressedSource implements Callable<String> {
+    private static final class DecompressedSource implements Callable<String> {
         final String source;
 
         DecompressedSource(String source) {

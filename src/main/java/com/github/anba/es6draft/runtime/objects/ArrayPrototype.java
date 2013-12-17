@@ -477,7 +477,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 22.1.3.24.1 Runtime Semantics: SortCompare Abstract Operation
          */
-        private static class DefaultComparator implements Comparator<Object> {
+        private static final class DefaultComparator implements Comparator<Object> {
             private final ExecutionContext cx;
 
             DefaultComparator(ExecutionContext cx) {
@@ -495,7 +495,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
         /**
          * 22.1.3.24.1 Runtime Semantics: SortCompare Abstract Operation
          */
-        private static class FunctionComparator implements Comparator<Object> {
+        private static final class FunctionComparator implements Comparator<Object> {
             private final ExecutionContext cx;
             private final Callable comparefn;
 

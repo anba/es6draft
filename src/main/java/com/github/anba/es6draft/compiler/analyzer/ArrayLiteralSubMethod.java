@@ -22,7 +22,7 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
     private static final int MAX_ARRAY_SIZE = 8 * MAX_ARRAY_ELEMENT_SIZE;
     private static final int MAX_SPREAD_SIZE = 4 * MAX_ARRAY_ELEMENT_SIZE;
 
-    private static class ArrayElement extends NodeElement<Expression> {
+    private static final class ArrayElement extends NodeElement<Expression> {
         ArrayElement(Expression node, int index, int size) {
             super(node, index, size);
         }
@@ -38,14 +38,15 @@ final class ArrayLiteralSubMethod extends ListSubMethod<ArrayLiteral> {
         }
     }
 
-    private static class ArrayElementMapper implements NodeElementMapper<Expression, ArrayElement> {
+    private static final class ArrayElementMapper implements
+            NodeElementMapper<Expression, ArrayElement> {
         @Override
         public ArrayElement map(Expression node, int index, int size) {
             return new ArrayElement(node, index, size);
         }
     }
 
-    private static class ArrayConflater extends Conflater<ArrayElement, Expression> {
+    private static final class ArrayConflater extends Conflater<ArrayElement, Expression> {
         @Override
         protected int getSourceSize(ArrayElement source) {
             return source.size;

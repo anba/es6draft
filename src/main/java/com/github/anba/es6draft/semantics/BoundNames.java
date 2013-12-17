@@ -13,7 +13,7 @@ import com.github.anba.es6draft.ast.*;
 /**
  * Static Semantics: BoundNames
  */
-class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>> {
+final class BoundNames extends StaticSemanticsVisitor<List<String>, List<String>> {
     static final NodeVisitor<List<String>, List<String>> INSTANCE = new BoundNames();
 
     /**

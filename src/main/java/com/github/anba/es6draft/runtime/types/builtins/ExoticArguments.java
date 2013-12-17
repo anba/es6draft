@@ -40,7 +40,7 @@ public class ExoticArguments extends OrdinaryObject {
     /** [[ParameterMap]] */
     private ParameterMap parameterMap = null;
 
-    private static class ParameterMap {
+    private static final class ParameterMap {
         private final LexicalEnvironment env;
         private final int length;
         private final String[] parameters;

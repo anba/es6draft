@@ -861,7 +861,7 @@ public final class ScriptRuntime {
         return new ValuesIterator(cx, obj, FromListIterator(cx, obj, keys));
     }
 
-    private static class ValuesIterator extends SimpleIterator<Object> {
+    private static final class ValuesIterator extends SimpleIterator<Object> {
         private final ExecutionContext cx;
         private final ScriptObject object;
         private final Iterator<?> keysIterator;

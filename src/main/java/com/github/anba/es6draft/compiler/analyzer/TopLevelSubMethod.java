@@ -36,7 +36,8 @@ abstract class TopLevelSubMethod<NODE extends TopLevelNode> extends SubMethod<NO
         }
     }
 
-    private static class StatementConflater extends Conflater<StatementListItem, StatementListItem> {
+    private static final class StatementConflater extends
+            Conflater<StatementListItem, StatementListItem> {
         CodeSizeVisitor visitor = new CodeSizeVisitor();
         CodeSizeHandler handler = new EmptyHandler();
 

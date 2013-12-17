@@ -16,7 +16,7 @@ import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
  * Inserts {@link ExpressionMethod}s into {@link CommaExpression} nodes
  */
 final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
-    private static class ExpressionElement extends NodeElement<Expression> {
+    private static final class ExpressionElement extends NodeElement<Expression> {
         ExpressionElement(Expression node, int index, int size) {
             super(node, index, size);
         }
@@ -32,7 +32,7 @@ final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
         }
     }
 
-    private static class ExpressionElementMapper implements
+    private static final class ExpressionElementMapper implements
             NodeElementMapper<Expression, ExpressionElement> {
         @Override
         public ExpressionElement map(Expression node, int index, int size) {
@@ -40,7 +40,7 @@ final class CommaExpressionSubMethod extends ListSubMethod<CommaExpression> {
         }
     }
 
-    private static class ExpressionConflater extends Conflater<ExpressionElement, Expression> {
+    private static final class ExpressionConflater extends Conflater<ExpressionElement, Expression> {
         @Override
         protected int getSourceSize(ExpressionElement source) {
             return source.size;

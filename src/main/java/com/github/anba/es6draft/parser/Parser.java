@@ -79,7 +79,7 @@ public class Parser {
         }
     }
 
-    private static class ParseContext {
+    private static final class ParseContext {
         final ParseContext parent;
         final ContextKind kind;
 
@@ -171,7 +171,7 @@ public class Parser {
         }
     }
 
-    private static class FunctionContext extends TopContext implements FunctionScope {
+    private static final class FunctionContext extends TopContext implements FunctionScope {
         FunctionNode node = null;
         HashSet<String> parameterNames = null;
 
@@ -195,7 +195,7 @@ public class Parser {
         }
     }
 
-    private static class ScriptContext extends TopContext implements ScriptScope {
+    private static final class ScriptContext extends TopContext implements ScriptScope {
         Script node = null;
 
         ScriptContext(ParseContext context) {
@@ -213,7 +213,7 @@ public class Parser {
         }
     }
 
-    private static class ModuleContext extends TopContext implements ModuleScope {
+    private static final class ModuleContext extends TopContext implements ModuleScope {
         LinkedHashSet<String> moduleRequests = new LinkedHashSet<>();
         HashSet<String> exportBindings = new HashSet<>();
         Module node = null;
@@ -293,7 +293,7 @@ public class Parser {
         }
     }
 
-    private static class BlockContext extends ScopeContext implements BlockScope {
+    private static final class BlockContext extends ScopeContext implements BlockScope {
         final boolean dynamic;
         ScopedNode node = null;
 
@@ -384,7 +384,7 @@ public class Parser {
         }
     }
 
-    private static class LabelContext {
+    private static final class LabelContext {
         final LabelContext parent;
         final StatementType type;
         final Set<String> labelSet;
@@ -402,7 +402,7 @@ public class Parser {
     }
 
     @SuppressWarnings("serial")
-    private static class RetryGenerator extends RuntimeException {
+    private static final class RetryGenerator extends RuntimeException {
     }
 
     public enum Option {

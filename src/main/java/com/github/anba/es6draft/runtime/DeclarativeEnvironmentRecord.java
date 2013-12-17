@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * </ul>
  */
 public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
-    private static class Binding {
+    private static final class Binding {
         final boolean mutable;
         final boolean deletable;
         Object value;

@@ -146,7 +146,7 @@ public class Repl {
         }
     }
 
-    private static class StartScript {
+    private static final class StartScript {
         private Path script = Paths.get("-");
         private List<String> arguments = new ArrayList<>();
 
@@ -170,7 +170,7 @@ public class Repl {
     }
 
     @SuppressWarnings("serial")
-    private static class ParserExceptionWithSource extends RuntimeException {
+    private static final class ParserExceptionWithSource extends RuntimeException {
         private final String source;
 
         ParserExceptionWithSource(ParserException e, String source) {
@@ -425,7 +425,7 @@ public class Repl {
         }
     }
 
-    private static class ReplConsole implements ShellConsole {
+    private static final class ReplConsole implements ShellConsole {
         private Console console;
 
         ReplConsole(Console console) {

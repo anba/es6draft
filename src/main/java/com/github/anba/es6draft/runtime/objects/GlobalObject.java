@@ -581,7 +581,7 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         }
     }
 
-    private final static class URIFunctions {
+    private static final class URIFunctions {
         private URIFunctions() {
         }
 

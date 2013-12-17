@@ -713,7 +713,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         return cx.resolveThisBinding();
     }
 
-    static class ScriptBodyImpl implements RuntimeInfo.ScriptBody {
+    private static final class ScriptBodyImpl implements RuntimeInfo.ScriptBody {
         private Script parsedScript;
 
         ScriptBodyImpl(Script parsedScript) {
@@ -753,7 +753,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
      * {@link NodeVisitor} to test whether or not the given nodes can be executed by the interpreter
      */
-    private static class InterpreterTest extends DefaultNodeVisitor<Boolean, Void> {
+    private static final class InterpreterTest extends DefaultNodeVisitor<Boolean, Void> {
         static final DefaultNodeVisitor<Boolean, Void> INSTANCE = new InterpreterTest();
 
         @Override

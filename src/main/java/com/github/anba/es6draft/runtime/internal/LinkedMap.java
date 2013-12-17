@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class LinkedMap<KEY, VALUE> {
     @SuppressWarnings("serial")
-    private static class Entry<KEY, VALUE> extends AbstractMap.SimpleEntry<KEY, VALUE> {
+    private static final class Entry<KEY, VALUE> extends AbstractMap.SimpleEntry<KEY, VALUE> {
         private Entry<KEY, VALUE> prev, next;
         private boolean removed = false;
 

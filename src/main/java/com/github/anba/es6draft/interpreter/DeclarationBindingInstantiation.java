@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 /**
  * <h1>Declaration Binding Instantiation</h1>
  * <ul>
- * <li>15.1.2.1 Global Declaration Instantiation
+ * <li>15.2.8 Runtime Semantics: GlobalDeclarationInstantiation
  * <li>18.2.1.2 Eval Declaration Instantiation
  * </ul>
  */
@@ -38,7 +38,7 @@ final class DeclarationBindingInstantiation {
     }
 
     /**
-     * [15.1.2.1 Global Declaration Instantiation]
+     * [15.2.8 Runtime Semantics: GlobalDeclarationInstantiation]
      */
     public static void GlobalDeclarationInstantiation(ExecutionContext cx, Script script,
             LexicalEnvironment globalEnv, LexicalEnvironment lexicalEnv, boolean deletableBindings) {

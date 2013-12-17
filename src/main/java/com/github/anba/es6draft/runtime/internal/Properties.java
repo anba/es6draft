@@ -276,7 +276,7 @@ public final class Properties {
         }
     };
 
-    private static class ObjectLayout {
+    private static final class ObjectLayout {
         CompatibilityExtension extension;
         Prototype proto = null;
         Object protoValue = null;

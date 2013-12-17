@@ -33,7 +33,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
     }
 
-    private static class StatementElement extends NodeElement<StatementListItem> {
+    private static final class StatementElement extends NodeElement<StatementListItem> {
         static final StatementElement EMPTY = new StatementElement(null, -1, 0, ExportState.Empty);
 
         StatementElement(StatementListItem node, int index, int size, ExportState state) {
@@ -188,7 +188,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         return true;
     }
 
-    private static class StatementUpdater extends
+    private static final class StatementUpdater extends
             DefaultNodeVisitor<Void, Entry<StatementListItem, StatementListMethod>> {
         private List<StatementListItem> updateStatements(List<StatementListItem> statements,
                 Entry<StatementListItem, StatementListMethod> entry) {
@@ -243,7 +243,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
     }
 
     @SuppressWarnings("serial")
-    private static class RangeArrayList<E> extends ArrayList<E> {
+    private static final class RangeArrayList<E> extends ArrayList<E> {
         public void replaceRange(E element, int fromIndex, int toIndex) {
             if (fromIndex == toIndex) {
                 add(fromIndex, element);
@@ -254,7 +254,7 @@ abstract class NestedSubMethod<NODE extends Node> extends SubMethod<NODE> {
         }
     }
 
-    private static class FindExportableStatement extends
+    private static final class FindExportableStatement extends
             DefaultNodeVisitor<Boolean, ArrayDeque<Node>> {
         RangeArrayList<StatementListItem> exportable = new RangeArrayList<>();
         RangeArrayList<Node> parents = new RangeArrayList<>();

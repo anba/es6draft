@@ -204,7 +204,7 @@ class IntlDataTools {
         }
     }
 
-    private static class Record {
+    private static final class Record {
         EnumMap<Field, String> entries = new EnumMap<>(Field.class);
 
         boolean has(Field field) {

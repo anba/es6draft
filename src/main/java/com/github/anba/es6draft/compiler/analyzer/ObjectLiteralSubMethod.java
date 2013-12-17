@@ -22,7 +22,7 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
     private static final int MAX_OBJECT_SIZE = 8 * MAX_OBJECT_ELEMENT_SIZE;
     private static final int MAX_SPREAD_SIZE = 4 * MAX_OBJECT_ELEMENT_SIZE;
 
-    private static class ObjectElement extends NodeElement<PropertyDefinition> {
+    private static final class ObjectElement extends NodeElement<PropertyDefinition> {
         ObjectElement(PropertyDefinition node, int index, int size) {
             super(node, index, size);
         }
@@ -41,7 +41,7 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
         }
     }
 
-    private static class ObjectElementMapper implements
+    private static final class ObjectElementMapper implements
             NodeElementMapper<PropertyDefinition, ObjectElement> {
         @Override
         public ObjectElement map(PropertyDefinition node, int index, int size) {
@@ -49,7 +49,7 @@ final class ObjectLiteralSubMethod extends ListSubMethod<ObjectLiteral> {
         }
     }
 
-    private static class ObjectConflater extends Conflater<ObjectElement, PropertyDefinition> {
+    private static final class ObjectConflater extends Conflater<ObjectElement, PropertyDefinition> {
         @Override
         protected int getSourceSize(ObjectElement source) {
             return source.size;
