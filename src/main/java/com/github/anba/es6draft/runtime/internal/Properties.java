@@ -292,11 +292,20 @@ public final class Properties {
      * {@link Accessor} fields
      */
     public static void createProperties(ScriptObject owner, ExecutionContext cx, Class<?> holder) {
+        createProperties(owner, owner, cx, holder);
+    }
+
+    /**
+     * Sets the {@link Prototype} and creates own properties for {@link Value}, {@link Function} and
+     * {@link Accessor} fields
+     */
+    public static void createProperties(ScriptObject target, ScriptObject owner,
+            ExecutionContext cx, Class<?> holder) {
         if (holder.getName().startsWith(INTERNAL_PACKAGE)) {
-            assert owner instanceof OrdinaryObject;
+            assert owner instanceof OrdinaryObject && owner == target;
             createInternalProperties((OrdinaryObject) owner, cx, holder);
         } else {
-            createExternalProperties(owner, cx, holder);
+            createExternalProperties(target, owner, cx, holder);
         }
     }
 
@@ -510,19 +519,20 @@ public final class Properties {
         }
     }
 
-    private static void createExternalProperties(ScriptObject owner, ExecutionContext cx,
-            Class<?> holder) {
+    private static void createExternalProperties(ScriptObject target, ScriptObject owner,
+            ExecutionContext cx, Class<?> holder) {
         ObjectLayout layout = externalLayouts.get(holder);
         if (layout.functions != null) {
             Converter converter = new Converter(cx);
             for (Entry<Function, MethodHandle> entry : layout.functions.entrySet()) {
-                createExternalFunction(owner, cx, converter, entry.getKey(), entry.getValue());
+                createExternalFunction(target, owner, cx, converter, entry.getKey(),
+                        entry.getValue());
             }
         }
     }
 
-    private static void createExternalFunction(ScriptObject owner, ExecutionContext cx,
-            Converter converter, Function function, MethodHandle unreflect) {
+    private static void createExternalFunction(ScriptObject target, ScriptObject owner,
+            ExecutionContext cx, Converter converter, Function function, MethodHandle unreflect) {
         MethodHandle handle = getInstanceMethodHandle(cx, converter, unreflect, owner);
         String name = function.name();
         int arity = function.arity();
@@ -530,7 +540,7 @@ public final class Properties {
         assert function.symbol() == BuiltinSymbol.NONE;
 
         NativeFunction fun = new NativeFunction(cx.getRealm(), name, arity, handle);
-        owner.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
+        target.defineOwnProperty(cx, name, propertyDescriptor(fun, attrs));
     }
 
     private static void createInternalProperties(OrdinaryObject owner, ExecutionContext cx,
