@@ -24,12 +24,11 @@ feature/Scope/BlockBinding11.js
 # invalid test, symbol-valued properties are not strict properties
 feature/Symbol/Inherited.js
 
+# invalid test, symbol-valued properties are not non-enumerable by default
+feature/Symbol/Object.js
+
 # invalid test, Symbol.prototype.toString() throws when thisArg is primitive symbol
 feature/Symbol/ObjectModel.js
-
-# invalid test, expects global "o" object
-feature/Symbol/Object.js
-feature/Symbol/TransformationOff.js
 
 
 ############################################

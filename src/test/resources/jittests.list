@@ -439,14 +439,6 @@ tests/pic/watch4.js
 # Unsupported extension objects       #
 #######################################
 
-# ParallelArray not supported
-tests/auto-regress/bug755564.js
-tests/auto-regress/bug783923.js
-tests/auto-regress/bug784011.js
-tests/auto-regress/bug786106.js
-tests/auto-regress/bug789107.js
-tests/auto-regress/bug791445.js
-
 # Debugger API
 tests/arguments/rest-debugger.js
 tests/auto-regress/bug677587.js
@@ -500,6 +492,8 @@ tests/basic/decompile-script.js
 tests/basic/bug923390.js
 # neuter
 tests/basic/testNeutering.js
+# getSelfHostedValue
+tests/self-hosting/makewrappable.js
 
 # Unsupported 'Testing' functions
 # gcparam
@@ -529,7 +523,6 @@ tests/basic/functionnames.js
 # getObjectMetadata/setObjectMetadata/setObjectMetadataCallback
 tests/basic/metadata-hook.js
 # getBuildConfiguration
-tests/basic/bug815652.js
 tests/basic/testOOMInAutoEnterCompartment.js
 # workerThreadCount
 tests/basic/offThreadCompileScript.js
