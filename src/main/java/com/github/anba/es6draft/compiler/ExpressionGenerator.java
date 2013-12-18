@@ -161,6 +161,14 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                         Type.VOID_TYPE, Types.ScriptObject, Type.INT_TYPE, Types.Object,
                         Types.ExecutionContext));
 
+        static final MethodDesc ScriptRuntime_directEvalFallbackArguments = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "directEvalFallbackArguments",
+                Type.getMethodType(Types.Object_, Types.Object_, Types.Object, Types.Callable));
+
+        static final MethodDesc ScriptRuntime_directEvalFallbackHook = MethodDesc.create(
+                MethodType.Static, Types.ScriptRuntime, "directEvalFallbackHook",
+                Type.getMethodType(Types.Callable, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_ensureObject = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "ensureObject",
                 Type.getMethodType(Types.ScriptObject, Types.Object, Types.ExecutionContext));
@@ -282,10 +290,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     private void invokeDynamicOperator(BinaryExpression.Operator operator, ExpressionVisitor mv) {
         mv.invokedynamic(Bootstrap.getName(operator), Bootstrap.getMethodDescriptor(operator),
                 Bootstrap.getBootstrap(operator), EMPTY_BSM_ARGS);
-    }
-
-    private boolean isDirectEvalHookSupported() {
-        return true;
     }
 
     /**
@@ -584,30 +588,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // stack: [args, thisValue, func(Callable)] -> [args]
         mv.pop2();
 
-        if (!isDirectEvalHookSupported()) {
-            // stack: [args] -> [arg0]
-            if (hasSpread) {
-                Label isEmpty = new Label(), after = new Label();
-                mv.dup();
-                mv.arraylength();
-                mv.ifeq(isEmpty);
-                mv.iconst(0);
-                mv.aload(Types.Object);
-                mv.goTo(after);
-                mv.mark(isEmpty);
-                mv.pop();
-                mv.loadUndefined();
-                mv.mark(after);
-            } else if (arguments.isEmpty()) {
-                mv.pop();
-                mv.loadUndefined();
-            } else {
-                mv.iconst(0);
-                mv.aload(Types.Object);
-            }
-        }
-
-        // stack: [args0] -> [result]
+        // stack: [args] -> [result]
         mv.loadExecutionContext();
         int evalFlags = EvalFlags.Direct.getValue();
         if (mv.isStrict()) {
@@ -627,6 +608,21 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
 
         mv.goTo(afterCall);
         mv.mark(notEval);
+
+        // direct-eval fallback hook
+        Label noEvalHook = new Label();
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
+        mv.ifnull(noEvalHook);
+        {
+            // stack: [args, thisValue, func(Callable)] -> [args']
+            mv.invoke(Methods.ScriptRuntime_directEvalFallbackArguments);
+            mv.loadUndefined(); // FIXME: unspecified
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_directEvalFallbackHook);
+            // stack: [args', undefined, fallback(Callable)]
+        }
+        mv.mark(noEvalHook);
     }
 
     /**

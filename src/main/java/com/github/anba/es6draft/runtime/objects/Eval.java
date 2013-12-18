@@ -87,18 +87,21 @@ public final class Eval {
         } else {
             source = arguments.length > 0 ? arguments[0] : UNDEFINED;
         }
-        return eval(cx, source, EvalFlags.GlobalCode.getValue() | EvalFlags.GlobalScope.getValue());
+        return indirectEval(cx, source);
     }
 
     /**
      * 18.2.1 eval (x)
      */
     public static Object indirectEval(ExecutionContext cx, Object source) {
+        // TODO: let's assume for now that this is the no-hook entry point (probably rename method)
         return eval(cx, source, EvalFlags.GlobalCode.getValue() | EvalFlags.GlobalScope.getValue());
     }
 
     /**
      * 18.2.1 eval (x)
+     * <p>
+     * [Called from generated code]
      */
     public static Object directEval(Object[] arguments, ExecutionContext cx, int flags) {
         Object source;
@@ -108,13 +111,6 @@ public final class Eval {
         } else {
             source = arguments.length > 0 ? arguments[0] : UNDEFINED;
         }
-        return eval(cx, source, flags | EvalFlags.Direct.getValue());
-    }
-
-    /**
-     * 18.2.1 eval (x)
-     */
-    public static Object directEval(Object source, ExecutionContext cx, int flags) {
         return eval(cx, source, flags | EvalFlags.Direct.getValue());
     }
 

@@ -481,6 +481,29 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 12.2.3 Function Calls
+     * <p>
+     * Runtime Semantics: EvaluateCall Abstract Operation
+     */
+    public static Callable directEvalFallbackHook(ExecutionContext cx) {
+        return cx.getRealm().getFallbackDirectEvalHook();
+    }
+
+    /**
+     * 12.2.3 Function Calls
+     * <p>
+     * Runtime Semantics: EvaluateCall Abstract Operation
+     */
+    public static Object[] directEvalFallbackArguments(Object[] args, Object thisValue,
+            Callable callee) {
+        Object[] fallbackArgs = new Object[2 + args.length];
+        fallbackArgs[0] = thisValue;
+        fallbackArgs[1] = callee;
+        System.arraycopy(args, 0, fallbackArgs, 2, args.length);
+        return fallbackArgs;
+    }
+
+    /**
      * 12.2.4 The super Keyword
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
