@@ -35,9 +35,9 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
-        super.initialise(cx);
-        createProperties(this, cx, SimpleShellGlobalObject.class);
+    public void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
+        super.defineBuiltinProperties(cx, object);
+        createProperties(object, this, cx, SimpleShellGlobalObject.class);
     }
 
     /**

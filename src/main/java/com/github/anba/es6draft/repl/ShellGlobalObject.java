@@ -31,6 +31,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
 
 /**
  *
@@ -51,9 +52,9 @@ public abstract class ShellGlobalObject extends GlobalObject {
     }
 
     @Override
-    public void initialise(ExecutionContext cx) {
-        super.initialise(cx);
-        createProperties(this, cx, ShellGlobalObject.class);
+    public void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
+        super.defineBuiltinProperties(cx, object);
+        createProperties(object, this, cx, ShellGlobalObject.class);
     }
 
     /**

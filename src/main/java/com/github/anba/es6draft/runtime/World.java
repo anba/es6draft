@@ -20,6 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Microtask;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.objects.modules.RealmObject;
+import com.github.anba.es6draft.runtime.types.Intrinsics;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1>
@@ -162,9 +163,11 @@ public final class World<GLOBAL extends GlobalObject> {
      */
     public GLOBAL newGlobal() {
         Realm realm = Realm.newRealm(this);
-        realm.initialiseGlobalObject();
         @SuppressWarnings("unchecked")
         GLOBAL global = (GLOBAL) realm.getGlobalThis();
+        // implementation defined behaviour
+        global.setPrototype(realm.getIntrinsic(Intrinsics.ObjectPrototype));
+        realm.defineBuiltinProperties(global);
         return global;
     }
 }

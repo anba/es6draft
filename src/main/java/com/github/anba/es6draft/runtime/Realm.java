@@ -110,11 +110,6 @@ public final class Realm {
      */
     private Callable indirectEvalHook;
 
-    /**
-     * [[FunctionHook]]
-     */
-    private Callable functionHook;
-
     private Callable builtinEval;
 
     private ExecutionContext defaultContext;
@@ -184,13 +179,6 @@ public final class Realm {
      */
     public Callable getIndirectEvalHook() {
         return indirectEvalHook;
-    }
-
-    /**
-     * [[FunctionHook]]
-     */
-    public Callable getFunctionHook() {
-        return functionHook;
     }
 
     /**
@@ -333,25 +321,10 @@ public final class Realm {
      * Initialises the custom extension points
      */
     public void setExtensionHooks(Callable translateDirectEvalHook,
-            Callable fallbackDirectEvalHook, Callable indirectEvalHook, Callable functionHook) {
+            Callable fallbackDirectEvalHook, Callable indirectEvalHook) {
         this.translateDirectEvalHook = translateDirectEvalHook;
         this.fallbackDirectEvalHook = fallbackDirectEvalHook;
         this.indirectEvalHook = indirectEvalHook;
-        this.functionHook = functionHook;
-    }
-
-    /**
-     * Defines the built-in objects as properties of the global object
-     */
-    public void initialiseGlobalObject() {
-        assert this.builtinEval == null : "global object already initialised";
-        ExecutionContext defaultContext = this.defaultContext;
-
-        // finish initialising global object
-        globalThis.initialise(defaultContext);
-
-        // store reference to built-in eval
-        this.builtinEval = (Callable) Get(defaultContext, globalThis, "eval");
     }
 
     /**
@@ -361,8 +334,8 @@ public final class Realm {
         assert this.builtinEval == null : "built-ins already initialised";
         ExecutionContext defaultContext = this.defaultContext;
 
-        // finish initialising global object
-        GlobalObject.defineBuiltinProperties(defaultContext, builtins);
+        // define built-in properties
+        globalThis.defineBuiltinProperties(defaultContext, builtins);
 
         // store reference to built-in eval
         this.builtinEval = (Callable) Get(defaultContext, builtins, "eval");
@@ -424,8 +397,7 @@ public final class Realm {
         initialiseInternationalisation(realm);
 
         if (defaultRealmObject) {
-            realmObject.setPrototypeOf(defaultContext,
-                    realm.getIntrinsic(Intrinsics.RealmPrototype));
+            realmObject.setPrototype(realm.getIntrinsic(Intrinsics.RealmPrototype));
         }
 
         return realm;

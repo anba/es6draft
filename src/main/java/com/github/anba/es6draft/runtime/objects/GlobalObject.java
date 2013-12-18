@@ -17,7 +17,6 @@ import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
-import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.CompatibilityExtension;
@@ -38,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>18.5 Other Properties of the Global Object
  * </ul>
  */
-public class GlobalObject extends OrdinaryObject implements Initialisable {
+public class GlobalObject extends OrdinaryObject {
     private final Realm realm;
 
     public GlobalObject(Realm realm) {
@@ -46,17 +45,10 @@ public class GlobalObject extends OrdinaryObject implements Initialisable {
         this.realm = realm;
     }
 
-    @Override
-    public void initialise(ExecutionContext cx) {
-        // implementation defined behaviour
-        setPrototype(cx.getIntrinsic(Intrinsics.ObjectPrototype));
-        defineBuiltinProperties(cx, this);
-    }
-
     /**
      * Initialise {@code object} with the default properties of the Global Object
      */
-    public static void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
+    public void defineBuiltinProperties(ExecutionContext cx, ScriptObject object) {
         createProperties(object, cx, ValueProperties.class);
         createProperties(object, cx, FunctionProperties.class);
         createProperties(object, cx, URIHandlingFunctions.class);

@@ -8,7 +8,6 @@ package com.github.anba.es6draft.runtime.objects.modules;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -26,6 +25,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.objects.Eval;
+import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -77,13 +77,12 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     /**
-     * 1.5.1.1 Realm ( options, initializer )
+     * 1.5.1.1 Realm ( options )
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object options = args.length > 0 ? args[0] : UNDEFINED;
-        Object initializer = args.length > 1 ? args[1] : UNDEFINED;
         /* steps 2-3 */
         if (!(thisValue instanceof RealmObject)) {
             throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
@@ -94,28 +93,19 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
         if (realmObject.getRealm() != null) {
             throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
+
         /* steps 5-6 */
         if (Type.isUndefined(options)) {
             options = ObjectCreate(calleeContext, (ScriptObject) null);
         } else if (!Type.isObject(options)) {
             throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
         }
-        ScriptObject opts = Type.objectValue(options);
-        /* step 7 */
-        Realm realm = CreateRealm(calleeContext, realmObject);
-        /* steps 8-9 */
-        Object evalHooks = Get(calleeContext, opts, "eval");
-        /* steps 10-11 */
-        if (Type.isUndefined(evalHooks)) {
-            evalHooks = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
-        } else if (!Type.isObject(evalHooks)) {
-            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
-        }
-        ScriptObject evalHooksObject = Type.objectValue(evalHooks);
+        ScriptObject optionsObject = Type.objectValue(options);
         /* steps 12-13 */
-        Object directEval = Get(calleeContext, evalHooksObject, "direct");
+        Object directEval = Get(calleeContext, optionsObject, "directEval");
         /* steps 14-15 */
         if (Type.isUndefined(directEval)) {
+            // TODO: change to `ObjectCreate(null, ())` just like above?
             directEval = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         } else if (!Type.isObject(directEval)) {
             throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
@@ -126,27 +116,34 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
         /* steps 20-22 */
         Callable fallback = GetMethod(calleeContext, directEvalObject, "fallback");
         /* steps 24-26 */
-        Callable indirectEval = GetMethod(calleeContext, opts, "indirect");
-        /* steps 28-30 */
-        Callable function = GetMethod(calleeContext, opts, "Function");
-        /* steps 19, 23, 27, 31 */
-        realm.setExtensionHooks(translate, fallback, indirectEval, function);
-        /* step 32 */
+        Callable indirectEval = GetMethod(calleeContext, optionsObject, "indirectEval");
+        /* step ? */
+        Callable initializer = GetMethod(calleeContext, optionsObject, "init");
+
+        // FIXME: as usual, reentrancy checks
+        if (realmObject.getRealm() != null) {
+            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+        }
+
+        /* step 7 */
+        Realm realm = CreateRealm(calleeContext, realmObject);
+        /* steps 19, 23, 27 */
+        realm.setExtensionHooks(translate, fallback, indirectEval);
+        /* step 28 */
         realmObject.setRealm(realm);
-        /* step 33 */
-        if (!Type.isUndefined(initializer)) {
-            if (!IsCallable(initializer)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
-            }
-            ScriptObject builtins = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
+        /* step 29 */
+        if (initializer != null) {
+            ScriptObject builtins = ObjectCreate(realm.defaultContext(), Intrinsics.ObjectPrototype);
             DefineBuiltinProperties(realm, builtins);
-            ((Callable) initializer).call(calleeContext, realmObject, builtins);
+            // TODO: spec bug? necessary to provide realm object as thisArgument and 1st parameter?
+            initializer.call(calleeContext, realmObject, realmObject, builtins);
         } else {
             // default global object environment
-            // TODO: does this include adding non-standard properties to the new realm, like print?
-            realm.initialiseGlobalObject();
+            GlobalObject globalObject = realm.getGlobalThis();
+            globalObject.setPrototype(realm.getIntrinsic(Intrinsics.ObjectPrototype));
+            DefineBuiltinProperties(realm, globalObject);
         }
-        /* step 34 */
+        /* step 30 */
         return realmObject;
     }
 
@@ -169,7 +166,7 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final int length = 2;
+        public static final int length = 1;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
