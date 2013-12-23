@@ -7,9 +7,12 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Messages;
+import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -57,7 +60,11 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
             /* step 3 */
             Object[] boundArgs = getBoundArguments();
             /* step 4 */
-            Object[] args = new Object[boundArgs.length + extraArgs.length];
+            int argsLen = boundArgs.length + extraArgs.length;
+            if (argsLen > FunctionPrototype.getMaxArguments()) {
+                throw newRangeError(callerContext, Messages.Key.FunctionTooManyArguments);
+            }
+            Object[] args = new Object[argsLen];
             System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);
             System.arraycopy(extraArgs, 0, args, boundArgs.length, extraArgs.length);
             /* step 5 */
@@ -115,7 +122,11 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
         /* step 3 */
         Callable target = getBoundTargetFunction();
         /* step 4 */
-        Object[] args = new Object[boundArgs.length + argumentsList.length];
+        int argsLen = boundArgs.length + argumentsList.length;
+        if (argsLen > FunctionPrototype.getMaxArguments()) {
+            throw newRangeError(callerContext, Messages.Key.FunctionTooManyArguments);
+        }
+        Object[] args = new Object[argsLen];
         System.arraycopy(boundArgs, 0, args, 0, boundArgs.length);
         System.arraycopy(argumentsList, 0, args, boundArgs.length, argumentsList.length);
         /* step 5 */
