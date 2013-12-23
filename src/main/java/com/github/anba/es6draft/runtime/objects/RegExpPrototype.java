@@ -633,21 +633,15 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
         RegExpMatcher matcher = r.getRegExpMatcher();
         /* steps 12-13 */
         MatchState m = matcher.matcher(s);
+        boolean matchSucceeded;
         if (!sticky) {
-            boolean matchSucceeded = m.find((int) i);
-            if (!matchSucceeded) {
-                Put(cx, r, "lastIndex", 0, true);
-                return null;
-            }
+            matchSucceeded = m.find((int) i);
         } else {
-            boolean matchSucceeded = m.matches((int) i);
-            if (!matchSucceeded) {
-                // FIXME: spec always sets lastIndex to 0, independant of global-flag
-                if (global) {
-                    Put(cx, r, "lastIndex", 0, true);
-                }
-                return null;
-            }
+            matchSucceeded = m.matches((int) i);
+        }
+        if (!matchSucceeded) {
+            Put(cx, r, "lastIndex", 0, true);
+            return null;
         }
         /* step 14 */
         int e = m.end();
