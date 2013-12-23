@@ -147,16 +147,8 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
          */
         @Function(name = "isArray", arity = 1)
         public static Object isArray(ExecutionContext cx, Object thisValue, Object arg) {
-            /* step 1 */
-            if (!Type.isObject(arg)) {
-                return false;
-            }
-            /* step 2 */
-            if (arg instanceof ExoticArray) {
-                return true;
-            }
-            /* step 3 */
-            return false;
+            /* steps 1-3 */
+            return arg instanceof ExoticArray;
         }
 
         /**

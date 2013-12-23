@@ -257,16 +257,18 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     @Override
     public Void visit(LegacyComprehensionFor node, ExpressionVisitor mv) {
         Label lblContinue = new Label(), lblBreak = new Label();
-        Label loopstart = new Label();
 
-        expressionBoxedValue(node.getExpression(), mv);
-
-        mv.dup();
-        isUndefinedOrNull(mv);
-        mv.ifeq(loopstart);
-        mv.pop();
-        mv.goTo(lblBreak);
-        mv.mark(loopstart);
+        ValType type = expressionValue(node.getExpression(), mv);
+        if (type != ValType.Object) {
+            mv.toBoxed(type);
+            Label loopstart = new Label();
+            mv.dup();
+            isUndefinedOrNull(mv);
+            mv.ifeq(loopstart);
+            mv.pop();
+            mv.goTo(lblBreak);
+            mv.mark(loopstart);
+        }
 
         IterationKind iterationKind = node.getIterationKind();
         if (iterationKind == IterationKind.Enumerate

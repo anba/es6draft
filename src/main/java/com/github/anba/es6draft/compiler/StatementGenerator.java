@@ -376,7 +376,7 @@ final class StatementGenerator extends
             IterationKind iterationKind, StatementVisitor mv) {
         ContinueLabel lblContinue = new ContinueLabel();
         BreakLabel lblBreak = new BreakLabel();
-        Label loopstart = new Label(), loopbody = new Label();
+        Label loopbody = new Label();
 
         mv.enterVariableScope();
         Variable<LexicalEnvironment> savedEnv = saveEnvironment(node, mv);
@@ -384,14 +384,17 @@ final class StatementGenerator extends
         Variable<Iterator> iter = mv.newVariable("iter", Iterator.class);
 
         // Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
-        expressionBoxedValue(expr, mv);
-
-        mv.dup();
-        isUndefinedOrNull(mv);
-        mv.ifeq(loopstart);
-        mv.pop();
-        mv.goTo(lblBreak);
-        mv.mark(loopstart);
+        ValType type = expressionValue(expr, mv);
+        if (type != ValType.Object) {
+            mv.toBoxed(type);
+            Label loopstart = new Label();
+            mv.dup();
+            isUndefinedOrNull(mv);
+            mv.ifeq(loopstart);
+            mv.pop();
+            mv.goTo(lblBreak);
+            mv.mark(loopstart);
+        }
 
         if ((iterationKind == IterationKind.Enumerate || iterationKind == IterationKind.EnumerateValues)
                 && codegen.isEnabled(CompatibilityOption.LegacyGenerator)) {

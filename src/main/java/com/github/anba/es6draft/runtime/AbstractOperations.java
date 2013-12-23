@@ -661,12 +661,8 @@ public final class AbstractOperations {
      * 7.2.6 IsPropertyKey
      */
     public static boolean IsPropertyKey(Object val) {
-        /* steps 1-3 */
-        if (Type.isString(val) || val instanceof Symbol) {
-            return true;
-        }
-        /* step 4 */
-        return false;
+        /* steps 1-4 */
+        return val instanceof String || val instanceof Symbol;
     }
 
     /**

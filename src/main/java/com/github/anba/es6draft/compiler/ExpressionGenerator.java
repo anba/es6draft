@@ -2146,8 +2146,11 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         for (Expression expr : node.getElements()) {
             assert chars == (expr instanceof TemplateCharacters);
             if (chars) {
-                mv.aconst(((TemplateCharacters) expr).getValue());
-                mv.invoke(Methods.StringBuilder_append_String);
+                String value = ((TemplateCharacters) expr).getValue();
+                if (!value.isEmpty()) {
+                    mv.aconst(value);
+                    mv.invoke(Methods.StringBuilder_append_String);
+                }
             } else {
                 ValType type = evalAndGetValue(expr, mv);
                 ToString(type, mv);

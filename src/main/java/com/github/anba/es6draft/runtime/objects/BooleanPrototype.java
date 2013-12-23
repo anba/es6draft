@@ -73,8 +73,7 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
-            boolean b = thisBooleanValue(cx, thisValue);
-            return (b ? "true" : "false");
+            return thisBooleanValue(cx, thisValue) ? "true" : "false";
         }
 
         /**
