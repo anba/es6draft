@@ -22,6 +22,7 @@ import com.github.anba.es6draft.runtime.internal.Microtask;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
+import com.github.anba.es6draft.runtime.objects.ErrorObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -89,6 +90,14 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         String id = String.format("%s@%d", object.getClass().getSimpleName(),
                 System.identityHashCode(object));
         console.print(id);
+    }
+
+    /** shell-function: {@code printStackTrace(object)} */
+    @Function(name = "printStackTrace", arity = 1)
+    public void printStackTrace(ScriptObject object) {
+        if (object instanceof ErrorObject) {
+            ((ErrorObject) object).getException().printStackTrace();
+        }
     }
 
     /** shell-function: {@code nextTick(function)} */
