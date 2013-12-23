@@ -61,8 +61,6 @@ feature/Scope/Error_BlockBinding1.js
 # Unsupported built-in object functions    #
 ############################################
 
-# String.prototype.toArray()
-feature/StringExtras/ToArray.js
 
 
 #######################################

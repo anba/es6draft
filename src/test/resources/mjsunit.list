@@ -160,6 +160,9 @@ regress/regress-3027.js
 # Error.prototype.message is limited to 350 characters in V8
 error-tostring-omit.js
 
+# different precision for Math.hypot()
+harmony/math-hypot.js
+
 
 ############################################
 # Unsupported built-in object functions    #
@@ -214,6 +217,9 @@ third_party/object-keys.js
 regress/regress-function-length-strict.js
 regress/regress-1419.js
 regress/regress-1530.js
+
+# Function.name is configurable
+regress/regress-270142.js
 
 # ToLength() moved array length restriction to 2^53-1
 array-indexing.js

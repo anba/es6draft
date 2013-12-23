@@ -556,6 +556,9 @@ js1_8_5/extensions/clone-v1-typed-array.js
 # enableSPSProfilingAssertions() not supported
 js1_8_5/extensions/sps-generators.js
 
+# objectEmulatingUndefined() not supported
+Intl/extensions/options-value-emulates-undefined.js
+
 
 #######################################
 # Legacy generator issues             #
