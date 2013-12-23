@@ -60,7 +60,7 @@ const {
   class XPromise extends Promise {
     then(fulfill, reject) {
       let step = ++stepCount;
-      assertTrue(1 <= step && step <= 5, `step = ${step}`);
+      assertTrue(1 <= step && step <= 6, `step = ${step}`);
       switch (step) {
         case 1:
           assertUndefined(fulfill);
@@ -75,14 +75,21 @@ const {
           assertSame(reportFailure, reject);
           break;
         case 4:
+          // 'ResolvePromiseFunction' and 'RejectPromiseFunction'
+          builtins.resolvePromise = fulfill;
+          builtins.rejectPromise = reject;
+          assertNativeFunction(fulfill, undefined, 1);
+          assertNativeFunction(reject, undefined, 1);
+          break;
+        case 5:
+          // 'IdentityFunction' and 'ThrowerFunction'
           builtins.identity = fulfill;
           builtins.thrower = reject;
           assertNativeFunction(fulfill, undefined, 1);
           assertNativeFunction(reject, undefined, 1);
           break;
-        case 5:
-          builtins.resolvePromise = fulfill;
-          builtins.rejectPromise = reject;
+        case 6:
+          // 'ResolvePromiseFunction' and 'RejectPromiseFunction'
           assertNativeFunction(fulfill, undefined, 1);
           assertNativeFunction(reject, undefined, 1);
           break;
@@ -100,7 +107,7 @@ const {
   }
 
   function testBuiltinFunctions() {
-    assertSame(5, stepCount);
+    assertSame(6, stepCount);
     testIdentityFunction(builtins.identity);
     testThrowerFunction(builtins.thrower);
 

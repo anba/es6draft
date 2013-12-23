@@ -433,25 +433,16 @@ public final class PromiseAbstractOperations {
             }
             /* step 5 */
             Constructor c = promise.getConstructor();
-            /* step 6 */
-            if (IsPromise(x)) {
-                PromiseObject xPromise = (PromiseObject) x;
-                Constructor xConstructor = xPromise.getConstructor();
-                if (SameValue(xConstructor, c)) {
-                    return Invoke(calleeContext, xPromise, "then", fulfillmentHandler,
-                            rejectionHandler);
-                }
-            }
-            /* steps 7-8 */
+            /* steps 6-7 */
             Deferred deferred = GetDeferred(calleeContext, c);
-            /* steps 9-10 */
+            /* steps 8-9 */
             boolean updateResult = UpdateDeferredFromPotentialThenable(calleeContext, x, deferred);
-            /* step 11 */
+            /* step 10 */
             if (updateResult) {
                 return Invoke(calleeContext, deferred.getPromise(), "then", fulfillmentHandler,
                         rejectionHandler);
             }
-            /* step 12 */
+            /* step 11 */
             return fulfillmentHandler.call(calleeContext, UNDEFINED, x);
         }
     }
