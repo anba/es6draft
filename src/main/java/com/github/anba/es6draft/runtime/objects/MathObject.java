@@ -410,36 +410,44 @@ public class MathObject extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "hypot", arity = 2)
         public static Object hypot(ExecutionContext cx, Object thisValue, Object... values) {
-            if (values.length == 0) {
-                return +0.0;
-            }
-            boolean hasInfinity = false, hasNaN = false, hasNonZero = false;
+            boolean hasInfinity = false, hasNaN = false;
+            double max = 0;
             double[] numbers = new double[values.length];
             for (int i = 0, len = values.length; i < len; ++i) {
                 double num = ToNumber(cx, values[i]);
-                numbers[i] = num;
                 if (Double.isInfinite(num)) {
                     hasInfinity = true;
                 } else if (Double.isNaN(num)) {
                     hasNaN = true;
-                } else if (num != 0.0) {
-                    hasNonZero = true;
+                } else {
+                    num = Math.abs(num);
+                    max = Math.max(max, num);
+                    numbers[i] = num;
                 }
             }
             if (hasInfinity) {
                 return Double.POSITIVE_INFINITY;
             } else if (hasNaN) {
                 return Double.NaN;
-            } else if (!hasNonZero) {
+            } else if (max == 0.0) {
                 return +0.0;
-            } else if (values.length == 1) {
-                return Math.abs(numbers[0]); // sqrt(value1^2)
             }
-            double result = Math.hypot(numbers[0], numbers[1]);
-            for (int i = 2, len = values.length; i < len; ++i) {
-                result = Math.hypot(result, numbers[i]);
+            if (values.length == 1) {
+                return numbers[0]; // sqrt(value1^2)
+            } else if (values.length == 2) {
+                return Math.hypot(numbers[0], numbers[1]);
+            } else {
+                // Kahan summation with normalisation
+                double result = 0.0, c = 0.0;
+                for (int i = 0, len = numbers.length; i < len; ++i) {
+                    double num = numbers[i] / max;
+                    double y = num * num - c;
+                    double t = result + y;
+                    c = (t - result) - y;
+                    result = t;
+                }
+                return Math.sqrt(result) * max;
             }
-            return result;
         }
 
         /**
