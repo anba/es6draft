@@ -6,14 +6,15 @@
  */
 
 function range(start, end, increment = 1) {
-  Assert.assertTrue(typeof start == 'number' || typeof start == 'string' && start.length == 1);
-  Assert.assertTrue(typeof end == 'number' || typeof end == 'string' && start.length == 1);
-  Assert.assertTrue(typeof increment == 'number');
+  const { assertTrue } = Assert;
+  assertTrue(typeof start == 'number' || typeof start == 'string' && start.length == 1);
+  assertTrue(typeof end == 'number' || typeof end == 'string' && start.length == 1);
+  assertTrue(typeof increment == 'number');
 
   start = typeof start == 'string' ? start.codePointAt(0) : +start;
   end = typeof end == 'string' ? end.codePointAt(0) : +end;
-  Assert.assertTrue(start <= end);
-  Assert.assertTrue(increment > 0);
+  assertTrue(start <= end);
+  assertTrue(increment > 0);
 
   class Range {
     constructor(start, end, increment) {

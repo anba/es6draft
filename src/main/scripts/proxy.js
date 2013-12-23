@@ -15,7 +15,6 @@ const {
 const {
   create: Object_create,
   assign: Object_assign,
-  mixin: Object_mixin,
 } = Object;
 
 const iteratorSym = Symbol.iterator;

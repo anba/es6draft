@@ -12,6 +12,9 @@ const {
   Object, RegExp
 } = global;
 
+/*
+ * Add `RegExp.$input` (alias for `RegExp.input`)
+ */
 Object.defineProperty(RegExp, "$input", Object.getOwnPropertyDescriptor(RegExp, "input"));
 
 })(this);

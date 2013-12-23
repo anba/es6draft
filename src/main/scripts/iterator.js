@@ -334,20 +334,18 @@ function MakeBuiltinIterator(ctor) {
 // make TypedArrays iterable
 {
   const ArrayPrototype_iterator = Array.prototype[mozIteratorSym];
-  const types = ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"];
-  const TypedArrays = [for (type of types) global[type + "Array"]];
-  [String, ...TypedArrays].forEach(
-    ctor => {
-      // "@@iterator" iterator based on Array.prototype[mozIteratorSym]
-      Object.defineProperties(Object.assign(ctor.prototype, {
-        [mozIteratorSym]() {
-          return $CallFunction(ArrayPrototype_iterator, this);
-        }
-      }), {
-        [mozIteratorSym]: {enumerable: false},
-      });
-    }
-  );
+  for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"]) {
+    const ctor = global[`${type}Array`];
+
+    // "@@iterator" iterator based on Array.prototype[mozIteratorSym]
+    Object.defineProperties(Object.assign(ctor.prototype, {
+      [mozIteratorSym]() {
+        return $CallFunction(ArrayPrototype_iterator, this);
+      }
+    }), {
+      [mozIteratorSym]: {enumerable: false},
+    });
+  }
 }
 
 {
@@ -379,214 +377,6 @@ function MakeBuiltinIterator(ctor) {
   // delete original StringIteratorPrototype[@@iterator] and String.prototype[@@iterator]
   delete StringIteratorPrototype[iteratorSym];
   delete String.prototype[iteratorSym];
-}
-
-// create overrides for Map/Set/WeakMap/WeakSet
-
-{ /* Map */
-  const BuiltinMap = global.Map;
-  const isMapSym = Symbol("isMap");
-
-  class Map extends BuiltinMap {
-    constructor(iterable, comparator = "is") {
-      if (!(typeof this == 'object' && this !== null)) {
-        if (this === undefined) {
-          return new Map(iterable, comparator);
-        }
-        throw new TypeError();
-      }
-      if (!Object_hasOwnProperty(this, isMapSym) || this[isMapSym] !== false) {
-        throw new TypeError();
-      }
-      Object_defineProperty(this, isMapSym, {__proto__: null, value: true, configurable: false});
-      if (iterable !== undefined) {
-        iterable = iterable[mozIteratorSym]();
-      }
-      return super(iterable, comparator);
-    }
-
-    set(key, value) {
-      super(key, value);
-    }
-
-    get size() {
-      return super.size;
-    }
-
-    static [createSym]() {
-      var m = super();
-      Object_defineProperty(m, isMapSym, {__proto__: null, value: false, configurable: true});
-      return m;
-    }
-  }
-
-  Object.defineProperties(Map.prototype, {
-    set: {enumerable: false},
-    size: {enumerable: false},
-  });
-
-  Object.defineProperties(Map, {
-    [createSym]: {writable: false, enumerable: false},
-  });
-
-  Object.defineProperty(global, "Map", {
-    value: Map,
-    writable: true, enumerable: false, configurable: true
-  });
-}
-
-{ /* Set */
-  const BuiltinSet = global.Set;
-  const isSetSym = Symbol("isSet");
-
-  class Set extends BuiltinSet {
-    constructor(iterable, comparator = "is") {
-      if (!(typeof this == 'object' && this !== null)) {
-        if (this === undefined) {
-          return new Set(iterable, comparator);
-        }
-        throw new TypeError();
-      }
-      if (!Object_hasOwnProperty(this, isSetSym) || this[isSetSym] !== false) {
-        throw new TypeError();
-      }
-      Object_defineProperty(this, isSetSym, {__proto__: null, value: true, configurable: false});
-      if (iterable !== undefined) {
-        iterable = iterable[mozIteratorSym]();
-      }
-      return super(iterable, comparator);
-    }
-
-    add(value) {
-      super(value);
-    }
-
-    get size() {
-      return super.size;
-    }
-
-    static [createSym]() {
-      var m = super();
-      Object_defineProperty(m, isSetSym, {__proto__: null, value: false, configurable: true});
-      return m;
-    }
-  }
-
-  Object.defineProperties(Set.prototype, {
-    add: {enumerable: false},
-    size: {enumerable: false},
-  });
-
-  Object.defineProperties(Set, {
-    [createSym]: {writable: false, enumerable: false},
-  });
-
-  Object.defineProperty(global, "Set", {
-    value: Set,
-    writable: true, enumerable: false, configurable: true
-  });
-}
-
-{ /* WeakMap */
-  const BuiltinWeakMap = global.WeakMap;
-  const isWeakMapSym = Symbol("isWeakMap");
-
-  class WeakMap extends BuiltinWeakMap {
-    constructor(iterable, comparator = undefined) {
-      if (!(typeof this == 'object' && this !== null)) {
-        if (this === undefined) {
-          return new WeakMap(iterable, comparator);
-        }
-        throw new TypeError();
-      }
-      if (!Object_hasOwnProperty(this, isWeakMapSym) || this[isWeakMapSym] !== false) {
-        throw new TypeError();
-      }
-      Object_defineProperty(this, isWeakMapSym, {__proto__: null, value: true, configurable: false});
-      if (iterable !== undefined) {
-        if ("entries" in iterable) {
-          iterable = iterable.entries();
-        } else {
-          iterable = iterable[mozIteratorSym]();
-        }
-      }
-      return super(iterable, comparator);
-    }
-
-    get(key, defaultValue) {
-      return this.has(key) ? super(key) : defaultValue;
-    }
-
-    set(key, value) {
-      super(key, value);
-    }
-
-    static [createSym]() {
-      var m = super();
-      Object_defineProperty(m, isWeakMapSym, {__proto__: null, value: false, configurable: true});
-      return m;
-    }
-  }
-
-  Object.defineProperties(WeakMap.prototype, {
-    set: {enumerable: false},
-  });
-
-  Object.defineProperties(WeakMap, {
-    [createSym]: {writable: false, enumerable: false},
-  });
-
-  Object.defineProperty(global, "WeakMap", {
-    value: WeakMap,
-    writable: true, enumerable: false, configurable: true
-  });
-}
-
-{ /* WeakSet */
-  const BuiltinWeakSet = global.WeakSet;
-  const isWeakSetSym = Symbol("isWeakSet");
-
-  class WeakSet extends BuiltinWeakSet {
-    constructor(iterable, comparator = undefined) {
-      if (!(typeof this == 'object' && this !== null)) {
-        if (this === undefined) {
-          return new WeakSet(iterable, comparator);
-        }
-        throw new TypeError();
-      }
-      if (!Object_hasOwnProperty(this, isWeakSetSym) || this[isWeakSetSym] !== false) {
-        throw new TypeError();
-      }
-      Object_defineProperty(this, isWeakSetSym, {__proto__: null, value: true, configurable: false});
-      if (iterable !== undefined) {
-        iterable = iterable[mozIteratorSym]();
-      }
-      return super(iterable, comparator);
-    }
-
-    add(value) {
-      super(value);
-    }
-
-    static [createSym]() {
-      var m = super();
-      Object_defineProperty(m, isWeakSetSym, {__proto__: null, value: false, configurable: true});
-      return m;
-    }
-  }
-
-  Object.defineProperties(WeakSet.prototype, {
-    add: {enumerable: false},
-  });
-
-  Object.defineProperties(WeakSet, {
-    [createSym]: {writable: false, enumerable: false},
-  });
-
-  Object.defineProperty(global, "WeakSet", {
-    value: WeakSet,
-    writable: true, enumerable: false, configurable: true
-  });
 }
 
 })(this);

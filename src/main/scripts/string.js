@@ -30,20 +30,23 @@ function ToFlatPattern(p) {
   return $CallFunction(RegExp_prototype_replace, specialCharsRE, p, "\\$&");
 }
 
+/*
+ * Add support to specify regular expression flags
+ */
 Object.defineProperties(Object.assign(String.prototype, {
-  match(regexp, flags) {
+  match(regexp, flags = void 0) {
     if (typeof regexp == 'string' && flags !== void 0) {
       regexp = new RegExp(regexp, flags);
     }
     return $CallFunction(String_prototype_match, this, regexp);
   },
-  search(regexp, flags) {
+  search(regexp, flags = void 0) {
     if (typeof regexp == 'string' && flags !== void 0) {
       regexp = new RegExp(regexp, flags);
     }
     return $CallFunction(String_prototype_search, this, regexp);
   },
-  replace(searchValue, replaceValue, flags) {
+  replace(searchValue, replaceValue, flags = void 0) {
     if (typeof searchValue == 'string' && flags !== void 0) {
       searchValue = new RegExp(ToFlatPattern(searchValue), flags);
     }

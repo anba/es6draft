@@ -145,10 +145,11 @@ Object.defineProperty(Object.assign(global, {
   }
 }), "uneval", {enumerable: false});
 
-// duplicated definition from array-join.js to access shared 'weakset'
+// duplicated definition from cyclic.js to access shared 'weakset'
 Object.defineProperty(Object.assign(Array.prototype, {
   join(separator) {
-    if (typeof this == 'function' || typeof this == 'object' && this !== null) {
+    const isObject = typeof this == 'function' || typeof this == 'object' && this !== null;
+    if (isObject) {
       if (weakset.has(this)) {
         return "";
       }
@@ -157,7 +158,7 @@ Object.defineProperty(Object.assign(Array.prototype, {
     try {
       return Array_prototype_join.call(this, separator);
     } finally {
-      if (typeof this == 'function' || typeof this == 'object' && this !== null) {
+      if (isObject) {
         weakset.delete(this);
       }
     }
@@ -218,19 +219,19 @@ Object.defineProperty(Object.assign(Array.prototype, {
 
 Object.defineProperty(Object.assign(String.prototype, {
   toSource() {
-    return "(new String(" + Quote(String.prototype.toString.call(this)) + "))";
+    return `(new String(${ Quote(String.prototype.toString.call(this)) }))`;
   }
 }), "toSource", {enumerable: false});
 
 Object.defineProperty(Object.assign(Boolean.prototype, {
   toSource() {
-    return "(new Boolean(" + Boolean.prototype.valueOf.call(this) + "))";
+    return `(new Boolean(${ Boolean.prototype.valueOf.call(this) }))`;
   }
 }), "toSource", {enumerable: false});
 
 Object.defineProperty(Object.assign(Number.prototype, {
   toSource() {
-    return "(new Number(" + Number.prototype.valueOf.call(this) + "))";
+    return `(new Number(${ Number.prototype.valueOf.call(this) }))`;
   }
 }), "toSource", {enumerable: false});
 
@@ -242,7 +243,7 @@ Object.defineProperty(Object.assign(Math, {
 
 Object.defineProperty(Object.assign(Date.prototype, {
   toSource() {
-    return "(new Date(" + Date.prototype.valueOf.call(this) + "))";
+    return `(new Date(${ Date.prototype.valueOf.call(this) }))`;
   }
 }), "toSource", {enumerable: false});
 

@@ -32,7 +32,8 @@ const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 const weakset = new WeakSet(), set = new Set();
 
 function checkCycle(fn, o, ...args) {
-  if (typeof o == 'function' || typeof o == 'object' && o !== null) {
+  const isObject = typeof o == 'function' || typeof o == 'object' && o !== null;
+  if (isObject) {
     if ($CallFunction(WeakSet_prototype_has, weakset, o)) {
       return "";
     }
@@ -46,7 +47,7 @@ function checkCycle(fn, o, ...args) {
   try {
     return $CallFunction(fn, o, ...args);
   } finally {
-    if (typeof o == 'function' || typeof o == 'object' && o !== null) {
+    if (isObject) {
       $CallFunction(WeakSet_prototype_delete, weakset, o);
     } else {
       $CallFunction(Set_prototype_delete, set, o);
@@ -54,18 +55,27 @@ function checkCycle(fn, o, ...args) {
   }
 }
 
+/*
+ * Add cyclic check to: Array.prototype.join
+ */
 Object.defineProperty(Object.assign(Array.prototype, {
   join(separator) {
     return checkCycle(Array_prototype_join, this, separator);
   }
 }), "join", {enumerable: false});
 
+/*
+ * Add cyclic check to: Array.prototype.toLocaleString
+ */
 Object.defineProperty(Object.assign(Array.prototype, {
   toLocaleString() {
     return checkCycle(Array_prototype_toLocaleString, this);
   }
 }), "toLocaleString", {enumerable: false});
 
+/*
+ * Add cyclic check to: Error.prototype.toString
+ */
 Object.defineProperty(Object.assign(Error.prototype, {
   toString() {
     return checkCycle(Error_prototype_toString, this);

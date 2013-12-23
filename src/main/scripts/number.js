@@ -12,6 +12,9 @@ const {
   Object, Number, Math,
 } = global;
 
+/*
+ * Add 'Number.toInteger(v)'
+ */
 Object.defineProperties(Object.assign(Number, {
   toInteger(v) {
     var number = +v;

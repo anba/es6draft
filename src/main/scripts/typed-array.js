@@ -19,38 +19,41 @@ const {
 
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
-const types = ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"];
-const TypedArrays = [for (type of types) global[type + "Array"]];
+for (const type of ["Int8", "Uint8", "Uint8Clamped", "Int16", "Uint16", "Int32", "Uint32", "Float32", "Float64"]) {
+  const ctor = global[`${type}Array`];
+  const {
+    subarray, set
+  } = ctor.prototype;
 
-TypedArrays.forEach(
-  ctor => {
-    const {
-      subarray, set
-    } = ctor.prototype;
-    Object.defineProperty(ctor.prototype, "move", {
-      value(start, end, dest) {
-        start = +start; end = +end; dest = +dest;
-        const len = this.length;
-        if (end < 0) {
-          end = len + end;
-        }
-        if (dest < 0) {
-          dest = len + dest;
-        }
-        dest = Math_max(0, Math_min(len, dest));
-        $CallFunction(set, this, $CallFunction(subarray, this, start, end), dest);
-      },
-      writable: true, enumerable: false, configurable: true
-    });
+  /*
+   * Add 'move' operation
+   */
+  Object.defineProperty(ctor.prototype, "move", {
+    value(start, end, dest) {
+      start = +start; end = +end; dest = +dest;
+      const len = this.length;
+      if (end < 0) {
+        end = len + end;
+      }
+      if (dest < 0) {
+        dest = len + dest;
+      }
+      dest = Math_max(0, Math_min(len, dest));
+      $CallFunction(set, this, $CallFunction(subarray, this, start, end), dest);
+    },
+    writable: true, enumerable: false, configurable: true
+  });
 
-    Object.defineProperty(ctor.prototype, "subarray", {
-      value(begin, end) {
-        if (!(this instanceof ctor)) throw new TypeError();
-        return $CallFunction(subarray, this, begin, end);
-      },
-      writable: true, enumerable: false, configurable: true
-    });
-  }
-);
+  /*
+   * Remove polymorphism from 'subarray'
+   */
+  Object.defineProperty(ctor.prototype, "subarray", {
+    value(begin, end) {
+      if (!(this instanceof ctor)) throw new TypeError();
+      return $CallFunction(subarray, this, begin, end);
+    },
+    writable: true, enumerable: false, configurable: true
+  });
+}
 
 })(this);
