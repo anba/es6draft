@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.DefineProperty
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
@@ -109,7 +109,7 @@ public class OrdinaryFunction extends FunctionObject {
         Object obj;
         if (!Type.isUndefined(creator)) {
             if (!IsCallable(creator)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             obj = ((Callable) creator).call(cx, f);
         } else {
@@ -117,7 +117,7 @@ public class OrdinaryFunction extends FunctionObject {
         }
         /* step 6 */
         if (!Type.isObject(obj)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* steps 7-8 */
         Object result = f.call(cx, obj, args);
@@ -140,7 +140,7 @@ public class OrdinaryFunction extends FunctionObject {
         Object obj;
         if (!Type.isUndefined(creator)) {
             if (!IsCallable(creator)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             obj = ((Callable) creator).call(cx, f);
         } else {
@@ -148,7 +148,7 @@ public class OrdinaryFunction extends FunctionObject {
         }
         /* step 6 */
         if (!Type.isObject(obj)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* steps 7-8 */
         // Invoke 'tailCall()' instead of 'call()' to get TailCallInvocation objects
@@ -314,7 +314,7 @@ public class OrdinaryFunction extends FunctionObject {
 
         @Override
         public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            throw throwTypeError(calleeContext(), Messages.Key.StrictModePoisonPill);
+            throw newTypeError(calleeContext(), Messages.Key.StrictModePoisonPill);
         }
     }
 

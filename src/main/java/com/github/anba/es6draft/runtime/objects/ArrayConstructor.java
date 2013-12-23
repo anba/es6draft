@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -86,7 +86,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
                 double llen = Type.numberValue(len);
                 intLen = ToUint32(llen);
                 if (intLen != llen) {
-                    throw throwRangeError(calleeContext, Messages.Key.InvalidArrayLength);
+                    throw newRangeError(calleeContext, Messages.Key.InvalidArrayLength);
                 }
             }
             /* steps 9-10 */
@@ -204,7 +204,7 @@ public class ArrayConstructor extends BuiltinConstructor implements Initialisabl
                 mapping = false;
             } else {
                 if (!IsCallable(mapfn)) {
-                    throw throwTypeError(cx, Messages.Key.NotCallable);
+                    throw newTypeError(cx, Messages.Key.NotCallable);
                 }
                 mapping = true;
                 mapper = (Callable) mapfn;

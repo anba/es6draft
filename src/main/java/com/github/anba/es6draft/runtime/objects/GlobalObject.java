@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwURIError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newURIError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.Eval.indirectEval;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -169,7 +169,7 @@ public class GlobalObject extends OrdinaryObject {
             /* steps 3-4 */
             String decoded = URIFunctions.decodeURI(uriString);
             if (decoded == null) {
-                throw throwURIError(cx, Messages.Key.MalformedURI);
+                throw newURIError(cx, Messages.Key.MalformedURI);
             }
             return decoded;
         }
@@ -185,7 +185,7 @@ public class GlobalObject extends OrdinaryObject {
             /* steps 3-4 */
             String decoded = URIFunctions.decodeURIComponent(componentString);
             if (decoded == null) {
-                throw throwURIError(cx, Messages.Key.MalformedURI);
+                throw newURIError(cx, Messages.Key.MalformedURI);
             }
             return decoded;
         }
@@ -200,7 +200,7 @@ public class GlobalObject extends OrdinaryObject {
             /* steps 3-4 */
             String encoded = URIFunctions.encodeURI(uriString);
             if (encoded == null) {
-                throw throwURIError(cx, Messages.Key.MalformedURI);
+                throw newURIError(cx, Messages.Key.MalformedURI);
             }
             return encoded;
         }
@@ -216,7 +216,7 @@ public class GlobalObject extends OrdinaryObject {
             /* steps 3-4 */
             String encoded = URIFunctions.encodeURIComponent(componentString);
             if (encoded == null) {
-                throw throwURIError(cx, Messages.Key.MalformedURI);
+                throw newURIError(cx, Messages.Key.MalformedURI);
             }
             return encoded;
         }

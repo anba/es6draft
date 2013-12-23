@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 
@@ -62,7 +62,6 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Realm realm = calleeContext.getRealm();
 
         /* steps 1-7 */
         int argCount = args.length;
@@ -87,6 +86,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         /* steps 8-12 */
         RuntimeInfo.Function function;
         try {
+            Realm realm = calleeContext.getRealm();
             Parser parser = new Parser("<Function>", 1, realm.getOptions());
             FunctionDefinition functionDef = parser.parseFunction(p, bodyText);
             String className = calleeContext.getRealm().nextFunctionName();
@@ -112,7 +112,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         }
         /* step 17 */
         if (!(f instanceof OrdinaryFunction)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryFunction fn = (OrdinaryFunction) f;
         /* step 18 */

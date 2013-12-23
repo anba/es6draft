@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -147,7 +147,7 @@ public class ExoticArray extends OrdinaryObject {
         /* step 9 (moved) */
         if (length > 0xFFFF_FFFFL) {
             // enfore array index invariant
-            throw throwRangeError(cx, Messages.Key.InvalidArrayLength);
+            throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
         /* steps 2-4, 6 (implicit) */
         ExoticArray array = new ExoticArray(cx.getRealm());
@@ -207,7 +207,7 @@ public class ExoticArray extends OrdinaryObject {
         long newLen = ToUint32(cx, desc.getValue());
         /* step 4 */
         if (newLen != ToNumber(cx, desc.getValue())) {
-            throw throwRangeError(cx, Messages.Key.InvalidArrayLength);
+            throw newRangeError(cx, Messages.Key.InvalidArrayLength);
         }
         /* step 5 */
         newLenDesc.setValue(newLen);

@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.collection;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -55,7 +55,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
                     return map;
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -143,7 +143,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
             WeakHashMap<Object, Object> entries = m.getWeakMapData();
             /* step 6 */
             if (!Type.isObject(key)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* steps 7-9 */
             entries.put(key, value);

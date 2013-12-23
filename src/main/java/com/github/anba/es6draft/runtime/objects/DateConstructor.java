@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.DateAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -124,7 +124,7 @@ public class DateConstructor extends BuiltinConstructor implements Initialisable
                 return obj.getDateValue();
             }
         }
-        throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+        throw newTypeError(cx, Messages.Key.IncompatibleObject);
     }
 
     private static boolean isUninitialisedDateObject(Object thisValue) {

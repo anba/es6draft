@@ -10,8 +10,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -143,12 +143,12 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
             Object locales, Object opts) {
         // spec allows any object to become a NumberFormat object, we don't allow this
         if (!(obj instanceof NumberFormatObject)) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* steps 1-2 */
         NumberFormatObject numberFormat = (NumberFormatObject) obj;
         if (numberFormat.isInitializedIntlObject()) {
-            throwTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitialisedObject);
         }
         numberFormat.setInitializedIntlObject(true);
         /* step 3 */
@@ -188,12 +188,12 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
         /* step 18 */
         if (c != null) {
             if (!IsWellFormedCurrencyCode(cx, c)) {
-                throw throwRangeError(cx, Messages.Key.IntlInvalidCurrency, c);
+                throw newRangeError(cx, Messages.Key.IntlInvalidCurrency, c);
             }
         }
         /* step 19 */
         if ("currency".equals(s) && c == null) {
-            throw throwTypeError(cx, Messages.Key.IntlInvalidCurrency, "null");
+            throw newTypeError(cx, Messages.Key.IntlInvalidCurrency, "null");
         }
         /* step 20 */
         int cDigits = -1;
@@ -295,7 +295,7 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
         }
         ScriptObject obj = ToObject(calleeContext, thisValue);
         if (!IsExtensible(calleeContext, obj)) {
-            throwTypeError(calleeContext, Messages.Key.NotExtensible);
+            throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
         InitializeNumberFormat(calleeContext, obj, locales, options);
         return obj;

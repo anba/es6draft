@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import java.util.Objects;
@@ -54,7 +54,7 @@ public class SymbolPrototype extends OrdinaryObject implements Initialisable {
             if (object instanceof SymbolObject) {
                 return ((SymbolObject) object).getSymbolData();
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -95,7 +95,7 @@ public class SymbolPrototype extends OrdinaryObject implements Initialisable {
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             /* step 1 */
-            throw throwTypeError(cx, Messages.Key.SymbolPrimitive);
+            throw newTypeError(cx, Messages.Key.SymbolPrimitive);
         }
 
         /**

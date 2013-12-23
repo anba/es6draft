@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -76,14 +76,14 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         assert size >= 0;
         /* step 2 */
         if (size > Integer.MAX_VALUE) {
-            throwRangeError(cx, Messages.Key.OutOfMemory);
+            throw newRangeError(cx, Messages.Key.OutOfMemory);
         }
         try {
             /* step 3 */
             return ByteBuffer.allocate((int) size).order(DEFAULT_BYTE_ORDER);
         } catch (OutOfMemoryError e) {
             /* step 2 */
-            throw throwRangeError(cx, Messages.Key.OutOfMemoryVM);
+            throw newRangeError(cx, Messages.Key.OutOfMemoryVM);
         }
     }
 
@@ -158,7 +158,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         ByteBuffer srcBlock = srcBuffer.getData();
         /* step 3 */
         if (srcBlock == null) {
-            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 4 */
         long srcLength = srcBuffer.getByteLength();
@@ -203,7 +203,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         ByteBuffer block = arrayBuffer.getData();
         /* step 4 */
         if (block == null) {
-            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* steps 7-8 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
@@ -264,7 +264,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         ByteBuffer block = arrayBuffer.getData();
         /* step 4 */
         if (block == null) {
-            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* steps 6-9 */
         if ((block.order() == ByteOrder.LITTLE_ENDIAN) != isLittleEndian) {
@@ -322,11 +322,11 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         /* step 1 (omitted) */
         /* step 2 */
         if (!(thisValue instanceof ArrayBufferObject)) {
-            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         ArrayBufferObject buf = (ArrayBufferObject) thisValue;
         if (buf.getData() != null) {
-            throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         // FIXME: spec issue? - undefined length is same as 0 for bwcompat?
         if (Type.isUndefined(length)) {
@@ -338,7 +338,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         long byteLength = ToLength(numberLength);
         /* step 6 */
         if (!SameValueZero(numberLength, byteLength)) {
-            throwRangeError(calleeContext, Messages.Key.InvalidBufferSize);
+            throw newRangeError(calleeContext, Messages.Key.InvalidBufferSize);
         }
         /* step 7 */
         return SetArrayBufferData(calleeContext, buf, byteLength);

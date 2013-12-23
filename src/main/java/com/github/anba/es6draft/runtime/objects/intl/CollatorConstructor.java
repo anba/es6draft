@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.intl;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsExtensible;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -233,12 +233,12 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
             Object opts) {
         // spec allows any object to become a Collator object, we don't allow this
         if (!(obj instanceof CollatorObject)) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* steps 1-2 */
         CollatorObject collator = (CollatorObject) obj;
         if (collator.isInitializedIntlObject()) {
-            throwTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitialisedObject);
         }
         collator.setInitializedIntlObject(true);
         /* step 3 */
@@ -320,7 +320,7 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
         }
         ScriptObject obj = ToObject(calleeContext, thisValue);
         if (!IsExtensible(calleeContext, obj)) {
-            throwTypeError(calleeContext, Messages.Key.NotExtensible);
+            throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
         InitializeCollator(calleeContext, obj, locales, options);
         return obj;

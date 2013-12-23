@@ -30,12 +30,12 @@ public final class World<GLOBAL extends GlobalObject> {
     private final EnumSet<CompatibilityOption> options;
     private final EnumSet<Option> compilerOptions;
 
+    private final Locale locale = Locale.getDefault();
+    private final TimeZone timezone = TimeZone.getDefault();
+    private final Messages messages = Messages.create(locale);
+
     // TODO: move to custom class
     private ArrayDeque<Microtask> tasks = new ArrayDeque<>();
-
-    private Locale locale = Locale.getDefault();
-    private TimeZone timezone = TimeZone.getDefault();
-    private Messages messages = Messages.create(locale);
 
     private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
         @Override
@@ -120,7 +120,14 @@ public final class World<GLOBAL extends GlobalObject> {
      * Returns the localised message for {@code key}
      */
     public String message(Messages.Key key) {
-        return messages.getString(key);
+        return messages.getMessage(key);
+    }
+
+    /**
+     * Returns the localised message for {@code key}
+     */
+    public String message(Messages.Key key, String... args) {
+        return messages.getMessage(key, args);
     }
 
     /**

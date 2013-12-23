@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -96,11 +96,11 @@ public class StringIteratorPrototype extends OrdinaryObject implements Initialis
             /* step 1 (omitted) */
             /* step 2 */
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 3 */
             if (!(thisValue instanceof StringIterator)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             StringIterator iterator = (StringIterator) thisValue;
             /* step 4 */

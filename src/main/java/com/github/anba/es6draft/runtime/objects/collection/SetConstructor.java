@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -60,14 +60,14 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
-            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof SetObject)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         SetObject set = (SetObject) thisValue;
         if (set.isInitialised()) {
-            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
         /* steps 5-7 */
@@ -79,7 +79,7 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
             iter = GetIterator(calleeContext, iterable);
             Object _adder = Get(calleeContext, set, "add");
             if (!IsCallable(_adder)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             adder = (Callable) _adder;
         }
@@ -88,7 +88,7 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
         SetObject.Comparator _comparator = SetObject.Comparator.SameValueZero;
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
-                throw throwRangeError(calleeContext, Messages.Key.SetInvalidComparator);
+                throw newRangeError(calleeContext, Messages.Key.SetInvalidComparator);
             }
             _comparator = SetObject.Comparator.SameValue;
         }

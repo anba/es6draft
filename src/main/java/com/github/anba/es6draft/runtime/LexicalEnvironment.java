@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.types.Reference;
@@ -66,7 +66,7 @@ public final class LexicalEnvironment {
         if (envRec != null) {
             return envRec.getBindingValue(name, strict);
         }
-        throw throwReferenceError(lex.cx, Messages.Key.UnresolvableReference, name);
+        throw newReferenceError(lex.cx, Messages.Key.UnresolvableReference, name);
     }
 
     /**

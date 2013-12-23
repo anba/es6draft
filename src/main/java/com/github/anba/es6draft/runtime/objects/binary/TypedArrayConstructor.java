@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -91,12 +91,12 @@ public class TypedArrayConstructor extends BuiltinConstructor implements Initial
         Object obj = thisValue;
         /* steps 2-3 */
         if (!(obj instanceof TypedArrayObject)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         TypedArrayObject array = (TypedArrayObject) obj;
         /* step 4 */
         if (array.getElementType() != null) {
-            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         /* step 5 */
         array.setElementType(getElementType());

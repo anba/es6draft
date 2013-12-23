@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProp
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIterator;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -78,7 +78,7 @@ class WrapperProxy implements ScriptObject {
      */
     public static WrapperProxy CreateWrapProxy(ExecutionContext cx, Object target) {
         if (!Type.isObject(target)) {
-            throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject proxyTarget = Type.objectValue(target);
         ScriptObject prototype = proxyTarget.getPrototypeOf(cx);
@@ -96,10 +96,10 @@ class WrapperProxy implements ScriptObject {
      */
     public static WrapperProxy CreateWrapProxy(ExecutionContext cx, Object target, Object proto) {
         if (!Type.isObject(target)) {
-            throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         if (!(Type.isObject(proto) || Type.isNull(proto))) {
-            throwTypeError(cx, Messages.Key.NotObjectOrNull);
+            throw newTypeError(cx, Messages.Key.NotObjectOrNull);
         }
         ScriptObject proxyTarget = Type.objectValue(target);
         ScriptObject prototype = Type.isObject(proto) ? Type.objectValue(proto) : null;

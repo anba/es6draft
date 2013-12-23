@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
 import java.lang.invoke.MethodHandle;
@@ -55,7 +55,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     @SuppressWarnings("unused")
     private static final Object uninitialisedFunctionObject(ExecutionContext cx) {
-        throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+        throw newTypeError(cx, Messages.Key.UninitialisedObject);
     }
 
     /** [[Scope]] */

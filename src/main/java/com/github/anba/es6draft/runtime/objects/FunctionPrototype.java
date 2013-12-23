@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.EMPTY_ARRAY;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareForTailCall;
@@ -31,8 +31,7 @@ import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
+import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 
 /**
  * <h1>19 Fundamental Objects</h1><br>
@@ -99,7 +98,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
         @Function(name = "toString", arity = 0)
         public static Object toString(ExecutionContext cx, Object thisValue) {
             if (!IsCallable(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             return ((Callable) thisValue).toSource();
         }
@@ -113,7 +112,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
                 Object argArray) {
             /* step 1 */
             if (!IsCallable(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             Callable func = (Callable) thisValue;
             /* step 2 */
@@ -135,7 +134,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
                 Object... args) {
             /* step 1 */
             if (!IsCallable(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             Callable func = (Callable) thisValue;
             /* steps 2-4 */
@@ -150,7 +149,7 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
                 Object... args) {
             /* step 2 */
             if (!IsCallable(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 1 */
             Callable target = (Callable) thisValue;
@@ -158,8 +157,8 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             ExoticBoundFunction f = BoundFunctionCreate(cx, target, thisArg, args);
             /* steps 5-6 */
             int l;
-            if (target instanceof OrdinaryFunction || target instanceof OrdinaryGenerator
-                    || target instanceof BuiltinFunction || target instanceof ExoticBoundFunction) {
+            if (target instanceof FunctionObject || target instanceof BuiltinFunction
+                    || target instanceof ExoticBoundFunction) {
                 Object targetLen = Get(cx, target, "length");
                 l = (int) Math.max(0, ToLength(cx, targetLen) - args.length);
             } else {

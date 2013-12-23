@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.internal;
 
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -30,12 +31,24 @@ public final class Messages {
         return new Messages(resourceBundle);
     }
 
-    public String getString(Key key) {
+    public String getMessage(Key key) {
         try {
             return resourceBundle.getString(key.id);
         } catch (MissingResourceException e) {
             return '!' + key.id + '!';
         }
+    }
+
+    public String getMessage(Key key, String... args) {
+        try {
+            return format(resourceBundle.getString(key.id), resourceBundle.getLocale(), args);
+        } catch (MissingResourceException e) {
+            return '!' + key.id + '!';
+        }
+    }
+
+    private String format(String pattern, Locale locale, String... messageArguments) {
+        return new MessageFormat(pattern, locale).format(messageArguments);
     }
 
     public enum Key {/* @formatter:off */

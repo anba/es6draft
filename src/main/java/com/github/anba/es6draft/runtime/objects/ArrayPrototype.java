@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.strictEqualityComparison;
 import static com.github.anba.es6draft.runtime.objects.ArrayIteratorPrototype.CreateArrayIterator;
@@ -525,7 +525,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
 
             // handle OOM early
             if (len > Integer.MAX_VALUE) {
-                throwInternalError(cx, Messages.Key.OutOfMemory);
+                throw newInternalError(cx, Messages.Key.OutOfMemory);
             }
 
             // collect elements
@@ -553,7 +553,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                 Comparator<Object> comparator;
                 if (!Type.isUndefined(comparefn)) {
                     if (!IsCallable(comparefn)) {
-                        throw throwTypeError(cx, Messages.Key.NotCallable);
+                        throw newTypeError(cx, Messages.Key.NotCallable);
                     }
                     comparator = new FunctionComparator(cx, (Callable) comparefn);
                 } else {
@@ -875,7 +875,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 7 (omitted) */
@@ -923,7 +923,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 7 (omitted) */
@@ -971,7 +971,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 7 (omitted) */
@@ -1002,7 +1002,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 7 (omitted) */
@@ -1047,7 +1047,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             long len = ToLength(cx, lenVal);
             /* step 6 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 7 (omitted) */
@@ -1109,12 +1109,12 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 7 */
             if (len == 0 && initialValue == null) {
-                throw throwTypeError(cx, Messages.Key.ReduceInitialValue);
+                throw newTypeError(cx, Messages.Key.ReduceInitialValue);
             }
             /* step 8 */
             long k = 0;
@@ -1132,7 +1132,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     }
                 }
                 if (!kpresent) {
-                    throw throwTypeError(cx, Messages.Key.ReduceInitialValue);
+                    throw newTypeError(cx, Messages.Key.ReduceInitialValue);
                 }
             }
             /* step 11 */
@@ -1176,12 +1176,12 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 7 */
             if (len == 0 && initialValue == null) {
-                throw throwTypeError(cx, Messages.Key.ReduceInitialValue);
+                throw newTypeError(cx, Messages.Key.ReduceInitialValue);
             }
             /* step 8 */
             long k = len - 1;
@@ -1199,7 +1199,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
                     }
                 }
                 if (!kpresent) {
-                    throw throwTypeError(cx, Messages.Key.ReduceInitialValue);
+                    throw newTypeError(cx, Messages.Key.ReduceInitialValue);
                 }
             }
             /* step 11 */
@@ -1243,7 +1243,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(predicate)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable pred = (Callable) predicate;
             /* step 7 (omitted) */
@@ -1291,7 +1291,7 @@ public class ArrayPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-5 (not applicable) */
             /* step 6 */
             if (!IsCallable(predicate)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable pred = (Callable) predicate;
             /* step 7 (omitted) */

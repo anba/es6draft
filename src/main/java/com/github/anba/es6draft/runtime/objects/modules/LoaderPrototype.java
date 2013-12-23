@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.objects.modules;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.modules.LinkSet.CreateLinkSet;
 import static com.github.anba.es6draft.runtime.modules.LinkSet.LoadModule;
@@ -76,11 +76,11 @@ public class LoaderPrototype extends OrdinaryObject implements Initialisable {
             if (value instanceof LoaderObject) {
                 LoaderObject loader = (LoaderObject) value;
                 if (loader.getModules() == null) {
-                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 return loader;
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -272,7 +272,7 @@ public class LoaderPrototype extends OrdinaryObject implements Initialisable {
             String sname = ToFlatString(cx, name);
             /* step 5 */
             if (!(module instanceof ModuleObject)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             ModuleObject m = (ModuleObject) module;
             /* steps 6-8 */
@@ -345,7 +345,7 @@ public class LoaderPrototype extends OrdinaryObject implements Initialisable {
         public static Object locate(ExecutionContext cx, Object thisValue, Object load) {
             // FIXME: spec bug - missing type check for load
             if (!Type.isObject(load)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 1 */
             return Get(cx, Type.objectValue(load), "name");
@@ -356,7 +356,7 @@ public class LoaderPrototype extends OrdinaryObject implements Initialisable {
          */
         @Function(name = "fetch", arity = 1)
         public static Object fetch(ExecutionContext cx, Object thisValue, Object load) {
-            throw throwTypeError(cx, Messages.Key.InternalError);
+            throw newTypeError(cx, Messages.Key.InternalError);
         }
 
         /**
@@ -366,7 +366,7 @@ public class LoaderPrototype extends OrdinaryObject implements Initialisable {
         public static Object translate(ExecutionContext cx, Object thisValue, Object load) {
             // FIXME: spec bug - missing type check for load
             if (!Type.isObject(load)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 1 */
             return Get(cx, Type.objectValue(load), "source");

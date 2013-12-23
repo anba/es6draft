@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.CompletePropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromPropertyDescriptor;
@@ -51,7 +51,7 @@ public class ExoticProxy implements ScriptObject {
 
     protected final ScriptObject getProxyHandler(ExecutionContext cx) {
         if (proxyHandler == null) {
-            throw throwTypeError(cx, Messages.Key.ProxyRevoked);
+            throw newTypeError(cx, Messages.Key.ProxyRevoked);
         }
         return proxyHandler;
     }
@@ -138,7 +138,7 @@ public class ExoticProxy implements ScriptObject {
             Object newObj = trap.call(callerContext, handler, target, argArray);
             /* step 10 */
             if (!Type.isObject(newObj)) {
-                throw throwTypeError(callerContext, Messages.Key.NotObjectType);
+                throw newTypeError(callerContext, Messages.Key.NotObjectType);
             }
             /* step 11 */
             return Type.objectValue(newObj);
@@ -159,11 +159,11 @@ public class ExoticProxy implements ScriptObject {
     public static ExoticProxy ProxyCreate(ExecutionContext cx, Object target, Object handler) {
         /* step 1 */
         if (!Type.isObject(target)) {
-            throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 2 */
         if (!Type.isObject(handler)) {
-            throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject proxyTarget = Type.objectValue(target);
         ScriptObject proxyHandler = Type.objectValue(handler);
@@ -274,7 +274,7 @@ public class ExoticProxy implements ScriptObject {
         Object handlerProto = trap.call(cx, handler, target);
         /* step 9 */
         if (!(Type.isNull(handlerProto) || Type.isObject(handlerProto))) {
-            throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
+            throw newTypeError(cx, Messages.Key.NotObjectOrNull);
         }
         ScriptObject handlerProto_ = (ScriptObject) unmaskNull(handlerProto);
         /* steps 10-11 */
@@ -287,7 +287,7 @@ public class ExoticProxy implements ScriptObject {
         ScriptObject targetProto = target.getPrototypeOf(cx);
         /* step 14 */
         if (!SameValue(handlerProto_, targetProto)) {
-            throw throwTypeError(cx, Messages.Key.ProxySamePrototype);
+            throw newTypeError(cx, Messages.Key.ProxySamePrototype);
         }
         /* step 15 */
         return handlerProto_;
@@ -323,7 +323,7 @@ public class ExoticProxy implements ScriptObject {
         ScriptObject targetProto = target.getPrototypeOf(cx);
         /* step 16 */
         if (booleanTrapResult && !SameValue(prototype, targetProto)) {
-            throw throwTypeError(cx, Messages.Key.ProxySamePrototype);
+            throw newTypeError(cx, Messages.Key.ProxySamePrototype);
         }
         /* step 17 */
         return booleanTrapResult;
@@ -352,7 +352,7 @@ public class ExoticProxy implements ScriptObject {
         boolean targetResult = target.isExtensible(cx);
         /* step 12 */
         if (booleanTrapResult != targetResult) {
-            throw throwTypeError(cx, Messages.Key.ProxyExtensible);
+            throw newTypeError(cx, Messages.Key.ProxyExtensible);
         }
         /* step 13 */
         return booleanTrapResult;
@@ -381,7 +381,7 @@ public class ExoticProxy implements ScriptObject {
         boolean targetIsExtensible = target.isExtensible(cx);
         /* step 12 */
         if (booleanTrapResult && targetIsExtensible) {
-            throw throwTypeError(cx, Messages.Key.ProxyExtensible);
+            throw newTypeError(cx, Messages.Key.ProxyExtensible);
         }
         /* step 13 */
         return booleanTrapResult;
@@ -422,7 +422,7 @@ public class ExoticProxy implements ScriptObject {
         Object trapResultObj = trap.call(cx, handler, target, propertyKey);
         /* step 10 */
         if (!(Type.isObject(trapResultObj) || Type.isUndefined(trapResultObj))) {
-            throw throwTypeError(cx, Messages.Key.ProxyNotObjectOrUndefined);
+            throw newTypeError(cx, Messages.Key.ProxyNotObjectOrUndefined);
         }
         /* steps 11-12 */
         Property targetDesc = __getOwnProperty(cx, target, propertyKey);
@@ -432,11 +432,11 @@ public class ExoticProxy implements ScriptObject {
                 return null;
             }
             if (!targetDesc.isConfigurable()) {
-                throw throwTypeError(cx, Messages.Key.ProxyNotConfigurable);
+                throw newTypeError(cx, Messages.Key.ProxyNotConfigurable);
             }
             boolean extensibleTarget = IsExtensible(cx, target);
             if (!extensibleTarget) {
-                throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
+                throw newTypeError(cx, Messages.Key.ProxyNotExtensible);
             }
             return null;
         }
@@ -454,12 +454,12 @@ public class ExoticProxy implements ScriptObject {
         boolean valid = IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc);
         /* step 20 */
         if (!valid) {
-            throw throwTypeError(cx, Messages.Key.ProxyIncompatibleDescriptor);
+            throw newTypeError(cx, Messages.Key.ProxyIncompatibleDescriptor);
         }
         /* step 21 */
         if (!resultDesc.isConfigurable()) {
             if (targetDesc == null || targetDesc.isConfigurable()) {
-                throw throwTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
+                throw newTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
             }
         }
         /* step 22 */
@@ -523,17 +523,17 @@ public class ExoticProxy implements ScriptObject {
         /* steps 20-21 */
         if (targetDesc == null) {
             if (!extensibleTarget) {
-                throw throwTypeError(cx, Messages.Key.ProxyAbsentNotExtensible);
+                throw newTypeError(cx, Messages.Key.ProxyAbsentNotExtensible);
             }
             if (!desc.isConfigurable()) {
-                throw throwTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
+                throw newTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
             }
         } else {
             if (!IsCompatiblePropertyDescriptor(extensibleTarget, desc, targetDesc)) {
-                throw throwTypeError(cx, Messages.Key.ProxyIncompatibleDescriptor);
+                throw newTypeError(cx, Messages.Key.ProxyIncompatibleDescriptor);
             }
             if (settingConfigFalse && targetDesc.isConfigurable()) {
-                throw throwTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
+                throw newTypeError(cx, Messages.Key.ProxyAbsentOrConfigurable);
             }
         }
         /* step 22 */
@@ -580,11 +580,11 @@ public class ExoticProxy implements ScriptObject {
             Property targetDesc = __getOwnProperty(cx, target, propertyKey);
             if (targetDesc != null) {
                 if (!targetDesc.isConfigurable()) {
-                    throw throwTypeError(cx, Messages.Key.ProxyNotConfigurable);
+                    throw newTypeError(cx, Messages.Key.ProxyNotConfigurable);
                 }
                 boolean extensibleTarget = IsExtensible(cx, target);
                 if (!extensibleTarget) {
-                    throw throwTypeError(cx, Messages.Key.ProxyNotExtensible);
+                    throw newTypeError(cx, Messages.Key.ProxyNotExtensible);
                 }
             }
         }
@@ -632,13 +632,13 @@ public class ExoticProxy implements ScriptObject {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
                     && !targetDesc.isWritable()) {
                 if (!SameValue(trapResult, targetDesc.getValue())) {
-                    throw throwTypeError(cx, Messages.Key.ProxySameValue);
+                    throw newTypeError(cx, Messages.Key.ProxySameValue);
                 }
             }
             if (targetDesc.isAccessorDescriptor() && !targetDesc.isConfigurable()
                     && targetDesc.getGetter() == null) {
                 if (trapResult != UNDEFINED) {
-                    throw throwTypeError(cx, Messages.Key.ProxyNoGetter);
+                    throw newTypeError(cx, Messages.Key.ProxyNoGetter);
                 }
             }
         }
@@ -692,12 +692,12 @@ public class ExoticProxy implements ScriptObject {
             if (targetDesc.isDataDescriptor() && !targetDesc.isConfigurable()
                     && !targetDesc.isWritable()) {
                 if (!SameValue(value, targetDesc.getValue())) {
-                    throw throwTypeError(cx, Messages.Key.ProxySameValue);
+                    throw newTypeError(cx, Messages.Key.ProxySameValue);
                 }
             }
             if (targetDesc.isAccessorDescriptor() && !targetDesc.isConfigurable()) {
                 if (targetDesc.getSetter() == null) {
-                    throw throwTypeError(cx, Messages.Key.ProxyNoSetter);
+                    throw newTypeError(cx, Messages.Key.ProxyNoSetter);
                 }
             }
         }
@@ -752,7 +752,7 @@ public class ExoticProxy implements ScriptObject {
         }
         /* step 15 */
         if (!targetDesc.isConfigurable()) {
-            throw throwTypeError(cx, Messages.Key.ProxyDeleteNonConfigurable);
+            throw newTypeError(cx, Messages.Key.ProxyDeleteNonConfigurable);
         }
         /* step 16 */
         return true;
@@ -777,7 +777,7 @@ public class ExoticProxy implements ScriptObject {
         Object trapResult = trap.call(cx, handler, target);
         /* step 9 */
         if (!Type.isObject(trapResult)) {
-            throw throwTypeError(cx, Messages.Key.ProxyNotObject);
+            throw newTypeError(cx, Messages.Key.ProxyNotObject);
         }
         /* step 10 */
         return Type.objectValue(trapResult);
@@ -802,7 +802,7 @@ public class ExoticProxy implements ScriptObject {
         Object trapResult = trap.call(cx, handler, target);
         /* step 9 */
         if (!Type.isObject(trapResult)) {
-            throw throwTypeError(cx, Messages.Key.ProxyNotObject);
+            throw newTypeError(cx, Messages.Key.ProxyNotObject);
         }
         /* steps 10-11 */
         return Type.objectValue(trapResult);

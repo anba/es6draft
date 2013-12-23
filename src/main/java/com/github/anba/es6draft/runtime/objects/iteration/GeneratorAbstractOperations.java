@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -42,11 +42,11 @@ public final class GeneratorAbstractOperations {
     public static Object GeneratorResume(ExecutionContext cx, Object generator, Object value) {
         /* step 1 */
         if (!Type.isObject(generator)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 2 */
         if (!(generator instanceof GeneratorObject)) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* steps 3-15 */
         return ((GeneratorObject) generator).resume(cx, value);

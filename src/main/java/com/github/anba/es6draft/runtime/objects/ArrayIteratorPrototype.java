@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
@@ -109,11 +109,11 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
         public static Object next(ExecutionContext cx, Object thisValue) {
             /* steps 1-2 */
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 3 */
             if (!(thisValue instanceof ArrayIterator)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             ArrayIterator iter = (ArrayIterator) thisValue;
             /* step 4 */

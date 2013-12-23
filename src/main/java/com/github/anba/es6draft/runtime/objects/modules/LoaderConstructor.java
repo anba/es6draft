@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.modules;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -60,7 +60,7 @@ public class LoaderConstructor extends BuiltinConstructor implements Initialisab
         }
         /* step 2 */
         if (!Type.isObject(options)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 3 */
         return Get(cx, Type.objectValue(options), name);
@@ -75,13 +75,13 @@ public class LoaderConstructor extends BuiltinConstructor implements Initialisab
         Object options = args.length > 0 ? args[0] : UNDEFINED;
         /* steps 2-3 */
         if (!(thisValue instanceof LoaderObject)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         /* step 1 */
         LoaderObject loader = (LoaderObject) thisValue;
         /* step 4 */
         if (loader.getModules() != null) {
-            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         // FIXME: tests assume options gets defaulted to empty object if undefined
         if (Type.isUndefined(options)) {
@@ -89,7 +89,7 @@ public class LoaderConstructor extends BuiltinConstructor implements Initialisab
         }
         /* step 5 */
         if (!Type.isObject(options)) {
-            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         ScriptObject opts = Type.objectValue(options);
         /* steps 6-7 */
@@ -99,11 +99,11 @@ public class LoaderConstructor extends BuiltinConstructor implements Initialisab
         if (Type.isUndefined(realmObject)) {
             realm = calleeContext.getRealm();
         } else if (!(realmObject instanceof RealmObject)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         } else {
             realm = ((RealmObject) realmObject).getRealm();
             if (realm == null) {
-                throw throwTypeError(calleeContext, Messages.Key.UninitialisedObject);
+                throw newTypeError(calleeContext, Messages.Key.UninitialisedObject);
             }
         }
         /* step 11 */

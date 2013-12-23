@@ -10,8 +10,8 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreate
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
@@ -71,14 +71,14 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
             Object isLittleEndian, ElementType type) {
         /* steps 1-2 */
         if (!(view instanceof DataViewObject)) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         DataViewObject dataView = (DataViewObject) view;
         /* step 3 */
         ArrayBufferObject buffer = dataView.getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
         double numberIndex = ToNumber(cx, requestIndex);
@@ -86,7 +86,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         double getIndex = ToInteger(numberIndex);
         /* step 8 */
         if (numberIndex != getIndex || getIndex < 0) {
-            throwRangeError(cx, Messages.Key.InvalidByteOffset);
+            throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
         /* steps 9-10 */
         boolean littleEndian = ToBoolean(isLittleEndian);
@@ -98,7 +98,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         int elementSize = type.size();
         /* step 14 */
         if (getIndex + elementSize > viewSize) {
-            throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
+            throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
         /* step 15 */
         long bufferIndex = (long) getIndex + viewOffset;
@@ -114,14 +114,14 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
             Object isLittleEndian, ElementType type, Object value) {
         /* steps 1-2 */
         if (!(view instanceof DataViewObject)) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         DataViewObject dataView = (DataViewObject) view;
         /* step 3 */
         ArrayBufferObject buffer = dataView.getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
         double numberIndex = ToNumber(cx, requestIndex);
@@ -129,7 +129,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         double getIndex = ToInteger(numberIndex);
         /* step 8 */
         if (numberIndex != getIndex || getIndex < 0) {
-            throwRangeError(cx, Messages.Key.InvalidByteOffset);
+            throw newRangeError(cx, Messages.Key.InvalidByteOffset);
         }
         /* steps 9-10 */
         boolean littleEndian = ToBoolean(isLittleEndian);
@@ -141,7 +141,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         int elementSize = type.size();
         /* step 14 */
         if (getIndex + elementSize > viewSize) {
-            throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
+            throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
         }
         /* step 15 */
         long bufferIndex = (long) getIndex + viewOffset;
@@ -161,22 +161,22 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         /* step 1 (implicit) */
         /* step 2 */
         if (!(thisValue instanceof DataViewObject)) {
-            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         DataViewObject dataView = (DataViewObject) thisValue;
         /* step 3 (not applicable) */
         /* step 4 */
         if (dataView.getBuffer() != null) {
-            throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         /* steps 5-6 */
         if (!(buffer instanceof ArrayBufferObject)) {
-            throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         ArrayBufferObject bufferObj = (ArrayBufferObject) buffer;
         /* step 7 */
         if (bufferObj.getData() == null) {
-            throwTypeError(calleeContext, Messages.Key.UninitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.UninitialisedObject);
         }
         /* step 8 */
         double numberOffset = ToNumber(calleeContext, byteOffset);
@@ -184,13 +184,13 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         double offset = ToInteger(numberOffset);
         /* step 11 */
         if (numberOffset != offset || offset < 0) {
-            throwRangeError(calleeContext, Messages.Key.InvalidByteOffset);
+            throw newRangeError(calleeContext, Messages.Key.InvalidByteOffset);
         }
         /* step 12 */
         long bufferByteLength = bufferObj.getByteLength();
         /* step 13 */
         if (offset > bufferByteLength) {
-            throwRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
+            throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
         }
         /* steps 14-15 */
         long viewByteLength, viewByteOffset = (long) offset;
@@ -202,16 +202,16 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
             double viewLength = ToInteger(numberLength);
             if (numberLength != viewLength || viewLength < 0) {
                 // TODO: correct error message -> invalid length
-                throwRangeError(calleeContext, Messages.Key.InvalidByteOffset);
+                throw newRangeError(calleeContext, Messages.Key.InvalidByteOffset);
             }
             viewByteLength = (long) viewLength;
             if (offset + viewByteLength > bufferByteLength) {
-                throwRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
+                throw newRangeError(calleeContext, Messages.Key.ArrayOffsetOutOfRange);
             }
         }
         /* step 16 */
         if (dataView.getBuffer() != null) {
-            throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         /* steps 17-19 */
         dataView.setBuffer(bufferObj);

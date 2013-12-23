@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorResume;
 
@@ -70,7 +70,7 @@ public class GeneratorPrototype extends OrdinaryObject implements Initialisable 
         public static Object _throw(ExecutionContext cx, Object thisValue, Object exception) {
             /* steps 1-3 */
             if (!(thisValue instanceof GeneratorObject)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* steps 4-18 */
             return ((GeneratorObject) thisValue)._throw(cx, exception);

@@ -6,16 +6,13 @@
  */
 package com.github.anba.es6draft.parser;
 
-import java.text.MessageFormat;
 import java.util.Locale;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.InternalException;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
 
 /**
  * {@link RuntimeException} subclass for parser exceptions
@@ -41,11 +38,6 @@ public class ParserException extends InternalException {
         this.column = column;
         this.messageKey = messageKey;
         this.messageArguments = args;
-    }
-
-    private String format(String pattern, Locale locale) {
-        MessageFormat format = new MessageFormat(pattern, locale);
-        return format.format(messageArguments);
     }
 
     @Override
@@ -80,18 +72,15 @@ public class ParserException extends InternalException {
     }
 
     public String getFormattedMessage(Locale locale) {
-        return format(Messages.create(locale).getString(messageKey), locale);
+        return Messages.create(locale).getMessage(messageKey, messageArguments);
     }
 
     @Override
     public ScriptException toScriptException(ExecutionContext cx) {
-        Realm realm = cx.getRealm();
-        String message = format(realm.message(messageKey), realm.getLocale());
+        String message = cx.getRealm().message(messageKey, messageArguments);
         if (type == ExceptionType.ReferenceError) {
-            return Errors.newError(cx, Intrinsics.ReferenceError, message, getFile(), getLine(),
-                    getColumn());
+            return Errors.newReferenceError(cx, message, getFile(), getLine(), getColumn());
         }
-        return Errors.newError(cx, Intrinsics.SyntaxError, message, getFile(), getLine(),
-                getColumn());
+        return Errors.newSyntaxError(cx, message, getFile(), getLine(), getColumn());
     }
 }

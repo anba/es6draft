@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.promise;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Microtask;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -38,10 +37,6 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  */
 public final class PromiseAbstractOperations {
     private PromiseAbstractOperations() {
-    }
-
-    private static ScriptException newTypeError(ExecutionContext cx, Messages.Key key) {
-        return Errors.newError(cx, Intrinsics.TypeError, key);
     }
 
     /**
@@ -166,7 +161,7 @@ public final class PromiseAbstractOperations {
     public static Deferred GetDeferred(ExecutionContext cx, Object c) {
         /* step 1 */
         if (!IsConstructor(c)) {
-            throw throwTypeError(cx, Messages.Key.NotConstructor);
+            throw newTypeError(cx, Messages.Key.NotConstructor);
         }
         /* step 2 */
         DeferredConstructionFunction resolver = new DeferredConstructionFunction(cx.getRealm());
@@ -176,13 +171,13 @@ public final class PromiseAbstractOperations {
         Object resolve = resolver.resolve;
         /* step 6 */
         if (!IsCallable(resolve)) {
-            throw throwTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
         /* step 7 */
         Object reject = resolver.reject;
         /* step 8 */
         if (!IsCallable(reject)) {
-            throw throwTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
         /* step 9 */
         return new Deferred(promise, (Callable) resolve, (Callable) reject);

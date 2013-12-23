@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.objects.modules;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
@@ -89,11 +89,11 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
             MapIterationKind kind) {
         /* steps 1-2 */
         if (!(obj instanceof LoaderObject)) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         LoaderObject loader = (LoaderObject) obj;
         if (loader.getModules() == null) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* step 3 */
         LoaderIterator iterator = ObjectCreate(cx, Intrinsics.LoaderIteratorPrototype,
@@ -123,11 +123,11 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
         public static Object next(ExecutionContext cx, Object thisValue) {
             /* step 2 */
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 3 */
             if (!(thisValue instanceof LoaderIterator)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 1 */
             LoaderIterator o = (LoaderIterator) thisValue;

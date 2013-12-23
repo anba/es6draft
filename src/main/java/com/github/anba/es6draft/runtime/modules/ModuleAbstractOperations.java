@@ -6,8 +6,10 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newSyntaxError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.modules.LinkSet.FinishLoad;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -24,13 +26,11 @@ import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.modules.Load.Dependency;
 import com.github.anba.es6draft.runtime.objects.modules.LoaderObject;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
 
 /**
  * <h1>Modules and Module Loaders</h1>
@@ -42,16 +42,6 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
  */
 public final class ModuleAbstractOperations {
     private ModuleAbstractOperations() {
-    }
-
-    private static ScriptException newReferenceError(ExecutionContext cx, Messages.Key key,
-            String... args) {
-        return Errors.newError(cx, Intrinsics.ReferenceError, key, args);
-    }
-
-    private static ScriptException newSyntaxError(ExecutionContext cx, Messages.Key key,
-            String... args) {
-        return Errors.newError(cx, Intrinsics.SyntaxError, key, args);
     }
 
     public static void CreateImportBinding(EnvironmentRecord envRec, String name,
@@ -418,12 +408,16 @@ public final class ModuleAbstractOperations {
             Callable execute = load.getExecute();
             Object result = execute.call(cx, UNDEFINED);
             if (!(result instanceof ModuleObject)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             ModuleObject module = (ModuleObject) result;
             load.link(module);
             FinishLoad(loader, load);
         }
+    }
+
+    private static boolean isModuleLinkSpecComplete() {
+        return false;
     }
 
     /**
@@ -433,17 +427,16 @@ public final class ModuleAbstractOperations {
      */
     public static void Link(ExecutionContext cx, List<Load> start, LoaderObject loader) {
         // FIXME: module linking spec is incomplete
-        L1: {
+        if (!isModuleLinkSpecComplete()) {
             for (Load load : start) {
                 if (load.getKind() == Load.Kind.Declarative) {
-                    break L1;
+                    throw newInternalError(cx, Messages.Key.InternalError);
                 }
             }
             // only dynamic loads
             LinkDynamicModules(cx, start, loader);
             return;
         }
-        throwInternalError(cx, Messages.Key.InternalError);
 
         List<List<Load>> groups = LinkageGroups(start);
         for (List<Load> group : groups) {

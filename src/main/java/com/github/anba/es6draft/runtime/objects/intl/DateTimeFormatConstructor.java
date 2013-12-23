@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects.intl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.IntlAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
@@ -232,12 +232,12 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
             Object locales, Object opts) {
         // spec allows any object to become a DateTimeFormat object, we don't allow this
         if (!(obj instanceof DateTimeFormatObject)) {
-            throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* steps 1-2 */
         DateTimeFormatObject dateTimeFormat = (DateTimeFormatObject) obj;
         if (dateTimeFormat.isInitializedIntlObject()) {
-            throwTypeError(cx, Messages.Key.InitialisedObject);
+            throw newTypeError(cx, Messages.Key.InitialisedObject);
         }
         dateTimeFormat.setInitializedIntlObject(true);
         /* step 3 */
@@ -270,7 +270,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         if (!Type.isUndefined(tz)) {
             timeZone = ToFlatString(cx, tz);
             if (!IsValidTimeZoneName(timeZone)) {
-                throw throwRangeError(cx, Messages.Key.IntlInvalidOption, timeZone);
+                throw newRangeError(cx, Messages.Key.IntlInvalidOption, timeZone);
             }
             timeZone = CanonicalizeTimeZoneName(timeZone);
         } else {
@@ -651,7 +651,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         }
         ScriptObject obj = ToObject(calleeContext, thisValue);
         if (!IsExtensible(calleeContext, obj)) {
-            throwTypeError(calleeContext, Messages.Key.NotExtensible);
+            throw newTypeError(calleeContext, Messages.Key.NotExtensible);
         }
         InitializeDateTimeFormat(calleeContext, obj, locales, options);
         return obj;

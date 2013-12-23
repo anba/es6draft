@@ -8,8 +8,8 @@ package com.github.anba.es6draft.runtime.objects.intl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -68,7 +68,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
                     return dateTimeFormat;
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -133,7 +133,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
     public static String FormatDateTime(ExecutionContext cx, DateTimeFormatObject dateTimeFormat,
             double x) {
         if (Double.isInfinite(x) || Double.isNaN(x)) {
-            throwRangeError(cx, Messages.Key.InvalidDateValue);
+            throw newRangeError(cx, Messages.Key.InvalidDateValue);
         }
         return dateTimeFormat.getDateFormat().format(new Date((long) x));
     }

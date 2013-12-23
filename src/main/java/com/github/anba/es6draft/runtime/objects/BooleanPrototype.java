@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -56,7 +56,7 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
                     return obj.getBooleanData();
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype

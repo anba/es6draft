@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
@@ -89,12 +89,12 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
             MapIterationKind kind) {
         /* steps 1-2 */
         if (!(obj instanceof MapObject)) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         MapObject map = (MapObject) obj;
         /* step 3 */
         if (!map.isInitialised()) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* step 4 */
         LinkedMap<Object, Object> entries = map.getMapData();
@@ -126,11 +126,11 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         public static Object next(ExecutionContext cx, Object thisValue) {
             /* step 2 */
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 3 */
             if (!(thisValue instanceof MapIterator)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 1 */
             MapIterator o = (MapIterator) thisValue;

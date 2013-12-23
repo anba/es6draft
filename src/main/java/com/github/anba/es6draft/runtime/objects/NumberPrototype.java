@@ -9,8 +9,8 @@ package com.github.anba.es6draft.runtime.objects;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToUint32;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.intl.NumberFormatPrototype.FormatNumber;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -66,7 +66,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
                     return obj.getNumberData();
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -88,7 +88,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
                 r = ToInteger(cx, radix);
             }
             if (r < 2 || r > 36) {
-                throw throwRangeError(cx, Messages.Key.InvalidRadix);
+                throw newRangeError(cx, Messages.Key.InvalidRadix);
             }
             if (r == 10) {
                 return ToString(thisNumberValue(cx, thisValue));
@@ -147,7 +147,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
             double f = ToInteger(cx, fractionDigits);
             /* step 5 */
             if (f < 0 || f > 20) {
-                throw throwRangeError(cx, Messages.Key.InvalidPrecision);
+                throw newRangeError(cx, Messages.Key.InvalidPrecision);
             }
             /* step 6 */
             if (x != x) {
@@ -180,7 +180,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
             }
             /* step 10 */
             if (f < 0 || f > 20) {
-                throw throwRangeError(cx, Messages.Key.InvalidPrecision);
+                throw newRangeError(cx, Messages.Key.InvalidPrecision);
             }
             /* steps 11-17 */
             StringBuilder sb = new StringBuilder();
@@ -215,7 +215,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
             }
             /* step 10 */
             if (p < 1 || p > 21) {
-                throw throwRangeError(cx, Messages.Key.InvalidPrecision);
+                throw newRangeError(cx, Messages.Key.InvalidPrecision);
             }
             /* steps 11-16 */
             StringBuilder sb = new StringBuilder();

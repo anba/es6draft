@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.promise;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Invoke;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.GetDeferred;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
@@ -82,7 +82,7 @@ public class PromisePrototype extends OrdinaryObject implements Initialisable {
                 Object onRejected) {
             /* step 2 */
             if (!IsPromise(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 1 */
             PromiseObject promise = (PromiseObject) thisValue;

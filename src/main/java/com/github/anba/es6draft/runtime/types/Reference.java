@@ -8,8 +8,8 @@ package com.github.anba.es6draft.runtime.types;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -91,7 +91,7 @@ public abstract class Reference<BASE, NAME> {
      */
     public static void PutValue(Object v, Object w, ExecutionContext cx) {
         if (!(v instanceof Reference)) {
-            throw throwReferenceError(cx, Messages.Key.InvalidReference);
+            throw newReferenceError(cx, Messages.Key.InvalidReference);
         }
         ((Reference<?, ?>) v).putValue(w, cx);
     }
@@ -155,8 +155,7 @@ public abstract class Reference<BASE, NAME> {
         @Override
         public Object getValue(ExecutionContext cx) {
             if (isUnresolvableReference()) {
-                throw throwReferenceError(cx, Messages.Key.UnresolvableReference,
-                        getReferencedName());
+                throw newReferenceError(cx, Messages.Key.UnresolvableReference, getReferencedName());
             }
             return getBase().getBindingValue(getReferencedName(), isStrictReference());
         }
@@ -167,7 +166,7 @@ public abstract class Reference<BASE, NAME> {
 
             if (isUnresolvableReference()) {
                 if (isStrictReference()) {
-                    throw throwReferenceError(cx, Messages.Key.UnresolvableReference,
+                    throw newReferenceError(cx, Messages.Key.UnresolvableReference,
                             getReferencedName());
                 }
                 ScriptObject globalObj = cx.getGlobalObject();
@@ -180,8 +179,7 @@ public abstract class Reference<BASE, NAME> {
         @Override
         public EnvironmentRecord getThisValue(ExecutionContext cx) {
             if (isUnresolvableReference()) {
-                throw throwReferenceError(cx, Messages.Key.UnresolvableReference,
-                        getReferencedName());
+                throw newReferenceError(cx, Messages.Key.UnresolvableReference, getReferencedName());
             }
             return getBase();
         }
@@ -282,7 +280,7 @@ public abstract class Reference<BASE, NAME> {
                     : (ScriptObject) getBase());
             boolean succeeded = base.set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
-                throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
             }
         }
 
@@ -335,7 +333,7 @@ public abstract class Reference<BASE, NAME> {
                     : (ScriptObject) getBase());
             boolean succeeded = base.set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
-                throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
             }
         }
@@ -417,8 +415,7 @@ public abstract class Reference<BASE, NAME> {
 
             boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
-                throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
-                        .toString());
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName());
             }
         }
     }
@@ -448,7 +445,7 @@ public abstract class Reference<BASE, NAME> {
 
             boolean succeeded = getBase().set(cx, getReferencedName(), w, getThisValue(cx));
             if (!succeeded && isStrictReference()) {
-                throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
+                throw newTypeError(cx, Messages.Key.PropertyNotModifiable, getReferencedName()
                         .toString());
             }
         }

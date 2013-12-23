@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.promise;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.GetDeferred;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
@@ -65,17 +65,17 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
         Object resolver = args.length > 0 ? args[0] : UNDEFINED;
         /* steps 2-3 */
         if (!(thisValue instanceof PromiseObject)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         /* step 1 */
         PromiseObject promise = (PromiseObject) thisValue;
         /* step 4 */
         if (promise.getStatus() != null) {
-            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
         /* step 5 */
         if (!IsCallable(resolver)) {
-            throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+            throw newTypeError(calleeContext, Messages.Key.NotCallable);
         }
         /* steps 6-8 */
         promise.initialise();

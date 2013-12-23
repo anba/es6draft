@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects.intl;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
@@ -354,7 +354,7 @@ public final class IntlAbstractOperations {
             String tag = ToFlatString(cx, locales);
             LanguageTag langTag = IsStructurallyValidLanguageTag(tag);
             if (langTag == null) {
-                throw throwRangeError(cx, Messages.Key.IntlStructurallyInvalidLanguageTag, tag);
+                throw newRangeError(cx, Messages.Key.IntlStructurallyInvalidLanguageTag, tag);
             }
             tag = CanonicalizeLanguageTag(langTag);
             return singleton(tag);
@@ -369,12 +369,12 @@ public final class IntlAbstractOperations {
             if (kPresent) {
                 Object kValue = Get(cx, o, pk);
                 if (!(Type.isString(kValue) || Type.isObject(pk))) {
-                    throwTypeError(cx, Messages.Key.IncompatibleObject);
+                    throw newTypeError(cx, Messages.Key.IncompatibleObject);
                 }
                 String tag = ToFlatString(cx, kValue);
                 LanguageTag langTag = IsStructurallyValidLanguageTag(tag);
                 if (langTag == null) {
-                    throw throwRangeError(cx, Messages.Key.IntlStructurallyInvalidLanguageTag, tag);
+                    throw newRangeError(cx, Messages.Key.IntlStructurallyInvalidLanguageTag, tag);
                 }
                 tag = CanonicalizeLanguageTag(langTag);
                 if (!seen.contains(tag)) {
@@ -829,7 +829,7 @@ public final class IntlAbstractOperations {
         if (!Type.isUndefined(value)) {
             String val = ToFlatString(cx, value);
             if (values != null && !values.contains(val)) {
-                throwRangeError(cx, Messages.Key.IntlInvalidOption, val);
+                throw newRangeError(cx, Messages.Key.IntlInvalidOption, val);
             }
             return val;
         }
@@ -859,7 +859,7 @@ public final class IntlAbstractOperations {
         if (!Type.isUndefined(value)) {
             double val = ToNumber(cx, value);
             if (Double.isNaN(val) || val < minimum || val > maximum) {
-                throwRangeError(cx, Messages.Key.IntlInvalidOption, Double.toString(val));
+                throw newRangeError(cx, Messages.Key.IntlInvalidOption, Double.toString(val));
             }
             return (int) Math.floor(val);
         }

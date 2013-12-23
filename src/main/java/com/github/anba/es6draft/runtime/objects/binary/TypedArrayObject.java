@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -82,7 +82,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
         ArrayBufferObject buffer = getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
         long length = getArrayLength();
@@ -112,7 +112,7 @@ public class TypedArrayObject extends ExoticIntegerIndexedObject implements Arra
         ArrayBufferObject buffer = getBuffer();
         /* step 4 */
         if (buffer == null) {
-            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 5 */
         long length = getArrayLength();

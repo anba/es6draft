@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.iteration;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.GeneratorThread.newGeneratorThreadFactory;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -87,16 +87,16 @@ public class GeneratorObject extends OrdinaryObject {
         GeneratorState state = this.state;
         if (state == null) {
             // uninitialised generator object
-            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         switch (state) {
         case Executing:
-            throw throwTypeError(cx, Messages.Key.GeneratorExecuting);
+            throw newTypeError(cx, Messages.Key.GeneratorExecuting);
         case Completed:
             return CreateIterResultObject(cx, UNDEFINED, true);
         case SuspendedStart:
             if (value != UNDEFINED) {
-                throw throwTypeError(cx, Messages.Key.GeneratorNewbornSend);
+                throw newTypeError(cx, Messages.Key.GeneratorNewbornSend);
             }
             start0();
             return execute0(cx);
@@ -114,11 +114,11 @@ public class GeneratorObject extends OrdinaryObject {
         GeneratorState state = this.state;
         if (state == null) {
             // uninitialised generator object
-            throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         switch (state) {
         case Executing:
-            throw throwTypeError(cx, Messages.Key.GeneratorExecuting);
+            throw newTypeError(cx, Messages.Key.GeneratorExecuting);
         case Completed:
             throw ScriptException.create(value);
         case SuspendedStart:

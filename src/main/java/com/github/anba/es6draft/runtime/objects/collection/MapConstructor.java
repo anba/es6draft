@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -60,14 +60,14 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
-            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof MapObject)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         MapObject map = (MapObject) thisValue;
         if (map.isInitialised()) {
-            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
         /* steps 5-7 */
@@ -79,7 +79,7 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
             iter = GetIterator(calleeContext, iterable);
             Object _adder = Get(calleeContext, map, "set");
             if (!IsCallable(_adder)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             adder = (Callable) _adder;
         }
@@ -88,14 +88,14 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
         MapObject.Comparator _comparator = MapObject.Comparator.SameValueZero;
         if (!Type.isUndefined(comparator)) {
             if (!SameValue(comparator, "is")) {
-                throw throwRangeError(calleeContext, Messages.Key.MapInvalidComparator);
+                throw newRangeError(calleeContext, Messages.Key.MapInvalidComparator);
             }
             _comparator = MapObject.Comparator.SameValue;
         }
 
         /* steps 9-10 */
         if (map.isInitialised()) {
-            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
         /* steps 11-12 */
@@ -113,7 +113,7 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
             }
             Object nextItem = IteratorValue(calleeContext, next);
             if (!Type.isObject(nextItem)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+                throw newTypeError(calleeContext, Messages.Key.NotObjectType);
             }
             ScriptObject entry = Type.objectValue(nextItem);
             Object k = Get(calleeContext, entry, "0");

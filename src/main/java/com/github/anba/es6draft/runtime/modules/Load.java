@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.modules;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.modules.LinkSet.AddLoadToLinkSet;
 import static com.github.anba.es6draft.runtime.modules.LinkSet.LinkSetFailed;
 import static com.github.anba.es6draft.runtime.modules.LinkSet.UpdateLinkSetOnLoad;
@@ -310,7 +310,7 @@ public final class Load {
             /* step 5 */
             Object normalizeHook = Get(calleeContext, loader, "normalize");
             if (!IsCallable(normalizeHook)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             /* steps 6-7 */
             Object name = ((Callable) normalizeHook).call(calleeContext, loader, request,
@@ -449,7 +449,7 @@ public final class Load {
             Object hook = Get(calleeContext, loader, "locate");
             /* step 5 */
             if (!IsCallable(hook)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             /* step 6 */
             ScriptObject obj = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
@@ -496,7 +496,7 @@ public final class Load {
             Object hook = Get(calleeContext, loader, "fetch");
             /* step 7 */
             if (!IsCallable(hook)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             /* step 8 */
             ScriptObject obj = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
@@ -543,7 +543,7 @@ public final class Load {
             Object hook = Get(calleeContext, loader, "translate");
             /* step 6 */
             if (!IsCallable(hook)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             /* step 7 */
             ScriptObject obj = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
@@ -594,7 +594,7 @@ public final class Load {
             Object hook = Get(calleeContext, loader, "instantiate");
             /* step 7 */
             if (!IsCallable(hook)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             /* step 8 */
             ScriptObject obj = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
@@ -668,13 +668,13 @@ public final class Load {
                 Object execute = Get(calleeContext, instantiateResultObject, "execute");
                 // TODO: assert callable here?
                 if (!IsCallable(execute)) {
-                    throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+                    throw newTypeError(calleeContext, Messages.Key.NotCallable);
                 }
                 load.execute = (Callable) execute;
                 load.kind = Load.Kind.Dynamic;
             } else {
                 /* step 6 */
-                throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+                throw newTypeError(calleeContext, Messages.Key.NotObjectType);
             }
             return ProcessLoadDependencies(calleeContext, load, loader, depsList);
         }

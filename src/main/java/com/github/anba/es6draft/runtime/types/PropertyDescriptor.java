@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.types;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
@@ -293,7 +293,7 @@ public final class PropertyDescriptor implements Cloneable {
     public static PropertyDescriptor ToPropertyDescriptor(ExecutionContext cx, Object object) {
         /* steps 1-2 */
         if (!Type.isObject(object)) {
-            throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject obj = Type.objectValue(object);
         /* steps 3-9 */
@@ -317,20 +317,20 @@ public final class PropertyDescriptor implements Cloneable {
         if (HasProperty(cx, obj, "get")) {
             Object getter = Get(cx, obj, "get");
             if (!(IsCallable(getter) || Type.isUndefined(getter))) {
-                throwTypeError(cx, Messages.Key.InvalidGetter);
+                throw newTypeError(cx, Messages.Key.InvalidGetter);
             }
             desc.setGetter(callableOrNull(getter));
         }
         if (HasProperty(cx, obj, "set")) {
             Object setter = Get(cx, obj, "set");
             if (!(IsCallable(setter) || Type.isUndefined(setter))) {
-                throwTypeError(cx, Messages.Key.InvalidSetter);
+                throw newTypeError(cx, Messages.Key.InvalidSetter);
             }
             desc.setSetter(callableOrNull(setter));
         }
         /* step 10 */
         if ((desc.present & (GET | SET)) != 0 && (desc.present & (VALUE | WRITABLE)) != 0) {
-            throwTypeError(cx, Messages.Key.InvalidDescriptor);
+            throw newTypeError(cx, Messages.Key.InvalidDescriptor);
         }
         /* step 11 */
         desc.origin = obj;

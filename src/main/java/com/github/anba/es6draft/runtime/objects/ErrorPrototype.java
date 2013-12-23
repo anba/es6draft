@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFro
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -85,7 +85,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
         public static Object toString(ExecutionContext cx, Object thisValue) {
             /* step 2 */
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 1 */
             ScriptObject o = Type.objectValue(thisValue);

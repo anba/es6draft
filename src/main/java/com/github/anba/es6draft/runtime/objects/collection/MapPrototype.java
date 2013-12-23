@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.collection.MapIteratorPrototype.CreateMapIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -62,7 +62,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
                     return map;
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -112,7 +112,7 @@ public class MapPrototype extends OrdinaryObject implements Initialisable {
             MapObject m = thisMapValue(cx, thisValue);
             /* step 5 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 6 (omitted) */

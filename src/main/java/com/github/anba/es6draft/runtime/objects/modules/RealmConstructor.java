@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.modules;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
 import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -85,20 +85,20 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
         Object options = args.length > 0 ? args[0] : UNDEFINED;
         /* steps 2-3 */
         if (!(thisValue instanceof RealmObject)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         /* step 1 */
         RealmObject realmObject = (RealmObject) thisValue;
         /* step 4 */
         if (realmObject.getRealm() != null) {
-            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
         /* steps 5-6 */
         if (Type.isUndefined(options)) {
             options = ObjectCreate(calleeContext, (ScriptObject) null);
         } else if (!Type.isObject(options)) {
-            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         ScriptObject optionsObject = Type.objectValue(options);
         /* steps 12-13 */
@@ -108,7 +108,7 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
             // TODO: change to `ObjectCreate(null, ())` just like above?
             directEval = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
         } else if (!Type.isObject(directEval)) {
-            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         ScriptObject directEvalObject = Type.objectValue(directEval);
         /* steps 16-18 */
@@ -122,7 +122,7 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
 
         // FIXME: as usual, reentrancy checks
         if (realmObject.getRealm() != null) {
-            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
         /* step 7 */

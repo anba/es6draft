@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwSyntaxError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newSyntaxError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
@@ -77,7 +77,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
                 JSONParser parser = new JSONParser(cx, jtext);
                 unfiltered = parser.parse();
             } catch (ParserException e) {
-                throw throwSyntaxError(cx, Messages.Key.InvalidJSONLiteral);
+                throw newSyntaxError(cx, Messages.Key.InvalidJSONLiteral);
             }
             /* step 8 */
             if (IsCallable(reviver)) {
@@ -242,7 +242,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             } else if (o instanceof BooleanObject) {
                 BooleanObject bool = (BooleanObject) o;
                 if (!bool.isInitialised()) {
-                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 value = bool.getBooleanData();
             }
@@ -338,7 +338,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
         /* step 1 */
         if (stack.contains(value)) {
-            throw throwTypeError(cx, Messages.Key.CyclicValue);
+            throw newTypeError(cx, Messages.Key.CyclicValue);
         }
         /* step 2 */
         stack.add(value);
@@ -404,7 +404,7 @@ public class JSONObject extends OrdinaryObject implements Initialisable {
             Callable replacerFunction, String indent, String gap, ScriptObject value) {
         /* step 1 */
         if (stack.contains(value)) {
-            throw throwTypeError(cx, Messages.Key.CyclicValue);
+            throw newTypeError(cx, Messages.Key.CyclicValue);
         }
         /* step 2 */
         stack.add(value);

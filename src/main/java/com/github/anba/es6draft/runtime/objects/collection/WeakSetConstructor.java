@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -58,14 +58,14 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
-            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         if (!(thisValue instanceof WeakSetObject)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         WeakSetObject set = (WeakSetObject) thisValue;
         if (set.isInitialised()) {
-            throw throwTypeError(calleeContext, Messages.Key.InitialisedObject);
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
         /* steps 5-7 */
@@ -77,7 +77,7 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
             iter = GetIterator(calleeContext, iterable);
             Object _adder = Get(calleeContext, set, "add");
             if (!IsCallable(_adder)) {
-                throw throwTypeError(calleeContext, Messages.Key.NotCallable);
+                throw newTypeError(calleeContext, Messages.Key.NotCallable);
             }
             adder = (Callable) _adder;
         }

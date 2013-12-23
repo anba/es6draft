@@ -10,7 +10,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.DefineProperty
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Put;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -121,7 +121,7 @@ public final class ObjectEnvironmentRecord implements EnvironmentRecord {
             if (!strict) {
                 return UNDEFINED;
             }
-            throw throwReferenceError(cx, Messages.Key.UnresolvableReference, name);
+            throw newReferenceError(cx, Messages.Key.UnresolvableReference, name);
         }
         /* step 6 */
         return Get(cx, bindings, name);

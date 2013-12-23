@@ -7,9 +7,9 @@
 package com.github.anba.es6draft.runtime.objects.binary;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwInternalError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CloneArrayBuffer;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.GetValueFromBuffer;
@@ -70,7 +70,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                     return view;
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         private static TypedArrayObject thisTypedArrayObject(ExecutionContext cx, Object thisValue) {
@@ -78,7 +78,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 // initialisation status intentionally not checked here!
                 return (TypedArrayObject) thisValue;
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -121,7 +121,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
         public static Object length(ExecutionContext cx, Object thisValue) {
             TypedArrayObject typedArray = thisTypedArrayObject(cx, thisValue);
             if (typedArray.getBuffer() == null) {
-                throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             return typedArray.getArrayLength();
         }
@@ -140,7 +140,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 ArrayBufferObject targetBuffer = target.getBuffer();
                 /* step 7 */
                 if (targetBuffer == null) {
-                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 /* step 8 */
                 long targetLength = target.getArrayLength();
@@ -148,7 +148,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 double targetOffset = (offset == UNDEFINED ? 0 : ToInteger(cx, offset));
                 /* step 11 */
                 if (targetOffset < 0) {
-                    throwRangeError(cx, Messages.Key.InvalidByteOffset);
+                    throw newRangeError(cx, Messages.Key.InvalidByteOffset);
                 }
                 /* steps 12, 14 */
                 ElementType targetType = target.getElementType();
@@ -166,11 +166,11 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 double srcLength = ToInteger(numberLength);
                 /* step 22 */
                 if (numberLength != srcLength || srcLength < 0) {
-                    throwRangeError(cx, Messages.Key.InvalidByteOffset);
+                    throw newRangeError(cx, Messages.Key.InvalidByteOffset);
                 }
                 /* step 23 */
                 if (srcLength + targetOffset > targetLength) {
-                    throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
+                    throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
                 }
                 /* step 24 */
                 long targetByteIndex = (long) (targetOffset * targetElementSize + targetByteOffset);
@@ -195,13 +195,13 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 ArrayBufferObject targetBuffer = target.getBuffer();
                 /* step 7 */
                 if (targetBuffer == null) {
-                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 /* step 8 */
                 ArrayBufferObject srcBuffer = typedArray.getBuffer();
                 /* step 9 */
                 if (srcBuffer == null) {
-                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 /* step 10 */
                 long targetLength = target.getArrayLength();
@@ -209,7 +209,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 double targetOffset = (offset == UNDEFINED ? 0 : ToInteger(cx, offset));
                 /* step 13 */
                 if (targetOffset < 0) {
-                    throwRangeError(cx, Messages.Key.InvalidByteOffset);
+                    throw newRangeError(cx, Messages.Key.InvalidByteOffset);
                 }
                 /* steps 14-15 */
                 ElementType targetType = target.getElementType();
@@ -227,7 +227,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 long srcByteOffset = typedArray.getByteOffset();
                 /* step 23 */
                 if (srcLength + targetOffset > targetLength) {
-                    throwRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
+                    throw newRangeError(cx, Messages.Key.ArrayOffsetOutOfRange);
                 }
                 /* steps 24-25 */
                 long srcByteIndex;
@@ -266,7 +266,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             ArrayBufferObject buffer = array.getBuffer();
             /* step 6 */
             if (buffer == null) {
-                throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             /* step 7 */
             long srcLength = array.getArrayLength();
@@ -304,7 +304,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             Object constructor = Get(cx, array, "constructor");
             /* step 26 */
             if (!IsConstructor(constructor)) {
-                throwTypeError(cx, Messages.Key.NotConstructor);
+                throw newTypeError(cx, Messages.Key.NotConstructor);
             }
             /* steps 27-28 */
             return ((Constructor) constructor).construct(cx, buffer, beginByteOffset, newLength);
@@ -384,7 +384,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             Object c = Get(cx, o, "constructor");
             /* steps 14-15 */
             if (!IsConstructor(c)) {
-                throw throwTypeError(cx, Messages.Key.NotConstructor);
+                throw newTypeError(cx, Messages.Key.NotConstructor);
             }
             ScriptObject a = ((Constructor) c).construct(cx, count);
             /* steps 16-17 */
@@ -435,7 +435,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
 
             // handle OOM early
             if (len > Integer.MAX_VALUE) {
-                throwInternalError(cx, Messages.Key.OutOfMemory);
+                throw newInternalError(cx, Messages.Key.OutOfMemory);
             }
             int length = (int) len;
             if (length == 0) {
@@ -461,7 +461,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             Double[] array;
             if (!Type.isUndefined(comparefn)) {
                 if (!IsCallable(comparefn)) {
-                    throw throwTypeError(cx, Messages.Key.NotCallable);
+                    throw newTypeError(cx, Messages.Key.NotCallable);
                 }
                 Comparator<Double> comparator = new FunctionComparator(cx, (Callable) comparefn);
                 array = toDoubleArray(elements);
@@ -551,7 +551,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             long len = o.getArrayLength();
             /* step 5 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 6 (omitted) */
@@ -559,7 +559,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             Object c = Get(cx, o, "constructor");
             /* steps 9-10 */
             if (!IsConstructor(c)) {
-                throw throwTypeError(cx, Messages.Key.NotConstructor);
+                throw newTypeError(cx, Messages.Key.NotConstructor);
             }
             ScriptObject a = ((Constructor) c).construct(cx, len);
             /* steps 11-12 */
@@ -585,7 +585,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             long len = o.getArrayLength();
             /* step 5 */
             if (!IsCallable(callbackfn)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             Callable callback = (Callable) callbackfn;
             /* step 6 (omitted) */
@@ -593,7 +593,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             Object c = Get(cx, o, "constructor");
             /* step 9 */
             if (!IsConstructor(c)) {
-                throw throwTypeError(cx, Messages.Key.NotConstructor);
+                throw newTypeError(cx, Messages.Key.NotConstructor);
             }
             /* steps 10, 12 */
             List<Object> kept = new ArrayList<>();
@@ -724,7 +724,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                         enumerable = false, configurable = true))
         public static Object toStringTag(ExecutionContext cx, Object thisValue) {
             if (!(thisValue instanceof TypedArrayObject)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             return ((TypedArrayObject) thisValue).getTypedArrayName();
         }

@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpCreate;
 import static com.github.anba.es6draft.runtime.objects.StringIteratorPrototype.CreateStringIterator;
@@ -87,7 +87,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                     return s;
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -621,7 +621,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             double n = ToInteger(cx, count);
             /* steps 6-7 */
             if (n < 0 || n == Double.POSITIVE_INFINITY) {
-                throw throwRangeError(cx, Messages.Key.InvalidStringRepeat);
+                throw newRangeError(cx, Messages.Key.InvalidStringRepeat);
             }
             /* step 8 */
             if (n == 0 || s.length() == 0) {
@@ -630,7 +630,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             double capacity = s.length() * n;
             if (capacity > 1 << 27) {
                 // likely to exceed heap space, follow SpiderMonkey and throw RangeError
-                throw throwRangeError(cx, Messages.Key.InvalidStringRepeat);
+                throw newRangeError(cx, Messages.Key.InvalidStringRepeat);
             }
             /* step 8 */
             StringBuilder t = new StringBuilder((int) capacity);
@@ -654,7 +654,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* step 4 */
             if (Type.isObject(searchString)
                     && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
-                throw throwTypeError(cx, Messages.Key.InvalidRegExpArgument);
+                throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
             /* steps 5-6 */
             String searchStr = ToFlatString(cx, searchString);
@@ -687,7 +687,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             /* step 4 */
             if (Type.isObject(searchString)
                     && HasProperty(cx, Type.objectValue(searchString), BuiltinSymbol.isRegExp.get())) {
-                throw throwTypeError(cx, Messages.Key.InvalidRegExpArgument);
+                throw newTypeError(cx, Messages.Key.InvalidRegExpArgument);
             }
             /* steps 5-6 */
             String searchStr = ToFlatString(cx, searchString);
@@ -770,7 +770,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
             }
             /* step 7 */
             if (!("NFC".equals(f) || "NFD".equals(f) || "NFKC".equals(f) || "NFKD".equals(f))) {
-                throw throwRangeError(cx, Messages.Key.InvalidNormalizationForm);
+                throw newRangeError(cx, Messages.Key.InvalidNormalizationForm);
             }
             /* steps 8-9 */
             return Normalizer.normalize(s, Normalizer.Form.valueOf(f));

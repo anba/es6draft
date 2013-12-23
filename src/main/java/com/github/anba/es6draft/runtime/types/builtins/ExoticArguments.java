@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInt32;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.builtins.FunctionObject.isStrictFunction;
 
 import java.util.BitSet;
@@ -305,7 +305,7 @@ public class ExoticArguments extends OrdinaryObject {
             // FIXME: spec bug (does not work as intended) (Bug 1413)
             Object v = super.get(cx, propertyKey, receiver);
             if ("caller".equals(propertyKey) && isStrictFunction(v)) {
-                throw throwTypeError(cx, Messages.Key.StrictModePoisonPill);
+                throw newTypeError(cx, Messages.Key.StrictModePoisonPill);
             }
             return v;
         }

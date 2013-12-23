@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor.GetViewValue;
 import static com.github.anba.es6draft.runtime.objects.binary.DataViewConstructor.SetViewValue;
@@ -54,7 +54,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
                     return view;
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype

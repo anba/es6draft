@@ -253,6 +253,13 @@ public final class Realm {
     }
 
     /**
+     * Returns the localised message for {@code key}
+     */
+    public String message(Messages.Key key, String... args) {
+        return world.message(key, args);
+    }
+
+    /**
      * Returns a reference to the built-in <code>eval</code> function
      */
     public Callable getBuiltinEval() {

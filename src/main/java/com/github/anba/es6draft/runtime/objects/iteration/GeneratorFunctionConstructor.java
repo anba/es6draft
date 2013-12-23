@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.iteration;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.*;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.FunctionAllocate;
@@ -63,7 +63,6 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Realm realm = calleeContext.getRealm();
 
         /* steps 1-7 */
         int argCount = args.length;
@@ -88,6 +87,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         /* steps 8-12 */
         RuntimeInfo.Function function;
         try {
+            Realm realm = calleeContext.getRealm();
             Parser parser = new Parser("<GeneratorFunction>", 1, realm.getOptions());
             GeneratorDefinition generatorDef = parser.parseGenerator(p, bodyText);
             String className = calleeContext.getRealm().nextFunctionName();
@@ -113,7 +113,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         }
         /* step 17 */
         if (!(f instanceof OrdinaryGenerator)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         OrdinaryGenerator fn = (OrdinaryGenerator) f;
         /* steps 18-19 */

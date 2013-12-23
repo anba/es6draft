@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
@@ -169,7 +169,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 Object properties) {
             /* step 1 */
             if (!(Type.isObject(o) || Type.isNull(o))) {
-                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
+                throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             ScriptObject proto = Type.isObject(o) ? Type.objectValue(o) : null;
             /* step 2 */
@@ -190,7 +190,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 Object p, Object attributes) {
             /* step 1 */
             if (!Type.isObject(o)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* steps 2-3 */
             Object key = ToPropertyKey(cx, p);
@@ -225,7 +225,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Sealed);
             /* step 4 */
             if (!status) {
-                throw throwTypeError(cx, Messages.Key.ObjectSealFailed);
+                throw newTypeError(cx, Messages.Key.ObjectSealFailed);
             }
             /* step 5 */
             return o;
@@ -244,7 +244,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             boolean status = SetIntegrityLevel(cx, Type.objectValue(o), IntegrityLevel.Frozen);
             /* step 4 */
             if (!status) {
-                throw throwTypeError(cx, Messages.Key.ObjectFreezeFailed);
+                throw newTypeError(cx, Messages.Key.ObjectFreezeFailed);
             }
             /* step 5 */
             return o;
@@ -263,7 +263,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             boolean status = Type.objectValue(o).preventExtensions(cx);
             /* step 4 */
             if (!status) {
-                throw throwTypeError(cx, Messages.Key.ObjectPreventExtensionsFailed);
+                throw newTypeError(cx, Messages.Key.ObjectPreventExtensionsFailed);
             }
             /* step 5 */
             return o;
@@ -398,7 +398,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             CheckObjectCoercible(cx, o);
             /* step 3 */
             if (!(Type.isNull(proto) || Type.isObject(proto))) {
-                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
+                throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             /* step 4 */
             if (!Type.isObject(o)) {
@@ -413,11 +413,11 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 // provide better error messages for ordinary objects
                 if (obj instanceof OrdinaryObject) {
                     if (!obj.isExtensible(cx)) {
-                        throw throwTypeError(cx, Messages.Key.NotExtensible);
+                        throw newTypeError(cx, Messages.Key.NotExtensible);
                     }
-                    throw throwTypeError(cx, Messages.Key.CyclicProto);
+                    throw newTypeError(cx, Messages.Key.CyclicProto);
                 }
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 8 */
             return obj;
@@ -433,7 +433,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             Object properties) {
         /* step 1 */
         if (!Type.isObject(o)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject obj = Type.objectValue(o);
         /* step 2 */

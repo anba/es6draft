@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.modules;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.modules.Load.CreateLoad;
 import static com.github.anba.es6draft.runtime.modules.Load.ProceedToFetch;
 import static com.github.anba.es6draft.runtime.modules.Load.ProceedToLocate;
@@ -96,7 +96,7 @@ public final class LinkSet {
     public static LinkSet CreateLinkSet(ExecutionContext cx, ScriptObject loader, Load startingLoad) {
         /* steps 1-2 */
         if (!(loader instanceof LoaderObject)) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* steps 3-4 */
         Deferred deferred = GetDeferred(cx, cx.getIntrinsic(Intrinsics.Promise));
@@ -313,11 +313,11 @@ public final class LinkSet {
             Object source = this.moduleSource;
             /* step 7 */
             if (loader.getModules().containsKey(name)) {
-                throw throwTypeError(calleeContext, Messages.Key.InternalError);
+                throw newTypeError(calleeContext, Messages.Key.InternalError);
             }
             /* step 8 */
             if (loader.getLoads().containsKey(name)) {
-                throw throwTypeError(calleeContext, Messages.Key.InternalError);
+                throw newTypeError(calleeContext, Messages.Key.InternalError);
             }
             /* steps 9-10 */
             Load load = CreateLoad(calleeContext, name, metadata);

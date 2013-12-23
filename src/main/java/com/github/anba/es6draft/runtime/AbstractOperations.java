@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.runtime;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.InstanceofOperator;
 import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCreate;
 import static com.github.anba.es6draft.runtime.objects.NumberObject.NumberCreate;
@@ -27,7 +27,6 @@ import org.mozilla.javascript.DToA;
 import org.mozilla.javascript.StringToNumber;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 
-import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
@@ -85,7 +84,7 @@ public final class AbstractOperations {
         /* step 6 */
         if (!Type.isUndefined(exoticToPrim)) {
             if (!IsCallable(exoticToPrim))
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             /* steps 1-3 */
             String hint;
             if (preferredType == null) {
@@ -100,7 +99,7 @@ public final class AbstractOperations {
             if (!Type.isObject(result)) {
                 return result;
             }
-            throw throwTypeError(cx, Messages.Key.NotPrimitiveType);
+            throw newTypeError(cx, Messages.Key.NotPrimitiveType);
         }
         /* step 7 */
         if (preferredType == null) {
@@ -144,7 +143,7 @@ public final class AbstractOperations {
             }
         }
         /* step 6 */
-        throw throwTypeError(cx, Messages.Key.NoPrimitiveRepresentation);
+        throw newTypeError(cx, Messages.Key.NoPrimitiveRepresentation);
     }
 
     /**
@@ -396,7 +395,7 @@ public final class AbstractOperations {
         case String:
             return Type.stringValue(val);
         case Symbol:
-            throw Errors.throwTypeError(cx, Messages.Key.SymbolString);
+            throw newTypeError(cx, Messages.Key.SymbolString);
         case Object:
         default:
             Object primValue = ToPrimitive(cx, val, Type.String);
@@ -457,7 +456,7 @@ public final class AbstractOperations {
         switch (Type.of(val)) {
         case Undefined:
         case Null:
-            throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
+            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         case Boolean:
             return BooleanCreate(cx, Type.booleanValue(val));
         case Number:
@@ -514,7 +513,7 @@ public final class AbstractOperations {
      */
     public static Object CheckObjectCoercible(ExecutionContext cx, Object val) {
         if (Type.isUndefinedOrNull(val)) {
-            throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
+            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         return val;
     }
@@ -872,7 +871,7 @@ public final class AbstractOperations {
         boolean success = object.set(cx, propertyKey, value, object);
         /* step 6 */
         if (!success && _throw) {
-            throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey);
+            throw newTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey);
         }
         /* step 7 (not applicable) */
     }
@@ -886,7 +885,7 @@ public final class AbstractOperations {
         boolean success = object.set(cx, propertyKey, value, object);
         /* step 6 */
         if (!success && _throw) {
-            throw throwTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey.toString());
+            throw newTypeError(cx, Messages.Key.PropertyNotModifiable, propertyKey.toString());
         }
         /* step 7 (not applicable) */
     }
@@ -949,7 +948,7 @@ public final class AbstractOperations {
         boolean success = CreateDataProperty(cx, object, propertyKey, value);
         /* step 5 */
         if (!success) {
-            throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
         }
         /* step 6 */
     }
@@ -964,7 +963,7 @@ public final class AbstractOperations {
         boolean success = CreateDataProperty(cx, object, propertyKey, value);
         /* step 5 */
         if (!success) {
-            throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey.toString());
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey.toString());
         }
         /* step 6 */
     }
@@ -990,7 +989,7 @@ public final class AbstractOperations {
         boolean success = object.defineOwnProperty(cx, propertyKey, desc);
         /* step 5 */
         if (!success) {
-            throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
         }
         /* step 6 (not applicable) */
     }
@@ -1004,7 +1003,7 @@ public final class AbstractOperations {
         boolean success = object.defineOwnProperty(cx, propertyKey, desc);
         /* step 5 */
         if (!success) {
-            throw throwTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey.toString());
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey.toString());
         }
         /* step 6 (not applicable) */
     }
@@ -1030,7 +1029,7 @@ public final class AbstractOperations {
         boolean success = object.delete(cx, propertyKey);
         /* step 5 */
         if (!success) {
-            throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, propertyKey);
+            throw newTypeError(cx, Messages.Key.PropertyNotDeletable, propertyKey);
         }
         /* step 6 (not applicable) */
     }
@@ -1044,7 +1043,7 @@ public final class AbstractOperations {
         boolean success = object.delete(cx, propertyKey);
         /* step 5 */
         if (!success) {
-            throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, propertyKey.toString());
+            throw newTypeError(cx, Messages.Key.PropertyNotDeletable, propertyKey.toString());
         }
         /* step 6 (not applicable) */
     }
@@ -1135,7 +1134,7 @@ public final class AbstractOperations {
         }
         /* step 6 */
         if (!IsCallable(func)) {
-            throw throwTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
         /* step 7 */
         return (Callable) func;
@@ -1153,7 +1152,7 @@ public final class AbstractOperations {
         }
         /* step 6 */
         if (!IsCallable(func)) {
-            throw throwTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
         /* step 7 */
         return (Callable) func;
@@ -1186,7 +1185,7 @@ public final class AbstractOperations {
         /* step 6 */
         Callable method = GetMethod(cx, base, propertyKey);
         if (method == null) {
-            throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
+            throw newTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
         }
         return method.call(cx, object, args);
     }
@@ -1200,7 +1199,7 @@ public final class AbstractOperations {
         /* step 6 */
         Callable method = GetMethod(cx, object, propertyKey);
         if (method == null) {
-            throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
+            throw newTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
         }
         return method.call(cx, object, args);
     }
@@ -1220,7 +1219,7 @@ public final class AbstractOperations {
         /* step 6 */
         Callable method = GetMethod(cx, base, propertyKey);
         if (method == null) {
-            throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
+            throw newTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
         }
         return method.call(cx, object, args);
     }
@@ -1234,7 +1233,7 @@ public final class AbstractOperations {
         /* step 6 */
         Callable method = GetMethod(cx, object, propertyKey);
         if (method == null) {
-            throwTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
+            throw newTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
         }
         return method.call(cx, object, args);
     }
@@ -1404,7 +1403,7 @@ public final class AbstractOperations {
     public static Object[] CreateListFromArrayLike(ExecutionContext cx, Object obj) {
         /* step 1 */
         if (!Type.isObject(obj)) {
-            throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         ScriptObject object = Type.objectValue(obj);
         /* step 2 */
@@ -1413,7 +1412,7 @@ public final class AbstractOperations {
         long n = ToLength(cx, len);
         // CreateListFromArrayLike() is (currently) only used for argument arrays
         if (n > FunctionPrototype.getMaxArguments()) {
-            throw throwRangeError(cx, Messages.Key.FunctionTooManyArguments);
+            throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
         }
         int length = (int) n;
         /* step 5 */
@@ -1448,7 +1447,7 @@ public final class AbstractOperations {
         /* steps 4-5 */
         Object p = Get(cx, (ScriptObject) c, "prototype");
         if (!Type.isObject(p)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 7 */
         for (ScriptObject obj = Type.objectValue(o), proto = Type.objectValue(p);;) {
@@ -1470,7 +1469,7 @@ public final class AbstractOperations {
         /* step 1 (not applicable) */
         /* step 2 */
         if (!IsConstructor(constructor)) {
-            throw throwTypeError(cx, Messages.Key.NotConstructor);
+            throw newTypeError(cx, Messages.Key.NotConstructor);
         }
         /* steps 3-4 */
         Object proto = Get(cx, Type.objectValue(constructor), "prototype");
@@ -1523,7 +1522,7 @@ public final class AbstractOperations {
         Object iterator = Invoke(cx, obj, BuiltinSymbol.iterator.get());
         /* step 3 */
         if (!Type.isObject(iterator)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 4 */
         return Type.objectValue(iterator);
@@ -1545,7 +1544,7 @@ public final class AbstractOperations {
         Object result = Invoke(cx, iterator, "next", value);
         /* step 4 */
         if (!Type.isObject(result)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 5 */
         return Type.objectValue(result);
@@ -1558,7 +1557,7 @@ public final class AbstractOperations {
             Object value) {
         Object result = Invoke(cx, iterator, "throw", value);
         if (!Type.isObject(result)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         return Type.objectValue(result);
     }

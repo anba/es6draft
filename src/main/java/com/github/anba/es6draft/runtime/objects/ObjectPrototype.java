@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
 
@@ -273,11 +273,11 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
                 // provide better error messages for ordinary objects
                 if (obj instanceof OrdinaryObject) {
                     if (!obj.isExtensible(cx)) {
-                        throw throwTypeError(cx, Messages.Key.NotExtensible);
+                        throw newTypeError(cx, Messages.Key.NotExtensible);
                     }
-                    throw throwTypeError(cx, Messages.Key.CyclicProto);
+                    throw newTypeError(cx, Messages.Key.CyclicProto);
                 }
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 8 */
             return proto;

@@ -11,7 +11,6 @@ import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.InternalException;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
 
 /**
  * Exception for compilation errors
@@ -24,7 +23,6 @@ public class CompilationException extends InternalException {
 
     @Override
     public ScriptException toScriptException(ExecutionContext cx) {
-        return Errors.newError(cx, Intrinsics.InternalError, Messages.Key.InternalError,
-                getMessage());
+        return Errors.newInternalError(cx, Messages.Key.InternalError, getMessage());
     }
 }

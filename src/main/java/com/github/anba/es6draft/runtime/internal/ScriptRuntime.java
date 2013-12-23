@@ -62,7 +62,7 @@ public final class ScriptRuntime {
     public static void bindingNotPresentOrThrow(ExecutionContext cx, EnvironmentRecord envRec,
             String name) {
         if (envRec.hasBinding(name)) {
-            throw throwSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
+            throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -72,10 +72,10 @@ public final class ScriptRuntime {
     public static void canDeclareLexicalScopedOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String name) {
         if (envRec.hasVarDeclaration(name)) {
-            throw throwSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
+            throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
         if (envRec.hasLexicalDeclaration(name)) {
-            throw throwSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
+            throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -85,7 +85,7 @@ public final class ScriptRuntime {
     public static void canDeclareVarScopedOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String name) {
         if (envRec.hasLexicalDeclaration(name)) {
-            throw throwSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
+            throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
 
@@ -96,7 +96,7 @@ public final class ScriptRuntime {
             GlobalEnvironmentRecord envRec, String fn) {
         boolean fnDefinable = envRec.canDeclareGlobalFunction(fn);
         if (!fnDefinable) {
-            throw throwTypeError(cx, Messages.Key.InvalidDeclaration, fn);
+            throw newTypeError(cx, Messages.Key.InvalidDeclaration, fn);
         }
     }
 
@@ -107,7 +107,7 @@ public final class ScriptRuntime {
             GlobalEnvironmentRecord envRec, String vn) {
         boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
         if (!vnDefinable) {
-            throw throwTypeError(cx, Messages.Key.InvalidDeclaration, vn);
+            throw newTypeError(cx, Messages.Key.InvalidDeclaration, vn);
         }
     }
 
@@ -145,7 +145,7 @@ public final class ScriptRuntime {
         /* step 4 */
         if (!Type.isObject(spreadObj)) {
             // FIXME: spec bug ? why restrict to objects?
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* steps 5-6 */
         ScriptObject iterator = GetIterator(cx, spreadObj);
@@ -384,7 +384,7 @@ public final class ScriptRuntime {
         /* steps 1-3/1-3/1-6 (generated code) */
         /* steps 4/6/7 */
         if (!IsConstructor(constructor)) {
-            throw throwTypeError(cx, Messages.Key.NotConstructor);
+            throw newTypeError(cx, Messages.Key.NotConstructor);
         }
         /* steps 5/7/8 */
         return ((Constructor) constructor).construct(cx, args);
@@ -406,7 +406,7 @@ public final class ScriptRuntime {
         /* steps 1-3/1-3/1-6 (generated code) */
         /* steps 4/6/7 */
         if (!IsConstructor(constructor)) {
-            throw throwTypeError(cx, Messages.Key.NotConstructor);
+            throw newTypeError(cx, Messages.Key.NotConstructor);
         }
         /* steps 5/7/8 */
         return PrepareForTailCall(args, null, (Constructor) constructor);
@@ -420,11 +420,11 @@ public final class ScriptRuntime {
     public static Callable CheckCallable(Object func, ExecutionContext cx) {
         /* step 5 */
         if (!Type.isObject(func)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* step 6 */
         if (!IsCallable(func)) {
-            throw throwTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
         return (Callable) func;
     }
@@ -512,14 +512,14 @@ public final class ScriptRuntime {
             Object propertyKey, boolean strict) {
         EnvironmentRecord envRec = cx.getThisEnvironment();
         if (!envRec.hasSuperBinding()) {
-            throwReferenceError(cx, Messages.Key.MissingSuperBinding);
+            throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
         }
         assert envRec instanceof FunctionEnvironmentRecord;
         Object actualThis = envRec.getThisBinding();
         ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
         // CheckObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
-            throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
+            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         if (propertyKey == null) {
             propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
@@ -541,14 +541,14 @@ public final class ScriptRuntime {
         assert propertyKey != null;
         EnvironmentRecord envRec = cx.getThisEnvironment();
         if (!envRec.hasSuperBinding()) {
-            throwReferenceError(cx, Messages.Key.MissingSuperBinding);
+            throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
         }
         assert envRec instanceof FunctionEnvironmentRecord;
         Object actualThis = envRec.getThisBinding();
         ScriptObject baseValue = ((FunctionEnvironmentRecord) envRec).getSuperBase();
         // CheckObjectCoercible(cx.getRealm(), baseValue);
         if (baseValue == null) {
-            throw throwTypeError(cx, Messages.Key.UndefinedOrNull);
+            throw newTypeError(cx, Messages.Key.UndefinedOrNull);
         }
         return new Reference.SuperNameReference(baseValue, propertyKey, strict, actualThis);
     }
@@ -566,7 +566,7 @@ public final class ScriptRuntime {
         /* step 5 */
         if (!Type.isObject(spreadObj)) {
             // FIXME: spec bug ? why restrict to objects?
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         /* steps 6-7 */
         ScriptObject iterator = GetIterator(cx, spreadObj);
@@ -579,7 +579,7 @@ public final class ScriptRuntime {
             Object nextArg = IteratorValue(cx, next);
             list.add(nextArg);
         }
-        throw throwRangeError(cx, Messages.Key.FunctionTooManyArguments);
+        throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
     }
 
     /**
@@ -594,7 +594,7 @@ public final class ScriptRuntime {
             if (array[i] instanceof Object[]) {
                 newlen += ((Object[]) array[i]).length - 1;
                 if (newlen > MAX_ARGS) {
-                    throw throwRangeError(cx, Messages.Key.FunctionTooManyArguments);
+                    throw newRangeError(cx, Messages.Key.FunctionTooManyArguments);
                 }
             }
         }
@@ -624,14 +624,14 @@ public final class ScriptRuntime {
         /* step 4 */
         if (ref.isUnresolvableReference()) {
             if (ref.isStrictReference()) {
-                throw throwSyntaxError(cx, Messages.Key.UnqualifiedDelete);
+                throw newSyntaxError(cx, Messages.Key.UnqualifiedDelete);
             }
             return true;
         }
         /* step 5 */
         if (ref.isPropertyReference()) {
             if (ref.isSuperReference()) {
-                throw throwReferenceError(cx, Messages.Key.SuperDelete);
+                throw newReferenceError(cx, Messages.Key.SuperDelete);
             }
             ScriptObject obj = ToObject(cx, ref.getBase());
             boolean deleteStatus;
@@ -642,7 +642,7 @@ public final class ScriptRuntime {
                 deleteStatus = obj.delete(cx, (Symbol) referencedName);
             }
             if (!deleteStatus && ref.isStrictReference()) {
-                throw throwTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
+                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
                         .toString());
             }
             return deleteStatus;
@@ -714,7 +714,7 @@ public final class ScriptRuntime {
         }
         int newlen = llen + rlen;
         if (newlen < 0) {
-            throwInternalError(cx, Messages.Key.OutOfMemory);
+            throw newInternalError(cx, Messages.Key.OutOfMemory);
         }
         if (newlen <= 10) {
             return new StringBuilder(newlen).append(lstr).append(rstr).toString();
@@ -735,7 +735,7 @@ public final class ScriptRuntime {
      */
     public static boolean in(Object lval, Object rval, ExecutionContext cx) {
         if (!Type.isObject(rval)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         Object p = ToPropertyKey(cx, lval);
         if (p instanceof String) {
@@ -751,7 +751,7 @@ public final class ScriptRuntime {
      */
     public static boolean InstanceofOperator(Object obj, Object constructor, ExecutionContext cx) {
         if (!Type.isObject(constructor)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         Callable instOfHandler = GetMethod(cx, Type.objectValue(constructor),
                 BuiltinSymbol.hasInstance.get());
@@ -760,7 +760,7 @@ public final class ScriptRuntime {
             return ToBoolean(result);
         }
         if (!IsCallable(constructor)) {
-            throw throwTypeError(cx, Messages.Key.NotCallable);
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
         return OrdinaryHasInstance(cx, constructor, obj);
     }
@@ -791,7 +791,7 @@ public final class ScriptRuntime {
      */
     public static ScriptObject ensureObject(Object val, ExecutionContext cx) {
         if (!Type.isObject(val)) {
-            throw throwTypeError(cx, Messages.Key.NotObjectType);
+            throw newTypeError(cx, Messages.Key.NotObjectType);
         }
         return Type.objectValue(val);
     }
@@ -923,8 +923,8 @@ public final class ScriptRuntime {
      * 13.14 The try Statement
      */
     public static ScriptException toInternalError(StackOverflowError e, ExecutionContext cx) {
-        ScriptException exception = Errors.newError(cx, Intrinsics.InternalError,
-                Messages.Key.StackOverflow, "StackOverflow");
+        ScriptException exception = newInternalError(cx, Messages.Key.StackOverflow,
+                "StackOverflow");
         // use stacktrace from original error
         exception.setStackTrace(e.getStackTrace());
         return exception;
@@ -1496,11 +1496,11 @@ public final class ScriptRuntime {
             protoParent = null;
             constructorParent = cx.getIntrinsic(Intrinsics.FunctionPrototype);
         } else if (!IsConstructor(superClass)) {
-            throw throwTypeError(cx, Messages.Key.NotConstructor);
+            throw newTypeError(cx, Messages.Key.NotConstructor);
         } else {
             Object p = Get(cx, Type.objectValue(superClass), "prototype");
             if (!(Type.isObject(p) || Type.isNull(p))) {
-                throw throwTypeError(cx, Messages.Key.NotObjectOrNull);
+                throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             protoParent = Type.isNull(p) ? null : Type.objectValue(p);
             constructorParent = Type.objectValue(superClass);

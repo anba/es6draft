@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -138,10 +138,10 @@ public class StringConstructor extends BuiltinConstructor implements Initialisab
                 Object next = codePoints[nextIndex];
                 double nextCP = ToNumber(cx, next);
                 if (!SameValue(nextCP, ToInteger(nextCP))) {
-                    throw throwRangeError(cx, Messages.Key.InvalidCodePoint);
+                    throw newRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
                 if (nextCP < 0 || nextCP > 0x10FFFF) {
-                    throw throwRangeError(cx, Messages.Key.InvalidCodePoint);
+                    throw newRangeError(cx, Messages.Key.InvalidCodePoint);
                 }
                 elements[nextIndex] = (int) nextCP;
             }

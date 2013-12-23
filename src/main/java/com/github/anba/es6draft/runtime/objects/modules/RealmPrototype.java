@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.modules;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.modules.RealmConstructor.IndirectEval;
 
@@ -51,11 +51,11 @@ public class RealmPrototype extends OrdinaryObject implements Initialisable {
             if (value instanceof RealmObject) {
                 RealmObject realmObject = (RealmObject) value;
                 if (realmObject.getRealm() == null) {
-                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 return realmObject;
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype

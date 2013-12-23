@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.EscapeRegExpPattern;
 import static com.github.anba.es6draft.runtime.objects.RegExpConstructor.RegExpInitialise;
@@ -73,7 +73,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                     return obj;
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -559,24 +559,24 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
             /* step 1 (omitted) */
             /* step 2 */
             if (!(thisValue instanceof RegExpObject)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             RegExpObject r = (RegExpObject) thisValue;
             /* step 3 */
             boolean extensible = IsExtensible(cx, r);
             /* step 4 */
             if (!extensible) {
-                throw throwTypeError(cx, Messages.Key.NotExtensible);
+                throw newTypeError(cx, Messages.Key.NotExtensible);
             }
             Object p, f;
             if (pattern instanceof RegExpObject) {
                 /* step 5 */
                 RegExpObject rx = (RegExpObject) pattern;
                 if (!rx.isInitialised()) {
-                    throw throwTypeError(cx, Messages.Key.UninitialisedObject);
+                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
                 }
                 if (!Type.isUndefined(flags)) {
-                    throw throwTypeError(cx, Messages.Key.NotUndefined);
+                    throw newTypeError(cx, Messages.Key.NotUndefined);
                 }
                 p = rx.getOriginalSource();
                 f = rx.getOriginalFlags();
@@ -610,7 +610,6 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
     private static MatchResult getMatcherOrNull(ExecutionContext cx, RegExpObject r, String s) {
         /* step 1 */
         assert r.isInitialised();
-
         /* step 2 */
         int length = s.length();
         /* step 3 */

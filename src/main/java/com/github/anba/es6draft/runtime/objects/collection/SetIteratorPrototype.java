@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
@@ -89,12 +89,12 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
             SetIterationKind kind) {
         /* steps 1-2 */
         if (!(obj instanceof SetObject)) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         SetObject set = (SetObject) obj;
         /* step 3 */
         if (!set.isInitialised()) {
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* step 4 */
         LinkedMap<Object, Void> entries = set.getSetData();
@@ -126,11 +126,11 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         public static Object next(ExecutionContext cx, Object thisValue) {
             /* step 2 */
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             /* step 3 */
             if (!(thisValue instanceof SetIterator)) {
-                throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             /* step 1 */
             SetIterator o = (SetIterator) thisValue;

@@ -9,7 +9,7 @@ package com.github.anba.es6draft.runtime.objects.modules;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetOwnEnumerablePropertyNames;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.modules.ModuleAbstractOperations.CreateLinkedModuleInstance;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -87,7 +87,7 @@ public class ModuleFactoryFunction extends BuiltinConstructor implements Initial
         Object obj = args.length > 0 ? args[0] : UNDEFINED;
         /* step 1 */
         if (!Type.isObject(obj)) {
-            throw throwTypeError(calleeContext, Messages.Key.NotObjectType);
+            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
         }
         ScriptObject object = Type.objectValue(obj);
         /* step 2 */

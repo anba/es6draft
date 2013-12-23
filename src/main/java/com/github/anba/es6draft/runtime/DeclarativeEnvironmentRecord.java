@@ -6,8 +6,8 @@
  */
 package com.github.anba.es6draft.runtime;
 
-import static com.github.anba.es6draft.runtime.internal.Errors.throwReferenceError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newReferenceError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.HashMap;
@@ -132,11 +132,11 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
         assert b != null; // FIXME: spec bug (bug 159)
         /* steps 3-6 */
         if (b.value == null) {
-            throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
+            throw newReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         } else if (b.mutable) {
             b.value = value;
         } else if (strict) {
-            throw throwTypeError(cx, Messages.Key.ImmutableBinding, name);
+            throw newTypeError(cx, Messages.Key.ImmutableBinding, name);
         }
     }
 
@@ -154,7 +154,7 @@ public class DeclarativeEnvironmentRecord implements EnvironmentRecord {
             if (!strict) {
                 return UNDEFINED;
             }
-            throw throwReferenceError(cx, Messages.Key.UninitialisedBinding, name);
+            throw newReferenceError(cx, Messages.Key.UninitialisedBinding, name);
         }
         /* step 4 */
         return b.value;

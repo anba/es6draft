@@ -7,7 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.internal;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateIterResultObject;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.util.Iterator;
@@ -36,7 +36,7 @@ public class ListIteratorNext extends BuiltinFunction {
         /* step 1 (omitted) */
         /* step 2 */
         if (!(thisValue instanceof ListIterator)) {
-            throw throwTypeError(calleeContext, Messages.Key.IncompatibleObject);
+            throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         /* step 3 */
         Iterator<?> iterator = ((ListIterator<?>) thisValue).getIterator();

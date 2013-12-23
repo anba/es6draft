@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwRangeError;
-import static com.github.anba.es6draft.runtime.internal.Errors.throwTypeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.DateAbstractOperations.*;
 import static com.github.anba.es6draft.runtime.objects.intl.DateTimeFormatConstructor.ToDateTimeOptions;
@@ -122,7 +122,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
                     return obj.getDateValue();
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         @Prototype
@@ -904,7 +904,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         public static Object toISOString(ExecutionContext cx, Object thisValue) {
             double dateValue = thisTimeValue(cx, thisValue);
             if (!isFinite(dateValue)) {
-                throw throwRangeError(cx, Messages.Key.InvalidDateValue);
+                throw newRangeError(cx, Messages.Key.InvalidDateValue);
             }
             return DatePrototype.toISOString(dateValue);
         }
@@ -926,7 +926,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             Object toISO = Get(cx, o, "toISOString");
             /* step 6 */
             if (!IsCallable(toISO)) {
-                throw throwTypeError(cx, Messages.Key.NotCallable);
+                throw newTypeError(cx, Messages.Key.NotCallable);
             }
             /* step 7 */
             return ((Callable) toISO).call(cx, o);
@@ -940,12 +940,12 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
             /* steps 1-2 */
             if (!Type.isObject(thisValue)) {
-                throw throwTypeError(cx, Messages.Key.NotObjectType);
+                throw newTypeError(cx, Messages.Key.NotObjectType);
             }
             Type tryFirst;
             /* step 5 */
             if (!Type.isString(hint)) {
-                throw throwTypeError(cx, Messages.Key.InvalidToPrimitiveHint, "?");
+                throw newTypeError(cx, Messages.Key.InvalidToPrimitiveHint, "?");
             }
             /* steps 3-5 */
             String _hint = Type.stringValue(hint).toString();
@@ -954,7 +954,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
             } else if ("number".equals(_hint)) {
                 tryFirst = Type.Number;
             } else {
-                throw throwTypeError(cx, Messages.Key.InvalidToPrimitiveHint, _hint);
+                throw newTypeError(cx, Messages.Key.InvalidToPrimitiveHint, _hint);
             }
             /* step 6 */
             return OrdinaryToPrimitive(cx, Type.objectValue(thisValue), tryFirst);
@@ -979,7 +979,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
                     return obj.getDateValue();
                 }
             }
-            throw throwTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
 
         /**

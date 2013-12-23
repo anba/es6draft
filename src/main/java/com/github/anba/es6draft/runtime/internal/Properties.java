@@ -515,7 +515,7 @@ public final class Properties {
             if (cause instanceof ScriptException)
                 return (ScriptException) cause;
             String info = Objects.toString(cause.getMessage(), cause.getClass().getSimpleName());
-            return Errors.throwInternalError(cx, Messages.Key.InternalError, info);
+            return Errors.newInternalError(cx, Messages.Key.InternalError, info);
         }
     }
 
