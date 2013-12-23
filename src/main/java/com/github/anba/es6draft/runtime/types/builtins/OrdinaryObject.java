@@ -79,13 +79,13 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /** [[HasOwnProperty]] (P) */
-    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected boolean hasOwnProperty(String propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)
         return __has__(propertyKey);
     }
 
     /** [[HasOwnProperty]] (P) */
-    protected boolean hasOwnProperty(ExecutionContext cx, Symbol propertyKey) {
+    protected boolean hasOwnProperty(Symbol propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)
         return __has__(propertyKey);
     }
@@ -384,7 +384,7 @@ public class OrdinaryObject implements ScriptObject {
     public boolean hasProperty(ExecutionContext cx, String propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-3 */
-        boolean hasOwn = hasOwnProperty(cx, propertyKey);
+        boolean hasOwn = hasOwnProperty(propertyKey);
         /* step 4 */
         if (!hasOwn) {
             ScriptObject parent = getPrototypeOf(cx);
@@ -403,7 +403,7 @@ public class OrdinaryObject implements ScriptObject {
     public boolean hasProperty(ExecutionContext cx, Symbol propertyKey) {
         /* step 1 (implicit) */
         /* steps 2-3 */
-        boolean hasOwn = hasOwnProperty(cx, propertyKey);
+        boolean hasOwn = hasOwnProperty(propertyKey);
         /* step 4 */
         if (!hasOwn) {
             ScriptObject parent = getPrototypeOf(cx);

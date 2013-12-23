@@ -212,8 +212,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        boolean has = super.hasOwnProperty(cx, propertyKey);
+    protected boolean hasOwnProperty(String propertyKey) {
+        boolean has = super.hasOwnProperty(propertyKey);
         if (has) {
             return true;
         }

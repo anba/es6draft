@@ -42,7 +42,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
 
     /** [[HasOwnProperty]] (P) */
     @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
+    protected boolean hasOwnProperty(String propertyKey) {
         /* steps 1-2 (not applicable) */
         /* step 3 */
         double intIndex = toIntegerIndex(propertyKey);
@@ -57,7 +57,7 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
             return true;
         }
         /* step 4 */
-        return super.hasOwnProperty(cx, propertyKey);
+        return super.hasOwnProperty(propertyKey);
     }
 
     /** 9.4.5.1 [[GetOwnProperty]] (P) */

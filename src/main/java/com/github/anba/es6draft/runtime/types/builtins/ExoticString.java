@@ -64,8 +64,8 @@ public class ExoticString extends OrdinaryObject {
      * [[HasOwnProperty]] (P)
      */
     @Override
-    protected boolean hasOwnProperty(ExecutionContext cx, String propertyKey) {
-        boolean has = super.hasOwnProperty(cx, propertyKey);
+    protected boolean hasOwnProperty(String propertyKey) {
+        boolean has = super.hasOwnProperty(propertyKey);
         if (has) {
             return true;
         }
@@ -137,7 +137,7 @@ public class ExoticString extends OrdinaryObject {
     @Override
     protected boolean isEnumerableOwnProperty(String key) {
         int index = toStringIndex(key);
-        if (index >= 0 && index < getStringDataOrEmpty().length()) {
+        if (index >= 0 && index < getStringDataOrEmpty().length() && !super.hasOwnProperty(key)) {
             return true;
         }
         return super.isEnumerableOwnProperty(key);
