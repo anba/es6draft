@@ -30,6 +30,7 @@ tests/basic/testBug606138.js
 tests/basic/testDoubleZeroInSwitch2.js
 tests/basic/testOverRecursed5.js
 tests/basic/testSlowNativeWithNullThis.js
+tests/basic/testTypedArrayInit.js
 tests/basic/typed-array-offsets.js
 tests/for-of/typedarrays-1.js
 tests/for-of/typedarrays-2.js
@@ -133,10 +134,6 @@ tests/basic/function-tosource-getset.js
 tests/basic/function-tosource-lambda.js
 tests/basic/function-tosource-strict.js
 tests/basic/testLet.js
-
-# Date parser
-tests/sunspider/check-date-format-tofte.js
-tests/sunspider/check-date-format-xparb.js
 
 # different error message
 tests/basic/bug827104.js
@@ -522,6 +519,8 @@ tests/basic/testBug755916.js
 tests/basic/functionnames.js
 # getObjectMetadata/setObjectMetadata/setObjectMetadataCallback
 tests/basic/metadata-hook.js
+tests/basic/bug951213.js
+tests/basic/bug951632.js
 # getBuildConfiguration
 tests/basic/testOOMInAutoEnterCompartment.js
 # workerThreadCount

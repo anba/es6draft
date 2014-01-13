@@ -81,9 +81,6 @@ feature/Spread/Error_Disabled.js
 feature/TemplateLiterals/Error_Disabled.js
 feature/Yield/Error_Disabled.js
 
-# lint test not supported
-feature/Syntax/Error_StrictSemiColonsNoLint.js
-
 
 #######################################
 # ES6 related syntax changes          #

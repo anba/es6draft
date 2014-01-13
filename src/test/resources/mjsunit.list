@@ -156,6 +156,7 @@ function-names.js
 
 # different maximum arguments size
 regress/regress-3027.js
+regress/regress-331444.js
 
 # Error.prototype.message is limited to 350 characters in V8
 error-tostring-omit.js
@@ -177,7 +178,11 @@ stack-traces-custom-lazy.js
 eval-stack-trace.js
 
 # V8 Realm API
+contextual-calls.js
 regress/regress-280531.js
+
+# readbuffer function
+regress/d8-readbuffer.js
 
 
 ###############################################################
