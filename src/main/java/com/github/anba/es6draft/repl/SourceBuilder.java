@@ -11,26 +11,155 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
+import com.github.anba.es6draft.runtime.objects.DateObject;
+import com.github.anba.es6draft.runtime.objects.DatePrototype;
+import com.github.anba.es6draft.runtime.objects.RegExpObject;
+import com.github.anba.es6draft.runtime.objects.RegExpPrototype;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 
 /**
  *
  */
-final class SourceBuilder {
+public final class SourceBuilder {
     private SourceBuilder() {
     }
 
-    public static String ToSource(ExecutionContext cx, Object val) {
-        HashSet<ScriptObject> stack = new HashSet<>();
-        return toSource(cx, stack, val);
+    private enum AnsiAttribute {
+        Reset(0), Bold(1), Underline(4), Negative(7), NormalIntensity(22), UnderlineNone(24),
+        Positive(27), TextColor(30), DefaultTextColor(39), BackgroundColor(40),
+        DefaultBackgroundColor(49), TextColorHi(90), BackgroundColorHi(100);
+
+        final int code;
+
+        private AnsiAttribute(int code) {
+            this.code = code;
+        }
+
+        int color(AnsiColor color) {
+            return code + color.offset;
+        }
     }
 
-    private static String toSource(ExecutionContext cx, Set<ScriptObject> stack, Object value) {
+    private enum AnsiColor {
+        Black(0), Red(1), Green(2), Yellow(3), Blue(4), Magenta(5), Cyan(6), White(7);
+
+        final int offset;
+
+        private AnsiColor(int offset) {
+            this.offset = offset;
+        }
+    }
+
+    private enum Style {/* @formatter:off */
+        Special(AnsiAttribute.TextColor.color(AnsiColor.Cyan), AnsiAttribute.DefaultTextColor),
+        Number(AnsiAttribute.TextColor.color(AnsiColor.Yellow), AnsiAttribute.DefaultTextColor),
+        Boolean(AnsiAttribute.TextColor.color(AnsiColor.Yellow), AnsiAttribute.DefaultTextColor),
+        Undefined(AnsiAttribute.TextColorHi.color(AnsiColor.Black), AnsiAttribute.DefaultTextColor),
+        Null(AnsiAttribute.Bold, AnsiAttribute.NormalIntensity),
+        String(AnsiAttribute.TextColor.color(AnsiColor.Green), AnsiAttribute.DefaultTextColor),
+        Symbol(AnsiAttribute.TextColor.color(AnsiColor.Green), AnsiAttribute.DefaultTextColor),
+        Date(AnsiAttribute.TextColor.color(AnsiColor.Magenta), AnsiAttribute.DefaultTextColor),
+        RegExp(AnsiAttribute.TextColor.color(AnsiColor.Red), AnsiAttribute.DefaultTextColor),
+        ;
+        /* @formatter:on */
+
+        private final int on;
+        private final int off;
+
+        private Style(AnsiAttribute on, AnsiAttribute off) {
+            this(on.code, off.code);
+        }
+
+        private Style(int on, AnsiAttribute off) {
+            this(on, off.code);
+        }
+
+        private Style(int on, int off) {
+            this.on = on;
+            this.off = off;
+        }
+    }
+
+    public enum Mode {
+        Simple, Color
+    }
+
+    /**
+     * Returns the simple mode, source representation for {@code val}
+     */
+    public static String ToSource(ExecutionContext cx, Object val) {
+        return ToSource(Mode.Simple, cx, val);
+    }
+
+    /**
+     * Returns the source representation for {@code val}
+     */
+    public static String ToSource(Mode mode, ExecutionContext cx, Object val) {
+        HashSet<ScriptObject> stack = new HashSet<>();
+        return toSource(mode, cx, stack, val);
+    }
+
+    private static String toSource(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
+            Object value) {
+        if (Type.isObject(value)) {
+            ScriptObject objValue = Type.objectValue(value);
+            Object toSource = Get(cx, objValue, "toSource");
+            if (IsCallable(toSource)) {
+                return ToFlatString(cx, ((Callable) toSource).call(cx, objValue));
+            }
+        }
+        return format(mode, source(mode, cx, stack, value), style(stack, value));
+    }
+
+    private static String format(Mode mode, String source, Style style) {
+        if (mode == Mode.Simple || style == null) {
+            return source;
+        }
+        return String.format("\u001B[%dm%s\u001B[%d;%dm", style.on, source,
+                AnsiAttribute.Reset.code, style.off);
+    }
+
+    private static Style style(Set<ScriptObject> stack, Object value) {
+        switch (Type.of(value)) {
+        case Undefined:
+            return Style.Undefined;
+        case Null:
+            return Style.Null;
+        case Boolean:
+            return Style.Boolean;
+        case String:
+            return Style.String;
+        case Number:
+            return Style.Number;
+        case Symbol:
+            return Style.Symbol;
+        case Object:
+        default:
+            if (IsCallable(value)) {
+                return Style.Special;
+            }
+            if (stack.contains(value)) {
+                return Style.Special;
+            }
+            if (value instanceof DateObject) {
+                return Style.Date;
+            }
+            if (value instanceof RegExpObject) {
+                return Style.RegExp;
+            }
+            return null;
+        }
+    }
+
+    private static String source(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
+            Object value) {
         switch (Type.of(value)) {
         case Null:
             return "null";
@@ -44,10 +173,6 @@ final class SourceBuilder {
             return ToFlatString(cx, value);
         case Object:
             ScriptObject objValue = Type.objectValue(value);
-            Object toSource = Get(cx, objValue, "toSource");
-            if (IsCallable(toSource)) {
-                return ToFlatString(cx, ((Callable) toSource).call(cx, objValue));
-            }
             if (IsCallable(objValue)) {
                 return ((Callable) objValue).toSource();
             }
@@ -56,10 +181,14 @@ final class SourceBuilder {
             }
             stack.add(objValue);
             try {
-                if (objValue instanceof ExoticArray) {
-                    return arrayToSource(cx, stack, objValue);
+                if (objValue instanceof DateObject) {
+                    return DatePrototype.Properties.toString(cx, value).toString();
+                } else if (objValue instanceof RegExpObject) {
+                    return RegExpPrototype.Properties.toString(cx, value).toString();
+                } else if (objValue instanceof ExoticArray) {
+                    return arrayToSource(mode, cx, stack, objValue);
                 } else {
-                    return objectToSource(cx, stack, objValue);
+                    return objectToSource(mode, cx, stack, objValue);
                 }
             } finally {
                 stack.remove(objValue);
@@ -112,7 +241,26 @@ final class SourceBuilder {
         return sb.toString();
     }
 
-    private static String objectToSource(ExecutionContext cx, Set<ScriptObject> stack,
+    private static final Pattern namePattern = Pattern
+            .compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
+
+    private static String propertyKeyToSource(Mode mode, Object key) {
+        if (key instanceof String) {
+            String s = (String) key;
+            if (namePattern.matcher(s).matches()) {
+                return s;
+            }
+            return format(mode, stringToSource(s), Style.String);
+        }
+        assert key instanceof Symbol;
+        String description = ((Symbol) key).getDescription();
+        if (description == null) {
+            description = "Symbol()";
+        }
+        return format(mode, String.format("[%s]", description), Style.Symbol);
+    }
+
+    private static String objectToSource(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
             ScriptObject value) {
         List<Object> keys = GetOwnEnumerablePropertyKeys(cx, value);
         if (keys.isEmpty()) {
@@ -120,14 +268,15 @@ final class SourceBuilder {
         }
         StringBuilder properties = new StringBuilder();
         for (Object k : keys) {
-            String p = toSource(cx, stack, Get(cx, value, k));
-            properties.append(',').append(k).append(':').append(p);
+            String key = propertyKeyToSource(mode, k);
+            String p = toSource(mode, cx, stack, Get(cx, value, k));
+            properties.append(", ").append(key).append(": ").append(p);
         }
-        properties.append('}').setCharAt(0, '{');
+        properties.append(" }").setCharAt(0, '{');
         return properties.toString();
     }
 
-    private static String arrayToSource(ExecutionContext cx, Set<ScriptObject> stack,
+    private static String arrayToSource(Mode mode, ExecutionContext cx, Set<ScriptObject> stack,
             ScriptObject value) {
         long len = ToUint32(cx, Get(cx, value, "length"));
         if (len <= 0) {
@@ -135,10 +284,10 @@ final class SourceBuilder {
         }
         StringBuilder properties = new StringBuilder();
         for (long index = 0; index < len; ++index) {
-            String p = toSource(cx, stack, Get(cx, value, ToString(index)));
-            properties.append(',').append(p);
+            String p = toSource(mode, cx, stack, Get(cx, value, ToString(index)));
+            properties.append(", ").append(p);
         }
-        properties.append(']').setCharAt(0, '[');
+        properties.append(" ]").setCharAt(0, '[');
         return properties.toString();
     }
 }

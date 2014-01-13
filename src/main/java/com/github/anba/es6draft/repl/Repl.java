@@ -157,7 +157,7 @@ public class Repl {
 
     private enum Option {
         NoInterpreter, Debug, FullDebug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell,
-        NoJLine;
+        NoJLine, NoColor;
 
         static EnumSet<Option> fromArgs(String[] args) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -192,6 +192,9 @@ public class Repl {
                 case "--no-jline":
                     options.add(NoJLine);
                     break;
+                case "--no-color":
+                    options.add(NoColor);
+                    break;
                 case "--help":
                     System.out.print(getHelp());
                     System.exit(0);
@@ -216,6 +219,7 @@ public class Repl {
         sb.append("  --shell=[mode]    Set default shell emulation [simple, mozilla, v8] (default = simple)\n");
         sb.append("  --strict          Strict semantics without web compatibility\n");
         sb.append("  --no-interpreter  Disable interpreter\n");
+        sb.append("  --no-color        Disable colored output\n");
         sb.append("  --no-jline        Disable JLine support\n");
         sb.append("  --stacktrace      Print stack-trace on error\n");
         sb.append("  --debug           Print generated Java bytecode\n");
@@ -386,7 +390,9 @@ public class Repl {
      */
     private void print(Realm realm, Object result) {
         if (result != UNDEFINED) {
-            console.printf("%s%n", ToSource(realm.defaultContext(), result));
+            boolean color = console.isAnsiSupported() && !options.contains(Option.NoColor);
+            SourceBuilder.Mode mode = color ? SourceBuilder.Mode.Color : SourceBuilder.Mode.Simple;
+            console.printf("%s%n", ToSource(mode, realm.defaultContext(), result));
         }
     }
 
