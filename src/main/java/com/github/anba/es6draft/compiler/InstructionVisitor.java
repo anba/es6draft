@@ -366,6 +366,7 @@ class InstructionVisitor extends InstructionAdapter {
     private final String methodName;
     private final Type methodDescriptor;
     private final MethodAllocation methodAllocation;
+    private final StackInspector stack;
     private final Variables variables = new Variables();
     private final ClassValue<Type> typeCache = new ClassValue<Type>() {
         @Override
@@ -380,11 +381,26 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     protected InstructionVisitor(MethodCode method) {
-        super(Opcodes.ASM4, method.methodVisitor);
+        this(method, false);
+    }
+
+    protected InstructionVisitor(MethodCode method, boolean recordStack) {
+        super(Opcodes.ASM4, wrapIf(method, recordStack));
         this.methodVisitor = method.methodVisitor;
         this.methodName = method.methodName;
         this.methodDescriptor = Type.getMethodType(method.methodDescriptor);
         this.methodAllocation = MethodAllocation.from(method.access);
+        this.stack = recordStack ? (StackInspector) mv : null;
+        if (recordStack) {
+            stack.setVariables(variables);
+        }
+    }
+
+    private static MethodVisitor wrapIf(MethodCode method, boolean recordStack) {
+        if (recordStack) {
+            return new StackInspector(method);
+        }
+        return method.methodVisitor;
     }
 
     public final MethodVisitor getMethodVisitor() {
@@ -401,6 +417,18 @@ class InstructionVisitor extends InstructionAdapter {
 
     public final MethodAllocation getMethodAllocation() {
         return methodAllocation;
+    }
+
+    public final boolean hasStack() {
+        return stack != null;
+    }
+
+    public final Type[] getStack() {
+        return stack.getStack();
+    }
+
+    protected final void restoreStack(Type[] stack) {
+        this.stack.setStack(stack);
     }
 
     protected final void restoreVariables(VariablesView variables) {
@@ -796,6 +824,9 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     public void catchHandler(Label handler, Type exception) {
+        if (stack != null) {
+            stack.catchHandler(exception);
+        }
         mark(handler);
     }
 

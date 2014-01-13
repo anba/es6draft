@@ -30,6 +30,7 @@ import com.github.anba.es6draft.ast.synthetic.SpreadElementMethod;
 import com.github.anba.es6draft.ast.synthetic.StatementListMethod;
 import com.github.anba.es6draft.compiler.Code.MethodCode;
 import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
+import com.github.anba.es6draft.compiler.ExpressionVisitor.GeneratorState;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
@@ -38,6 +39,7 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.ImmediateFuture;
 import com.github.anba.es6draft.runtime.internal.JVMNames;
+import com.github.anba.es6draft.runtime.internal.ResumptionPoint;
 import com.github.anba.es6draft.runtime.internal.SourceCompressor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 
@@ -77,7 +79,7 @@ final class CodeGenerator implements AutoCloseable {
         static final String GeneratorComprehension_Call = Type.getMethodDescriptor(Types.Object,
                 Types.OrdinaryGenerator, Types.ExecutionContext, Types.Object, Types.Object_);
         static final String GeneratorComprehension_Code = Type.getMethodDescriptor(Types.Object,
-                Types.ExecutionContext);
+                Types.ExecutionContext, Types.ResumptionPoint);
         static final String GeneratorComprehension_RTI = Type
                 .getMethodDescriptor(Types.RuntimeInfo$Function);
 
@@ -101,7 +103,7 @@ final class CodeGenerator implements AutoCloseable {
         static final String FunctionNode_Code = Type.getMethodDescriptor(Types.Object,
                 Types.ExecutionContext);
         static final String Generator_Code = Type.getMethodDescriptor(Types.Object,
-                Types.ExecutionContext);
+                Types.ExecutionContext, Types.ResumptionPoint);
 
         static final String FunctionNode_Init = Type.getMethodDescriptor(Type.VOID_TYPE,
                 Types.ExecutionContext, Types.FunctionObject, Types.Object_);
@@ -633,12 +635,15 @@ final class CodeGenerator implements AutoCloseable {
                     FunctionName.Code), node, parent);
             body.lineInfo(node);
             body.begin();
+            Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
+            GeneratorState state = body.prologue(resume);
 
             body.setScope(parent.getScope());
             node.accept(new GeneratorComprehensionGenerator(this), body);
             body.loadUndefined();
             body.areturn();
 
+            body.epilogue(resume, state);
             body.end();
 
             // call method
@@ -750,6 +755,8 @@ final class CodeGenerator implements AutoCloseable {
                 node);
         body.lineInfo(node);
         body.begin();
+        Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
+        GeneratorState state = body.prologue(resume);
 
         body.enterScope(node);
         Completion result = statements(node.getStatements(), body);
@@ -761,6 +768,7 @@ final class CodeGenerator implements AutoCloseable {
             body.areturn();
         }
 
+        body.epilogue(resume, state);
         body.end();
 
         return body.hasTailCalls();
@@ -927,7 +935,7 @@ final class CodeGenerator implements AutoCloseable {
 
     private static final class ScriptStatementVisitor extends StatementVisitor {
         ScriptStatementVisitor(MethodCode method, Script node) {
-            super(method, IsStrict(node), node, node.isGlobalCode() ? CodeType.GlobalScript
+            super(method, false, IsStrict(node), node, node.isGlobalCode() ? CodeType.GlobalScript
                     : CodeType.NonGlobalScript);
         }
 
@@ -940,7 +948,7 @@ final class CodeGenerator implements AutoCloseable {
 
     private static final class FunctionStatementVisitor extends StatementVisitor {
         FunctionStatementVisitor(MethodCode method, FunctionNode node) {
-            super(method, IsStrict(node), node, CodeType.Function);
+            super(method, node.isGenerator(), IsStrict(node), node, CodeType.Function);
         }
 
         @Override
@@ -952,13 +960,14 @@ final class CodeGenerator implements AutoCloseable {
 
     private static final class GeneratorStatementVisitor extends StatementVisitor {
         GeneratorStatementVisitor(MethodCode method, FunctionNode node) {
-            super(method, IsStrict(node), node, CodeType.Function);
+            super(method, node.isGenerator(), IsStrict(node), node, CodeType.Function);
         }
 
         @Override
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("rp", 1, Types.ResumptionPoint);
         }
     }
 
@@ -977,7 +986,7 @@ final class CodeGenerator implements AutoCloseable {
 
     private static final class ArrowFunctionVisitor extends ExpressionVisitor {
         ArrowFunctionVisitor(MethodCode method, ArrowFunction node) {
-            super(method, IsStrict(node), false, node.hasSyntheticNodes());
+            super(method, false, IsStrict(node), false, node.hasSyntheticNodes());
         }
 
         @Override
@@ -990,13 +999,14 @@ final class CodeGenerator implements AutoCloseable {
     private static final class GeneratorComprehensionVisitor extends ExpressionVisitor {
         GeneratorComprehensionVisitor(MethodCode method, GeneratorComprehension node,
                 ExpressionVisitor parent) {
-            super(method, parent.isStrict(), parent.isGlobalCode(), node.hasSyntheticNodes());
+            super(method, true, parent.isStrict(), parent.isGlobalCode(), node.hasSyntheticNodes());
         }
 
         @Override
         public void begin() {
             super.begin();
             setParameterName("cx", 0, Types.ExecutionContext);
+            setParameterName("rp", 1, Types.ResumptionPoint);
         }
     }
 

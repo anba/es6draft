@@ -58,6 +58,11 @@ public final class RuntimeInfo {
             }
 
             @Override
+            public boolean hasSyntheticMethods() {
+                return FunctionFlags.SyntheticMethods.isSet(functionFlags);
+            }
+
+            @Override
             public int expectedArgumentCount() {
                 return expectedArgumentCount;
             }
@@ -153,32 +158,37 @@ public final class RuntimeInfo {
         /**
          * Flag for strict-mode functions
          */
-        Strict(0b00_0001),
+        Strict(0b0000_0001),
 
         /**
          * Flag for functions with super-binding
          */
-        Super(0b00_0010),
+        Super(0b0000_0010),
 
         /**
          * Flag for functions which have their name in scope
          */
-        ScopedName(0b00_0100),
+        ScopedName(0b0000_0100),
 
         /**
          * Flag for generator functions
          */
-        Generator(0b00_1000),
+        Generator(0b0000_1000),
 
         /**
          * Flag for tail-call functions
          */
-        TailCall(0b01_0000),
+        TailCall(0b0001_0000),
 
         /**
          * Flag for legacy functions
          */
-        Legacy(0b10_0000);
+        Legacy(0b0010_0000),
+
+        /**
+         * Flag for functions with synthetic sub-methods
+         */
+        SyntheticMethods(0b0100_0000);
 
         private final int value;
 
@@ -198,7 +208,7 @@ public final class RuntimeInfo {
     /**
      * Compiled function information
      */
-    public interface Function extends Code {
+    public interface Function {
         String functionName();
 
         boolean isStrict();
@@ -213,6 +223,8 @@ public final class RuntimeInfo {
 
         boolean isLegacy();
 
+        boolean hasSyntheticMethods();
+
         int expectedArgumentCount();
 
         String source();
@@ -221,14 +233,9 @@ public final class RuntimeInfo {
          * (? extends FunctionObject, ExecutionContext, Object, Object[]) -> Object
          */
         MethodHandle callMethod();
-    }
 
-    /**
-     * Compiled function code information
-     */
-    public interface Code {
         /**
-         * (ExecutionContext) -> Object
+         * (ExecutionContext, ...?) -> Object
          */
         MethodHandle handle();
     }

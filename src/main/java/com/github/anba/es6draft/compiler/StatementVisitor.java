@@ -142,9 +142,10 @@ abstract class StatementVisitor extends ExpressionVisitor {
         this.labels.returnLabel = codeType == CodeType.Function ? new ReturnLabel() : null;
     }
 
-    protected StatementVisitor(MethodCode method, boolean strict, TopLevelNode topLevelNode,
-            CodeType codeType) {
-        super(method, strict, codeType == CodeType.GlobalScript, topLevelNode.hasSyntheticNodes());
+    protected StatementVisitor(MethodCode method, boolean recordStack, boolean strict,
+            TopLevelNode topLevelNode, CodeType codeType) {
+        super(method, recordStack, strict, codeType == CodeType.GlobalScript, topLevelNode
+                .hasSyntheticNodes());
         this.topLevelNode = topLevelNode;
         this.codeType = codeType;
         this.isScriptCode = codeType != CodeType.Function;

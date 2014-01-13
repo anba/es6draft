@@ -709,6 +709,9 @@ class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
 
     @Override
     public Integer visit(YieldExpression node, CodeSizeHandler value) {
-        return analyze(node, node.getExpression(), 15, value);
+        if (node.isDelegatedYield()) {
+            return analyze(node, node.getExpression(), 300, value);
+        }
+        return analyze(node, node.getExpression(), 150, value);
     }
 }

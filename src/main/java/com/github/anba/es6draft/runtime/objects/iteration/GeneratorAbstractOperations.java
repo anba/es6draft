@@ -29,7 +29,7 @@ public final class GeneratorAbstractOperations {
      * 25.3.3.1 GeneratorStart (generator, generatorBody)
      */
     public static GeneratorObject GeneratorStart(ExecutionContext cx, GeneratorObject generator,
-            RuntimeInfo.Code generatorBody) {
+            RuntimeInfo.Function generatorBody) {
         /* steps 1-6 */
         generator.start(cx, generatorBody);
         /* step 7 */

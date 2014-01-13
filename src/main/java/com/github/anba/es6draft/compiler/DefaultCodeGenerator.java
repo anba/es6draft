@@ -42,10 +42,42 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
 
     private static final class Methods {
         // class: AbstractOperations
+        static final MethodDesc AbstractOperations_CreateIterResultObject = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "CreateIterResultObject", Type
+                        .getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object,
+                                Type.BOOLEAN_TYPE));
+
+        static final MethodDesc AbstractOperations_GetIterator = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "GetIterator",
+                Type.getMethodType(Types.ScriptObject, Types.ExecutionContext, Types.Object));
+
         static final MethodDesc AbstractOperations_HasOwnProperty = MethodDesc.create(
                 MethodType.Static, Types.AbstractOperations, "HasOwnProperty", Type
                         .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
                                 Types.ScriptObject, Types.String));
+
+        static final MethodDesc AbstractOperations_HasProperty = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "HasProperty", Type
+                        .getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext,
+                                Types.ScriptObject, Types.String));
+
+        static final MethodDesc AbstractOperations_IteratorComplete = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "IteratorComplete",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.ExecutionContext, Types.ScriptObject));
+
+        static final MethodDesc AbstractOperations_IteratorNext = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "IteratorNext", Type.getMethodType(
+                        Types.ScriptObject, Types.ExecutionContext, Types.ScriptObject,
+                        Types.Object));
+
+        static final MethodDesc AbstractOperations_IteratorThrow = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "IteratorThrow", Type.getMethodType(
+                        Types.ScriptObject, Types.ExecutionContext, Types.ScriptObject,
+                        Types.Object));
+
+        static final MethodDesc AbstractOperations_IteratorValue = MethodDesc.create(
+                MethodType.Static, Types.AbstractOperations, "IteratorValue",
+                Type.getMethodType(Types.Object, Types.ExecutionContext, Types.ScriptObject));
 
         static final MethodDesc AbstractOperations_ToPrimitive = MethodDesc
                 .create(MethodType.Static, Types.AbstractOperations, "ToPrimitive", Type
@@ -172,6 +204,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 .create(MethodType.Static, Types.OrdinaryFunction, "SetFunctionName", Type
                         .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
                                 Types.FunctionObject, Types.Symbol));
+
+        // class: ScriptException
+        static final MethodDesc ScriptException_getValue = MethodDesc.create(MethodType.Virtual,
+                Types.ScriptException, "getValue", Type.getMethodType(Types.Object));
 
         // class: ScriptRuntime
         static final MethodDesc ScriptRuntime_CreateDefaultConstructor = MethodDesc.create(
@@ -1045,9 +1081,96 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected final void delegatedYield(Expression node, ExpressionVisitor mv) {
         mv.lineInfo(node);
-        // call runtime
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_delegatedYield);
+        if (!mv.hasSyntheticMethods() && mv.hasStack()) {
+            Label iteratorNext = new Label(), iteratorThrow = new Label(), iteratorComplete = new Label();
+            Label done = new Label();
+
+            mv.enterVariableScope();
+            Variable<ScriptObject> iterator = mv.newVariable("iterator", ScriptObject.class);
+            Variable<ScriptObject> innerResult = mv.newVariable("innerResult", ScriptObject.class);
+            Variable<Object> received = mv.newVariable("received", Object.class);
+
+            /* steps 4-5 */
+            // stack: [value] -> []
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.invoke(Methods.AbstractOperations_GetIterator);
+            mv.store(iterator);
+
+            /* step 6 */
+            // stack: [] -> []
+            mv.loadUndefined();
+            mv.store(received);
+
+            /* step 7a */
+            // stack: [] -> [innerResult]
+            mv.mark(iteratorNext);
+            mv.loadExecutionContext();
+            mv.load(iterator);
+            mv.load(received);
+            mv.invoke(Methods.AbstractOperations_IteratorNext);
+            mv.goTo(iteratorComplete);
+
+            /* step 7b (I) */
+            // stack: [] -> [innerResult]
+            mv.mark(iteratorThrow);
+            mv.loadExecutionContext();
+            mv.load(iterator);
+            mv.load(received);
+            mv.invoke(Methods.AbstractOperations_IteratorThrow);
+
+            /* steps 7c-7d */
+            // stack: [innerResult] -> [done]
+            mv.mark(iteratorComplete);
+            mv.store(innerResult);
+            mv.loadExecutionContext();
+            mv.load(innerResult);
+            mv.invoke(Methods.AbstractOperations_IteratorComplete);
+            mv.ifne(done);
+
+            /* step 7f */
+            // stack: [] -> [Object(innerResult)]
+            // force stack top to Object-type
+            mv.load(innerResult);
+            mv.checkcast(Types.Object);
+            mv.newResumptionPoint();
+            mv.store(received);
+
+            /* step 7b (II) */
+            mv.load(received);
+            mv.instanceOf(Types.ScriptException);
+            mv.ifeq(iteratorNext);
+            {
+                mv.load(received);
+                mv.checkcast(Types.ScriptException);
+
+                Label hasThrow = new Label();
+                mv.loadExecutionContext();
+                mv.load(iterator);
+                mv.aconst("throw");
+                mv.invoke(Methods.AbstractOperations_HasProperty);
+                mv.ifeq(hasThrow);
+                {
+                    mv.invoke(Methods.ScriptException_getValue);
+                    mv.store(received);
+                    mv.goTo(iteratorThrow);
+                }
+                mv.mark(hasThrow);
+                mv.athrow();
+            }
+
+            /* step 7e */
+            mv.mark(done);
+            mv.loadExecutionContext();
+            mv.load(innerResult);
+            mv.invoke(Methods.AbstractOperations_IteratorValue);
+
+            mv.exitVariableScope();
+        } else {
+            // call runtime
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_delegatedYield);
+        }
     }
 
     /**
@@ -1063,8 +1186,30 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      */
     protected final void yield(Expression node, ExpressionVisitor mv) {
         mv.lineInfo(node);
-        // call runtime
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_yield);
+        if (!mv.hasSyntheticMethods() && mv.hasStack()) {
+            mv.loadExecutionContext();
+            mv.swap();
+            mv.iconst(false);
+            mv.invoke(Methods.AbstractOperations_CreateIterResultObject);
+
+            // force stack top to Object-type
+            mv.checkcast(Types.Object);
+            mv.newResumptionPoint();
+
+            // check for exception
+            Label isException = new Label();
+            mv.dup();
+            mv.instanceOf(Types.ScriptException);
+            mv.ifeq(isException);
+            {
+                mv.checkcast(Types.ScriptException);
+                mv.athrow();
+            }
+            mv.mark(isException);
+        } else {
+            // call runtime
+            mv.loadExecutionContext();
+            mv.invoke(Methods.ScriptRuntime_yield);
+        }
     }
 }

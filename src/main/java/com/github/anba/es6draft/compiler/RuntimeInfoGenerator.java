@@ -55,6 +55,9 @@ final class RuntimeInfoGenerator {
         // TODO: revisit decision to censor .caller by making generator expr strict by default?
         functionFlags |= FunctionFlags.Strict.getValue();
         functionFlags |= FunctionFlags.Generator.getValue();
+        if (node.hasSyntheticNodes()) {
+            functionFlags |= FunctionFlags.SyntheticMethods.getValue();
+        }
         return functionFlags;
     }
 
@@ -74,6 +77,9 @@ final class RuntimeInfoGenerator {
         }
         if (generator) {
             functionFlags |= FunctionFlags.Generator.getValue();
+        }
+        if (node.hasSyntheticNodes()) {
+            functionFlags |= FunctionFlags.SyntheticMethods.getValue();
         }
         if (tailCall) {
             assert !generator && strict;
