@@ -162,7 +162,7 @@ public final class Compiler {
         } else {
             p = new SimpleTypeTextifier();
         }
-        cr.accept(new TraceClassVisitor(null, p, null), 0);
+        cr.accept(new TraceClassVisitor(null, p, null), ClassReader.EXPAND_FRAMES);
         PrintWriter pw = new PrintWriter(System.out);
         p.print(pw);
         pw.flush();
@@ -234,7 +234,9 @@ public final class Compiler {
         protected void appendDescriptor(int type, String desc) {
             switch (type) {
             case INTERNAL_NAME:
-                desc = getInternalName(desc);
+                if (desc != null) {
+                    desc = getInternalName(desc);
+                }
                 break;
             case FIELD_DESCRIPTOR:
                 desc = getDescriptor(desc);
@@ -286,5 +288,4 @@ public final class Compiler {
             return smap.toString();
         }
     }
-
 }

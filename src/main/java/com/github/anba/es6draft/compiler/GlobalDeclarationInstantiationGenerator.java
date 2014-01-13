@@ -80,7 +80,7 @@ final class GlobalDeclarationInstantiationGenerator extends
 
     private static final class GlobalDeclInitMethodGenerator extends ExpressionVisitor {
         GlobalDeclInitMethodGenerator(MethodCode method, Script node) {
-            super(method, IsStrict(node), false);
+            super(method, IsStrict(node), false, false);
         }
 
         @Override

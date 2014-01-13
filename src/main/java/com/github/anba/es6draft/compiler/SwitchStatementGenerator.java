@@ -371,6 +371,7 @@ final class SwitchStatementGenerator extends
     private void emitStringSwitch(List<SwitchClause> clauses, Label[] labels, Label defaultClause,
             Label lblBreak, Variable<?> switchValue, StatementVisitor mv) {
         Label switchDefault = defaultClause != null ? defaultClause : lblBreak;
+        mv.enterVariableScope();
         Variable<String> switchValueString = mv.newVariable("switchValueString", String.class);
         if (switchValue.getType().equals(Types.CharSequence)) {
             mv.load(switchValue);
@@ -429,6 +430,7 @@ final class SwitchStatementGenerator extends
             lastValue = value;
         }
         mv.goTo(switchDefault);
+        mv.exitVariableScope();
     }
 
     /**
@@ -474,6 +476,7 @@ final class SwitchStatementGenerator extends
             mv.ifeq(switchDefault);
 
             // test for char-ness: value is char (string with only one character)
+            mv.enterVariableScope();
             Variable<CharSequence> switchValueChar = mv.newVariable("switchValueChar",
                     CharSequence.class);
             mv.load(switchValue);
@@ -488,6 +491,7 @@ final class SwitchStatementGenerator extends
             mv.iconst(0);
             mv.invoke(Methods.CharSequence_charAt);
             mv.cast(Type.CHAR_TYPE, Type.INT_TYPE);
+            mv.exitVariableScope();
         }
 
         // emit tableswitch or lookupswitch
@@ -551,6 +555,7 @@ final class SwitchStatementGenerator extends
             mv.ifeq(switchDefault);
 
             // test for int-ness: value is integer
+            mv.enterVariableScope();
             Variable<Double> switchValueNum = mv.newVariable("switchValueNum", double.class);
             mv.load(switchValue);
             mv.checkcast(Types.Number);
@@ -565,6 +570,7 @@ final class SwitchStatementGenerator extends
 
             mv.load(switchValueNum);
             mv.cast(Type.DOUBLE_TYPE, Type.INT_TYPE);
+            mv.exitVariableScope();
         }
 
         // emit tableswitch or lookupswitch

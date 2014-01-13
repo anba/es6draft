@@ -35,16 +35,26 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
     private final boolean strict;
     private final boolean globalCode;
+    private final boolean syntheticMethods;
     private Variable<ExecutionContext> executionContext;
     private Scope scope;
     // tail-call support
     private boolean hasTailCalls = false;
     private Set<Expression> tailCallNodes = emptySet();
 
-    protected ExpressionVisitor(MethodCode method, boolean strict, boolean globalCode) {
+    protected ExpressionVisitor(MethodCode method, ExpressionVisitor parent) {
+        super(method);
+        this.strict = parent.isStrict();
+        this.globalCode = parent.isGlobalCode();
+        this.syntheticMethods = true;
+    }
+
+    protected ExpressionVisitor(MethodCode method, boolean strict, boolean globalCode,
+            boolean syntheticMethods) {
         super(method);
         this.strict = strict;
         this.globalCode = globalCode;
+        this.syntheticMethods = syntheticMethods;
     }
 
     @Override
@@ -88,6 +98,10 @@ abstract class ExpressionVisitor extends InstructionVisitor {
 
     boolean isGlobalCode() {
         return globalCode;
+    }
+
+    boolean hasSyntheticMethods() {
+        return syntheticMethods;
     }
 
     Scope getScope() {

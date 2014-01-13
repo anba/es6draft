@@ -221,14 +221,13 @@ final class FunctionCodeGenerator {
         mv.mark(endFinally);
 
         // Exception: Restore 'caller' and 'arguments' and then rethrow exception
-        mv.mark(handlerFinally);
+        mv.finallyHandler(handlerFinally);
         mv.store(throwable);
         restoreLegacyProperties(function, oldCaller, oldArguments, mv);
         mv.load(throwable);
         mv.athrow();
 
-        mv.visitTryCatchBlock(startFinally, endFinally, handlerFinally,
-                Types.Throwable.getInternalName());
+        mv.tryFinally(startFinally, endFinally, handlerFinally);
     }
 
     /**

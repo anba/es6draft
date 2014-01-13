@@ -167,7 +167,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 .create(MethodType.Static, Types.OrdinaryFunction, "SetFunctionName", Type
                         .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
                                 Types.FunctionObject, Types.String));
-        // class: OrdinaryFunction
+
         static final MethodDesc OrdinaryFunction_SetFunctionName_Symbol = MethodDesc
                 .create(MethodType.Static, Types.OrdinaryFunction, "SetFunctionName", Type
                         .getMethodType(Type.VOID_TYPE, Types.ExecutionContext,
@@ -182,6 +182,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
                 MethodType.Static, Types.ScriptRuntime, "CreateDefaultEmptyConstructor",
                 Type.getMethodType(Types.RuntimeInfo$Function));
 
+        static final MethodDesc ScriptRuntime_delegatedYield = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "delegatedYield",
+                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
+
         static final MethodDesc ScriptRuntime_EvaluateConstructorMethod = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "EvaluateConstructorMethod", Type
                         .getMethodType(Types.OrdinaryFunction, Types.ScriptObject,
@@ -195,6 +199,10 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
         static final MethodDesc ScriptRuntime_getDefaultClassProto = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "getDefaultClassProto",
                 Type.getMethodType(Types.ScriptObject_, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "yield",
+                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
 
         // class: Type
         static final MethodDesc Type_isUndefinedOrNull = MethodDesc.create(MethodType.Static,
@@ -1023,5 +1031,40 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
             // implicit: mv.exitScope()
         }
         // step 20 (empty)
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.14 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>YieldExpression : yield * AssignmentExpression
+     * </ul>
+     * <p>
+     * stack: [value] -> [value]
+     */
+    protected final void delegatedYield(Expression node, ExpressionVisitor mv) {
+        mv.lineInfo(node);
+        // call runtime
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_delegatedYield);
+    }
+
+    /**
+     * 14.4 Generator Function Definitions
+     * <p>
+     * 14.4.14 Runtime Semantics: Evaluation
+     * <ul>
+     * <li>YieldExpression : yield
+     * <li>YieldExpression : yield AssignmentExpression
+     * </ul>
+     * <p>
+     * stack: [value] -> [value]
+     */
+    protected final void yield(Expression node, ExpressionVisitor mv) {
+        mv.lineInfo(node);
+        // call runtime
+        mv.loadExecutionContext();
+        mv.invoke(Methods.ScriptRuntime_yield);
     }
 }

@@ -6,12 +6,8 @@
  */
 package com.github.anba.es6draft.compiler;
 
-import org.objectweb.asm.Type;
-
 import com.github.anba.es6draft.ast.Expression;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
-import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
@@ -21,13 +17,6 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
  * </ul>
  */
 final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
-    private static final class Methods {
-        // class: ScriptRuntime
-        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "yield",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
-    }
-
     private boolean initialised = false;
 
     GeneratorComprehensionGenerator(CodeGenerator codegen) {
@@ -60,9 +49,7 @@ final class GeneratorComprehensionGenerator extends ComprehensionGenerator {
         assert initialised : "generator-comprehension generator not initialised";
 
         expressionBoxedValue(node, mv);
-        mv.lineInfo(node);
-        mv.loadExecutionContext();
-        mv.invoke(Methods.ScriptRuntime_yield);
+        yield(node, mv);
         mv.pop();
 
         return null;

@@ -87,7 +87,7 @@ final class FunctionDeclarationInstantiationGenerator extends
 
     private static final class FunctionDeclInitMethodGenerator extends ExpressionVisitor {
         FunctionDeclInitMethodGenerator(MethodCode method, FunctionNode node) {
-            super(method, IsStrict(node), false);
+            super(method, IsStrict(node), false, false);
         }
 
         @Override
@@ -144,7 +144,7 @@ final class FunctionDeclarationInstantiationGenerator extends
 
         Set<String> bindings = new HashSet<>();
         /* step 1 */
-        // RuntimeInfo.Code code = func.getCode();
+        // RuntimeInfo.Function code = func.getCode();
         /* step 2 */
         boolean strict = IsStrict(function);
         boolean legacy = !strict && codegen.isEnabled(CompatibilityOption.FunctionPrototype);

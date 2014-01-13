@@ -27,11 +27,29 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
  *
  */
 class InstructionVisitor extends InstructionAdapter {
-    private static final class Variables {
+    static interface VariablesView {
+        /**
+         * Returns the type information for the requested local variable
+         */
+        Type getVariable(int slot);
+
+        /**
+         * Returns the next local variable slot after {@code slot}
+         */
+        int getNextActiveSlot(int slot);
+
+        /**
+         * Returns the number of variables
+         */
+        int getVariableCount();
+    }
+
+    private static final class Variables implements VariablesView {
         private static final Type RESERVED = Type.getType("reserved");
         private static final int INITIAL_SIZE = 8;
         private final AtomicInteger id = new AtomicInteger();
         private final BitSet variables = new BitSet();
+        private final BitSet active = new BitSet();
         private Type[] types = new Type[INITIAL_SIZE];
         private VariableScope varScope = null;
 
@@ -51,6 +69,43 @@ class InstructionVisitor extends InstructionAdapter {
             }
         }
 
+        @Override
+        public Type getVariable(int slot) {
+            assert 0 <= slot && slot <= types.length : String.format("slot=%d not in [%d, %d]",
+                    slot, 0, types.length);
+            assert variables.get(slot) && types[slot] != null && types[slot] != RESERVED : String
+                    .format("slot=%d, used=%b, type=%s", slot, variables.get(slot), types[slot]);
+            return types[slot];
+        }
+
+        @Override
+        public int getNextActiveSlot(int slot) {
+            assert 0 <= slot && slot <= types.length : String.format("slot=%d not in [%d, %d]",
+                    slot, 0, types.length);
+            assert variables.get(slot) && active.get(slot) && types[slot] != null
+                    && types[slot] != RESERVED : String.format(
+                    "slot=%d, used=%b, active=%b, type=%s", slot, variables.get(slot),
+                    active.get(slot), types[slot]);
+            return active.nextSetBit(slot + types[slot].getSize());
+        }
+
+        @Override
+        public int getVariableCount() {
+            int count = 0;
+            for (int i = 0, len = types.length; i < len; ++i) {
+                count += types[i] != null && types[i] != RESERVED ? 1 : 0;
+            }
+            return count;
+        }
+
+        VariablesView view() {
+            Variables clone = new Variables();
+            clone.variables.or(variables);
+            clone.active.or(active);
+            clone.types = Arrays.copyOf(types, types.length);
+            return clone;
+        }
+
         VariableScope enter() {
             return varScope = new VariableScope(varScope, variables.length());
         }
@@ -64,11 +119,20 @@ class InstructionVisitor extends InstructionAdapter {
             }
             Arrays.fill(types, scope.firstSlot, types.length, null);
             variables.clear(scope.firstSlot, variables.size());
+            active.clear(scope.firstSlot, active.size());
             return scope;
         }
 
         void close() {
             assert varScope == null : "unclosed variable scopes";
+        }
+
+        void activate(int slot) {
+            active.set(slot);
+        }
+
+        boolean isActive(int slot) {
+            return active.get(slot);
         }
 
         /**
@@ -82,20 +146,21 @@ class InstructionVisitor extends InstructionAdapter {
         /**
          * Sets the variable information for a fixed slot
          */
-        void reserveFixedSlot(Type type, int slot) {
+        void reserveSlot(Type type, int slot) {
             assert slot >= 0;
             if (slot + type.getSize() > types.length) {
                 types = grow(types);
             }
             assert types[slot] == null && (type.getSize() == 1 || types[slot + 1] == null);
             assign(slot, type);
+            activate(slot);
         }
 
         /**
          * Sets the variable information for a fixed slot and adds an entry to the variable map
          */
-        <T> Variable<T> reserveFixedSlot(String name, Type type, int slot) {
-            reserveFixedSlot(type, slot);
+        <T> Variable<T> reserveSlot(String name, Type type, int slot) {
+            reserveSlot(type, slot);
             return varScope.add(name, type, slot);
         }
 
@@ -126,6 +191,7 @@ class InstructionVisitor extends InstructionAdapter {
             assert variables.get(slot);
             assert types[slot].equals(variable.getType());
             variables.clear(slot);
+            active.clear(slot);
         }
 
         private int newVariable(Type type) {
@@ -287,11 +353,16 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     enum MethodAllocation {
-        Class, Instance
+        Class, Instance;
+
+        static MethodAllocation from(int access) {
+            return (access & Opcodes.ACC_STATIC) != 0 ? Class : Instance;
+        }
     }
 
     private static final int MAX_STRING_SIZE = 16384;
 
+    private final MethodVisitor methodVisitor;
     private final String methodName;
     private final Type methodDescriptor;
     private final MethodAllocation methodAllocation;
@@ -310,18 +381,14 @@ class InstructionVisitor extends InstructionAdapter {
 
     protected InstructionVisitor(MethodCode method) {
         super(Opcodes.ASM4, method.methodVisitor);
+        this.methodVisitor = method.methodVisitor;
         this.methodName = method.methodName;
         this.methodDescriptor = Type.getMethodType(method.methodDescriptor);
-        this.methodAllocation = (method.access & Opcodes.ACC_STATIC) != 0 ? MethodAllocation.Class
-                : MethodAllocation.Instance;
+        this.methodAllocation = MethodAllocation.from(method.access);
     }
 
-    protected InstructionVisitor(MethodVisitor mv, String methodName, Type methodDescriptor,
-            MethodAllocation methodAllocation) {
-        super(Opcodes.ASM4, mv);
-        this.methodName = methodName;
-        this.methodDescriptor = methodDescriptor;
-        this.methodAllocation = methodAllocation;
+    public final MethodVisitor getMethodVisitor() {
+        return methodVisitor;
     }
 
     public final String getMethodName() {
@@ -332,22 +399,32 @@ class InstructionVisitor extends InstructionAdapter {
         return methodDescriptor;
     }
 
-    public MethodAllocation getMethodAllocation() {
+    public final MethodAllocation getMethodAllocation() {
         return methodAllocation;
     }
 
-    protected final <T> Variable<T> reserveFixedSlot(String name, int slot, Class<T> clazz) {
-        return variables.reserveFixedSlot(name, getType(clazz), slot);
+    protected final void restoreVariables(VariablesView variables) {
+        assert variables instanceof Variables;
+        Variables locals = (Variables) variables;
+        this.variables.variables.clear();
+        this.variables.variables.or(locals.variables);
+        this.variables.active.clear();
+        this.variables.active.or(locals.active);
+        this.variables.types = Arrays.copyOf(locals.types, locals.types.length);
+    }
+
+    public final VariablesView getVariables() {
+        return variables.view();
     }
 
     private void initialiseParameters() {
         int slot = 0;
         if (methodAllocation == MethodAllocation.Instance) {
-            variables.reserveFixedSlot("<this>", Types.Object, slot);
+            variables.reserveSlot("<this>", Types.Object, slot);
             slot += Types.Object.getSize();
         }
         for (Type argument : methodDescriptor.getArgumentTypes()) {
-            variables.reserveFixedSlot(argument, slot);
+            variables.reserveSlot(argument, slot);
             slot += argument.getSize();
         }
     }
@@ -358,10 +435,6 @@ class InstructionVisitor extends InstructionAdapter {
             slot += argumentTypes[i].getSize();
         }
         return slot;
-    }
-
-    protected void setParameterName(String name, int index, Class<?> clazz) {
-        setParameterName(name, index, getType(clazz));
     }
 
     protected void setParameterName(String name, int index, Type type) {
@@ -391,18 +464,18 @@ class InstructionVisitor extends InstructionAdapter {
 
     public void enterVariableScope() {
         VariableScope scope = variables.enter();
-        mark(scope.start);
+        getMethodVisitor().visitLabel(scope.start);
     }
 
     public void exitVariableScope() {
         VariableScope scope = variables.exit();
-        mark(scope.end);
+        getMethodVisitor().visitLabel(scope.end);
         for (Variable<?> variable : scope) {
             visitLocalVariable(variable, scope.start, scope.end);
         }
     }
 
-    public void visitLocalVariable(Variable<?> variable, Label start, Label end) {
+    private void visitLocalVariable(Variable<?> variable, Label start, Label end) {
         if (variable.slot >= 0) {
             visitLocalVariable(variable.getName(), variable.getType().getDescriptor(), null, start,
                     end, variable.getSlot());
@@ -423,25 +496,25 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     @Override
-    @Deprecated
-    public void load(int var, Type type) {
+    public final void load(int var, Type type) {
+        assert variables.isActive(var);
         super.load(var, type);
     }
 
     public void load(Variable<?> variable) {
         assert variable.isAlive();
-        super.load(variable.getSlot(), variable.getType());
+        load(variable.getSlot(), variable.getType());
     }
 
     @Override
-    @Deprecated
-    public void store(int var, Type type) {
+    public final void store(int var, Type type) {
+        variables.activate(var);
         super.store(var, type);
     }
 
     public void store(Variable<?> variable) {
         assert variable.isAlive();
-        super.store(variable.getSlot(), variable.getType());
+        store(variable.getSlot(), variable.getType());
     }
 
     public void begin() {
@@ -457,19 +530,19 @@ class InstructionVisitor extends InstructionAdapter {
         visitEnd();
     }
 
-    public Label label() {
-        Label label = new Label();
-        mark(label);
-        return label;
-    }
-
     public void lineInfo(int line) {
         if (lastLineNumber == line) {
-            // omit duplicate line info entries;
+            // omit duplicate line info entries
             return;
         }
         lastLineNumber = line;
-        visitLineNumber(line, label());
+        Label label = new Label();
+        getMethodVisitor().visitLabel(label);
+        visitLineNumber(line, label);
+    }
+
+    protected final int getLastLineNumber() {
+        return lastLineNumber;
     }
 
     /**
@@ -570,6 +643,30 @@ class InstructionVisitor extends InstructionAdapter {
     }
 
     /**
+     * {value3}, {value2, value1} → {value2, value1}, {value3}
+     */
+    public void swap1_2() {
+        dup2X1();
+        pop2();
+    }
+
+    /**
+     * {value3, value2}, {value1} → {value1}, {value3, value2}
+     */
+    public void swap2_1() {
+        dupX2();
+        pop();
+    }
+
+    /**
+     * {value4, value3}, {value2, value1} → {value2, value1}, {value4, value3}
+     */
+    public void swap2() {
+        dup2X2();
+        pop2();
+    }
+
+    /**
      * value → value, value
      */
     public void dup(ValType type) {
@@ -619,19 +716,19 @@ class InstructionVisitor extends InstructionAdapter {
         if (lsize == 1 && rsize == 1) {
             swap();
         } else if (lsize == 1 && rsize == 2) {
-            dup2X1();
-            pop2();
+            swap1_2();
         } else if (lsize == 2 && rsize == 1) {
-            dupX2();
-            pop();
+            swap2_1();
         } else if (lsize == 2 && rsize == 2) {
-            dup2X2();
-            pop2();
+            swap2();
         } else {
             assert false : "invalid type size";
         }
     }
 
+    /**
+     * &#x2205; → value
+     */
     public void get(FieldDesc field) {
         switch (field.type) {
         case Instance:
@@ -645,6 +742,9 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
+    /**
+     * value → &#x2205;
+     */
     public void put(FieldDesc field) {
         switch (field.type) {
         case Instance:
@@ -658,6 +758,9 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
+    /**
+     * parameters → value
+     */
     public void invoke(MethodDesc method) {
         switch (method.type) {
         case Interface:
@@ -677,18 +780,39 @@ class InstructionVisitor extends InstructionAdapter {
         }
     }
 
+    /**
+     * &#x2205; → handle
+     */
     public void handle(MethodDesc method) {
         hconst(new Handle(method.type.toTag(), method.owner, method.name, method.desc));
     }
 
-    public void invokeStaticMH(String className, String name, String desc) {
-        hconst(new Handle(Opcodes.H_INVOKESTATIC, className, name, desc));
+    public void tryCatch(Label start, Label end, Label handler, Type type) {
+        visitTryCatchBlock(start, end, handler, type.getInternalName());
     }
 
+    public void tryFinally(Label start, Label end, Label handler) {
+        visitTryCatchBlock(start, end, handler, null);
+    }
+
+    public void catchHandler(Label handler, Type exception) {
+        mark(handler);
+    }
+
+    public void finallyHandler(Label handler) {
+        catchHandler(handler, Types.Throwable);
+    }
+
+    /**
+     * value → boxed
+     */
     public void toBoxed(ValType type) {
         toBoxed(type.toType());
     }
 
+    /**
+     * value → boxed
+     */
     public void toBoxed(Type type) {
         switch (type.getSort()) {
         case Type.VOID:
@@ -721,6 +845,72 @@ class InstructionVisitor extends InstructionAdapter {
         case Type.OBJECT:
         case Type.METHOD:
             return;
+        }
+    }
+
+    /**
+     * boxed → value
+     */
+    public void toUnboxed(Type type) {
+        switch (type.getSort()) {
+        case Type.VOID:
+            return;
+        case Type.BOOLEAN:
+            invokevirtual("java/lang/Boolean", "booleanValue", "()Z");
+            return;
+        case Type.CHAR:
+            invokevirtual("java/lang/Character", "charValue", "()C");
+            return;
+        case Type.BYTE:
+            invokevirtual("java/lang/Byte", "byteValue", "()B");
+            return;
+        case Type.SHORT:
+            invokevirtual("java/lang/Short", "shortValue", "()S");
+            return;
+        case Type.INT:
+            invokevirtual("java/lang/Integer", "intValue", "()I");
+            return;
+        case Type.FLOAT:
+            invokevirtual("java/lang/Float", "floatValue", "()F");
+            return;
+        case Type.LONG:
+            invokevirtual("java/lang/Long", "longValue", "()J");
+            return;
+        case Type.DOUBLE:
+            invokevirtual("java/lang/Double", "doubleValue", "()D");
+            return;
+        case Type.ARRAY:
+        case Type.OBJECT:
+        case Type.METHOD:
+            return;
+        }
+    }
+
+    public Type getWrapper(Type type) {
+        switch (type.getSort()) {
+        case Type.VOID:
+            return Types.Void;
+        case Type.BOOLEAN:
+            return Types.Boolean;
+        case Type.CHAR:
+            return Types.Character;
+        case Type.BYTE:
+            return Types.Byte;
+        case Type.SHORT:
+            return Types.Short;
+        case Type.INT:
+            return Types.Integer;
+        case Type.FLOAT:
+            return Types.Float;
+        case Type.LONG:
+            return Types.Long;
+        case Type.DOUBLE:
+            return Types.Double;
+        case Type.ARRAY:
+        case Type.OBJECT:
+        case Type.METHOD:
+        default:
+            return type;
         }
     }
 }

@@ -47,9 +47,11 @@ abstract class StatementVisitor extends ExpressionVisitor {
         List<TempLabel> tempLabels = null;
 
         final Labels parent;
+        final Variable<Object> completion;
 
-        Labels(Labels parent) {
+        Labels(Labels parent, Variable<Object> completion) {
             this.parent = parent;
+            this.completion = completion;
         }
 
         TempLabel newTemp(JumpLabel actual) {
@@ -124,15 +126,25 @@ abstract class StatementVisitor extends ExpressionVisitor {
     private final boolean isScriptCode;
     private final boolean isGenerator;
     private Variable<Object> completionValue;
-    private Labels labels = new Labels(null);
+    private Labels labels = new Labels(null, null);
     private int finallyDepth = 0;
 
     // tail-call support
     private int wrapped = 0;
 
+    protected StatementVisitor(MethodCode method, StatementVisitor parent) {
+        super(method, parent);
+        this.topLevelNode = parent.getTopLevelNode();
+        this.codeType = parent.getCodeType();
+        this.isScriptCode = codeType != CodeType.Function;
+        this.isGenerator = codeType == CodeType.Function && isGeneratorNode(topLevelNode);
+        // no return in script code
+        this.labels.returnLabel = codeType == CodeType.Function ? new ReturnLabel() : null;
+    }
+
     protected StatementVisitor(MethodCode method, boolean strict, TopLevelNode topLevelNode,
             CodeType codeType) {
-        super(method, strict, codeType == CodeType.GlobalScript);
+        super(method, strict, codeType == CodeType.GlobalScript, topLevelNode.hasSyntheticNodes());
         this.topLevelNode = topLevelNode;
         this.codeType = codeType;
         this.isScriptCode = codeType != CodeType.Function;
@@ -149,9 +161,10 @@ abstract class StatementVisitor extends ExpressionVisitor {
     @Override
     public void begin() {
         super.begin();
-        completionValue = hasParameter(COMPLETION_SLOT, Object.class) ? getParameter(
-                COMPLETION_SLOT, Object.class) : reserveFixedSlot("completion", COMPLETION_SLOT,
-                Object.class);
+        if (isScriptCode) {
+            completionValue = hasParameter(COMPLETION_SLOT, Object.class) ? getParameter(
+                    COMPLETION_SLOT, Object.class) : newVariable("completion", Object.class);
+        }
     }
 
     /**
@@ -172,23 +185,20 @@ abstract class StatementVisitor extends ExpressionVisitor {
      * Pushes the completion value onto the stack
      */
     void loadCompletionValue() {
-        load(completionValue);
+        if (isScriptCode) {
+            load(completionValue);
+        } else {
+            aconst(null);
+        }
     }
 
     /**
      * Pops the stack's top element and stores it into the completion value
      */
-    void storeCompletionValue() {
-        store(completionValue);
-    }
-
-    /**
-     * Pops the stack's top element and conditionally stores it into the completion value.
-     */
-    void storeCompletionValueForScript(ValType type) {
+    void storeCompletionValue(ValType type) {
         if (isScriptCode && finallyDepth == 0) {
             toBoxed(type);
-            storeCompletionValue();
+            store(completionValue);
         } else {
             pop(type);
         }
@@ -212,9 +222,17 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Enter a finally scoped block
      */
-    void enterFinallyScoped() {
+    Variable<Object> enterFinallyScoped() {
         assert labels != null;
-        labels = new Labels(labels);
+        Variable<Object> completion = labels.completion;
+        if (completion == null) {
+            completion = newVariable("completion", Object.class);
+            // TODO: correct live variable analysis, initialised with null for now
+            aconst(null);
+            store(completion);
+        }
+        labels = new Labels(labels, completion);
+        return completion;
     }
 
     /**
@@ -375,7 +393,7 @@ abstract class StatementVisitor extends ExpressionVisitor {
         if (isFinallyScoped()) {
             // If currently enclosed by a finally scoped block, store value in completion register
             // and jump to (temporary) return label
-            storeCompletionValue();
+            store(labels.completion);
             goTo(returnLabel());
         } else {
             // Otherwise emit direct return instruction
@@ -416,11 +434,11 @@ abstract class StatementVisitor extends ExpressionVisitor {
     /**
      * Emit goto instruction to jump to {@code label}'s actual target
      */
-    void goTo(TempLabel label) {
+    void goTo(TempLabel label, Variable<Object> completion) {
         JumpLabel actual = label.getActual();
         if (actual instanceof ReturnLabel) {
             // specialize return label to emit direct return instruction
-            loadCompletionValue();
+            load(completion);
             areturn();
         } else {
             goTo(actual.mark());

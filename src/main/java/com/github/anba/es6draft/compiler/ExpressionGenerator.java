@@ -135,14 +135,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "typeof",
                 Type.getMethodType(Types.String, Types.Object, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_yield = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "yield",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
-
-        static final MethodDesc ScriptRuntime_delegatedYield = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "delegatedYield",
-                Type.getMethodType(Types.Object, Types.Object, Types.ExecutionContext));
-
         static final MethodDesc ScriptRuntime_InstanceofOperator = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "InstanceofOperator", Type.getMethodType(
                         Type.BOOLEAN_TYPE, Types.Object, Types.Object, Types.ExecutionContext));
@@ -1436,7 +1428,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 mv.iconst(true);
                 mv.mark(lbl2);
             }
-
             return ValType.Boolean;
         }
         case GT: {
@@ -2138,28 +2129,35 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             return ValType.Object;
         }
 
-        mv.anew(Types.StringBuilder);
-        mv.dup();
-        mv.invoke(Methods.StringBuilder_init);
+        List<Expression> elements = node.getElements();
+        if (elements.size() == 1) {
+            assert elements.get(0) instanceof TemplateCharacters;
+            TemplateCharacters chars = (TemplateCharacters) elements.get(0);
+            mv.aconst(chars.getValue());
+        } else {
+            mv.anew(Types.StringBuilder);
+            mv.dup();
+            mv.invoke(Methods.StringBuilder_init);
 
-        boolean chars = true;
-        for (Expression expr : node.getElements()) {
-            assert chars == (expr instanceof TemplateCharacters);
-            if (chars) {
-                String value = ((TemplateCharacters) expr).getValue();
-                if (!value.isEmpty()) {
-                    mv.aconst(value);
-                    mv.invoke(Methods.StringBuilder_append_String);
+            boolean chars = true;
+            for (Expression expr : elements) {
+                assert chars == (expr instanceof TemplateCharacters);
+                if (chars) {
+                    String value = ((TemplateCharacters) expr).getValue();
+                    if (!value.isEmpty()) {
+                        mv.aconst(value);
+                        mv.invoke(Methods.StringBuilder_append_String);
+                    }
+                } else {
+                    ValType type = evalAndGetValue(expr, mv);
+                    ToString(type, mv);
+                    mv.invoke(Methods.StringBuilder_append_Charsequence);
                 }
-            } else {
-                ValType type = evalAndGetValue(expr, mv);
-                ToString(type, mv);
-                mv.invoke(Methods.StringBuilder_append_Charsequence);
+                chars = !chars;
             }
-            chars = !chars;
-        }
 
-        mv.invoke(Methods.StringBuilder_toString);
+            mv.invoke(Methods.StringBuilder_toString);
+        }
 
         return ValType.String;
     }
@@ -2323,13 +2321,10 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             mv.loadUndefined();
         }
 
-        mv.loadExecutionContext();
         if (node.isDelegatedYield()) {
-            mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_delegatedYield);
+            delegatedYield(node, mv);
         } else {
-            mv.lineInfo(node);
-            mv.invoke(Methods.ScriptRuntime_yield);
+            yield(node, mv);
         }
 
         return ValType.Any;

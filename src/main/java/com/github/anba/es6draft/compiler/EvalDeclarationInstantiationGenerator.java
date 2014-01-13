@@ -53,7 +53,7 @@ final class EvalDeclarationInstantiationGenerator extends DeclarationBindingInst
 
     private static final class EvalDeclInitMethodGenerator extends ExpressionVisitor {
         EvalDeclInitMethodGenerator(MethodCode method, Script node) {
-            super(method, IsStrict(node), false);
+            super(method, IsStrict(node), false, false);
         }
 
         @Override
