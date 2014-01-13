@@ -46,6 +46,7 @@ public class ExoticProxy implements ScriptObject {
     }
 
     protected final ScriptObject getProxyTarget() {
+        assert proxyTarget != null;
         return proxyTarget;
     }
 
@@ -54,6 +55,10 @@ public class ExoticProxy implements ScriptObject {
             throw newTypeError(cx, Messages.Key.ProxyRevoked);
         }
         return proxyHandler;
+    }
+
+    protected final boolean isRevoked() {
+        return proxyHandler == null;
     }
 
     /**
@@ -67,6 +72,8 @@ public class ExoticProxy implements ScriptObject {
     }
 
     private static class CallabeExoticProxy extends ExoticProxy implements Callable {
+        private static final String SOURCE_NOT_AVAILABLE = "function F() { /* source not available */ }";
+
         public CallabeExoticProxy(ScriptObject target, ScriptObject handler) {
             super(target, handler);
         }
@@ -102,6 +109,9 @@ public class ExoticProxy implements ScriptObject {
 
         @Override
         public String toSource() {
+            if (isRevoked()) {
+                return SOURCE_NOT_AVAILABLE;
+            }
             return ((Callable) getProxyTarget()).toSource();
         }
     }
