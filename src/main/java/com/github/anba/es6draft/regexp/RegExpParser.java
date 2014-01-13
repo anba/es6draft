@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.regex.Pattern;
 
+import org.joni.Config;
+
 import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.parser.ParserException.ExceptionType;
 import com.github.anba.es6draft.runtime.internal.Messages;
@@ -23,8 +25,6 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * </ul>
  */
 public final class RegExpParser {
-    // Disabled until https://github.com/jruby/joni/pull/10 is fixed and released
-    private static final boolean JONI_ENABLED = false;
     private static final int BACKREF_LIMIT = 0xFFFF;
     private static final int DEPTH_LIMIT = 0xFFFF;
     private static final char[] HEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -59,7 +59,7 @@ public final class RegExpParser {
         this.source = source;
         this.length = source.length();
         this.flags = flags;
-        this.joni = !isUnicode() && JONI_ENABLED;
+        this.joni = !isUnicode();
         this.sourceFile = sourceFile;
         this.sourceLine = sourceLine;
         this.sourceColumn = sourceColumn;
@@ -188,6 +188,14 @@ public final class RegExpParser {
      */
     private boolean caseInsensitive() {
         return joni;
+    }
+
+    /**
+     * Maximum supported repeat
+     */
+    private int repeatMaximum() {
+        // clamp at max-int to avoid overflow in Java
+        return joni ? Config.MAX_REPEAT_NUM : Integer.MAX_VALUE;
     }
 
     private boolean isIgnoreCase() {
@@ -1057,11 +1065,11 @@ public final class RegExpParser {
                 throw error(Messages.Key.RegExpInvalidQuantifier);
             }
 
-            // output result (clamp at max-int to avoid overflow in Java)
-            out.append('{').append((int) Math.min(min, Integer.MAX_VALUE));
+            // output result
+            out.append('{').append((int) Math.min(min, repeatMaximum()));
             if (comma) {
                 if (max != -1) {
-                    out.append(',').append((int) Math.min(max, Integer.MAX_VALUE));
+                    out.append(',').append((int) Math.min(max, repeatMaximum()));
                 } else {
                     out.append(',');
                 }

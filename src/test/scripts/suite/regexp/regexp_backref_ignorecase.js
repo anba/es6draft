@@ -9,8 +9,7 @@ const {
   assertFalse, assertTrue
 } = Assert;
 
-// Only works due to the terrible unicode case hack when emitting back references
-assertTrue(/(\u01C6)\1/i.test("\u01C6\u01C5"));
+// Test back references are working if ignoreCase is set.
 
-// This should be false instead of true
-assertTrue(/(\u0069)\1/i.test("\u0069\u0131"));
+assertTrue(/(\u01C6)\1/i.test("\u01C6\u01C5"));
+assertFalse(/(\u0069)\1/i.test("\u0069\u0131"));
