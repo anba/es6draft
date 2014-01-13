@@ -11,8 +11,11 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFro
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import java.io.BufferedReader;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,6 +25,13 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import jline.TerminalFactory;
+import jline.TerminalSupport;
+import jline.UnsupportedTerminal;
+import jline.console.ConsoleReader;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
@@ -30,6 +40,7 @@ import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserEOFException;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.repl.console.JLineConsole;
 import com.github.anba.es6draft.repl.console.LegacyConsole;
 import com.github.anba.es6draft.repl.console.NativeConsole;
 import com.github.anba.es6draft.repl.console.ReplConsole;
@@ -62,7 +73,13 @@ public class Repl {
             EnumSet<Option> options = Option.fromArgs(args);
             StartScript startScript = StartScript.fromArgs(args);
             ReplConsole console;
-            if (System.console() != null) {
+            if (!options.contains(Option.NoJLine)) {
+                configureTerminalFlavors();
+                ConsoleReader consoleReader = new ConsoleReader(PROGRAM_NAME, new FileInputStream(
+                        FileDescriptor.in), System.out, TerminalFactory.get(), getDefaultEncoding());
+                consoleReader.setExpandEvents(false);
+                console = new JLineConsole(consoleReader);
+            } else if (System.console() != null) {
                 console = new NativeConsole(System.console());
             } else {
                 console = new LegacyConsole(System.out, System.in);
@@ -71,6 +88,58 @@ public class Repl {
         } catch (Throwable e) {
             printStackTrace(e);
             System.exit(1);
+        }
+    }
+
+    private static void configureTerminalFlavors() {
+        final boolean isWindows = isWindows();
+        final String type = System.getProperty(TerminalFactory.JLINE_TERMINAL);
+        if (isWindows && type == null) {
+            TerminalFactory.registerFlavor(TerminalFactory.Flavor.WINDOWS,
+                    UnsupportedTerminal.class);
+        } else if (isWindows && type.equalsIgnoreCase(TerminalFactory.UNIX)) {
+            TerminalFactory.registerFlavor(TerminalFactory.Flavor.UNIX, CygwinTerminal.class);
+        }
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name").startsWith("Windows");
+    }
+
+    private static String getDefaultEncoding() {
+        return Charset.defaultCharset().name();
+    }
+
+    public static final class CygwinTerminal extends TerminalSupport {
+        private final int width, height;
+
+        public CygwinTerminal() {
+            super(true);
+            String settings = System.getProperty(TerminalFactory.JLINE_TERMINAL + ".settings", "");
+            width = getProperty(settings, "columns", DEFAULT_WIDTH);
+            height = getProperty(settings, "rows", DEFAULT_HEIGHT);
+        }
+
+        private static int getProperty(String settings, String name, int defaultValue) {
+            Matcher m = Pattern.compile(name + "\\s+(\\d{1,4})").matcher(settings);
+            return m.find() ? Integer.parseInt(m.group(1)) : defaultValue;
+        }
+
+        @Override
+        public void init() throws Exception {
+            super.init();
+            setEchoEnabled(false);
+            setAnsiSupported(true);
+        }
+
+        @Override
+        public int getWidth() {
+            return width;
+        }
+
+        @Override
+        public int getHeight() {
+            return height;
         }
     }
 
@@ -87,7 +156,8 @@ public class Repl {
     }
 
     private enum Option {
-        NoInterpreter, Debug, FullDebug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell;
+        NoInterpreter, Debug, FullDebug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell,
+        NoJLine;
 
         static EnumSet<Option> fromArgs(String[] args) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
@@ -119,6 +189,9 @@ public class Repl {
                 case "--shell=v8":
                     options.add(V8Shell);
                     break;
+                case "--no-jline":
+                    options.add(NoJLine);
+                    break;
                 case "--help":
                     System.out.print(getHelp());
                     System.exit(0);
@@ -143,6 +216,7 @@ public class Repl {
         sb.append("  --shell=[mode]    Set default shell emulation [simple, mozilla, v8] (default = simple)\n");
         sb.append("  --strict          Strict semantics without web compatibility\n");
         sb.append("  --no-interpreter  Disable interpreter\n");
+        sb.append("  --no-jline        Disable JLine support\n");
         sb.append("  --stacktrace      Print stack-trace on error\n");
         sb.append("  --debug           Print generated Java bytecode\n");
         sb.append("  --full-debug      Print generated Java bytecode (full type descriptors)\n");

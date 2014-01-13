@@ -11,26 +11,36 @@
 # Helper script to start the simple REPL
 #
 
+IS_CYGWIN=false
+case "`uname`" in
+  "CYGWIN"*) IS_CYGWIN=true ;;
+esac
+
+# Base directory and class information
 REL_PATH="$( dirname "$0" )"
 BUILD_DIR="${REL_PATH}/../target"
 CLASSPATH="${BUILD_DIR}/es6draft.jar"
-case "`uname`" in
-  "CYGWIN"*) CLASSPATH=`cygpath -wp "${CLASSPATH}"` ;;
-esac
+if [[ $IS_CYGWIN ]] ; then
+  CLASSPATH=`cygpath -wp "${CLASSPATH}"`
+fi
 MAINCLASS="com.github.anba.es6draft.repl.Repl"
 
+# Determine Java start command
 if [[ -z "$JAVA_HOME" ]] ; then
   JAVA_CMD="java"
 else
-  case "`uname`" in
-    "CYGWIN"*) JAVA_HOME=`cygpath -u "${JAVA_HOME}"` ;;
-  esac
+  if [[ $IS_CYGWIN ]] ; then
+    JAVA_HOME=`cygpath -u "${JAVA_HOME}"`
+  fi
   JAVA_CMD="${JAVA_HOME}/bin/java"
 fi
+
+# Set default Java options
 JAVA_OPTS="${JAVA_OPTS:-""}"
 JAVA_OPTS="${JAVA_OPTS} -ea -server -XX:+TieredCompilation"
-JAVA_VERSION=`${JAVA_CMD} -version 2>&1 | sed 's/java version "\([0-9._]*\).*"/\1/; 1q'`
 
+# Adjust classpath based on current Java version
+JAVA_VERSION=`${JAVA_CMD} -version 2>&1 | sed 's/java version "\([0-9._]*\).*"/\1/; 1q'`
 if [[ "$JAVA_VERSION" < "1.7.0_45" ]] ; then
   JAVA_OPTS="${JAVA_OPTS} -esa"
   JAVA_CLASSPATH="-Xbootclasspath/a:${CLASSPATH}"
@@ -38,4 +48,49 @@ else
   JAVA_CLASSPATH="-cp ${CLASSPATH}"
 fi
 
-${JAVA_CMD} ${JAVA_OPTS} ${JAVA_CLASSPATH} "${MAINCLASS}" "$@"
+# Pass default encoding on cygwin
+if [[ $IS_CYGWIN ]] ; then
+  JAVA_OPTS="${JAVA_OPTS} -Dfile.encoding=$(locale charmap)"
+fi
+
+# Configure JLine terminal settings
+CYGWIN_TERM=false
+JLINE_TERMINAL="unix"
+if [[ $IS_CYGWIN ]] ; then
+  case "$TERM" in
+    rxvt* | xterm*)
+      CYGWIN_TERM=true
+    ;;
+    cygwin*)
+      if [[ "$JAVA_VERSION" < "1.7.0_45" ]] ; then
+        JLINE_TERMINAL="none"
+      else
+        JLINE_TERMINAL="windows"
+      fi
+    ;;
+  esac
+fi
+JAVA_OPTS="${JAVA_OPTS} -Djline.terminal=${JLINE_TERMINAL}"
+
+JAVA_OPTS_EXTRA=""
+function configureTerminal() {
+  if [[ $CYGWIN_TERM ]] ; then
+    # see JLine UnixTerminal
+    stty -icanon min 1 -icrnl -inlcr -ixon -echo > /dev/null 2>&1
+    JAVA_OPTS_EXTRA="-Djline.terminal.settings=$(stty -a)"
+    trap restoreTerminal INT
+  fi
+}
+
+function restoreTerminal() {
+  EXIT_STATUS=$?
+  if [[ $CYGWIN_TERM ]] ; then
+    stty sane > /dev/null 2>&1
+  fi
+  exit $EXIT_STATUS
+}
+
+# Start application
+configureTerminal
+${JAVA_CMD} ${JAVA_OPTS} "${JAVA_OPTS_EXTRA}" ${JAVA_CLASSPATH} "${MAINCLASS}" "$@"
+restoreTerminal
