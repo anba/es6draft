@@ -126,14 +126,15 @@ public final class PropertyDescriptor implements Cloneable {
      * Converts this property descriptor to a {@link Property} object
      */
     public Property toPlainProperty() {
-        return new Property(this);
+        // [[Origin]] field must not be copied in this constructor, otherwise we'd create a leak
+        return new Property(this, null);
     }
 
     /**
      * Converts this property descriptor to a {@link Property} object
      */
     public Property toProperty() {
-        return new Property(this, null);
+        return new Property(this, origin);
     }
 
     @Override

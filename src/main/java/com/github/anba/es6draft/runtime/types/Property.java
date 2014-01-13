@@ -50,7 +50,7 @@ public final class Property implements Cloneable {
      * <p>
      * <strong>package-private for PropertyDescriptor</strong>
      */
-    Property(PropertyDescriptor original) {
+    Property(PropertyDescriptor original, ScriptObject originObject) {
         type = original.isAccessorDescriptor() ? Type.AccessorProperty : Type.DataProperty;
         value = original.getValue();
         getter = original.getGetter();
@@ -58,23 +58,7 @@ public final class Property implements Cloneable {
         writable = original.isWritable();
         enumerable = original.isEnumerable();
         configurable = original.isConfigurable();
-        // [[Origin]] field must not be copied in this constructor, otherwise we'd create a leak
-    }
-
-    /**
-     * Create a new {@link Property} from the supplied {@link PropertyDescriptor} object
-     * <p>
-     * <strong>package-private for PropertyDescriptor</strong>
-     */
-    Property(PropertyDescriptor original, Void ignore) {
-        type = original.isAccessorDescriptor() ? Type.AccessorProperty : Type.DataProperty;
-        value = original.getValue();
-        getter = original.getGetter();
-        setter = original.getSetter();
-        writable = original.isWritable();
-        enumerable = original.isEnumerable();
-        configurable = original.isConfigurable();
-        origin = original.getOrigin();
+        origin = originObject;
     }
 
     /**
