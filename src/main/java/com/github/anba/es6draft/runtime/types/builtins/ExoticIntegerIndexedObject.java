@@ -169,14 +169,37 @@ public abstract class ExoticIntegerIndexedObject extends OrdinaryObject {
     @Override
     protected Collection<String> enumerateKeys() {
         // FIXME: spec incomplete
-        return super.enumerateKeys();
+        Collection<String> keys = super.enumerateKeys();
+        addIntegerIndices(keys);
+        return keys;
     }
 
     /** 9.4.5.6 [[OwnPropertyKeys]] () */
     @Override
     protected Collection<Object> enumerateOwnKeys() {
         // FIXME: spec incomplete
-        return super.enumerateOwnKeys();
+        Collection<Object> keys = super.enumerateOwnKeys();
+        addIntegerIndices(keys);
+        return keys;
+    }
+
+    @Override
+    protected boolean isEnumerableOwnProperty(String key) {
+        double intIndex = toIntegerIndex(key);
+        if (!Double.isNaN(intIndex)) {
+            long length = getLength();
+            return 0 <= intIndex && intIndex < length;
+        }
+        return super.isEnumerableOwnProperty(key);
+    }
+
+    /**
+     * Append integer indices to {@code keys} collection
+     */
+    private void addIntegerIndices(Collection<? super String> keys) {
+        for (long i = 0, length = getLength(); i < length; ++i) {
+            keys.add(Long.toString(i));
+        }
     }
 
     /**
