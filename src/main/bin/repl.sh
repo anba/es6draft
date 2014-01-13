@@ -80,7 +80,7 @@ function configureTerminal() {
   if $CYGWIN_TERM ; then
     # see JLine UnixTerminal
     stty -icanon min 1 -icrnl -inlcr -ixon -echo > /dev/null 2>&1
-    JAVA_OPTS_EXTRA="-Djline.terminal.settings=$(stty -a)"
+    JAVA_OPTS_EXTRA="-Djline.terminal.settings=\"$(stty -a)\""
     trap restoreTerminal INT
   fi
 }
@@ -93,7 +93,12 @@ function restoreTerminal() {
   exit $EXIT_STATUS
 }
 
+function collectOptions() {
+  JAVA_OPTS=("$@")
+}
+
 # Start application
 configureTerminal
-${JAVA_CMD} ${JAVA_OPTS} "${JAVA_OPTS_EXTRA}" ${JAVA_CLASSPATH} "${MAINCLASS}" "$@"
+eval collectOptions "$JAVA_OPTS" "$JAVA_OPTS_EXTRA"
+"${JAVA_CMD}" "${JAVA_OPTS[@]}" ${JAVA_CLASSPATH} "${MAINCLASS}" "$@"
 restoreTerminal
