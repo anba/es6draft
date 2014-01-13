@@ -267,6 +267,12 @@ final class LanguageTagParser {
         return input.substring(tokenStart, tokenStart + tokenLength);
     }
 
+    private String consumeTokenString() {
+        String s = tokenString();
+        consume();
+        return s;
+    }
+
     private static String toLowerASCIIOrNull(String s) {
         int i = 0, len = s.length();
         if (len == 0 || s.charAt(len - 1) == '-') {
@@ -405,13 +411,11 @@ final class LanguageTagParser {
     private boolean language() {
         if (token == ALPHA) {
             if (tokenLength >= 2 && tokenLength <= 3) {
-                tag.language = tokenString();
-                consume();
+                tag.language = consumeTokenString();
                 extlang();
                 return true;
             } else if (tokenLength >= 4 && tokenLength <= 8) {
-                tag.language = tokenString();
-                consume();
+                tag.language = consumeTokenString();
                 return true;
             }
         }
@@ -426,14 +430,11 @@ final class LanguageTagParser {
      */
     private boolean extlang() {
         if (token == ALPHA && tokenLength == 3) {
-            tag.extLang1 = tokenString();
-            consume();
+            tag.extLang1 = consumeTokenString();
             if (token == ALPHA && tokenLength == 3) {
-                tag.extLang2 = tokenString();
-                consume();
+                tag.extLang2 = consumeTokenString();
                 if (token == ALPHA && tokenLength == 3) {
-                    tag.extLang3 = tokenString();
-                    consume();
+                    tag.extLang3 = consumeTokenString();
                 }
             }
             return true;
@@ -448,8 +449,7 @@ final class LanguageTagParser {
      */
     private boolean script() {
         if (token == ALPHA && tokenLength == 4) {
-            tag.script = tokenString();
-            consume();
+            tag.script = consumeTokenString();
             return true;
         }
         return false;
@@ -463,8 +463,7 @@ final class LanguageTagParser {
      */
     private boolean region() {
         if ((token == ALPHA && tokenLength == 2) || (token == DIGIT && tokenLength == 3)) {
-            tag.region = tokenString();
-            consume();
+            tag.region = consumeTokenString();
             return true;
         }
         return false;
@@ -478,13 +477,11 @@ final class LanguageTagParser {
      */
     private boolean variant() {
         if (alphanum() && tokenLength >= 5 && tokenLength <= 8) {
-            storeVariant(tokenString());
-            consume();
+            storeVariant(consumeTokenString());
             return true;
         }
         if (alphanum() && tokenLength == 4 && isDigit(tokenStartChar())) {
-            storeVariant(tokenString());
-            consume();
+            storeVariant(consumeTokenString());
             return true;
         }
         return false;

@@ -25,12 +25,18 @@ public final class Messages {
         this.resourceBundle = resourceBundle;
     }
 
+    /**
+     * Creates a new instance of this class
+     */
     public static Messages create(Locale locale) {
         ResourceBundle.Control control = UTF8_RESOURCE_CONTROL;
         ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE_NAME, locale, control);
         return new Messages(resourceBundle);
     }
 
+    /**
+     * Returns the localised message for {@code key} from the resource bundle
+     */
     public String getMessage(Key key) {
         try {
             return resourceBundle.getString(key.id);
@@ -39,6 +45,9 @@ public final class Messages {
         }
     }
 
+    /**
+     * Returns the localised message for {@code key} from the resource bundle
+     */
     public String getMessage(Key key, String... args) {
         try {
             return format(resourceBundle.getString(key.id), resourceBundle.getLocale(), args);
@@ -51,6 +60,9 @@ public final class Messages {
         return new MessageFormat(pattern, locale).format(messageArguments);
     }
 
+    /**
+     * Message key enumeration
+     */
     public enum Key {/* @formatter:off */
         // internal
         InternalError("internal.error"),

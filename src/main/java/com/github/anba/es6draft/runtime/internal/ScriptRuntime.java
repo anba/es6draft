@@ -48,7 +48,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * All kinds of different runtime support methods
+ * Different runtime support methods
  */
 public final class ScriptRuntime {
     public static final Object[] EMPTY_ARRAY = new Object[0];

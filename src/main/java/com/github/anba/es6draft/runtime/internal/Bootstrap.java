@@ -461,8 +461,12 @@ public final class Bootstrap {
         MethodHandle callSiteTarget;
         if (target != null) {
             target = target.asType(callsite.type());
-            MethodHandle fallback = getFallback(callsite, generic);
-            callSiteTarget = MethodHandles.guardWithTest(test, target, fallback);
+            if (test != null) {
+                MethodHandle fallback = getFallback(callsite, generic);
+                callSiteTarget = MethodHandles.guardWithTest(test, target, fallback);
+            } else {
+                callSiteTarget = target;
+            }
         } else {
             callSiteTarget = target = generic;
         }

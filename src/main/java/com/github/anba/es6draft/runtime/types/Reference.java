@@ -68,7 +68,7 @@ public abstract class Reference<BASE, NAME> {
     public abstract Object getValue(ExecutionContext cx);
 
     /**
-     * [6.2.3.1] PutValue (V, W)
+     * [6.2.3.2] PutValue (V, W)
      */
     public abstract void putValue(Object w, ExecutionContext cx);
 
@@ -81,18 +81,24 @@ public abstract class Reference<BASE, NAME> {
      * [6.2.3.1] GetValue (V)
      */
     public static Object GetValue(Object v, ExecutionContext cx) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         if (!(v instanceof Reference))
             return v;
+        /* steps 3-6 */
         return ((Reference<?, ?>) v).getValue(cx);
     }
 
     /**
-     * [6.2.3.1] PutValue (V, W)
+     * [6.2.3.2] PutValue (V, W)
      */
     public static void PutValue(Object v, Object w, ExecutionContext cx) {
+        /* steps 1-2 (not applicable) */
+        /* step 3 */
         if (!(v instanceof Reference)) {
             throw newReferenceError(cx, Messages.Key.InvalidReference);
         }
+        /* steps 4-8 */
         ((Reference<?, ?>) v).putValue(w, cx);
     }
 
@@ -100,8 +106,11 @@ public abstract class Reference<BASE, NAME> {
      * [6.2.3.3] GetThisValue (V)
      */
     public static Object GetThisValue(ExecutionContext cx, Object v) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         if (!(v instanceof Reference))
             return v;
+        /* steps 3-5 */
         return ((Reference<?, ?>) v).getThisValue(cx);
     }
 
@@ -154,9 +163,12 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public Object getValue(ExecutionContext cx) {
+            /* step 4 */
             if (isUnresolvableReference()) {
                 throw newReferenceError(cx, Messages.Key.UnresolvableReference, getReferencedName());
             }
+            /* step 5 (not applicable) */
+            /* steps 3, 6 */
             return getBase().getBindingValue(getReferencedName(), isStrictReference());
         }
 
@@ -164,7 +176,10 @@ public abstract class Reference<BASE, NAME> {
         public void putValue(Object w, ExecutionContext cx) {
             assert Type.of(w) != null : "invalid value type";
 
+            /* step 6 (not applicable) */
+            /* step 4-5, 7-8 */
             if (isUnresolvableReference()) {
+                /* steps 5, 8 */
                 if (isStrictReference()) {
                     throw newReferenceError(cx, Messages.Key.UnresolvableReference,
                             getReferencedName());
@@ -172,15 +187,19 @@ public abstract class Reference<BASE, NAME> {
                 ScriptObject globalObj = cx.getGlobalObject();
                 Put(cx, globalObj, getReferencedName(), w, false);
             } else {
+                /* steps 4, 7-8 */
                 getBase().setMutableBinding(getReferencedName(), w, isStrictReference());
             }
         }
 
         @Override
         public EnvironmentRecord getThisValue(ExecutionContext cx) {
+            /* step 3 */
             if (isUnresolvableReference()) {
                 throw newReferenceError(cx, Messages.Key.UnresolvableReference, getReferencedName());
             }
+            /* step 4 (not applicable) */
+            /* step 5 */
             return getBase();
         }
     }
@@ -198,38 +217,40 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public Object getBase() {
+        public final Object getBase() {
             return base;
         }
 
         @Override
-        public boolean isStrictReference() {
+        public final boolean isStrictReference() {
             return strictReference;
         }
 
         @Override
-        public boolean hasPrimitiveBase() {
+        public final boolean hasPrimitiveBase() {
             return type == Type.Boolean || type == Type.String || type == Type.Symbol
                     || type == Type.Number;
         }
 
         @Override
-        public boolean isPropertyReference() {
+        public final boolean isPropertyReference() {
             return true;
         }
 
         @Override
-        public boolean isUnresolvableReference() {
+        public final boolean isUnresolvableReference() {
             return false;
         }
 
         @Override
-        public boolean isSuperReference() {
+        public final boolean isSuperReference() {
             return false;
         }
 
         @Override
-        public Object getThisValue(ExecutionContext cx) {
+        public final Object getThisValue(ExecutionContext cx) {
+            /* steps 3-4 (not applicable) */
+            /* step 5 */
             return getBase();
         }
 
@@ -265,10 +286,13 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public Object getValue(ExecutionContext cx) {
+            /* steps 4, 6 (not applicable) */
+            /* steps 3, 5.a */
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
                 return GetValuePrimitive(cx);
             }
+            /* steps 3, 5.b */
             return ((ScriptObject) getBase()).get(cx, getReferencedName(), getThisValue(cx));
         }
 
@@ -318,10 +342,13 @@ public abstract class Reference<BASE, NAME> {
 
         @Override
         public Object getValue(ExecutionContext cx) {
+            /* steps 4, 6 (not applicable) */
+            /* steps 3, 5.a */
             if (hasPrimitiveBase()) {
                 // base = ToObject(realm, base);
                 return GetValuePrimitive(cx);
             }
+            /* steps 3, 5.b */
             return ((ScriptObject) getBase()).get(cx, getReferencedName(), getThisValue(cx));
         }
 
@@ -355,37 +382,39 @@ public abstract class Reference<BASE, NAME> {
         }
 
         @Override
-        public ScriptObject getBase() {
+        public final ScriptObject getBase() {
             return base;
         }
 
         @Override
-        public boolean isStrictReference() {
+        public final boolean isStrictReference() {
             return strictReference;
         }
 
         @Override
-        public boolean hasPrimitiveBase() {
+        public final boolean hasPrimitiveBase() {
             return false;
         }
 
         @Override
-        public boolean isPropertyReference() {
+        public final boolean isPropertyReference() {
             return true;
         }
 
         @Override
-        public boolean isUnresolvableReference() {
+        public final boolean isUnresolvableReference() {
             return false;
         }
 
         @Override
-        public boolean isSuperReference() {
+        public final boolean isSuperReference() {
             return true;
         }
 
         @Override
-        public Object getThisValue(ExecutionContext cx) {
+        public final Object getThisValue(ExecutionContext cx) {
+            /* steps 3, 5 (not applicable) */
+            /* step 4 */
             return thisValue;
         }
     }

@@ -58,7 +58,7 @@ public enum Type {
      * <code>Type.of(val) == Type.Undefined</code>
      */
     public static boolean isUndefined(Object val) {
-        return (val == UNDEFINED);
+        return val == UNDEFINED;
     }
 
     /**
@@ -66,7 +66,7 @@ public enum Type {
      * <code>Type.of(val) == Type.Null</code>
      */
     public static boolean isNull(Object val) {
-        return (val == NULL);
+        return val == NULL;
     }
 
     /**
@@ -74,7 +74,7 @@ public enum Type {
      * <code>Type.of(val) == Type.Undefined || Type.of(val) == Type.Null</code>
      */
     public static boolean isUndefinedOrNull(Object val) {
-        return (val == UNDEFINED || val == NULL);
+        return val == UNDEFINED || val == NULL;
     }
 
     /**
@@ -82,7 +82,7 @@ public enum Type {
      * <code>Type.of(val) == Type.Boolean</code>
      */
     public static boolean isBoolean(Object val) {
-        return (val instanceof Boolean);
+        return val instanceof Boolean;
     }
 
     /**
@@ -90,7 +90,7 @@ public enum Type {
      * <code>Type.of(val) == Type.String</code>
      */
     public static boolean isString(Object val) {
-        return (val instanceof String || val instanceof ConsString);
+        return val instanceof String || val instanceof ConsString;
     }
 
     /**
@@ -98,7 +98,7 @@ public enum Type {
      * <code>Type.of(val) == Type.Symbol</code>
      */
     public static boolean isSymbol(Object val) {
-        return (val instanceof Symbol);
+        return val instanceof Symbol;
     }
 
     /**
@@ -106,7 +106,7 @@ public enum Type {
      * <code>Type.of(val) == Type.Number</code>
      */
     public static boolean isNumber(Object val) {
-        return (val instanceof Double || val instanceof Integer || val instanceof Long);
+        return val instanceof Double || val instanceof Integer || val instanceof Long;
     }
 
     /**
@@ -114,7 +114,7 @@ public enum Type {
      * <code>Type.of(val) == Type.Object</code>
      */
     public static boolean isObject(Object val) {
-        return (val instanceof ScriptObject);
+        return val instanceof ScriptObject;
     }
 
     /**

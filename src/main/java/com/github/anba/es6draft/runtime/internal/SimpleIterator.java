@@ -25,7 +25,7 @@ public abstract class SimpleIterator<E> implements Iterator<E> {
         if (next == null) {
             next = tryNext();
         }
-        return (next != null);
+        return next != null;
     }
 
     @Override
