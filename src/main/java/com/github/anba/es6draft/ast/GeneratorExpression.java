@@ -22,6 +22,7 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     private List<StatementListItem> statements;
     private StrictMode strictMode;
     private String headerSource, bodySource;
+    private boolean syntheticNodes;
 
     public GeneratorExpression(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
@@ -102,6 +103,16 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     @Override
     public boolean isGenerator() {
         return true;
+    }
+
+    @Override
+    public boolean hasSyntheticNodes() {
+        return syntheticNodes;
+    }
+
+    @Override
+    public void setSyntheticNodes(boolean syntheticNodes) {
+        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

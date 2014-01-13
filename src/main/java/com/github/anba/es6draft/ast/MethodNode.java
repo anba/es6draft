@@ -6,11 +6,11 @@
  */
 package com.github.anba.es6draft.ast;
 
-import java.util.List;
-
 /**
- * Super-interface for {@link Script} and {@link FunctionNode}
+ * Base interface for {@link Node} objects which trigger method generation
  */
-public interface TopLevelNode extends ScopedNode, MethodNode {
-    List<? extends ModuleItem> getStatements();
+public interface MethodNode extends Node {
+    boolean hasSyntheticNodes();
+
+    void setSyntheticNodes(boolean syntheticNodes);
 }

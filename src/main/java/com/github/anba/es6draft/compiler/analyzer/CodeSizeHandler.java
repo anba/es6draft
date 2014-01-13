@@ -8,6 +8,7 @@ package com.github.anba.es6draft.compiler.analyzer;
 
 import java.util.List;
 
+import com.github.anba.es6draft.ast.MethodNode;
 import com.github.anba.es6draft.ast.Node;
 
 /**
@@ -16,5 +17,5 @@ import com.github.anba.es6draft.ast.Node;
 interface CodeSizeHandler {
     int reportSize(Node node, int size);
 
-    void submit(Node node, List<? extends Node> children);
+    void submit(MethodNode node, List<? extends Node> children);
 }

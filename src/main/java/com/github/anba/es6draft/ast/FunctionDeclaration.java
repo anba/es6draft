@@ -21,6 +21,7 @@ public class FunctionDeclaration extends Declaration implements FunctionDefiniti
     private List<StatementListItem> statements;
     private StrictMode strictMode;
     private String headerSource, bodySource;
+    private boolean syntheticNodes;
 
     public FunctionDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
@@ -92,6 +93,16 @@ public class FunctionDeclaration extends Declaration implements FunctionDefiniti
     @Override
     public boolean isConstDeclaration() {
         return false;
+    }
+
+    @Override
+    public boolean hasSyntheticNodes() {
+        return syntheticNodes;
+    }
+
+    @Override
+    public void setSyntheticNodes(boolean syntheticNodes) {
+        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

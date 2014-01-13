@@ -22,6 +22,7 @@ public class Module extends AstNode implements TopLevelNode, ScopedNode {
     private List<ModuleItem> statements;
     private EnumSet<CompatibilityOption> options;
     private EnumSet<Parser.Option> parserOptions;
+    private boolean syntheticNodes;
 
     public Module(long beginPosition, long endPosition, String sourceFile, ModuleScope scope,
             List<ModuleItem> statements, EnumSet<CompatibilityOption> options,
@@ -58,6 +59,16 @@ public class Module extends AstNode implements TopLevelNode, ScopedNode {
 
     public EnumSet<Parser.Option> getParserOptions() {
         return parserOptions;
+    }
+
+    @Override
+    public boolean hasSyntheticNodes() {
+        return syntheticNodes;
+    }
+
+    @Override
+    public void setSyntheticNodes(boolean syntheticNodes) {
+        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

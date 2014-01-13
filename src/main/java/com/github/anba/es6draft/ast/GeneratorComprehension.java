@@ -13,8 +13,9 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.7 Generator Comprehensions
  * </ul>
  */
-public class GeneratorComprehension extends Expression {
+public class GeneratorComprehension extends Expression implements MethodNode {
     private Comprehension comprehension;
+    private boolean syntheticNodes;
 
     public GeneratorComprehension(long beginPosition, long endPosition, Comprehension comprehension) {
         super(beginPosition, endPosition);
@@ -28,5 +29,15 @@ public class GeneratorComprehension extends Expression {
     @Override
     public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
         return visitor.visit(this, value);
+    }
+
+    @Override
+    public boolean hasSyntheticNodes() {
+        return syntheticNodes;
+    }
+
+    @Override
+    public void setSyntheticNodes(boolean syntheticNodes) {
+        this.syntheticNodes = syntheticNodes;
     }
 }

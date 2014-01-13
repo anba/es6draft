@@ -49,7 +49,7 @@ public class CodeSizeAnalysis implements AutoCloseable {
         executor.shutdownNow();
     }
 
-    private void submit(Node node, List<? extends Node> children) {
+    private void submit(MethodNode node, List<? extends Node> children) {
         queue.add(executor.submit(new Entry(node, children)));
     }
 
@@ -74,10 +74,10 @@ public class CodeSizeAnalysis implements AutoCloseable {
     }
 
     private class Entry implements Callable<Integer> {
-        private Node node;
+        private MethodNode node;
         private List<? extends Node> children;
 
-        Entry(Node node, List<? extends Node> children) {
+        Entry(MethodNode node, List<? extends Node> children) {
             this.node = node;
             this.children = children;
         }
@@ -85,24 +85,31 @@ public class CodeSizeAnalysis implements AutoCloseable {
         @Override
         public Integer call() throws Exception {
             CodeSizeVisitor visitor = new CodeSizeVisitor();
-            CodeSizeHandler handler = new CodeSizeHandlerImpl();
+            CodeSizeHandler handler = new CodeSizeHandlerImpl(node);
             return visitor.startAnalyze(node, children, handler);
         }
     }
 
     private class CodeSizeHandlerImpl extends DefaultNodeVisitor<Integer, Integer> implements
             CodeSizeHandler {
+        private final MethodNode methodNode;
+
+        public CodeSizeHandlerImpl(MethodNode methodNode) {
+            this.methodNode = methodNode;
+        }
+
         @Override
         public int reportSize(Node node, int size) {
             if (size > MAX_SIZE_ALLOWED) {
                 // System.out.printf("reportSize(%s, %d)%n", node, size);
+                methodNode.setSyntheticNodes(true);
                 return node.accept(this, size);
             }
             return size;
         }
 
         @Override
-        public void submit(Node node, List<? extends Node> children) {
+        public void submit(MethodNode node, List<? extends Node> children) {
             CodeSizeAnalysis.this.submit(node, children);
         }
 

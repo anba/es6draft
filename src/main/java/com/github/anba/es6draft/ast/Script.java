@@ -25,6 +25,7 @@ public class Script extends AstNode implements TopLevelNode, ScopedNode {
     private EnumSet<CompatibilityOption> options;
     private EnumSet<Parser.Option> parserOptions;
     private boolean strict;
+    private boolean syntheticNodes;
 
     public Script(long beginPosition, long endPosition, String sourceFile, ScriptScope scope,
             List<StatementListItem> statements, EnumSet<CompatibilityOption> options,
@@ -86,6 +87,16 @@ public class Script extends AstNode implements TopLevelNode, ScopedNode {
 
     public boolean isEnclosedByWithStatement() {
         return parserOptions.contains(Parser.Option.EnclosedByWithStatement);
+    }
+
+    @Override
+    public boolean hasSyntheticNodes() {
+        return syntheticNodes;
+    }
+
+    @Override
+    public void setSyntheticNodes(boolean syntheticNodes) {
+        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

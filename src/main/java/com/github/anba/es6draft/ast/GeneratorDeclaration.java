@@ -21,6 +21,7 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     private List<StatementListItem> statements;
     private StrictMode strictMode;
     private String headerSource, bodySource;
+    private boolean syntheticNodes;
 
     public GeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
@@ -92,6 +93,16 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     @Override
     public boolean isConstDeclaration() {
         return false;
+    }
+
+    @Override
+    public boolean hasSyntheticNodes() {
+        return syntheticNodes;
+    }
+
+    @Override
+    public void setSyntheticNodes(boolean syntheticNodes) {
+        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

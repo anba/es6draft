@@ -22,6 +22,7 @@ public class FunctionExpression extends Expression implements FunctionDefinition
     private List<StatementListItem> statements;
     private StrictMode strictMode;
     private String headerSource, bodySource;
+    private boolean syntheticNodes;
 
     public FunctionExpression(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
@@ -102,6 +103,16 @@ public class FunctionExpression extends Expression implements FunctionDefinition
     @Override
     public boolean isGenerator() {
         return false;
+    }
+
+    @Override
+    public boolean hasSyntheticNodes() {
+        return syntheticNodes;
+    }
+
+    @Override
+    public void setSyntheticNodes(boolean syntheticNodes) {
+        this.syntheticNodes = syntheticNodes;
     }
 
     @Override

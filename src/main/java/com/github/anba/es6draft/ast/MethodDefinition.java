@@ -24,6 +24,7 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
     private StrictMode strictMode;
     private boolean superReference;
     private String headerSource, bodySource;
+    private boolean syntheticNodes;
 
     public enum MethodType {
         Function, Generator, Getter, Setter
@@ -112,6 +113,16 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
 
     public boolean hasSuperReference() {
         return superReference;
+    }
+
+    @Override
+    public boolean hasSyntheticNodes() {
+        return syntheticNodes;
+    }
+
+    @Override
+    public void setSyntheticNodes(boolean syntheticNodes) {
+        this.syntheticNodes = syntheticNodes;
     }
 
     @Override
