@@ -23,7 +23,7 @@ CLASSES="${BUILD_DIR}/classes"
 DEP_DIR="${BUILD_DIR}/dependencies"
 DEPENDENCIES=`ls -1 "${DEP_DIR}" | sed 's,^,'"${DEP_DIR}"'/&,' | sed ':a;{N; s/\n/:/; ta}'`
 CLASSPATH="${CLASSES}:${DEPENDENCIES}"
-if [[ $IS_CYGWIN ]] ; then
+if $IS_CYGWIN ; then
   CLASSPATH=`cygpath -wp "${CLASSPATH}"`
 fi
 MAINCLASS="com.github.anba.es6draft.repl.Repl"
@@ -32,7 +32,7 @@ MAINCLASS="com.github.anba.es6draft.repl.Repl"
 if [[ -z "$JAVA_HOME" ]] ; then
   JAVA_CMD="java"
 else
-  if [[ $IS_CYGWIN ]] ; then
+  if $IS_CYGWIN ; then
     JAVA_HOME=`cygpath -u "${JAVA_HOME}"`
   fi
   JAVA_CMD="${JAVA_HOME}/bin/java"
@@ -52,14 +52,14 @@ else
 fi
 
 # Pass default encoding on cygwin
-if [[ $IS_CYGWIN ]] ; then
+if $IS_CYGWIN ; then
   JAVA_OPTS="${JAVA_OPTS} -Dfile.encoding=$(locale charmap)"
 fi
 
 # Configure JLine terminal settings
 CYGWIN_TERM=false
 JLINE_TERMINAL="unix"
-if [[ $IS_CYGWIN ]] ; then
+if $IS_CYGWIN ; then
   case "$TERM" in
     rxvt* | xterm*)
       CYGWIN_TERM=true
@@ -77,7 +77,7 @@ JAVA_OPTS="${JAVA_OPTS} -Djline.terminal=${JLINE_TERMINAL}"
 
 JAVA_OPTS_EXTRA=""
 function configureTerminal() {
-  if [[ $CYGWIN_TERM ]] ; then
+  if $CYGWIN_TERM ; then
     # see JLine UnixTerminal
     stty -icanon min 1 -icrnl -inlcr -ixon -echo > /dev/null 2>&1
     JAVA_OPTS_EXTRA="-Djline.terminal.settings=$(stty -a)"
@@ -87,7 +87,7 @@ function configureTerminal() {
 
 function restoreTerminal() {
   EXIT_STATUS=$?
-  if [[ $CYGWIN_TERM ]] ; then
+  if $CYGWIN_TERM ; then
     stty sane > /dev/null 2>&1
   fi
   exit $EXIT_STATUS
