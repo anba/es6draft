@@ -8,7 +8,7 @@ package com.github.anba.es6draft.moztest;
 
 import org.junit.rules.ErrorCollector;
 
-import com.github.anba.es6draft.repl.ShellConsole;
+import com.github.anba.es6draft.repl.console.ShellConsole;
 
 /**
  *

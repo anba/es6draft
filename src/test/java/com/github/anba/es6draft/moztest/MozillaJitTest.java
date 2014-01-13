@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.moztest;
 
-import static com.github.anba.es6draft.repl.MozShellGlobalObject.newGlobalObjectAllocator;
+import static com.github.anba.es6draft.repl.global.MozShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.ErrorMessageMatcher.hasErrorMessage;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
@@ -32,8 +32,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.github.anba.es6draft.repl.MozShellGlobalObject;
-import com.github.anba.es6draft.repl.ShellConsole;
+import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;

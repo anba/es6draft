@@ -15,7 +15,7 @@ import org.hamcrest.Matcher;
 
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.StopExecutionException;
+import com.github.anba.es6draft.repl.global.StopExecutionException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.util.Functional.Function;

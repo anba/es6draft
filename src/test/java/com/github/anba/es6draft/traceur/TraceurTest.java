@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.traceur;
 
-import static com.github.anba.es6draft.repl.V8ShellGlobalObject.newGlobalObjectAllocator;
+import static com.github.anba.es6draft.repl.global.V8ShellGlobalObject.newGlobalObjectAllocator;
 import static com.github.anba.es6draft.util.Resources.loadConfiguration;
 import static com.github.anba.es6draft.util.Resources.loadTests;
 import static org.junit.Assume.assumeTrue;
@@ -29,8 +29,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.github.anba.es6draft.repl.ShellConsole;
-import com.github.anba.es6draft.repl.V8ShellGlobalObject;
+import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;

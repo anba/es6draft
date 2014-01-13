@@ -9,11 +9,8 @@ package com.github.anba.es6draft.repl;
 import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateArrayFromList;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 
 import java.io.BufferedReader;
-import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +30,15 @@ import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserEOFException;
 import com.github.anba.es6draft.parser.ParserException;
-import com.github.anba.es6draft.repl.StopExecutionException.Reason;
+import com.github.anba.es6draft.repl.console.LegacyConsole;
+import com.github.anba.es6draft.repl.console.NativeConsole;
+import com.github.anba.es6draft.repl.console.ReplConsole;
+import com.github.anba.es6draft.repl.global.MozShellGlobalObject;
+import com.github.anba.es6draft.repl.global.ShellGlobalObject;
+import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
+import com.github.anba.es6draft.repl.global.StopExecutionException;
+import com.github.anba.es6draft.repl.global.StopExecutionException.Reason;
+import com.github.anba.es6draft.repl.global.V8ShellGlobalObject;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.World;
@@ -52,13 +57,20 @@ public class Repl {
     private static final String PROGRAM_NAME = "es6draft";
     private static final int STACKTRACE_DEPTH = 20;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Throwable {
         try {
             EnumSet<Option> options = Option.fromArgs(args);
             StartScript startScript = StartScript.fromArgs(args);
-            new Repl(options, startScript, System.console()).loop();
+            ReplConsole console;
+            if (System.console() != null) {
+                console = new NativeConsole(System.console());
+            } else {
+                console = new LegacyConsole(System.out, System.in);
+            }
+            new Repl(options, startScript, console).loop();
         } catch (Throwable e) {
             printStackTrace(e);
+            System.exit(1);
         }
     }
 
@@ -75,20 +87,21 @@ public class Repl {
     }
 
     private enum Option {
-        CompileOnly, Debug, FullDebug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell;
+        NoInterpreter, Debug, FullDebug, StackTrace, Strict, SimpleShell, MozillaShell, V8Shell;
 
         static EnumSet<Option> fromArgs(String[] args) {
             EnumSet<Option> options = EnumSet.noneOf(Option.class);
             for (String arg : args) {
                 switch (arg) {
                 case "--compile-only":
-                    options.add(CompileOnly);
+                case "--no-interpreter":
+                    options.add(NoInterpreter);
                     break;
                 case "--full-debug":
                     options.add(FullDebug);
                     // fall-thru
                 case "--debug":
-                    options.add(CompileOnly);
+                    options.add(NoInterpreter);
                     options.add(Debug);
                     break;
                 case "--stacktrace":
@@ -127,12 +140,12 @@ public class Repl {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("%s\n\n", getResourceInfo("/version", PROGRAM_NAME)));
         sb.append("Options: \n");
-        sb.append("  --compile-only    Disable interpreter\n");
-        sb.append("  --debug           Print generated Java bytecode\n");
-        sb.append("  --full-debug      Print generated Java bytecode (full Java type descriptors)\n");
-        sb.append("  --stacktrace      Print stack-trace on error\n");
-        sb.append("  --strict          Strict semantics without web compatibility\n");
         sb.append("  --shell=[mode]    Set default shell emulation [simple, mozilla, v8] (default = simple)\n");
+        sb.append("  --strict          Strict semantics without web compatibility\n");
+        sb.append("  --no-interpreter  Disable interpreter\n");
+        sb.append("  --stacktrace      Print stack-trace on error\n");
+        sb.append("  --debug           Print generated Java bytecode\n");
+        sb.append("  --full-debug      Print generated Java bytecode (full type descriptors)\n");
         sb.append("  --help            Print this help\n");
         return sb.toString();
     }
@@ -190,10 +203,10 @@ public class Repl {
 
     private final EnumSet<Option> options;
     private final StartScript startScript;
-    private final Console console;
+    private final ReplConsole console;
     private AtomicInteger scriptCounter = new AtomicInteger(0);
 
-    private Repl(EnumSet<Option> options, StartScript startScript, Console console) {
+    private Repl(EnumSet<Option> options, StartScript startScript, ReplConsole console) {
         this.options = options;
         this.startScript = startScript;
         this.console = console;
@@ -263,8 +276,8 @@ public class Repl {
      */
     private com.github.anba.es6draft.ast.Script read(Realm realm, int line) {
         StringBuilder source = new StringBuilder();
-        for (;;) {
-            String s = console.readLine();
+        for (String prompt = "js> ";; prompt = "") {
+            String s = console.readLine(prompt);
             if (s == null) {
                 continue;
             }
@@ -286,7 +299,7 @@ public class Repl {
     private Object eval(Realm realm, com.github.anba.es6draft.ast.Script parsedScript) {
         String className = "typein_" + scriptCounter.incrementAndGet();
         Script script;
-        if (options.contains(Option.CompileOnly)) {
+        if (options.contains(Option.NoInterpreter)) {
             script = ScriptLoader.compile(className, parsedScript, realm.getCompilerOptions());
         } else {
             script = ScriptLoader.load(className, parsedScript, realm.getCompilerOptions());
@@ -314,7 +327,6 @@ public class Repl {
         for (int line = 1;; line += 1) {
             drainTaskQueue(realm);
             try {
-                console.printf("js> ");
                 com.github.anba.es6draft.ast.Script parsedScript = read(realm, line);
                 if (parsedScript.getStatements().isEmpty()) {
                     continue;
@@ -357,7 +369,7 @@ public class Repl {
     }
 
     private ShellGlobalObject newGlobal() {
-        ReplConsole console = new ReplConsole(this.console);
+        ReplConsole console = this.console;
         Path baseDir = Paths.get("").toAbsolutePath();
         Path script = Paths.get("./.");
         Set<CompatibilityOption> compatibilityOptions;
@@ -377,18 +389,14 @@ public class Repl {
         }
         ScriptCache scriptCache = new ScriptCache(compatibilityOptions);
 
-        List<String> initScripts;
         ObjectAllocator<? extends ShellGlobalObject> allocator;
         if (options.contains(Option.MozillaShell)) {
-            initScripts = asList("mozlegacy.js");
             allocator = MozShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
                     scriptCache);
         } else if (options.contains(Option.V8Shell)) {
-            initScripts = asList("v8legacy.js");
             allocator = V8ShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
                     scriptCache);
         } else {
-            initScripts = emptyList();
             allocator = SimpleShellGlobalObject.newGlobalObjectAllocator(console, baseDir, script,
                     scriptCache);
         }
@@ -396,13 +404,12 @@ public class Repl {
         World<? extends ShellGlobalObject> world = new World<>(allocator, compatibilityOptions,
                 compilerOptions);
         ShellGlobalObject global = world.newGlobal();
+        console.addCompletion(global.getRealm());
 
-        for (String name : initScripts) {
-            try {
-                global.eval(ShellGlobalObject.compileScript(scriptCache, name));
-            } catch (ParserException | CompilationException | IOException e) {
-                printException(e);
-            }
+        try {
+            global.executeInitialisation();
+        } catch (ParserException | CompilationException | IOException e) {
+            printException(e);
         }
 
         return global;
@@ -422,34 +429,6 @@ public class Repl {
             } catch (ParserException | CompilationException | IOException e) {
                 printException(e);
             }
-        }
-    }
-
-    private static final class ReplConsole implements ShellConsole {
-        private Console console;
-
-        ReplConsole(Console console) {
-            this.console = console;
-        }
-
-        @Override
-        public String readLine() {
-            return console.readLine();
-        }
-
-        @Override
-        public void putstr(String s) {
-            console.writer().print(s);
-        }
-
-        @Override
-        public void print(String s) {
-            console.writer().println(s);
-        }
-
-        @Override
-        public void printErr(String s) {
-            System.err.println(s);
         }
     }
 }

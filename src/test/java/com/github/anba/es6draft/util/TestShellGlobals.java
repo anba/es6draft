@@ -18,8 +18,8 @@ import java.util.List;
 import org.apache.commons.configuration.Configuration;
 
 import com.github.anba.es6draft.Script;
-import com.github.anba.es6draft.repl.ShellConsole;
-import com.github.anba.es6draft.repl.ShellGlobalObject;
+import com.github.anba.es6draft.repl.console.ShellConsole;
+import com.github.anba.es6draft.repl.global.ShellGlobalObject;
 import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;

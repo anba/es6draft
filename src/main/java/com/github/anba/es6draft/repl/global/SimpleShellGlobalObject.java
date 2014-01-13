@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.repl;
+package com.github.anba.es6draft.repl.global;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -16,6 +16,7 @@ import java.nio.file.Paths;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Microtask;
@@ -90,6 +91,12 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
         String id = String.format("%s@%d", object.getClass().getSimpleName(),
                 System.identityHashCode(object));
         console.print(id);
+    }
+
+    /** shell-function: {@code error()} */
+    @Function(name = "error", arity = 0)
+    public void error() {
+        throw new AssertionError();
     }
 
     /** shell-function: {@code printStackTrace(object)} */

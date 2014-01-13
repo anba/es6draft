@@ -4,12 +4,18 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.repl;
+package com.github.anba.es6draft.repl.global;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
+import com.github.anba.es6draft.Script;
+import com.github.anba.es6draft.compiler.CompilationException;
+import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -45,6 +51,14 @@ public class V8ShellGlobalObject extends ShellGlobalObject {
                 return new V8ShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
         };
+    }
+
+    @Override
+    protected List<Script> initialisationScripts() throws IOException, ParserException,
+            CompilationException {
+        List<Script> scripts = super.initialisationScripts();
+        scripts.add(compileScript(scriptCache, "v8legacy.js"));
+        return scripts;
     }
 
     private String concat(String... strings) {

@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.repl;
+package com.github.anba.es6draft.repl.global;
 
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -17,12 +17,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import com.github.anba.es6draft.Script;
 import com.github.anba.es6draft.ScriptLoader;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Errors;
@@ -88,6 +91,24 @@ public abstract class ShellGlobalObject extends GlobalObject {
         Script currentScript = getRealm().getScriptContext().getCurrentScript();
         String sourceFile = currentScript.getScriptBody().sourceFile();
         return baseDir.resolve(Paths.get(sourceFile).getParent().resolve(file));
+    }
+
+    /**
+     * Returns the initialisation scripts which should be run for this global instance
+     */
+    protected List<Script> initialisationScripts() throws IOException, ParserException,
+            CompilationException {
+        return new ArrayList<>();
+    }
+
+    /**
+     * Execute the initialisation scripts which should be run for this global instance
+     */
+    public final void executeInitialisation() throws IOException, ParserException,
+            CompilationException {
+        for (Script initScript : initialisationScripts()) {
+            eval(initScript);
+        }
     }
 
     /**

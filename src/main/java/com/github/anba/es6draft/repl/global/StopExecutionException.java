@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.repl;
+package com.github.anba.es6draft.repl.global;
 
 /**
  * Exception class to propagate {@link MozShellGlobalObject#quit()} and

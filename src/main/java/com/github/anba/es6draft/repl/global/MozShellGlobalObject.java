@@ -4,10 +4,10 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.repl;
+package com.github.anba.es6draft.repl.global;
 
 import static com.github.anba.es6draft.repl.SourceBuilder.ToSource;
-import static com.github.anba.es6draft.repl.WrapperProxy.CreateWrapProxy;
+import static com.github.anba.es6draft.repl.global.WrapperProxy.CreateWrapProxy;
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.github.anba.es6draft.Script;
@@ -25,6 +26,7 @@ import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.compiler.CompilationException;
 import com.github.anba.es6draft.parser.Parser;
 import com.github.anba.es6draft.parser.ParserException;
+import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
@@ -68,6 +70,14 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
                 return new MozShellGlobalObject(realm, console, baseDir, script, scriptCache);
             }
         };
+    }
+
+    @Override
+    protected List<Script> initialisationScripts() throws IOException, ParserException,
+            CompilationException {
+        List<Script> scripts = super.initialisationScripts();
+        scripts.add(compileScript(scriptCache, "mozlegacy.js"));
+        return scripts;
     }
 
     private Object evaluate(Realm realm, String source, String sourceName, int sourceLine)
@@ -297,7 +307,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     public GlobalObject newGlobal(ExecutionContext cx) {
         MozShellGlobalObject global = (MozShellGlobalObject) getRealm().getWorld().newGlobal();
         try {
-            global.eval(compileScript(scriptCache, "mozlegacy.js"));
+            global.executeInitialisation();
         } catch (ParserException | CompilationException | IOException e) {
             throwError(cx, e.getMessage());
         }
