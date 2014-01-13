@@ -25,6 +25,7 @@ const {
 // - RejectPromiseFunction
 // - IdentityFunction
 // - ThrowerFunction
+// - PromiseAllCountdownFunction
 
 // Access to 'DeferredConstructionFunction'
 {
@@ -139,4 +140,26 @@ const {
            .then(testBuiltinFunctions)
            .catch(reportFailure);
   d.resolve(XPromise.resolve());
+}
+
+// Access to 'PromiseAllCountdownFunction'
+{
+  let allCountdownFunction;
+  class P {
+    then(fulfill) {
+      allCountdownFunction = fulfill;
+    }
+  }
+  class F {
+    constructor(r) {
+      r(() => {}, () => {});
+    }
+
+    static cast(v) {
+      return v;
+    }
+  }
+  Promise.all.call(F, [new P]);
+
+  assertNativeFunction(allCountdownFunction, undefined, 1);
 }
