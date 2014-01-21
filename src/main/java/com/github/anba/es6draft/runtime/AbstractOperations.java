@@ -558,7 +558,9 @@ public final class AbstractOperations {
         }
         /* step 7 */
         if (tx == Type.String) {
-            return Type.stringValue(x).toString().contentEquals(Type.stringValue(y));
+            CharSequence sx = Type.stringValue(x);
+            CharSequence sy = Type.stringValue(y);
+            return sx.length() == sy.length() && sx.toString().contentEquals(sy);
         }
         /* step 8 */
         if (tx == Type.Boolean) {
@@ -623,7 +625,9 @@ public final class AbstractOperations {
         }
         /* step 7 */
         if (tx == Type.String) {
-            return Type.stringValue(x).toString().contentEquals(Type.stringValue(y));
+            CharSequence sx = Type.stringValue(x);
+            CharSequence sy = Type.stringValue(y);
+            return sx.length() == sy.length() && sx.toString().contentEquals(sy);
         }
         /* step 8 */
         if (tx == Type.Boolean) {
