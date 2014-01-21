@@ -115,9 +115,6 @@ tests/basic/testCrossCompartmentTransparency.js
 # Implementation specific differences      #
 ############################################
 
-# Over allocation in ArrayBuffer
-tests/basic/bug839215.js
-
 # SpiderMonkey: __proto__ and ArrayBuffer
 tests/auto-regress/bug666599.js
 
@@ -183,6 +180,9 @@ tests/basic/testBug773108.js
 
 # SpiderMonkey restriction test for destructuring with spread
 tests/parser/bug-889628.js
+
+# SpiderMonkey restriction test for RegExp match limit
+tests/basic/regexp-match-limit.js
 
 
 ############################################
@@ -525,6 +525,8 @@ tests/basic/bug951632.js
 tests/basic/testOOMInAutoEnterCompartment.js
 # workerThreadCount
 tests/basic/offThreadCompileScript.js
+# setJitCompilerOption
+tests/bug953337.js
 
 
 #######################################
@@ -544,13 +546,16 @@ tests/parser/yield-without-operand.js
 # Compilation or runtime issues       #
 #######################################
 
+# Method code too large
+# too many variables
+tests/basic/testManyVars.js
+
 # Timeout
 tests/auto-regress/bug583680.js
 tests/auto-regress/bug620637.js
 tests/basic/bug539379.js
 tests/basic/bug632964-regexp.js
 tests/basic/bug826581.js
-tests/basic/bug849777.js
 tests/basic/math-jit-tests.js
 tests/basic/testBug614653.js
 tests/basic/testBug621202.js

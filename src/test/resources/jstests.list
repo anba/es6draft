@@ -35,6 +35,9 @@ ecma_5/RegExp/exec.js
 # - no special [[Class]] for TypedArray/DataView prototypes
 js1_8_5/extensions/dataview.js
 
+# ArrayBuffer constructor requires `new`
+ecma_6/Proxy/regress-bug950407.js
+
 # lexical declarations must not be duplicated in same scope
 ecma_6/Generators/syntax.js
 
