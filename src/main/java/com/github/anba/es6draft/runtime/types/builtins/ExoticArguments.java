@@ -17,6 +17,7 @@ import java.util.BitSet;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -34,6 +35,8 @@ import com.github.anba.es6draft.runtime.types.Symbol;
  * </ul>
  */
 public class ExoticArguments extends OrdinaryObject {
+    /** [[Realm]] */
+    private final Realm realm;
     // = `this instanceof ExoticLegacyArguments`
     private final boolean isLegacy;
 
@@ -110,6 +113,7 @@ public class ExoticArguments extends OrdinaryObject {
 
     public ExoticArguments(Realm realm, boolean isLegacy) {
         super(realm);
+        this.realm = realm;
         this.isLegacy = isLegacy;
     }
 
@@ -304,7 +308,8 @@ public class ExoticArguments extends OrdinaryObject {
         if (!isMapped) {
             // FIXME: spec bug (does not work as intended) (Bug 1413)
             Object v = super.get(cx, propertyKey, receiver);
-            if ("caller".equals(propertyKey) && isStrictFunction(v)) {
+            if ("caller".equals(propertyKey) && isStrictFunction(v)
+                    && realm.isEnabled(CompatibilityOption.FunctionPrototype)) {
                 throw newTypeError(cx, Messages.Key.StrictModePoisonPill);
             }
             return v;

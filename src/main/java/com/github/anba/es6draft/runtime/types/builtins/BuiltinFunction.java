@@ -12,6 +12,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -101,7 +102,8 @@ public abstract class BuiltinFunction extends OrdinaryObject implements Callable
         if (v != null && v.isDataDescriptor()) {
             // TODO: spec bug? [[GetOwnProperty]] override necessary, cf.
             // AddRestrictedFunctionProperties (Bug 1223)
-            if ("caller".equals(propertyKey) && isStrictFunction(v.getValue())) {
+            if ("caller".equals(propertyKey) && isStrictFunction(v.getValue())
+                    && getRealm().isEnabled(CompatibilityOption.FunctionPrototype)) {
                 PropertyDescriptor desc = v.toPropertyDescriptor();
                 desc.setValue(NULL);
                 v = desc.toProperty();
