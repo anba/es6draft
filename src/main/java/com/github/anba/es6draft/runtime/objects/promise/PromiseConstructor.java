@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.promise;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.GetDeferred;
@@ -163,44 +164,52 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
             ScriptObject values = ArrayCreate(cx, 0);
             /* step 7 */
             AtomicInteger countdownHolder = new AtomicInteger(0);
-            /* step 8 */
-            int index = 0;
-            /* step 9 */
-            for (;;) {
+            /* steps 8-9 */
+            for (int index = 0; index + 1 > 0;) {
+                /* steps 9.i-9.ii */
                 ScriptObject next;
                 try {
                     next = IteratorStep(cx, iterator);
                 } catch (ScriptException e) {
                     return RejectIfAbrupt(cx, e, deferred);
                 }
+                /* step 9.iii */
                 if (next == null) {
                     if (index == 0) {
                         deferred.getResolve().call(cx, UNDEFINED, values);
                     }
                     return deferred.getPromise();
                 }
+                /* steps 9.iv-9.v */
                 Object nextValue;
                 try {
                     nextValue = IteratorValue(cx, next);
                 } catch (ScriptException e) {
                     return RejectIfAbrupt(cx, e, deferred);
                 }
+                /* steps 9.vi-9.vii */
                 Object nextPromise;
                 try {
                     nextPromise = Invoke(cx, c, "cast", nextValue);
                 } catch (ScriptException e) {
                     return RejectIfAbrupt(cx, e, deferred);
                 }
+                /* steps 9.viii-9.xii */
                 PromiseAllCountdownFunction countdownFunction = new PromiseAllCountdownFunction(
                         cx.getRealm(), index, values, deferred, countdownHolder);
+                /* steps 9.xiii-9.xiv */
                 try {
                     Invoke(cx, nextPromise, "then", countdownFunction, deferred.getReject());
                 } catch (ScriptException e) {
                     return RejectIfAbrupt(cx, e, deferred);
                 }
+                /* step 9.xv */
                 index += 1;
+                /* step 9.xvi */
                 countdownHolder.incrementAndGet();
             }
+            // prevent integer overflow for 'index'
+            throw newInternalError(cx, Messages.Key.InternalError, "integer overflow");
         }
 
         /**
@@ -244,27 +253,32 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
             }
             /* step 6 */
             for (;;) {
+                /* steps 6.i-6.ii */
                 ScriptObject next;
                 try {
                     next = IteratorStep(cx, iterator);
                 } catch (ScriptException e) {
                     return RejectIfAbrupt(cx, e, deferred);
                 }
+                /* step 6.iii */
                 if (next == null) {
                     return deferred.getPromise();
                 }
+                /* steps 6.iv-6.v */
                 Object nextValue;
                 try {
                     nextValue = IteratorValue(cx, next);
                 } catch (ScriptException e) {
                     return RejectIfAbrupt(cx, e, deferred);
                 }
+                /* steps 6.vi-6.vii */
                 Object nextPromise;
                 try {
                     nextPromise = Invoke(cx, c, "cast", nextValue);
                 } catch (ScriptException e) {
                     return RejectIfAbrupt(cx, e, deferred);
                 }
+                /* steps 6.viii-6.ix */
                 try {
                     Invoke(cx, nextPromise, "then", deferred.getResolve(), deferred.getReject());
                 } catch (ScriptException e) {

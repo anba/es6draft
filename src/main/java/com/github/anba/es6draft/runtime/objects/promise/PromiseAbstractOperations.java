@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.promise;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
+import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
@@ -376,6 +377,11 @@ public final class PromiseAbstractOperations {
             } catch (ScriptException e) {
                 /* step 6 */
                 return RejectIfAbrupt(calleeContext, e, deferred);
+            }
+            if (countdownHolder.get() == Integer.MIN_VALUE) {
+                // prevent integer overflow for 'countdownHolder'
+                throw newInternalError(calleeContext, Messages.Key.InternalError,
+                        "integer overflow");
             }
             /* steps 7-8 */
             if (countdownHolder.decrementAndGet() == 0) {
