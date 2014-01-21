@@ -54,6 +54,7 @@ public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
                 if (set.isInitialised()) {
                     return set;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

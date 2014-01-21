@@ -53,6 +53,7 @@ public class DataViewPrototype extends OrdinaryObject implements Initialisable {
                 if (view.getBuffer() != null) {
                     return view;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

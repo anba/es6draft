@@ -86,6 +86,7 @@ public class StringPrototype extends OrdinaryObject implements Initialisable {
                 if (s != null) {
                     return s;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

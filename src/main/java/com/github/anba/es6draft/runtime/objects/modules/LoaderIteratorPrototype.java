@@ -93,7 +93,7 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
         }
         LoaderObject loader = (LoaderObject) obj;
         if (loader.getModules() == null) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 3 */
         LoaderIterator iterator = ObjectCreate(cx, Intrinsics.LoaderIteratorPrototype,

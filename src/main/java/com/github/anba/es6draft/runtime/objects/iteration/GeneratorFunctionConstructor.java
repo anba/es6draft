@@ -123,7 +123,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         /* step 21 */
         MakeConstructor(calleeContext, fn, true, prototype);
         /* step 22 */
-        // FIXME: if-test missing in spec
+        // FIXME: if-test missing in spec https://bugs.ecmascript.org/show_bug.cgi?id=2335
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(calleeContext, fn, "anonymous");
         }

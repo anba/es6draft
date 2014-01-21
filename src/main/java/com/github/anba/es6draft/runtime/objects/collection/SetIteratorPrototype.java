@@ -94,7 +94,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         SetObject set = (SetObject) obj;
         /* step 3 */
         if (!set.isInitialised()) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 4 */
         LinkedMap<Object, Void> entries = set.getSetData();

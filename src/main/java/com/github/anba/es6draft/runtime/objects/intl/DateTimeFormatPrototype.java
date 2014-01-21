@@ -67,6 +67,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
                 if (dateTimeFormat.isInitializedDateTimeFormat()) {
                     return dateTimeFormat;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

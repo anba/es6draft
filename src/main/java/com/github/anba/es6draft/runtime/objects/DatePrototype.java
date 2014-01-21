@@ -121,6 +121,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
                 if (obj.isInitialised()) {
                     return obj.getDateValue();
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -938,6 +939,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "[Symbol.toPrimitive]", arity = 1, symbol = BuiltinSymbol.toPrimitive,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object toPrimitive(ExecutionContext cx, Object thisValue, Object hint) {
+            // TODO: is this function generic?
             /* steps 1-2 */
             if (!Type.isObject(thisValue)) {
                 throw newTypeError(cx, Messages.Key.NotObjectType);
@@ -978,6 +980,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
                 if (obj.isInitialised()) {
                     return obj.getDateValue();
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -1032,6 +1035,7 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
          */
         @Value(name = "toGMTString")
         public static Object toGMTString(ExecutionContext cx) {
+            // TODO: is this function generic?
             return Get(cx, cx.getIntrinsic(Intrinsics.DatePrototype), "toUTCString");
         }
     }

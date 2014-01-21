@@ -72,6 +72,7 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 if (obj.isInitialised()) {
                     return obj;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -562,6 +563,17 @@ public class RegExpPrototype extends OrdinaryObject implements Initialisable {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
             RegExpObject r = (RegExpObject) thisValue;
+            // FIXME: spec issue - delay extensible check after side effects?
+            /*
+             * re = /abc/;
+             * re.compile({
+             *   toString() {
+             *     re.compile("def");
+             *     Object.preventExtensions(re);
+             *     return "ghi";
+             *   }
+             * });
+             */
             /* step 3 */
             boolean extensible = IsExtensible(cx, r);
             /* step 4 */

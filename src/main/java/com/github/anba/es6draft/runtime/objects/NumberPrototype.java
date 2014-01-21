@@ -65,6 +65,7 @@ public class NumberPrototype extends OrdinaryObject implements Initialisable {
                 if (obj.isInitialised()) {
                     return obj.getNumberData();
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

@@ -9,7 +9,6 @@ package com.github.anba.es6draft.runtime.objects.binary;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
-import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.CopyDataBlockBytes;
@@ -59,6 +58,7 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
                 if (buffer.getData() != null) {
                     return buffer;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -117,7 +117,8 @@ public class ArrayBufferPrototype extends OrdinaryObject implements Initialisabl
                     ((Constructor) ctor).construct(cx, newLen));
             /* step 20 */
             if (_new.getByteLength() < newLen) {
-                throw newRangeError(cx, Messages.Key.InvalidBufferSize);
+                // FIXME: spec bug - throw RangeError instead of TypeError?
+                throw newTypeError(cx, Messages.Key.InvalidBufferSize);
             }
             /* step 21 */
             ByteBuffer fromBuf = obj.getData();

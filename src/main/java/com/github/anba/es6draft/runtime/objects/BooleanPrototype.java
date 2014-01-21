@@ -55,6 +55,7 @@ public class BooleanPrototype extends OrdinaryObject implements Initialisable {
                 if (obj.isInitialised()) {
                     return obj.getBooleanData();
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

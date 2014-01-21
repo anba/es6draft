@@ -58,6 +58,7 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
                 if (numberFormat.isInitializedNumberFormat()) {
                     return numberFormat;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

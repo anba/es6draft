@@ -57,6 +57,7 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
                 if (collator.isInitializedCollator()) {
                     return collator;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

@@ -69,6 +69,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
                 if (view.getBuffer() != null) {
                     return view;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

@@ -38,7 +38,7 @@ public class ExoticString extends OrdinaryObject {
      * string is returned
      */
     private CharSequence getStringDataOrEmpty() {
-        return (stringData != null ? stringData : "");
+        return stringData != null ? stringData : "";
     }
 
     /**

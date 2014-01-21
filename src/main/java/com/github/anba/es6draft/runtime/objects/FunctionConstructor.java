@@ -120,7 +120,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         /* step 19 */
         MakeConstructor(calleeContext, fn);
         /* step 20 */
-        // FIXME: if-test missing in spec
+        // FIXME: if-test missing in spec https://bugs.ecmascript.org/show_bug.cgi?id=2335
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(calleeContext, fn, "anonymous");
         }

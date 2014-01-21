@@ -94,7 +94,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         MapObject map = (MapObject) obj;
         /* step 3 */
         if (!map.isInitialised()) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 4 */
         LinkedMap<Object, Object> entries = map.getMapData();

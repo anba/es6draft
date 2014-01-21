@@ -38,7 +38,6 @@ import com.github.anba.es6draft.runtime.GlobalEnvironmentRecord;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
-import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
@@ -816,7 +815,7 @@ public final class ScriptRuntime {
      * 13.2.3.5 Runtime Semantics: IteratorBindingInitialisation
      */
     public static Iterator<?> getIterator(ScriptObject obj, ExecutionContext cx) {
-        return ListIterator.FromScriptIterator(cx, GetIterator(cx, obj));
+        return FromScriptIterator(cx, GetIterator(cx, obj));
     }
 
     /**

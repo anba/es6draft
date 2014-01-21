@@ -54,6 +54,7 @@ public class WeakMapPrototype extends OrdinaryObject implements Initialisable {
                 if (map.isInitialised()) {
                     return map;
                 }
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
