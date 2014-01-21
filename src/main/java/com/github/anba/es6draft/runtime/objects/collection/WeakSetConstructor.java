@@ -82,6 +82,11 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
             adder = (Callable) _adder;
         }
 
+        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2397
+        if (set.isInitialised()) {
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+        }
+
         /* step 8 */
         set.initialise();
 

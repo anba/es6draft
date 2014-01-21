@@ -727,7 +727,12 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             if (!(thisValue instanceof TypedArrayObject)) {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
             }
-            return ((TypedArrayObject) thisValue).getTypedArrayName();
+            // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2414
+            TypedArrayObject array = (TypedArrayObject) thisValue;
+            if (array.getElementType() == null) {
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
+            }
+            return array.getTypedArrayName();
         }
     }
 }

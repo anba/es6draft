@@ -93,6 +93,11 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
             _comparator = SetObject.Comparator.SameValue;
         }
 
+        // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2397
+        if (set.isInitialised()) {
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+        }
+
         /* steps 10-11 */
         set.initialise(_comparator);
 

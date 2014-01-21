@@ -340,6 +340,10 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         if (!SameValueZero(numberLength, byteLength)) {
             throw newRangeError(calleeContext, Messages.Key.InvalidBufferSize);
         }
+        // FIXME: spec bug https://bugs.ecmascript.org/show_bug.cgi?id=2415
+        if (buf.getData() != null) {
+            throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
+        }
         /* step 7 */
         return SetArrayBufferData(calleeContext, buf, byteLength);
     }
