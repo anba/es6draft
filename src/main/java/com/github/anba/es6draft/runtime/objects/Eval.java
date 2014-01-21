@@ -244,7 +244,17 @@ public final class Eval {
             if (withStatement) {
                 options.add(Parser.Option.EnclosedByWithStatement);
             }
-            Parser parser = new Parser("<eval>", 1, realm.getOptions(), options);
+            String sourceFile;
+            ExecutionContext scriptContext = cx.getRealm().getScriptContext();
+            if (scriptContext != null) {
+                Script currentScript = scriptContext.getCurrentScript();
+                sourceFile = String.format("<eval> (%s)", currentScript.getScriptBody()
+                        .sourceFile());
+            } else {
+                // eval call crossing realm boundaries, include source file information here?
+                sourceFile = "<eval>";
+            }
+            Parser parser = new Parser(sourceFile, 1, realm.getOptions(), options);
             com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript(source);
             if (parsedScript.getStatements().isEmpty()) {
                 return null;
