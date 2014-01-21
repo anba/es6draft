@@ -911,6 +911,7 @@ final class StackInspector extends MethodVisitor {
         pop(Type.INT_TYPE);
         jump(dflt);
         jump(labels);
+        discardStack();
     }
 
     @Override
@@ -937,6 +938,7 @@ final class StackInspector extends MethodVisitor {
         pop(Type.INT_TYPE);
         jump(dflt);
         jump(labels);
+        discardStack();
     }
 
     @Override
