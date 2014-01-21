@@ -40,6 +40,7 @@ public class ArrayBufferObject extends OrdinaryObject {
      * [[ArrayBufferData]]
      */
     public void setData(ByteBuffer data) {
+        assert data != null : "cannot initialise ArrayBuffer with null";
         assert this.data == null : "ArrayBuffer already initialised";
         this.data = data;
     }
@@ -55,6 +56,7 @@ public class ArrayBufferObject extends OrdinaryObject {
      * [[ArrayBufferByteLength]]
      */
     public void setByteLength(long byteLength) {
+        assert byteLength >= 0 : "negative byte length: " + byteLength;
         this.byteLength = byteLength;
     }
 }
