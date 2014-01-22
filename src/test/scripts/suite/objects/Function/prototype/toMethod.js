@@ -10,14 +10,17 @@ const {
   assertSame,
   assertNotSame,
   assertThrows,
+  assertFalse,
 } = Assert;
 
 
-/* 19.1.2.15  Object.mixin ( target, source ) */
+/* 19.2.3.5 Function.prototype.toMethod (superBinding, methodName = undefined) */
 
-assertBuiltinFunction(Object.mixin, "mixin", 2);
+assertBuiltinFunction(Function.prototype.toMethod, "toMethod", 1);
 
-// Object.mixin() overwrites .constructor with rebound .constructor from source (explicit constructor)
+const ToMethod = Function.prototype.toMethod.call.bind(Function.prototype.toMethod);
+
+// Function.prototype.toMethod() overwrites .constructor with rebound .constructor from source (explicit constructor)
 {
   let log = "";
   class SourceBase {
@@ -44,7 +47,7 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
   assertSame(Target, (new Target).constructor);
   assertSame("[TargetBase][Target]", log);
 
-  Object.mixin(Target.prototype, Source.prototype);
+  Target.prototype.constructor = ToMethod(Source.prototype.constructor, Target.prototype);
   assertNotSame(Target, Target.prototype.constructor);
 
   log = "";
@@ -56,7 +59,7 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
   assertSame("[TargetBase][Source]", log);
 }
 
-// Object.mixin() overwrites .constructor with rebound .constructor from source (implicit constructor)
+// Function.prototype.toMethod() overwrites .constructor with rebound .constructor from source (implicit constructor)
 {
   let log = "";
   class SourceBase {
@@ -81,7 +84,7 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
   assertSame(Target, (new Target).constructor);
   assertSame("[TargetBase]", log);
 
-  Object.mixin(Target.prototype, Source.prototype);
+  Target.prototype.constructor = ToMethod(Source.prototype.constructor, Target.prototype);
   assertNotSame(Target, Target.prototype.constructor);
 
   log = "";
@@ -93,7 +96,7 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
   assertSame("[TargetBase]", log);
 }
 
-// Object.mixin() rebinds [[HomeObject]]
+// Function.prototype.toMethod() rebinds [[HomeObject]]
 {
   let log = "";
   class SourceBase {
@@ -116,60 +119,64 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
   (new Target).fn();
   assertSame("[TargetBase]", log);
 
-  Object.mixin(Target.prototype, Source.prototype);
+  Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
 
   log = "";
   (new Target).fn();
   assertSame("[TargetBase][Source]", log);
 }
 
-// Object.mixin() copies internal slots ([[Prototype]]) (1)
+// Function.prototype.toMethod() copies internal slots ([[Prototype]]) (1)
 {
-  class SourceBase {
-    fn() { }
-  }
-  class Source extends SourceBase {
+  class Source {
     fn() { super(); }
   }
-  class TargetBase {
-    fn() { }
-  }
-  class Target extends TargetBase { }
+  class Target { }
 
   class XFunction extends Function { }
 
   Object.setPrototypeOf(Source.prototype.fn, XFunction.prototype);
-  assertNotSame(Object.getPrototypeOf(Target.prototype.fn), XFunction.prototype);
+  assertSame(Object.getPrototypeOf(Source.prototype.fn), XFunction.prototype);
 
-  Object.mixin(Target.prototype, Source.prototype);
+  Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
 
   assertNotSame(Source.prototype.fn, Target.prototype.fn);
   assertSame(Object.getPrototypeOf(Source.prototype.fn), Object.getPrototypeOf(Target.prototype.fn));
 }
 
-// Object.mixin() copies internal slots ([[Prototype]]) (2)
+// Function.prototype.toMethod() copies internal slots ([[Prototype]]) (2)
 {
-  class SourceBase {
-    fn() { }
-  }
-  class Source extends SourceBase {
+  class Source {
     fn() { super(); }
   }
-  class TargetBase {
-    fn() { }
-  }
-  class Target extends TargetBase { }
+  class Target { }
 
   Object.setPrototypeOf(Source.prototype.fn, null);
-  assertNotSame(Object.getPrototypeOf(Target.prototype.fn), null);
+  assertSame(Object.getPrototypeOf(Source.prototype.fn), null);
 
-  Object.mixin(Target.prototype, Source.prototype);
+  Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
 
   assertNotSame(Source.prototype.fn, Target.prototype.fn);
   assertSame(Object.getPrototypeOf(Source.prototype.fn), Object.getPrototypeOf(Target.prototype.fn));
 }
 
-// Object.mixin() copies internal slots ([[Realm]]) (1)
+// Function.prototype.toMethod() copies internal slots ([[Extensible]])
+{
+  class Source {
+    fn() { super(); }
+  }
+  class Target { }
+
+  Object.preventExtensions(Source.prototype.fn);
+  assertFalse(Object.isExtensible(Source.prototype.fn));
+
+  Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
+
+  assertNotSame(Source.prototype.fn, Target.prototype.fn);
+  assertFalse(Object.isExtensible(Target.prototype.fn));
+}
+
+// Function.prototype.toMethod() copies internal slots ([[Realm]]) (1)
 {
   const foreignRealm = new Realm();
   assertNotSame(foreignRealm.global.TypeError, TypeError);
@@ -182,13 +189,13 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
     Target;
   `);
 
-  Object.mixin(Target.prototype, Source.prototype);
+  Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
 
   // Source is from current realm!
   assertThrows(() => (new Target).fn(), TypeError);
 }
 
-// Object.mixin() copies internal slots ([[Realm]]) (2)
+// Function.prototype.toMethod() copies internal slots ([[Realm]]) (2)
 {
   const foreignRealm = new Realm();
   assertNotSame(foreignRealm.global.TypeError, TypeError);
@@ -201,13 +208,13 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
   `);
   class Target { }
 
-  Object.mixin(Target.prototype, Source.prototype);
+  Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
 
   // Source is from another realm!
   assertThrows(() => (new Target).fn(), foreignRealm.global.TypeError);
 }
 
-// Object.mixin() copies internal slots (%ThrowTypeError% in 'caller' and 'arguments') (1)
+// Function.prototype.toMethod() copies internal slots (%ThrowTypeError% in 'caller' and 'arguments') (1)
 {
   const foreignRealm = new Realm();
   const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
@@ -220,7 +227,7 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
     Target;
   `);
 
-  Object.mixin(Target.prototype, Source.prototype);
+  Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
 
   // .caller and .arguments are copied like just like other properties
   assertSame(ThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "caller").get);
@@ -229,7 +236,7 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
   assertSame(ThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "arguments").set);
 }
 
-// Object.mixin() copies internal slots (%ThrowTypeError% in 'caller' and 'arguments') (2)
+// Function.prototype.toMethod() copies internal slots (%ThrowTypeError% in 'caller' and 'arguments') (2)
 {
   const foreignRealm = new Realm();
   const ThrowTypeError = Object.getOwnPropertyDescriptor(function(){"use strict"}, "caller").get;
@@ -245,7 +252,7 @@ assertBuiltinFunction(Object.mixin, "mixin", 2);
   `);
   class Target { }
 
-  Object.mixin(Target.prototype, Source.prototype);
+  Target.prototype.fn = ToMethod(Source.prototype.fn, Target.prototype);
 
   // .caller and .arguments are copied like just like other properties
   assertSame(ForeignThrowTypeError, Object.getOwnPropertyDescriptor(Target.prototype.fn, "caller").get);
