@@ -120,13 +120,17 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         /* step 18 */
         FunctionInitialise(calleeContext, fn, FunctionKind.Normal, function, scope);
         /* step 19 */
+        if (function.hasSuperReference()) {
+            MakeMethod(fn, (String) null, null);
+        }
+        /* steps 20-21 */
         MakeConstructor(calleeContext, fn);
-        /* step 20 */
+        /* step 22 */
         // FIXME: if-test missing in spec https://bugs.ecmascript.org/show_bug.cgi?id=2335
         if (!HasOwnProperty(calleeContext, fn, "name")) {
             SetFunctionName(calleeContext, fn, "anonymous");
         }
-        /* step 21 */
+        /* step 23 */
         return fn;
     }
 

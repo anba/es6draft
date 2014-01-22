@@ -70,6 +70,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     private ThisMode thisMode;
     /** [[Strict]] */
     private boolean strict;
+    /** [[NeedsSuper]] */
+    private boolean needsSuper;
     /** [[HomeObject]] */
     private ScriptObject homeObject;
     /** [[MethodName]] */
@@ -256,15 +258,24 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
 
     /**
      * Returns a copy of this function object with the [[HomeObject]] property set to
-     * {@code newHomeObject}
+     * {@code newHomeObject} and the [[MethodName]] property set to {@code newMethodName}
      */
-    protected final FunctionObject rebind(ScriptObject newHomeObject) {
-        assert isInitialised() : "uninitialised function object";
-        Object methodName = getMethodName();
-        FunctionObject copy = allocateNew();
-        copy.initialise(getFunctionKind(), getCode(), getScope(), newHomeObject, methodName);
-        copy.setConstructor(isConstructor());
-        return copy;
+    protected final FunctionObject clone(ScriptObject newHomeObject, Object newMethodName) {
+        FunctionObject clone = allocateNew();
+        if (isInitialised()) {
+            clone.initialise(getFunctionKind(), getCode(), getEnvironment());
+        }
+        clone.setExtensible(isExtensible());
+        clone.setConstructor(isConstructor());
+        if (isNeedsSuper()) {
+            assert isInitialised() : "uninitialised function object with [[NeedsSuper]] = true";
+            if (newMethodName != null) {
+                clone.toMethod(newMethodName, newHomeObject);
+            } else {
+                clone.toMethod(getMethodName(), newHomeObject);
+            }
+        }
+        return clone;
     }
 
     /**
@@ -273,10 +284,11 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected abstract FunctionObject allocateNew();
 
     /**
-     * 9.2.5 FunctionAllocate Abstract Operation
+     * 9.2.3 FunctionAllocate Abstract Operation
      */
     protected final void allocate(Realm realm, ScriptObject functionPrototype, boolean strict,
             FunctionKind kind, MethodHandle defaultCallMethod) {
+        assert this.realm == null && realm != null : "function object already allocated";
         this.callMethod = defaultCallMethod;
         this.tailCallMethod = defaultCallMethod;
         /* step 13 (moved) */
@@ -292,21 +304,18 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.6 FunctionInitialise Abstract Operation
+     * 9.2.5 FunctionInitialise Abstract Operation
      */
     protected final void initialise(FunctionKind kind, RuntimeInfo.Function function,
-            LexicalEnvironment scope, ScriptObject homeObject, Object methodName) {
-        assert this.function == null && function != null;
+            LexicalEnvironment scope) {
+        assert this.function == null && function != null : "function object already initialised";
         /* step 6 */
-        this.scope = scope;
+        this.environment = scope;
         /* steps 7-8 */
         this.function = function;
         this.callMethod = tailCallAdapter(function);
         this.tailCallMethod = function.callMethod();
-        /* step 9 */
-        this.homeObject = homeObject;
-        this.methodName = methodName;
-        /* steps 10-12 */
+        /* steps 9-11 */
         if (kind == FunctionKind.Arrow) {
             this.thisMode = ThisMode.Lexical;
         } else if (strict) {
@@ -314,6 +323,17 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         } else {
             this.thisMode = ThisMode.Global;
         }
+    }
+
+    /**
+     * 9.2.10 MakeMethod ( F, methodName, homeObject ) Abstract Operation
+     */
+    protected final void toMethod(Object methodName, ScriptObject homeObject) {
+        assert isInitialised() : "uninitialised function object";
+        assert !needsSuper : "function object already method";
+        this.needsSuper = true;
+        this.methodName = methodName;
+        this.homeObject = homeObject;
     }
 
     private static MethodHandle tailCallAdapter(RuntimeInfo.Function function) {
@@ -380,6 +400,13 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         // support for legacy 'caller' and 'arguments' properties
         // TODO: 'caller' and 'arguments' properties are never updated for generator functions
         this.legacy = !strict && realm.isEnabled(CompatibilityOption.FunctionPrototype);
+    }
+
+    /**
+     * [[NeedsSuper]]
+     */
+    public final boolean isNeedsSuper() {
+        return needsSuper;
     }
 
     /**

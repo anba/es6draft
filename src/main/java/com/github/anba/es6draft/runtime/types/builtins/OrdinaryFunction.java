@@ -16,15 +16,12 @@ import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.RuntimeInfo;
-import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
-import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
-import com.github.anba.es6draft.runtime.types.Type;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
@@ -123,15 +120,6 @@ public class OrdinaryFunction extends FunctionObject {
     public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
             ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment scope) {
-        return FunctionInitialise(cx, f, kind, function, scope, null, (String) null);
-    }
-
-    /**
-     * 9.2.5 FunctionInitialise Abstract Operation
-     */
-    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
-            ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
-            LexicalEnvironment scope, ScriptObject homeObject, String methodName) {
         /* step 1 */
         int len = function.expectedArgumentCount();
         /* step 2 */
@@ -142,31 +130,9 @@ public class OrdinaryFunction extends FunctionObject {
         if (strict) {
             AddRestrictedFunctionProperties(cx, f);
         }
-        /* steps 6-12 */
-        f.initialise(kind, function, scope, homeObject, methodName);
-        /* step 13 */
-        return f;
-    }
-
-    /**
-     * 9.2.5 FunctionInitialise Abstract Operation
-     */
-    public static <FUNCTION extends FunctionObject> FUNCTION FunctionInitialise(
-            ExecutionContext cx, FUNCTION f, FunctionKind kind, RuntimeInfo.Function function,
-            LexicalEnvironment scope, ScriptObject homeObject, Symbol methodName) {
-        /* step 1 */
-        int len = function.expectedArgumentCount();
-        /* step 2 */
-        boolean strict = f.isStrict();
-        /* steps 3-4 */
-        DefinePropertyOrThrow(cx, f, "length", new PropertyDescriptor(len, false, false, true));
-        /* step 5 */
-        if (strict) {
-            AddRestrictedFunctionProperties(cx, f);
-        }
-        /* steps 6-12 */
-        f.initialise(kind, function, scope, homeObject, methodName);
-        /* step 13 */
+        /* steps 6-11 */
+        f.initialise(kind, function, scope);
+        /* step 12 */
         return f;
     }
 
@@ -175,7 +141,7 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
-        return FunctionCreate(cx, kind, function, scope, null, null, (String) null);
+        return FunctionCreate(cx, kind, function, scope, null);
     }
 
     /**
@@ -183,15 +149,6 @@ public class OrdinaryFunction extends FunctionObject {
      */
     public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
-        return FunctionCreate(cx, kind, function, scope, functionPrototype, null, (String) null);
-    }
-
-    /**
-     * 9.2.6 FunctionCreate Abstract Operation
-     */
-    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope,
-            ScriptObject functionPrototype, ScriptObject homeObject, String methodName) {
         assert !function.isGenerator();
         /* step 1 */
         if (functionPrototype == null) {
@@ -200,24 +157,7 @@ public class OrdinaryFunction extends FunctionObject {
         /* step 2 */
         OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
-    }
-
-    /**
-     * 9.2.6 FunctionCreate Abstract Operation
-     */
-    public static OrdinaryFunction FunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope,
-            ScriptObject functionPrototype, ScriptObject homeObject, Symbol methodName) {
-        assert !function.isGenerator();
-        /* step 1 */
-        if (functionPrototype == null) {
-            functionPrototype = cx.getIntrinsic(Intrinsics.FunctionPrototype);
-        }
-        /* step 2 */
-        OrdinaryFunction f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
-        /* step 3 */
-        return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
+        return FunctionInitialise(cx, f, kind, function, scope);
     }
 
     /**
@@ -314,19 +254,39 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.10 SetFunctionName Abstract Operation
+     * 9.2.10 MakeMethod ( F, methodName, homeObject ) Abstract Operation
+     */
+    public static void MakeMethod(FunctionObject f, String methodName, ScriptObject homeObject) {
+        /* steps 1-3 (not applicable) */
+        /* steps 4-6 */
+        f.toMethod(methodName, homeObject);
+        /* step 7 (return) */
+    }
+
+    /**
+     * 9.2.10 MakeMethod ( F, methodName, homeObject ) Abstract Operation
+     */
+    public static void MakeMethod(FunctionObject f, Symbol methodName, ScriptObject homeObject) {
+        /* steps 1-3 (not applicable) */
+        /* steps 3-6 */
+        f.toMethod(methodName, homeObject);
+        /* step 7 (return) */
+    }
+
+    /**
+     * 9.2.11 SetFunctionName Abstract Operation
      */
     public static void SetFunctionName(ExecutionContext cx, FunctionObject f, String name) {
         SetFunctionName(cx, f, name, null);
     }
 
     /**
-     * 9.2.10 SetFunctionName Abstract Operation
+     * 9.2.11 SetFunctionName Abstract Operation
      */
     public static void SetFunctionName(ExecutionContext cx, FunctionObject f, String name,
             String prefix) {
         /* step 1 */
-        assert f.isExtensible(cx) && !f.hasOwnProperty("name");
+        assert f.isExtensible() && !f.hasOwnProperty("name");
         /* step 2 (implicit) */
         /* step 3 (not applicable) */
         /* step 4 */
@@ -342,14 +302,14 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.10 SetFunctionName Abstract Operation
+     * 9.2.11 SetFunctionName Abstract Operation
      */
     public static void SetFunctionName(ExecutionContext cx, FunctionObject f, Symbol name) {
         SetFunctionName(cx, f, name, null);
     }
 
     /**
-     * 9.2.10 SetFunctionName Abstract Operation
+     * 9.2.11 SetFunctionName Abstract Operation
      */
     public static void SetFunctionName(ExecutionContext cx, FunctionObject f, Symbol name,
             String prefix) {
@@ -361,27 +321,40 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.11 GetSuperBinding(obj) Abstract Operation
+     * 9.2.12 GetSuperBinding(obj) Abstract Operation
      */
     public static ScriptObject GetSuperBinding(Object obj) {
         /* steps 1-2 */
         if (!(obj instanceof FunctionObject)) {
             return null;
         }
+        FunctionObject function = (FunctionObject) obj;
+        if (!function.isNeedsSuper()) {
+            return null;
+        }
         /* step 3 */
-        return ((FunctionObject) obj).getHomeObject();
+        return function.getHomeObject();
     }
 
     /**
-     * 9.2.12 RebindSuper(function, newHome) Abstract Operation
+     * 9.2.13 CloneMethod(function, newHome, newName) Abstract Operation
      */
-    public static FunctionObject RebindSuper(ExecutionContext cx, FunctionObject function,
-            ScriptObject newHome) {
-        /* step 1 */
-        assert function.getHomeObject() != null;
-        /* step 2 */
-        assert newHome != null;
-        /* steps 3-6 */
-        return function.rebind(newHome);
+    public static FunctionObject CloneMethod(FunctionObject function, ScriptObject newHome,
+            String newName) {
+        // FIXME: spec bug - Copy of properties not specified?!
+        /* steps 1-3 (not applicable) */
+        /* steps 4-6 */
+        return function.clone(newHome, newName);
+    }
+
+    /**
+     * 9.2.13 CloneMethod(function, newHome, newName) Abstract Operation
+     */
+    public static FunctionObject CloneMethod(FunctionObject function, ScriptObject newHome,
+            Symbol newName) {
+        // FIXME: spec bug - Copy of properties not specified?!
+        /* steps 1-3 (not applicable) */
+        /* steps 4-6 */
+        return function.clone(newHome, newName);
     }
 }

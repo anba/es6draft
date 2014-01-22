@@ -79,6 +79,12 @@ public class OrdinaryObject implements ScriptObject {
         return extensible;
     }
 
+    /** [[Extensible]] */
+    protected final void setExtensible(boolean extensible) {
+        assert this.extensible || !extensible;
+        this.extensible = extensible;
+    }
+
     /** [[HasOwnProperty]] (P) */
     protected boolean hasOwnProperty(String propertyKey) {
         // optimised: HasOwnProperty(cx, this, propertyKey)

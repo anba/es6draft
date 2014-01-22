@@ -15,8 +15,6 @@ import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.FromProp
 import static com.github.anba.es6draft.runtime.types.PropertyDescriptor.ToPropertyDescriptor;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.GetSuperBinding;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.RebindSuper;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -31,7 +29,6 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.IntegrityLevel;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.Property;
@@ -40,7 +37,6 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
-import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
@@ -544,46 +540,6 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
                 continue;
             }
             PropertyDescriptor desc = prop.toPropertyDescriptor();
-            if (desc.isDataDescriptor()) {
-                Object propValue = desc.getValue();
-                if (SameValue(GetSuperBinding(propValue), source)) {
-                    try {
-                        FunctionObject f = (FunctionObject) propValue;
-                        FunctionObject newFunc = MixinProperties(cx, RebindSuper(cx, f, target), f);
-                        desc.setValue(newFunc);
-                    } catch (ScriptException e) {
-                        if (pendingException == null) {
-                            pendingException = e;
-                        }
-                    }
-                }
-            } else {
-                assert desc.isAccessorDescriptor();
-                Callable getter = desc.getGetter();
-                if (SameValue(GetSuperBinding(getter), source)) {
-                    try {
-                        FunctionObject f = (FunctionObject) getter;
-                        FunctionObject newFunc = MixinProperties(cx, RebindSuper(cx, f, target), f);
-                        desc.setGetter(newFunc);
-                    } catch (ScriptException e) {
-                        if (pendingException == null) {
-                            pendingException = e;
-                        }
-                    }
-                }
-                Callable setter = desc.getSetter();
-                if (SameValue(GetSuperBinding(setter), source)) {
-                    try {
-                        FunctionObject f = (FunctionObject) setter;
-                        FunctionObject newFunc = MixinProperties(cx, RebindSuper(cx, f, target), f);
-                        desc.setSetter(newFunc);
-                    } catch (ScriptException e) {
-                        if (pendingException == null) {
-                            pendingException = e;
-                        }
-                    }
-                }
-            }
             try {
                 DefinePropertyOrThrow(cx, target, nextKey, desc);
             } catch (ScriptException e) {

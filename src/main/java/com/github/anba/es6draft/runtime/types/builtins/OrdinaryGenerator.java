@@ -21,7 +21,6 @@ import com.github.anba.es6draft.runtime.objects.iteration.GeneratorObject;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1>
@@ -173,7 +172,7 @@ public class OrdinaryGenerator extends FunctionObject {
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope) {
-        return GeneratorFunctionCreate(cx, kind, function, scope, null, null, (String) null);
+        return GeneratorFunctionCreate(cx, kind, function, scope, null);
     }
 
     /**
@@ -181,16 +180,6 @@ public class OrdinaryGenerator extends FunctionObject {
      */
     public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
             RuntimeInfo.Function function, LexicalEnvironment scope, ScriptObject functionPrototype) {
-        return GeneratorFunctionCreate(cx, kind, function, scope, functionPrototype, null,
-                (String) null);
-    }
-
-    /**
-     * 9.2.7 GeneratorFunctionCreate Abstract Operation
-     */
-    public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope,
-            ScriptObject functionPrototype, ScriptObject homeObject, String methodName) {
         assert function.isGenerator() && kind != FunctionKind.ConstructorMethod;
         /* step 1 */
         if (functionPrototype == null) {
@@ -199,23 +188,6 @@ public class OrdinaryGenerator extends FunctionObject {
         /* step 2 */
         OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
         /* step 3 */
-        return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
-    }
-
-    /**
-     * 9.2.7 GeneratorFunctionCreate Abstract Operation
-     */
-    public static OrdinaryGenerator GeneratorFunctionCreate(ExecutionContext cx, FunctionKind kind,
-            RuntimeInfo.Function function, LexicalEnvironment scope,
-            ScriptObject functionPrototype, ScriptObject homeObject, Symbol methodName) {
-        assert function.isGenerator() && kind != FunctionKind.ConstructorMethod;
-        /* step 1 */
-        if (functionPrototype == null) {
-            functionPrototype = cx.getIntrinsic(Intrinsics.Generator);
-        }
-        /* step 2 */
-        OrdinaryGenerator f = FunctionAllocate(cx, functionPrototype, function.isStrict(), kind);
-        /* step 3 */
-        return FunctionInitialise(cx, f, kind, function, scope, homeObject, methodName);
+        return FunctionInitialise(cx, f, kind, function, scope);
     }
 }

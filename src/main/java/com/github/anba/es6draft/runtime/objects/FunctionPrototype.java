@@ -14,6 +14,7 @@ import static com.github.anba.es6draft.runtime.internal.ScriptRuntime.PrepareFor
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction.BoundFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.CloneMethod;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -28,6 +29,8 @@ import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
+import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
@@ -170,6 +173,38 @@ public class FunctionPrototype extends BuiltinFunction implements Initialisable 
             AddRestrictedFunctionProperties(cx, f);
             /* step 9 */
             return f;
+        }
+
+        /**
+         * 19.2.3.5 Function.prototype.toMethod (superBinding, methodName = undefined)
+         */
+        @Function(name = "toMethod", arity = 1)
+        public static Object toMethod(ExecutionContext cx, Object thisValue, Object superBinding,
+                Object methodName) {
+            // TODO: def. for ECMAScript function object vs. built-in functions
+            /* step 1 */
+            if (!(thisValue instanceof FunctionObject)) {
+                throw newTypeError(cx, Messages.Key.IncompatibleObject);
+            }
+            FunctionObject function = (FunctionObject) thisValue;
+            /* step 2 */
+            if (!Type.isObject(superBinding)) {
+                throw newTypeError(cx, Messages.Key.NotObjectType);
+            }
+            ScriptObject newHome = Type.objectValue(superBinding);
+            /* step 3 */
+            Object newName;
+            if (!Type.isUndefined(methodName)) {
+                newName = ToPropertyKey(cx, methodName);
+            } else {
+                newName = null;
+            }
+            /* step 4 */
+            if (newName instanceof String) {
+                return CloneMethod(function, newHome, (String) newName);
+            } else {
+                return CloneMethod(function, newHome, (Symbol) newName);
+            }
         }
 
         /**

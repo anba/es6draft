@@ -17,6 +17,7 @@ import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.Cr
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeConstructor;
+import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.MakeMethod;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.SetFunctionName;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator.GeneratorFunctionCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
@@ -945,13 +946,20 @@ public final class ScriptRuntime {
      */
     public static OrdinaryFunction InstantiateFunctionObject(LexicalEnvironment scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
-        /* steps 1-3 */
+        /* step 1 (not applicable) */
+        /* step 2 */
+        String name = fd.functionName();
+        /* step 3 */
         OrdinaryFunction f = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
         /* step 4 */
-        MakeConstructor(cx, f);
+        if (fd.hasSuperReference()) {
+            MakeMethod(f, name, null);
+        }
         /* step 5 */
-        SetFunctionName(cx, f, fd.functionName());
+        MakeConstructor(cx, f);
         /* step 6 */
+        SetFunctionName(cx, f, name);
+        /* step 7 */
         return f;
     }
 
@@ -966,20 +974,44 @@ public final class ScriptRuntime {
      */
     public static OrdinaryFunction EvaluateFunctionExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        if (fd.hasScopedName()) {
-            scope = LexicalEnvironment.newDeclarativeEnvironment(scope);
-            EnvironmentRecord envRec = scope.getEnvRec();
-            envRec.createImmutableBinding(fd.functionName());
+        OrdinaryFunction closure;
+        if (!fd.hasScopedName()) {
+            /* step 1 (not applicable) */
+            /* step 2 */
+            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            /* step 3 */
+            closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
+            /* step 4 */
+            if (fd.hasSuperReference()) {
+                MakeMethod(closure, (String) null, null);
+            }
+            /* step 5 */
+            MakeConstructor(cx, closure);
+        } else {
+            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            /* step 1 (not applicable) */
+            /* step 2 */
+            LexicalEnvironment funcEnv = LexicalEnvironment.newDeclarativeEnvironment(scope);
+            /* step 3 */
+            EnvironmentRecord envRec = funcEnv.getEnvRec();
+            /* step 4 */
+            String name = fd.functionName();
+            /* step 5 */
+            envRec.createImmutableBinding(name);
+            /* step 6 */
+            closure = FunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
+            /* step 7 */
+            if (fd.hasSuperReference()) {
+                MakeMethod(closure, name, null);
+            }
+            /* step 8 */
+            MakeConstructor(cx, closure);
+            /* step 9 */
+            SetFunctionName(cx, closure, name);
+            /* step 10 */
+            envRec.initialiseBinding(name, closure);
         }
-        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        MakeConstructor(cx, closure);
-        if (!fd.functionName().isEmpty()) {
-            SetFunctionName(cx, closure, fd.functionName());
-        }
-        if (fd.hasScopedName()) {
-            scope.getEnvRec().initialiseBinding(fd.functionName(), closure);
-        }
+        /* step 6/11 */
         return closure;
     }
 
@@ -993,8 +1025,12 @@ public final class ScriptRuntime {
      */
     public static OrdinaryFunction EvaluateArrowFunction(RuntimeInfo.Function fd,
             ExecutionContext cx) {
+        /* step 1 (not applicable) */
+        /* step 2 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
+        /* steps 3-4 */
         OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Arrow, fd, scope);
+        /* step 5 */
         return closure;
     }
 
@@ -1010,13 +1046,10 @@ public final class ScriptRuntime {
         // -> calls DefineMethod
         String propKey = "constructor";
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction constructor;
+        OrdinaryFunction constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd,
+                scope, constructorParent);
         if (fd.hasSuperReference()) {
-            constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
-                    constructorParent, proto, propKey);
-        } else {
-            constructor = FunctionCreate(cx, FunctionKind.ConstructorMethod, fd, scope,
-                    constructorParent);
+            MakeMethod(constructor, propKey, proto);
         }
 
         // ClassDefinitionEvaluation - step 11
@@ -1058,15 +1091,21 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinition(ScriptObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (DefineMethod) */
+        /* DefineMethod: steps 1-3 (generated code) */
+        /* DefineMethod: step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure;
+        /* DefineMethod: step 5 */
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* DefineMethod: step 6 */
         if (fd.hasSuperReference()) {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propKey);
-        } else {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+            MakeMethod(closure, propKey, object);
         }
+        /* step 3 */
         SetFunctionName(cx, closure, propKey);
+        /* step 4 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        /* step 5 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1080,15 +1119,21 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinition(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-2 (DefineMethod) */
+        /* DefineMethod: steps 1-3 (generated code) */
+        /* DefineMethod: step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure;
+        /* DefineMethod: step 5 */
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* DefineMethod: step 6 */
         if (fd.hasSuperReference()) {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propKey);
-        } else {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+            MakeMethod(closure, propKey, object);
         }
+        /* step 3 */
         SetFunctionName(cx, closure, propKey);
+        /* step 4 */
         PropertyDescriptor desc = new PropertyDescriptor(closure, true, true, true);
+        /* step 5 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1119,18 +1164,23 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionGetter(ScriptObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-3 (generated code) */
+        /* step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure;
+        /* steps 5-6 */
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 7 */
         if (fd.hasSuperReference()) {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propKey);
-        } else {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+            MakeMethod(closure, propKey, object);
         }
+        /* step 8 */
         SetFunctionName(cx, closure, propKey, "get");
+        /* step 9 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setGetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
+        /* step 10 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1144,18 +1194,23 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionGetter(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-3 (generated code) */
+        /* step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure;
+        /* steps 5-6 */
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 7 */
         if (fd.hasSuperReference()) {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propKey);
-        } else {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+            MakeMethod(closure, propKey, object);
         }
+        /* step 8 */
         SetFunctionName(cx, closure, propKey, "get");
+        /* step 9 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setGetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
+        /* step 10 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1186,18 +1241,23 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionSetter(ScriptObject object, String propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-3 (generated code) */
+        /* step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure;
+        /* step 5 */
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 6 */
         if (fd.hasSuperReference()) {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propKey);
-        } else {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+            MakeMethod(closure, propKey, object);
         }
+        /* step 7 */
         SetFunctionName(cx, closure, propKey, "set");
+        /* step 8 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setSetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
+        /* step 9 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1211,18 +1271,23 @@ public final class ScriptRuntime {
      */
     public static void EvaluatePropertyDefinitionSetter(ScriptObject object, Symbol propKey,
             RuntimeInfo.Function fd, ExecutionContext cx) {
+        /* steps 1-3 (generated code) */
+        /* step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
-        OrdinaryFunction closure;
+        /* step 5 */
+        OrdinaryFunction closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 6 */
         if (fd.hasSuperReference()) {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope, null, object, propKey);
-        } else {
-            closure = FunctionCreate(cx, FunctionKind.Method, fd, scope);
+            MakeMethod(closure, propKey, object);
         }
+        /* step 7 */
         SetFunctionName(cx, closure, propKey, "set");
+        /* step 8 */
         PropertyDescriptor desc = new PropertyDescriptor();
         desc.setSetter(closure);
         desc.setEnumerable(true);
         desc.setConfigurable(true);
+        /* step 9 */
         DefinePropertyOrThrow(cx, object, propKey, desc);
     }
 
@@ -1233,15 +1298,22 @@ public final class ScriptRuntime {
      */
     public static OrdinaryGenerator InstantiateGeneratorObject(LexicalEnvironment scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
-        /* steps 1-3 */
+        /* step 1 (not applicable) */
+        /* step 2 */
+        String name = fd.functionName();
+        /* steps 3-4 */
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        // TODO: missing in spec
-        SetFunctionName(cx, f, fd.functionName());
-        /* step 4 */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
         /* step 5 */
-        MakeConstructor(cx, f, true, prototype);
+        if (fd.hasSuperReference()) {
+            MakeMethod(f, name, null);
+        }
         /* step 6 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+        /* step 7 */
+        MakeConstructor(cx, f, true, prototype);
+        // TODO: missing in spec
+        SetFunctionName(cx, f, name);
+        /* step 8 */
         return f;
     }
 
@@ -1252,15 +1324,22 @@ public final class ScriptRuntime {
      */
     public static OrdinaryGenerator InstantiateLegacyGeneratorObject(LexicalEnvironment scope,
             ExecutionContext cx, RuntimeInfo.Function fd) {
-        /* steps 1-3 */
+        /* step 1 (not applicable) */
+        /* step 2 */
+        String name = fd.functionName();
+        /* steps 3-4 */
         OrdinaryGenerator f = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        // TODO: missing in spec
-        SetFunctionName(cx, f, fd.functionName());
-        /* step 4 */
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
         /* step 5 */
-        MakeConstructor(cx, f, true, prototype);
+        if (fd.hasSuperReference()) {
+            MakeMethod(f, name, null);
+        }
         /* step 6 */
+        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
+        /* step 7 */
+        MakeConstructor(cx, f, true, prototype);
+        // TODO: missing in spec
+        SetFunctionName(cx, f, name);
+        /* step 8 */
         return f;
     }
 
@@ -1296,13 +1375,11 @@ public final class ScriptRuntime {
         /* step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         /* step 5 (not applicable) */
-        /* steps 6-7 */
-        OrdinaryGenerator closure;
+        /* step 6 */
+        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 7 */
         if (fd.hasSuperReference()) {
-            closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope, null, object,
-                    propKey);
-        } else {
-            closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
+            MakeMethod(closure, propKey, object);
         }
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
@@ -1330,13 +1407,11 @@ public final class ScriptRuntime {
         /* step 4 */
         LexicalEnvironment scope = cx.getLexicalEnvironment();
         /* step 5 (not applicable) */
-        /* steps 6-7 */
-        OrdinaryGenerator closure;
+        /* step 6 */
+        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
+        /* step 7 */
         if (fd.hasSuperReference()) {
-            closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope, null, object,
-                    propKey);
-        } else {
-            closure = GeneratorFunctionCreate(cx, FunctionKind.Method, fd, scope);
+            MakeMethod(closure, propKey, object);
         }
         /* step 8 */
         OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
@@ -1360,22 +1435,48 @@ public final class ScriptRuntime {
      */
     public static OrdinaryGenerator EvaluateGeneratorExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        if (fd.hasScopedName()) {
-            scope = LexicalEnvironment.newDeclarativeEnvironment(scope);
-            EnvironmentRecord envRec = scope.getEnvRec();
-            envRec.createImmutableBinding(fd.functionName());
+        OrdinaryGenerator closure;
+        if (!fd.hasScopedName()) {
+            /* steps 1-2 (generated code) */
+            /* step 3 */
+            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            /* step 4 */
+            closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+            /* step 5 */
+            if (fd.hasSuperReference()) {
+                MakeMethod(closure, (String) null, null);
+            }
+            /* step 6 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+            /* step 7 */
+            MakeConstructor(cx, closure, true, prototype);
+        } else {
+            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            /* steps 1-2 (generated code) */
+            /* step 3 */
+            LexicalEnvironment funcEnv = LexicalEnvironment.newDeclarativeEnvironment(scope);
+            /* step 4 */
+            EnvironmentRecord envRec = funcEnv.getEnvRec();
+            /* step 5 */
+            String name = fd.functionName();
+            /* step 6 */
+            envRec.createImmutableBinding(name);
+            /* step 7 */
+            closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
+            /* step 8 */
+            if (fd.hasSuperReference()) {
+                MakeMethod(closure, name, null);
+            }
+            /* step 9 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
+            /* step 10 */
+            MakeConstructor(cx, closure, true, prototype);
+            // TODO: missing in spec
+            SetFunctionName(cx, closure, name);
+            /* step 11 */
+            envRec.initialiseBinding(name, closure);
         }
-        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        // TODO: missing in spec
-        if (!fd.functionName().isEmpty()) {
-            SetFunctionName(cx, closure, fd.functionName());
-        }
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.GeneratorPrototype);
-        MakeConstructor(cx, closure, true, prototype);
-        if (fd.hasScopedName()) {
-            scope.getEnvRec().initialiseBinding(fd.functionName(), closure);
-        }
+        /* step 8/12 */
         return closure;
     }
 
@@ -1390,22 +1491,48 @@ public final class ScriptRuntime {
      */
     public static OrdinaryGenerator EvaluateLegacyGeneratorExpression(RuntimeInfo.Function fd,
             ExecutionContext cx) {
-        LexicalEnvironment scope = cx.getLexicalEnvironment();
-        if (fd.hasScopedName()) {
-            scope = LexicalEnvironment.newDeclarativeEnvironment(scope);
-            EnvironmentRecord envRec = scope.getEnvRec();
-            envRec.createImmutableBinding(fd.functionName());
+        OrdinaryGenerator closure;
+        if (!fd.hasScopedName()) {
+            /* steps 1-2 (generated code) */
+            /* step 3 */
+            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            /* step 4 */
+            closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
+            /* step 5 */
+            if (fd.hasSuperReference()) {
+                MakeMethod(closure, (String) null, null);
+            }
+            /* step 6 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
+            /* step 7 */
+            MakeConstructor(cx, closure, true, prototype);
+        } else {
+            LexicalEnvironment scope = cx.getLexicalEnvironment();
+            /* steps 1-2 (generated code) */
+            /* step 3 */
+            LexicalEnvironment funcEnv = LexicalEnvironment.newDeclarativeEnvironment(scope);
+            /* step 4 */
+            EnvironmentRecord envRec = funcEnv.getEnvRec();
+            /* step 5 */
+            String name = fd.functionName();
+            /* step 6 */
+            envRec.createImmutableBinding(name);
+            /* step 7 */
+            closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, funcEnv);
+            /* step 8 */
+            if (fd.hasSuperReference()) {
+                MakeMethod(closure, name, null);
+            }
+            /* step 9 */
+            OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
+            /* step 10 */
+            MakeConstructor(cx, closure, true, prototype);
+            // TODO: missing in spec
+            SetFunctionName(cx, closure, name);
+            /* step 11 */
+            envRec.initialiseBinding(name, closure);
         }
-        OrdinaryGenerator closure = GeneratorFunctionCreate(cx, FunctionKind.Normal, fd, scope);
-        // TODO: missing in spec
-        if (!fd.functionName().isEmpty()) {
-            SetFunctionName(cx, closure, fd.functionName());
-        }
-        OrdinaryObject prototype = ObjectCreate(cx, Intrinsics.LegacyGeneratorPrototype);
-        MakeConstructor(cx, closure, true, prototype);
-        if (fd.hasScopedName()) {
-            scope.getEnvRec().initialiseBinding(fd.functionName(), closure);
-        }
+        /* step 8/12 */
         return closure;
     }
 
