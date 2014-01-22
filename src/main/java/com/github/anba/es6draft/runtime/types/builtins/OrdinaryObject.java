@@ -8,6 +8,7 @@ package com.github.anba.es6draft.runtime.types.builtins;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateListIterator;
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.SameValue;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -697,22 +698,22 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /** 9.1.13 ObjectCreate Abstract Operation */
-    public static OrdinaryObject ObjectCreate(ExecutionContext cx) {
+    public static final OrdinaryObject ObjectCreate(ExecutionContext cx) {
         return ObjectCreate(cx, Intrinsics.ObjectPrototype, DefaultAllocator.INSTANCE);
     }
 
     /** 9.1.13 ObjectCreate Abstract Operation */
-    public static OrdinaryObject ObjectCreate(ExecutionContext cx, ScriptObject proto) {
+    public static final OrdinaryObject ObjectCreate(ExecutionContext cx, ScriptObject proto) {
         return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
     }
 
     /** 9.1.13 ObjectCreate Abstract Operation */
-    public static OrdinaryObject ObjectCreate(ExecutionContext cx, Intrinsics proto) {
+    public static final OrdinaryObject ObjectCreate(ExecutionContext cx, Intrinsics proto) {
         return ObjectCreate(cx, proto, DefaultAllocator.INSTANCE);
     }
 
     /** 9.1.13 ObjectCreate Abstract Operation */
-    public static <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
+    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             ScriptObject proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
         obj.setPrototype(proto);
@@ -720,10 +721,35 @@ public class OrdinaryObject implements ScriptObject {
     }
 
     /** 9.1.13 ObjectCreate Abstract Operation */
-    public static <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
+    public static final <OBJECT extends OrdinaryObject> OBJECT ObjectCreate(ExecutionContext cx,
             Intrinsics proto, ObjectAllocator<OBJECT> allocator) {
         OBJECT obj = allocator.newInstance(cx.getRealm());
         obj.setPrototype(cx.getIntrinsic(proto));
         return obj;
+    }
+
+    /**
+     * 9.1.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
+     */
+    public static final OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
+            Object constructor, Intrinsics intrinsicDefaultProto) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
+        /* step 4 */
+        return ObjectCreate(cx, proto);
+    }
+
+    /**
+     * 9.1.14 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     */
+    public static final <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
+            ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,
+            ObjectAllocator<OBJECT> allocator) {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
+        /* step 4 */
+        return ObjectCreate(cx, proto, allocator);
     }
 }

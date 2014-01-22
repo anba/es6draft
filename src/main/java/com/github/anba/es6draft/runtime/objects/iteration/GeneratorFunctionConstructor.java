@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
@@ -105,7 +106,8 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
         /* steps 15-16 */
         if (!Type.isObject(f) || !(f instanceof FunctionObject)
                 || ((FunctionObject) f).getCode() != null) {
-            ScriptObject proto = calleeContext.getIntrinsic(Intrinsics.Generator);
+            ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
+                    Intrinsics.Generator);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
         } else {
             // FIXME: this also updates uninitialised function (not generator!)
@@ -136,7 +138,7 @@ public class GeneratorFunctionConstructor extends BuiltinConstructor implements 
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return OrdinaryConstruct(callerContext, this, args);
+        return Construct(callerContext, this, args);
     }
 
     /**

@@ -1035,7 +1035,6 @@ public class DatePrototype extends OrdinaryObject implements Initialisable {
          */
         @Value(name = "toGMTString")
         public static Object toGMTString(ExecutionContext cx) {
-            // TODO: is this function generic?
             return Get(cx, cx.getIntrinsic(Intrinsics.DatePrototype), "toUTCString");
         }
     }

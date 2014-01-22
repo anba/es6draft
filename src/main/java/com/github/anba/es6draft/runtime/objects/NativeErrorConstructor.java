@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -167,7 +166,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return OrdinaryConstruct(callerContext, this, args);
+        return Construct(callerContext, this, args);
     }
 
     /**

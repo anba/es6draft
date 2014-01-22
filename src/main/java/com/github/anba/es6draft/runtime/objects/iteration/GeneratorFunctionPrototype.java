@@ -6,7 +6,6 @@
  */
 package com.github.anba.es6draft.runtime.objects.iteration;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;

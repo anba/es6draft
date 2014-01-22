@@ -10,7 +10,6 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,8 +64,8 @@ public final class PromiseAbstractOperations {
      */
     public static ScriptObject PromiseCreate(ExecutionContext cx, Callable f) {
         // TODO: make safe
-        ScriptObject p = OrdinaryConstruct(cx,
-                (PromiseConstructor) cx.getIntrinsic(Intrinsics.Promise), new Object[] { f });
+        ScriptObject p = Construct(cx, (PromiseConstructor) cx.getIntrinsic(Intrinsics.Promise),
+                new Object[] { f });
         return p;
     }
 

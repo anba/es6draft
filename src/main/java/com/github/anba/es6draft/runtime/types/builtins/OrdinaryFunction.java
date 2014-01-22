@@ -6,10 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
+import static com.github.anba.es6draft.runtime.AbstractOperations.ConstructTailCall;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
-import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -50,20 +49,20 @@ public class OrdinaryFunction extends FunctionObject {
         }
 
         /**
-         * 9.2.2 [[Construct]] (argumentsList)
+         * 9.2.1 [[Construct]] (argumentsList)
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-            return OrdinaryConstruct(callerContext, this, args);
+            return Construct(callerContext, this, args);
         }
 
         /**
-         * 9.2.2 [[Construct]] (argumentsList)
+         * 9.2.1 [[Construct]] (argumentsList)
          */
         @Override
         public Object tailConstruct(ExecutionContext callerContext, Object... args)
                 throws Throwable {
-            return OrdinaryConstructTailCall(callerContext, this, args);
+            return ConstructTailCall(callerContext, this, args);
         }
     }
 
@@ -74,7 +73,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.1 [[Call]] (thisArgument, argumentsList)
+     * 9.2.4 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -88,7 +87,7 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
-     * 9.2.1 [[Call]] (thisArgument, argumentsList)
+     * 9.2.4 [[Call]] (thisArgument, argumentsList)
      */
     @Override
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
@@ -99,75 +98,7 @@ public class OrdinaryFunction extends FunctionObject {
     /* ***************************************************************************************** */
 
     /**
-     * 9.2.2.1 OrdinaryConstruct (F, argumentsList)
-     */
-    public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject OrdinaryConstruct(
-            ExecutionContext cx, FUNCTION f, Object[] args) {
-        /* steps 1-2 */
-        Object creator = Get(cx, f, BuiltinSymbol.create.get());
-        /* steps 3-5 */
-        Object obj;
-        if (!Type.isUndefined(creator)) {
-            if (!IsCallable(creator)) {
-                throw newTypeError(cx, Messages.Key.NotCallable);
-            }
-            obj = ((Callable) creator).call(cx, f);
-        } else {
-            obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
-        }
-        /* step 6 */
-        if (!Type.isObject(obj)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* steps 7-8 */
-        Object result = f.call(cx, obj, args);
-        /* step 9 */
-        if (Type.isObject(result)) {
-            return Type.objectValue(result);
-        }
-        /* step 10 */
-        return Type.objectValue(obj);
-    }
-
-    /**
-     * 9.2.2.1 OrdinaryConstruct (F, argumentsList)
-     */
-    public static <FUNCTION extends ScriptObject & Callable & Constructor> Object OrdinaryConstructTailCall(
-            ExecutionContext cx, FUNCTION f, Object[] args) throws Throwable {
-        /* steps 1-2 */
-        Object creator = Get(cx, f, BuiltinSymbol.create.get());
-        /* steps 3-5 */
-        Object obj;
-        if (!Type.isUndefined(creator)) {
-            if (!IsCallable(creator)) {
-                throw newTypeError(cx, Messages.Key.NotCallable);
-            }
-            obj = ((Callable) creator).call(cx, f);
-        } else {
-            obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
-        }
-        /* step 6 */
-        if (!Type.isObject(obj)) {
-            throw newTypeError(cx, Messages.Key.NotObjectType);
-        }
-        /* steps 7-8 */
-        // Invoke 'tailCall()' instead of 'call()' to get TailCallInvocation objects
-        Object result = f.tailCall(cx, obj, args);
-        /* steps 9-10 (tail-call) */
-        if (result instanceof TailCallInvocation) {
-            // Don't unwind tail-call yet, instead store reference to 'obj'
-            return ((TailCallInvocation) result).toConstructTailCall(Type.objectValue(obj));
-        }
-        /* step 9 */
-        if (Type.isObject(result)) {
-            return Type.objectValue(result);
-        }
-        /* step 10 */
-        return Type.objectValue(obj);
-    }
-
-    /**
-     * 9.2.4 FunctionAllocate Abstract Operation
+     * 9.2.3 FunctionAllocate Abstract Operation
      */
     public static OrdinaryFunction FunctionAllocate(ExecutionContext cx,
             ScriptObject functionPrototype, boolean strict, FunctionKind kind) {

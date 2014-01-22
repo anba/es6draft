@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetPrototypeFromConstructor;
 import static com.github.anba.es6draft.runtime.AbstractOperations.HasOwnProperty;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToString;
@@ -104,7 +105,8 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
         /* step 16 */
         if (!Type.isObject(f) || !(f instanceof FunctionObject)
                 || ((FunctionObject) f).getCode() != null) {
-            ScriptObject proto = calleeContext.getIntrinsic(Intrinsics.FunctionPrototype);
+            ScriptObject proto = GetPrototypeFromConstructor(calleeContext, this,
+                    Intrinsics.FunctionPrototype);
             f = FunctionAllocate(calleeContext, proto, strict, FunctionKind.Normal);
         } else {
             // FIXME: this also updates uninitialised generator (not function!)
@@ -133,7 +135,7 @@ public class FunctionConstructor extends BuiltinConstructor implements Initialis
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return OrdinaryConstruct(callerContext, this, args);
+        return Construct(callerContext, this, args);
     }
 
     /**

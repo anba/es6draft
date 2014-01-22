@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -353,7 +352,7 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return OrdinaryConstruct(callerContext, this, args);
+        return Construct(callerContext, this, args);
     }
 
     /**

@@ -6,10 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.types.builtins;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorStart;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.FunctionInitialise;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.EnvironmentRecord;
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -51,7 +50,7 @@ public class OrdinaryGenerator extends FunctionObject {
          */
         @Override
         public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-            return OrdinaryConstruct(callerContext, this, args);
+            return Construct(callerContext, this, args);
         }
 
         /**

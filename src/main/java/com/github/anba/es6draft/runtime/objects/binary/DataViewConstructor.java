@@ -6,7 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.binary;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.OrdinaryCreateFromConstructor;
+import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToBoolean;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToInteger;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToNumber;
@@ -17,7 +17,6 @@ import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstru
 import static com.github.anba.es6draft.runtime.objects.binary.ArrayBufferConstructor.SetValueInBuffer;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
@@ -226,7 +225,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return OrdinaryConstruct(callerContext, this, args);
+        return Construct(callerContext, this, args);
     }
 
     /**

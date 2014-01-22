@@ -12,7 +12,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.internal.Strings.isLineTerminator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -108,7 +107,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-        return OrdinaryConstruct(callerContext, this, args);
+        return Construct(callerContext, this, args);
     }
 
     private static class RegExpObjectAllocator implements ObjectAllocator<RegExpObject> {

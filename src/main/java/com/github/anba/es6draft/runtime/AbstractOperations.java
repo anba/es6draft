@@ -28,9 +28,9 @@ import org.mozilla.javascript.StringToNumber;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.internal.Strings;
+import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
 import com.github.anba.es6draft.runtime.types.*;
@@ -1175,19 +1175,17 @@ public final class AbstractOperations {
      */
     public static Object Invoke(ExecutionContext cx, Object object, String propertyKey,
             Object... args) {
-        /* steps 1-5 */
-        ScriptObject base;
-        if (Type.isObject(object)) {
-            base = Type.objectValue(object);
-        } else {
-            base = ToObject(cx, object);
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        ScriptObject base = ToObject(cx, object);
+        /* steps 5-6 */
+        Object func = base.get(cx, propertyKey, object);
+        /* step 7 */
+        if (!IsCallable(func)) {
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
-        /* step 6 */
-        Callable method = GetMethod(cx, base, propertyKey);
-        if (method == null) {
-            throw newTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
-        }
-        return method.call(cx, object, args);
+        /* step 8 */
+        return ((Callable) func).call(cx, object, args);
     }
 
     /**
@@ -1195,13 +1193,15 @@ public final class AbstractOperations {
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, String propertyKey,
             Object... args) {
-        /* steps 1-5 (not applicable) */
-        /* step 6 */
-        Callable method = GetMethod(cx, object, propertyKey);
-        if (method == null) {
-            throw newTypeError(cx, Messages.Key.MethodNotFound, propertyKey);
+        /* steps 1-4 (not applicable) */
+        /* steps 5-6 */
+        Object func = object.get(cx, propertyKey, object);
+        /* step 7 */
+        if (!IsCallable(func)) {
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
-        return method.call(cx, object, args);
+        /* step 8 */
+        return ((Callable) func).call(cx, object, args);
     }
 
     /**
@@ -1209,19 +1209,17 @@ public final class AbstractOperations {
      */
     public static Object Invoke(ExecutionContext cx, Object object, Symbol propertyKey,
             Object... args) {
-        /* steps 1-5 */
-        ScriptObject base;
-        if (Type.isObject(object)) {
-            base = Type.objectValue(object);
-        } else {
-            base = ToObject(cx, object);
+        /* steps 1-2 (not applicable) */
+        /* steps 3-4 */
+        ScriptObject base = ToObject(cx, object);
+        /* steps 5-6 */
+        Object func = base.get(cx, propertyKey, object);
+        /* step 7 */
+        if (!IsCallable(func)) {
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
-        /* step 6 */
-        Callable method = GetMethod(cx, base, propertyKey);
-        if (method == null) {
-            throw newTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
-        }
-        return method.call(cx, object, args);
+        /* step 8 */
+        return ((Callable) func).call(cx, object, args);
     }
 
     /**
@@ -1229,13 +1227,15 @@ public final class AbstractOperations {
      */
     public static Object Invoke(ExecutionContext cx, ScriptObject object, Symbol propertyKey,
             Object... args) {
-        /* steps 1-5 (not applicable) */
-        /* step 6 */
-        Callable method = GetMethod(cx, object, propertyKey);
-        if (method == null) {
-            throw newTypeError(cx, Messages.Key.MethodNotFound, propertyKey.toString());
+        /* steps 1-4 (not applicable) */
+        /* steps 5-6 */
+        Object func = object.get(cx, propertyKey, object);
+        /* step 7 */
+        if (!IsCallable(func)) {
+            throw newTypeError(cx, Messages.Key.NotCallable);
         }
-        return method.call(cx, object, args);
+        /* step 8 */
+        return ((Callable) func).call(cx, object, args);
     }
 
     /**
@@ -1490,28 +1490,128 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.3.17 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto )
+     * 7.3.17 CreateFromConstructor (F)
      */
-    public static OrdinaryObject OrdinaryCreateFromConstructor(ExecutionContext cx,
-            Object constructor, Intrinsics intrinsicDefaultProto) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
+    public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject CreateFromConstructor(
+            ExecutionContext cx, FUNCTION f) {
+        // TODO: Use GetMethod() to reduce code duplication?
+        /* steps 1-2 */
+        Object creator = Get(cx, f, BuiltinSymbol.create.get());
+        /* step 3 */
+        if (Type.isUndefined(creator)) {
+            return null;
+        }
         /* step 4 */
-        return ObjectCreate(cx, proto);
+        if (!IsCallable(creator)) {
+            throw newTypeError(cx, Messages.Key.NotCallable);
+        }
+        /* steps 5-6 */
+        Object obj = ((Callable) creator).call(cx, f);
+        /* step 7 */
+        if (!Type.isObject(obj)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 8 */
+        return Type.objectValue(obj);
     }
 
     /**
-     * 7.3.17 OrdinaryCreateFromConstructor ( constructor, intrinsicDefaultProto, internalDataList )
+     * 7.3.18 Construct (F, argumentsList)
      */
-    public static <OBJECT extends OrdinaryObject> OBJECT OrdinaryCreateFromConstructor(
-            ExecutionContext cx, Object constructor, Intrinsics intrinsicDefaultProto,
-            ObjectAllocator<OBJECT> allocator) {
+    public static <FUNCTION extends ScriptObject & Callable & Constructor> ScriptObject Construct(
+            ExecutionContext cx, FUNCTION f, Object... args) {
         /* step 1 (not applicable) */
         /* steps 2-3 */
-        ScriptObject proto = GetPrototypeFromConstructor(cx, constructor, intrinsicDefaultProto);
+        ScriptObject obj = CreateFromConstructor(cx, f);
         /* step 4 */
-        return ObjectCreate(cx, proto, allocator);
+        if (obj == null) {
+            obj = OrdinaryObject.OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
+            // FIXME: spec bug - change if-test to assertion, OrdinaryCreateFromConstructor always
+            // returns object type
+        }
+        /* steps 5-6 */
+        Object result = f.call(cx, obj, args);
+        /* step 7 */
+        if (Type.isObject(result)) {
+            return Type.objectValue(result);
+        }
+        /* step 8 */
+        return obj;
+    }
+
+    /**
+     * 7.3.18 Construct (F, argumentsList)
+     */
+    public static <FUNCTION extends ScriptObject & Callable & Constructor> Object ConstructTailCall(
+            ExecutionContext cx, FUNCTION f, Object... args) throws Throwable {
+        /* step 1 (not applicable) */
+        /* steps 2-3 */
+        ScriptObject obj = CreateFromConstructor(cx, f);
+        /* step 4 */
+        if (obj == null) {
+            obj = OrdinaryObject.OrdinaryCreateFromConstructor(cx, f, Intrinsics.ObjectPrototype);
+            // FIXME: spec bug - change if-test to assertion, OrdinaryCreateFromConstructor always
+            // returns object type
+        }
+        /* steps 5-6 */
+        // Invoke 'tailCall()' instead of 'call()' to get TailCallInvocation objects
+        Object result = f.tailCall(cx, obj, args);
+        /* steps 7-8 (tail-call) */
+        if (result instanceof TailCallInvocation) {
+            // Don't unwind tail-call yet, instead store reference to 'obj'
+            return ((TailCallInvocation) result).toConstructTailCall(obj);
+        }
+        /* step 7 */
+        if (Type.isObject(result)) {
+            return Type.objectValue(result);
+        }
+        /* step 8 */
+        return obj;
+    }
+
+    /**
+     * 7.3.19 GetOption (options, P)
+     */
+    public static Object GetOption(ExecutionContext cx, Object options, Object propertyKey) {
+        if (propertyKey instanceof String) {
+            return GetOption(cx, options, (String) propertyKey);
+        } else {
+            return GetOption(cx, options, (Symbol) propertyKey);
+        }
+    }
+
+    /**
+     * 7.3.19 GetOption (options, P)
+     */
+    public static Object GetOption(ExecutionContext cx, Object options, String propertyKey) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (Type.isUndefined(options)) {
+            return UNDEFINED;
+        }
+        /* step 3 */
+        if (!Type.isObject(options)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 4 */
+        return Type.objectValue(options).get(cx, propertyKey, options);
+    }
+
+    /**
+     * 7.3.19 GetOption (options, P)
+     */
+    public static Object GetOption(ExecutionContext cx, Object options, Symbol propertyKey) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (Type.isUndefined(options)) {
+            return UNDEFINED;
+        }
+        /* step 3 */
+        if (!Type.isObject(options)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 4 */
+        return Type.objectValue(options).get(cx, propertyKey, options);
     }
 
     /**
@@ -1532,15 +1632,21 @@ public final class AbstractOperations {
      * 7.4.2 IteratorNext ( iterator, value )
      */
     public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator) {
-        return IteratorNext(cx, iterator, UNDEFINED);
+        /* steps 1-3 */
+        Object result = Invoke(cx, iterator, "next");
+        /* step 4 */
+        if (!Type.isObject(result)) {
+            throw newTypeError(cx, Messages.Key.NotObjectType);
+        }
+        /* step 5 */
+        return Type.objectValue(result);
     }
 
     /**
      * 7.4.2 IteratorNext ( iterator, value )
      */
     public static ScriptObject IteratorNext(ExecutionContext cx, ScriptObject iterator, Object value) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
+        /* steps 1-3 */
         Object result = Invoke(cx, iterator, "next", value);
         /* step 4 */
         if (!Type.isObject(result)) {
@@ -1583,26 +1689,18 @@ public final class AbstractOperations {
     }
 
     /**
-     * 7.4.5 IteratorStep ( iterator, value )
+     * 7.4.5 IteratorStep ( iterator )
      */
     public static ScriptObject IteratorStep(ExecutionContext cx, ScriptObject iterator) {
-        return IteratorStep(cx, iterator, UNDEFINED);
-    }
-
-    /**
-     * 7.4.5 IteratorStep ( iterator, value )
-     */
-    public static ScriptObject IteratorStep(ExecutionContext cx, ScriptObject iterator, Object value) {
-        /* step 1 (not applicable) */
-        /* steps 2-3 */
-        ScriptObject result = IteratorNext(cx, iterator, value);
-        /* steps 4-5 */
+        /* steps 1-2 */
+        ScriptObject result = IteratorNext(cx, iterator);
+        /* steps 3-4 */
         boolean done = IteratorComplete(cx, result);
-        /* step 6 */
+        /* step 5 */
         if (done) {
             return null;
         }
-        /* step 7 */
+        /* step 6 */
         return result;
     }
 

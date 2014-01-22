@@ -6,6 +6,7 @@
  */
 package com.github.anba.es6draft.runtime.objects.modules;
 
+import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.DefinePropertyOrThrow;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetOwnEnumerablePropertyNames;
@@ -14,7 +15,6 @@ import static com.github.anba.es6draft.runtime.internal.Properties.createPropert
 import static com.github.anba.es6draft.runtime.modules.ModuleAbstractOperations.CreateLinkedModuleInstance;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import java.util.List;
 
@@ -110,7 +110,7 @@ public class ModuleFactoryFunction extends BuiltinConstructor implements Initial
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         // FIXME: tests assume that Module has [[Construct]]
-        return OrdinaryConstruct(callerContext, this, args);
+        return Construct(callerContext, this, args);
     }
 
     /**

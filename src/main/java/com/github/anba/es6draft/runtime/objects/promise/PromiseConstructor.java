@@ -17,7 +17,6 @@ import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOp
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.OrdinaryConstruct;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -101,7 +100,7 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
         /* steps 1-3 */
-        return OrdinaryConstruct(callerContext, this, args);
+        return Construct(callerContext, this, args);
     }
 
     /**
