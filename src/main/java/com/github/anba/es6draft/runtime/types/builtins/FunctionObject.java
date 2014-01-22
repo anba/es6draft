@@ -58,8 +58,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         throw newTypeError(cx, Messages.Key.UninitialisedObject);
     }
 
-    /** [[Scope]] */
-    private LexicalEnvironment scope;
+    /** [[Environment]] */
+    private LexicalEnvironment environment;
     /** [[FunctionKind]] */
     private FunctionKind functionKind;
     /** [[FormalParameters]] / [[Code]] */
@@ -234,7 +234,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * 9.2.3 [[GetOwnProperty]] (P)
+     * 9.2.2 [[GetOwnProperty]] (P)
      */
     @Override
     public Property getOwnProperty(ExecutionContext cx, String propertyKey) {
@@ -330,10 +330,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     }
 
     /**
-     * [[Scope]]
+     * [[Environment]]
      */
-    public final LexicalEnvironment getScope() {
-        return scope;
+    public final LexicalEnvironment getEnvironment() {
+        return environment;
     }
 
     /**

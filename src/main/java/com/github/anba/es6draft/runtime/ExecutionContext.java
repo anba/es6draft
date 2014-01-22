@@ -165,7 +165,7 @@ public final class ExecutionContext {
         ThisMode thisMode = f.getThisMode();
         LexicalEnvironment localEnv;
         if (thisMode == ThisMode.Lexical) {
-            localEnv = newDeclarativeEnvironment(f.getScope());
+            localEnv = newDeclarativeEnvironment(f.getEnvironment());
         } else {
             Object thisValue;
             if (thisMode == ThisMode.Strict) {
