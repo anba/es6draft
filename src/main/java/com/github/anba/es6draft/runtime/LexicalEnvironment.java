@@ -124,7 +124,10 @@ public final class LexicalEnvironment {
             Object t) {
         /* step 1 */
         assert f.getThisMode() != ThisMode.Lexical;
-        // TODO: spec change in rev21 wrt home object
+        /* step 5 */
+        if (f.isNeedsSuper() && f.getHomeObject() == null) {
+            throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
+        }
         /* steps 3-6 */
         EnvironmentRecord envRec = new FunctionEnvironmentRecord(cx, t, f.getHomeObject(),
                 f.getMethodName());
