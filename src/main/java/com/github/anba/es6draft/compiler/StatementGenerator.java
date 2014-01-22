@@ -804,8 +804,10 @@ final class StatementGenerator extends
     public Completion visit(ReturnStatement node, StatementVisitor mv) {
         Expression expr = node.getExpression();
         if (expr != null) {
-            mv.enterTailCallPosition(expr);
-            expressionBoxedValue(expr, mv);
+            // expression as value to ensure tail-call nodes set contains the value node
+            Expression expression = expr.asValue();
+            mv.enterTailCallPosition(expression);
+            expressionBoxedValue(expression, mv);
             mv.exitTailCallPosition();
         } else {
             mv.loadUndefined();

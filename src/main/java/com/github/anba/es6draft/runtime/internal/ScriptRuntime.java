@@ -1644,7 +1644,8 @@ public final class ScriptRuntime {
     public static RuntimeInfo.Function CreateDefaultConstructor() {
         String functionName = "constructor";
         int functionFlags = RuntimeInfo.FunctionFlags.Strict.getValue()
-                | RuntimeInfo.FunctionFlags.Super.getValue();
+                | RuntimeInfo.FunctionFlags.Super.getValue()
+                | RuntimeInfo.FunctionFlags.TailCall.getValue();
         int expectedArguments = 0;
         RuntimeInfo.Function function = RuntimeInfo.newFunction(functionName, functionFlags,
                 expectedArguments, DefaultConstructorSource, DefaultConstructorMH,
@@ -1684,7 +1685,7 @@ public final class ScriptRuntime {
             throw new IllegalStateException(e);
         }
         try {
-            String source = "constructor(...args) { super(...args); }";
+            String source = "constructor(...args) { return super(...args); }";
             DefaultConstructorSource = SourceCompressor.compress(source).call();
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -1706,14 +1707,12 @@ public final class ScriptRuntime {
     public static Object DefaultConstructor(ExecutionContext cx) {
         // super()
         Reference<ScriptObject, ?> ref = MakeSuperReference(cx, (Object) null, true);
-        // EvaluateCall: super(...args)
+        // EvaluateCall: return super(...args)
         Object func = ref.getValue(cx);
         Object[] argList = SpreadArray(cx.resolveBindingValue("args", true), cx);
         Callable f = CheckCallable(func, cx);
         Object thisValue = GetCallThisValue(ref, cx);
-        f.call(cx, thisValue, argList);
-
-        return UNDEFINED;
+        return PrepareForTailCall(argList, thisValue, f);
     }
 
     public static Object DefaultConstructor(OrdinaryFunction callee,
