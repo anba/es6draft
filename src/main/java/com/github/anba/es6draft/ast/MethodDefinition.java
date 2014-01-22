@@ -111,6 +111,7 @@ public class MethodDefinition extends PropertyDefinition implements FunctionNode
         return getType() == MethodType.Generator;
     }
 
+    @Override
     public boolean hasSuperReference() {
         return superReference;
     }

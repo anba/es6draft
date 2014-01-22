@@ -17,9 +17,10 @@ import java.util.List;
 public class LegacyGeneratorExpression extends GeneratorExpression {
     public LegacyGeneratorExpression(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
-        super(beginPosition, endPosition, scope, identifier, parameters, statements, headerSource,
-                bodySource);
+            List<StatementListItem> statements, boolean superReference, String headerSource,
+            String bodySource) {
+        super(beginPosition, endPosition, scope, identifier, parameters, statements,
+                superReference, headerSource, bodySource);
     }
 
     @Override

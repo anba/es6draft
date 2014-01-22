@@ -103,6 +103,11 @@ public class ArrowFunction extends Expression implements FunctionNode {
     }
 
     @Override
+    public boolean hasSuperReference() {
+        return false;
+    }
+
+    @Override
     public boolean hasSyntheticNodes() {
         return syntheticNodes;
     }

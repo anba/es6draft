@@ -11,13 +11,13 @@ const {
 
 // FIXME: https://bugs.ecmascript.org/show_bug.cgi?id=2338
 
-// 'super' is not allowed in object literals (restriction to be removed)
+// 'super' is allowed in object literals
 {
-  assertSyntaxError(`({m(){super()}})`);
-  assertSyntaxError(`({m(){super.x}})`);
-  assertSyntaxError(`({m(){super["x"]}})`);
-  assertSyntaxError(`({m(){super.x()}})`);
-  assertSyntaxError(`({m(){super["x"]()}})`);
+  ({m(){super()}});
+  ({m(){super.x}});
+  ({m(){super["x"]}});
+  ({m(){super.x()}});
+  ({m(){super["x"]()}});
 }
 
 // CallExpression: 'super' Arguments

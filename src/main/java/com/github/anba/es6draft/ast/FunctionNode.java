@@ -37,4 +37,6 @@ public interface FunctionNode extends TopLevelNode, ScopedNode {
     FunctionScope getScope();
 
     boolean isGenerator();
+
+    boolean hasSuperReference();
 }

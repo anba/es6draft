@@ -936,7 +936,8 @@ public class Parser {
 
                 FunctionContext scope = context.funContext;
                 function = new FunctionExpression(beginSource(), ts.endPosition(), scope,
-                        "anonymous", parameters, statements, header, body);
+                        "anonymous", parameters, statements, context.hasSuperReference(), header,
+                        body);
                 scope.node = function;
 
                 function_EarlyErrors(function);
@@ -992,7 +993,8 @@ public class Parser {
 
                 FunctionContext scope = context.funContext;
                 generator = new GeneratorExpression(beginSource(), ts.endPosition(), scope,
-                        "anonymous", parameters, statements, header, body);
+                        "anonymous", parameters, statements, context.hasSuperReference(), header,
+                        body);
                 scope.node = generator;
 
                 generator_EarlyErrors(generator);
@@ -1611,7 +1613,7 @@ public class Parser {
 
             FunctionContext scope = context.funContext;
             FunctionDeclaration function = new FunctionDeclaration(begin, ts.endPosition(), scope,
-                    identifier, parameters, statements, header, body);
+                    identifier, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = function;
 
             function_EarlyErrors(function);
@@ -1668,7 +1670,7 @@ public class Parser {
 
             FunctionContext scope = context.funContext;
             FunctionExpression function = new FunctionExpression(begin, ts.endPosition(), scope,
-                    identifier, parameters, statements, header, body);
+                    identifier, parameters, statements, context.hasSuperReference(), header, body);
             scope.node = function;
 
             function_EarlyErrors(function);
@@ -2312,10 +2314,11 @@ public class Parser {
             GeneratorDeclaration generator;
             if (!starless) {
                 generator = new GeneratorDeclaration(begin, ts.endPosition(), scope, identifier,
-                        parameters, statements, header, body);
+                        parameters, statements, context.hasSuperReference(), header, body);
             } else {
                 generator = new LegacyGeneratorDeclaration(begin, ts.endPosition(), scope,
-                        identifier, parameters, statements, header, body);
+                        identifier, parameters, statements, context.hasSuperReference(), header,
+                        body);
             }
             scope.node = generator;
 
@@ -2366,10 +2369,11 @@ public class Parser {
             GeneratorExpression generator;
             if (!starless) {
                 generator = new GeneratorExpression(begin, ts.endPosition(), scope, identifier,
-                        parameters, statements, header, body);
+                        parameters, statements, context.hasSuperReference(), header, body);
             } else {
                 generator = new LegacyGeneratorExpression(begin, ts.endPosition(), scope,
-                        identifier, parameters, statements, header, body);
+                        identifier, parameters, statements, context.hasSuperReference(), header,
+                        body);
             }
             scope.node = generator;
 
@@ -5162,11 +5166,7 @@ public class Parser {
             } else if (def instanceof PropertyNameDefinition) {
                 kind = SPECIAL;
             } else if (def instanceof MethodDefinition) {
-                MethodDefinition method = (MethodDefinition) def;
-                if (method.hasSuperReference()) {
-                    reportSyntaxError(def, Messages.Key.SuperOutsideClass);
-                }
-                MethodDefinition.MethodType type = method.getType();
+                MethodDefinition.MethodType type = ((MethodDefinition) def).getType();
                 kind = type == MethodType.Getter ? GETTER : type == MethodType.Setter ? SETTER
                         : SPECIAL;
             } else {

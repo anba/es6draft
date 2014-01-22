@@ -20,17 +20,20 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private StrictMode strictMode;
+    private boolean superReference;
     private String headerSource, bodySource;
     private boolean syntheticNodes;
 
     public GeneratorDeclaration(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
+            List<StatementListItem> statements, boolean superReference, String headerSource,
+            String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
         this.parameters = parameters;
         this.statements = statements;
+        this.superReference = superReference;
         this.headerSource = headerSource;
         this.bodySource = bodySource;
     }
@@ -88,6 +91,11 @@ public class GeneratorDeclaration extends Declaration implements GeneratorDefini
     @Override
     public boolean isGenerator() {
         return true;
+    }
+
+    @Override
+    public boolean hasSuperReference() {
+        return superReference;
     }
 
     @Override

@@ -18,7 +18,6 @@ import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
 import com.github.anba.es6draft.ast.GeneratorComprehension;
 import com.github.anba.es6draft.ast.GeneratorExpression;
-import com.github.anba.es6draft.ast.MethodDefinition;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.CodeGenerator.ScriptName;
@@ -63,40 +62,31 @@ final class RuntimeInfoGenerator {
 
     private int functionFlags(FunctionNode node, boolean tailCall) {
         boolean strict = IsStrict(node);
-        boolean generator = isGenerator(node);
         boolean legacy = !strict && codegen.isEnabled(CompatibilityOption.FunctionPrototype);
         int functionFlags = 0;
         if (strict) {
             functionFlags |= FunctionFlags.Strict.getValue();
         }
-        if (hasSuperReference(node)) {
+        if (node.hasSuperReference()) {
             functionFlags |= FunctionFlags.Super.getValue();
         }
         if (hasScopedName(node)) {
             functionFlags |= FunctionFlags.ScopedName.getValue();
         }
-        if (generator) {
+        if (node.isGenerator()) {
             functionFlags |= FunctionFlags.Generator.getValue();
         }
         if (node.hasSyntheticNodes()) {
             functionFlags |= FunctionFlags.SyntheticMethods.getValue();
         }
         if (tailCall) {
-            assert !generator && strict;
+            assert !node.isGenerator() && strict;
             functionFlags |= FunctionFlags.TailCall.getValue();
         }
         if (legacy) {
             functionFlags |= FunctionFlags.Legacy.getValue();
         }
         return functionFlags;
-    }
-
-    private static boolean hasSuperReference(FunctionNode node) {
-        if (node instanceof MethodDefinition) {
-            return ((MethodDefinition) node).hasSuperReference();
-        } else {
-            return false;
-        }
     }
 
     private static boolean hasScopedName(FunctionNode node) {
@@ -107,10 +97,6 @@ final class RuntimeInfoGenerator {
         } else {
             return false;
         }
-    }
-
-    private static boolean isGenerator(FunctionNode node) {
-        return node.isGenerator();
     }
 
     private static <T> T get(Future<T> future) {

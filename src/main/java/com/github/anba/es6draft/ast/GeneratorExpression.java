@@ -21,31 +21,36 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     private FormalParameterList parameters;
     private List<StatementListItem> statements;
     private StrictMode strictMode;
+    private boolean superReference;
     private String headerSource, bodySource;
     private boolean syntheticNodes;
 
     public GeneratorExpression(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
+            List<StatementListItem> statements, boolean superReference, String headerSource,
+            String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = identifier;
         this.functionName = (identifier != null ? identifier.getName() : "");
         this.parameters = parameters;
         this.statements = statements;
+        this.superReference = superReference;
         this.headerSource = headerSource;
         this.bodySource = bodySource;
     }
 
     public GeneratorExpression(long beginPosition, long endPosition, FunctionScope scope,
             String functionName, FormalParameterList parameters,
-            List<StatementListItem> statements, String headerSource, String bodySource) {
+            List<StatementListItem> statements, boolean superReference, String headerSource,
+            String bodySource) {
         super(beginPosition, endPosition);
         this.scope = scope;
         this.identifier = null;
         this.functionName = functionName;
         this.parameters = parameters;
         this.statements = statements;
+        this.superReference = superReference;
         this.headerSource = headerSource;
         this.bodySource = bodySource;
     }
@@ -103,6 +108,11 @@ public class GeneratorExpression extends Expression implements GeneratorDefiniti
     @Override
     public boolean isGenerator() {
         return true;
+    }
+
+    @Override
+    public boolean hasSuperReference() {
+        return superReference;
     }
 
     @Override
