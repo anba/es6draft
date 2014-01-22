@@ -64,6 +64,14 @@ public class OrdinaryObject implements ScriptObject {
         __put__(propertyKey, property);
     }
 
+    /**
+     * Internal hook for FunctionObject
+     */
+    final void inheritProperties(OrdinaryObject source) {
+        assert properties.isEmpty() : "properties not empty";
+        properties.putAll(source.properties);
+    }
+
     /** [[Prototype]] */
     public final ScriptObject getPrototype() {
         return prototype;

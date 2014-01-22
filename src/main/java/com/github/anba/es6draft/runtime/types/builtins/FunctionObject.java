@@ -265,6 +265,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         if (isInitialised()) {
             clone.initialise(getFunctionKind(), getCode(), getEnvironment());
         }
+        clone.inheritProperties(this);
         clone.setExtensible(isExtensible());
         clone.setConstructor(isConstructor());
         if (isNeedsSuper()) {
@@ -309,6 +310,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected final void initialise(FunctionKind kind, RuntimeInfo.Function function,
             LexicalEnvironment scope) {
         assert this.function == null && function != null : "function object already initialised";
+        assert this.functionKind == kind : String.format("%s != %s", functionKind, kind);
         /* step 6 */
         this.environment = scope;
         /* steps 7-8 */
