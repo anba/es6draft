@@ -6,14 +6,12 @@
  */
 package com.github.anba.es6draft.runtime.internal;
 
-import com.github.anba.es6draft.runtime.ExecutionContext;
-
 /**
- * Interface for {@link Microtask} objects
+ * Interface for {@link Task} objects
  */
-public interface Microtask {
+public interface Task {
     /**
-     * Execute the action for this micro-task
+     * Execute the action for this task
      */
-    void execute(ExecutionContext cx);
+    void execute();
 }

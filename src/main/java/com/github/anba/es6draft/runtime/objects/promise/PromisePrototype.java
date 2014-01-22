@@ -13,7 +13,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.GetDeferred;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.QueueMicrotask;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
@@ -80,6 +79,7 @@ public class PromisePrototype extends OrdinaryObject implements Initialisable {
         @Function(name = "then", arity = 2)
         public static Object then(ExecutionContext cx, Object thisValue, Object onFulfilled,
                 Object onRejected) {
+            Realm realm = cx.getRealm();
             /* step 2 */
             if (!IsPromise(thisValue)) {
                 throw newTypeError(cx, Messages.Key.IncompatibleObject);
@@ -104,7 +104,7 @@ public class PromisePrototype extends OrdinaryObject implements Initialisable {
             }
             /* steps 11-14 */
             PromiseResolutionHandlerFunction resolutionHandler = new PromiseResolutionHandlerFunction(
-                    cx.getRealm(), promise, fulfillmentHandler, rejectionHandler);
+                    realm, promise, fulfillmentHandler, rejectionHandler);
             /* step 15 */
             PromiseReaction resolveReaction = new PromiseReaction(deferred, resolutionHandler);
             /* step 16 */
@@ -117,12 +117,14 @@ public class PromisePrototype extends OrdinaryObject implements Initialisable {
             /* step 18 */
             if (promise.getStatus() == PromiseObject.Status.HasResolution) {
                 Object resolution = promise.getResult();
-                QueueMicrotask(cx, new ExecutePromiseReaction(resolveReaction, resolution));
+                realm.getWorld().enqueuePromiseTask(
+                        new ExecutePromiseReaction(realm, resolveReaction, resolution));
             }
             /* step 19 */
             if (promise.getStatus() == PromiseObject.Status.HasRejection) {
                 Object reason = promise.getResult();
-                QueueMicrotask(cx, new ExecutePromiseReaction(rejectReaction, reason));
+                realm.getWorld().enqueuePromiseTask(
+                        new ExecutePromiseReaction(realm, rejectReaction, reason));
             }
             /* step 20 */
             return deferred.getPromise();

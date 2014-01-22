@@ -25,7 +25,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.repl.global.SimpleShellGlobalObject;
-import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
 import com.github.anba.es6draft.util.ExceptionHandlers.ScriptExceptionHandler;
@@ -81,10 +80,7 @@ public class ScriptTest {
         // evaluate actual test-script
         global.eval(test.script, test.toFile());
 
-        // wait for pending micro-tasks to finish
-        World<?> world = global.getRealm().getWorld();
-        while (world.hasTasks()) {
-            world.executeTasks(global.getRealm().defaultContext());
-        }
+        // wait for pending tasks to finish
+        global.getRealm().getWorld().executeTasks();
     }
 }

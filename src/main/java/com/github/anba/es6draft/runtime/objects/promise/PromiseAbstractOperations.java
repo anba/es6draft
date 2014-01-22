@@ -16,8 +16,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.World;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.Microtask;
+import com.github.anba.es6draft.runtime.internal.Task;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
@@ -48,13 +49,6 @@ public final class PromiseAbstractOperations {
         deferred.getReject().call(cx, UNDEFINED, e.getValue());
         /* step 1.iii */
         return deferred.getPromise();
-    }
-
-    /**
-     * QueueMicrotask ( microtask, argumentsList )
-     */
-    public static void QueueMicrotask(ExecutionContext cx, Microtask task) {
-        cx.getRealm().getWorld().enqueueTask(task);
     }
 
     /**
@@ -244,8 +238,10 @@ public final class PromiseAbstractOperations {
      */
     public static void TriggerPromiseReactions(ExecutionContext cx,
             List<PromiseReaction> reactions, Object argument) {
+        Realm realm = cx.getRealm();
+        World<?> world = realm.getWorld();
         for (PromiseReaction reaction : reactions) {
-            QueueMicrotask(cx, new ExecutePromiseReaction(reaction, argument));
+            world.enqueuePromiseTask(new ExecutePromiseReaction(realm, reaction, argument));
         }
     }
 
@@ -522,18 +518,20 @@ public final class PromiseAbstractOperations {
      * <p>
      * Microtask ExecutePromiseReaction( reaction, argument )
      */
-    public static final class ExecutePromiseReaction implements Microtask {
+    public static final class ExecutePromiseReaction implements Task {
+        private final Realm realm;
         private final PromiseReaction reaction;
         private final Object argument;
 
-        public ExecutePromiseReaction(PromiseReaction reaction, Object argument) {
+        public ExecutePromiseReaction(Realm realm, PromiseReaction reaction, Object argument) {
+            this.realm = realm;
             this.reaction = reaction;
             this.argument = argument;
         }
 
         @Override
-        public void execute(ExecutionContext cx) {
-            // FIXME: current execution context for micro-tasks?
+        public void execute() {
+            ExecutionContext cx = realm.defaultContext();
             /* step 1 */
             Deferred deferred = reaction.getDeferred();
             /* step 2 */

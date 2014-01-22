@@ -431,9 +431,9 @@ public class Repl {
 
     private void drainTaskQueue(Realm realm) {
         World<?> world = realm.getWorld();
-        while (world.hasTasks()) {
+        while (world.hasPendingTasks()) {
             try {
-                world.executeTasks(realm.defaultContext());
+                world.executeTasks();
             } catch (StopExecutionException e) {
                 if (e.getReason() == Reason.Quit) {
                     System.exit(0);

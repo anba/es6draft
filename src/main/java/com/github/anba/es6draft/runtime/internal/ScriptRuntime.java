@@ -486,7 +486,7 @@ public final class ScriptRuntime {
      * Runtime Semantics: EvaluateCall Abstract Operation
      */
     public static Callable directEvalFallbackHook(ExecutionContext cx) {
-        return cx.getRealm().getFallbackDirectEvalHook();
+        return cx.getRealm().getDirectEvalFallback();
     }
 
     /**

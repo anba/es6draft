@@ -9,6 +9,7 @@ package com.github.anba.es6draft.runtime.objects.modules;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
 import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
 import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
+import static com.github.anba.es6draft.runtime.Realm.CreateRealm;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -48,14 +49,6 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
     public void initialise(ExecutionContext cx) {
         createProperties(this, cx, Properties.class);
         AddRestrictedFunctionProperties(cx, this);
-    }
-
-    /**
-     * Abstract Operation: CreateRealm (realmObject)
-     */
-    public static Realm CreateRealm(ExecutionContext cx, RealmObject realmObject) {
-        // TODO: not yet specified
-        return cx.getRealm().getWorld().newRealm(realmObject);
     }
 
     /**

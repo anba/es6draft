@@ -16,14 +16,17 @@ import com.github.anba.es6draft.compiler.Compiler;
 import com.github.anba.es6draft.compiler.Compiler.Option;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.internal.Microtask;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
+import com.github.anba.es6draft.runtime.internal.Task;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
-import com.github.anba.es6draft.runtime.objects.modules.RealmObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 
 /**
  * <h1>8 Executable Code and Execution Contexts</h1>
+ * <ul>
+ * <li>8.2 Code Realms
+ * <li>8.4 Tasks and Task Queues
+ * </ul>
  */
 public final class World<GLOBAL extends GlobalObject> {
     private final ObjectAllocator<GLOBAL> allocator;
@@ -35,7 +38,8 @@ public final class World<GLOBAL extends GlobalObject> {
     private final Messages messages = Messages.create(locale);
 
     // TODO: move to custom class
-    private ArrayDeque<Microtask> tasks = new ArrayDeque<>();
+    private ArrayDeque<Task> loadingTasks = new ArrayDeque<>();
+    private ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
 
     private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
         @Override
@@ -77,28 +81,47 @@ public final class World<GLOBAL extends GlobalObject> {
     }
 
     /**
-     * Checks whether there are any pending micro-tasks
+     * Checks whether there are any pending tasks
      */
-    public boolean hasTasks() {
-        return !tasks.isEmpty();
+    public boolean hasPendingTasks() {
+        return !(loadingTasks.isEmpty() && promiseTasks.isEmpty());
     }
 
     /**
-     * Enqueues {@code task} to the queue of pending micro-tasks
+     * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
+     * <p>
+     * Enqueues {@code task} to the queue of pending loading-tasks
      */
-    public void enqueueTask(Microtask task) {
-        tasks.offer(task);
+    public void enqueueLoadingTask(Task task) {
+        loadingTasks.offer(task);
     }
 
     /**
-     * Executes the queue of pending micro-tasks
+     * 8.4.1 EnqueueTask ( queueName, task, arguments) Abstract Operation
+     * <p>
+     * Enqueues {@code task} to the queue of pending promise-tasks
      */
-    public void executeTasks(ExecutionContext cx) {
-        ArrayDeque<Microtask> tasks = this.tasks;
-        // execute all pending micro-tasks until the queue is empty
-        for (Microtask task; (task = tasks.poll()) != null;) {
-            // TODO: ignore exceptions or stop execution?
-            task.execute(cx);
+    public void enqueuePromiseTask(Task task) {
+        promiseTasks.offer(task);
+    }
+
+    /**
+     * Executes the queue of pending tasks
+     */
+    public void executeTasks() {
+        while (hasPendingTasks()) {
+            executeTasks(loadingTasks);
+            executeTasks(promiseTasks);
+        }
+    }
+
+    /**
+     * Executes the queue of pending tasks
+     */
+    private void executeTasks(ArrayDeque<Task> tasks) {
+        // execute all pending tasks until the queue is empty
+        for (Task task; (task = tasks.poll()) != null;) {
+            task.execute();
         }
     }
 
@@ -156,13 +179,6 @@ public final class World<GLOBAL extends GlobalObject> {
      */
     public EnumSet<Option> getCompilerOptions() {
         return compilerOptions;
-    }
-
-    /**
-     * Creates a new {@link Realm} object
-     */
-    public Realm newRealm(RealmObject realmObject) {
-        return Realm.newRealm(this, realmObject);
     }
 
     /**

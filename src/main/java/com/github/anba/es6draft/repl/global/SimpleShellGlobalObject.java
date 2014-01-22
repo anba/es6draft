@@ -19,7 +19,7 @@ import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.repl.console.ShellConsole;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Microtask;
+import com.github.anba.es6draft.runtime.internal.Task;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.ScriptCache;
@@ -109,10 +109,10 @@ public class SimpleShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code nextTick(function)} */
     @Function(name = "nextTick", arity = 1)
-    public void nextTick(ExecutionContext cx, final Callable function) {
-        cx.getRealm().getWorld().enqueueTask(new Microtask() {
+    public void nextTick(final ExecutionContext cx, final Callable function) {
+        cx.getRealm().getWorld().enqueuePromiseTask(new Task() {
             @Override
-            public void execute(ExecutionContext cx) {
+            public void execute() {
                 function.call(cx, UNDEFINED);
             }
         });

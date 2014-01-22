@@ -96,19 +96,19 @@ public final class Realm {
     private Callable throwTypeError;
 
     /**
-     * [[TranslateDirectEvalHook]]
+     * [[directEvalTranslate]]
      */
-    private Callable translateDirectEvalHook;
+    private Callable directEvalTranslate;
 
     /**
-     * [[FallbackDirectEvalHook]]
+     * [[directEvalFallback]]
      */
-    private Callable fallbackDirectEvalHook;
+    private Callable directEvalFallback;
 
     /**
-     * [[IndirectEvalHook]]
+     * [[indirectEval]]
      */
-    private Callable indirectEvalHook;
+    private Callable indirectEval;
 
     private Callable builtinEval;
 
@@ -161,24 +161,24 @@ public final class Realm {
     }
 
     /**
-     * [[TranslateDirectEvalHook]]
+     * [[directEvalTranslate]]
      */
-    public Callable getTranslateDirectEvalHook() {
-        return translateDirectEvalHook;
+    public Callable getDirectEvalTranslate() {
+        return directEvalTranslate;
     }
 
     /**
-     * [[FallbackDirectEvalHook]]
+     * [[directEvalFallback]]
      */
-    public Callable getFallbackDirectEvalHook() {
-        return fallbackDirectEvalHook;
+    public Callable getDirectEvalFallback() {
+        return directEvalFallback;
     }
 
     /**
-     * [[IndirectEvalHook]]
+     * [[indirectEval]]
      */
-    public Callable getIndirectEvalHook() {
-        return indirectEvalHook;
+    public Callable getIndirectEval() {
+        return indirectEval;
     }
 
     /**
@@ -327,11 +327,11 @@ public final class Realm {
     /**
      * Initialises the custom extension points
      */
-    public void setExtensionHooks(Callable translateDirectEvalHook,
-            Callable fallbackDirectEvalHook, Callable indirectEvalHook) {
-        this.translateDirectEvalHook = translateDirectEvalHook;
-        this.fallbackDirectEvalHook = fallbackDirectEvalHook;
-        this.indirectEvalHook = indirectEvalHook;
+    public void setExtensionHooks(Callable directEvalTranslate, Callable directEvalFallback,
+            Callable indirectEval) {
+        this.directEvalTranslate = directEvalTranslate;
+        this.directEvalFallback = directEvalFallback;
+        this.indirectEval = indirectEval;
     }
 
     /**
@@ -346,6 +346,13 @@ public final class Realm {
 
         // store reference to built-in eval
         this.builtinEval = (Callable) Get(defaultContext, builtins, "eval");
+    }
+
+    /**
+     * 8.2.1 CreateRealm ( )
+     */
+    public static Realm CreateRealm(ExecutionContext cx, RealmObject realmObject) {
+        return newRealm(cx.getRealm().getWorld(), realmObject);
     }
 
     /**

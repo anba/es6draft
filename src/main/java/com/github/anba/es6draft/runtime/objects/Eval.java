@@ -81,7 +81,7 @@ public final class Eval {
      */
     public static Object indirectEval(ExecutionContext cx, Object... arguments) {
         Object source;
-        Callable indirectEval = cx.getRealm().getIndirectEvalHook();
+        Callable indirectEval = cx.getRealm().getIndirectEval();
         if (indirectEval != null) {
             source = indirectEval.call(cx, UNDEFINED, arguments);
         } else {
@@ -105,7 +105,7 @@ public final class Eval {
      */
     public static Object directEval(Object[] arguments, ExecutionContext cx, int flags) {
         Object source;
-        Callable translate = cx.getRealm().getTranslateDirectEvalHook();
+        Callable translate = cx.getRealm().getDirectEvalTranslate();
         if (translate != null) {
             source = translate.call(cx, UNDEFINED, arguments);
         } else {
