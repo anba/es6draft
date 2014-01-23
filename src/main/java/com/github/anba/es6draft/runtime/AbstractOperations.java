@@ -13,6 +13,9 @@ import static com.github.anba.es6draft.runtime.objects.BooleanObject.BooleanCrea
 import static com.github.anba.es6draft.runtime.objects.NumberObject.NumberCreate;
 import static com.github.anba.es6draft.runtime.objects.SymbolObject.SymbolCreate;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreatePromiseCapabilityRecord;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.AllocatePromise;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor.InitialisePromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticString.StringCreate;
@@ -33,6 +36,8 @@ import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.*;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 import com.github.anba.es6draft.runtime.types.builtins.ExoticBoundFunction;
@@ -47,6 +52,7 @@ import com.google.doubleconversion.DoubleConversion;
  * <li>7.2 Testing and Comparison Operations
  * <li>7.3 Operations on Objects
  * <li>7.4 Operations on Iterator Objects
+ * <li>7.5 Operations on Promise Objects
  * </ul>
  */
 public final class AbstractOperations {
@@ -1742,6 +1748,39 @@ public final class AbstractOperations {
         List<?> empty = Collections.emptyList();
         /* step 2 */
         return CreateListIterator(cx, empty);
+    }
+
+    /**
+     * 7.5.1 PromiseNew ( executor ) Abstract Operation
+     */
+    public static PromiseObject PromiseNew(ExecutionContext cx, Callable executor) {
+        /* step 1 */
+        PromiseObject promise = AllocatePromise(cx, cx.getIntrinsic(Intrinsics.Promise));
+        /* step 2 */
+        return InitialisePromise(cx, promise, executor);
+    }
+
+    /**
+     * 7.5.2 PromiseBuiltinCapability () Abstract Operation
+     */
+    public static PromiseCapability PromiseBuiltinCapability(ExecutionContext cx) {
+        /* step 1 */
+        PromiseObject promise = AllocatePromise(cx, cx.getIntrinsic(Intrinsics.Promise));
+        /* step 2 */
+        return CreatePromiseCapabilityRecord(cx, promise,
+                (Constructor) cx.getIntrinsic(Intrinsics.Promise));
+    }
+
+    /**
+     * 7.5.3 PromiseOf (value) Abstract Operation
+     */
+    public static ScriptObject PromiseOf(ExecutionContext cx, Object value) {
+        /* steps 1-2 */
+        PromiseCapability capability = PromiseBuiltinCapability(cx);
+        /* steps 3-4 */
+        capability.getResolve().call(cx, UNDEFINED, value);
+        /* step 5 */
+        return capability.getPromise();
     }
 
     /**

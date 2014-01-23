@@ -9,29 +9,30 @@ package com.github.anba.es6draft.runtime.objects.promise;
 import com.github.anba.es6draft.runtime.types.Callable;
 
 /**
- * <h1>Promise Objects</h1><br>
- * <h2>Record Types for Promise Objects</h2>
+ * <h1>25 Control Abstraction Objects</h1><br>
+ * <h2>25.4 Promise Objects</h2><br>
+ * <h3>25.4.1 Promise Abstract Operations</h3>
  * <ul>
- * <li>The PromiseReaction Specification Type
+ * <li>25.4.1.2 PromiseReaction Records
  * </ul>
  */
 public final class PromiseReaction {
-    /** [[Deferred]] */
-    private final Deferred deferred;
+    /** [[Capabilities]] */
+    private final PromiseCapability capabilities;
 
     /** [[Handler]] */
     private final Callable handler;
 
-    public PromiseReaction(Deferred deferred, Callable handler) {
-        this.deferred = deferred;
+    public PromiseReaction(PromiseCapability capabilities, Callable handler) {
+        this.capabilities = capabilities;
         this.handler = handler;
     }
 
     /**
-     * Returns the [[Deferred]] field of this PromiseReaction record
+     * Returns the [[Capabilities]] field of this PromiseReaction record
      */
-    public Deferred getDeferred() {
-        return deferred;
+    public PromiseCapability getCapabilities() {
+        return capabilities;
     }
 
     /**

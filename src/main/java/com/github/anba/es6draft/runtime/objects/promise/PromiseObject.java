@@ -14,9 +14,10 @@ import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>Promise Objects</h1><br>
+ * <h1>25 Control Abstraction Objects</h1><br>
+ * <h2>25.4 Promise Objects</h2>
  * <ul>
- * <li>Properties of Promise Instances
+ * <li>25.4.6 Properties of Promise Instances
  * </ul>
  */
 public class PromiseObject extends OrdinaryObject {
@@ -30,13 +31,13 @@ public class PromiseObject extends OrdinaryObject {
     /** [[PromiseConstructor]] */
     private Constructor constructor;
 
-    /** [[Result]] */
+    /** [[PromiseResult]] */
     private Object result;
 
-    /** [[ResolveReactions]] */
+    /** [[PromiseResolveReactions]] */
     private List<PromiseReaction> resolveReactions;
 
-    /** [[RejectReactions]] */
+    /** [[PromiseRejectReactions]] */
     private List<PromiseReaction> rejectReactions;
 
     public PromiseObject(Realm realm) {
@@ -66,18 +67,18 @@ public class PromiseObject extends OrdinaryObject {
         this.constructor = constructor;
     }
 
-    /** [[Result]] */
+    /** [[PromiseResult]] */
     public Object getResult() {
         return result;
     }
 
-    /** [[ResolveReactions]] */
+    /** [[PromiseResolveReactions]] */
     public void addResolveReaction(PromiseReaction reaction) {
         assert status == Status.Unresolved;
         resolveReactions.add(reaction);
     }
 
-    /** [[RejectReactions]] */
+    /** [[PromiseRejectReactions]] */
     public void addRejectReaction(PromiseReaction reaction) {
         assert status == Status.Unresolved;
         rejectReactions.add(reaction);
@@ -97,9 +98,9 @@ public class PromiseObject extends OrdinaryObject {
 
     private void resolve(Status status, Object result) {
         assert this.status == Status.Unresolved;
-        this.status = status;
         this.result = result;
         this.resolveReactions = null;
         this.rejectReactions = null;
+        this.status = status;
     }
 }

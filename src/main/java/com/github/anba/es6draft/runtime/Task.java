@@ -4,7 +4,7 @@
  *
  * <https://github.com/anba/es6draft>
  */
-package com.github.anba.es6draft.runtime.internal;
+package com.github.anba.es6draft.runtime;
 
 /**
  * Interface for {@link Task} objects

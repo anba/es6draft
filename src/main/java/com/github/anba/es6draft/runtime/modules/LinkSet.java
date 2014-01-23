@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.modules;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
+import static com.github.anba.es6draft.runtime.AbstractOperations.PromiseBuiltinCapability;
 import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.modules.Load.CreateLoad;
@@ -15,7 +16,6 @@ import static com.github.anba.es6draft.runtime.modules.Load.ProceedToLocate;
 import static com.github.anba.es6draft.runtime.modules.Load.ProceedToTranslate;
 import static com.github.anba.es6draft.runtime.modules.ModuleAbstractOperations.Link;
 import static com.github.anba.es6draft.runtime.objects.modules.LoaderConstructor.GetOption;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.GetDeferred;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseCreate;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseResolve;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
@@ -33,7 +33,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.modules.Load.Dependency;
 import com.github.anba.es6draft.runtime.objects.modules.LoaderObject;
-import com.github.anba.es6draft.runtime.objects.promise.Deferred;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -66,12 +66,12 @@ public final class LinkSet {
     private static final AtomicLong idGen = new AtomicLong(Long.MIN_VALUE);
     private final long id = idGen.getAndIncrement();
 
-    private LinkSet(LoaderObject loader, Deferred deferred) {
+    private LinkSet(LoaderObject loader, PromiseCapability capability) {
         this.loader = loader;
         this.loads = new ArrayList<>();
-        this.done = deferred.getPromise();
-        this.resolve = deferred.getResolve();
-        this.reject = deferred.getReject();
+        this.done = capability.getPromise();
+        this.resolve = capability.getResolve();
+        this.reject = capability.getReject();
     }
 
     private static final class LinkSetComparator implements Comparator<LinkSet> {
@@ -99,9 +99,9 @@ public final class LinkSet {
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
         /* steps 3-4 */
-        Deferred deferred = GetDeferred(cx, cx.getIntrinsic(Intrinsics.Promise));
+        PromiseCapability capability = PromiseBuiltinCapability(cx);
         /* steps 5-10 */
-        LinkSet linkSet = new LinkSet((LoaderObject) loader, deferred);
+        LinkSet linkSet = new LinkSet((LoaderObject) loader, capability);
         /* step 11 */
         AddLoadToLinkSet(linkSet, startingLoad);
         /* step 12 */

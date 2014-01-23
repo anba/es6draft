@@ -17,7 +17,6 @@ import com.github.anba.es6draft.compiler.Compiler.Option;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
-import com.github.anba.es6draft.runtime.internal.Task;
 import com.github.anba.es6draft.runtime.objects.GlobalObject;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 
@@ -38,8 +37,8 @@ public final class World<GLOBAL extends GlobalObject> {
     private final Messages messages = Messages.create(locale);
 
     // TODO: move to custom class
-    private ArrayDeque<Task> loadingTasks = new ArrayDeque<>();
-    private ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
+    private final ArrayDeque<Task> loadingTasks = new ArrayDeque<>();
+    private final ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
 
     private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
         @Override

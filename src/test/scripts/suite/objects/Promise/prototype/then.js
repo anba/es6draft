@@ -62,15 +62,51 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
   }
 }
 
-// 
+// Throws TypeError if constructor returns a different object
 {
   let promise = new Promise(() => {});
-  function Constructor(resolver) {
-    let p = {};
-    // call resolver() twice
-    resolver(() => {}, () => {});
-    resolver(() => {}, () => {});
-    return p;
+  function Constructor(executor) {
+    executor(() => {}, () => {});
+    return {};
+  }
+  promise.constructor = Constructor;
+  assertThrows(() => promise.then(), TypeError);
+}
+
+// Throws TypeError if executor is called multiple times (1)
+{
+  let promise = new Promise(() => {});
+  function Constructor(executor) {
+    // call executor() twice, second call triggers TypeError
+    executor(() => {}, () => {});
+    assertThrows(() => executor(() => {}, () => {}), TypeError);
+    return this;
+  }
+  promise.constructor = Constructor;
+  promise.then();
+}
+
+// Throws TypeError if executor is called multiple times (2)
+{
+  let promise = new Promise(() => {});
+  function Constructor(executor) {
+    // call executor() twice, second call triggers TypeError
+    executor(null, null);
+    assertThrows(() => executor(() => {}, () => {}), TypeError);
+    return this;
+  }
+  promise.constructor = Constructor;
+  assertThrows(() => promise.then(), TypeError);
+}
+
+// Throws TypeError if executor is called multiple times (3)
+{
+  let promise = new Promise(() => {});
+  function Constructor(executor) {
+    // call executor() twice, second call does not trigger TypeError
+    executor(void 0, void 0);
+    executor(() => {}, () => {})
+    return this;
   }
   promise.constructor = Constructor;
   promise.then();

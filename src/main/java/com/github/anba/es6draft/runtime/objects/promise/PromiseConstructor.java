@@ -10,10 +10,11 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.*;
 import static com.github.anba.es6draft.runtime.internal.Errors.newInternalError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.GetDeferred;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreateRejectFunction;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.CreateResolveFunction;
 import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.IsPromise;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseReject;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.RejectIfAbrupt;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.NewPromiseCapability;
+import static com.github.anba.es6draft.runtime.objects.promise.PromiseCapability.IfAbruptRejectPromise;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.AddRestrictedFunctionProperties;
@@ -30,21 +31,22 @@ import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseAllCountdownFunction;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.RejectPromiseFunction;
-import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.ResolvePromiseFunction;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseRejectFunction;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseResolveFunction;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
+import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
- * <h1>Promise Objects</h1><br>
+ * <h1>25 Control Abstraction Objects</h1><br>
+ * <h2>25.4 Promise Objects</h2>
  * <ul>
- * <li>The Promise Constructor
- * <li>Properties of the Promise Constructor
+ * <li>25.4.3 The Promise Constructor
+ * <li>25.4.4 Properties of the Promise Constructor
  * </ul>
  */
 public class PromiseConstructor extends BuiltinConstructor implements Initialisable {
@@ -58,44 +60,58 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
         AddRestrictedFunctionProperties(cx, this);
     }
 
+    /**
+     * 25.4.3.1 Promise ( executor )
+     */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
-        Realm realm = calleeContext.getRealm();
-        Object resolver = args.length > 0 ? args[0] : UNDEFINED;
-        /* steps 2-3 */
+        Object executor = args.length > 0 ? args[0] : UNDEFINED;
+        /* step 2 */
+        if (!IsCallable(executor)) {
+            throw newTypeError(calleeContext, Messages.Key.NotCallable);
+        }
+        /* steps 3-4 */
         if (!(thisValue instanceof PromiseObject)) {
             throw newTypeError(calleeContext, Messages.Key.IncompatibleObject);
         }
         /* step 1 */
         PromiseObject promise = (PromiseObject) thisValue;
-        /* step 4 */
+        /* step 5 */
         if (promise.getStatus() != null) {
             throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
-        /* step 5 */
-        if (!IsCallable(resolver)) {
-            throw newTypeError(calleeContext, Messages.Key.NotCallable);
-        }
-        /* steps 6-8 */
+        /* step 6 */
+        return InitialisePromise(calleeContext, promise, (Callable) executor);
+    }
+
+    /**
+     * 25.4.3.1.1 InitialisePromise( promise, executor) Abstract Operation
+     */
+    public static PromiseObject InitialisePromise(ExecutionContext cx, PromiseObject promise,
+            Callable executor) {
+        /* step 1 */
+        assert promise.getStatus() == null;
+        /* step 2 (not applicable) */
+        /* steps 3-5 */
         promise.initialise();
-        /* steps 9-10 */
-        ResolvePromiseFunction resolve = new ResolvePromiseFunction(realm, promise);
-        /* steps 11-12 */
-        RejectPromiseFunction reject = new RejectPromiseFunction(realm, promise);
-        /* step 13 */
+        /* step 6 */
+        PromiseResolveFunction resolve = CreateResolveFunction(cx, promise);
+        /* step 7 */
+        PromiseRejectFunction reject = CreateRejectFunction(cx, promise);
+        /* step 8 */
         try {
-            ((Callable) resolver).call(calleeContext, UNDEFINED, resolve, reject);
+            executor.call(cx, UNDEFINED, resolve, reject);
         } catch (ScriptException e) {
-            /* step 14 */
-            PromiseReject(calleeContext, promise, e.getValue());
+            /* step 9 */
+            reject.call(cx, UNDEFINED, e.getValue());
         }
-        /* step 15 */
+        /* step 10 */
         return promise;
     }
 
     /**
-     * new Promise (... argumentsList)
+     * 25.4.3.2 new Promise ( ... argumentsList )
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -104,7 +120,7 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
     }
 
     /**
-     * Properties of the Promise Constructor
+     * 25.4.4 Properties of the Promise Constructor
      */
     public enum Properties {
         ;
@@ -120,99 +136,84 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
                 configurable = true))
         public static final String name = "Promise";
 
+        /**
+         * 25.4.4.3 Promise.prototype
+         */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.PromisePrototype;
 
         /**
-         * Promise [ @@create ] ( )
-         */
-        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
-                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
-        public static Object create(ExecutionContext cx, Object thisValue) {
-            /* step 1 */
-            Object f = thisValue;
-            /* step 2 */
-            PromiseObject obj = OrdinaryCreateFromConstructor(cx, f, Intrinsics.PromisePrototype,
-                    PromiseObjectAllocator.INSTANCE);
-            /* step 3 */
-            assert IsConstructor(f);
-            obj.setConstructor((Constructor) f);
-            /* step 4 */
-            return obj;
-        }
-
-        /**
-         * Promise.all ( iterable )
+         * 25.4.4.1 Promise.all ( iterable )
          */
         @Function(name = "all", arity = 1)
         public static Object all(ExecutionContext cx, Object thisValue, Object iterable) {
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
-            Deferred deferred = GetDeferred(cx, c);
+            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
             /* step 4 */
             ScriptObject iterator;
             try {
                 iterator = GetIterator(cx, iterable);
             } catch (ScriptException e) {
                 /* step 5 */
-                return RejectIfAbrupt(cx, e, deferred);
+                return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
             /* step 6 */
             ScriptObject values = ArrayCreate(cx, 0);
             /* step 7 */
-            AtomicInteger countdownHolder = new AtomicInteger(0);
+            AtomicInteger remainingElementsCount = new AtomicInteger(0);
             /* steps 8-9 */
             for (int index = 0; index + 1 > 0;) {
-                /* steps 9.i-9.ii */
+                /* steps 9.a-9.b */
                 ScriptObject next;
                 try {
                     next = IteratorStep(cx, iterator);
                 } catch (ScriptException e) {
-                    return RejectIfAbrupt(cx, e, deferred);
+                    return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* step 9.iii */
+                /* step 9.c */
                 if (next == null) {
                     if (index == 0) {
-                        deferred.getResolve().call(cx, UNDEFINED, values);
+                        promiseCapability.getResolve().call(cx, UNDEFINED, values);
                     }
-                    return deferred.getPromise();
+                    return promiseCapability.getPromise();
                 }
-                /* steps 9.iv-9.v */
+                /* steps 9.d-9.e */
                 Object nextValue;
                 try {
                     nextValue = IteratorValue(cx, next);
                 } catch (ScriptException e) {
-                    return RejectIfAbrupt(cx, e, deferred);
+                    return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* steps 9.vi-9.vii */
+                /* steps 9.f-9.g */
                 Object nextPromise;
                 try {
                     nextPromise = Invoke(cx, c, "cast", nextValue);
                 } catch (ScriptException e) {
-                    return RejectIfAbrupt(cx, e, deferred);
+                    return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* steps 9.viii-9.xii */
-                PromiseAllCountdownFunction countdownFunction = new PromiseAllCountdownFunction(
-                        cx.getRealm(), index, values, deferred, countdownHolder);
-                /* steps 9.xiii-9.xiv */
+                /* steps 9.h-9.l */
+                PromiseAllResolveElementFunction resolveElement = new PromiseAllResolveElementFunction(
+                        cx.getRealm(), index, values, promiseCapability, remainingElementsCount);
+                /* steps 9.m-9.n */
                 try {
-                    Invoke(cx, nextPromise, "then", countdownFunction, deferred.getReject());
+                    Invoke(cx, nextPromise, "then", resolveElement, promiseCapability.getReject());
                 } catch (ScriptException e) {
-                    return RejectIfAbrupt(cx, e, deferred);
+                    return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* step 9.xv */
+                /* step 9.o */
                 index += 1;
-                /* step 9.xvi */
-                countdownHolder.incrementAndGet();
+                /* step 9.p */
+                remainingElementsCount.incrementAndGet();
             }
             // prevent integer overflow for 'index'
             throw newInternalError(cx, Messages.Key.InternalError, "integer overflow");
         }
 
         /**
-         * Promise.cast ( x )
+         * 25.4.4.2 Promise.cast ( x )
          */
         @Function(name = "cast", arity = 1)
         public static Object cast(ExecutionContext cx, Object thisValue, Object x) {
@@ -226,95 +227,120 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
                 }
             }
             /* steps 3-4 */
-            Deferred deferred = GetDeferred(cx, c);
+            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
             /* steps 5-6 */
-            deferred.getResolve().call(cx, UNDEFINED, x);
+            promiseCapability.getResolve().call(cx, UNDEFINED, x);
             /* step 7 */
-            return deferred.getPromise();
+            return promiseCapability.getPromise();
         }
 
         /**
-         * Promise.race ( iterable )
+         * 25.4.4.4 Promise.race ( iterable )
          */
         @Function(name = "race", arity = 1)
         public static Object race(ExecutionContext cx, Object thisValue, Object iterable) {
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
-            Deferred deferred = GetDeferred(cx, c);
+            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
             /* step 4 */
             ScriptObject iterator;
             try {
                 iterator = GetIterator(cx, iterable);
             } catch (ScriptException e) {
                 /* step 5 */
-                return RejectIfAbrupt(cx, e, deferred);
+                return IfAbruptRejectPromise(cx, e, promiseCapability);
             }
             /* step 6 */
             for (;;) {
-                /* steps 6.i-6.ii */
+                /* steps 6.a-6.b */
                 ScriptObject next;
                 try {
                     next = IteratorStep(cx, iterator);
                 } catch (ScriptException e) {
-                    return RejectIfAbrupt(cx, e, deferred);
+                    return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* step 6.iii */
+                /* step 6.c */
                 if (next == null) {
-                    return deferred.getPromise();
+                    return promiseCapability.getPromise();
                 }
-                /* steps 6.iv-6.v */
+                /* steps 6.d-6.e */
                 Object nextValue;
                 try {
                     nextValue = IteratorValue(cx, next);
                 } catch (ScriptException e) {
-                    return RejectIfAbrupt(cx, e, deferred);
+                    return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* steps 6.vi-6.vii */
+                /* steps 6.f-6.g */
                 Object nextPromise;
                 try {
                     nextPromise = Invoke(cx, c, "cast", nextValue);
                 } catch (ScriptException e) {
-                    return RejectIfAbrupt(cx, e, deferred);
+                    return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
-                /* steps 6.viii-6.ix */
+                /* steps 6.h-6.i */
                 try {
-                    Invoke(cx, nextPromise, "then", deferred.getResolve(), deferred.getReject());
+                    Invoke(cx, nextPromise, "then", promiseCapability.getResolve(),
+                            promiseCapability.getReject());
                 } catch (ScriptException e) {
-                    return RejectIfAbrupt(cx, e, deferred);
+                    return IfAbruptRejectPromise(cx, e, promiseCapability);
                 }
             }
         }
 
         /**
-         * Promise.reject ( r )
+         * 25.4.4.5 Promise.reject ( r )
          */
         @Function(name = "reject", arity = 1)
         public static Object reject(ExecutionContext cx, Object thisValue, Object r) {
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
-            Deferred deferred = GetDeferred(cx, c);
+            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
             /* steps 4-5 */
-            deferred.getReject().call(cx, UNDEFINED, r);
+            promiseCapability.getReject().call(cx, UNDEFINED, r);
             /* step 6 */
-            return deferred.getPromise();
+            return promiseCapability.getPromise();
         }
 
         /**
-         * Promise.resolve ( x )
+         * 25.4.4.6 Promise.resolve ( x )
          */
         @Function(name = "resolve", arity = 1)
         public static Object resolve(ExecutionContext cx, Object thisValue, Object x) {
             /* step 1 */
             Object c = thisValue;
             /* steps 2-3 */
-            Deferred deferred = GetDeferred(cx, c);
+            PromiseCapability promiseCapability = NewPromiseCapability(cx, c);
             /* steps 4-5 */
-            deferred.getResolve().call(cx, UNDEFINED, x);
+            promiseCapability.getResolve().call(cx, UNDEFINED, x);
             /* step 6 */
-            return deferred.getPromise();
+            return promiseCapability.getPromise();
         }
+
+        /**
+         * 25.4.4.7 Promise [ @@create ] ( )
+         */
+        @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static Object create(ExecutionContext cx, Object thisValue) {
+            /* steps 1-2 */
+            return AllocatePromise(cx, thisValue);
+        }
+    }
+
+    /**
+     * 25.4.4.7.1 AllocatePromise( constructor ) Abstraction Operation
+     */
+    public static PromiseObject AllocatePromise(ExecutionContext cx, Object constructor) {
+        /* step 1 */
+        PromiseObject obj = OrdinaryCreateFromConstructor(cx, constructor,
+                Intrinsics.PromisePrototype, PromiseObjectAllocator.INSTANCE);
+        /* step 2 */
+        assert IsConstructor(constructor);
+        obj.setConstructor((Constructor) constructor);
+        /* step 3 */
+        return obj;
     }
 
     private static class PromiseObjectAllocator implements ObjectAllocator<PromiseObject> {
@@ -323,6 +349,64 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
         @Override
         public PromiseObject newInstance(Realm realm) {
             return new PromiseObject(realm);
+        }
+    }
+
+    /**
+     * 25.4.4.1.1 Promise.all Resolve Element Functions
+     */
+    public static final class PromiseAllResolveElementFunction extends BuiltinFunction {
+        /** [[Index]] */
+        private final int index;
+
+        /** [[Values]] */
+        private final ScriptObject values;
+
+        /** [[Capabilities]] */
+        private final PromiseCapability capabilities;
+
+        /** [[RemainingElements]] */
+        private final AtomicInteger remainingElements;
+
+        public PromiseAllResolveElementFunction(Realm realm, int index, ScriptObject values,
+                PromiseCapability capabilities, AtomicInteger remainingElements) {
+            super(realm, ANONYMOUS, 1);
+            this.index = index;
+            this.values = values;
+            this.capabilities = capabilities;
+            this.remainingElements = remainingElements;
+        }
+
+        @Override
+        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
+            ExecutionContext calleeContext = calleeContext();
+            Object x = args.length > 0 ? args[0] : UNDEFINED;
+            /* step 1 */
+            int index = this.index;
+            /* step 2 */
+            ScriptObject values = this.values;
+            /* step 3 */
+            PromiseCapability promiseCapability = this.capabilities;
+            /* step 4 */
+            AtomicInteger remainingElementsCount = this.remainingElements;
+            /* step 5 */
+            try {
+                CreateDataProperty(calleeContext, values, ToString(index), x);
+            } catch (ScriptException e) {
+                /* step 6 */
+                return IfAbruptRejectPromise(calleeContext, e, promiseCapability);
+            }
+            if (remainingElementsCount.get() == Integer.MIN_VALUE) {
+                // prevent integer overflow for 'remainingElementsCount'
+                throw newInternalError(calleeContext, Messages.Key.InternalError,
+                        "integer overflow");
+            }
+            /* steps 7-8 */
+            if (remainingElementsCount.decrementAndGet() == 0) {
+                return promiseCapability.getResolve().call(calleeContext, UNDEFINED, values);
+            }
+            /* step 9 */
+            return UNDEFINED;
         }
     }
 }
