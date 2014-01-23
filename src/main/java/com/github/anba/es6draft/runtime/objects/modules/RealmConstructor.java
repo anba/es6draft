@@ -7,8 +7,8 @@
 package com.github.anba.es6draft.runtime.objects.modules;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.Construct;
-import static com.github.anba.es6draft.runtime.AbstractOperations.Get;
-import static com.github.anba.es6draft.runtime.AbstractOperations.GetMethod;
+import static com.github.anba.es6draft.runtime.AbstractOperations.GetOption;
+import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.Realm.CreateRealm;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
@@ -34,10 +34,11 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
 
 /**
- * <h1>1 Modules: Semantics</h1><br>
- * <h2>1.5 Realm Objects</h2>
+ * <h1>26 Reflection</h1><br>
+ * <h2>26.2 Realm Objects</h2>
  * <ul>
- * <li>1.5.1 The Realm Constructor
+ * <li>26.2.1 The %Realm% Constructor
+ * <li>26.2.2 Properties of the %Realm% Constructor
  * </ul>
  */
 public class RealmConstructor extends BuiltinConstructor implements Initialisable {
@@ -68,8 +69,19 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
         realm.defineBuiltinProperties(builtins);
     }
 
+    private static Callable getFunctionOption(ExecutionContext cx, Object options, String name) {
+        Object option = GetOption(cx, options, name);
+        if (Type.isUndefined(option)) {
+            return null;
+        }
+        if (!IsCallable(option)) {
+            throw newTypeError(cx, Messages.Key.NotCallable);
+        }
+        return (Callable) option;
+    }
+
     /**
-     * 1.5.1.1 Realm ( options )
+     * 26.2.1.1 %Realm% (options = { }, initialiser = undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
@@ -85,41 +97,25 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
         if (realmObject.getRealm() != null) {
             throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
-
-        /* steps 5-6 */
-        if (Type.isUndefined(options)) {
-            options = ObjectCreate(calleeContext, (ScriptObject) null);
-        } else if (!Type.isObject(options)) {
-            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
-        }
-        ScriptObject optionsObject = Type.objectValue(options);
-        /* steps 12-13 */
-        Object directEval = Get(calleeContext, optionsObject, "directEval");
-        /* steps 14-15 */
-        if (Type.isUndefined(directEval)) {
-            // TODO: change to `ObjectCreate(null, ())` just like above?
-            directEval = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
-        } else if (!Type.isObject(directEval)) {
-            throw newTypeError(calleeContext, Messages.Key.NotObjectType);
-        }
-        ScriptObject directEvalObject = Type.objectValue(directEval);
-        /* steps 16-18 */
-        Callable translate = GetMethod(calleeContext, directEvalObject, "translate");
-        /* steps 20-22 */
-        Callable fallback = GetMethod(calleeContext, directEvalObject, "fallback");
-        /* steps 24-26 */
-        Callable indirectEval = GetMethod(calleeContext, optionsObject, "indirectEval");
+        /* steps 5-6 (superseded by newer Realm API) */
+        /* steps 7-8 */
+        Object directEval = GetOption(calleeContext, options, "directEval");
+        /* steps 9-11 */
+        Callable translate = getFunctionOption(calleeContext, directEval, "translate");
+        /* steps 12-14 */
+        Callable fallback = getFunctionOption(calleeContext, directEval, "fallback");
+        /* steps 15-17 */
+        Callable indirectEval = getFunctionOption(calleeContext, options, "indirectEval");
+        /* steps 18-20 (superseded by newer Realm API) */
         /* step ? */
-        Callable initializer = GetMethod(calleeContext, optionsObject, "init");
-
-        // FIXME: as usual, reentrancy checks
+        Callable initializer = getFunctionOption(calleeContext, options, "init");
+        /* steps 21-22 */
         if (realmObject.getRealm() != null) {
             throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
-
-        /* step 7 */
+        /* step 23 */
         Realm realm = CreateRealm(calleeContext, realmObject);
-        /* steps 19, 23, 27 */
+        /* steps 24-27 */
         realm.setExtensionHooks(translate, fallback, indirectEval);
         /* step 28 */
         realmObject.setRealm(realm);
@@ -140,7 +136,7 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     /**
-     * new Realm (... argumentsList)
+     * 26.2.1.2 new %Realm% ( ... argumentsList )
      */
     @Override
     public ScriptObject construct(ExecutionContext callerContext, Object... args) {
@@ -148,7 +144,7 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
     }
 
     /**
-     * Properties of the Realm Constructor
+     * 26.2.2 Properties of the %Realm% Constructor
      */
     public enum Properties {
         ;
@@ -158,23 +154,25 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
 
         @Value(name = "length", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
-        public static final int length = 1;
+        public static final int length = 0;
 
         @Value(name = "name", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = true))
         public static final String name = "Realm";
 
+        /**
+         * 26.2.2.1 %Realm%.prototype
+         */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
         public static final Intrinsics prototype = Intrinsics.RealmPrototype;
 
         /**
-         * 1.5.2.3 Realm [ @@create ] ( )
+         * 26.2.2.2 %Realm% [ @@create ] ( )
          */
         @Function(name = "[Symbol.create]", symbol = BuiltinSymbol.create, arity = 0,
                 attributes = @Attributes(writable = false, enumerable = false, configurable = true))
         public static Object create(ExecutionContext cx, Object thisValue) {
-            // FIXME: spec bug - wrong variable name 'realm' instead of 'realmObject'
             return OrdinaryCreateFromConstructor(cx, thisValue, Intrinsics.RealmPrototype,
                     RealmObjectAllocator.INSTANCE);
         }

@@ -22,10 +22,10 @@ import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>1 Modules: Semantics</h1><br>
- * <h2>1.5 Realm Objects</h2>
+ * <h1>26 Reflection</h1><br>
+ * <h2>26.2 Realm Objects</h2>
  * <ul>
- * <li>1.5.2 Properties of the Realm Prototype Object
+ * <li>26.2.3 Properties of the %Realm% Prototype Object
  * </ul>
  */
 public class RealmPrototype extends OrdinaryObject implements Initialisable {
@@ -39,7 +39,7 @@ public class RealmPrototype extends OrdinaryObject implements Initialisable {
     }
 
     /**
-     * 1.5.2 Properties of the Realm Prototype Object
+     * 26.2.3 Properties of the %Realm% Prototype Object
      */
     public enum Properties {
         ;
@@ -62,31 +62,31 @@ public class RealmPrototype extends OrdinaryObject implements Initialisable {
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * Realm.prototype.constructor
+         * 26.2.3.1 %Realm%.prototype.constructor
          */
         @Value(name = "constructor")
         public static final Intrinsics constructor = Intrinsics.Realm;
 
         /**
-         * 1.5.2.1 get Realm.prototype.global
-         */
-        @Accessor(name = "global", type = Accessor.Type.Getter)
-        public static Object global(ExecutionContext cx, Object thisValue) {
-            /* steps 1-2 */
-            RealmObject realmObject = thisRealmObject(cx, thisValue);
-            /* step 3 */
-            return realmObject.getRealm().getGlobalThis();
-        }
-
-        /**
-         * 1.5.2.2 Realm.prototype.eval ( source )
+         * 26.2.3.2 %Realm%.prototype.eval (source )
          */
         @Function(name = "eval", arity = 1)
         public static Object eval(ExecutionContext cx, Object thisValue, Object source) {
-            /* steps 1-2 */
+            /* steps 1-4 */
             RealmObject realmObject = thisRealmObject(cx, thisValue);
-            /* step 3 */
+            /* step 5 */
             return IndirectEval(realmObject.getRealm(), source);
+        }
+
+        /**
+         * 26.2.3.3 get Realm.prototype.global
+         */
+        @Accessor(name = "global", type = Accessor.Type.Getter)
+        public static Object global(ExecutionContext cx, Object thisValue) {
+            /* steps 1-4 */
+            RealmObject realmObject = thisRealmObject(cx, thisValue);
+            /* step 5 */
+            return realmObject.getRealm().getGlobalThis();
         }
     }
 }

@@ -10,8 +10,11 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>1 Modules: Semantics</h1><br>
- * <h2>1.5 Realm Objects</h2>
+ * <h1>26 Reflection</h1><br>
+ * <h2>26.2 Realm Objects</h2>
+ * <ul>
+ * <li>26.2.4 Properties of %Realm% Instances
+ * </ul>
  */
 public class RealmObject extends OrdinaryObject {
     /** [[Realm]] */
