@@ -14,7 +14,9 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
+import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
+import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
@@ -27,16 +29,14 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
  * <h1>26 Reflection</h1><br>
- * <h2>26.2 Proxy Objects</h2>
+ * <h2>26.5 Proxy Objects</h2>
  * <ul>
- * <li>26.2.1 The Proxy Factory Function
- * <li>26.2.2 Properties of the Proxy Factory Function
+ * <li>26.5.1 The Proxy Constructor Function
+ * <li>26.5.2 Properties of the Proxy Constructor Function
  * </ul>
  */
-public class ProxyFactoryFunction extends BuiltinConstructor implements Initialisable {
-    // TODO: remove [[Construct]] ?
-
-    public ProxyFactoryFunction(Realm realm) {
+public class ProxyConstructorFunction extends BuiltinConstructor implements Initialisable {
+    public ProxyConstructorFunction(Realm realm) {
         super(realm, "Proxy");
     }
 
@@ -47,23 +47,27 @@ public class ProxyFactoryFunction extends BuiltinConstructor implements Initiali
     }
 
     /**
-     * 26.2.1.1 Proxy (target, handler)
+     * 26.5.1.1 Proxy (target, handler)
      */
     @Override
     public ExoticProxy call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        ExecutionContext calleeContext = calleeContext();
-        Object target = args.length > 0 ? args[0] : UNDEFINED;
-        Object handler = args.length > 1 ? args[1] : UNDEFINED;
-        return ProxyCreate(calleeContext, target, handler);
-    }
-
-    @Override
-    public ExoticProxy construct(ExecutionContext callerContext, Object... args) {
-        return call(callerContext, null, args);
+        // TODO: better error message
+        throw Errors.newTypeError(calleeContext(), Messages.Key.NotCallable);
     }
 
     /**
-     * 26.2.2 Properties of the Proxy Factory Function
+     * 26.5.1.2 new Proxy ( target, handler )
+     */
+    @Override
+    public ExoticProxy construct(ExecutionContext callerContext, Object... args) {
+        Object target = args.length > 0 ? args[0] : UNDEFINED;
+        Object handler = args.length > 1 ? args[1] : UNDEFINED;
+        /* step 1 */
+        return ProxyCreate(callerContext, target, handler);
+    }
+
+    /**
+     * 26.5.2 Properties of the Proxy Constructor Function
      */
     public enum Properties {
         ;
@@ -80,7 +84,7 @@ public class ProxyFactoryFunction extends BuiltinConstructor implements Initiali
         public static final String name = "Proxy";
 
         /**
-         * 26.2.2.1 Proxy.revocable ( target, handler )
+         * 26.5.2.1 Proxy.revocable ( target, handler )
          */
         @Function(name = "revocable", arity = 2)
         public static Object revocable(ExecutionContext cx, Object thisValue, Object target,
@@ -103,7 +107,7 @@ public class ProxyFactoryFunction extends BuiltinConstructor implements Initiali
     }
 
     /**
-     * <h1>26.2.2.1.1 Proxy Revocation Functions</h1>
+     * <h1>26.5.2.1.1 Proxy Revocation Functions</h1>
      */
     private static final class ProxyRevocationFunction extends BuiltinFunction {
         /** [[RevokableProxy]] */

@@ -55,7 +55,7 @@ import com.github.anba.es6draft.runtime.objects.modules.RealmObject;
 import com.github.anba.es6draft.runtime.objects.modules.RealmPrototype;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseConstructor;
 import com.github.anba.es6draft.runtime.objects.promise.PromisePrototype;
-import com.github.anba.es6draft.runtime.objects.reflect.ProxyFactoryFunction;
+import com.github.anba.es6draft.runtime.objects.reflect.ProxyConstructorFunction;
 import com.github.anba.es6draft.runtime.objects.reflect.Reflect;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
@@ -661,7 +661,7 @@ public final class Realm {
         ExecutionContext defaultContext = realm.defaultContext;
 
         // allocation phase
-        ProxyFactoryFunction proxy = new ProxyFactoryFunction(realm);
+        ProxyConstructorFunction proxy = new ProxyConstructorFunction(realm);
         Reflect reflect = new Reflect(realm);
 
         // registration phase

@@ -145,7 +145,7 @@ Object.defineProperties(Object_assign(Proxy, {
     var proxyHandler = Object_assign({
       setPrototypeOf() { throw TypeError() }
     }, toProxyHandler(handler));
-    return Proxy(proxyTarget, proxyHandler);
+    return new Proxy(proxyTarget, proxyHandler);
   },
   createFunction(handler, callTrap, constructTrap = callTrap) {
     if (Object(handler) !== handler) throw TypeError();
@@ -157,11 +157,18 @@ Object.defineProperties(Object_assign(Proxy, {
       apply(_, thisValue, args) { return callTrap.apply(thisValue, args) },
       construct(_, args) { return new constructTrap(...args) }
     }, toProxyHandler(handler));
-    return Proxy(proxyTarget, proxyHandler);
+    return new Proxy(proxyTarget, proxyHandler);
   }
 }), {
   create: {enumerable: false},
   createFunction: {enumerable: false},
+});
+
+// Enable creating proxies without `new` for tests
+global.Proxy = new Proxy(Proxy, {
+  apply(target, thisValue, args) {
+    return new target(...args);
+  }
 });
 
 })(this);
