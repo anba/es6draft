@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -49,13 +48,12 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 23.1.1.1 Map (iterable = undefined, comparator = undefined)
+     * 23.1.1.1 Map (iterable = undefined)
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
-        Object comparator = args.length > 1 ? args[1] : UNDEFINED;
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
@@ -84,27 +82,18 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
         }
 
         /* step 8 */
-        MapObject.Comparator _comparator = MapObject.Comparator.SameValueZero;
-        if (!Type.isUndefined(comparator)) {
-            if (!SameValue(comparator, "is")) {
-                throw newRangeError(calleeContext, Messages.Key.MapInvalidComparator);
-            }
-            _comparator = MapObject.Comparator.SameValue;
-        }
-
-        /* steps 9-10 */
         if (map.isInitialised()) {
             throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
-        /* steps 11-12 */
-        map.initialise(_comparator);
+        /* steps 9-10 */
+        map.initialise();
 
-        /* step 13 */
+        /* step 11 */
         if (iter == null) {
             return map;
         }
-        /* step 14 */
+        /* step 12 */
         for (;;) {
             ScriptObject next = IteratorStep(calleeContext, iter);
             if (next == null) {

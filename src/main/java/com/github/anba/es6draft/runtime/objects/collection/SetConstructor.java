@@ -7,7 +7,6 @@
 package com.github.anba.es6draft.runtime.objects.collection;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.newRangeError;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
@@ -49,13 +48,12 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
     }
 
     /**
-     * 23.2.1.1 Set (iterable = undefined, comparator = undefined )
+     * 23.2.1.1 Set (iterable = undefined )
      */
     @Override
     public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
         ExecutionContext calleeContext = calleeContext();
         Object iterable = args.length > 0 ? args[0] : UNDEFINED;
-        Object comparator = args.length > 1 ? args[1] : UNDEFINED;
 
         /* steps 1-4 */
         if (!Type.isObject(thisValue)) {
@@ -83,28 +81,19 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
             adder = (Callable) _adder;
         }
 
-        /* steps 8-9 */
-        SetObject.Comparator _comparator = SetObject.Comparator.SameValueZero;
-        if (!Type.isUndefined(comparator)) {
-            if (!SameValue(comparator, "is")) {
-                throw newRangeError(calleeContext, Messages.Key.SetInvalidComparator);
-            }
-            _comparator = SetObject.Comparator.SameValue;
-        }
-
         // FIXME: spec bug - https://bugs.ecmascript.org/show_bug.cgi?id=2397
         if (set.isInitialised()) {
             throw newTypeError(calleeContext, Messages.Key.InitialisedObject);
         }
 
-        /* steps 10-11 */
-        set.initialise(_comparator);
+        /* step 8 */
+        set.initialise();
 
-        /* step 12 */
+        /* step 9 */
         if (iter == null) {
             return set;
         }
-        /* step 13 */
+        /* step 10 */
         for (;;) {
             ScriptObject next = IteratorStep(calleeContext, iter);
             if (next == null) {

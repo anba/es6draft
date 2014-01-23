@@ -22,13 +22,6 @@ public class MapObject extends OrdinaryObject {
     /** [[MapData]] */
     private LinkedMap<Object, Object> mapData = null;
 
-    /** [[MapComparator]] */
-    private Comparator mapComparator;
-
-    public enum Comparator {
-        SameValue, SameValueZero
-    }
-
     public MapObject(Realm realm) {
         super(realm);
     }
@@ -40,17 +33,9 @@ public class MapObject extends OrdinaryObject {
         return mapData;
     }
 
-    /**
-     * [[MapComparator]]
-     */
-    public Comparator getMapComparator() {
-        return mapComparator;
-    }
-
-    public void initialise(Comparator comparator) {
+    public void initialise() {
         assert this.mapData == null : "Map already initialised";
-        this.mapData = new LinkedMapImpl<Object>(comparator == Comparator.SameValueZero);
-        this.mapComparator = comparator;
+        this.mapData = new LinkedMapImpl<Object>();
     }
 
     public boolean isInitialised() {

@@ -19,7 +19,6 @@ import java.util.Map.Entry;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
-import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -97,16 +96,14 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
             throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 4 */
-        LinkedMap<Object, Void> entries = set.getSetData();
-        /* step 5 */
         SetIterator iterator = ObjectCreate(cx, Intrinsics.SetIteratorPrototype,
                 SetIteratorAllocator.INSTANCE);
-        /* steps 6-8 */
+        /* steps 5-7 */
         iterator.set = set;
         iterator.nextIndex = 0;
         iterator.iterationKind = kind;
-        iterator.iterator = entries.iterator();
-        /* step 9 */
+        iterator.iterator = set.getSetData().iterator();
+        /* step 8 */
         return iterator;
     }
 

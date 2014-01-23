@@ -19,7 +19,6 @@ import java.util.Map.Entry;
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
-import com.github.anba.es6draft.runtime.internal.LinkedMap;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
@@ -97,15 +96,13 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
             throw newTypeError(cx, Messages.Key.UninitialisedObject);
         }
         /* step 4 */
-        LinkedMap<Object, Object> entries = map.getMapData();
-        /* step 4 */
         MapIterator iterator = ObjectCreate(cx, Intrinsics.MapIteratorPrototype,
                 MapIteratorAllocator.INSTANCE);
         /* steps 5-7 */
         iterator.map = map;
         iterator.nextIndex = 0;
         iterator.iterationKind = kind;
-        iterator.iterator = entries.iterator();
+        iterator.iterator = map.getMapData().iterator();
         /* step 8 */
         return iterator;
     }

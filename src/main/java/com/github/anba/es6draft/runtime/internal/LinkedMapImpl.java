@@ -13,24 +13,14 @@ import com.github.anba.es6draft.runtime.types.Type;
  * support runtime types.
  */
 public final class LinkedMapImpl<VALUE> extends LinkedMap<Object, VALUE> {
-    private boolean sameZero;
-
-    /**
-     * If {@code sameZero} is <code>true</code>, both, positive and negative zero, will be mapped to
-     * positive zero for hashing
-     */
-    public LinkedMapImpl(boolean sameZero) {
-        super(LinkedMap.HashMapBuilder);
-        this.sameZero = sameZero;
-    }
-
     @Override
     protected Object hashKey(Object key) {
         switch (Type.of(key)) {
         case Number:
             // int/long/double -> double
             double v = Type.numberValue(key);
-            return (v == 0 && sameZero ? +0.0 : v);
+            // Map +/-0 to +0 to enforce SameValueZero comparison
+            return v == 0 ? +0.0 : v;
         case String:
             // String/ConsString -> String
             return Type.stringValue(key).toString();

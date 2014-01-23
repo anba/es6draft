@@ -22,13 +22,6 @@ public class SetObject extends OrdinaryObject {
     /** [[SetData]] */
     private LinkedMap<Object, Void> setData = null;
 
-    /** [[SetComparator]] */
-    private Comparator setComparator;
-
-    public enum Comparator {
-        SameValue, SameValueZero
-    }
-
     public SetObject(Realm realm) {
         super(realm);
     }
@@ -40,17 +33,9 @@ public class SetObject extends OrdinaryObject {
         return setData;
     }
 
-    /**
-     * [[SetComparator]]
-     */
-    public Comparator getSetComparator() {
-        return setComparator;
-    }
-
-    public void initialise(Comparator comparator) {
+    public void initialise() {
         assert this.setData == null : "Set already initialised";
-        this.setData = new LinkedMapImpl<Void>(comparator == Comparator.SameValueZero);
-        this.setComparator = comparator;
+        this.setData = new LinkedMapImpl<Void>();
     }
 
     public boolean isInitialised() {
