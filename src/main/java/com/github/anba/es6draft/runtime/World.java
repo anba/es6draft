@@ -40,6 +40,8 @@ public final class World<GLOBAL extends GlobalObject> {
     private final ArrayDeque<Task> loadingTasks = new ArrayDeque<>();
     private final ArrayDeque<Task> promiseTasks = new ArrayDeque<>();
 
+    private final GlobalSymbolRegistry symbolRegistry = new GlobalSymbolRegistry();
+
     private static final ObjectAllocator<GlobalObject> DEFAULT_GLOBAL_OBJECT = new ObjectAllocator<GlobalObject>() {
         @Override
         public GlobalObject newInstance(Realm realm) {
@@ -178,6 +180,13 @@ public final class World<GLOBAL extends GlobalObject> {
      */
     public EnumSet<Option> getCompilerOptions() {
         return compilerOptions;
+    }
+
+    /**
+     * Returns the global symbol registry
+     */
+    public GlobalSymbolRegistry getSymbolRegistry() {
+        return symbolRegistry;
     }
 
     /**
