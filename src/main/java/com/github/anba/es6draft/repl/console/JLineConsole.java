@@ -79,6 +79,7 @@ public final class JLineConsole implements ReplConsole {
     public void putstr(String s) {
         try {
             console.print(s);
+            console.flush();
         } catch (IOException e) {
             throw new IOError(e);
         }
@@ -88,6 +89,7 @@ public final class JLineConsole implements ReplConsole {
     public void print(String s) {
         try {
             console.println(s);
+            console.flush();
         } catch (IOException e) {
             throw new IOError(e);
         }
