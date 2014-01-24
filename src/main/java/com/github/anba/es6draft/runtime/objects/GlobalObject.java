@@ -467,12 +467,6 @@ public class GlobalObject extends OrdinaryObject {
         @Value(name = "Reflect")
         public static final Intrinsics Reflect = Intrinsics.Reflect;
 
-        /**
-         * Module Factory Function
-         */
-        @Value(name = "Module")
-        public static final Intrinsics Module = Intrinsics.Module;
-
         // Internationalization API
 
         @Value(name = "Intl")

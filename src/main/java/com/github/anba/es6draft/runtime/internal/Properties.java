@@ -1039,18 +1039,22 @@ public final class Properties {
     }
 
     private static Object resolveValue(ExecutionContext cx, Object value) {
+        Object resolvedValue;
         if (value instanceof Intrinsics) {
-            value = cx.getIntrinsic((Intrinsics) value);
+            resolvedValue = cx.getIntrinsic((Intrinsics) value);
+            assert resolvedValue != null : "intrinsic not defined: " + value;
         } else if (value instanceof MethodHandle) {
             try {
-                value = (Object) ((MethodHandle) value).invokeExact(cx);
+                resolvedValue = (Object) ((MethodHandle) value).invokeExact(cx);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
+        } else {
+            resolvedValue = value;
         }
-        return value;
+        return resolvedValue;
     }
 
     private enum StaticMethodKind {

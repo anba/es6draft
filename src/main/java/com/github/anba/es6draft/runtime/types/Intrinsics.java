@@ -106,7 +106,6 @@ public enum Intrinsics {/* @formatter:off */
     Loader,
     LoaderPrototype,
     LoaderIteratorPrototype,
-    Module,
     Realm,
     RealmPrototype,
 
