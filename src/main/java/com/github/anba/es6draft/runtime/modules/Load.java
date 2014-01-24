@@ -6,40 +6,25 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.*;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.modules.LinkSet.AddLoadToLinkSet;
-import static com.github.anba.es6draft.runtime.modules.LinkSet.LinkSetFailed;
-import static com.github.anba.es6draft.runtime.modules.LinkSet.UpdateLinkSetOnLoad;
-import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.*;
+import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
 import static com.github.anba.es6draft.runtime.types.Null.NULL;
-import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
-import com.github.anba.es6draft.ast.Module;
-import com.github.anba.es6draft.parser.Parser;
-import com.github.anba.es6draft.parser.ParserException;
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
-import com.github.anba.es6draft.runtime.objects.modules.LoaderObject;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
- * <h1>Modules: Semantics</h1><br>
- * <h2>Module Loading</h2>
+ * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h2>15.2 Modules</h2><br>
+ * <h3>15.2.3 Runtime Semantics: Loader State</h3>
  * <ul>
- * <li>Load Records
+ * <li>15.2.3.2 Load Records and LoadRequest Objects
  * </ul>
  */
 public final class Load {
@@ -103,7 +88,7 @@ public final class Load {
     private Object exception;
 
     /** [[Module]] */
-    private ModuleObject module;
+    private ModuleLinkage module;
 
     private Load(String name, Object metadata) {
         this.status = Status.Loading;
@@ -145,9 +130,25 @@ public final class Load {
     }
 
     /** [[Address]] */
+    public Object getAddress() {
+        return address;
+    }
+
+    /** [[Address]] */
     public void setAddress(Object address) {
         assert this.address == null && address != null;
         this.address = address;
+    }
+
+    /** [[Source]] */
+    public String getSource() {
+        return source;
+    }
+
+    /** [[Source]] */
+    public void setSource(String source) {
+        assert this.source == null && source != null;
+        this.source = source;
     }
 
     /** [[Kind]] */
@@ -170,22 +171,69 @@ public final class Load {
         return dependencies;
     }
 
+    /** [[Dependencies]] */
+    public void setDependencies(List<Dependency> dependencies) {
+        this.dependencies = dependencies;
+    }
+
     /** [[Module]] */
-    public ModuleObject getModule() {
+    public ModuleLinkage getModule() {
         return module;
     }
 
     /**
      * Links this {@link Load} record to {@code module}
      */
-    void link(ModuleObject module) {
+    void link(ModuleLinkage module) {
         assert status != Status.Linked;
         this.status = Status.Linked;
         this.module = module;
     }
 
     /**
-     * 1.1.1.1 CreateLoad(name) Abstract Operation
+     * Marks this {@link Load} as loaded
+     */
+    void loaded() {
+        assert status == Status.Loading;
+        this.status = Status.Loaded;
+    }
+
+    /**
+     * Marks this {@link Load} as failed
+     */
+    void failed(Object exception) {
+        assert status == Status.Loading;
+        this.status = Status.Failed;
+        this.exception = exception;
+    }
+
+    /**
+     * Changes this Load record to 'declarative'
+     */
+    void declarative(ModuleBody moduleBody) {
+        assert kind == null;
+        this.kind = Kind.Declarative;
+        this.body = moduleBody;
+    }
+
+    /**
+     * Changes this Load record to 'dynamic'
+     */
+    void dynamic(Callable execute) {
+        assert kind == null;
+        this.kind = Kind.Dynamic;
+        this.execute = execute;
+    }
+
+    /**
+     * Adds a new dependency to this Load record
+     */
+    void addDependency(String moduleName, String normalisedModuleName) {
+        dependencies.add(new Dependency(moduleName, normalisedModuleName));
+    }
+
+    /**
+     * 15.2.3.2.1 CreateLoad(name) Abstract Operation
      */
     public static Load CreateLoad(ExecutionContext cx, String name) {
         assert name != null : "expected non-anonymous module";
@@ -196,7 +244,7 @@ public final class Load {
     }
 
     /**
-     * 1.1.1.1 CreateLoad(name) Abstract Operation
+     * 15.2.3.2.1 CreateLoad(name) Abstract Operation
      */
     public static Load CreateLoad(ExecutionContext cx, String name, Object metadata) {
         assert name != null : "expected non-anonymous module";
@@ -207,6 +255,8 @@ public final class Load {
     }
 
     /**
+     * 15.2.3.2.1 CreateLoad(name) Abstract Operation
+     * <p>
      * CreateLoadFromAddress(address) [not in spec]
      */
     public static Load CreateLoadFromAddress(ExecutionContext cx, Object address) {
@@ -217,585 +267,42 @@ public final class Load {
     }
 
     /**
-     * 1.1.1.2 LoadFailed Functions
+     * 15.2.3.2.2 CreateLoadRequestObject(name, metadata, address, source) Abstract Operation
      */
-    public static final class LoadFailed extends BuiltinFunction {
-        /** [[Load]] */
-        private final Load load;
-
-        public LoadFailed(Realm realm, Load load) {
-            super(realm, ANONYMOUS, 1);
-            this.load = load;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object exc = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 */
-            Load load = this.load;
-            /* step 2 */
-            assert load.status == Load.Status.Loading;
-            /* step 3 */
-            load.status = Load.Status.Failed;
-            /* step 4 */
-            load.exception = exc;
-            /* step 5 */
-            List<LinkSet> linkSets = load.getSortedLinkSets();
-            /* step 6 */
-            for (LinkSet linkSet : linkSets) {
-                LinkSetFailed(calleeContext, linkSet, exc);
-            }
-            /* step 7 */
-            assert load.linkSets.isEmpty();
-            /* step 8 */
-            return UNDEFINED;
-        }
+    public static ScriptObject CreateLoadRequestObject(ExecutionContext cx, Object name,
+            Object metadata) {
+        return CreateLoadRequestObject(cx, name, metadata, null, null);
     }
 
     /**
-     * 1.1.1.3 RequestLoad(loader, request, refererName, refererAddress) Abstract Operation
+     * 15.2.3.2.2 CreateLoadRequestObject(name, metadata, address, source) Abstract Operation
      */
-    public static ScriptObject RequestLoad(ExecutionContext cx, LoaderObject loader,
-            String request, Object refererName, Object refererAddress) {
-        /* steps 1-5 */
-        CallNormalize f = new CallNormalize(cx.getRealm(), loader, request, refererName,
-                refererAddress);
-        /* step 6 */
-        ScriptObject p = PromiseCreate(cx, f);
-        /* steps 7-8 */
-        GetOrCreateLoad g = new GetOrCreateLoad(cx.getRealm(), loader);
-        /* step 9 */
-        p = PromiseThen(cx, p, g);
-        /* step 10 */
-        return p;
+    public static ScriptObject CreateLoadRequestObject(ExecutionContext cx, Object name,
+            Object metadata, Object address) {
+        return CreateLoadRequestObject(cx, name, metadata, address, null);
     }
 
     /**
-     * 1.1.1.4 CallNormalize Functions
+     * 15.2.3.2.2 CreateLoadRequestObject(name, metadata, address, source) Abstract Operation
      */
-    public static final class CallNormalize extends BuiltinFunction {
-        /** [[Loader]] */
-        private final LoaderObject loader;
-        /** [[Request]] */
-        private final String request;
-        /** [[RefererName]] */
-        private final Object refererName;
-        /** [[RefererAddress]] */
-        private final Object refererAddress;
-
-        public CallNormalize(Realm realm, LoaderObject loader, String request, Object refererName,
-                Object refererAddress) {
-            super(realm, ANONYMOUS, 2);
-            this.loader = loader;
-            this.request = request;
-            this.refererName = refererName;
-            this.refererAddress = refererAddress;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object resolve = args.length > 0 ? args[0] : UNDEFINED;
-            @SuppressWarnings("unused")
-            Object reject = args.length > 1 ? args[1] : UNDEFINED;
-            /* step 1 */
-            LoaderObject loader = this.loader;
-            /* step 2 */
-            String request = this.request;
-            /* step 3 */
-            Object refererName = this.refererName;
-            /* step 4 */
-            Object refererAddress = this.refererAddress;
-            /* step 5 */
-            Object normalizeHook = Get(calleeContext, loader, "normalize");
-            if (!IsCallable(normalizeHook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
-            }
-            /* steps 6-7 */
-            Object name = ((Callable) normalizeHook).call(calleeContext, loader, request,
-                    refererName, refererAddress);
-            /* step 8 */
-            assert IsCallable(resolve);
-            return ((Callable) resolve).call(calleeContext, UNDEFINED, name);
-        }
-    }
-
-    /**
-     * 1.1.1.5 GetOrCreateLoad Functions
-     */
-    public static final class GetOrCreateLoad extends BuiltinFunction {
-        /** [[Loader]] */
-        private final LoaderObject loader;
-
-        public GetOrCreateLoad(Realm realm, LoaderObject loader) {
-            super(realm, ANONYMOUS, 1);
-            this.loader = loader;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object nameArg = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 */
-            LoaderObject loader = this.loader;
-            /* steps 2-3 */
-            String name = ToFlatString(calleeContext, nameArg);
-            /* steps 4-5 */
-            if (loader.getModules().containsKey(name)) {
-                /* step 4 */
-                ModuleObject existingModule = loader.getModules().get(name);
-                Load load = CreateLoad(calleeContext, name);
-                load.link(existingModule);
-                return load;
-            } else if (loader.getLoads().containsKey(name)) {
-                /* step 5 */
-                Load load = loader.getLoads().get(name);
-                assert load.status == Load.Status.Loading || load.status == Load.Status.Loaded;
-                return load;
-            }
-            /* step 6 */
-            Load load = CreateLoad(calleeContext, name);
-            /* step 7 */
-            loader.getLoads().put(name, load);
-            /* step 8 */
-            ProceedToLocate(calleeContext, loader, load);
-            /* step 9 */
-            return load;
-        }
-    }
-
-    /**
-     * 1.1.1.6 ProceedToLocate(loader, load, p) Abstract Operation
-     */
-    public static ScriptObject ProceedToLocate(ExecutionContext cx, LoaderObject loader, Load load) {
-        /* step 1 */
-        ScriptObject p = PromiseResolve(cx, UNDEFINED);
-        /* steps 2-4 */
-        CallLocate f = new CallLocate(cx.getRealm(), loader, load);
-        /* step 5 */
-        p = PromiseThen(cx, p, f);
-        /* step 6 */
-        return ProceedToFetch(cx, loader, load, p);
-    }
-
-    /**
-     * 1.1.1.7 ProceedToFetch(loader, load, p) Abstract Operation
-     */
-    public static ScriptObject ProceedToFetch(ExecutionContext cx, LoaderObject loader, Load load,
-            ScriptObject p) {
-        /* steps 1-4 */
-        CallFetch f = new CallFetch(cx.getRealm(), loader, load);
-        /* step 5 */
-        p = PromiseThen(cx, p, f);
-        /* step 6 */
-        return ProceedToTranslate(cx, loader, load, p);
-    }
-
-    /**
-     * 1.1.1.8 ProceedToTranslate(loader, load, p) Abstract Operation
-     */
-    public static ScriptObject ProceedToTranslate(ExecutionContext cx, LoaderObject loader,
-            Load load, ScriptObject p) {
-        /* step 1-3 */
-        CallTranslate f1 = new CallTranslate(cx.getRealm(), loader, load);
-        /* step 4 */
-        p = PromiseThen(cx, p, f1);
-        /* steps 5-7 */
-        CallInstantiate f2 = new CallInstantiate(cx.getRealm(), loader, load);
-        /* step 8 */
-        p = PromiseThen(cx, p, f2);
-        /* steps 9-11 */
-        InstantiateSucceeded f3 = new InstantiateSucceeded(cx.getRealm(), loader, load);
-        /* step 12 */
-        p = PromiseThen(cx, p, f3);
-        /* steps 13-14 */
-        LoadFailed f4 = new LoadFailed(cx.getRealm(), load);
-        /* step 15 */
-        return PromiseCatch(cx, p, f4);
-    }
-
-    /**
-     * 1.1.1.9 SimpleDefine(obj, name, value) Abstract Operation
-     */
-    public static boolean SimpleDefine(ExecutionContext cx, ScriptObject obj, String name,
-            Object value) {
-        return CreateDataProperty(cx, obj, name, value);
-    }
-
-    /**
-     * 1.1.1.10 CallLocate Functions
-     */
-    public static final class CallLocate extends BuiltinFunction {
-        /** [[Loader]] */
-        private final LoaderObject loader;
-        /** [[Load]] */
-        private final Load load;
-
-        public CallLocate(Realm realm, LoaderObject loader, Load load) {
-            super(realm, ANONYMOUS, 0);
-            this.loader = loader;
-            this.load = load;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            /* step 1 */
-            LoaderObject loader = this.loader;
-            /* step 2 */
-            Load load = this.load;
-            /* step 3-4 */
-            Object hook = Get(calleeContext, loader, "locate");
-            /* step 5 */
-            if (!IsCallable(hook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
-            }
-            /* step 6 */
-            ScriptObject obj = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
-            /* step 7 */
-            SimpleDefine(calleeContext, obj, "name", load.getNameOrNull());
-            /* step 8 */
-            SimpleDefine(calleeContext, obj, "metadata", load.metadata);
-            /* step 9 */
-            // FIXME: spec bug - missing 'loader as thisArgument'
-            return ((Callable) hook).call(calleeContext, loader, obj);
-        }
-    }
-
-    /**
-     * 1.1.1.11 CallFetch Functions
-     */
-    public static final class CallFetch extends BuiltinFunction {
-        /** [[Loader]] */
-        private final LoaderObject loader;
-        /** [[Load]] */
-        private final Load load;
-
-        public CallFetch(Realm realm, LoaderObject loader, Load load) {
-            super(realm, ANONYMOUS, 1);
-            this.loader = loader;
-            this.load = load;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object address = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 */
-            LoaderObject loader = this.loader;
-            /* step 2 */
-            Load load = this.load;
-            /* step 3 */
-            if (load.linkSets.isEmpty()) {
-                return UNDEFINED;
-            }
-            /* step 4 */
-            load.address = address;
-            /* steps 5-6 */
-            Object hook = Get(calleeContext, loader, "fetch");
-            /* step 7 */
-            if (!IsCallable(hook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
-            }
-            /* step 8 */
-            ScriptObject obj = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
-            /* step 9 */
-            SimpleDefine(calleeContext, obj, "name", load.getNameOrNull());
-            /* step 10 */
-            SimpleDefine(calleeContext, obj, "metadata", load.metadata);
-            /* step 11 */
-            SimpleDefine(calleeContext, obj, "address", load.address);
-            /* step 12 */
-            // FIXME: spec bug - missing 'loader as thisArgument'
-            return ((Callable) hook).call(calleeContext, loader, obj);
-        }
-    }
-
-    /**
-     * 1.1.1.12 CallTranslate Functions
-     */
-    public static final class CallTranslate extends BuiltinFunction {
-        /** [[Loader]] */
-        private final LoaderObject loader;
-        /** [[Load]] */
-        private final Load load;
-
-        public CallTranslate(Realm realm, LoaderObject loader, Load load) {
-            super(realm, ANONYMOUS, 1);
-            this.loader = loader;
-            this.load = load;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object source = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 */
-            LoaderObject loader = this.loader;
-            /* step 2 */
-            Load load = this.load;
-            /* step 3 */
-            if (load.linkSets.isEmpty()) {
-                return UNDEFINED;
-            }
-            /* steps 4-5 */
-            Object hook = Get(calleeContext, loader, "translate");
-            /* step 6 */
-            if (!IsCallable(hook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
-            }
-            /* step 7 */
-            ScriptObject obj = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
-            /* step 8 */
-            SimpleDefine(calleeContext, obj, "name", load.getNameOrNull());
-            /* step 9 */
-            SimpleDefine(calleeContext, obj, "metadata", load.metadata);
-            /* step 10 */
-            SimpleDefine(calleeContext, obj, "address", load.address);
-            /* step 11 */
-            SimpleDefine(calleeContext, obj, "source", source);
-            /* step 12 */
-            // FIXME: spec bug - missing 'loader as thisArgument'
-            return ((Callable) hook).call(calleeContext, loader, obj);
-        }
-    }
-
-    /**
-     * 1.1.1.13 CallInstantiate Functions
-     */
-    public static final class CallInstantiate extends BuiltinFunction {
-        /** [[Loader]] */
-        private final LoaderObject loader;
-        /** [[Load]] */
-        private final Load load;
-
-        public CallInstantiate(Realm realm, LoaderObject loader, Load load) {
-            super(realm, ANONYMOUS, 1);
-            this.loader = loader;
-            this.load = load;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object source = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 */
-            LoaderObject loader = this.loader;
-            /* step 2 */
-            Load load = this.load;
-            /* step 3 */
-            if (load.linkSets.isEmpty()) {
-                return UNDEFINED;
-            }
-            /* step 4 */
-            load.source = ToFlatString(calleeContext, source); // FIXME: add ToString() ?
-            /* steps 5-6 */
-            Object hook = Get(calleeContext, loader, "instantiate");
-            /* step 7 */
-            if (!IsCallable(hook)) {
-                throw newTypeError(calleeContext, Messages.Key.NotCallable);
-            }
-            /* step 8 */
-            ScriptObject obj = ObjectCreate(calleeContext, Intrinsics.ObjectPrototype);
-            /* step 9 */
-            SimpleDefine(calleeContext, obj, "name", load.getNameOrNull());
-            /* step 10 */
-            SimpleDefine(calleeContext, obj, "metadata", load.metadata);
-            /* step 11 */
-            SimpleDefine(calleeContext, obj, "address", load.address);
-            /* step 12 */
-            SimpleDefine(calleeContext, obj, "source", source);
-            /* step 13 */
-            // FIXME: spec bug - missing 'loader as thisArgument'
-            return ((Callable) hook).call(calleeContext, loader, obj);
-        }
-    }
-
-    /**
-     * 1.1.1.14 InstantiateSucceeded Functions
-     */
-    public static final class InstantiateSucceeded extends BuiltinFunction {
-        /** [[Loader]] */
-        private final LoaderObject loader;
-        /** [[Load]] */
-        private final Load load;
-
-        public InstantiateSucceeded(Realm realm, LoaderObject loader, Load load) {
-            super(realm, ANONYMOUS, 1);
-            this.loader = loader;
-            this.load = load;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object instantiateResult = args.length > 0 ? args[0] : UNDEFINED;
-            /* step 1 */
-            LoaderObject loader = this.loader;
-            /* step 2 */
-            Load load = this.load;
-            /* step 3 */
-            if (load.linkSets.isEmpty()) {
-                return UNDEFINED;
-            }
-            /* steps 4-6 */
-            Iterable<String> depsList;
-            if (Type.isUndefined(instantiateResult)) {
-                /* step 4 */
-                Parser parser = new Parser("", 1, calleeContext.getRealm().getOptions());
-                Module parsedModule;
-                try {
-                    parsedModule = parser.parseModule(load.source);
-                } catch (ParserException e) {
-                    throw e.toScriptException(calleeContext);
-                }
-                // TODO: parsedModule as ModuleBody
-                ModuleBody body = null;
-                load.body = body;
-                load.kind = Load.Kind.Declarative;
-                depsList = parsedModule.getScope().getModuleRequests();
-            } else if (Type.isObject(instantiateResult)) {
-                /* step 5 */
-                ScriptObject instantiateResultObject = Type.objectValue(instantiateResult);
-                Object deps = Get(calleeContext, instantiateResultObject, "deps");
-                if (Type.isUndefined(deps)) {
-                    depsList = new ArrayList<>();
-                } else {
-                    // TODO: convert ToString() here?
-                    depsList = IterableToArray(calleeContext, deps);
-                }
-                Object execute = Get(calleeContext, instantiateResultObject, "execute");
-                // TODO: assert callable here?
-                if (!IsCallable(execute)) {
-                    throw newTypeError(calleeContext, Messages.Key.NotCallable);
-                }
-                load.execute = (Callable) execute;
-                load.kind = Load.Kind.Dynamic;
-            } else {
-                /* step 6 */
-                throw newTypeError(calleeContext, Messages.Key.NotObjectType);
-            }
-            return ProcessLoadDependencies(calleeContext, load, loader, depsList);
-        }
-    }
-
-    /**
-     * 1.1.1.15 ProcessLoadDependencies(load, loader, depsList) Abstract Operation
-     */
-    public static ScriptObject ProcessLoadDependencies(ExecutionContext cx, Load load,
-            LoaderObject loader, Iterable<String> depsList) {
-        /* step 1 */
-        Object refererName = load.getNameOrNull();
-        /* step 2 */
-        load.dependencies = new ArrayList<>();
+    public static ScriptObject CreateLoadRequestObject(ExecutionContext cx, Object name,
+            Object metadata, Object address, Object source) {
+        assert name != null && metadata != null;
+        /* steps 1-2 */
+        ScriptObject obj = ObjectCreate(cx, Intrinsics.ObjectPrototype);
         /* step 3 */
-        List<ScriptObject> loadPromises = new ArrayList<>();
+        CreateDataProperty(cx, obj, "name", name);
         /* step 4 */
-        for (String request : depsList) {
-            /* step 4a */
-            ScriptObject p = RequestLoad(cx, loader, request, refererName, load.address);
-            /* steps 4b-4d */
-            // FIXME: spec bug [[Load]] instead of [[ParentLoad]]
-            AddDependencyLoad f = new AddDependencyLoad(cx.getRealm(), load, request);
-            /* step 4e */
-            p = PromiseThen(cx, p, f);
-            /* step 4f */
-            loadPromises.add(p);
-        }
+        CreateDataProperty(cx, obj, "metadata", metadata);
         /* step 5 */
-        ScriptObject p = PromiseAll(cx, loadPromises);
-        /* steps 6-7 */
-        LoadSucceeded f = new LoadSucceeded(cx.getRealm(), load);
-        /* step 8 */
-        p = PromiseThen(cx, p, f);
-        /* step 9 */
-        return p;
-    }
-
-    /**
-     * 1.1.1.16 AddDependencyLoad Functions
-     */
-    public static final class AddDependencyLoad extends BuiltinFunction {
-        /** [[ParentLoad]] */
-        private final Load parentLoad;
-        /** [[Request]] */
-        private final String request;
-
-        public AddDependencyLoad(Realm realm, Load parentLoad, String request) {
-            super(realm, ANONYMOUS, 1);
-            this.parentLoad = parentLoad;
-            this.request = request;
+        if (address != null) {
+            CreateDataProperty(cx, obj, "address", address);
         }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            @SuppressWarnings("unused")
-            ExecutionContext calleeContext = calleeContext();
-            Object depLoadArg = args.length > 0 ? args[0] : null;
-            assert depLoadArg instanceof Load;
-            Load depLoad = (Load) depLoadArg;
-            /* step 1 */
-            Load parentLoad = this.parentLoad;
-            /* step 2 */
-            String request = this.request;
-            /* step 3 */
-            // FIXME: implement
-            // assert parentLoad.dependencies;
-            /* step 4 */
-            // FIXME: [[key]] / [[value]] relation unclear
-            assert depLoad.name != null : "unexpected anonymous dependency load";
-            parentLoad.dependencies.add(new Dependency(request, depLoad.name));
-            /* step 5 */
-            if (depLoad.status != Load.Status.Linked) {
-                List<LinkSet> linkSets = new ArrayList<>(parentLoad.linkSets);
-                for (LinkSet linkSet : linkSets) {
-                    AddLoadToLinkSet(linkSet, depLoad);
-                }
-            }
-            return UNDEFINED;
+        /* step 6 */
+        if (source != null) {
+            CreateDataProperty(cx, obj, "source", source);
         }
-    }
-
-    /**
-     * 1.1.1.17 LoadSucceeded Functions
-     */
-    public static final class LoadSucceeded extends BuiltinFunction {
-        /** [[Load]] */
-        private final Load load;
-
-        public LoadSucceeded(Realm realm, Load load) {
-            super(realm, ANONYMOUS, 0);
-            this.load = load;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            /* step 1 */
-            Load load = this.load;
-            /* step 2 */
-            assert load.status == Load.Status.Loading;
-            /* step 3 */
-            load.status = Load.Status.Loaded;
-            /* step 4 */
-            List<LinkSet> linkSets = load.getSortedLinkSets();
-            /* step 5 */
-            for (LinkSet linkSet : linkSets) {
-                UpdateLinkSetOnLoad(calleeContext, linkSet, load);
-            }
-            return UNDEFINED;
-        }
-    }
-
-    // FIXME: missing definition in spec
-    private static List<String> IterableToArray(ExecutionContext cx, Object iterable) {
-        Iterator<?> iterator = FromScriptIterator(cx, GetIterator(cx, iterable));
-        List<String> array = new ArrayList<>();
-        while (iterator.hasNext()) {
-            Object value = iterator.next();
-            array.add(ToFlatString(cx, value));
-        }
-        return array;
+        /* step 7 */
+        return obj;
     }
 }

@@ -6,54 +6,33 @@
  */
 package com.github.anba.es6draft.runtime.objects.modules;
 
-import java.util.LinkedHashMap;
-
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.LinkedMap;
-import com.github.anba.es6draft.runtime.modules.Load;
-import com.github.anba.es6draft.runtime.modules.ModuleObject;
+import com.github.anba.es6draft.runtime.modules.Loader;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>1 Modules: Semantics</h1><br>
- * <h2>1.6 Loader Objects</h2>
+ * <h1>26 Reflection</h1><br>
+ * <h2>26.3 Loader Objects</h2>
+ * <ul>
+ * <li>26.3.4 Properties of %Loader% Instances
+ * </ul>
  */
 public class LoaderObject extends OrdinaryObject {
-    /** [[Realm]] */
-    private Realm realm;
-
-    /** [[Modules]] */
-    private LinkedMap<String, ModuleObject> modules;
-
-    /** [[Loads]] */
-    private LinkedHashMap<String, Load> loads;
+    /** [[Loader]] */
+    private Loader loader;
 
     public LoaderObject(Realm realm) {
         super(realm);
     }
 
-    /**
-     * Initialises this {@link LoaderObject} instance
-     */
-    public void initialise(Realm realm) {
-        assert this.realm == null && realm != null;
-        this.realm = realm;
-        this.modules = new LinkedMap<>();
-        this.loads = new LinkedHashMap<>();
+    /** [[Loader]] */
+    public Loader getLoader() {
+        return loader;
     }
 
-    /** [[Realm]] */
-    public Realm getRealm() {
-        return realm;
-    }
-
-    /** [[Modules]] */
-    public LinkedMap<String, ModuleObject> getModules() {
-        return modules;
-    }
-
-    /** [[Loads]] */
-    public LinkedHashMap<String, Load> getLoads() {
-        return loads;
+    /** [[Loader]] */
+    public void setLoader(Loader loader) {
+        assert this.loader == null && loader != null : "LoaderObject already initialised";
+        this.loader = loader;
     }
 }

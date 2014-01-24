@@ -49,7 +49,6 @@ import com.github.anba.es6draft.runtime.objects.iteration.GeneratorPrototype;
 import com.github.anba.es6draft.runtime.objects.modules.LoaderConstructor;
 import com.github.anba.es6draft.runtime.objects.modules.LoaderIteratorPrototype;
 import com.github.anba.es6draft.runtime.objects.modules.LoaderPrototype;
-import com.github.anba.es6draft.runtime.objects.modules.ModuleFactoryFunction;
 import com.github.anba.es6draft.runtime.objects.modules.RealmConstructor;
 import com.github.anba.es6draft.runtime.objects.modules.RealmObject;
 import com.github.anba.es6draft.runtime.objects.modules.RealmPrototype;
@@ -834,7 +833,6 @@ public final class Realm {
         LoaderConstructor loaderConstructor = new LoaderConstructor(realm);
         LoaderPrototype loaderPrototype = new LoaderPrototype(realm);
         LoaderIteratorPrototype loaderIteratorPrototype = new LoaderIteratorPrototype(realm);
-        ModuleFactoryFunction module = new ModuleFactoryFunction(realm);
         RealmConstructor realmConstructor = new RealmConstructor(realm);
         RealmPrototype realmPrototype = new RealmPrototype(realm);
 
@@ -842,7 +840,6 @@ public final class Realm {
         intrinsics.put(Intrinsics.Loader, loaderConstructor);
         intrinsics.put(Intrinsics.LoaderPrototype, loaderPrototype);
         intrinsics.put(Intrinsics.LoaderIteratorPrototype, loaderIteratorPrototype);
-        intrinsics.put(Intrinsics.Module, module);
         intrinsics.put(Intrinsics.Realm, realmConstructor);
         intrinsics.put(Intrinsics.RealmPrototype, realmPrototype);
 
@@ -850,7 +847,6 @@ public final class Realm {
         loaderConstructor.initialise(defaultContext);
         loaderPrototype.initialise(defaultContext);
         loaderIteratorPrototype.initialise(defaultContext);
-        module.initialise(defaultContext);
         realmConstructor.initialise(defaultContext);
         realmPrototype.initialise(defaultContext);
     }

@@ -96,7 +96,7 @@ public final class ExecutionContext {
     /**
      * <div>
      * <ul>
-     * <li>15 ECMAScript Language: Scripts and Modules
+     * <li>15 ECMAScript Language: Modules and Scripts
      * <ul>
      * <li>15.1 Script
      * <ul>
@@ -115,14 +115,23 @@ public final class ExecutionContext {
     }
 
     /**
-     * Runtime Semantics: Module Evaluation
+     * <div>
+     * <ul>
+     * <li>15 ECMAScript Language: Modules and Scripts
+     * <ul>
+     * <li>15.2 Modules
+     * <ul>
+     * <li>15.2.6 Runtime Semantics: Module Evaluation</div>
+     * <p>
+     * 15.2.6.2 EnsureEvaluated(mod, seen, loader) Abstract Operation
      */
     public static ExecutionContext newModuleExecutionContext(Realm realm, LexicalEnvironment env) {
-        ExecutionContext progCxt = new ExecutionContext();
-        progCxt.realm = realm;
-        progCxt.varEnv = env;
-        progCxt.lexEnv = env;
-        return progCxt;
+        /* steps 8-11 */
+        ExecutionContext initCxt = new ExecutionContext();
+        initCxt.realm = realm;
+        initCxt.varEnv = env;
+        initCxt.lexEnv = env;
+        return initCxt;
     }
 
     /**

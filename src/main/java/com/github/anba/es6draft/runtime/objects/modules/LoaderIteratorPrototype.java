@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.internal.ObjectAllocator;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
-import com.github.anba.es6draft.runtime.modules.ModuleObject;
+import com.github.anba.es6draft.runtime.modules.ModuleLinkage;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
@@ -32,10 +32,10 @@ import com.github.anba.es6draft.runtime.types.Type;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
 /**
- * <h1>1 Modules: Semantics</h1><br>
- * <h2>1.6 Loader Objects</h2>
+ * <h1>26 Reflection</h1><br>
+ * <h2>26.3 Loader Objects</h2>
  * <ul>
- * <li>1.6.4 Loader Iterator Objects
+ * <li>26.3.5 Loader Iterator Objects
  * </ul>
  */
 public class LoaderIteratorPrototype extends OrdinaryObject implements Initialisable {
@@ -48,25 +48,25 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
         createProperties(this, cx, Properties.class);
     }
 
-    public enum MapIterationKind {
+    public enum LoaderIterationKind {
         Key, Value, KeyValue
     }
 
     /**
-     * 1.6.4 Loader Iterator Objects
+     * 26.3.5.3 Properties of Loader Iterator Instances
      */
     private static class LoaderIterator extends OrdinaryObject {
         /** [[Loader]] */
         LoaderObject loader;
 
-        /** [[ModuleMapNextIndex]] */
+        /** [[LoaderNextIndex]] */
         @SuppressWarnings("unused")
         int nextIndex;
 
-        /** [[MapIterationKind]] */
-        MapIterationKind iterationKind;
+        /** [[LoaderIterationKind]] */
+        LoaderIterationKind iterationKind;
 
-        Iterator<Entry<String, ModuleObject>> iterator;
+        Iterator<Entry<String, ModuleLinkage>> iterator;
 
         LoaderIterator(Realm realm) {
             super(realm);
@@ -83,32 +83,26 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
     }
 
     /**
-     * 1.6.4.1 CreateLoaderIterator(loader, kind) Abstract Operation
+     * 26.3.5.1 CreateLoaderIterator Abstract Operation
      */
-    public static OrdinaryObject CreateLoaderIterator(ExecutionContext cx, Object obj,
-            MapIterationKind kind) {
-        /* steps 1-2 */
-        if (!(obj instanceof LoaderObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
-        }
-        LoaderObject loader = (LoaderObject) obj;
-        if (loader.getModules() == null) {
-            throw newTypeError(cx, Messages.Key.UninitialisedObject);
-        }
-        /* step 3 */
+    public static OrdinaryObject CreateLoaderIterator(ExecutionContext cx, LoaderObject loader,
+            LoaderIterationKind kind) {
+        /* step 1 */
+        assert loader.getLoader() != null;
+        /* step 2 */
         LoaderIterator iterator = ObjectCreate(cx, Intrinsics.LoaderIteratorPrototype,
                 LoaderIteratorAllocator.INSTANCE);
-        /* steps 4-6*/
+        /* steps 3-5 */
         iterator.loader = loader;
         iterator.nextIndex = 0;
         iterator.iterationKind = kind;
-        iterator.iterator = loader.getModules().iterator();
-        /* step 7 */
+        iterator.iterator = loader.getLoader().getModules().iterator();
+        /* step 6 */
         return iterator;
     }
 
     /**
-     * 1.6.4.2 The %LoaderIteratorPrototype% Object
+     * 26.3.5.2 The %LoaderIteratorPrototype% Object
      */
     public enum Properties {
         ;
@@ -117,7 +111,7 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
         public static final Intrinsics __proto__ = Intrinsics.ObjectPrototype;
 
         /**
-         * 1.6.4.2.1 %LoaderIteratorPrototype%.next ( )
+         * 26.3.5.2.1 %LoaderIteratorPrototype%.next( )
          */
         @Function(name = "next", arity = 0)
         public static Object next(ExecutionContext cx, Object thisValue) {
@@ -132,46 +126,45 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
             /* step 1 */
             LoaderIterator o = (LoaderIterator) thisValue;
             /* step 4 */
-            LoaderObject loader = o.loader;
-            /* step 5 */
-            // int index = o.nextIndex;
+            LoaderObject m = o.loader;
             /* step 6 */
-            MapIterationKind itemKind = o.iterationKind;
-            // FIXME: spec bug - not updated to new Iterator contract
-            if (loader == null) {
+            // int index = o.nextIndex;
+            /* step 7 */
+            LoaderIterationKind itemKind = o.iterationKind;
+            /* step 8 */
+            if (m == null) {
                 return CreateIterResultObject(cx, UNDEFINED, true);
             }
-            /* step 7 */
-            assert loader.getModules() != null;
-            /* step 8 */
-            Iterator<Entry<String, ModuleObject>> iter = o.iterator;
+            /* step 5 (not applicable) */
+            /* steps 9-10 */
+            Iterator<Entry<String, ModuleLinkage>> iter = o.iterator;
             if (iter.hasNext()) {
-                Entry<String, ModuleObject> e = iter.next();
+                Entry<String, ModuleLinkage> e = iter.next();
                 assert e != null;
                 Object result;
-                if (itemKind == MapIterationKind.Key) {
+                if (itemKind == LoaderIterationKind.Key) {
                     result = e.getKey();
-                } else if (itemKind == MapIterationKind.Value) {
+                } else if (itemKind == LoaderIterationKind.Value) {
                     // FIXME: spec bug? need to protect against returning half-init modules?
-                    result = e.getValue();
+                    result = e.getValue().getModuleObject();
                 } else {
                     // FIXME: spec bug? need to protect against returning half-init modules?
-                    assert itemKind == MapIterationKind.KeyValue;
+                    assert itemKind == LoaderIterationKind.KeyValue;
                     ScriptObject array = ArrayCreate(cx, 2);
                     CreateDataProperty(cx, array, "0", e.getKey());
-                    CreateDataProperty(cx, array, "1", e.getValue());
+                    CreateDataProperty(cx, array, "1", e.getValue().getModuleObject());
                     result = array;
                 }
                 return CreateIterResultObject(cx, result, false);
             }
-            // FIXME: spec bug - not updated to new Iterator contract
+            /* step 11 */
             o.loader = null;
-            /* step 9 */
+            /* step 12 */
             return CreateIterResultObject(cx, UNDEFINED, true);
         }
 
         /**
-         * 1.6.4.2.2 %LoaderIteratorPrototype% [ @@iterator ] ()
+         * 26.3.5.2.2 %LoaderIteratorPrototype% [ @@iterator ] ( )
          */
         @Function(name = "[Symbol.iterator]", symbol = BuiltinSymbol.iterator, arity = 0)
         public static Object iterator(ExecutionContext cx, Object thisValue) {
@@ -179,7 +172,7 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
         }
 
         /**
-         * 1.6.4.2.3 %LoaderIteratorPrototype% [ @@toStringTag ]
+         * 26.3.5.2.3 %LoaderIteratorPrototype% [ @@toStringTag ]
          */
         @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag)
         public static final String toStringTag = "Loader Iterator";

@@ -338,18 +338,6 @@ public final class PromiseAbstractOperations {
     /**
      * <h2>Modules</h2>
      * <p>
-     * PromiseCreate ( f )
-     */
-    public static ScriptObject PromiseCreate(ExecutionContext cx, Callable f) {
-        // TODO: make safe
-        ScriptObject p = Construct(cx, (PromiseConstructor) cx.getIntrinsic(Intrinsics.Promise),
-                new Object[] { f });
-        return p;
-    }
-
-    /**
-     * <h2>Modules</h2>
-     * <p>
      * PromiseThen ( promise, onFulfilled )
      */
     public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
@@ -382,19 +370,6 @@ public final class PromiseAbstractOperations {
             Callable onRejected) {
         // TODO: make safe
         Object p = PromisePrototype.Properties._catch(cx, promise, onRejected);
-        assert p instanceof ScriptObject;
-        return (ScriptObject) p;
-    }
-
-    /**
-     * <h2>Modules</h2>
-     * <p>
-     * PromiseResolve ( x )
-     */
-    public static ScriptObject PromiseResolve(ExecutionContext cx, Object x) {
-        // TODO: make safe
-        ScriptObject promiseConstructor = cx.getIntrinsic(Intrinsics.Promise);
-        Object p = PromiseConstructor.Properties.resolve(cx, promiseConstructor, x);
         assert p instanceof ScriptObject;
         return (ScriptObject) p;
     }

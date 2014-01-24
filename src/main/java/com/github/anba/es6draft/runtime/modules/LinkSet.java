@@ -6,21 +6,9 @@
  */
 package com.github.anba.es6draft.runtime.modules;
 
-import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.AbstractOperations.PromiseBuiltinCapability;
-import static com.github.anba.es6draft.runtime.AbstractOperations.ToFlatString;
-import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
-import static com.github.anba.es6draft.runtime.modules.Load.CreateLoad;
-import static com.github.anba.es6draft.runtime.modules.Load.ProceedToFetch;
-import static com.github.anba.es6draft.runtime.modules.Load.ProceedToLocate;
-import static com.github.anba.es6draft.runtime.modules.Load.ProceedToTranslate;
-import static com.github.anba.es6draft.runtime.modules.ModuleAbstractOperations.Link;
-import static com.github.anba.es6draft.runtime.objects.modules.LoaderConstructor.GetOption;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseCreate;
-import static com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseResolve;
-import static com.github.anba.es6draft.runtime.types.Null.NULL;
+import static com.github.anba.es6draft.runtime.modules.ModuleLinking.Link;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
-import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject.ObjectCreate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,28 +16,23 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
-import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.modules.Load.Dependency;
-import com.github.anba.es6draft.runtime.objects.modules.LoaderObject;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.types.Callable;
-import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
-import com.github.anba.es6draft.runtime.types.Type;
-import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
 
 /**
- * <h1>1 Modules: Semantics</h1><br>
- * <h2>1.1 Module Loading</h2>
+ * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h2>15.2 Modules</h2><br>
+ * <h3>15.2.5 Runtime Semantics: Module Linking</h3>
  * <ul>
- * <li>1.1.2 LinkSet Records
+ * <li>15.2.5.2 LinkSet Records
  * </ul>
  */
 public final class LinkSet {
     /** [[Loader]] */
-    private final LoaderObject loader;
+    private final Loader loader;
 
     /** [[Loads]] */
     private final List<Load> loads;
@@ -66,12 +49,17 @@ public final class LinkSet {
     private static final AtomicLong idGen = new AtomicLong(Long.MIN_VALUE);
     private final long id = idGen.getAndIncrement();
 
-    private LinkSet(LoaderObject loader, PromiseCapability capability) {
+    private LinkSet(Loader loader, PromiseCapability promiseCapability) {
         this.loader = loader;
         this.loads = new ArrayList<>();
-        this.done = capability.getPromise();
-        this.resolve = capability.getResolve();
-        this.reject = capability.getReject();
+        this.done = promiseCapability.getPromise();
+        this.resolve = promiseCapability.getResolve();
+        this.reject = promiseCapability.getReject();
+    }
+
+    /** [[Done]] */
+    public ScriptObject getDone() {
+        return done;
     }
 
     private static final class LinkSetComparator implements Comparator<LinkSet> {
@@ -85,37 +73,29 @@ public final class LinkSet {
         return new LinkSetComparator();
     }
 
-    /** [[Done]] */
-    public ScriptObject getDone() {
-        return done;
-    }
-
     /**
-     * 1.1.2.1 CreateLinkSet(loader, startingLoad) Abstract Operation
+     * 15.2.5.2.1 CreateLinkSet(loader, startingLoad) Abstract Operation
      */
-    public static LinkSet CreateLinkSet(ExecutionContext cx, ScriptObject loader, Load startingLoad) {
-        /* steps 1-2 */
-        if (!(loader instanceof LoaderObject)) {
-            throw newTypeError(cx, Messages.Key.IncompatibleObject);
-        }
+    public static LinkSet CreateLinkSet(ExecutionContext cx, Loader loader, Load startingLoad) {
+        /* steps 1-2 (not applicable) */
         /* steps 3-4 */
-        PromiseCapability capability = PromiseBuiltinCapability(cx);
+        PromiseCapability promiseCapability = PromiseBuiltinCapability(cx);
         /* steps 5-10 */
-        LinkSet linkSet = new LinkSet((LoaderObject) loader, capability);
-        /* step 11 */
+        LinkSet linkSet = new LinkSet(loader, promiseCapability);
+        /* step 6 */
         AddLoadToLinkSet(linkSet, startingLoad);
-        /* step 12 */
+        /* step 7 */
         return linkSet;
     }
 
     /**
-     * 1.1.2.2 AddLoadToLinkSet(linkSet, load) Abstract Operation
+     * 15.2.5.2.2 AddLoadToLinkSet(linkSet, load) Abstract Operation
      */
     public static void AddLoadToLinkSet(LinkSet linkSet, Load load) {
         /* step 1 */
         assert load.getStatus() == Load.Status.Loading || load.getStatus() == Load.Status.Loaded;
         /* step 2 */
-        LoaderObject loader = linkSet.loader;
+        Loader loader = linkSet.loader;
         /* step 3 */
         if (!linkSet.loads.contains(load)) {
             /* step 3a */
@@ -138,7 +118,7 @@ public final class LinkSet {
     }
 
     /**
-     * 1.1.2.3 UpdateLinkSetOnLoad(linkSet, load) Abstract Operation
+     * 15.2.5.2.3 UpdateLinkSetOnLoad(linkSet, load) Abstract Operation
      */
     public static void UpdateLinkSetOnLoad(ExecutionContext cx, LinkSet linkSet, Load load) {
         /* step 1 */
@@ -151,33 +131,34 @@ public final class LinkSet {
                 return;
             }
         }
-        /* step 4 */
-        Load startingLoad = linkSet.loads.get(0);
+        /* step 4 (Assert ?) */
         /* step 5 */
+        Load startingLoad = linkSet.loads.get(0);
+        /* step 6 */
         try {
             Link(cx, linkSet.loads, linkSet.loader);
         } catch (ScriptException e) {
-            /* step 6 */
+            /* step 7 */
             LinkSetFailed(cx, linkSet, e.getValue());
             return;
         }
-        /* step 7 */
-        assert linkSet.loads.isEmpty();
         /* step 8 */
+        assert linkSet.loads.isEmpty();
+        /* step 9 */
         try {
             linkSet.resolve.call(cx, UNDEFINED, startingLoad);
         } catch (ScriptException e) {
-            /* step 9 */
+            /* step 10 */
             assert false : "unexpected abrupt completion: " + e;
         }
     }
 
     /**
-     * 1.1.2.4 LinkSetFailed(linkSet, exc) Abstract Operation
+     * 15.2.5.2.4 LinkSetFailed(linkSet, exc) Abstract Operation
      */
     public static void LinkSetFailed(ExecutionContext cx, LinkSet linkSet, Object exc) {
         /* step 1 */
-        LoaderObject loader = linkSet.loader;
+        Loader loader = linkSet.loader;
         /* step 2 */
         List<Load> loads = new ArrayList<>(linkSet.loads);
         /* step 3 */
@@ -205,9 +186,9 @@ public final class LinkSet {
     }
 
     /**
-     * 1.1.2.5 FinishLoad(loader, load) Abstract Operation
+     * 15.2.5.2.5 FinishLoad(loader, load) Abstract Operation
      */
-    public static void FinishLoad(LoaderObject loader, Load load) {
+    public static void FinishLoad(Loader loader, Load load) {
         /* step 1 */
         String name = load.getName();
         /* step 2 */
@@ -228,119 +209,5 @@ public final class LinkSet {
         }
         /* step 5 */
         load.getLinkSets().clear();
-    }
-
-    /**
-     * 1.1.2.6 LoadModule(loader, name, options) Abstract Operation
-     */
-    public static ScriptObject LoadModule(ExecutionContext cx, LoaderObject loader, Object name,
-            Object options) {
-        // FIXME: spec bug - source is undefined
-        String source = null;
-        /* steps 1-2 */
-        String sname = ToFlatString(cx, name);
-        /* steps 3-4 */
-        Object address = GetOption(cx, options, "address");
-        /* steps 8-9 */
-        AsyncStartLoadPartwayThrough.Step step;
-        if (Type.isUndefined(address)) {
-            step = AsyncStartLoadPartwayThrough.Step.Locate;
-        } else {
-            step = AsyncStartLoadPartwayThrough.Step.Fetch;
-        }
-        /* step 10 */
-        ScriptObject metadata = ObjectCreate(cx, Intrinsics.ObjectPrototype);
-        /* steps 5-13 */
-        AsyncStartLoadPartwayThrough f = new AsyncStartLoadPartwayThrough(cx.getRealm(), loader,
-                sname, step, metadata, address, source);
-        /* step 4 */
-        return PromiseCreate(cx, f);
-    }
-
-    /**
-     * 1.1.3 AsyncStartLoadPartwayThrough Functions
-     */
-    public static final class AsyncStartLoadPartwayThrough extends BuiltinFunction {
-        /** [[Loader]] */
-        private final LoaderObject loader;
-        /** [[ModuleName]] */
-        private final String moduleName;
-        /** [[Step]] */
-        private final Step step;
-        /** [[ModuleMetadata]] */
-        private final Object moduleMetadata;
-        /** [[ModuleAddress]] */
-        private final Object moduleAddress;
-        /** [[ModuleSource]] */
-        private final Object moduleSource;
-
-        public enum Step {
-            Locate, Fetch, Translate
-        }
-
-        public AsyncStartLoadPartwayThrough(Realm realm, LoaderObject loader, String moduleName,
-                Step step, Object moduleMetadata, Object moduleAddress, Object moduleSource) {
-            super(realm, ANONYMOUS, 2);
-            assert moduleName != null : "anonymous module in async-start-load";
-            this.loader = loader;
-            this.moduleName = moduleName;
-            this.step = step;
-            this.moduleMetadata = moduleMetadata;
-            this.moduleAddress = moduleAddress;
-            this.moduleSource = moduleSource;
-        }
-
-        @Override
-        public Object call(ExecutionContext callerContext, Object thisValue, Object... args) {
-            ExecutionContext calleeContext = calleeContext();
-            Object resolveArg = args.length > 0 ? args[0] : UNDEFINED;
-            Object rejectArg = args.length > 1 ? args[1] : UNDEFINED;
-            assert IsCallable(resolveArg) && IsCallable(rejectArg);
-            Callable resolve = (Callable) resolveArg;
-            @SuppressWarnings("unused")
-            Callable reject = (Callable) rejectArg;
-            /* step 1 */
-            LoaderObject loader = this.loader;
-            /* step 2 */
-            String name = this.moduleName;
-            /* step 3 */
-            Step step = this.step;
-            /* step 4 */
-            Object metadata = this.moduleMetadata;
-            /* step 5 */
-            Object address = this.moduleAddress;
-            /* step 6 */
-            Object source = this.moduleSource;
-            /* step 7 */
-            if (loader.getModules().containsKey(name)) {
-                throw newTypeError(calleeContext, Messages.Key.InternalError);
-            }
-            /* step 8 */
-            if (loader.getLoads().containsKey(name)) {
-                throw newTypeError(calleeContext, Messages.Key.InternalError);
-            }
-            /* steps 9-10 */
-            Load load = CreateLoad(calleeContext, name, metadata);
-            /* step 11 */
-            LinkSet linkSet = CreateLinkSet(calleeContext, loader, load);
-            /* step 12 */
-            loader.getLoads().put(name, load);
-            /* step 13 */
-            resolve.call(calleeContext, NULL, linkSet.done);
-            /* step 14 */
-            if (step == Step.Locate) {
-                return ProceedToLocate(calleeContext, loader, load);
-            } else if (step == Step.Fetch) {
-                // FIXME: spec bug - PromiseOf() -> PromiseResolve()
-                ScriptObject addressPromise = PromiseResolve(calleeContext, address);
-                return ProceedToFetch(calleeContext, loader, load, addressPromise);
-            } else {
-                assert step == Step.Translate;
-                load.setAddress(address);
-                // FIXME: spec bug - PromiseOf() -> PromiseResolve()
-                ScriptObject sourcePromise = PromiseResolve(calleeContext, source);
-                return ProceedToTranslate(calleeContext, loader, load, sourcePromise);
-            }
-        }
     }
 }

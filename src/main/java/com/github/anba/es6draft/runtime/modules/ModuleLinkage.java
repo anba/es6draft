@@ -11,16 +11,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.LexicalEnvironment;
 import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
-import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
+import com.github.anba.es6draft.runtime.objects.modules.ModuleObject;
 
 /**
- * <h1>1 Modules: Semantics</h1><br>
- * <h2>1.4 Module Objects</h2>
+ * <h1>15 ECMAScript Language: Modules and Scripts</h1><br>
+ * <h2>15.2 Modules</h2><br>
+ * <h3>15.2.5 Runtime Semantics: Module Linking</h3>
+ * <ul>
+ * <li>15.2.5.1 ModuleLinkage Record
+ * </ul>
  */
-public class ModuleObject extends OrdinaryObject {
+public final class ModuleLinkage {
     /** [[Body]] */
     private final ModuleBody body;
 
@@ -37,7 +42,7 @@ public class ModuleObject extends OrdinaryObject {
     private Map<String, ExportBinding> exports;
 
     /** [[Dependencies]] */
-    private LinkedHashMap<String, ModuleObject> dependencies;
+    private LinkedHashMap<String, ModuleLinkage> dependencies;
 
     /** [[UnlinkedDependencies]] */
     private List<Load> unlinkedDependencies;
@@ -51,8 +56,18 @@ public class ModuleObject extends OrdinaryObject {
     /** [[Evaluated]] */
     private boolean evaluated;
 
-    public ModuleObject(Realm realm, ModuleBody body, LexicalEnvironment environment) {
-        super(realm);
+    // FIXME: spec does not properly differentiate between module linkage records and module objects
+
+    /** [[ModuleObj]] */
+    private final ModuleObject moduleObject;
+
+    /** [[ModuleObj]] */
+    public ModuleObject getModuleObject() {
+        return moduleObject;
+    }
+
+    public ModuleLinkage(ModuleObject moduleObject, ModuleBody body, LexicalEnvironment environment) {
+        this.moduleObject = moduleObject;
         this.body = body;
         this.environment = environment;
         this.linkErrors = new ArrayList<>();
@@ -98,12 +113,12 @@ public class ModuleObject extends OrdinaryObject {
     }
 
     /** [[Dependencies]] */
-    public LinkedHashMap<String, ModuleObject> getDependencies() {
+    public LinkedHashMap<String, ModuleLinkage> getDependencies() {
         return dependencies;
     }
 
     /** [[Dependencies]] */
-    public void setDependencies(LinkedHashMap<String, ModuleObject> dependencies) {
+    public void setDependencies(LinkedHashMap<String, ModuleLinkage> dependencies) {
         this.dependencies = dependencies;
     }
 
@@ -157,5 +172,61 @@ public class ModuleObject extends OrdinaryObject {
     public void setEvaluated(boolean evaluated) {
         assert !this.evaluated && evaluated;
         this.evaluated = evaluated;
+    }
+
+    public static ModuleLinkage CreateLinkedModuleInstance(ExecutionContext cx) {
+        // TODO: not yet specified
+        ModuleObject module = new ModuleObject(cx.getRealm());
+        ModuleLinkage moduleLinkage = new ModuleLinkage(module, null, null);
+        module.setModuleLinkage(moduleLinkage);
+        // no dependencies for linked modules
+        moduleLinkage.setDependencies(new LinkedHashMap<String, ModuleLinkage>());
+        return moduleLinkage;
+    }
+
+    /**
+     * 15.2.5.1.1 CreateModuleLinkageRecord (loader, body) Abstract Operation
+     */
+    public static ModuleLinkage CreateModuleLinkageRecord(Loader loader, ModuleBody body) {
+        /* step 1 (not applicable) */
+        /* step 14 */
+        Realm realm = loader.getRealm();
+        /* step 15 */
+        LexicalEnvironment globalEnv = realm.getGlobalEnv();
+        /* step 16 */
+        LexicalEnvironment env = LexicalEnvironment.newModuleEnvironment(globalEnv);
+        /* steps 2-13, 17 */
+        ModuleObject module = new ModuleObject(realm);
+        ModuleLinkage moduleLinkage = new ModuleLinkage(module, body, env);
+        module.setModuleLinkage(moduleLinkage);
+        /* step 18 */
+        return moduleLinkage;
+    }
+
+    /**
+     * 15.2.5.1.2 LookupExport ( M, exportName )
+     */
+    public static ExportBinding LookupExport(ModuleLinkage module, String exportName) {
+        assert module.getExports() != null;
+        /* step 1 */
+        if (!module.getExports().containsKey(exportName)) {
+            return null;
+        }
+        /* steps 2-3 */
+        return module.getExports().get(exportName);
+    }
+
+    /**
+     * 15.2.5.1.3 LookupModuleDependency ( M, requestName )
+     */
+    public static ModuleLinkage LookupModuleDependency(ModuleLinkage module, String requestName) {
+        /* step 1 (not applicable) */
+        /* step 2 */
+        if (requestName == null) {
+            return module;
+        }
+        assert module.getDependencies() != null;
+        /* steps 3-4 */
+        return module.getDependencies().get(requestName);
     }
 }

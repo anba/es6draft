@@ -36,6 +36,7 @@ import com.github.anba.es6draft.runtime.internal.Strings;
 import com.github.anba.es6draft.runtime.internal.TailCallInvocation;
 import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
 import com.github.anba.es6draft.runtime.objects.internal.ListIterator;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseCapability;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseObject;
 import com.github.anba.es6draft.runtime.types.*;
@@ -1781,6 +1782,37 @@ public final class AbstractOperations {
         capability.getResolve().call(cx, UNDEFINED, value);
         /* step 5 */
         return capability.getPromise();
+    }
+
+    /**
+     * 7.5.4 PromiseAll (promiseList) Abstract Operation
+     */
+    public static ScriptObject PromiseAll(ExecutionContext cx, List<ScriptObject> promiseList) {
+        return PromiseAbstractOperations.PromiseAll(cx, promiseList);
+    }
+
+    /**
+     * 7.5.5 PromiseCatch (promise, rejectedAction) Abstract Operation
+     */
+    public static ScriptObject PromiseCatch(ExecutionContext cx, ScriptObject promise,
+            Callable rejectedAction) {
+        return PromiseAbstractOperations.PromiseCatch(cx, promise, rejectedAction);
+    }
+
+    /**
+     * 7.5.6 PromiseThen (promise, resolvedAction, rejectedAction) Abstract Operation
+     */
+    public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
+            Callable resolvedAction) {
+        return PromiseAbstractOperations.PromiseThen(cx, promise, resolvedAction);
+    }
+
+    /**
+     * 7.5.6 PromiseThen (promise, resolvedAction, rejectedAction) Abstract Operation
+     */
+    public static ScriptObject PromiseThen(ExecutionContext cx, ScriptObject promise,
+            Callable resolvedAction, Callable rejectedAction) {
+        return PromiseAbstractOperations.PromiseThen(cx, promise, resolvedAction, rejectedAction);
     }
 
     /**

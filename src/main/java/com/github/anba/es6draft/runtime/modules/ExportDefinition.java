@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.modules;
 
 public final class ExportDefinition {
     /** [[Module]] */
-    final ModuleObject module;
+    final ModuleLinkage module;
 
     /** [[ImportName]] */
     final String importName;
@@ -22,7 +22,7 @@ public final class ExportDefinition {
     /** [[Explicit]] */
     final boolean explicit;
 
-    public ExportDefinition(ModuleObject module, String importName, String localName,
+    public ExportDefinition(ModuleLinkage module, String importName, String localName,
             String exportName, boolean explicit) {
         this.module = module;
         this.importName = importName;

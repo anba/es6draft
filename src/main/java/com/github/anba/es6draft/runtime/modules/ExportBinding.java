@@ -8,12 +8,12 @@ package com.github.anba.es6draft.runtime.modules;
 
 public final class ExportBinding {
     /** [[Module]] */
-    final ModuleObject module;
+    final ModuleLinkage module;
 
     /** [[LocalName]] */
     final String localName;
 
-    public ExportBinding(ModuleObject module, String localName) {
+    public ExportBinding(ModuleLinkage module, String localName) {
         this.module = module;
         this.localName = localName;
     }

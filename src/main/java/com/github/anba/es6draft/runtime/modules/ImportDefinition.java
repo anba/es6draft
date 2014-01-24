@@ -8,7 +8,7 @@ package com.github.anba.es6draft.runtime.modules;
 
 public final class ImportDefinition {
     /** [[Module]] */
-    final ModuleObject module;
+    final ModuleLinkage module;
 
     /** [[ImportName]] */
     final String importName;
@@ -16,7 +16,7 @@ public final class ImportDefinition {
     /** [[LocalName]] */
     final String localName;
 
-    public ImportDefinition(ModuleObject module, String importName, String localName) {
+    public ImportDefinition(ModuleLinkage module, String importName, String localName) {
         this.module = module;
         this.importName = importName;
         this.localName = localName;
