@@ -6,19 +6,13 @@
  */
 package com.github.anba.es6draft.compiler;
 
+import static com.github.anba.es6draft.semantics.StaticSemantics.ConstructorMethod;
 import static com.github.anba.es6draft.semantics.StaticSemantics.IsAnonymousFunctionDefinition;
 import static com.github.anba.es6draft.semantics.StaticSemantics.PropName;
 
 import org.objectweb.asm.Type;
 
-import com.github.anba.es6draft.ast.ComputedPropertyName;
-import com.github.anba.es6draft.ast.Expression;
-import com.github.anba.es6draft.ast.Identifier;
-import com.github.anba.es6draft.ast.MethodDefinition;
-import com.github.anba.es6draft.ast.Node;
-import com.github.anba.es6draft.ast.PropertyName;
-import com.github.anba.es6draft.ast.PropertyNameDefinition;
-import com.github.anba.es6draft.ast.PropertyValueDefinition;
+import com.github.anba.es6draft.ast.*;
 import com.github.anba.es6draft.ast.synthetic.PropertyDefinitionsMethod;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
@@ -26,9 +20,9 @@ import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
 
 /**
- * 12.1.5.7 Runtime Semantics: PropertyDefinitionEvaluation<br>
- * 14.3.7 Runtime Semantics: PropertyDefinitionEvaluation<br>
- * 14.4.11 Runtime Semantics: PropertyDefinitionEvaluation
+ * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation<br>
+ * 14.3.9 Runtime Semantics: PropertyDefinitionEvaluation<br>
+ * 14.4.13 Runtime Semantics: PropertyDefinitionEvaluation
  */
 final class PropertyGenerator extends
         DefaultCodeGenerator<DefaultCodeGenerator.ValType, ExpressionVisitor> {
@@ -88,6 +82,10 @@ final class PropertyGenerator extends
         static final MethodDesc ScriptRuntime_defineProtoProperty = MethodDesc.create(
                 MethodType.Static, Types.ScriptRuntime, "defineProtoProperty", Type.getMethodType(
                         Type.VOID_TYPE, Types.ScriptObject, Types.Object, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_updateMethod = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "updateMethod", Type.getMethodType(Type.VOID_TYPE,
+                        Types.ScriptObject, Types.Object, Types.FunctionObject));
     }
 
     public PropertyGenerator(CodeGenerator codegen) {
@@ -100,7 +98,7 @@ final class PropertyGenerator extends
     }
 
     /**
-     * 12.1.5.6 Runtime Semantics: Evaluation
+     * 12.1.5.7 Runtime Semantics: Evaluation
      * <p>
      * ComputedPropertyName : [ AssignmentExpression ]
      */
@@ -127,8 +125,8 @@ final class PropertyGenerator extends
     }
 
     /**
-     * 14.3.7 Runtime Semantics: PropertyDefinitionEvaluation<br>
-     * 14.4.11 Runtime Semantics: PropertyDefinitionEvaluation
+     * 14.3.9 Runtime Semantics: PropertyDefinitionEvaluation<br>
+     * 14.4.13 Runtime Semantics: PropertyDefinitionEvaluation
      */
     @Override
     public ValType visit(MethodDefinition node, ExpressionVisitor mv) {
@@ -190,7 +188,7 @@ final class PropertyGenerator extends
     }
 
     /**
-     * 12.1.5.7 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * <p>
      * PropertyDefinition : IdentifierName
      */
@@ -209,7 +207,7 @@ final class PropertyGenerator extends
     }
 
     /**
-     * 12.1.5.7 Runtime Semantics: PropertyDefinitionEvaluation
+     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
      * <p>
      * PropertyDefinition : PropertyName : AssignmentExpression
      */
@@ -221,15 +219,46 @@ final class PropertyGenerator extends
         PropertyName propertyName = node.getPropertyName();
         Expression propertyValue = node.getPropertyValue();
 
+        boolean isAnonymousFunctionDefinition = IsAnonymousFunctionDefinition(propertyValue);
+        boolean updateMethodFields = false;
+        if (isAnonymousFunctionDefinition && !(propertyValue instanceof ArrowFunction)) {
+            if (propertyValue instanceof ClassExpression) {
+                ClassExpression classExpr = (ClassExpression) propertyValue;
+                // FIXME: spec bug - not useful to update class constructor methods
+                // Broken test case with this: `new ({c: class extends Object {}}).c`
+                MethodDefinition constructorMethod = ConstructorMethod(classExpr);
+                if (constructorMethod != null) {
+                    updateMethodFields = constructorMethod.hasSuperReference();
+                } else {
+                    updateMethodFields = classExpr.getHeritage() != null;
+                }
+                // Disable for now:
+                updateMethodFields = false;
+            } else {
+                assert propertyValue instanceof FunctionExpression
+                        || propertyValue instanceof GeneratorExpression;
+                updateMethodFields = ((FunctionNode) propertyValue).hasSuperReference();
+            }
+        }
+
         String propName = PropName(propertyName);
         if (propName == null) {
             assert propertyName instanceof ComputedPropertyName;
             ValType type = propertyName.accept(this, mv);
 
+            if (updateMethodFields) {
+                // stack: [<object>, pk] -> [<object>, pk, <object>, pk]
+                mv.dup2();
+            }
             // stack: [<object>, pk]
             expressionBoxedValue(propertyValue, mv);
+            if (updateMethodFields) {
+                // stack: [<object>, pk, <object>, pk, value] -> [<object>, pk, value]
+                mv.dupX2();
+                mv.invoke(Methods.ScriptRuntime_updateMethod);
+            }
             // stack: [<object>, pk, value]
-            if (IsAnonymousFunctionDefinition(propertyValue)) {
+            if (isAnonymousFunctionDefinition) {
                 SetFunctionName(propertyValue, type, mv);
             }
             mv.loadExecutionContext();
@@ -242,8 +271,17 @@ final class PropertyGenerator extends
             mv.invoke(Methods.ScriptRuntime_defineProtoProperty);
         } else {
             mv.aconst(propName);
+            if (updateMethodFields) {
+                // stack: [<object>, pk] -> [<object>, pk, <object>, pk]
+                mv.dup2();
+            }
             expressionBoxedValue(propertyValue, mv);
-            if (IsAnonymousFunctionDefinition(propertyValue)) {
+            if (updateMethodFields) {
+                // stack: [<object>, pk, <object>, pk, value] -> [<object>, pk, value]
+                mv.dupX2();
+                mv.invoke(Methods.ScriptRuntime_updateMethod);
+            }
+            if (isAnonymousFunctionDefinition) {
                 SetFunctionName(propertyValue, propName, mv);
             }
             mv.loadExecutionContext();

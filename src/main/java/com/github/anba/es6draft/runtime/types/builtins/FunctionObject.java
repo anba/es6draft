@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Property;
 import com.github.anba.es6draft.runtime.types.PropertyDescriptor;
 import com.github.anba.es6draft.runtime.types.ScriptObject;
+import com.github.anba.es6draft.runtime.types.Symbol;
 
 /**
  * <h1>9 Ordinary and Exotic Objects Behaviours</h1><br>
@@ -334,6 +335,18 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         assert isInitialised() : "uninitialised function object";
         assert !needsSuper : "function object already method";
         this.needsSuper = true;
+        this.methodName = methodName;
+        this.homeObject = homeObject;
+    }
+
+    /**
+     * 
+     */
+    public final void updateMethod(Object methodName, ScriptObject homeObject) {
+        assert isInitialised() : "uninitialised function object";
+        assert needsSuper : "function object not method";
+        assert methodName != null && homeObject != null;
+        assert methodName instanceof String || methodName instanceof Symbol;
         this.methodName = methodName;
         this.homeObject = homeObject;
     }

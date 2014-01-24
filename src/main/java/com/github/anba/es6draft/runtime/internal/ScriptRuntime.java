@@ -184,6 +184,15 @@ public final class ScriptRuntime {
     }
 
     /**
+     * 12.1.5 Object Initialiser
+     * <p>
+     * 12.1.5.8 Runtime Semantics: PropertyDefinitionEvaluation
+     */
+    public static void updateMethod(ScriptObject object, Object propertyName, FunctionObject f) {
+        f.updateMethod(propertyName, object);
+    }
+
+    /**
      * 12.1.7 Generator Comprehensions
      * <p>
      * 12.1.7.2 Runtime Semantics: Evaluation
@@ -523,6 +532,9 @@ public final class ScriptRuntime {
         }
         if (propertyKey == null) {
             propertyKey = ((FunctionEnvironmentRecord) envRec).getMethodName();
+            if (propertyKey == null) {
+                throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
+            }
         }
         if (propertyKey instanceof Symbol) {
             return new Reference.SuperSymbolReference(baseValue, (Symbol) propertyKey, strict,
