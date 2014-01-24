@@ -1808,12 +1808,8 @@ public class Parser {
             Set<String> names, boolean simple) {
         if (!simple) {
             boolean hasDuplicates = (boundNames.size() != names.size());
-            boolean hasEvalOrArguments = (names.contains("eval") || names.contains("arguments"));
             if (hasDuplicates) {
                 reportSyntaxError(node, Messages.Key.StrictModeDuplicateFormalParameter);
-            }
-            if (hasEvalOrArguments) {
-                reportSyntaxError(node, Messages.Key.StrictModeRestrictedIdentifier);
             }
         }
     }
@@ -2432,6 +2428,9 @@ public class Parser {
         consume(Token.YIELD);
         boolean delegatedYield = false;
         if (token() == Token.MUL) {
+            if (!noLineTerminator()) {
+                reportSyntaxError(Messages.Key.UnexpectedEndOfLine);
+            }
             consume(Token.MUL);
             delegatedYield = true;
         }
@@ -2548,7 +2547,7 @@ public class Parser {
         Expression heritage = null;
         if (token() == Token.EXTENDS) {
             consume(Token.EXTENDS);
-            heritage = assignmentExpression(true);
+            heritage = leftHandSideExpression(true);
         }
         consume(Token.LC);
         enterBlockContext();
@@ -2589,7 +2588,7 @@ public class Parser {
         Expression heritage = null;
         if (token() == Token.EXTENDS) {
             consume(Token.EXTENDS);
-            heritage = assignmentExpression(true);
+            heritage = leftHandSideExpression(true);
         }
         consume(Token.LC);
         if (name != null) {
@@ -4086,15 +4085,15 @@ public class Parser {
      * <pre>
      * ContinueStatement :
      *     continue ;
-     *     continue [no <i>LineTerminator</i> here] UnresolvedIdentifier ;
+     *     continue [no <i>LineTerminator</i> here] NonResolvedIdentifier ;
      * </pre>
      */
     private ContinueStatement continueStatement() {
         long begin = ts.beginPosition();
         String label;
         consume(Token.CONTINUE);
-        if (noLineTerminator() && isUnresolvedIdentifier(token())) {
-            label = unresolvedIdentifier();
+        if (noLineTerminator() && isNonResolvedIdentifier(token())) {
+            label = nonResolvedIdentifier();
         } else {
             label = null;
         }
@@ -4122,15 +4121,15 @@ public class Parser {
      * <pre>
      * BreakStatement :
      *     break ;
-     *     break [no <i>LineTerminator</i> here] UnresolvedIdentifier ;
+     *     break [no <i>LineTerminator</i> here] NonResolvedIdentifier ;
      * </pre>
      */
     private BreakStatement breakStatement() {
         long begin = ts.beginPosition();
         String label;
         consume(Token.BREAK);
-        if (noLineTerminator() && isUnresolvedIdentifier(token())) {
-            label = unresolvedIdentifier();
+        if (noLineTerminator() && isNonResolvedIdentifier(token())) {
+            label = nonResolvedIdentifier();
         } else {
             label = null;
         }
@@ -4275,7 +4274,7 @@ public class Parser {
      * 
      * <pre>
      * LabelledStatement<sub>[Yield, Return]</sub> :
-     *     UnresolvedIdentifier : Statement<sub>[?Yield, ?Return]</sub>
+     *     NonResolvedIdentifier : Statement<sub>[?Yield, ?Return]</sub>
      * </pre>
      */
     private Statement labelledStatement() {
@@ -4324,7 +4323,7 @@ public class Parser {
                 break labels;
             }
             long beginLabel = ts.beginPosition();
-            String name = unresolvedIdentifier();
+            String name = nonResolvedIdentifier();
             consume(Token.COLON);
             if (!labelSet.add(name)) {
                 reportSyntaxError(beginLabel, Messages.Key.DuplicateLabel, name);
@@ -4690,14 +4689,14 @@ public class Parser {
      * <strong>[12.1.2] Identifier Reference</strong>
      * 
      * <pre>
-     * UnresolvedIdentifier<sub>[Yield]</sub> :
+     * NonResolvedIdentifier<sub>[Yield]</sub> :
      *     Identifier
      *     <sub>[~Yield]</sub> yield
      * </pre>
      */
-    private String unresolvedIdentifier() {
+    private String nonResolvedIdentifier() {
         Token tok = token();
-        if (!isUnresolvedIdentifier(tok)) {
+        if (!isNonResolvedIdentifier(tok)) {
             reportTokenNotIdentifier(tok);
         }
         String name = getName(tok);
@@ -4710,9 +4709,9 @@ public class Parser {
      * 
      * <pre>
      * IdentifierReference<sub>[Yield]</sub> :
-     *     UnresolvedIdentifier<sub>[?Yield]</sub>
+     *     NonResolvedIdentifier<sub>[?Yield]</sub>
      * 
-     * UnresolvedIdentifier<sub>[Yield]</sub> :
+     * NonResolvedIdentifier<sub>[Yield]</sub> :
      *     Identifier
      *     <sub>[~Yield]</sub> yield
      * </pre>
@@ -4732,9 +4731,9 @@ public class Parser {
      * 
      * <pre>
      * IdentifierReference<sub>[Yield]</sub> :
-     *     UnresolvedIdentifier<sub>[?Yield]</sub>
+     *     NonResolvedIdentifier<sub>[?Yield]</sub>
      * 
-     * UnresolvedIdentifier<sub>[Yield]</sub> :
+     * NonResolvedIdentifier<sub>[Yield]</sub> :
      *     Identifier
      *     <sub>[~Yield]</sub> yield
      * </pre>
@@ -4752,7 +4751,7 @@ public class Parser {
     /**
      * <strong>[12.1.2] Identifier Reference</strong>
      */
-    private boolean isUnresolvedIdentifier(Token tok) {
+    private boolean isNonResolvedIdentifier(Token tok) {
         switch (tok) {
         case NAME:
             return true;
@@ -5242,7 +5241,6 @@ public class Parser {
             return new PropertyNameDefinition(begin, ts.endPosition(), identifier);
         }
         if (LOOKAHEAD(Token.ASSIGN)) {
-            // TODO: investigate why spec does not use "IdentifierReference[?Yield]"
             String ident = identifierReference();
             Identifier identifier = new Identifier(begin, ts.endPosition(), ident);
             consume(Token.ASSIGN);
