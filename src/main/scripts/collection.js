@@ -31,10 +31,10 @@ const mozIteratorSym = "@@iterator";
   const isMapSym = Symbol("isMap");
 
   class Map extends BuiltinMap {
-    constructor(iterable, comparator = "is") {
+    constructor(iterable) {
       if (!(typeof this == 'object' && this !== null)) {
         if (this === undefined) {
-          return new Map(iterable, comparator);
+          return new Map(iterable);
         }
         throw new TypeError();
       }
@@ -45,7 +45,7 @@ const mozIteratorSym = "@@iterator";
       if (iterable !== undefined) {
         iterable = iterable[mozIteratorSym]();
       }
-      return super(iterable, comparator);
+      return super(iterable);
     }
 
     // overridden to change return value to `undefined`
@@ -82,10 +82,10 @@ const mozIteratorSym = "@@iterator";
   const isSetSym = Symbol("isSet");
 
   class Set extends BuiltinSet {
-    constructor(iterable, comparator = "is") {
+    constructor(iterable) {
       if (!(typeof this == 'object' && this !== null)) {
         if (this === undefined) {
-          return new Set(iterable, comparator);
+          return new Set(iterable);
         }
         throw new TypeError();
       }
@@ -96,7 +96,7 @@ const mozIteratorSym = "@@iterator";
       if (iterable !== undefined) {
         iterable = iterable[mozIteratorSym]();
       }
-      return super(iterable, comparator);
+      return super(iterable);
     }
 
     // overridden to change return value to `undefined`

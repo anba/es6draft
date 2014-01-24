@@ -336,6 +336,15 @@ tests/basic/testBug714650.js
 # contextual .name property for functions
 tests/self-test/assertDeepEq.js
 
+# SameValueZero comparison for Map and Set not implemented in SM
+tests/auto-regress/bug770954.js
+tests/collections/key-equality-0.js
+tests/collections/Map-gc-4.js
+tests/collections/Map-get.js
+
+# for-of does not call .next() with undefined as a single argument
+tests/for-of/next-arity.js
+
 
 #######################################
 # ES6 related syntax changes          #
