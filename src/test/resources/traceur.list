@@ -30,6 +30,10 @@ feature/Symbol/Object.js
 # invalid test, Symbol.prototype.toString() throws when thisArg is primitive symbol
 feature/Symbol/ObjectModel.js
 
+# changed default constructor and old functions as base class
+feature/Classes/FieldLookup.js
+feature/Classes/InheritanceFromNonclass.js
+
 
 ############################################
 # Implementation specific differences      #

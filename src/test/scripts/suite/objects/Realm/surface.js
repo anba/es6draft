@@ -35,7 +35,7 @@ function assertPrototypeProperty(object, name = "prototype", value = object[name
 
 /* Realm Objects */
 
-assertBuiltinConstructor(Realm, "Realm", 1);
+assertBuiltinConstructor(Realm, "Realm", 0);
 assertBuiltinPrototype(Realm.prototype);
 assertSame(Realm, Realm.prototype.constructor);
 
