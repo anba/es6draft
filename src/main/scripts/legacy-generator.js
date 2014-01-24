@@ -9,7 +9,7 @@
 "use strict";
 
 const {
-  Object, Function, Symbol, StopIteration,
+  Object, Function, Symbol, StopIteration, Reflect
 } = global;
 
 const Object_defineProperty = Object.defineProperty,
@@ -83,7 +83,14 @@ function GeneratorResume(fn, g, v) {
   }
 }
 
-Object.defineProperties(Object.mixin(LegacyGeneratorPrototype, {
+function mixin(target, source) {
+  for (let name of {[Symbol.iterator]: () => Reflect.ownKeys(source)}) {
+    Reflect.defineProperty(target, name, Reflect.getOwnPropertyDescriptor(source, name));
+  }
+  return target;
+}
+
+Object.defineProperties(mixin(LegacyGeneratorPrototype, {
   [iteratorSym]() {
     return this[mozIteratorSym]();
   },

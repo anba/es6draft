@@ -9,7 +9,7 @@
 "use strict";
 
 const {
-  Object, Function, Array, String, Symbol, TypeError, Proxy,
+  Object, Function, Array, String, Symbol, TypeError, Proxy, Reflect
 } = global;
 
 const Object_keys = Object.keys,
@@ -61,6 +61,13 @@ const Iterator = MakeIterator();
 function MakeIterator() {
   const nextSym = Symbol("next");
 
+  function mixin(target, source) {
+    for (let name of {[Symbol.iterator]: () => Reflect.ownKeys(source)}) {
+      Reflect.defineProperty(target, name, Reflect.getOwnPropertyDescriptor(source, name));
+    }
+    return target;
+  }
+
   function ToIterator(instance, obj, keys = false) {
     var iter = (
       Array_isArray(obj) && keys ? obj.map((_, k) => k) :
@@ -86,7 +93,7 @@ function MakeIterator() {
   }
   Iterator.prototype = ToIterator(Object.create(Object.prototype), []);
 
-  Object.defineProperties(Object.mixin(Iterator, {
+  Object.defineProperties(mixin(Iterator, {
     [createSym]() {
       var o = Object.create(Iterator.prototype);
       Object_defineProperty(o, nextSym, {__proto__: null, value: null, configurable: true});
@@ -96,7 +103,7 @@ function MakeIterator() {
     [createSym]: {writable: false, enumerable: false},
   });
 
-  Object.defineProperties(Object.mixin(Iterator.prototype, {
+  Object.defineProperties(mixin(Iterator.prototype, {
     constructor: Iterator,
     get [toStringTagSym]() {
       return "Iterator";

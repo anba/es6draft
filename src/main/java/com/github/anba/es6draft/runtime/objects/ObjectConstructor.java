@@ -100,7 +100,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         public static final String name = "Object";
 
         /**
-         * 19.1.3.17 Object.prototype
+         * 19.1.3.16 Object.prototype
          */
         @Value(name = "prototype", attributes = @Attributes(writable = false, enumerable = false,
                 configurable = false))
@@ -209,7 +209,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 19.1.3.18 Object.seal ( O )
+         * 19.1.3.17 Object.seal ( O )
          */
         @Function(name = "seal", arity = 1)
         public static Object seal(ExecutionContext cx, Object thisValue, Object o) {
@@ -247,7 +247,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 19.1.3.16 Object.preventExtensions ( O )
+         * 19.1.3.15 Object.preventExtensions ( O )
          */
         @Function(name = "preventExtensions", arity = 1)
         public static Object preventExtensions(ExecutionContext cx, Object thisValue, Object o) {
@@ -371,21 +371,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
 
         /**
-         * 19.1.3.15 Object.mixin ( target, source )
-         */
-        @Function(name = "mixin", arity = 2)
-        public static Object mixin(ExecutionContext cx, Object thisValue, Object target,
-                Object source) {
-            /* steps 1-2 */
-            ScriptObject to = ToObject(cx, target);
-            /* steps 3-4 */
-            ScriptObject from = ToObject(cx, source);
-            /* step 5 */
-            return MixinProperties(cx, to, from);
-        }
-
-        /**
-         * 19.1.3.19 Object.setPrototypeOf ( O, proto )
+         * 19.1.3.18 Object.setPrototypeOf ( O, proto )
          */
         @Function(name = "setPrototypeOf", arity = 2)
         public static Object setPrototypeOf(ExecutionContext cx, Object thisValue, Object o,
@@ -508,51 +494,5 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         }
         /* step 8 */
         return CreateArrayFromList(cx, nameList);
-    }
-
-    /**
-     * 19.1.3.15.1 MixinProperties( target, source )
-     */
-    public static <OBJECT extends ScriptObject> OBJECT MixinProperties(ExecutionContext cx,
-            OBJECT target, ScriptObject source) {
-        /* steps 1-2 (not applicable) */
-        /* steps 3-4 */
-        Iterator<?> keys = FromListIterator(cx, source, source.ownPropertyKeys(cx));
-        /* step 5 (omitted) */
-        /* step 6 */
-        ScriptException pendingException = null;
-        /* step 7 */
-        while (keys.hasNext()) {
-            Object nextKey = ToPropertyKey(cx, keys.next());
-            Property prop = null;
-            try {
-                if (nextKey instanceof String) {
-                    prop = source.getOwnProperty(cx, (String) nextKey);
-                } else {
-                    prop = source.getOwnProperty(cx, (Symbol) nextKey);
-                }
-            } catch (ScriptException e) {
-                if (pendingException == null) {
-                    pendingException = e;
-                }
-            }
-            if (prop == null) {
-                continue;
-            }
-            PropertyDescriptor desc = prop.toPropertyDescriptor();
-            try {
-                DefinePropertyOrThrow(cx, target, nextKey, desc);
-            } catch (ScriptException e) {
-                if (pendingException == null) {
-                    pendingException = e;
-                }
-            }
-        }
-        /* step 8 */
-        if (pendingException != null) {
-            throw pendingException;
-        }
-        /* step 9 */
-        return target;
     }
 }
