@@ -34,6 +34,9 @@ feature/Symbol/ObjectModel.js
 feature/Classes/FieldLookup.js
 feature/Classes/InheritanceFromNonclass.js
 
+# Object.mixin() removed in rev22
+feature/ObjectMixin.js
+
 
 ############################################
 # Implementation specific differences      #

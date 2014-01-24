@@ -24,23 +24,3 @@ const {
 
   assertSame(specialDesc, desc);
 }
-
-// Test case 3 [Object.mixin]
-{
-  let specialDesc = {value: 123, writable: true, configurable: true, special: "x"};
-  let source = new Proxy({}, {
-    getOwnPropertyDescriptor: () => specialDesc,
-    ownKeys: () => ["prop"].values(),
-  });
-  let defines = [];
-  let target = new Proxy({}, {
-    defineProperty: (t, propertyKey, descriptor) => {
-      defines.push({propertyKey, descriptor});
-      return true;
-    }
-  });
-  Object.mixin(target, source);
-  assertSame(1, defines.length);
-  assertSame("prop", defines[0].propertyKey);
-  assertSame(specialDesc, defines[0].descriptor);
-}

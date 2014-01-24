@@ -20,11 +20,18 @@ const {
   raw: String_raw,
 } = String;
 
-const $Reflect = Object.mixin(Object.create(null), Reflect);
+function mixin(target, source) {
+  for (let name of {[Symbol.iterator]: () => Reflect.ownKeys(source)}) {
+    Reflect.defineProperty(target, name, Reflect.getOwnPropertyDescriptor(source, name));
+  }
+  return target;
+}
+
+const $Reflect = mixin(Object.create(null), Reflect);
 const $CallFunction = Function.prototype.call.bind(Function.prototype.call);
 
 // Reflect.apply and Reflect.construct are not defined?!
-Object.mixin($Reflect, {
+mixin($Reflect, {
   apply(target, thisArgument, argumentsList) {
     return $CallFunction(target, thisArgument, ...argumentsList);
   },

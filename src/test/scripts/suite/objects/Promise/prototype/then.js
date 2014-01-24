@@ -35,10 +35,8 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
 
   // Test .constructor property is not accessed before IsPromise() check
   class ConstructorAccessed extends Error {}
-  let uninitPromiseWithConstructor = Object.mixin(Promise[Symbol.create](), {
-    get constructor() {
-      throw new ConstructorAccessed
-    }
+  let uninitPromiseWithConstructor = Object.defineProperty(Promise[Symbol.create](), "constructor", {
+    get() { throw new ConstructorAccessed }, configurable: true
   });
   assertThrows(() => uninitPromiseWithConstructor.then(), TypeError);
 }
@@ -46,10 +44,8 @@ assertBuiltinFunction(Promise.prototype.then, "then", 2);
 // Accesses .constructor property
 {
   class ConstructorAccessed extends Error {}
-  let promiseWithConstructor = Object.mixin(new Promise(() => {}), {
-    get constructor() {
-      throw new ConstructorAccessed
-    }
+  let promiseWithConstructor = Object.defineProperty(new Promise(() => {}), "constructor", {
+    get() { throw new ConstructorAccessed }, configurable: true
   });
   assertThrows(() => promiseWithConstructor.then(), ConstructorAccessed);
 }

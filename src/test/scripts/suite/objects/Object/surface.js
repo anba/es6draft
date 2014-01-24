@@ -48,7 +48,6 @@ assertFunctionProperty(Object, "isExtensible");
 assertFunctionProperty(Object, "isFrozen");
 assertFunctionProperty(Object, "isSealed");
 assertFunctionProperty(Object, "keys");
-assertFunctionProperty(Object, "mixin");
 assertFunctionProperty(Object, "preventExtensions");
 assertFunctionProperty(Object, "seal");
 assertFunctionProperty(Object, "setPrototypeOf");
