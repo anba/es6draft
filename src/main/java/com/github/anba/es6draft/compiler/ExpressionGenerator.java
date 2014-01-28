@@ -123,9 +123,13 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
                 Types.ScriptRuntime, "add", Type.getMethodType(Types.CharSequence,
                         Types.CharSequence, Types.CharSequence, Types.ExecutionContext));
 
-        static final MethodDesc ScriptRuntime_delete = MethodDesc.create(MethodType.Static,
-                Types.ScriptRuntime, "delete",
-                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object, Types.ExecutionContext));
+        static final MethodDesc ScriptRuntime_deleteBinding = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "deleteBinding",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Reference, Types.ExecutionContext));
+
+        static final MethodDesc ScriptRuntime_deleteProperty = MethodDesc.create(MethodType.Static,
+                Types.ScriptRuntime, "deleteProperty",
+                Type.getMethodType(Type.BOOLEAN_TYPE, Types.Reference, Types.ExecutionContext));
 
         static final MethodDesc ScriptRuntime_in = MethodDesc.create(MethodType.Static,
                 Types.ScriptRuntime, "in", Type.getMethodType(Type.BOOLEAN_TYPE, Types.Object,
@@ -2221,9 +2225,16 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
             // 12.4.3 The delete Operator
             Expression expr = node.getOperand();
             ValType type = expr.accept(this, mv);
-            mv.toBoxed(type);
-            mv.loadExecutionContext();
-            mv.invoke(Methods.ScriptRuntime_delete);
+            if (type != ValType.Reference) {
+                mv.pop(type);
+                mv.iconst(true);
+            } else if (isPropertyReference(expr, type)) {
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_deleteProperty);
+            } else {
+                mv.loadExecutionContext();
+                mv.invoke(Methods.ScriptRuntime_deleteBinding);
+            }
             return ValType.Boolean;
         }
         case VOID: {

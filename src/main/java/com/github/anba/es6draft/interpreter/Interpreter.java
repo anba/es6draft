@@ -89,6 +89,16 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     }
 
     /**
+     * 12.4.4 The delete Operator
+     */
+    private static boolean delete(Object expr, ExecutionContext cx) {
+        if (!(expr instanceof Reference)) {
+            return true;
+        }
+        return ScriptRuntime.delete((Reference<?, ?>) expr, cx);
+    }
+
+    /**
      * 12.4.5 The void Operator
      */
     private static Undefined _void(Object value, ExecutionContext cx) {
@@ -493,7 +503,7 @@ public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
         case BITNOT:
             return bitnot(GetValue(val, cx), cx);
         case DELETE:
-            return ScriptRuntime.delete(val, cx);
+            return delete(val, cx);
         case NEG:
             return neg(GetValue(val, cx), cx);
         case NOT:

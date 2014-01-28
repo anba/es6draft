@@ -604,46 +604,66 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.4.1 The delete Operator
+     * 12.4 Unary Operators<br>
+     * 12.4.4 The delete Operator
      */
-    public static boolean delete(Object expr, ExecutionContext cx) {
-        /* steps 1-2 (generated code) */
-        /* step 3 */
-        if (!(expr instanceof Reference)) {
-            return true;
+    public static boolean delete(Reference<?, ?> ref, ExecutionContext cx) {
+        /* steps 1-3 (generated code) */
+        /* step 4-6 */
+        if (ref.isPropertyReference()) {
+            return deleteProperty(ref, cx);
         }
-        Reference<?, ?> ref = (Reference<?, ?>) expr;
+        return deleteBinding(ref, cx);
+    }
+
+    /**
+     * 12.4 Unary Operators<br>
+     * 12.4.4 The delete Operator
+     */
+    public static boolean deleteBinding(Reference<?, ?> ref, ExecutionContext cx) {
+        /* steps 1-3 (generated code) */
+        /* step 5 (not applicable) */
+        assert !ref.isPropertyReference();
         /* step 4 */
         if (ref.isUnresolvableReference()) {
+            // TODO: spec issue - change to assert, cf. early error restriction
             if (ref.isStrictReference()) {
                 throw newSyntaxError(cx, Messages.Key.UnqualifiedDelete);
             }
             return true;
-        }
-        /* step 5 */
-        if (ref.isPropertyReference()) {
-            if (ref.isSuperReference()) {
-                throw newReferenceError(cx, Messages.Key.SuperDelete);
-            }
-            ScriptObject obj = ToObject(cx, ref.getBase());
-            boolean deleteStatus;
-            Object referencedName = ref.getReferencedName();
-            if (referencedName instanceof String) {
-                deleteStatus = obj.delete(cx, (String) referencedName);
-            } else {
-                deleteStatus = obj.delete(cx, (Symbol) referencedName);
-            }
-            if (!deleteStatus && ref.isStrictReference()) {
-                throw newTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
-                        .toString());
-            }
-            return deleteStatus;
         }
         /* step 6 */
         assert ref instanceof Reference.IdentifierReference;
         Reference.IdentifierReference idref = (Reference.IdentifierReference) ref;
         EnvironmentRecord bindings = idref.getBase();
         return bindings.deleteBinding(idref.getReferencedName());
+    }
+
+    /**
+     * 12.4 Unary Operators<br>
+     * 12.4.4 The delete Operator
+     */
+    public static boolean deleteProperty(Reference<?, ?> ref, ExecutionContext cx) {
+        /* steps 1-3 (generated code) */
+        /* steps 4, 6 (not applicable) */
+        assert ref.isPropertyReference() && !ref.isUnresolvableReference();
+        /* step 5 */
+        if (ref.isSuperReference()) {
+            throw newReferenceError(cx, Messages.Key.SuperDelete);
+        }
+        ScriptObject obj = ToObject(cx, ref.getBase());
+        boolean deleteStatus;
+        Object referencedName = ref.getReferencedName();
+        if (referencedName instanceof String) {
+            deleteStatus = obj.delete(cx, (String) referencedName);
+        } else {
+            deleteStatus = obj.delete(cx, (Symbol) referencedName);
+        }
+        if (!deleteStatus && ref.isStrictReference()) {
+            throw newTypeError(cx, Messages.Key.PropertyNotDeletable, ref.getReferencedName()
+                    .toString());
+        }
+        return deleteStatus;
     }
 
     /**
