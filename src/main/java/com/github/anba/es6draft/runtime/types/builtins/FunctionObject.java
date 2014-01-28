@@ -79,7 +79,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     private Object /* String|ExoticSymbol */methodName;
 
     private boolean isConstructor;
-    private boolean legacy;
     private String source;
 
     private MethodHandle callMethod;
@@ -113,7 +112,10 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * function object
      */
     private final boolean isLegacy() {
-        return legacy;
+        // TODO: 'caller' and 'arguments' properties are never updated for generator functions
+        // Uninitialised and non-strict functions have legacy support
+        return !(isInitialised() && strict)
+                && realm.isEnabled(CompatibilityOption.FunctionPrototype);
     }
 
     /**
@@ -230,8 +232,12 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
     protected Collection<Object> enumerateOwnKeys() {
         Collection<Object> ownKeys = super.enumerateOwnKeys();
         if (isLegacy()) {
-            ownKeys.add("caller");
-            ownKeys.add("arguments");
+            if (!super.hasOwnProperty("caller")) {
+                ownKeys.add("caller");
+            }
+            if (!super.hasOwnProperty("arguments")) {
+                ownKeys.add("arguments");
+            }
         }
         return ownKeys;
     }
@@ -293,8 +299,6 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         assert this.realm == null && realm != null : "function object already allocated";
         this.callMethod = defaultCallMethod;
         this.tailCallMethod = defaultCallMethod;
-        /* step 13 (moved) */
-        this.realm = realm;
         /* step 9 */
         this.setStrict(strict);
         /* step 10 */
@@ -303,6 +307,8 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
         this.setPrototype(functionPrototype);
         /* step 12 */
         // f.[[Extensible]] = true (implicit)
+        /* step 13 */
+        this.realm = realm;
     }
 
     /**
@@ -410,11 +416,7 @@ public abstract class FunctionObject extends OrdinaryObject implements Callable 
      * [[Strict]]
      */
     public final void setStrict(boolean strict) {
-        assert realm != null : "[[Realm]] not set";
         this.strict = strict;
-        // support for legacy 'caller' and 'arguments' properties
-        // TODO: 'caller' and 'arguments' properties are never updated for generator functions
-        this.legacy = !strict && realm.isEnabled(CompatibilityOption.FunctionPrototype);
     }
 
     /**

@@ -176,6 +176,32 @@ public class OrdinaryFunction extends FunctionObject {
     }
 
     /**
+     * 9.2.8 AddRestrictedFunctionProperties Abstract Operation
+     */
+    private static void AddRestrictedFunctionProperties(ExecutionContext cx, FunctionObject obj) {
+        // Modified AddRestrictedFunctionProperties() to bypass .caller and .arguments properties
+        // from FunctionObject
+
+        // TODO: %ThrowTypeError% from current realm or function's realm? (current realm per spec)
+        /* step 1 */
+        Callable thrower = cx.getRealm().getThrowTypeError();
+        /* step 2 */
+        ordinaryDefinePropertyOrThrow(cx, obj, "caller", new PropertyDescriptor(thrower, thrower,
+                false, false));
+        /* step 3 */
+        ordinaryDefinePropertyOrThrow(cx, obj, "arguments", new PropertyDescriptor(thrower,
+                thrower, false, false));
+    }
+
+    private static void ordinaryDefinePropertyOrThrow(ExecutionContext cx, FunctionObject obj,
+            String propertyKey, PropertyDescriptor desc) {
+        boolean success = obj.ordinaryDefineOwnProperty(propertyKey, desc);
+        if (!success) {
+            throw newTypeError(cx, Messages.Key.PropertyNotCreatable, propertyKey);
+        }
+    }
+
+    /**
      * 9.2.8 The %ThrowTypeError% Function Object
      */
     private static class TypeErrorThrower extends BuiltinFunction {
