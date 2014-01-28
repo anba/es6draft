@@ -135,8 +135,8 @@ public abstract class ShellGlobalObject extends GlobalObject {
         ScriptLoader.ScriptEvaluation(script, getRealm(), false);
     }
 
-    protected static ScriptException throwError(ExecutionContext cx, String message) {
-        throw Errors.newError(cx, Objects.toString(message, ""));
+    protected static ScriptException newError(ExecutionContext cx, String message) {
+        return Errors.newError(cx, Objects.toString(message, ""));
     }
 
     protected String read(ExecutionContext cx, Path path) {
@@ -147,7 +147,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
             byte[] bytes = Files.readAllBytes(path);
             return new String(bytes, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw throwError(cx, e.getMessage());
+            throw newError(cx, e.getMessage());
         }
     }
 
@@ -159,7 +159,7 @@ public abstract class ShellGlobalObject extends GlobalObject {
             eval(fileName, path);
             return UNDEFINED;
         } catch (IOException e) {
-            throw throwError(cx, e.getMessage());
+            throw newError(cx, e.getMessage());
         } catch (ParserException | CompilationException e) {
             throw e.toScriptException(cx);
         }

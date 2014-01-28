@@ -113,7 +113,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     @Function(name = "evaluate", arity = 2)
     public Object evaluate(ExecutionContext cx, Object code, Object options) {
         if (!(Type.isString(code) && (Type.isUndefined(options) || Type.isObject(options)))) {
-            throwError(cx, "invalid arguments");
+            throw newError(cx, "invalid arguments");
         }
 
         String source = Type.stringValue(code).toString();
@@ -137,7 +137,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             if (!Type.isUndefined(g)) {
                 ScriptObject obj = ToObject(cx, g);
                 if (!(obj instanceof GlobalObject)) {
-                    throwError(cx, "invalid global argument");
+                    throw newError(cx, "invalid global argument");
                 }
                 global = (GlobalObject) obj;
             }
@@ -154,7 +154,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             if (catchTermination) {
                 return "terminated";
             }
-            throw throwError(cx, e.getMessage());
+            throw newError(cx, e.getMessage());
         }
     }
 
@@ -198,14 +198,14 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             if (!Type.isUndefined(message)) {
                 msg.append(": ").append(ToFlatString(cx, message));
             }
-            throwError(cx, msg.toString());
+            throw newError(cx, msg.toString());
         }
     }
 
     /** shell-function: {@code throwError()} */
     @Function(name = "throwError", arity = 0)
     public void throwError(ExecutionContext cx) {
-        throwError(cx, "This is an error");
+        throw newError(cx, "This is an error");
     }
 
     /** shell-function: {@code build()} */
@@ -227,12 +227,12 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
             return global;
         }
         if (!(global instanceof GlobalObject)) {
-            throwError(cx, "invalid global argument");
+            throw newError(cx, "invalid global argument");
         }
         try {
             return evaluate(((GlobalObject) global).getRealm(), s, "evalcx", 1);
         } catch (IOException e) {
-            throw throwError(cx, e.getMessage());
+            throw newError(cx, e.getMessage());
         }
     }
 
@@ -242,7 +242,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         try {
             TimeUnit.SECONDS.sleep(ToUint32(dt));
         } catch (InterruptedException e) {
-            throwError(cx, e.getMessage());
+            throw newError(cx, e.getMessage());
         }
     }
 
@@ -309,7 +309,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         try {
             global.executeInitialisation();
         } catch (ParserException | CompilationException | IOException e) {
-            throwError(cx, e.getMessage());
+            throw newError(cx, e.getMessage());
         }
         return global;
     }
