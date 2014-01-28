@@ -76,10 +76,10 @@ public class LoaderPrototype extends OrdinaryObject implements Initialisable {
         private static LoaderObject thisLoader(ExecutionContext cx, Object value) {
             if (value instanceof LoaderObject) {
                 LoaderObject loader = (LoaderObject) value;
-                if (loader.getLoader() == null) {
-                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                if (loader.getLoader() != null) {
+                    return loader;
                 }
-                return loader;
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }

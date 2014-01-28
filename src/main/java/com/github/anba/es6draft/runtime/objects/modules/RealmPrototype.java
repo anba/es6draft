@@ -15,9 +15,11 @@ import com.github.anba.es6draft.runtime.Realm;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Accessor;
+import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
 import com.github.anba.es6draft.runtime.internal.Properties.Function;
 import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
+import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Intrinsics;
 import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 
@@ -50,10 +52,10 @@ public class RealmPrototype extends OrdinaryObject implements Initialisable {
         private static RealmObject thisRealmObject(ExecutionContext cx, Object value) {
             if (value instanceof RealmObject) {
                 RealmObject realmObject = (RealmObject) value;
-                if (realmObject.getRealm() == null) {
-                    throw newTypeError(cx, Messages.Key.UninitialisedObject);
+                if (realmObject.getRealm() != null) {
+                    return realmObject;
                 }
-                return realmObject;
+                throw newTypeError(cx, Messages.Key.UninitialisedObject);
             }
             throw newTypeError(cx, Messages.Key.IncompatibleObject);
         }
@@ -88,5 +90,12 @@ public class RealmPrototype extends OrdinaryObject implements Initialisable {
             /* step 5 */
             return realmObject.getRealm().getGlobalThis();
         }
+
+        /**
+         * 26.2.3.4 %Realm%.prototype [ @@toStringTag ]
+         */
+        @Value(name = "[Symbol.toStringTag]", symbol = BuiltinSymbol.toStringTag,
+                attributes = @Attributes(writable = false, enumerable = false, configurable = true))
+        public static final String toStringTag = "Realm";
     }
 }

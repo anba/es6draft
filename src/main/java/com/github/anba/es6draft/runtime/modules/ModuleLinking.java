@@ -67,7 +67,7 @@ public final class ModuleLinking {
         if (!isModuleLinkSpecComplete()) {
             for (Load load : start) {
                 if (load.getKind() == Load.Kind.Declarative) {
-                    throw newInternalError(cx, Messages.Key.InternalError);
+                    throw newInternalError(cx, Messages.Key.InternalError, "Declarative Module");
                 }
             }
             // only dynamic loads
