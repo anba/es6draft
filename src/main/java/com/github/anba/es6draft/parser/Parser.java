@@ -2730,7 +2730,7 @@ public class Parser {
         case IF:
             return ifStatement();
         case FOR:
-            return forStatement(EMPTY_LABEL_SET);
+            return forStatementOrForInOfStatement(EMPTY_LABEL_SET);
         case WHILE:
             return whileStatement(EMPTY_LABEL_SET);
         case DO:
@@ -2954,7 +2954,7 @@ public class Parser {
             BindingPattern bindingPattern = bindingPattern(false);
             addLexDeclaredName(bindingPattern);
             if (token() == Token.ASSIGN || allowIn) {
-                // make initialiser optional if `allowIn == false`, cf. validateFor{InOf}
+                // make initialiser optional if `allowIn == false`, cf. forStatement()
                 initialiser = initialiser(allowIn);
             }
             binding = bindingPattern;
@@ -2964,7 +2964,7 @@ public class Parser {
             if (token() == Token.ASSIGN) {
                 initialiser = initialiser(allowIn);
             } else if (isConst && allowIn) {
-                // `allowIn == false` indicates for-loop, cf. validateFor{InOf}
+                // `allowIn == false` indicates for-loop, cf. forStatement()
                 reportSyntaxError(bindingIdentifier, Messages.Key.ConstMissingInitialiser);
             }
             binding = bindingIdentifier;
@@ -3691,36 +3691,39 @@ public class Parser {
     /**
      * <strong>[13.6.3] The <code>for</code> Statement</strong> <br>
      * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
+     */
+    private IterationStatement forStatementOrForInOfStatement(Set<String> labelSet) {
+        long position = ts.position(), lineinfo = ts.lineinfo();
+        ForStatement forStatement = forStatement(labelSet);
+        if (forStatement != null) {
+            return forStatement;
+        }
+        // Reset tokenstream to ensure correct block scopes are created
+        ts.reset(position, lineinfo);
+        return forInOfStatement(labelSet);
+    }
+
+    /**
+     * <strong>[13.6.3] The <code>for</code> Statement</strong> <br>
      * 
      * <pre>
      * IterationStatement<sub>[Yield, Return]</sub> :
      *     for ( Expression<sub>[?Yield]opt</sub> ; Expression<sub>[In, ?Yield]opt</sub> ; Expression<sub>[In, ?Yield]opt</sub> ) Statement<sub>[?Yield, ?Return]</sub>
      *     for ( var VariableDeclarationList<sub>[?Yield]</sub> ; Expression<sub>[In, ?Yield]opt</sub> ; Expression<sub>[In, ?Yield]opt</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( LexicalDeclaration<sub>[?Yield]</sub> ; Expression<sub>[In, ?Yield]opt</sub> ; Expression<sub>[In, ?Yield]opt</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( LeftHandSideExpression<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( var ForBinding<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( ForDeclaration<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( LeftHandSideExpression<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( var ForBinding<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     *     for ( ForDeclaration<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
-     * ForDeclaration<sub>[Yield]</sub> :
-     *     LetOrConst ForBinding<sub>[?Yield]</sub>
-     * ForBinding<sub>[Yield]</sub> :
-     *     BindingIdentifier<sub>[?Yield]</sub>
-     *     BindingPattern<sub>[?Yield]</sub>
+     *     for ( LexicalDeclaration<sub>[?Yield]</sub> Expression<sub>[In, ?Yield]opt</sub> ; Expression<sub>[In, ?Yield]opt</sub> ) Statement<sub>[?Yield, ?Return]</sub>
      * </pre>
      */
-    private IterationStatement forStatement(Set<String> labelSet) {
+    private ForStatement forStatement(Set<String> labelSet) {
         long begin = ts.beginPosition();
         consume(Token.FOR);
-        boolean each = false;
         if (token() != Token.LP && isName("each")
                 && isEnabled(CompatibilityOption.ForEachStatement)) {
-            consume("each");
-            each = true;
+            // Don't bother to make the legacy ForEachStatement case fast
+            return null;
         }
         consume(Token.LP);
 
+        // NB: This code needs to be able to parse ForStatement and ForIn/OfStatement
         BlockContext lexBlockContext = null;
         Node head;
         switch (token()) {
@@ -3728,9 +3731,7 @@ public class Parser {
             long beginVar = ts.beginPosition();
             consume(Token.VAR);
             List<VariableDeclaration> decls = variableDeclarationList(false);
-            VariableStatement varStmt = new VariableStatement(beginVar, ts.endPosition(), decls);
-            addVarScopedDeclaration(varStmt);
-            head = varStmt;
+            head = new VariableStatement(beginVar, ts.endPosition(), decls);
             break;
         case SEMI:
             head = null;
@@ -3752,91 +3753,170 @@ public class Parser {
             break;
         }
 
-        if (!each && token() == Token.SEMI) {
-            head = validateFor(head);
-            consume(Token.SEMI);
-            Expression test = null;
-            if (token() != Token.SEMI) {
-                test = expression(true);
-            }
-            consume(Token.SEMI);
-            Expression step = null;
-            if (token() != Token.RP) {
-                step = expression(true);
-            }
-            consume(Token.RP);
-
-            LabelContext labelCx = enterIteration(begin, labelSet);
-            Statement stmt = statement();
-            exitIteration();
-
+        if (token() != Token.SEMI) {
+            // This is not a for-statement, try for-in/of next
             if (lexBlockContext != null) {
+                // Leave block context before rollback
                 exitBlockContext();
             }
+            return null;
+        }
 
-            ForStatement iteration = new ForStatement(begin, ts.endPosition(), lexBlockContext,
-                    labelCx.abrupts, labelCx.labelSet, head, test, step, stmt);
+        if (head instanceof VariableStatement) {
+            // Enforce initialiser for BindingPattern
+            VariableStatement varStmt = (VariableStatement) head;
+            for (VariableDeclaration decl : varStmt.getElements()) {
+                if (decl.getBinding() instanceof BindingPattern && decl.getInitialiser() == null) {
+                    reportSyntaxError(varStmt, Messages.Key.DestructuringMissingInitialiser);
+                }
+            }
+            // Add variable statement after for-statement type is known
+            addVarScopedDeclaration(varStmt);
+        } else if (head instanceof LexicalDeclaration) {
+            // Enforce initialiser for BindingPattern and const declarations
+            LexicalDeclaration lexDecl = (LexicalDeclaration) head;
+            boolean isConst = lexDecl.getType() == LexicalDeclaration.Type.Const;
+            for (LexicalBinding decl : lexDecl.getElements()) {
+                if (decl.getBinding() instanceof BindingPattern && decl.getInitialiser() == null) {
+                    reportSyntaxError(lexDecl, Messages.Key.DestructuringMissingInitialiser);
+                }
+                if (isConst && decl.getInitialiser() == null) {
+                    reportSyntaxError(lexDecl, Messages.Key.ConstMissingInitialiser);
+                }
+            }
+        }
+
+        consume(Token.SEMI);
+        Expression test = null;
+        if (token() != Token.SEMI) {
+            test = expression(true);
+        }
+        consume(Token.SEMI);
+        Expression step = null;
+        if (token() != Token.RP) {
+            step = expression(true);
+        }
+        consume(Token.RP);
+
+        LabelContext labelCx = enterIteration(begin, labelSet);
+        Statement stmt = statement();
+        exitIteration();
+
+        if (lexBlockContext != null) {
+            exitBlockContext();
+        }
+
+        ForStatement iteration = new ForStatement(begin, ts.endPosition(), lexBlockContext,
+                labelCx.abrupts, labelCx.labelSet, head, test, step, stmt);
+        if (lexBlockContext != null) {
+            lexBlockContext.node = iteration;
+        }
+        return iteration;
+    }
+
+    /**
+     * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
+     * 
+     * <pre>
+     * IterationStatement<sub>[Yield, Return]</sub> :
+     *     for ( LeftHandSideExpression<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
+     *     for ( var ForBinding<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
+     *     for ( ForDeclaration<sub>[?Yield]</sub> in Expression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
+     *     for ( LeftHandSideExpression<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
+     *     for ( var ForBinding<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
+     *     for ( ForDeclaration<sub>[?Yield]</sub> of AssignmentExpression<sub>[In, ?Yield]</sub> ) Statement<sub>[?Yield, ?Return]</sub>
+     * ForDeclaration<sub>[Yield]</sub> :
+     *     LetOrConst ForBinding<sub>[?Yield]</sub>
+     * ForBinding<sub>[Yield]</sub> :
+     *     BindingIdentifier<sub>[?Yield]</sub>
+     *     BindingPattern<sub>[?Yield]</sub>
+     * </pre>
+     */
+    private IterationStatement forInOfStatement(Set<String> labelSet) {
+        long begin = ts.beginPosition();
+        consume(Token.FOR);
+        boolean forEach = false, forOf = false;
+        if (token() != Token.LP && isName("each")
+                && isEnabled(CompatibilityOption.ForEachStatement)) {
+            consume("each");
+            forEach = true;
+        }
+        consume(Token.LP);
+
+        boolean lexicalBinding = false;
+        Node head;
+        switch (token()) {
+        case VAR:
+            VariableStatement varStmt = forVarDeclaration();
+            assert varStmt.getElements().size() == 1;
+            assert varStmt.getElements().get(0).getInitialiser() == null;
+            addVarDeclaredName(varStmt.getElements().get(0).getBinding());
+            addVarScopedDeclaration(varStmt);
+            head = varStmt;
+            break;
+        case CONST:
+            lexicalBinding = true;
+            head = forDeclaration();
+            break;
+        case LET:
+            if (lexicalBindingFirstSet(peek())) {
+                lexicalBinding = true;
+                head = forDeclaration();
+                break;
+            }
+            // 'let' as identifier, e.g. `for (let in "") {}`
+            // fall-through
+        default:
+            Expression lhs = leftHandSideExpression(true);
+            head = validateAssignment(lhs, ExceptionType.SyntaxError,
+                    Messages.Key.InvalidAssignmentTarget);
+            break;
+        }
+
+        Expression expr;
+        if (forEach || token() == Token.IN) {
+            consume(Token.IN);
+            expr = expression(true);
+        } else {
+            forOf = true;
+            consume("of");
+            expr = assignmentExpression(true);
+        }
+        consume(Token.RP);
+
+        BlockContext lexBlockContext = null;
+        if (lexicalBinding) {
+            lexBlockContext = enterBlockContext();
+            LexicalDeclaration lexDecl = (LexicalDeclaration) head;
+            assert lexDecl.getElements().size() == 1;
+            assert lexDecl.getElements().get(0).getInitialiser() == null;
+            addLexDeclaredName(lexDecl.getElements().get(0).getBinding());
+            addLexScopedDeclaration(lexDecl);
+        }
+
+        LabelContext labelCx = enterIteration(begin, labelSet);
+        Statement stmt = statement();
+        exitIteration();
+
+        if (lexicalBinding) {
+            exitBlockContext();
+        }
+
+        if (forEach) {
+            ForEachStatement iteration = new ForEachStatement(begin, ts.endPosition(),
+                    lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
             if (lexBlockContext != null) {
                 lexBlockContext.node = iteration;
             }
             return iteration;
-        } else if (each || token() == Token.IN) {
-            head = validateForInOf(head);
-            consume(Token.IN);
-            Expression expr;
-            if (lexBlockContext == null) {
-                expr = expression(true);
-            } else {
-                exitBlockContext();
-                expr = expression(true);
-                reenterBlockContext(lexBlockContext);
-            }
-            consume(Token.RP);
-
-            LabelContext labelCx = enterIteration(begin, labelSet);
-            Statement stmt = statement();
-            exitIteration();
-
+        } else if (!forOf) {
+            ForInStatement iteration = new ForInStatement(begin, ts.endPosition(), lexBlockContext,
+                    labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
             if (lexBlockContext != null) {
-                exitBlockContext();
+                lexBlockContext.node = iteration;
             }
-
-            if (each) {
-                ForEachStatement iteration = new ForEachStatement(begin, ts.endPosition(),
-                        lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
-                if (lexBlockContext != null) {
-                    lexBlockContext.node = iteration;
-                }
-                return iteration;
-            } else {
-                ForInStatement iteration = new ForInStatement(begin, ts.endPosition(),
-                        lexBlockContext, labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
-                if (lexBlockContext != null) {
-                    lexBlockContext.node = iteration;
-                }
-                return iteration;
-            }
+            return iteration;
         } else {
-            head = validateForInOf(head);
-            consume("of");
-            Expression expr;
-            if (lexBlockContext == null) {
-                expr = assignmentExpression(true);
-            } else {
-                exitBlockContext();
-                expr = assignmentExpression(true);
-                reenterBlockContext(lexBlockContext);
-            }
-            consume(Token.RP);
-
-            LabelContext labelCx = enterIteration(begin, labelSet);
-            Statement stmt = statement();
-            exitIteration();
-
-            if (lexBlockContext != null) {
-                exitBlockContext();
-            }
-
             ForOfStatement iteration = new ForOfStatement(begin, ts.endPosition(), lexBlockContext,
                     labelCx.abrupts, labelCx.labelSet, head, expr, stmt);
             if (lexBlockContext != null) {
@@ -3847,51 +3927,41 @@ public class Parser {
     }
 
     /**
-     * @see #forStatement(Set)
+     * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
+     * 
+     * <pre>
+     * ForDeclaration<sub>[Yield]</sub> :
+     *     LetOrConst ForBinding<sub>[?Yield]</sub>
+     * </pre>
      */
-    private Node validateFor(Node head) {
-        if (head instanceof VariableStatement) {
-            for (VariableDeclaration decl : ((VariableStatement) head).getElements()) {
-                if (decl.getBinding() instanceof BindingPattern && decl.getInitialiser() == null) {
-                    reportSyntaxError(head, Messages.Key.DestructuringMissingInitialiser);
-                }
-            }
-        } else if (head instanceof LexicalDeclaration) {
-            boolean isConst = ((LexicalDeclaration) head).getType() == LexicalDeclaration.Type.Const;
-            for (LexicalBinding decl : ((LexicalDeclaration) head).getElements()) {
-                if (decl.getBinding() instanceof BindingPattern && decl.getInitialiser() == null) {
-                    reportSyntaxError(head, Messages.Key.DestructuringMissingInitialiser);
-                }
-                if (isConst && decl.getInitialiser() == null) {
-                    reportSyntaxError(head, Messages.Key.ConstMissingInitialiser);
-                }
-            }
+    private LexicalDeclaration forDeclaration() {
+        long begin = ts.beginPosition();
+        LexicalDeclaration.Type type;
+        if (token() == Token.LET) {
+            consume(Token.LET);
+            type = LexicalDeclaration.Type.Let;
+        } else {
+            consume(Token.CONST);
+            type = LexicalDeclaration.Type.Const;
         }
-        return head;
+        Binding binding = forBinding(true);
+        LexicalBinding lexicalBinding = new LexicalBinding(begin, ts.endPosition(), binding, null);
+        return new LexicalDeclaration(begin, ts.endPosition(), type, singletonList(lexicalBinding));
     }
 
     /**
-     * @see #forStatement(Set)
+     * <strong>[13.6.4] The <code>for-in</code> and <code>for-of</code> Statements</strong>
+     * 
+     * <pre>
+     * var ForBinding<sub>[?Yield]</sub>
+     * </pre>
      */
-    private Node validateForInOf(Node head) {
-        if (head instanceof VariableStatement) {
-            // expected: single variable declaration with no initialiser
-            List<VariableDeclaration> elements = ((VariableStatement) head).getElements();
-            if (elements.size() == 1 && elements.get(0).getInitialiser() == null) {
-                return head;
-            }
-        } else if (head instanceof LexicalDeclaration) {
-            // expected: single lexical binding with no initialiser
-            List<LexicalBinding> elements = ((LexicalDeclaration) head).getElements();
-            if (elements.size() == 1 && elements.get(0).getInitialiser() == null) {
-                return head;
-            }
-        } else if (head instanceof Expression) {
-            // expected: left-hand side expression
-            return validateAssignment((Expression) head, ExceptionType.SyntaxError,
-                    Messages.Key.InvalidAssignmentTarget);
-        }
-        throw reportSyntaxError(head, Messages.Key.InvalidForInOfHead);
+    private VariableStatement forVarDeclaration() {
+        long beginVar = ts.beginPosition();
+        consume(Token.VAR);
+        Binding binding = forBinding(true);
+        VariableDeclaration variableDeclaration = new VariableDeclaration(binding, null);
+        return new VariableStatement(beginVar, ts.endPosition(), singletonList(variableDeclaration));
     }
 
     /**
@@ -4289,7 +4359,7 @@ public class Parser {
         labels: for (;;) {
             switch (token()) {
             case FOR:
-                return forStatement(labelSet);
+                return forStatementOrForInOfStatement(labelSet);
             case WHILE:
                 return whileStatement(labelSet);
             case DO:
