@@ -13,6 +13,7 @@ import static com.github.anba.es6draft.runtime.AbstractOperations.IsCallable;
 import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
+import static java.util.Collections.emptyIterator;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -98,11 +99,11 @@ class WrapperProxy implements ScriptObject {
         if (!Type.isObject(target)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        if (!(Type.isObject(proto) || Type.isNull(proto))) {
+        if (!Type.isObjectOrNull(proto)) {
             throw newTypeError(cx, Messages.Key.NotObjectOrNull);
         }
         ScriptObject proxyTarget = Type.objectValue(target);
-        ScriptObject prototype = Type.isObject(proto) ? Type.objectValue(proto) : null;
+        ScriptObject prototype = Type.objectValueOrNull(proto);
         WrapperProxy proxy;
         if (IsCallable(proxyTarget)) {
             proxy = new CallabeWrapperProxy(proxyTarget, prototype, true);
@@ -113,7 +114,7 @@ class WrapperProxy implements ScriptObject {
     }
 
     protected final ScriptObject getProto(ExecutionContext cx) {
-        return (withProto ? prototype : proxyTarget.getPrototypeOf(cx));
+        return withProto ? prototype : proxyTarget.getPrototypeOf(cx);
     }
 
     /**
@@ -386,7 +387,8 @@ class WrapperProxy implements ScriptObject {
             this.cx = cx;
             this.proxyTarget = proxyTarget;
             this.targetKeys = FromListIterator(cx, proxyTarget, proxyTarget.ownPropertyKeys(cx));
-            this.protoKeys = FromListIterator(cx, proto, proto.enumerate(cx));
+            this.protoKeys = proto != null ? FromListIterator(cx, proto, proto.enumerate(cx))
+                    : emptyIterator();
         }
 
         @Override

@@ -257,7 +257,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             /* steps 1-2 */
             Object o = CheckObjectCoercible(cx, thisValue);
             /* step 3 */
-            if (!(Type.isNull(proto) || Type.isObject(proto))) {
+            if (!Type.isObjectOrNull(proto)) {
                 return proto;
             }
             /* step 4 */
@@ -266,7 +266,7 @@ public class ObjectPrototype extends OrdinaryObject implements Initialisable {
             }
             /* steps 5-6 */
             ScriptObject obj = Type.objectValue(o);
-            ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
+            ScriptObject p = Type.objectValueOrNull(proto);
             boolean status = obj.setPrototypeOf(cx, p);
             /* step 7 */
             if (!status) {

@@ -164,10 +164,10 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
         public static Object create(ExecutionContext cx, Object thisValue, Object o,
                 Object properties) {
             /* step 1 */
-            if (!(Type.isObject(o) || Type.isNull(o))) {
+            if (!Type.isObjectOrNull(o)) {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            ScriptObject proto = Type.isObject(o) ? Type.objectValue(o) : null;
+            ScriptObject proto = Type.objectValueOrNull(o);
             /* step 2 */
             ScriptObject obj = ObjectCreate(cx, proto);
             /* step 3 */
@@ -379,7 +379,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             /* steps 1-2 */
             CheckObjectCoercible(cx, o);
             /* step 3 */
-            if (!(Type.isNull(proto) || Type.isObject(proto))) {
+            if (!Type.isObjectOrNull(proto)) {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             /* step 4 */
@@ -388,7 +388,7 @@ public class ObjectConstructor extends BuiltinConstructor implements Initialisab
             }
             /* steps 5-6 */
             ScriptObject obj = Type.objectValue(o);
-            ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
+            ScriptObject p = Type.objectValueOrNull(proto);
             boolean status = obj.setPrototypeOf(cx, p);
             /* step 7 */
             if (!status) {

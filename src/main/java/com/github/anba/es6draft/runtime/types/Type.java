@@ -118,6 +118,14 @@ public enum Type {
     }
 
     /**
+     * Short cut for:<br>
+     * <code>Type.of(val) == Type.Object || Type.of(val) == Type.Null</code>
+     */
+    public static boolean isObjectOrNull(Object val) {
+        return val == NULL || val instanceof ScriptObject;
+    }
+
+    /**
      * If {@code val} is a Boolean type, its value is returned. Otherwise a
      * {@link ClassCastException} is thrown.
      */
@@ -155,5 +163,13 @@ public enum Type {
      */
     public static ScriptObject objectValue(Object val) {
         return (ScriptObject) val;
+    }
+
+    /**
+     * If {@code val} is an Object type, its value is returned. If {@code val} is a Null type,
+     * <code>null</code> is returned. Otherwise a {@link ClassCastException} is thrown.
+     */
+    public static ScriptObject objectValueOrNull(Object val) {
+        return val == NULL ? null : (ScriptObject) val;
     }
 }

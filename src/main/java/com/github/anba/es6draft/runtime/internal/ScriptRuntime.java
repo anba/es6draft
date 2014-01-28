@@ -1655,10 +1655,10 @@ public final class ScriptRuntime {
             throw newTypeError(cx, Messages.Key.NotConstructor);
         } else {
             Object p = Get(cx, Type.objectValue(superClass), "prototype");
-            if (!(Type.isObject(p) || Type.isNull(p))) {
+            if (!Type.isObjectOrNull(p)) {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
-            protoParent = Type.isNull(p) ? null : Type.objectValue(p);
+            protoParent = Type.objectValueOrNull(p);
             constructorParent = Type.objectValue(superClass);
         }
         // step 3
@@ -1813,8 +1813,8 @@ public final class ScriptRuntime {
      */
     public static void defineProtoProperty(ScriptObject object, Object value, ExecutionContext cx) {
         // FIXME: function .name and __proto__ interaction unclear
-        if (Type.isNull(value) || Type.isObject(value)) {
-            object.setPrototypeOf(cx, Type.isNull(value) ? null : Type.objectValue(value));
+        if (Type.isObjectOrNull(value)) {
+            object.setPrototypeOf(cx, Type.objectValueOrNull(value));
         }
     }
 }

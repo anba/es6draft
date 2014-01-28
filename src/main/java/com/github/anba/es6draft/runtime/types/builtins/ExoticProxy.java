@@ -255,14 +255,7 @@ public class ExoticProxy implements ScriptObject {
      * Java {@code null} to {@link Null#NULL}
      */
     private static Object maskNull(Object val) {
-        return (val != null ? val : NULL);
-    }
-
-    /**
-     * {@link Null#NULL} to Java {@code null}
-     */
-    private static Object unmaskNull(Object jsval) {
-        return (jsval != NULL ? jsval : null);
+        return val != null ? val : NULL;
     }
 
     /**
@@ -283,10 +276,10 @@ public class ExoticProxy implements ScriptObject {
         /* steps 7-8 */
         Object handlerProto = trap.call(cx, handler, target);
         /* step 9 */
-        if (!(Type.isNull(handlerProto) || Type.isObject(handlerProto))) {
+        if (!Type.isObjectOrNull(handlerProto)) {
             throw newTypeError(cx, Messages.Key.NotObjectOrNull);
         }
-        ScriptObject handlerProto_ = (ScriptObject) unmaskNull(handlerProto);
+        ScriptObject handlerProto_ = Type.objectValueOrNull(handlerProto);
         /* steps 10-11 */
         boolean extensibleTarget = IsExtensible(cx, target);
         /* step 12 */

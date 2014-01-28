@@ -68,7 +68,7 @@ public class Reflect extends OrdinaryObject implements Initialisable {
             ScriptObject obj = ToObject(cx, target);
             /* step 3 */
             ScriptObject proto = obj.getPrototypeOf(cx);
-            return (proto != null ? proto : NULL);
+            return proto != null ? proto : NULL;
         }
 
         /**
@@ -80,11 +80,11 @@ public class Reflect extends OrdinaryObject implements Initialisable {
             /* steps 1-2 */
             ScriptObject obj = ToObject(cx, target);
             /* step 3 */
-            if (!(Type.isObject(proto) || Type.isNull(proto))) {
+            if (!Type.isObjectOrNull(proto)) {
                 throw newTypeError(cx, Messages.Key.NotObjectOrNull);
             }
             /* step 4 */
-            ScriptObject p = Type.isObject(proto) ? Type.objectValue(proto) : null;
+            ScriptObject p = Type.objectValueOrNull(proto);
             return obj.setPrototypeOf(cx, p);
         }
 
