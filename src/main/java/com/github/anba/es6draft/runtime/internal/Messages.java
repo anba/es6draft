@@ -232,6 +232,7 @@ public final class Messages {
         SetInvalidComparator("set.invalid_comparator"),
         // 26.2 Proxy Objects
         ProxyRevoked("proxy.revoked"),
+        ProxyNew("proxy.new"),
         ProxySamePrototype("proxy.same_prototype"),
         ProxyNotObject("proxy.not_object"),
         ProxyNotObjectOrUndefined("proxy.not_object_or_undefined"),

@@ -7,6 +7,7 @@
 package com.github.anba.es6draft.runtime.objects.reflect;
 
 import static com.github.anba.es6draft.runtime.AbstractOperations.CreateDataProperty;
+import static com.github.anba.es6draft.runtime.internal.Errors.newTypeError;
 import static com.github.anba.es6draft.runtime.internal.Properties.createProperties;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticProxy.ProxyCreate;
@@ -14,7 +15,6 @@ import static com.github.anba.es6draft.runtime.types.builtins.OrdinaryFunction.A
 
 import com.github.anba.es6draft.runtime.ExecutionContext;
 import com.github.anba.es6draft.runtime.Realm;
-import com.github.anba.es6draft.runtime.internal.Errors;
 import com.github.anba.es6draft.runtime.internal.Initialisable;
 import com.github.anba.es6draft.runtime.internal.Messages;
 import com.github.anba.es6draft.runtime.internal.Properties.Attributes;
@@ -51,8 +51,7 @@ public class ProxyConstructorFunction extends BuiltinConstructor implements Init
      */
     @Override
     public ExoticProxy call(ExecutionContext callerContext, Object thisValue, Object... args) {
-        // TODO: better error message
-        throw Errors.newTypeError(calleeContext(), Messages.Key.NotCallable);
+        throw newTypeError(calleeContext(), Messages.Key.ProxyNew);
     }
 
     /**
@@ -91,10 +90,8 @@ public class ProxyConstructorFunction extends BuiltinConstructor implements Init
                 Object handler) {
             /* steps 1-2 */
             ExoticProxy p = ProxyCreate(cx, target, handler);
-            /* step 3 */
-            ProxyRevocationFunction revoker = new ProxyRevocationFunction(cx.getRealm());
-            /* step 4 */
-            revoker.revokableProxy = p;
+            /* steps 3-4 */
+            ProxyRevocationFunction revoker = new ProxyRevocationFunction(cx.getRealm(), p);
             /* step 5 */
             OrdinaryObject result = ObjectCreate(cx);
             /* step 6 */
@@ -113,8 +110,9 @@ public class ProxyConstructorFunction extends BuiltinConstructor implements Init
         /** [[RevokableProxy]] */
         private ExoticProxy revokableProxy;
 
-        public ProxyRevocationFunction(Realm realm) {
+        public ProxyRevocationFunction(Realm realm, ExoticProxy revokableProxy) {
             super(realm, ANONYMOUS, 0);
+            this.revokableProxy = revokableProxy;
         }
 
         @Override
