@@ -123,6 +123,20 @@ feature/TempVarTransformer/UseStrictDirective.js
 feature/Classes/ClassNameBinding.js
 feature/Classes/Constructor.js
 
+# No error when calling next() on closed generator
+feature/Yield/Try.js
+feature/Yield/Try2.js
+feature/Yield/Try3.js
+feature/Yield/Try4.js
+feature/Yield/Try5.js
+feature/Yield/Try6.js
+feature/Yield/Try7.js
+feature/Yield/Try8.js
+feature/Yield/Try9.js
+feature/Yield/Try10.js
+feature/Yield/Try11.js
+feature/Yield/Try12.js
+
 
 #######################################
 # Test for syntax extensions          #

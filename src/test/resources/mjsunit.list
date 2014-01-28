@@ -214,6 +214,7 @@ regress/regress-105.js
 
 # Object.getPrototypeOf() wraps/ignores primitives
 get-prototype-of.js
+set-prototype-of.js
 
 # Object.keys() wraps/ignores primitives
 third_party/object-keys.js

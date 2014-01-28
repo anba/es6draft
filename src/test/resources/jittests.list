@@ -500,6 +500,8 @@ tests/basic/bug923390.js
 tests/basic/testNeutering.js
 # getSelfHostedValue
 tests/self-hosting/makewrappable.js
+# offThreadCompileScript
+tests/basic/offThreadCompileScript-02.js
 
 # Unsupported 'Testing' functions
 # gcparam
@@ -533,7 +535,7 @@ tests/basic/bug951632.js
 # getBuildConfiguration
 tests/basic/testOOMInAutoEnterCompartment.js
 # workerThreadCount
-tests/basic/offThreadCompileScript.js
+tests/basic/offThreadCompileScript-01.js
 # setJitCompilerOption
 tests/bug953337.js
 
