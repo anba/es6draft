@@ -4467,11 +4467,9 @@ public class Parser {
                 while (token() == Token.CATCH && catchNode == null) {
                     long beginCatch = ts.beginPosition();
                     consume(Token.CATCH);
-                    BlockContext catchScope = enterBlockContext();
-
                     consume(Token.LP);
                     Binding catchParameter = binding();
-                    addLexDeclaredName(catchParameter);
+                    BlockContext catchScope = enterBlockContext(catchParameter);
 
                     Expression guard;
                     if (token() == Token.IF) {
@@ -4504,11 +4502,9 @@ public class Parser {
             } else {
                 long beginCatch = ts.beginPosition();
                 consume(Token.CATCH);
-                BlockContext catchScope = enterBlockContext();
-
                 consume(Token.LP);
                 Binding catchParameter = binding();
-                addLexDeclaredName(catchParameter);
+                BlockContext catchScope = enterBlockContext(catchParameter);
                 consume(Token.RP);
 
                 // CatchBlock receives a list of non-available lexical declarable names to
