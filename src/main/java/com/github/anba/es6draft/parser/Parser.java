@@ -469,8 +469,15 @@ public class Parser {
         return cx;
     }
 
-    private BlockContext reenterBlockContext(BlockContext cx) {
-        context.scopeContext = cx;
+    private BlockContext enterBlockContext(Binding binding) {
+        BlockContext cx = enterBlockContext();
+        addLexDeclaredName(binding);
+        return cx;
+    }
+
+    private BlockContext enterBlockContext(List<Binding> bindings) {
+        BlockContext cx = enterBlockContext();
+        addLexDeclaredNames(bindings);
         return cx;
     }
 
@@ -555,7 +562,6 @@ public class Parser {
      * occurs in the VarDeclaredNames of StatementList.
      * </ul>
      */
-    @SuppressWarnings("unused")
     private void addVarDeclaredName(Binding binding) {
         if (binding instanceof BindingIdentifier) {
             addVarDeclaredName((BindingIdentifier) binding);
@@ -1030,7 +1036,7 @@ public class Parser {
     /* ***************************************************************************************** */
 
     /**
-     * <strong>[15.2] Scripts</strong>
+     * <strong>[15.1] Scripts</strong>
      * 
      * <pre>
      * Script :
@@ -1060,7 +1066,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1] Modules</strong>
+     * <strong>[15.2] Modules</strong>
      * 
      * <pre>
      * Module :
@@ -1088,7 +1094,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1] Modules</strong>
+     * <strong>[15.2] Modules</strong>
      * 
      * <pre>
      * ModuleItemList :
@@ -1117,7 +1123,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.1] Imports</strong>
+     * <strong>[15.2.1] Imports</strong>
      * 
      * <pre>
      * ImportDeclaration :
@@ -1158,7 +1164,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.1] Imports</strong>
+     * <strong>[15.2.1] Imports</strong>
      * 
      * <pre>
      * ModuleImport :
@@ -1182,7 +1188,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.1] Imports</strong>
+     * <strong>[15.2.1] Imports</strong>
      * 
      * <pre>
      * FromClause :
@@ -1195,7 +1201,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.1] Imports</strong>
+     * <strong>[15.2.1] Imports</strong>
      * 
      * <pre>
      * ImportClause :
@@ -1223,7 +1229,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.1] Imports</strong>
+     * <strong>[15.2.1] Imports</strong>
      * 
      * <pre>
      * NamedImports :
@@ -1251,7 +1257,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.1] Imports</strong>
+     * <strong>[15.2.1] Imports</strong>
      * 
      * <pre>
      * ImportSpecifier :
@@ -1285,7 +1291,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.1] Imports</strong>
+     * <strong>[15.2.1] Imports</strong>
      * 
      * <pre>
      * ModuleSpecifier :
@@ -1297,7 +1303,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.1] Imports</strong>
+     * <strong>[15.2.1] Imports</strong>
      * 
      * <pre>
      * ImportedBinding :
@@ -1309,7 +1315,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.2] Exports</strong>
+     * <strong>[15.2.2] Exports</strong>
      * 
      * <pre>
      * ExportDeclaration :
@@ -1397,7 +1403,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.2] Exports</strong>
+     * <strong>[15.2.2] Exports</strong>
      * 
      * <pre>
      * ExportsClause<sub>[NoReference]</sub> :
@@ -1426,7 +1432,7 @@ public class Parser {
     }
 
     /**
-     * <strong>[15.1.2] Exports</strong>
+     * <strong>[15.2.2] Exports</strong>
      * 
      * <pre>
      * ExportSpecifier<sub>[NoReference]</sub> :
@@ -2414,7 +2420,7 @@ public class Parser {
      * YieldExpression<sub>[In]</sub> :
      *     yield
      *     yield [no <i>LineTerminator</i> here] <font size="-1">[Lexical goal <i>InputElementRegExp</i>]</font> AssignmentExpression<sub>[?In, Yield]</sub>
-     *     yield * <font size="-1">[Lexical goal <i>InputElementRegExp</i>]</font> AssignmentExpression<sub>[?In, Yield]</sub>
+     *     yield [no <i>LineTerminator</i> here] * <font size="-1">[Lexical goal <i>InputElementRegExp</i>]</font> AssignmentExpression<sub>[?In, Yield]</sub>
      * </pre>
      */
     private YieldExpression yieldExpression(boolean allowIn) {
@@ -2552,8 +2558,7 @@ public class Parser {
             heritage = leftHandSideExpression(true);
         }
         consume(Token.LC);
-        enterBlockContext();
-        addLexDeclaredName(name);
+        enterBlockContext(name);
         List<MethodDefinition> staticMethods = newList();
         List<MethodDefinition> prototypeMethods = newList();
         classBody(name, staticMethods, prototypeMethods);
@@ -2594,8 +2599,7 @@ public class Parser {
         }
         consume(Token.LC);
         if (name != null) {
-            enterBlockContext();
-            addLexDeclaredName(name);
+            enterBlockContext(name);
         }
         List<MethodDefinition> staticMethods = newList();
         List<MethodDefinition> prototypeMethods = newList();
@@ -5001,13 +5005,25 @@ public class Parser {
         long begin = ts.beginPosition();
         consume(Token.FOR);
         consume(Token.LP);
-        Binding b = binding(false);
+        Binding b = forBinding(false);
         consume("of");
         Expression expression = assignmentExpression(true);
         consume(Token.RP);
-        BlockContext scope = enterBlockContext();
-        addLexDeclaredName(b);
+        BlockContext scope = enterBlockContext(b);
         return new ComprehensionFor(begin, ts.endPosition(), scope, b, expression);
+    }
+
+    /**
+     * <strong>[12.1.4.2] Array Comprehension</strong>
+     * 
+     * <pre>
+     * ForBinding<sub>[Yield]</sub> :
+     *     BindingIdentifier<sub>[?Yield]</sub>
+     *     BindingPattern<sub>[?Yield]</sub>
+     * </pre>
+     */
+    private Binding forBinding(boolean allowLet) {
+        return binding(allowLet);
     }
 
     /**
@@ -5075,7 +5091,7 @@ public class Parser {
                 each = true;
             }
             consume(Token.LP);
-            Binding b = binding();
+            Binding b = forBinding(false);
             addLexDeclaredName(b);
 
             LegacyComprehensionFor.IterationKind iterationKind;
