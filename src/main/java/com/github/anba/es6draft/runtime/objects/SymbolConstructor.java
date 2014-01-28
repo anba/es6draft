@@ -157,7 +157,7 @@ public class SymbolConstructor extends BuiltinConstructor implements Initialisab
             /* steps 1-2 */
             String stringKey = ToFlatString(cx, key);
             /* steps 3-7 */
-            return cx.getRealm().getWorld().getSymbolRegistry().getSymbol(stringKey);
+            return cx.getRealm().getSymbolRegistry().getSymbol(stringKey);
         }
 
         /**
@@ -170,7 +170,7 @@ public class SymbolConstructor extends BuiltinConstructor implements Initialisab
                 throw newTypeError(cx, Messages.Key.NotSymbol);
             }
             /* steps 2-3 */
-            String key = cx.getRealm().getWorld().getSymbolRegistry().getKey(Type.symbolValue(sym));
+            String key = cx.getRealm().getSymbolRegistry().getKey(Type.symbolValue(sym));
             /* step 4 */
             return key != null ? key : UNDEFINED;
         }

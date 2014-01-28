@@ -287,6 +287,13 @@ public final class Realm {
     }
 
     /**
+     * Returns the global symbol registry
+     */
+    public GlobalSymbolRegistry getSymbolRegistry() {
+        return world.getSymbolRegistry();
+    }
+
+    /**
      * Returns the template call-site object for {@code key}
      */
     public ScriptObject getTemplateCallSite(String key) {
