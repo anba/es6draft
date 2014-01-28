@@ -28,37 +28,14 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.2 ECMAScript Function Objects
  * </ul>
  */
-public class OrdinaryGenerator extends FunctionObject {
+public class OrdinaryGenerator extends FunctionObject implements Constructor {
     public OrdinaryGenerator(Realm realm) {
         super(realm);
     }
 
-    private static class OrdinaryConstructorGenerator extends OrdinaryGenerator implements
-            Constructor {
-        public OrdinaryConstructorGenerator(Realm realm) {
-            super(realm);
-        }
-
-        @Override
-        public final boolean isConstructor() {
-            return super.isConstructor();
-        }
-
-        /**
-         * 9.2.2 [[Construct]] (argumentsList)
-         */
-        @Override
-        public ScriptObject construct(ExecutionContext callerContext, Object... args) {
-            return Construct(callerContext, this, args);
-        }
-
-        /**
-         * 9.2.2 [[Construct]] (argumentsList)
-         */
-        @Override
-        public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
-            return construct(callerContext, args);
-        }
+    @Override
+    public final boolean isConstructor() {
+        return super.isConstructor();
     }
 
     @Override
@@ -88,6 +65,22 @@ public class OrdinaryGenerator extends FunctionObject {
     public Object tailCall(ExecutionContext callerContext, Object thisValue, Object... args)
             throws Throwable {
         return getTailCallMethod().invokeExact(this, callerContext, thisValue, args);
+    }
+
+    /**
+     * 9.2.2 [[Construct]] (argumentsList)
+     */
+    @Override
+    public ScriptObject construct(ExecutionContext callerContext, Object... args) {
+        return Construct(callerContext, this, args);
+    }
+
+    /**
+     * 9.2.2 [[Construct]] (argumentsList)
+     */
+    @Override
+    public ScriptObject tailConstruct(ExecutionContext callerContext, Object... args) {
+        return construct(callerContext, args);
     }
 
     /**
@@ -160,7 +153,7 @@ public class OrdinaryGenerator extends FunctionObject {
         Realm realm = cx.getRealm();
         /* steps 1-3 (implicit) */
         /* steps 4-8 */
-        OrdinaryGenerator f = new OrdinaryConstructorGenerator(realm);
+        OrdinaryGenerator f = new OrdinaryGenerator(realm);
         /* steps 9-13 */
         f.allocate(realm, functionPrototype, strict, kind, uninitialisedGeneratorMH);
         /* step 14 */
