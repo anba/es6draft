@@ -26,22 +26,30 @@ const mozIteratorSym = "@@iterator";
 // - to enable construction without `new`
 // - to enable initialisation with `mozIteratorSym`
 
+function isObjectWithBrand(o, sym) {
+  if (typeof o !== 'object' || o === null) {
+    return false;
+  }
+  if (!Object_hasOwnProperty(o, sym) || o[sym] !== false) {
+    return false;
+  }
+  Object_defineProperty(o, sym, {__proto__: null, value: true, configurable: false});
+  return true;
+}
+
+function addBrand(o, sym) {
+  return Object_defineProperty(o, sym, {__proto__: null, value: false, configurable: true});
+}
+
 { /* Map */
   const BuiltinMap = global.Map;
   const isMapSym = Symbol("isMap");
 
   class Map extends BuiltinMap {
     constructor(iterable) {
-      if (!(typeof this == 'object' && this !== null)) {
-        if (this === undefined) {
-          return new Map(iterable);
-        }
-        throw new TypeError();
+      if (!isObjectWithBrand(this, isMapSym)) {
+        return new Map(iterable);
       }
-      if (!Object_hasOwnProperty(this, isMapSym) || this[isMapSym] !== false) {
-        throw new TypeError();
-      }
-      Object_defineProperty(this, isMapSym, {__proto__: null, value: true, configurable: false});
       if (iterable !== undefined) {
         iterable = iterable[mozIteratorSym]();
       }
@@ -59,9 +67,7 @@ const mozIteratorSym = "@@iterator";
     }
 
     static [createSym]() {
-      var m = super();
-      Object_defineProperty(m, isMapSym, {__proto__: null, value: false, configurable: true});
-      return m;
+      return addBrand(super(), isMapSym);
     }
   }
 
@@ -83,16 +89,9 @@ const mozIteratorSym = "@@iterator";
 
   class Set extends BuiltinSet {
     constructor(iterable) {
-      if (!(typeof this == 'object' && this !== null)) {
-        if (this === undefined) {
-          return new Set(iterable);
-        }
-        throw new TypeError();
+      if (!isObjectWithBrand(this, isSetSym)) {
+        return new Set(iterable);
       }
-      if (!Object_hasOwnProperty(this, isSetSym) || this[isSetSym] !== false) {
-        throw new TypeError();
-      }
-      Object_defineProperty(this, isSetSym, {__proto__: null, value: true, configurable: false});
       if (iterable !== undefined) {
         iterable = iterable[mozIteratorSym]();
       }
@@ -110,9 +109,7 @@ const mozIteratorSym = "@@iterator";
     }
 
     static [createSym]() {
-      var m = super();
-      Object_defineProperty(m, isSetSym, {__proto__: null, value: false, configurable: true});
-      return m;
+      return addBrand(super(), isSetSym);
     }
   }
 
@@ -134,16 +131,9 @@ const mozIteratorSym = "@@iterator";
 
   class WeakMap extends BuiltinWeakMap {
     constructor(iterable) {
-      if (!(typeof this == 'object' && this !== null)) {
-        if (this === undefined) {
-          return new WeakMap(iterable);
-        }
-        throw new TypeError();
+      if (!isObjectWithBrand(this, isWeakMapSym)) {
+        return new WeakMap(iterable);
       }
-      if (!Object_hasOwnProperty(this, isWeakMapSym) || this[isWeakMapSym] !== false) {
-        throw new TypeError();
-      }
-      Object_defineProperty(this, isWeakMapSym, {__proto__: null, value: true, configurable: false});
       if (iterable !== undefined) {
         iterable = iterable[mozIteratorSym]();
       }
@@ -160,9 +150,7 @@ const mozIteratorSym = "@@iterator";
     }
 
     static [createSym]() {
-      var m = super();
-      Object_defineProperty(m, isWeakMapSym, {__proto__: null, value: false, configurable: true});
-      return m;
+      return addBrand(super(), isWeakMapSym);
     }
   }
 
@@ -184,16 +172,9 @@ const mozIteratorSym = "@@iterator";
 
   class WeakSet extends BuiltinWeakSet {
     constructor(iterable) {
-      if (!(typeof this == 'object' && this !== null)) {
-        if (this === undefined) {
-          return new WeakSet(iterable);
-        }
-        throw new TypeError();
+      if (!isObjectWithBrand(this, isWeakSetSym)) {
+        return new WeakSet(iterable);
       }
-      if (!Object_hasOwnProperty(this, isWeakSetSym) || this[isWeakSetSym] !== false) {
-        throw new TypeError();
-      }
-      Object_defineProperty(this, isWeakSetSym, {__proto__: null, value: true, configurable: false});
       if (iterable !== undefined) {
         iterable = iterable[mozIteratorSym]();
       }
@@ -206,9 +187,7 @@ const mozIteratorSym = "@@iterator";
     }
 
     static [createSym]() {
-      var m = super();
-      Object_defineProperty(m, isWeakSetSym, {__proto__: null, value: false, configurable: true});
-      return m;
+      return addBrand(super(), isWeakSetSym);
     }
   }
 
