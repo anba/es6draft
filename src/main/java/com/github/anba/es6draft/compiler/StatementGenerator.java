@@ -183,7 +183,6 @@ final class StatementGenerator extends
             return Completion.Normal;
         }
 
-        mv.enterScope(node);
         /* steps 1-4 */
         boolean hasDeclarations = !LexicalDeclarations(node).isEmpty();
         if (hasDeclarations) {
@@ -193,6 +192,7 @@ final class StatementGenerator extends
         }
 
         /* step 5 */
+        mv.enterScope(node);
         Completion result = Completion.Normal;
         {
             // 13.1.10 Runtime Semantics: Evaluation
@@ -204,12 +204,12 @@ final class StatementGenerator extends
                 }
             }
         }
+        mv.exitScope();
 
         /* step 6 */
         if (hasDeclarations && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
-        mv.exitScope();
 
         /* steps 7-8 */
         return result;
@@ -461,7 +461,6 @@ final class StatementGenerator extends
 
             // create new declarative lexical environment
             // stack: [nextValue] -> [nextValue, iterEnv]
-            mv.enterScope(node);
             newDeclarativeEnvironment(mv);
             {
                 // Runtime Semantics: Binding Instantiation
@@ -493,6 +492,7 @@ final class StatementGenerator extends
             }
             // stack: [iterEnv] -> []
             pushLexicalEnvironment(mv);
+            mv.enterScope(node);
         }
 
         Completion result;
@@ -503,11 +503,11 @@ final class StatementGenerator extends
         }
 
         if (lhs instanceof LexicalDeclaration) {
+            mv.exitScope();
             // restore previous lexical environment
             if (!result.isAbrupt()) {
                 popLexicalEnvironment(mv);
             }
-            mv.exitScope();
         }
 
         mv.mark(lblContinue);
@@ -549,7 +549,6 @@ final class StatementGenerator extends
             assert head instanceof LexicalDeclaration;
             LexicalDeclaration lexDecl = (LexicalDeclaration) head;
 
-            mv.enterScope(node);
             newDeclarativeEnvironment(mv);
             {
                 // stack: [loopEnv] -> [loopEnv, envRec]
@@ -569,6 +568,7 @@ final class StatementGenerator extends
                 mv.pop();
             }
             pushLexicalEnvironment(mv);
+            mv.enterScope(node);
 
             lexDecl.accept(this, mv);
         }
@@ -588,6 +588,7 @@ final class StatementGenerator extends
             result = node.getStatement().accept(this, mv);
             mv.exitIteration(node);
         }
+
         mv.mark(lblContinue);
         if (lblContinue.isUsed()) {
             restoreEnvironment(node, Abrupt.Continue, savedEnv, mv);
@@ -615,10 +616,10 @@ final class StatementGenerator extends
         mv.exitVariableScope();
 
         if (head instanceof LexicalDeclaration) {
+            mv.exitScope();
             if (node.getTest() != null || lblBreak.isUsed()) {
                 popLexicalEnvironment(mv);
             }
-            mv.exitScope();
         }
 
         if (node.getTest() == null) {
@@ -723,7 +724,6 @@ final class StatementGenerator extends
     public Completion visit(LetStatement node, StatementVisitor mv) {
         // create new declarative lexical environment
         // stack: [] -> [env]
-        mv.enterScope(node);
         newDeclarativeEnvironment(mv);
         {
             // stack: [env] -> [env, envRec]
@@ -759,13 +759,14 @@ final class StatementGenerator extends
         // stack: [env] -> []
         pushLexicalEnvironment(mv);
 
+        mv.enterScope(node);
         Completion result = node.getStatement().accept(this, mv);
+        mv.exitScope();
 
         // restore previous lexical environment
         if (!result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
-        mv.exitScope();
 
         return result;
     }
@@ -1186,7 +1187,6 @@ final class StatementGenerator extends
 
         // create new declarative lexical environment
         // stack: [ex] -> [ex, catchEnv]
-        mv.enterScope(node);
         newDeclarativeEnvironment(mv);
         {
             // stack: [ex, catchEnv] -> [catchEnv, ex, envRec]
@@ -1210,13 +1210,14 @@ final class StatementGenerator extends
         // stack: [catchEnv] -> []
         pushLexicalEnvironment(mv);
 
+        mv.enterScope(node);
         Completion result = catchBlock.accept(this, mv);
+        mv.exitScope();
 
         // restore previous lexical environment
         if (!result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
-        mv.exitScope();
 
         return result;
     }
@@ -1228,13 +1229,13 @@ final class StatementGenerator extends
     public Completion visit(GuardedCatchNode node, StatementVisitor mv) {
         Binding catchParameter = node.getCatchParameter();
         BlockStatement catchBlock = node.getCatchBlock();
+        Label l0 = new Label();
 
         // stack: [e] -> [ex]
         mv.invoke(Methods.ScriptException_getValue);
 
         // create new declarative lexical environment
         // stack: [ex] -> [ex, catchEnv]
-        mv.enterScope(node);
         newDeclarativeEnvironment(mv);
         {
             // stack: [ex, catchEnv] -> [catchEnv, ex, envRec]
@@ -1259,7 +1260,7 @@ final class StatementGenerator extends
         pushLexicalEnvironment(mv);
 
         Completion result;
-        Label l0 = new Label();
+        mv.enterScope(node);
         ToBoolean(expressionValue(node.getGuard(), mv), mv);
         mv.ifeq(l0);
         {
@@ -1272,10 +1273,10 @@ final class StatementGenerator extends
             }
         }
         mv.mark(l0);
+        mv.exitScope();
 
         // restore previous lexical environment
         popLexicalEnvironment(mv);
-        mv.exitScope();
 
         return result;
     }
@@ -1366,17 +1367,17 @@ final class StatementGenerator extends
         ToObject(type, mv);
 
         // create new object lexical environment (withEnvironment-flag = true)
-        mv.enterScope(node);
         newObjectEnvironment(mv, true);
         pushLexicalEnvironment(mv);
 
+        mv.enterScope(node);
         Completion result = node.getStatement().accept(this, mv);
+        mv.exitScope();
 
         // restore previous lexical environment
         if (!result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
-        mv.exitScope();
 
         return result;
     }

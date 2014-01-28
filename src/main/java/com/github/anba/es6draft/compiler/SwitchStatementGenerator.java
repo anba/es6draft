@@ -191,7 +191,6 @@ final class SwitchStatementGenerator extends
             mv.store(switchValue);
         }
 
-        mv.enterScope(node);
         boolean hasDeclarations = !LexicalDeclarations(node).isEmpty();
         if (hasDeclarations) {
             newDeclarativeEnvironment(mv);
@@ -200,12 +199,13 @@ final class SwitchStatementGenerator extends
         }
 
         BreakLabel lblBreak = new BreakLabel();
+        mv.enterScope(node);
         Completion result = CaseBlockEvaluation(node, type, lblBreak, switchValue, mv);
+        mv.exitScope();
 
         if (hasDeclarations && !result.isAbrupt()) {
             popLexicalEnvironment(mv);
         }
-        mv.exitScope();
 
         mv.mark(lblBreak);
         if (lblBreak.isUsed()) {

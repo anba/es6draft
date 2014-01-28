@@ -1847,7 +1847,6 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
     public ValType visit(LetExpression node, ExpressionVisitor mv) {
         // create new declarative lexical environment
         // stack: [] -> [env]
-        mv.enterScope(node);
         newDeclarativeEnvironment(mv);
         {
             // stack: [env] -> [env, envRec]
@@ -1883,11 +1882,12 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
         // stack: [env] -> []
         pushLexicalEnvironment(mv);
 
+        mv.enterScope(node);
         ValType type = evalAndGetValue(node.getExpression(), mv);
+        mv.exitScope();
 
         // restore previous lexical environment
         popLexicalEnvironment(mv);
-        mv.exitScope();
 
         return type;
     }

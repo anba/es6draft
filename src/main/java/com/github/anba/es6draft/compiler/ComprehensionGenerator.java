@@ -131,7 +131,6 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
     public Void visit(LegacyComprehension node, ExpressionVisitor mv) {
         // create new declarative lexical environment
         // stack: [] -> [env]
-        mv.enterScope(node);
         newDeclarativeEnvironment(mv);
         {
             // stack: [env] -> [env, envRec]
@@ -155,11 +154,12 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         // stack: [env] -> []
         pushLexicalEnvironment(mv);
 
+        mv.enterScope(node);
         visit((Comprehension) node, mv);
+        mv.exitScope();
 
         // restore previous lexical environment
         popLexicalEnvironment(mv);
-        mv.exitScope();
 
         return null;
     }
@@ -209,7 +209,6 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
 
         // create new declarative lexical environment
         // stack: [nextValue] -> [nextValue, forEnv]
-        mv.enterScope(node);
         newDeclarativeEnvironment(mv);
         {
             // stack: [nextValue, forEnv] -> [forEnv, nextValue, envRec]
@@ -237,11 +236,12 @@ abstract class ComprehensionGenerator extends DefaultCodeGenerator<Void, Express
         // stack: [forEnv] -> []
         pushLexicalEnvironment(mv);
 
+        mv.enterScope(node);
         elements.next().accept(this, mv);
+        mv.exitScope();
 
         // restore previous lexical environment
         popLexicalEnvironment(mv);
-        mv.exitScope();
 
         mv.goTo(lblContinue);
         mv.mark(lblBreak);

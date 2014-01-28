@@ -936,21 +936,21 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
     /**
      * stack: [value] -> []
      */
-    protected void BindingInitialisation(Binding node, ExpressionVisitor mv) {
+    protected final void BindingInitialisation(Binding node, ExpressionVisitor mv) {
         new BindingInitialisationGenerator(codegen).generate(node, mv);
     }
 
     /**
      * stack: [envRec, value] -> []
      */
-    protected void BindingInitialisationWithEnvironment(Binding node, ExpressionVisitor mv) {
+    protected final void BindingInitialisationWithEnvironment(Binding node, ExpressionVisitor mv) {
         new BindingInitialisationGenerator(codegen).generateWithEnvironment(node, mv);
     }
 
     /**
      * stack: [value] -> []
      */
-    protected void DestructuringAssignment(AssignmentPattern node, ExpressionVisitor mv) {
+    protected final void DestructuringAssignment(AssignmentPattern node, ExpressionVisitor mv) {
         new DestructuringAssignmentGenerator(codegen).generate(node, mv);
     }
 
@@ -958,7 +958,7 @@ abstract class DefaultCodeGenerator<R, V extends ExpressionVisitor> extends
      * 14.5.1.2 Runtime Semantics<br>
      * Runtime Semantics: ClassDefinitionEvaluation
      */
-    protected void ClassDefinitionEvaluation(ClassDefinition def, String className,
+    protected final void ClassDefinitionEvaluation(ClassDefinition def, String className,
             ExpressionVisitor mv) {
         // steps 1-3
         // stack: [] -> [<proto,ctor>]
