@@ -11,6 +11,10 @@ import java.util.List;
 /**
  * Super-interface for {@link Script} and {@link FunctionNode}
  */
-public interface TopLevelNode extends ScopedNode, MethodNode {
+public interface TopLevelNode extends ScopedNode {
     List<? extends ModuleItem> getStatements();
+
+    boolean hasSyntheticNodes();
+
+    void setSyntheticNodes(boolean syntheticNodes);
 }

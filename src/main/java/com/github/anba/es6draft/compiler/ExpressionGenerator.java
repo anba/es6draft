@@ -1781,7 +1781,7 @@ final class ExpressionGenerator extends DefaultCodeGenerator<ValType, Expression
      */
     @Override
     public ValType visit(GeneratorComprehension node, ExpressionVisitor mv) {
-        codegen.compile(node, mv);
+        codegen.compile(node);
 
         mv.invoke(codegen.methodDesc(node, FunctionName.RTI));
         mv.loadExecutionContext();

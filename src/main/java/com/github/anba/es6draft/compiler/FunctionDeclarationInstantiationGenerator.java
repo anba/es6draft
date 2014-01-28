@@ -158,7 +158,8 @@ final class FunctionDeclarationInstantiationGenerator extends
         List<Declaration> functionsToInitialise = new ArrayList<>();
         /* steps 7-8 */
         boolean argumentsObjectNeeded;
-        if (function instanceof ArrowFunction) { // => [[ThisMode]] of func is lexical
+        if (function instanceof ArrowFunction || function instanceof GeneratorComprehension) {
+            // => [[ThisMode]] of func is lexical
             argumentsObjectNeeded = false;
         } else {
             argumentsObjectNeeded = true;

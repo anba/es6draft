@@ -49,7 +49,7 @@ public class CodeSizeAnalysis implements AutoCloseable {
         executor.shutdownNow();
     }
 
-    private void submit(MethodNode node, List<? extends Node> children) {
+    private void submit(TopLevelNode node, List<? extends Node> children) {
         queue.add(executor.submit(new Entry(node, children)));
     }
 
@@ -74,10 +74,10 @@ public class CodeSizeAnalysis implements AutoCloseable {
     }
 
     private class Entry implements Callable<Integer> {
-        private MethodNode node;
+        private TopLevelNode node;
         private List<? extends Node> children;
 
-        Entry(MethodNode node, List<? extends Node> children) {
+        Entry(TopLevelNode node, List<? extends Node> children) {
             this.node = node;
             this.children = children;
         }
@@ -92,24 +92,24 @@ public class CodeSizeAnalysis implements AutoCloseable {
 
     private class CodeSizeHandlerImpl extends DefaultNodeVisitor<Integer, Integer> implements
             CodeSizeHandler {
-        private final MethodNode methodNode;
+        private final TopLevelNode topLevelNode;
 
-        public CodeSizeHandlerImpl(MethodNode methodNode) {
-            this.methodNode = methodNode;
+        public CodeSizeHandlerImpl(TopLevelNode topLevelNode) {
+            this.topLevelNode = topLevelNode;
         }
 
         @Override
         public int reportSize(Node node, int size) {
             if (size > MAX_SIZE_ALLOWED) {
                 // System.out.printf("reportSize(%s, %d)%n", node, size);
-                methodNode.setSyntheticNodes(true);
+                topLevelNode.setSyntheticNodes(true);
                 return node.accept(this, size);
             }
             return size;
         }
 
         @Override
-        public void submit(MethodNode node, List<? extends Node> children) {
+        public void submit(TopLevelNode node, List<? extends Node> children) {
             CodeSizeAnalysis.this.submit(node, children);
         }
 

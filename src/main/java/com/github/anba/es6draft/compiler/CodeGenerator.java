@@ -76,13 +76,6 @@ final class CodeGenerator implements AutoCloseable {
         static final String StatementListMethod = Type.getMethodDescriptor(Types.Object,
                 Types.ExecutionContext, Types.Object);
 
-        static final String GeneratorComprehension_Call = Type.getMethodDescriptor(Types.Object,
-                Types.OrdinaryGenerator, Types.ExecutionContext, Types.Object, Types.Object_);
-        static final String GeneratorComprehension_Code = Type.getMethodDescriptor(Types.Object,
-                Types.ExecutionContext, Types.ResumptionPoint);
-        static final String GeneratorComprehension_RTI = Type
-                .getMethodDescriptor(Types.RuntimeInfo$Function);
-
         static final String SpreadElementMethod = Type.getMethodDescriptor(Type.INT_TYPE,
                 Types.ExecutionContext, Types.ExoticArray, Type.INT_TYPE);
 
@@ -249,21 +242,6 @@ final class CodeGenerator implements AutoCloseable {
         return methodName(node, "block");
     }
 
-    private String methodName(GeneratorComprehension node, FunctionName name) {
-        String fname = methodName(node, "gencompr");
-        switch (name) {
-        case Call:
-            return insertMarker("", fname, "");
-        case Code:
-            return insertMarker("!", fname, "_code");
-        case RTI:
-            return insertMarker("", fname, "_rti");
-        case Init:
-        default:
-            throw new IllegalStateException();
-        }
-    }
-
     private String methodName(FunctionNode node, FunctionName name) {
         String fname = methodName(node);
         switch (name) {
@@ -349,20 +327,6 @@ final class CodeGenerator implements AutoCloseable {
         return MethodDescriptors.BlockDeclarationInit;
     }
 
-    private String methodDescriptor(GeneratorComprehension node, FunctionName name) {
-        switch (name) {
-        case Call:
-            return MethodDescriptors.GeneratorComprehension_Call;
-        case Code:
-            return MethodDescriptors.GeneratorComprehension_Code;
-        case RTI:
-            return MethodDescriptors.GeneratorComprehension_RTI;
-        case Init:
-        default:
-            throw new IllegalStateException();
-        }
-    }
-
     private String methodDescriptor(FunctionNode node, FunctionName name) {
         switch (name) {
         case Call:
@@ -444,10 +408,6 @@ final class CodeGenerator implements AutoCloseable {
         return publicStaticMethod(methodName(node), methodDescriptor(node));
     }
 
-    MethodCode newMethod(GeneratorComprehension node, FunctionName name) {
-        return publicStaticMethod(methodName(node, name), methodDescriptor(node, name));
-    }
-
     MethodCode newMethod(FunctionNode node, FunctionName name) {
         return publicStaticMethod(methodName(node, name), methodDescriptor(node, name));
     }
@@ -474,12 +434,6 @@ final class CodeGenerator implements AutoCloseable {
         String methodName = methodName(node);
         return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
                 methodDescriptor(node));
-    }
-
-    MethodDesc methodDesc(GeneratorComprehension node, FunctionName name) {
-        String methodName = methodName(node, name);
-        return MethodDesc.create(MethodType.Static, owner(methodName), methodName,
-                methodDescriptor(node, name));
     }
 
     MethodDesc methodDesc(SpreadElementMethod node) {
@@ -626,32 +580,8 @@ final class CodeGenerator implements AutoCloseable {
         mv.end();
     }
 
-    void compile(GeneratorComprehension node, ExpressionVisitor parent) {
-        if (!isCompiled(node)) {
-            Future<String> source = getSource(node);
-
-            // runtime method
-            ExpressionVisitor body = new GeneratorComprehensionVisitor(newMethod(node,
-                    FunctionName.Code), node, parent);
-            body.lineInfo(node);
-            body.begin();
-            Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
-            GeneratorState state = body.prologue(resume);
-
-            body.setScope(parent.getScope());
-            node.accept(new GeneratorComprehensionGenerator(this), body);
-            body.loadUndefined();
-            body.areturn();
-
-            body.epilogue(resume, state);
-            body.end();
-
-            // call method
-            new FunctionCodeGenerator(this).generate(node);
-
-            // runtime-info method
-            new RuntimeInfoGenerator(this).runtimeInfo(node, source);
-        }
+    void compile(GeneratorComprehension node) {
+        compile((FunctionNode) node);
     }
 
     void compile(FunctionDefinition node) {
@@ -681,6 +611,8 @@ final class CodeGenerator implements AutoCloseable {
             boolean tailCalls;
             if (node instanceof ArrowFunction && ((ArrowFunction) node).getExpression() != null) {
                 tailCalls = conciseFunctionBody((ArrowFunction) node);
+            } else if (node instanceof GeneratorComprehension) {
+                tailCalls = generatorComprehensionBody((GeneratorComprehension) node);
             } else if (node.isGenerator()) {
                 tailCalls = generatorBody(node);
             } else {
@@ -693,10 +625,6 @@ final class CodeGenerator implements AutoCloseable {
             // runtime-info method
             new RuntimeInfoGenerator(this).runtimeInfo(node, tailCalls, source);
         }
-    }
-
-    private Future<String> getSource(GeneratorComprehension node) {
-        return compressed("");
     }
 
     private Future<String> getSource(FunctionNode node) {
@@ -770,6 +698,27 @@ final class CodeGenerator implements AutoCloseable {
             body.loadUndefined();
             body.areturn();
         }
+
+        body.epilogue(resume, state);
+        body.end();
+
+        return body.hasTailCalls();
+    }
+
+    private boolean generatorComprehensionBody(GeneratorComprehension node) {
+        ExpressionVisitor body = new GeneratorComprehensionVisitor(newMethod(node,
+                FunctionName.Code), node);
+        body.lineInfo(node);
+        body.begin();
+        Variable<ResumptionPoint> resume = body.getParameter(1, ResumptionPoint.class);
+        GeneratorState state = body.prologue(resume);
+
+        body.enterScope(node);
+        node.accept(new GeneratorComprehensionGenerator(this), body);
+        body.exitScope();
+
+        body.loadUndefined();
+        body.areturn();
 
         body.epilogue(resume, state);
         body.end();
@@ -1000,9 +949,8 @@ final class CodeGenerator implements AutoCloseable {
     }
 
     private static final class GeneratorComprehensionVisitor extends ExpressionVisitor {
-        GeneratorComprehensionVisitor(MethodCode method, GeneratorComprehension node,
-                ExpressionVisitor parent) {
-            super(method, true, parent.isStrict(), parent.isGlobalCode(), node.hasSyntheticNodes());
+        GeneratorComprehensionVisitor(MethodCode method, GeneratorComprehension node) {
+            super(method, true, IsStrict(node), false, node.hasSyntheticNodes());
         }
 
         @Override

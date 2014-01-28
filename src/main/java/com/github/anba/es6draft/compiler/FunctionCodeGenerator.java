@@ -102,21 +102,6 @@ final class FunctionCodeGenerator {
         }
     }
 
-    private static final class GeneratorComprehensionCodeMethodGenerator extends InstructionVisitor {
-        GeneratorComprehensionCodeMethodGenerator(MethodCode method) {
-            super(method);
-        }
-
-        @Override
-        public void begin() {
-            super.begin();
-            setParameterName("generator", GENERATOR, Types.OrdinaryGenerator);
-            setParameterName("callerContext", EXECUTION_CONTEXT, Types.ExecutionContext);
-            setParameterName("thisValue", THIS_VALUE, Types.Object);
-            setParameterName("arguments", ARGUMENTS, Types.Object_);
-        }
-    }
-
     private final CodeGenerator codegen;
 
     FunctionCodeGenerator(CodeGenerator codegen) {
@@ -125,12 +110,16 @@ final class FunctionCodeGenerator {
 
     void generate(FunctionNode node) {
         MethodCode method = codegen.newMethod(node, FunctionName.Call);
-        if (isGenerator(node)) {
+        if (node.isGenerator()) {
             InstructionVisitor mv = new GeneratorCodeMethodGenerator(method);
             mv.lineInfo(node.getBeginLine());
             mv.begin();
 
-            generateGenerator(node, mv);
+            if (node instanceof GeneratorComprehension) {
+                generateGeneratorComprehension(node, mv);
+            } else {
+                generateGenerator(node, mv);
+            }
 
             mv.end();
         } else {
@@ -146,17 +135,6 @@ final class FunctionCodeGenerator {
 
             mv.end();
         }
-    }
-
-    void generate(GeneratorComprehension node) {
-        MethodCode method = codegen.newMethod(node, FunctionName.Call);
-        InstructionVisitor mv = new GeneratorComprehensionCodeMethodGenerator(method);
-        mv.lineInfo(node.getBeginLine());
-        mv.begin();
-
-        generateGeneratorComprehension(node, mv);
-
-        mv.end();
     }
 
     /**
@@ -301,7 +279,7 @@ final class FunctionCodeGenerator {
      * return EvaluateBodyComprehension(calleeContext, generator)
      * </pre>
      */
-    private void generateGeneratorComprehension(GeneratorComprehension node, InstructionVisitor mv) {
+    private void generateGeneratorComprehension(FunctionNode node, InstructionVisitor mv) {
         Variable<OrdinaryGenerator> generator = mv.getParameter(GENERATOR, OrdinaryGenerator.class);
         Variable<Object> thisValue = mv.getParameter(THIS_VALUE, Object.class);
         Variable<Object[]> arguments = mv.getParameter(ARGUMENTS, Object[].class);
@@ -352,15 +330,6 @@ final class FunctionCodeGenerator {
         mv.invoke(codegen.methodDesc(node, FunctionName.Init));
     }
 
-    private void functionDeclarationInstantiation(GeneratorComprehension node,
-            Variable<ExecutionContext> calleeContext, Variable<? extends FunctionObject> function,
-            Variable<Object[]> arguments, InstructionVisitor mv) {
-        // NB: generator comprehensions are defined in terms of generator functions which means they
-        // inherit the function declaration instantiation code from 9.2.13
-
-        /* steps 1-22 (not applicable, argumentsObjectNeeded = false) */
-    }
-
     /**
      * <code>
      * function_code(calleeContext)
@@ -396,10 +365,6 @@ final class FunctionCodeGenerator {
         mv.load(oldCaller);
         mv.load(oldArguments);
         mv.invoke(Methods.FunctionObject_restoreLegacyProperties);
-    }
-
-    private static boolean isGenerator(FunctionNode node) {
-        return node.isGenerator();
     }
 
     private boolean isLegacy(FunctionNode node) {

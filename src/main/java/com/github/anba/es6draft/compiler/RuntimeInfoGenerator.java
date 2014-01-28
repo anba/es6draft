@@ -16,7 +16,6 @@ import org.objectweb.asm.Type;
 
 import com.github.anba.es6draft.ast.FunctionExpression;
 import com.github.anba.es6draft.ast.FunctionNode;
-import com.github.anba.es6draft.ast.GeneratorComprehension;
 import com.github.anba.es6draft.ast.GeneratorExpression;
 import com.github.anba.es6draft.ast.Script;
 import com.github.anba.es6draft.compiler.CodeGenerator.FunctionName;
@@ -47,17 +46,6 @@ final class RuntimeInfoGenerator {
 
     RuntimeInfoGenerator(CodeGenerator codegen) {
         this.codegen = codegen;
-    }
-
-    private int functionFlags(GeneratorComprehension node) {
-        int functionFlags = 0;
-        // TODO: revisit decision to censor .caller by making generator expr strict by default?
-        functionFlags |= FunctionFlags.Strict.getValue();
-        functionFlags |= FunctionFlags.Generator.getValue();
-        if (node.hasSyntheticNodes()) {
-            functionFlags |= FunctionFlags.SyntheticMethods.getValue();
-        }
-        return functionFlags;
     }
 
     private int functionFlags(FunctionNode node, boolean tailCall) {
@@ -105,25 +93,6 @@ final class RuntimeInfoGenerator {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    void runtimeInfo(GeneratorComprehension node, Future<String> source) {
-        final String functionName = "";
-        final int expectedArgumentCount = 0;
-
-        InstructionVisitor mv = new InstructionVisitor(codegen.newMethod(node, FunctionName.RTI));
-        mv.begin();
-
-        mv.aconst(functionName);
-        mv.iconst(functionFlags(node));
-        mv.iconst(expectedArgumentCount);
-        mv.aconst(get(source));
-        mv.handle(codegen.methodDesc(node, FunctionName.Code));
-        mv.handle(codegen.methodDesc(node, FunctionName.Call));
-        mv.invoke(Methods.RTI_newFunction);
-        mv.areturn();
-
-        mv.end();
     }
 
     void runtimeInfo(FunctionNode node, boolean tailCall, Future<String> source) {

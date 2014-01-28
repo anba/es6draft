@@ -11,9 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.github.anba.es6draft.ast.MethodNode;
 import com.github.anba.es6draft.ast.Node;
 import com.github.anba.es6draft.ast.StatementListItem;
+import com.github.anba.es6draft.ast.TopLevelNode;
 
 /**
  * Base class for node re-writing classes
@@ -163,7 +163,7 @@ abstract class SubMethod<NODE extends Node> {
         }
 
         @Override
-        public void submit(MethodNode node, List<? extends Node> children) {
+        public void submit(TopLevelNode node, List<? extends Node> children) {
             // empty
         }
     }
@@ -183,7 +183,7 @@ abstract class SubMethod<NODE extends Node> {
         }
 
         @Override
-        public void submit(MethodNode node, List<? extends Node> children) {
+        public void submit(TopLevelNode node, List<? extends Node> children) {
             // empty
         }
     }

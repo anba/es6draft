@@ -54,7 +54,7 @@ public class Parser {
     }
 
     private enum ContextKind {
-        Script, Module, Function, Generator, ArrowFunction, Method;
+        Script, Module, Function, Generator, ArrowFunction, GeneratorComprehension, Method;
 
         final boolean isScript() {
             return this == Script;
@@ -69,6 +69,7 @@ public class Parser {
             case ArrowFunction:
             case Function:
             case Generator:
+            case GeneratorComprehension:
             case Method:
                 return true;
             case Module:
@@ -141,7 +142,8 @@ public class Parser {
 
         ParseContext findSuperContext() {
             ParseContext cx = this;
-            while (cx.kind == ContextKind.ArrowFunction) {
+            while (cx.kind == ContextKind.ArrowFunction
+                    || cx.kind == ContextKind.GeneratorComprehension) {
                 cx = cx.parent;
             }
             return cx;
@@ -5320,16 +5322,27 @@ public class Parser {
      */
     private GeneratorComprehension generatorComprehension() {
         boolean yieldAllowed = context.yieldAllowed;
+        newContext(ContextKind.GeneratorComprehension);
         try {
-            context.yieldAllowed = false;
+            // need to call manually b/c functionBody() isn't used here
+            applyStrictMode(false);
+
+            // propagate the outer context's 'yield' state
+            context.yieldAllowed = yieldAllowed;
+
             long begin = ts.beginPosition();
             consume(Token.LP);
             Comprehension comprehension = comprehension();
             consume(Token.RP);
 
-            return new GeneratorComprehension(begin, ts.endPosition(), comprehension);
+            FunctionContext scope = context.funContext;
+            GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
+                    scope, comprehension);
+            scope.node = generator;
+
+            return inheritStrictness(generator);
         } finally {
-            context.yieldAllowed = yieldAllowed;
+            restoreContext();
         }
     }
 
@@ -5343,16 +5356,27 @@ public class Parser {
      */
     private GeneratorComprehension legacyGeneratorComprehension() {
         boolean yieldAllowed = context.yieldAllowed;
+        newContext(ContextKind.GeneratorComprehension);
         try {
-            context.yieldAllowed = false;
+            // need to call manually b/c functionBody() isn't used here
+            applyStrictMode(false);
+
+            // propagate the outer context's 'yield' state
+            context.yieldAllowed = yieldAllowed;
+
             long begin = ts.beginPosition();
             consume(Token.LP);
             LegacyComprehension comprehension = legacyComprehension();
             consume(Token.RP);
 
-            return new GeneratorComprehension(begin, ts.endPosition(), comprehension);
+            FunctionContext scope = context.funContext;
+            GeneratorComprehension generator = new GeneratorComprehension(begin, ts.endPosition(),
+                    scope, comprehension);
+            scope.node = generator;
+
+            return inheritStrictness(generator);
         } finally {
-            context.yieldAllowed = yieldAllowed;
+            restoreContext();
         }
     }
 
@@ -5896,6 +5920,9 @@ public class Parser {
             } else if (context.kind == ContextKind.Function
                     && isEnabled(CompatibilityOption.LegacyGenerator)) {
                 throw new RetryGenerator();
+            } else if (context.kind == ContextKind.GeneratorComprehension && context.yieldAllowed) {
+                // yield nested in generator comprehension, nested in generator
+                reportSyntaxError(Messages.Key.InvalidYieldExpression);
             }
         }
         long position = ts.position(), lineinfo = ts.lineinfo();

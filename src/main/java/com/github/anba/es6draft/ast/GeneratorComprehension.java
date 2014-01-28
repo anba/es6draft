@@ -6,6 +6,9 @@
  */
 package com.github.anba.es6draft.ast;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * <h1>12 ECMAScript Language: Expressions</h1><br>
  * <h2>12.1 Primary Expressions</h2>
@@ -13,12 +16,16 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.7 Generator Comprehensions
  * </ul>
  */
-public class GeneratorComprehension extends Expression implements MethodNode {
+public class GeneratorComprehension extends Expression implements FunctionNode {
+    private FunctionScope scope;
     private Comprehension comprehension;
+    private StrictMode strictMode;
     private boolean syntheticNodes;
 
-    public GeneratorComprehension(long beginPosition, long endPosition, Comprehension comprehension) {
+    public GeneratorComprehension(long beginPosition, long endPosition, FunctionScope scope,
+            Comprehension comprehension) {
         super(beginPosition, endPosition);
+        this.scope = scope;
         this.comprehension = comprehension;
     }
 
@@ -27,8 +34,59 @@ public class GeneratorComprehension extends Expression implements MethodNode {
     }
 
     @Override
-    public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
-        return visitor.visit(this, value);
+    public String getFunctionName() {
+        return "gencompr";
+    }
+
+    @Override
+    public FormalParameterList getParameters() {
+        return new FormalParameterList(getBeginPosition(), getEndPosition(),
+                Collections.<FormalParameter> emptyList());
+    }
+
+    @Override
+    public StrictMode getStrictMode() {
+        return strictMode;
+    }
+
+    @Override
+    public void setStrictMode(StrictMode strictMode) {
+        this.strictMode = strictMode;
+    }
+
+    @Override
+    public String getHeaderSource() {
+        return "function gencompr()";
+    }
+
+    @Override
+    public String getBodySource() {
+        return "\n[generator expression]\n";
+    }
+
+    @Override
+    public List<StatementListItem> getStatements() {
+        return null;
+    }
+
+    @Override
+    public void setStatements(List<StatementListItem> statements) {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public FunctionScope getScope() {
+        return scope;
+    }
+
+    @Override
+    public boolean isGenerator() {
+        return true;
+    }
+
+    @Override
+    public boolean hasSuperReference() {
+        return false;
     }
 
     @Override
@@ -39,5 +97,10 @@ public class GeneratorComprehension extends Expression implements MethodNode {
     @Override
     public void setSyntheticNodes(boolean syntheticNodes) {
         this.syntheticNodes = syntheticNodes;
+    }
+
+    @Override
+    public <R, V> R accept(NodeVisitor<R, V> visitor, V value) {
+        return visitor.visit(this, value);
     }
 }
