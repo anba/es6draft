@@ -4557,35 +4557,63 @@ public class Parser {
      * </pre>
      */
     private Statement letStatement() {
-        BlockContext scope = enterBlockContext();
         long begin = ts.beginPosition();
         consume(Token.LET);
 
         consume(Token.LP);
-        List<LexicalBinding> bindings = bindingList(false, true);
+        List<LexicalBinding> lexicalBindings = letBindingList();
+        List<Binding> bindings = toBindings(lexicalBindings);
         consume(Token.RP);
 
         if (token() != Token.LC && isEnabled(CompatibilityOption.LetExpression)) {
             // let expression disguised as let statement - also error in strict mode(!)
             reportStrictModeSyntaxError(begin, Messages.Key.UnexpectedToken, token().toString());
-            Expression expression = assignmentExpression(true);
 
+            BlockContext scope = enterBlockContext(bindings);
+            Expression expression = assignmentExpression(true);
             exitBlockContext();
 
             LetExpression letExpression = new LetExpression(begin, ts.endPosition(), scope,
-                    bindings, expression);
+                    lexicalBindings, expression);
             scope.node = letExpression;
             return new ExpressionStatement(begin, ts.endPosition(), letExpression);
         } else {
-            BlockStatement letBlock = block(toBindings(bindings));
-
+            BlockContext scope = enterBlockContext(bindings);
+            BlockStatement letBlock = block(bindings);
             exitBlockContext();
 
-            LetStatement block = new LetStatement(begin, ts.endPosition(), scope, bindings,
+            LetStatement block = new LetStatement(begin, ts.endPosition(), scope, lexicalBindings,
                     letBlock);
             scope.node = block;
             return block;
         }
+    }
+
+    private List<LexicalBinding> letBindingList() {
+        List<LexicalBinding> list = newSmallList();
+        list.add(letBinding());
+        while (token() == Token.COMMA) {
+            consume(Token.COMMA);
+            list.add(letBinding());
+        }
+        return list;
+    }
+
+    private LexicalBinding letBinding() {
+        long begin = ts.beginPosition();
+        Binding binding;
+        Expression initialiser = null;
+        if (token() == Token.LC || token() == Token.LB) {
+            binding = bindingPattern(false);
+            initialiser = initialiser(true);
+        } else {
+            binding = bindingIdentifier(false);
+            if (token() == Token.ASSIGN) {
+                initialiser = initialiser(true);
+            }
+        }
+
+        return new LexicalBinding(begin, ts.endPosition(), binding, initialiser);
     }
 
     private List<Binding> toBindings(List<LexicalBinding> lexicalBindings) {
@@ -5535,22 +5563,21 @@ public class Parser {
      * </pre>
      */
     private LetExpression letExpression() {
-        BlockContext scope = enterBlockContext();
         long begin = ts.beginPosition();
         consume(Token.LET);
 
         consume(Token.LP);
-        List<LexicalBinding> bindings = bindingList(false, true);
+        List<LexicalBinding> lexicalBindings = letBindingList();
+        List<Binding> bindings = toBindings(lexicalBindings);
         consume(Token.RP);
 
+        BlockContext scope = enterBlockContext(bindings);
         Expression expression = assignmentExpression(true);
-
         exitBlockContext();
 
-        LetExpression letExpression = new LetExpression(begin, ts.endPosition(), scope, bindings,
-                expression);
+        LetExpression letExpression = new LetExpression(begin, ts.endPosition(), scope,
+                lexicalBindings, expression);
         scope.node = letExpression;
-
         return letExpression;
     }
 
