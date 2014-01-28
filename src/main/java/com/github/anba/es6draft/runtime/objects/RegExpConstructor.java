@@ -336,7 +336,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$*
          */
         @Accessor(name = "$*", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = false))
+                writable = false, enumerable = false, configurable = true))
         public static Object get_$multiline(ExecutionContext cx, Object thisValue) {
             return get_multiline(cx, thisValue);
         }
@@ -345,7 +345,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$*
          */
         @Accessor(name = "$*", type = Accessor.Type.Setter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = false))
+                writable = false, enumerable = false, configurable = true))
         public static Object set_$multiline(ExecutionContext cx, Object thisValue, Object value) {
             return set_multiline(cx, thisValue, value);
         }
@@ -354,7 +354,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.multiline
          */
         @Accessor(name = "multiline", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object get_multiline(ExecutionContext cx, Object thisValue) {
             return getRegExp(cx).isDefaultMultiline();
         }
@@ -363,7 +363,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.multiline
          */
         @Accessor(name = "multiline", type = Accessor.Type.Setter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object set_multiline(ExecutionContext cx, Object thisValue, Object value) {
             getRegExp(cx).setDefaultMultiline(ToBoolean(value));
             return UNDEFINED;
@@ -373,7 +373,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$_
          */
         @Accessor(name = "$_", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = false))
+                writable = false, enumerable = false, configurable = true))
         public static Object $input(ExecutionContext cx, Object thisValue) {
             return input(cx, thisValue);
         }
@@ -382,7 +382,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.input
          */
         @Accessor(name = "input", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object input(ExecutionContext cx, Object thisValue) {
             return getRegExp(cx).getLastInput();
         }
@@ -391,7 +391,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$&
          */
         @Accessor(name = "$&", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = false))
+                writable = false, enumerable = false, configurable = true))
         public static Object $lastMatch(ExecutionContext cx, Object thisValue) {
             return lastMatch(cx, thisValue);
         }
@@ -400,7 +400,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.lastMatch
          */
         @Accessor(name = "lastMatch", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object lastMatch(ExecutionContext cx, Object thisValue) {
             return getRegExp(cx).getLastMatchResult().group();
         }
@@ -409,7 +409,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$+
          */
         @Accessor(name = "$+", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = false))
+                writable = false, enumerable = false, configurable = true))
         public static Object $lastParen(ExecutionContext cx, Object thisValue) {
             return lastParen(cx, thisValue);
         }
@@ -418,7 +418,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.lastParen
          */
         @Accessor(name = "lastParen", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object lastParen(ExecutionContext cx, Object thisValue) {
             RegExpConstructor re = getRegExp(cx);
             int groups = re.getLastMatchResult().groupCount();
@@ -429,7 +429,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$`
          */
         @Accessor(name = "$`", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = false))
+                writable = false, enumerable = false, configurable = true))
         public static Object $leftContext(ExecutionContext cx, Object thisValue) {
             return leftContext(cx, thisValue);
         }
@@ -438,7 +438,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.leftContext
          */
         @Accessor(name = "leftContext", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object leftContext(ExecutionContext cx, Object thisValue) {
             RegExpConstructor re = getRegExp(cx);
             return re.getLastInput().toString().substring(0, re.getLastMatchResult().start());
@@ -448,7 +448,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$'
          */
         @Accessor(name = "$'", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = false))
+                writable = false, enumerable = false, configurable = true))
         public static Object $rightContext(ExecutionContext cx, Object thisValue) {
             return rightContext(cx, thisValue);
         }
@@ -457,7 +457,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.rightContext
          */
         @Accessor(name = "rightContext", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object rightContext(ExecutionContext cx, Object thisValue) {
             RegExpConstructor re = getRegExp(cx);
             return re.getLastInput().toString().substring(re.getLastMatchResult().end());
@@ -467,7 +467,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$1
          */
         @Accessor(name = "$1", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object $1(ExecutionContext cx, Object thisValue) {
             return group(getRegExp(cx), 1);
         }
@@ -476,7 +476,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$2
          */
         @Accessor(name = "$2", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object $2(ExecutionContext cx, Object thisValue) {
             return group(getRegExp(cx), 2);
         }
@@ -485,7 +485,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$3
          */
         @Accessor(name = "$3", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object $3(ExecutionContext cx, Object thisValue) {
             return group(getRegExp(cx), 3);
         }
@@ -494,7 +494,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$4
          */
         @Accessor(name = "$4", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object $4(ExecutionContext cx, Object thisValue) {
             return group(getRegExp(cx), 4);
         }
@@ -503,7 +503,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$5
          */
         @Accessor(name = "$5", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object $5(ExecutionContext cx, Object thisValue) {
             return group(getRegExp(cx), 5);
         }
@@ -512,7 +512,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$6
          */
         @Accessor(name = "$6", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object $6(ExecutionContext cx, Object thisValue) {
             return group(getRegExp(cx), 6);
         }
@@ -521,7 +521,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$7
          */
         @Accessor(name = "$7", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object $7(ExecutionContext cx, Object thisValue) {
             return group(getRegExp(cx), 7);
         }
@@ -530,7 +530,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$8
          */
         @Accessor(name = "$8", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object $8(ExecutionContext cx, Object thisValue) {
             return group(getRegExp(cx), 8);
         }
@@ -539,7 +539,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
          * Extension: RegExp.$9
          */
         @Accessor(name = "$9", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = true, configurable = false))
+                writable = false, enumerable = true, configurable = true))
         public static Object $9(ExecutionContext cx, Object thisValue) {
             return group(getRegExp(cx), 9);
         }

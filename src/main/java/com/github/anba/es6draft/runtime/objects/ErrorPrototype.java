@@ -214,7 +214,7 @@ public class ErrorPrototype extends OrdinaryObject implements Initialisable {
          * Extension: Error.prototype.stacktrace
          */
         @Accessor(name = "stacktrace", type = Accessor.Type.Getter, attributes = @Attributes(
-                writable = false, enumerable = false, configurable = false))
+                writable = false, enumerable = false, configurable = true))
         public static Object get_stacktrace(ExecutionContext cx, Object thisValue) {
             if (!(thisValue instanceof ErrorObject)) {
                 return UNDEFINED;
