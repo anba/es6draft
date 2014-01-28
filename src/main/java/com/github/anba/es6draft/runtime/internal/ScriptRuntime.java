@@ -11,7 +11,6 @@ import static com.github.anba.es6draft.runtime.internal.Errors.*;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromListIterator;
 import static com.github.anba.es6draft.runtime.objects.internal.ListIterator.FromScriptIterator;
 import static com.github.anba.es6draft.runtime.objects.iteration.GeneratorAbstractOperations.GeneratorYield;
-import static com.github.anba.es6draft.runtime.types.Reference.GetThisValue;
 import static com.github.anba.es6draft.runtime.types.Undefined.UNDEFINED;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArguments.CreateStrictArgumentsObject;
 import static com.github.anba.es6draft.runtime.types.builtins.ExoticArray.ArrayCreate;
@@ -57,7 +56,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * EvalDeclarationInstantiation
+     * 18.2.1.2 EvalDeclarationInstantiation
      */
     public static void bindingNotPresentOrThrow(ExecutionContext cx, EnvironmentRecord envRec,
             String name) {
@@ -67,33 +66,37 @@ public final class ScriptRuntime {
     }
 
     /**
-     * GlobalDeclarationInstantiation
+     * 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation
      */
     public static void canDeclareLexicalScopedOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String name) {
+        /* step 4.a */
         if (envRec.hasVarDeclaration(name)) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
+        /* step 4.b */
         if (envRec.hasLexicalDeclaration(name)) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
 
     /**
-     * GlobalDeclarationInstantiation
+     * 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation
      */
     public static void canDeclareVarScopedOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String name) {
+        /* step 5.a */
         if (envRec.hasLexicalDeclaration(name)) {
             throw newSyntaxError(cx, Messages.Key.VariableRedeclaration, name);
         }
     }
 
     /**
-     * GlobalDeclarationInstantiation
+     * 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation
      */
     public static void canDeclareGlobalFunctionOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String fn) {
+        /* steps 9.a.iii.1 - 9.a.iii.2 */
         boolean fnDefinable = envRec.canDeclareGlobalFunction(fn);
         if (!fnDefinable) {
             throw newTypeError(cx, Messages.Key.InvalidDeclaration, fn);
@@ -101,10 +104,11 @@ public final class ScriptRuntime {
     }
 
     /**
-     * GlobalDeclarationInstantiation
+     * 15.1.8 Runtime Semantics: GlobalDeclarationInstantiation
      */
     public static void canDeclareGlobalVarOrThrow(ExecutionContext cx,
             GlobalEnvironmentRecord envRec, String vn) {
+        /* steps 11.a.iii.1.a - 11.a.iii.1.b */
         boolean vnDefinable = envRec.canDeclareGlobalVar(vn);
         if (!vnDefinable) {
             throw newTypeError(cx, Messages.Key.InvalidDeclaration, vn);
@@ -422,7 +426,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.3 Function Calls
+     * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      */
@@ -439,33 +443,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.3 Function Calls
-     * <p>
-     * Runtime Semantics: EvaluateCall Abstract Operation
-     */
-    public static Object GetCallThisValue(Object ref, ExecutionContext cx) {
-        Object thisValue;
-        if (ref instanceof Reference) {
-            /* step 7 */
-            Reference<?, ?> r = (Reference<?, ?>) ref;
-            if (r.isPropertyReference()) {
-                thisValue = GetThisValue(cx, r);
-            } else {
-                assert r.getBase() instanceof EnvironmentRecord;
-                thisValue = ((EnvironmentRecord) r.getBase()).withBaseObject();
-                if (thisValue == null) {
-                    thisValue = Undefined.UNDEFINED;
-                }
-            }
-        } else {
-            /* step 8 */
-            thisValue = Undefined.UNDEFINED;
-        }
-        return thisValue;
-    }
-
-    /**
-     * 12.2.3 Function Calls
+     * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      */
@@ -481,7 +459,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.3 Function Calls
+     * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      */
@@ -490,7 +468,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.3 Function Calls
+     * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      */
@@ -499,7 +477,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.3 Function Calls
+     * 12.2.4 Function Calls
      * <p>
      * Runtime Semantics: EvaluateCall Abstract Operation
      */
@@ -513,12 +491,14 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.4 The super Keyword
+     * 12.2.5 The super Keyword
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      */
     public static Reference<ScriptObject, ?> MakeSuperReference(ExecutionContext cx,
             Object propertyKey, boolean strict) {
+        assert propertyKey == null || propertyKey instanceof String
+                || propertyKey instanceof Symbol;
         EnvironmentRecord envRec = cx.getThisEnvironment();
         if (!envRec.hasSuperBinding()) {
             throw newReferenceError(cx, Messages.Key.MissingSuperBinding);
@@ -544,7 +524,7 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.2.4 The super Keyword
+     * 12.2.5 The super Keyword
      * <p>
      * Runtime Semantics: Abstract Operation MakeSuperReference(propertyKey, strict)
      */
@@ -667,9 +647,12 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.4.3 The typeof Operator
+     * 12.4 Unary Operators<br>
+     * 12.4.6 The typeof Operator
      */
     public static String typeof(Object val, ExecutionContext cx) {
+        /* step 1 (generated code) */
+        /* step 2 */
         if (val instanceof Reference) {
             Reference<?, ?> ref = (Reference<?, ?>) val;
             if (ref.isUnresolvableReference()) {
@@ -677,6 +660,7 @@ public final class ScriptRuntime {
             }
             val = ref.getValue(cx);
         }
+        /* steps 3-4 */
         switch (Type.of(val)) {
         case Undefined:
             return "undefined";
@@ -700,21 +684,28 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.6.1 The Addition operator ( + )
+     * 12.6 Additive Operators<br>
+     * 12.6.3 The Addition operator ( + )
      */
     public static Object add(Object lval, Object rval, ExecutionContext cx) {
+        /* steps 1-6 (generated code) */
+        /* steps 7-8 */
         Object lprim = ToPrimitive(cx, lval, null);
+        /* steps 9-10 */
         Object rprim = ToPrimitive(cx, rval, null);
+        /* step 11 */
         if (Type.isString(lprim) || Type.isString(rprim)) {
             CharSequence lstr = ToString(cx, lprim);
             CharSequence rstr = ToString(cx, rprim);
             return add(lstr, rstr, cx);
         }
+        /* step 12 */
         return ToNumber(cx, lprim) + ToNumber(cx, rprim);
     }
 
     /**
-     * 12.6.1 The Addition operator ( + )
+     * 12.6 Additive Operators<br>
+     * 12.6.3 The Addition operator ( + )
      */
     public static CharSequence add(CharSequence lstr, CharSequence rstr, ExecutionContext cx) {
         int llen = lstr.length(), rlen = rstr.length();
@@ -735,7 +726,8 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.8.1 Abstract Relational Comparison
+     * 12.8 Relational Operators<br>
+     * 12.8.3 Runtime Semantics: Evaluation
      */
     public static int relationalComparison(Object x, Object y, boolean leftFirst,
             ExecutionContext cx) {
@@ -743,49 +735,55 @@ public final class ScriptRuntime {
     }
 
     /**
-     * 12.8 Relational Operators
+     * 12.8 Relational Operators<br>
+     * 12.8.3 Runtime Semantics: Evaluation
      */
     public static boolean in(Object lval, Object rval, ExecutionContext cx) {
+        /* steps 1-6 (generated code) */
+        /* step 7 */
         if (!Type.isObject(rval)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
-        Object p = ToPropertyKey(cx, lval);
-        if (p instanceof String) {
-            return HasProperty(cx, Type.objectValue(rval), (String) p);
-        } else {
-            return HasProperty(cx, Type.objectValue(rval), (Symbol) p);
-        }
+        /* step 8 */
+        return HasProperty(cx, Type.objectValue(rval), ToPropertyKey(cx, lval));
     }
 
     /**
      * 12.8 Relational Operators<br>
-     * 12.8.3 Runtime Semantics: InstanceofOperator(O, C)
+     * 12.8.4 Runtime Semantics: InstanceofOperator(O, C)
      */
     public static boolean InstanceofOperator(Object obj, Object constructor, ExecutionContext cx) {
+        /* step 1 */
         if (!Type.isObject(constructor)) {
             throw newTypeError(cx, Messages.Key.NotObjectType);
         }
+        /* steps 2-3 */
         Callable instOfHandler = GetMethod(cx, Type.objectValue(constructor),
                 BuiltinSymbol.hasInstance.get());
+        /* step 4 */
         if (instOfHandler != null) {
             Object result = instOfHandler.call(cx, constructor, obj);
             return ToBoolean(result);
         }
+        /* step 5 */
         if (!IsCallable(constructor)) {
             throw newTypeError(cx, Messages.Key.NotCallable);
         }
+        /* step 6 */
         return OrdinaryHasInstance(cx, constructor, obj);
     }
 
     /**
-     * 12.9.1 Abstract Equality Comparison
+     * 12.9 Equality Operators<br>
+     * 12.9.3 Runtime Semantics: Evaluation
      */
     public static boolean equalityComparison(Object x, Object y, ExecutionContext cx) {
         return EqualityComparison(cx, x, y);
     }
 
     /**
-     * 12.9.1 Strict Equality Comparison
+     * 12.9 Equality Operators<br>
+     * 12.9.3 Runtime Semantics: Evaluation
      */
     public static boolean strictEqualityComparison(Object x, Object y) {
         return StrictEqualityComparison(x, y);
@@ -856,7 +854,7 @@ public final class ScriptRuntime {
     /**
      * 13.6.4 The for-in and for-of Statements
      * <p>
-     * Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
+     * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      */
     public static Iterator<?> enumerate(Object o, ExecutionContext cx) {
         /* step 5 */
@@ -870,7 +868,7 @@ public final class ScriptRuntime {
     /**
      * 13.6.4 The for-in and for-of Statements
      * <p>
-     * Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
+     * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      */
     public static Iterator<?> iterate(Object o, ExecutionContext cx) {
         /* step 5 */
@@ -885,7 +883,7 @@ public final class ScriptRuntime {
      * 13.6.4 The for-in and for-of Statements<br>
      * Extension: 'for-each' statement
      * <p>
-     * Runtime Semantics: For In/Of Expression Evaluation Abstract Operation
+     * 13.6.4.6 Runtime Semantics: ForIn/OfExpressionEvaluation Abstract Operation
      */
     public static Iterator<?> enumerateValues(Object o, ExecutionContext cx) {
         /* step 5 */
@@ -922,11 +920,11 @@ public final class ScriptRuntime {
      */
     public static StackOverflowError getStackOverflowError(Error e) {
         if (e instanceof StackOverflowError) {
-            return ((StackOverflowError) e);
+            return (StackOverflowError) e;
         }
         Throwable cause = e.getCause();
         if (cause instanceof StackOverflowError) {
-            return ((StackOverflowError) cause);
+            return (StackOverflowError) cause;
         }
         throw e;
     }
@@ -1723,7 +1721,7 @@ public final class ScriptRuntime {
         Object func = ref.getValue(cx);
         Object[] argList = SpreadArray(cx.resolveBindingValue("args", true), cx);
         Callable f = CheckCallable(func, cx);
-        Object thisValue = GetCallThisValue(ref, cx);
+        Object thisValue = ref.getThisValue(cx);
         return PrepareForTailCall(argList, thisValue, f);
     }
 
