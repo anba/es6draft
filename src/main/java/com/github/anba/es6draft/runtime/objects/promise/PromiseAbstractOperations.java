@@ -245,16 +245,20 @@ public final class PromiseAbstractOperations {
         }
     }
 
+    public enum Thenable {
+        IsThenable, NotThenable
+    }
+
     /**
      * <h2>25.4.1 Promise Abstract Operations</h2>
      * <p>
      * 25.4.1.8 UpdatePromiseFromPotentialThenable ( x, promiseCapability)
      */
-    public static boolean UpdatePromiseFromPotentialThenable(ExecutionContext cx, Object x,
+    public static Thenable UpdatePromiseFromPotentialThenable(ExecutionContext cx, Object x,
             PromiseCapability promiseCapability) {
         /* step 1 */
         if (!Type.isObject(x)) {
-            return false; /* "not a thenable" */
+            return Thenable.NotThenable;
         }
         ScriptObject thenable = Type.objectValue(x);
         /* steps 2-4 */
@@ -264,11 +268,11 @@ public final class PromiseAbstractOperations {
         } catch (ScriptException e) {
             /* step 3 */
             promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
-            return true;
+            return Thenable.IsThenable;
         }
         /* step 5 */
         if (!IsCallable(then)) {
-            return false; /* "not a thenable" */
+            return Thenable.NotThenable;
         }
         /* steps 6-7 */
         try {
@@ -279,7 +283,7 @@ public final class PromiseAbstractOperations {
             promiseCapability.getReject().call(cx, UNDEFINED, e.getValue());
         }
         /* step 8 */
-        return true;
+        return Thenable.IsThenable;
     }
 
     /**
@@ -323,10 +327,10 @@ public final class PromiseAbstractOperations {
                 return;
             }
             /* steps 8-10 */
-            boolean updateResult = UpdatePromiseFromPotentialThenable(cx, handlerResult,
+            Thenable updateResult = UpdatePromiseFromPotentialThenable(cx, handlerResult,
                     promiseCapability);
             /* step 11 */
-            if (!updateResult) {
+            if (updateResult == Thenable.NotThenable) {
                 promiseCapability.getResolve().call(cx, UNDEFINED, handlerResult);
             }
             /* step 12 (return) */

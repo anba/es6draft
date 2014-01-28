@@ -27,6 +27,7 @@ import com.github.anba.es6draft.runtime.internal.Properties.Prototype;
 import com.github.anba.es6draft.runtime.internal.Properties.Value;
 import com.github.anba.es6draft.runtime.internal.ScriptException;
 import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.PromiseReactionTask;
+import com.github.anba.es6draft.runtime.objects.promise.PromiseAbstractOperations.Thenable;
 import com.github.anba.es6draft.runtime.types.BuiltinSymbol;
 import com.github.anba.es6draft.runtime.types.Callable;
 import com.github.anba.es6draft.runtime.types.Constructor;
@@ -205,10 +206,10 @@ public class PromisePrototype extends OrdinaryObject implements Initialisable {
             /* steps 6-7 */
             PromiseCapability promiseCapability = NewPromiseCapability(calleeContext, c);
             /* steps 8-9 */
-            boolean updateResult = UpdatePromiseFromPotentialThenable(calleeContext, x,
+            Thenable updateResult = UpdatePromiseFromPotentialThenable(calleeContext, x,
                     promiseCapability);
             /* step 10 */
-            if (updateResult) {
+            if (updateResult != Thenable.NotThenable) {
                 return Invoke(calleeContext, promiseCapability.getPromise(), "then",
                         fulfillmentHandler, rejectionHandler);
             }
