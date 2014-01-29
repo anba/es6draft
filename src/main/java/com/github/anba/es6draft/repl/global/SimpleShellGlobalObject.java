@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 /**
  *
  */
-public class SimpleShellGlobalObject extends ShellGlobalObject {
+public final class SimpleShellGlobalObject extends ShellGlobalObject {
     public SimpleShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
             ScriptCache scriptCache) {
         super(realm, console, baseDir, script, scriptCache);

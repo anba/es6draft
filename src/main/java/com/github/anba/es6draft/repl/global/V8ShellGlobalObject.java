@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 /**
  * Global object class with support for some v8-shell functions
  */
-public class V8ShellGlobalObject extends ShellGlobalObject {
+public final class V8ShellGlobalObject extends ShellGlobalObject {
     public V8ShellGlobalObject(Realm realm, ShellConsole console, Path baseDir, Path script,
             ScriptCache scriptCache) {
         super(realm, console, baseDir, script, scriptCache);

@@ -64,7 +64,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
 /**
  * Simple REPL
  */
-public class Repl {
+public final class Repl {
     private static final String PROGRAM_NAME = "es6draft";
     private static final int STACKTRACE_DEPTH = 20;
 

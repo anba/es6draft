@@ -47,7 +47,7 @@ class WrapperProxy implements ScriptObject {
         this.withProto = withProto;
     }
 
-    private static class CallabeWrapperProxy extends WrapperProxy implements Callable {
+    private static final class CallabeWrapperProxy extends WrapperProxy implements Callable {
         public CallabeWrapperProxy(ScriptObject target, ScriptObject prototype, boolean withProto) {
             super(target, prototype, withProto);
         }

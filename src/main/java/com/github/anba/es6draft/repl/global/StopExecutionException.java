@@ -11,7 +11,7 @@ package com.github.anba.es6draft.repl.global;
  * {@link MozShellGlobalObject#terminate()}
  */
 @SuppressWarnings("serial")
-public class StopExecutionException extends RuntimeException {
+public final class StopExecutionException extends RuntimeException {
     private final Reason reason;
 
     public enum Reason {
