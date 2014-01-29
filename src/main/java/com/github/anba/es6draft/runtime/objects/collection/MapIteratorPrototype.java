@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.1.5 Map Iterator Objects
  * </ul>
  */
-public class MapIteratorPrototype extends OrdinaryObject implements Initialisable {
+public final class MapIteratorPrototype extends OrdinaryObject implements Initialisable {
     public MapIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -54,7 +54,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
     /**
      * 23.1.5.3 Properties of Map Iterator Instances
      */
-    private static class MapIterator extends OrdinaryObject {
+    private static final class MapIterator extends OrdinaryObject {
         /** [[Map]] */
         MapObject map;
 
@@ -72,7 +72,7 @@ public class MapIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
     }
 
-    private static class MapIteratorAllocator implements ObjectAllocator<MapIterator> {
+    private static final class MapIteratorAllocator implements ObjectAllocator<MapIterator> {
         static final ObjectAllocator<MapIterator> INSTANCE = new MapIteratorAllocator();
 
         @Override

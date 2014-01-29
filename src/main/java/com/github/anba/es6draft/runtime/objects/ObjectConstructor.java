@@ -48,7 +48,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.1.3 Properties of the Object Constructor
  * </ul>
  */
-public class ObjectConstructor extends BuiltinConstructor implements Initialisable {
+public final class ObjectConstructor extends BuiltinConstructor implements Initialisable {
     public ObjectConstructor(Realm realm) {
         super(realm, "Object");
     }

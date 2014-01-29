@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>20.3.3 Properties of the Date Constructor
  * </ul>
  */
-public class DateConstructor extends BuiltinConstructor implements Initialisable {
+public final class DateConstructor extends BuiltinConstructor implements Initialisable {
     public DateConstructor(Realm realm) {
         super(realm, "Date");
     }
@@ -230,7 +230,7 @@ public class DateConstructor extends BuiltinConstructor implements Initialisable
         }
     }
 
-    private static class DateObjectAllocator implements ObjectAllocator<DateObject> {
+    private static final class DateObjectAllocator implements ObjectAllocator<DateObject> {
         static final ObjectAllocator<DateObject> INSTANCE = new DateObjectAllocator();
 
         @Override

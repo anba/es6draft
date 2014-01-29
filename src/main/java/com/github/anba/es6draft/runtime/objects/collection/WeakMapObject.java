@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.3.4 Properties of WeakMap Instances
  * </ul>
  */
-public class WeakMapObject extends OrdinaryObject {
+public final class WeakMapObject extends OrdinaryObject {
     /** [[WeakMapData]] */
     private WeakHashMap<Object, Object> weakMapData = null;
 

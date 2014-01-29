@@ -25,7 +25,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>7.4.7.1 ListIterator next( )
  * </ul>
  */
-public class ListIteratorNext extends BuiltinFunction {
+public final class ListIteratorNext extends BuiltinFunction {
     public ListIteratorNext(Realm realm) {
         super(realm, "next", 0);
     }

@@ -61,7 +61,7 @@ import com.ibm.icu.util.ULocale;
  * <li>12.2 Properties of the Intl.DateTimeFormat Constructor
  * </ul>
  */
-public class DateTimeFormatConstructor extends BuiltinConstructor implements Initialisable {
+public final class DateTimeFormatConstructor extends BuiltinConstructor implements Initialisable {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -716,7 +716,7 @@ public class DateTimeFormatConstructor extends BuiltinConstructor implements Ini
         }
     }
 
-    private static class DateTimeFormatObjectAllocator implements
+    private static final class DateTimeFormatObjectAllocator implements
             ObjectAllocator<DateTimeFormatObject> {
         static final ObjectAllocator<DateTimeFormatObject> INSTANCE = new DateTimeFormatObjectAllocator();
 

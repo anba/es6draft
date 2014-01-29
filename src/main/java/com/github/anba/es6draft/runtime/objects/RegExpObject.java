@@ -17,7 +17,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>21.2.6 Properties of RegExp Instances
  * </ul>
  */
-public class RegExpObject extends OrdinaryObject {
+public final class RegExpObject extends OrdinaryObject {
     /** [[OriginalSource]] */
     private String originalSource = null;
 

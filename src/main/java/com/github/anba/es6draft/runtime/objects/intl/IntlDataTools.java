@@ -34,7 +34,7 @@ import com.ibm.icu.util.TimeZone.SystemTimeZoneType;
 /**
  * Simple tools to generate the various language data for the intl package
  */
-class IntlDataTools {
+final class IntlDataTools {
     private IntlDataTools() {
     }
 

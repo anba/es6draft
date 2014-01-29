@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>22.2.6 Properties of the TypedArray Prototype Object
  * </ul>
  */
-public class TypedArrayPrototype extends OrdinaryObject implements Initialisable {
+public final class TypedArrayPrototype extends OrdinaryObject implements Initialisable {
     private final ElementType elementKind;
 
     public TypedArrayPrototype(Realm realm, ElementType elementKind) {

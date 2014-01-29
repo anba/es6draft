@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.1.4 Properties of Map Instances
  * </ul>
  */
-public class MapObject extends OrdinaryObject {
+public final class MapObject extends OrdinaryObject {
     /** [[MapData]] */
     private LinkedMap<Object, Object> mapData = null;
 

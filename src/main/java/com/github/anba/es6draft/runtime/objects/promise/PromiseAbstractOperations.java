@@ -395,7 +395,7 @@ public final class PromiseAbstractOperations {
         return (ScriptObject) p;
     }
 
-    private static class ConstantFunction extends BuiltinFunction {
+    private static final class ConstantFunction extends BuiltinFunction {
         /** [[ConstantValue]] */
         private final Object constantValue;
 

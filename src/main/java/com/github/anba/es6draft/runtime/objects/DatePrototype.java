@@ -47,7 +47,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>20.3.4 Properties of the Date Prototype Object
  * </ul>
  */
-public class DatePrototype extends OrdinaryObject implements Initialisable {
+public final class DatePrototype extends OrdinaryObject implements Initialisable {
     public DatePrototype(Realm realm) {
         super(realm);
     }

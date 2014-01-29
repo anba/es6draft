@@ -40,7 +40,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>24.1.3 Properties of the ArrayBuffer Constructor
  * </ul>
  */
-public class ArrayBufferConstructor extends BuiltinConstructor implements Initialisable {
+public final class ArrayBufferConstructor extends BuiltinConstructor implements Initialisable {
     // set default byte-order to little-endian - implementation specific choice
     private static final ByteOrder DEFAULT_BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
     private static final boolean IS_LITTLE_ENDIAN = true;
@@ -58,7 +58,8 @@ public class ArrayBufferConstructor extends BuiltinConstructor implements Initia
         AddRestrictedFunctionProperties(cx, this);
     }
 
-    private static class ArrayBufferObjectAllocator implements ObjectAllocator<ArrayBufferObject> {
+    private static final class ArrayBufferObjectAllocator implements
+            ObjectAllocator<ArrayBufferObject> {
         static final ObjectAllocator<ArrayBufferObject> INSTANCE = new ArrayBufferObjectAllocator();
 
         @Override

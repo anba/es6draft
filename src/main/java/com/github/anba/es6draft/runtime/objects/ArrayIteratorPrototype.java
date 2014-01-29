@@ -33,7 +33,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>22.1.5 Array Iterator Objects
  * </ul>
  */
-public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisable {
+public final class ArrayIteratorPrototype extends OrdinaryObject implements Initialisable {
     public ArrayIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -53,7 +53,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
     /**
      * 22.1.5.3 Properties of Array Iterator Instances
      */
-    private static class ArrayIterator extends OrdinaryObject {
+    private static final class ArrayIterator extends OrdinaryObject {
         /** [[IteratedObject]] */
         ScriptObject iteratedObject;
 
@@ -68,7 +68,7 @@ public class ArrayIteratorPrototype extends OrdinaryObject implements Initialisa
         }
     }
 
-    private static class ArrayIteratorAllocator implements ObjectAllocator<ArrayIterator> {
+    private static final class ArrayIteratorAllocator implements ObjectAllocator<ArrayIterator> {
         static final ObjectAllocator<ArrayIterator> INSTANCE = new ArrayIteratorAllocator();
 
         @Override

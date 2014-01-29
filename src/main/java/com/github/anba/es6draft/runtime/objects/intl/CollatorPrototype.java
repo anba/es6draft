@@ -32,7 +32,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>10.3 Properties of the Intl.Collator Prototype Object
  * </ul>
  */
-public class CollatorPrototype extends CollatorObject implements Initialisable {
+public final class CollatorPrototype extends CollatorObject implements Initialisable {
     public CollatorPrototype(Realm realm) {
         super(realm);
     }
@@ -111,7 +111,7 @@ public class CollatorPrototype extends CollatorObject implements Initialisable {
         return collator.getCollator().compare(x, y);
     }
 
-    private static class CompareFunction extends BuiltinFunction {
+    private static final class CompareFunction extends BuiltinFunction {
         public CompareFunction(Realm realm) {
             super(realm, "compare", 2);
         }

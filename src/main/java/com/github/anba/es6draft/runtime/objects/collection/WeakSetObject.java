@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.4.4 Properties of WeakSet Instances
  * </ul>
  */
-public class WeakSetObject extends OrdinaryObject {
+public final class WeakSetObject extends OrdinaryObject {
     /** [[WeakSetData]] */
     private WeakHashMap<Object, Boolean> weakSetData = null;
 

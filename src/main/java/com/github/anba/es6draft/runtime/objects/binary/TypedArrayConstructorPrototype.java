@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>22.2.2 Properties of the %TypedArray% Intrinsic Object
  * </ul>
  */
-public class TypedArrayConstructorPrototype extends BuiltinFunction implements Initialisable {
+public final class TypedArrayConstructorPrototype extends BuiltinFunction implements Initialisable {
     public TypedArrayConstructorPrototype(Realm realm) {
         super(realm, "TypedArray");
     }

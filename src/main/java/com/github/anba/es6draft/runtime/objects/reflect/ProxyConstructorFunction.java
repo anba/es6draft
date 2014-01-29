@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.5.2 Properties of the Proxy Constructor Function
  * </ul>
  */
-public class ProxyConstructorFunction extends BuiltinConstructor implements Initialisable {
+public final class ProxyConstructorFunction extends BuiltinConstructor implements Initialisable {
     public ProxyConstructorFunction(Realm realm) {
         super(realm, "Proxy");
     }

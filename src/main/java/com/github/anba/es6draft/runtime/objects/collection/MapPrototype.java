@@ -39,7 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.1.3 Properties of the Map Prototype Object
  * </ul>
  */
-public class MapPrototype extends OrdinaryObject implements Initialisable {
+public final class MapPrototype extends OrdinaryObject implements Initialisable {
     public MapPrototype(Realm realm) {
         super(realm);
     }

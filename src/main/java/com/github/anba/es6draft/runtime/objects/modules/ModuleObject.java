@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>15.2.5.1 ModuleLinkage Record
  * </ul>
  */
-public class ModuleObject extends OrdinaryObject {
+public final class ModuleObject extends OrdinaryObject {
     // FIXME: spec does not properly differentiate between module linkage records and module objects
 
     /** [[ModuleLinkage]] */

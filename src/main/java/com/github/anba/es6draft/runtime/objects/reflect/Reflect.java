@@ -39,7 +39,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.1 The Reflect Object
  * </ul>
  */
-public class Reflect extends OrdinaryObject implements Initialisable {
+public final class Reflect extends OrdinaryObject implements Initialisable {
     public Reflect(Realm realm) {
         super(realm);
     }

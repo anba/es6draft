@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  * </ul>
  */
-public class NativeErrorPrototype extends OrdinaryObject implements Initialisable {
+public final class NativeErrorPrototype extends OrdinaryObject implements Initialisable {
     private final ErrorType type;
 
     public NativeErrorPrototype(Realm realm, ErrorType type) {

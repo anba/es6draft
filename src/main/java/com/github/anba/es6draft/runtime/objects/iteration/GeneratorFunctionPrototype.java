@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>25.2.3 Properties of the GeneratorFunction Prototype Object
  * </ul>
  */
-public class GeneratorFunctionPrototype extends OrdinaryObject implements Initialisable {
+public final class GeneratorFunctionPrototype extends OrdinaryObject implements Initialisable {
     public GeneratorFunctionPrototype(Realm realm) {
         super(realm);
     }
@@ -79,7 +79,7 @@ public class GeneratorFunctionPrototype extends OrdinaryObject implements Initia
         }
     }
 
-    private static class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
+    private static final class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
         static final ObjectAllocator<GeneratorObject> INSTANCE = new GeneratorObjectAllocator();
 
         @Override

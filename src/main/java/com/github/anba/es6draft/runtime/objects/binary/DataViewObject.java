@@ -16,7 +16,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>24.2.5 Properties of DataView Instances
  * </ul>
  */
-public class DataViewObject extends OrdinaryObject implements ArrayBufferView {
+public final class DataViewObject extends OrdinaryObject implements ArrayBufferView {
     /** [[ViewedArrayBuffer]] */
     private ArrayBufferObject buffer;
 

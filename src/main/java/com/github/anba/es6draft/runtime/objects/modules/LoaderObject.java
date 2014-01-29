@@ -17,7 +17,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.3.4 Properties of %Loader% Instances
  * </ul>
  */
-public class LoaderObject extends OrdinaryObject {
+public final class LoaderObject extends OrdinaryObject {
     /** [[Loader]] */
     private Loader loader;
 

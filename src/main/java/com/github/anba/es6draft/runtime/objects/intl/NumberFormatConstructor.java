@@ -52,7 +52,7 @@ import com.ibm.icu.util.ULocale;
  * <li>11.2 Properties of the Intl.NumberFormat Constructor
  * </ul>
  */
-public class NumberFormatConstructor extends BuiltinConstructor implements Initialisable {
+public final class NumberFormatConstructor extends BuiltinConstructor implements Initialisable {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -359,7 +359,8 @@ public class NumberFormatConstructor extends BuiltinConstructor implements Initi
         }
     }
 
-    private static class NumberFormatObjectAllocator implements ObjectAllocator<NumberFormatObject> {
+    private static final class NumberFormatObjectAllocator implements
+            ObjectAllocator<NumberFormatObject> {
         static final ObjectAllocator<NumberFormatObject> INSTANCE = new NumberFormatObjectAllocator();
 
         @Override

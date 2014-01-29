@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.3.3 Properties of the Boolean Prototype Object
  * </ul>
  */
-public class BooleanPrototype extends OrdinaryObject implements Initialisable {
+public final class BooleanPrototype extends OrdinaryObject implements Initialisable {
     public BooleanPrototype(Realm realm) {
         super(realm);
     }

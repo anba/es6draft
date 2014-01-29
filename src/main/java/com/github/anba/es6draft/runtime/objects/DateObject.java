@@ -16,7 +16,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>20.3.5 Properties of Date Instances
  * </ul>
  */
-public class DateObject extends OrdinaryObject {
+public final class DateObject extends OrdinaryObject {
     /** [[DateValue]] */
     private double dateValue;
 

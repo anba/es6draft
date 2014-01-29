@@ -44,7 +44,7 @@ import com.github.anba.es6draft.runtime.types.builtins.FunctionObject;
  * <li>19.2.4 Properties of Function Instances
  * </ul>
  */
-public class FunctionPrototype extends BuiltinFunction implements Initialisable {
+public final class FunctionPrototype extends BuiltinFunction implements Initialisable {
     private static final int MAX_ARGUMENTS = 0x10000;
 
     public FunctionPrototype(Realm realm) {

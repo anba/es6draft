@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>20.2.2 Function Properties of the Math Object
  * </ul>
  */
-public class MathObject extends OrdinaryObject implements Initialisable {
+public final class MathObject extends OrdinaryObject implements Initialisable {
     public MathObject(Realm realm) {
         super(realm);
     }

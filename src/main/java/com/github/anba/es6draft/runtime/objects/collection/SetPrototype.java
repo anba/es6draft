@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.2.3 Properties of the Set Prototype Object
  * </ul>
  */
-public class SetPrototype extends OrdinaryObject implements Initialisable {
+public final class SetPrototype extends OrdinaryObject implements Initialisable {
     public SetPrototype(Realm realm) {
         super(realm);
     }

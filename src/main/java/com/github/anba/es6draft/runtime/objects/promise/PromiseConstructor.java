@@ -49,7 +49,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinFunction;
  * <li>25.4.4 Properties of the Promise Constructor
  * </ul>
  */
-public class PromiseConstructor extends BuiltinConstructor implements Initialisable {
+public final class PromiseConstructor extends BuiltinConstructor implements Initialisable {
     public PromiseConstructor(Realm realm) {
         super(realm, "Promise");
     }
@@ -343,7 +343,7 @@ public class PromiseConstructor extends BuiltinConstructor implements Initialisa
         return obj;
     }
 
-    private static class PromiseObjectAllocator implements ObjectAllocator<PromiseObject> {
+    private static final class PromiseObjectAllocator implements ObjectAllocator<PromiseObject> {
         static final ObjectAllocator<PromiseObject> INSTANCE = new PromiseObjectAllocator();
 
         @Override

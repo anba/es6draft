@@ -57,7 +57,7 @@ import com.ibm.icu.util.ULocale;
  * <li>21.1.4 Properties of String Instances
  * </ul>
  */
-public class StringPrototype extends OrdinaryObject implements Initialisable {
+public final class StringPrototype extends OrdinaryObject implements Initialisable {
     public StringPrototype(Realm realm) {
         super(realm);
     }

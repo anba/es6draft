@@ -25,7 +25,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * </ul>
  * </ul>
  */
-public class ErrorObject extends OrdinaryObject {
+public final class ErrorObject extends OrdinaryObject {
     private final Realm realm;
     private boolean initialised = false;
     private ScriptException exception = null;

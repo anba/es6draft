@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.3.2 Properties of the WeakMap Constructor
  * </ul>
  */
-public class WeakMapConstructor extends BuiltinConstructor implements Initialisable {
+public final class WeakMapConstructor extends BuiltinConstructor implements Initialisable {
     public WeakMapConstructor(Realm realm) {
         super(realm, "WeakMap");
     }
@@ -153,7 +153,7 @@ public class WeakMapConstructor extends BuiltinConstructor implements Initialisa
         }
     }
 
-    private static class WeakMapObjectAllocator implements ObjectAllocator<WeakMapObject> {
+    private static final class WeakMapObjectAllocator implements ObjectAllocator<WeakMapObject> {
         static final ObjectAllocator<WeakMapObject> INSTANCE = new WeakMapObjectAllocator();
 
         @Override

@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>22.2.5 Properties of the TypedArray Constructors
  * </ul>
  */
-public class TypedArrayConstructor extends BuiltinConstructor implements Initialisable {
+public final class TypedArrayConstructor extends BuiltinConstructor implements Initialisable {
     /** [[ElementType]] */
     private final ElementType elementType;
 

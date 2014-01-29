@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
  * <li>22.1.2 Properties of the Array Constructor
  * </ul>
  */
-public class ArrayConstructor extends BuiltinConstructor implements Initialisable {
+public final class ArrayConstructor extends BuiltinConstructor implements Initialisable {
     public ArrayConstructor(Realm realm) {
         super(realm, "Array");
     }

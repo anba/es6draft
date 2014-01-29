@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.2.4 Properties of Set Instances
  * </ul>
  */
-public class SetObject extends OrdinaryObject {
+public final class SetObject extends OrdinaryObject {
     /** [[SetData]] */
     private LinkedMap<Object, Void> setData = null;
 

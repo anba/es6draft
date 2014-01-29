@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>25.3.2 Properties of Generator Instances
  * </ul>
  */
-public class GeneratorObject extends OrdinaryObject {
+public final class GeneratorObject extends OrdinaryObject {
     /**
      * [[GeneratorState]]
      */
@@ -185,7 +185,7 @@ public class GeneratorObject extends OrdinaryObject {
     /**
      * ResumptionPoint-based generator implementation
      */
-    private static class ResumeGenerator implements Generator {
+    private static final class ResumeGenerator implements Generator {
         private final GeneratorObject generatorObject;
         private ResumptionPoint resumptionPoint = null;
 
@@ -259,7 +259,7 @@ public class GeneratorObject extends OrdinaryObject {
     /**
      * Thread-based generator implementation
      */
-    private static class ThreadGenerator implements Generator {
+    private static final class ThreadGenerator implements Generator {
         private static final Object COMPLETED = new Object();
         private final GeneratorObject generatorObject;
         private Future<Object> future;

@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>26.2.2 Properties of the %Realm% Constructor
  * </ul>
  */
-public class RealmConstructor extends BuiltinConstructor implements Initialisable {
+public final class RealmConstructor extends BuiltinConstructor implements Initialisable {
     public RealmConstructor(Realm realm) {
         super(realm, "Realm");
     }
@@ -178,7 +178,7 @@ public class RealmConstructor extends BuiltinConstructor implements Initialisabl
         }
     }
 
-    private static class RealmObjectAllocator implements ObjectAllocator<RealmObject> {
+    private static final class RealmObjectAllocator implements ObjectAllocator<RealmObject> {
         static final ObjectAllocator<RealmObject> INSTANCE = new RealmObjectAllocator();
 
         @Override

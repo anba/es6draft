@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.3.5 Loader Iterator Objects
  * </ul>
  */
-public class LoaderIteratorPrototype extends OrdinaryObject implements Initialisable {
+public final class LoaderIteratorPrototype extends OrdinaryObject implements Initialisable {
     public LoaderIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -55,7 +55,7 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
     /**
      * 26.3.5.3 Properties of Loader Iterator Instances
      */
-    private static class LoaderIterator extends OrdinaryObject {
+    private static final class LoaderIterator extends OrdinaryObject {
         /** [[Loader]] */
         LoaderObject loader;
 
@@ -73,7 +73,7 @@ public class LoaderIteratorPrototype extends OrdinaryObject implements Initialis
         }
     }
 
-    private static class LoaderIteratorAllocator implements ObjectAllocator<LoaderIterator> {
+    private static final class LoaderIteratorAllocator implements ObjectAllocator<LoaderIterator> {
         static final ObjectAllocator<LoaderIterator> INSTANCE = new LoaderIteratorAllocator();
 
         @Override

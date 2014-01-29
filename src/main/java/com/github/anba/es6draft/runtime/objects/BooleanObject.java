@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.3.4 Properties of Boolean Instances
  * </ul>
  */
-public class BooleanObject extends OrdinaryObject {
+public final class BooleanObject extends OrdinaryObject {
     /** [[BooleanData]] */
     private boolean booleanData;
 

@@ -32,7 +32,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.4.3 Properties of the WeakSet Prototype Object
  * </ul>
  */
-public class WeakSetPrototype extends OrdinaryObject implements Initialisable {
+public final class WeakSetPrototype extends OrdinaryObject implements Initialisable {
     public WeakSetPrototype(Realm realm) {
         super(realm);
     }

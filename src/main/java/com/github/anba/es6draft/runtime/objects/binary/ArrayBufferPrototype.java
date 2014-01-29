@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>24.1.4 Properties of the ArrayBuffer Prototype Object
  * </ul>
  */
-public class ArrayBufferPrototype extends OrdinaryObject implements Initialisable {
+public final class ArrayBufferPrototype extends OrdinaryObject implements Initialisable {
     public ArrayBufferPrototype(Realm realm) {
         super(realm);
     }

@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.5.3 Properties of the Error Prototype Object
  * </ul>
  */
-public class ErrorPrototype extends OrdinaryObject implements Initialisable {
+public final class ErrorPrototype extends OrdinaryObject implements Initialisable {
     public ErrorPrototype(Realm realm) {
         super(realm);
     }

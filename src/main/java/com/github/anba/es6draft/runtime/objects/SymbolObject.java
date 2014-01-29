@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.4.4 Properties of Symbol Instances
  * </ul>
  */
-public class SymbolObject extends OrdinaryObject {
+public final class SymbolObject extends OrdinaryObject {
     /** [[SymbolData]] */
     private Symbol symbolData;
 

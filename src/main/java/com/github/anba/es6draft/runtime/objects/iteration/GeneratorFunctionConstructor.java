@@ -47,7 +47,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryGenerator;
  * <li>25.2.2 Properties of the GeneratorFunction Constructor
  * </ul>
  */
-public class GeneratorFunctionConstructor extends BuiltinConstructor implements Initialisable {
+public final class GeneratorFunctionConstructor extends BuiltinConstructor implements Initialisable {
     public GeneratorFunctionConstructor(Realm realm) {
         super(realm, "GeneratorFunction");
     }

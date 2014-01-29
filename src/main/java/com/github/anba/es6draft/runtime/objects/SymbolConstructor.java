@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.4.2 Properties of the Symbol Constructor
  * </ul>
  */
-public class SymbolConstructor extends BuiltinConstructor implements Initialisable {
+public final class SymbolConstructor extends BuiltinConstructor implements Initialisable {
     public SymbolConstructor(Realm realm) {
         super(realm, "Symbol");
     }

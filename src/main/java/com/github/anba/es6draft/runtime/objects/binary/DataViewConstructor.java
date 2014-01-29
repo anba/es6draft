@@ -42,7 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>24.2.3 Properties of the DataView Constructor
  * </ul>
  */
-public class DataViewConstructor extends BuiltinConstructor implements Initialisable {
+public final class DataViewConstructor extends BuiltinConstructor implements Initialisable {
     public DataViewConstructor(Realm realm) {
         super(realm, "DataView");
     }
@@ -53,7 +53,7 @@ public class DataViewConstructor extends BuiltinConstructor implements Initialis
         AddRestrictedFunctionProperties(cx, this);
     }
 
-    private static class DataViewObjectAllocator implements ObjectAllocator<DataViewObject> {
+    private static final class DataViewObjectAllocator implements ObjectAllocator<DataViewObject> {
         static final ObjectAllocator<DataViewObject> INSTANCE = new DataViewObjectAllocator();
 
         @Override

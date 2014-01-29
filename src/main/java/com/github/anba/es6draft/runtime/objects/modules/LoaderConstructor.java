@@ -41,7 +41,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>26.3.2 Properties of the %Loader% Constructor
  * </ul>
  */
-public class LoaderConstructor extends BuiltinConstructor implements Initialisable {
+public final class LoaderConstructor extends BuiltinConstructor implements Initialisable {
     public LoaderConstructor(Realm realm) {
         super(realm, "Loader");
     }
@@ -148,7 +148,7 @@ public class LoaderConstructor extends BuiltinConstructor implements Initialisab
         }
     }
 
-    private static class LoaderObjectAllocator implements ObjectAllocator<LoaderObject> {
+    private static final class LoaderObjectAllocator implements ObjectAllocator<LoaderObject> {
         static final ObjectAllocator<LoaderObject> INSTANCE = new LoaderObjectAllocator();
 
         @Override

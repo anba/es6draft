@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>25.4.6 Properties of Promise Instances
  * </ul>
  */
-public class PromiseObject extends OrdinaryObject {
+public final class PromiseObject extends OrdinaryObject {
     public enum Status {
         Unresolved, HasResolution, HasRejection
     }

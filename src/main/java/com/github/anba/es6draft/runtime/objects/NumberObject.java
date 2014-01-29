@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>20.1.4 Properties of Number Instances
  * </ul>
  */
-public class NumberObject extends OrdinaryObject {
+public final class NumberObject extends OrdinaryObject {
     /** [[NumberData]] */
     private double numberData;
 

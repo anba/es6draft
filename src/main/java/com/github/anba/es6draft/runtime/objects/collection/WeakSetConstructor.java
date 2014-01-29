@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.4.2 Properties of the WeakSet Constructor
  * </ul>
  */
-public class WeakSetConstructor extends BuiltinConstructor implements Initialisable {
+public final class WeakSetConstructor extends BuiltinConstructor implements Initialisable {
     public WeakSetConstructor(Realm realm) {
         super(realm, "WeakSet");
     }
@@ -147,7 +147,7 @@ public class WeakSetConstructor extends BuiltinConstructor implements Initialisa
         }
     }
 
-    private static class WeakSetObjectAllocator implements ObjectAllocator<WeakSetObject> {
+    private static final class WeakSetObjectAllocator implements ObjectAllocator<WeakSetObject> {
         static final ObjectAllocator<WeakSetObject> INSTANCE = new WeakSetObjectAllocator();
 
         @Override

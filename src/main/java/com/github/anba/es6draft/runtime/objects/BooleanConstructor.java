@@ -32,7 +32,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.3.2 Properties of the Boolean Constructor
  * </ul>
  */
-public class BooleanConstructor extends BuiltinConstructor implements Initialisable {
+public final class BooleanConstructor extends BuiltinConstructor implements Initialisable {
     public BooleanConstructor(Realm realm) {
         super(realm, "Boolean");
     }
@@ -106,7 +106,7 @@ public class BooleanConstructor extends BuiltinConstructor implements Initialisa
         }
     }
 
-    private static class BooleanObjectAllocator implements ObjectAllocator<BooleanObject> {
+    private static final class BooleanObjectAllocator implements ObjectAllocator<BooleanObject> {
         static final ObjectAllocator<BooleanObject> INSTANCE = new BooleanObjectAllocator();
 
         @Override

@@ -19,7 +19,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
 /**
  * <h1>8 The Intl Object</h1>
  */
-public class IntlObject extends OrdinaryObject implements Initialisable {
+public final class IntlObject extends OrdinaryObject implements Initialisable {
     public IntlObject(Realm realm) {
         super(realm);
     }

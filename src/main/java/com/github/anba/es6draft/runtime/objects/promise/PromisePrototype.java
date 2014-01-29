@@ -42,7 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>25.4.5 Properties of the Promise Prototype Object
  * </ul>
  */
-public class PromisePrototype extends OrdinaryObject implements Initialisable {
+public final class PromisePrototype extends OrdinaryObject implements Initialisable {
     public PromisePrototype(Realm realm) {
         super(realm);
     }

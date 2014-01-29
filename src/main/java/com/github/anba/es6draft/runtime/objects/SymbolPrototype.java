@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.4.3 Properties of the Symbol Prototype Object
  * </ul>
  */
-public class SymbolPrototype extends OrdinaryObject implements Initialisable {
+public final class SymbolPrototype extends OrdinaryObject implements Initialisable {
     public SymbolPrototype(Realm realm) {
         super(realm);
     }

@@ -50,7 +50,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>19.1.5 Properties of Object Instances
  * </ul>
  */
-public class ObjectPrototype extends OrdinaryObject implements Initialisable {
+public final class ObjectPrototype extends OrdinaryObject implements Initialisable {
     public ObjectPrototype(Realm realm) {
         super(realm);
     }

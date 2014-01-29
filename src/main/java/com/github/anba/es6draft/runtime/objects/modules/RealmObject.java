@@ -16,7 +16,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.2.4 Properties of %Realm% Instances
  * </ul>
  */
-public class RealmObject extends OrdinaryObject {
+public final class RealmObject extends OrdinaryObject {
     /** [[Realm]] */
     private Realm realm;
 

@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>23.2.5 Set Iterator Objects
  * </ul>
  */
-public class SetIteratorPrototype extends OrdinaryObject implements Initialisable {
+public final class SetIteratorPrototype extends OrdinaryObject implements Initialisable {
     public SetIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -54,7 +54,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
     /**
      * 23.2.5.3 Properties of Set Iterator Instances
      */
-    private static class SetIterator extends OrdinaryObject {
+    private static final class SetIterator extends OrdinaryObject {
         /** [[IteratedSet]] */
         SetObject set;
 
@@ -72,7 +72,7 @@ public class SetIteratorPrototype extends OrdinaryObject implements Initialisabl
         }
     }
 
-    private static class SetIteratorAllocator implements ObjectAllocator<SetIterator> {
+    private static final class SetIteratorAllocator implements ObjectAllocator<SetIterator> {
         static final ObjectAllocator<SetIterator> INSTANCE = new SetIteratorAllocator();
 
         @Override

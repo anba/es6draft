@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.1.2 Properties of the Map Constructor
  * </ul>
  */
-public class MapConstructor extends BuiltinConstructor implements Initialisable {
+public final class MapConstructor extends BuiltinConstructor implements Initialisable {
     public MapConstructor(Realm realm) {
         super(realm, "Map");
     }
@@ -153,7 +153,7 @@ public class MapConstructor extends BuiltinConstructor implements Initialisable 
         }
     }
 
-    private static class MapObjectAllocator implements ObjectAllocator<MapObject> {
+    private static final class MapObjectAllocator implements ObjectAllocator<MapObject> {
         static final ObjectAllocator<MapObject> INSTANCE = new MapObjectAllocator();
 
         @Override

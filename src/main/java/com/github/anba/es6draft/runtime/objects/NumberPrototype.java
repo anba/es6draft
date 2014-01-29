@@ -37,7 +37,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>20.1.3 Properties of the Number Prototype Object
  * </ul>
  */
-public class NumberPrototype extends OrdinaryObject implements Initialisable {
+public final class NumberPrototype extends OrdinaryObject implements Initialisable {
     public NumberPrototype(Realm realm) {
         super(realm);
     }

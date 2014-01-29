@@ -50,7 +50,7 @@ import com.ibm.icu.util.ULocale;
  * <li>10.2 Properties of the Intl.Collator Constructor
  * </ul>
  */
-public class CollatorConstructor extends BuiltinConstructor implements Initialisable {
+public final class CollatorConstructor extends BuiltinConstructor implements Initialisable {
     /** [[availableLocales]] */
     private final Lazy<Set<String>> availableLocales = new Lazy<Set<String>>() {
         @Override
@@ -384,7 +384,7 @@ public class CollatorConstructor extends BuiltinConstructor implements Initialis
         }
     }
 
-    private static class CollatorObjectAllocator implements ObjectAllocator<CollatorObject> {
+    private static final class CollatorObjectAllocator implements ObjectAllocator<CollatorObject> {
         static final ObjectAllocator<CollatorObject> INSTANCE = new CollatorObjectAllocator();
 
         @Override

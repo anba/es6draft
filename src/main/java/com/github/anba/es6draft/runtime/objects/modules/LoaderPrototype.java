@@ -54,7 +54,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.3.3 Properties of the %Loader% Prototype Object
  * </ul>
  */
-public class LoaderPrototype extends OrdinaryObject implements Initialisable {
+public final class LoaderPrototype extends OrdinaryObject implements Initialisable {
     public LoaderPrototype(Realm realm) {
         super(realm);
     }
@@ -446,7 +446,7 @@ public class LoaderPrototype extends OrdinaryObject implements Initialisable {
     /**
      * Constant Functions
      */
-    public static class ConstantFunction extends BuiltinFunction {
+    public static final class ConstantFunction extends BuiltinFunction {
         /** [[ConstantValue]] */
         private final Object constantValue;
 

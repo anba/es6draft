@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>24.1.5 Properties of the ArrayBuffer Instances
  * </ul>
  */
-public class ArrayBufferObject extends OrdinaryObject {
+public final class ArrayBufferObject extends OrdinaryObject {
     /** [[ArrayBufferData]] */
     private ByteBuffer data = null;
 

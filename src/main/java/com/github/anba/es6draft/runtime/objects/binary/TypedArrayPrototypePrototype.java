@@ -47,7 +47,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>22.2.3 Properties of the %TypedArrayPrototype% Object
  * </ul>
  */
-public class TypedArrayPrototypePrototype extends OrdinaryObject implements Initialisable {
+public final class TypedArrayPrototypePrototype extends OrdinaryObject implements Initialisable {
     public TypedArrayPrototypePrototype(Realm realm) {
         super(realm);
     }
@@ -399,7 +399,7 @@ public class TypedArrayPrototypePrototype extends OrdinaryObject implements Init
             return a;
         }
 
-        private static class FunctionComparator implements Comparator<Double> {
+        private static final class FunctionComparator implements Comparator<Double> {
             private final ExecutionContext cx;
             private final Callable comparefn;
 

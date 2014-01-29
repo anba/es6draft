@@ -44,7 +44,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>21.2.4 Properties of the RegExp Constructor
  * </ul>
  */
-public class RegExpConstructor extends BuiltinConstructor implements Initialisable {
+public final class RegExpConstructor extends BuiltinConstructor implements Initialisable {
     public RegExpConstructor(Realm realm) {
         super(realm, "RegExp");
     }
@@ -110,7 +110,7 @@ public class RegExpConstructor extends BuiltinConstructor implements Initialisab
         return Construct(callerContext, this, args);
     }
 
-    private static class RegExpObjectAllocator implements ObjectAllocator<RegExpObject> {
+    private static final class RegExpObjectAllocator implements ObjectAllocator<RegExpObject> {
         static final ObjectAllocator<RegExpObject> INSTANCE = new RegExpObjectAllocator();
 
         @Override

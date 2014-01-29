@@ -35,7 +35,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>20.1.2 Properties of the Number Constructor
  * </ul>
  */
-public class NumberConstructor extends BuiltinConstructor implements Initialisable {
+public final class NumberConstructor extends BuiltinConstructor implements Initialisable {
     public NumberConstructor(Realm realm) {
         super(realm, "Number");
     }
@@ -285,7 +285,7 @@ public class NumberConstructor extends BuiltinConstructor implements Initialisab
         }
     }
 
-    private static class NumberObjectAllocator implements ObjectAllocator<NumberObject> {
+    private static final class NumberObjectAllocator implements ObjectAllocator<NumberObject> {
         static final ObjectAllocator<NumberObject> INSTANCE = new NumberObjectAllocator();
 
         @Override

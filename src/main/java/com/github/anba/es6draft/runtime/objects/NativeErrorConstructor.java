@@ -38,7 +38,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * </ul>
  * </ul>
  */
-public class NativeErrorConstructor extends BuiltinConstructor implements Initialisable {
+public final class NativeErrorConstructor extends BuiltinConstructor implements Initialisable {
     /**
      * 19.5.5 Native Error Types Used in This Standard
      * <ul>
@@ -414,7 +414,7 @@ public class NativeErrorConstructor extends BuiltinConstructor implements Initia
         }
     }
 
-    private static class NativeErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
+    private static final class NativeErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
         static final ObjectAllocator<ErrorObject> INSTANCE = new NativeErrorObjectAllocator();
 
         @Override

@@ -34,7 +34,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>19.5.2 Properties of the Error Constructor
  * </ul>
  */
-public class ErrorConstructor extends BuiltinConstructor implements Initialisable {
+public final class ErrorConstructor extends BuiltinConstructor implements Initialisable {
     public ErrorConstructor(Realm realm) {
         super(realm, "Error");
     }
@@ -137,7 +137,7 @@ public class ErrorConstructor extends BuiltinConstructor implements Initialisabl
         }
     }
 
-    private static class ErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
+    private static final class ErrorObjectAllocator implements ObjectAllocator<ErrorObject> {
         static final ObjectAllocator<ErrorObject> INSTANCE = new ErrorObjectAllocator();
 
         @Override

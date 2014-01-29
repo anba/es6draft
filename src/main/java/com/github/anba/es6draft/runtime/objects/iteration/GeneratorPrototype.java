@@ -29,7 +29,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>25.3.1 Properties of Generator Prototype
  * </ul>
  */
-public class GeneratorPrototype extends OrdinaryObject implements Initialisable {
+public final class GeneratorPrototype extends OrdinaryObject implements Initialisable {
     public GeneratorPrototype(Realm realm) {
         super(realm);
     }

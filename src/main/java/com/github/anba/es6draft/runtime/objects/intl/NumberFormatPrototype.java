@@ -33,7 +33,7 @@ import com.ibm.icu.text.NumberFormat;
  * <li>11.3 Properties of the Intl.NumberFormat Prototype Object
  * </ul>
  */
-public class NumberFormatPrototype extends NumberFormatObject implements Initialisable {
+public final class NumberFormatPrototype extends NumberFormatObject implements Initialisable {
     public NumberFormatPrototype(Realm realm) {
         super(realm);
     }
@@ -133,7 +133,7 @@ public class NumberFormatPrototype extends NumberFormatObject implements Initial
         return format.format(x);
     }
 
-    private static class FormatFunction extends BuiltinFunction {
+    private static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm, "format", 1);
         }

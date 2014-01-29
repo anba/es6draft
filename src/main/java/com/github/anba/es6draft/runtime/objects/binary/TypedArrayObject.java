@@ -24,7 +24,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticIntegerIndexedObjec
  * <li>22.2.7 Properties of TypedArray instances
  * </ul>
  */
-public class TypedArrayObject extends ExoticIntegerIndexedObject implements ArrayBufferView {
+public final class TypedArrayObject extends ExoticIntegerIndexedObject implements ArrayBufferView {
     /** [[ViewedArrayBuffer]] */
     private ArrayBufferObject buffer;
 

@@ -27,7 +27,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>7.4.7 CreateListIterator (list)
  * </ul>
  */
-public class ListIterator<T> extends OrdinaryObject {
+public final class ListIterator<T> extends OrdinaryObject {
     private Iterator<T> iterator;
 
     public ListIterator(Realm realm) {
@@ -38,7 +38,7 @@ public class ListIterator<T> extends OrdinaryObject {
         return iterator;
     }
 
-    private static class ListIteratorAllocator implements ObjectAllocator<ListIterator<?>> {
+    private static final class ListIteratorAllocator implements ObjectAllocator<ListIterator<?>> {
         static final ObjectAllocator<ListIterator<?>> INSTANCE = new ListIteratorAllocator();
 
         @Override

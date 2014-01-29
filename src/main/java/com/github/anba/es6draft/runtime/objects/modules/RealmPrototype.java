@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>26.2.3 Properties of the %Realm% Prototype Object
  * </ul>
  */
-public class RealmPrototype extends OrdinaryObject implements Initialisable {
+public final class RealmPrototype extends OrdinaryObject implements Initialisable {
     public RealmPrototype(Realm realm) {
         super(realm);
     }

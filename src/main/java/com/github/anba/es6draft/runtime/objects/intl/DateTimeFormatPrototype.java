@@ -41,7 +41,7 @@ import com.ibm.icu.text.DateTimePatternGenerator;
  * <li>12.3 Properties of the Intl.DateTimeFormat Prototype Object
  * </ul>
  */
-public class DateTimeFormatPrototype extends DateTimeFormatObject implements Initialisable {
+public final class DateTimeFormatPrototype extends DateTimeFormatObject implements Initialisable {
     public DateTimeFormatPrototype(Realm realm) {
         super(realm);
     }
@@ -139,7 +139,7 @@ public class DateTimeFormatPrototype extends DateTimeFormatObject implements Ini
         return dateTimeFormat.getDateFormat().format(new Date((long) x));
     }
 
-    private static class FormatFunction extends BuiltinFunction {
+    private static final class FormatFunction extends BuiltinFunction {
         public FormatFunction(Realm realm) {
             super(realm, "format", 0);
         }

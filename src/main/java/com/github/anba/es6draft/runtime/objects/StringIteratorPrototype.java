@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.types.builtins.OrdinaryObject;
  * <li>21.1.5 String Iterator Objects
  * </ul>
  */
-public class StringIteratorPrototype extends OrdinaryObject implements Initialisable {
+public final class StringIteratorPrototype extends OrdinaryObject implements Initialisable {
     public StringIteratorPrototype(Realm realm) {
         super(realm);
     }
@@ -44,7 +44,7 @@ public class StringIteratorPrototype extends OrdinaryObject implements Initialis
     /**
      * 21.1.5.3 Properties of String Iterator Instances
      */
-    private static class StringIterator extends OrdinaryObject {
+    private static final class StringIterator extends OrdinaryObject {
         /** [[IteratedString]] */
         String iteratedString;
 
@@ -56,7 +56,7 @@ public class StringIteratorPrototype extends OrdinaryObject implements Initialis
         }
     }
 
-    private static class StringIteratorAllocator implements ObjectAllocator<StringIterator> {
+    private static final class StringIteratorAllocator implements ObjectAllocator<StringIterator> {
         static final ObjectAllocator<StringIterator> INSTANCE = new StringIteratorAllocator();
 
         @Override

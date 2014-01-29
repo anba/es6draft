@@ -36,7 +36,7 @@ import com.github.anba.es6draft.runtime.types.builtins.BuiltinConstructor;
  * <li>23.2.2 Properties of the Set Constructor
  * </ul>
  */
-public class SetConstructor extends BuiltinConstructor implements Initialisable {
+public final class SetConstructor extends BuiltinConstructor implements Initialisable {
     public SetConstructor(Realm realm) {
         super(realm, "Set");
     }
@@ -147,7 +147,7 @@ public class SetConstructor extends BuiltinConstructor implements Initialisable 
         }
     }
 
-    private static class SetObjectAllocator implements ObjectAllocator<SetObject> {
+    private static final class SetObjectAllocator implements ObjectAllocator<SetObject> {
         static final ObjectAllocator<SetObject> INSTANCE = new SetObjectAllocator();
 
         @Override
