@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.13.1 Destructuring Assignment
  * </ul>
  */
-public class AssignmentRestElement extends AstNode implements AssignmentElementItem {
+public final class AssignmentRestElement extends AstNode implements AssignmentElementItem {
     private LeftHandSideExpression target;
 
     public AssignmentRestElement(long beginPosition, long endPosition, LeftHandSideExpression target) {

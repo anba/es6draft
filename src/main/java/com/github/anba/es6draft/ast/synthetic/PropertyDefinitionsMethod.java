@@ -15,7 +15,7 @@ import com.github.anba.es6draft.ast.PropertyName;
 /**
  * List of {@link PropertyDefinition}s as an external Java method
  */
-public class PropertyDefinitionsMethod extends PropertyDefinition {
+public final class PropertyDefinitionsMethod extends PropertyDefinition {
     private List<PropertyDefinition> properties;
 
     public PropertyDefinitionsMethod(List<PropertyDefinition> properties) {

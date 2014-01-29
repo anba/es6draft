@@ -12,7 +12,7 @@ import com.github.anba.es6draft.ast.NodeVisitor;
 /**
  * {@link Expression} as an external Java method
  */
-public class ExpressionMethod extends Expression {
+public final class ExpressionMethod extends Expression {
     private Expression expression;
 
     public ExpressionMethod(Expression expression) {

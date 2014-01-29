@@ -16,7 +16,7 @@ import java.util.Set;
  * <li>13.6.1 The do-while Statement
  * </ul>
  */
-public class DoWhileStatement extends IterationStatement {
+public final class DoWhileStatement extends IterationStatement {
     private EnumSet<Abrupt> abrupt;
     private Set<String> labelSet;
     private Expression test;

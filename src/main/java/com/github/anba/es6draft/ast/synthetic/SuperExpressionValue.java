@@ -19,7 +19,7 @@ import com.github.anba.es6draft.ast.SuperExpression;
  * <li>12.2.4 The super Keyword
  * </ul>
  */
-public class SuperExpressionValue extends SuperExpression {
+public final class SuperExpressionValue extends SuperExpression {
     public SuperExpressionValue(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
     }

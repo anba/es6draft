@@ -15,7 +15,7 @@ import java.util.List;
  * <li>12.1.5 Object Initialiser
  * </ul>
  */
-public class ObjectLiteral extends Expression {
+public final class ObjectLiteral extends Expression {
     private List<PropertyDefinition> properties;
 
     public ObjectLiteral(long beginPosition, long endPosition, List<PropertyDefinition> properties) {

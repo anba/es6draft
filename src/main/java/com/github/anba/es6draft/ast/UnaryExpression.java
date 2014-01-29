@@ -26,7 +26,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.4.9 Logical NOT Operator ( ! )
  * </ul>
  */
-public class UnaryExpression extends Expression {
+public final class UnaryExpression extends Expression {
     public enum Operator {
         DELETE("delete"), VOID("void"), TYPEOF("typeof"), PRE_INC("++"), PRE_DEC("--"), POST_INC(
                 "++", true), POST_DEC("--", true), POS("+"), NEG("-"), BITNOT("~"), NOT("!");

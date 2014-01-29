@@ -18,7 +18,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  * <li>15.1 Script
  * </ul>
  */
-public class Script extends AstNode implements TopLevelNode, ScopedNode {
+public final class Script extends AstNode implements TopLevelNode, ScopedNode {
     private String sourceFile;
     private ScriptScope scope;
     private List<StatementListItem> statements;

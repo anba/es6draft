@@ -15,7 +15,7 @@ import java.util.List;
  * <li>12.13.5 Destructuring Assignment
  * </ul>
  */
-public class ArrayAssignmentPattern extends AssignmentPattern {
+public final class ArrayAssignmentPattern extends AssignmentPattern {
     private List<AssignmentElementItem> elements;
 
     public ArrayAssignmentPattern(long beginPosition, long endPosition,

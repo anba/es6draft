@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.12 Conditional Operator ( ? : )
  * </ul>
  */
-public class ConditionalExpression extends Expression {
+public final class ConditionalExpression extends Expression {
     private Expression test;
     private Expression then;
     private Expression otherwise;

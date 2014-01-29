@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.4.2 Array Comprehension
  * </ul>
  */
-public class ComprehensionIf extends ComprehensionQualifier {
+public final class ComprehensionIf extends ComprehensionQualifier {
     private Expression test;
 
     public ComprehensionIf(long beginPosition, long endPosition, Expression test) {

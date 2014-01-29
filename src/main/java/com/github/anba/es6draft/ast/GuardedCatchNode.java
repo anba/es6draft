@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>Extension: 'catch-if' node
  * </ul>
  */
-public class GuardedCatchNode extends AstNode implements ScopedNode {
+public final class GuardedCatchNode extends AstNode implements ScopedNode {
     private BlockScope scope;
     private Binding catchParameter;
     private BlockStatement catchBlock;

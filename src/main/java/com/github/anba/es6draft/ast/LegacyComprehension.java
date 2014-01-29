@@ -16,7 +16,7 @@ import java.util.List;
  * <li>12.1.4.2 Array Comprehension
  * </ul>
  */
-public class LegacyComprehension extends Comprehension implements ScopedNode {
+public final class LegacyComprehension extends Comprehension implements ScopedNode {
     private BlockScope scope;
 
     public LegacyComprehension(BlockScope scope, List<ComprehensionQualifier> list,

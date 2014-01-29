@@ -15,7 +15,7 @@ import com.github.anba.es6draft.ast.NodeVisitor;
 /**
  * {@link ArrayLiteral} subclass for {@link SpreadElementMethod}
  */
-public class SpreadArrayLiteral extends ArrayLiteral {
+public final class SpreadArrayLiteral extends ArrayLiteral {
     public SpreadArrayLiteral(List<Expression> elements) {
         super(first(elements).getBeginPosition(), last(elements).getEndPosition(), elements);
     }

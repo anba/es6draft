@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.3 Literals
  * </ul>
  */
-public class StringLiteral extends ValueLiteral<String> implements PropertyName {
+public final class StringLiteral extends ValueLiteral<String> implements PropertyName {
     private String value;
 
     public StringLiteral(long beginPosition, long endPosition, String value) {

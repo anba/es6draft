@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.3 Modules</h2>
  */
-public class ImportSpecifier extends AstNode {
+public final class ImportSpecifier extends AstNode {
     private String importName;
     private BindingIdentifier localName;
 

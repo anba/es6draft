@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.3 Literals
  * </ul>
  */
-public class BooleanLiteral extends ValueLiteral<Boolean> {
+public final class BooleanLiteral extends ValueLiteral<Boolean> {
     private boolean value;
 
     public BooleanLiteral(long beginPosition, long endPosition, boolean value) {

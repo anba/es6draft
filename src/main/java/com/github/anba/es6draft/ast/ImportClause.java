@@ -12,7 +12,7 @@ import java.util.List;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.3 Modules</h2>
  */
-public class ImportClause extends AstNode {
+public final class ImportClause extends AstNode {
     private BindingIdentifier defaultEntry;
     private List<ImportSpecifier> namedImports;
 

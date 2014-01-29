@@ -15,7 +15,7 @@ import com.github.anba.es6draft.ast.StatementListItem;
 /**
  * List of {@link StatementListItem}s as an external Java method
  */
-public class StatementListMethod extends Statement {
+public final class StatementListMethod extends Statement {
     private List<StatementListItem> statements;
 
     public StatementListMethod(List<StatementListItem> statements) {

@@ -14,7 +14,7 @@ import java.util.List;
  * <li>13.14 The try Statement
  * </ul>
  */
-public class TryStatement extends Statement {
+public final class TryStatement extends Statement {
     private BlockStatement tryBlock;
     private CatchNode catchNode;
     private BlockStatement finallyBlock;

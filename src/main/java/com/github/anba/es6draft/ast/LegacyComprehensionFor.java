@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.4.2 Array Comprehension
  * </ul>
  */
-public class LegacyComprehensionFor extends ComprehensionQualifier {
+public final class LegacyComprehensionFor extends ComprehensionQualifier {
     private IterationKind iterationKind;
     private Binding binding;
     private Expression expression;

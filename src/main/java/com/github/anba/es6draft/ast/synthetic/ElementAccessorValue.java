@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.NodeVisitor;
  * <li>12.2.1 Property Accessors
  * </ul>
  */
-public class ElementAccessorValue extends ElementAccessor {
+public final class ElementAccessorValue extends ElementAccessor {
     public ElementAccessorValue(long beginPosition, long endPosition, Expression base,
             Expression element) {
         super(beginPosition, endPosition, base, element);

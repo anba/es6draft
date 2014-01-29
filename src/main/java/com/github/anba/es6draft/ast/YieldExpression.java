@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>14.4 Generator Function Definitions
  * </ul>
  */
-public class YieldExpression extends Expression {
+public final class YieldExpression extends Expression {
     private boolean delegatedYield;
     private Expression expression;
 

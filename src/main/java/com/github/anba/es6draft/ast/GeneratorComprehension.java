@@ -16,7 +16,7 @@ import java.util.List;
  * <li>12.1.7 Generator Comprehensions
  * </ul>
  */
-public class GeneratorComprehension extends Expression implements FunctionNode {
+public final class GeneratorComprehension extends Expression implements FunctionNode {
     private FunctionScope scope;
     private Comprehension comprehension;
     private StrictMode strictMode;

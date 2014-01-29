@@ -16,7 +16,7 @@ import java.util.Set;
  * <li>13.6.3 The for Statement
  * </ul>
  */
-public class ForStatement extends IterationStatement implements ScopedNode {
+public final class ForStatement extends IterationStatement implements ScopedNode {
     private BlockScope scope;
     private EnumSet<Abrupt> abrupt;
     private Set<String> labelSet;

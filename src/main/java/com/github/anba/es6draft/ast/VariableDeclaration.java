@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.2.2 Variable Statement
  * </ul>
  */
-public class VariableDeclaration extends AstNode {
+public final class VariableDeclaration extends AstNode {
     private Binding binding;
     private Expression initialiser;
 

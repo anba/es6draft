@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.3 Modules</h2>
  */
-public class ExportDeclaration extends ModuleItem {
+public final class ExportDeclaration extends ModuleItem {
     private Type type;
     private String moduleSpecifier;
     private ExportsClause exportsClause;

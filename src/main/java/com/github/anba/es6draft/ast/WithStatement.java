@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.10 The with Statement
  * </ul>
  */
-public class WithStatement extends Statement implements ScopedNode {
+public final class WithStatement extends Statement implements ScopedNode {
     private BlockScope scope;
     private Expression expression;
     private Statement statement;

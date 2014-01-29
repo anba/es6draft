@@ -14,7 +14,7 @@ import java.util.List;
  * <li>14.3 Method Definitions
  * </ul>
  */
-public class MethodDefinition extends PropertyDefinition implements FunctionNode {
+public final class MethodDefinition extends PropertyDefinition implements FunctionNode {
     private FunctionScope scope;
     private MethodType type;
     private PropertyName propertyName;

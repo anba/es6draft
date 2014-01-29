@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.2.5 Argument Lists
  * </ul>
  */
-public class CallSpreadElement extends Expression {
+public final class CallSpreadElement extends Expression {
     private Expression expression;
 
     public CallSpreadElement(long beginPosition, long endPosition, Expression expression) {

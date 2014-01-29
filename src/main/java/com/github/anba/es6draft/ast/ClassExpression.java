@@ -14,7 +14,7 @@ import java.util.List;
  * <li>14.5 Class Definitions
  * </ul>
  */
-public class ClassExpression extends Expression implements ClassDefinition {
+public final class ClassExpression extends Expression implements ClassDefinition {
     private BindingIdentifier name;
     private Expression heritage;
     private List<MethodDefinition> staticMethods;

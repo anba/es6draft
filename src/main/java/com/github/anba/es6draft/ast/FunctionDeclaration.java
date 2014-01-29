@@ -14,7 +14,7 @@ import java.util.List;
  * <li>14.1 Function Definitions
  * </ul>
  */
-public class FunctionDeclaration extends Declaration implements FunctionDefinition {
+public final class FunctionDeclaration extends Declaration implements FunctionDefinition {
     private FunctionScope scope;
     private BindingIdentifier identifier;
     private FormalParameterList parameters;

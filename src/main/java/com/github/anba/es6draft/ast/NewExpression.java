@@ -15,7 +15,7 @@ import java.util.List;
  * <li>12.2.2 The new Operator
  * </ul>
  */
-public class NewExpression extends Expression {
+public final class NewExpression extends Expression {
     private Expression expression;
     private List<Expression> arguments;
 

@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.5 Object Initialiser
  * </ul>
  */
-public class CoverInitialisedName extends PropertyDefinition {
+public final class CoverInitialisedName extends PropertyDefinition {
     private Identifier identifier;
     private Expression initialiser;
 

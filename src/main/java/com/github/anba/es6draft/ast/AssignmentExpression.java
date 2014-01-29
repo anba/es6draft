@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.13 Assignment Operators
  * </ul>
  */
-public class AssignmentExpression extends Expression {
+public final class AssignmentExpression extends Expression {
     public enum Operator {
         ASSIGN("="), ASSIGN_ADD("+="), ASSIGN_SUB("-="), ASSIGN_MUL("*="), ASSIGN_DIV("/="),
         ASSIGN_MOD("%="), ASSIGN_SHL("<<="), ASSIGN_SHR(">>="), ASSIGN_USHR(">>>="), ASSIGN_BITAND(

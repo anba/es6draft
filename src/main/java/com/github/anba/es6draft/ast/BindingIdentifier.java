@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.2.1 Let and Const Declarations
  * </ul>
  */
-public class BindingIdentifier extends Binding {
+public final class BindingIdentifier extends Binding {
     private String name;
 
     public BindingIdentifier(long beginPosition, long endPosition, String name) {

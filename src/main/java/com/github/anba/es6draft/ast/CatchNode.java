@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.14 The try Statement
  * </ul>
  */
-public class CatchNode extends AstNode implements ScopedNode {
+public final class CatchNode extends AstNode implements ScopedNode {
     private BlockScope scope;
     private Binding catchParameter;
     private BlockStatement catchBlock;

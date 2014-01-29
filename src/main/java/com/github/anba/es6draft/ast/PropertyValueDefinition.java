@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.5 Object Initialiser
  * </ul>
  */
-public class PropertyValueDefinition extends PropertyDefinition {
+public final class PropertyValueDefinition extends PropertyDefinition {
     private PropertyName propertyName;
     private Expression propertyValue;
 

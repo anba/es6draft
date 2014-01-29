@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.8 Regular Expression Literals
  * </ul>
  */
-public class RegularExpressionLiteral extends Expression {
+public final class RegularExpressionLiteral extends Expression {
     private String flags;
     private String regexp;
 

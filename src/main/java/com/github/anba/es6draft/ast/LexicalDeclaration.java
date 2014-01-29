@@ -15,7 +15,7 @@ import java.util.List;
  * <li>13.2.1 Let and Const Declarations
  * </ul>
  */
-public class LexicalDeclaration extends Declaration {
+public final class LexicalDeclaration extends Declaration {
     private Type type;
     private List<LexicalBinding> elements;
 

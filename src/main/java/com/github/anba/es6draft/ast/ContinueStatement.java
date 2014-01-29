@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.7 The continue Statement
  * </ul>
  */
-public class ContinueStatement extends Statement {
+public final class ContinueStatement extends Statement {
     private String label;
 
     public ContinueStatement(long beginPosition, long endPosition, String label) {

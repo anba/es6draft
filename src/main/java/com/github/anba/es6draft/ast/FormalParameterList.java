@@ -15,7 +15,7 @@ import java.util.List;
  * <li>14.1 Function Definitions
  * </ul>
  */
-public class FormalParameterList extends AstNode implements Iterable<FormalParameter> {
+public final class FormalParameterList extends AstNode implements Iterable<FormalParameter> {
     private List<FormalParameter> formals;
 
     public FormalParameterList(long beginPosition, long endPosition, List<FormalParameter> formals) {

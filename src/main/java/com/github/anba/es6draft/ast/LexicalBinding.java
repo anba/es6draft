@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.2.1 Let and Const Declarations
  * </ul>
  */
-public class LexicalBinding extends AstNode {
+public final class LexicalBinding extends AstNode {
     private Binding binding;
     private Expression initialiser;
 

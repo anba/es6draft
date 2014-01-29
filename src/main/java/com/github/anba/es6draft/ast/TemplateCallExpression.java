@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.2.6 Tagged Templates
  * </ul>
  */
-public class TemplateCallExpression extends Expression {
+public final class TemplateCallExpression extends Expression {
     private Expression base;
     private TemplateLiteral template;
 

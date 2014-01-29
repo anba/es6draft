@@ -15,7 +15,7 @@ import java.util.List;
  * <li>13.2.4 Destructuring Binding Patterns
  * </ul>
  */
-public class ArrayBindingPattern extends BindingPattern {
+public final class ArrayBindingPattern extends BindingPattern {
     private List<BindingElementItem> elements;
 
     public ArrayBindingPattern(long beginPosition, long endPosition,

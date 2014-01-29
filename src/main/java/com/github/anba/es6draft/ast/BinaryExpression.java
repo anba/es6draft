@@ -25,7 +25,7 @@ package com.github.anba.es6draft.ast;
  * <h2>12.10 Binary Bitwise Operators</h2><br>
  * <h2>12.11 Binary Logical Operators</h2><br>
  */
-public class BinaryExpression extends Expression {
+public final class BinaryExpression extends Expression {
     public enum Operator {
         MUL("*", 9), MOD("%", 9), DIV("/", 9), ADD("+", 8), SUB("-", 8), SHL("<<", 7),
         SHR(">>", 7), USHR(">>>", 7), LT("<", 6), GT(">", 6), LE("<=", 6), GE(">=", 6),

@@ -14,7 +14,7 @@ import java.util.List;
  * <li>13.11 The switch Statement
  * </ul>
  */
-public class SwitchClause extends AstNode {
+public final class SwitchClause extends AstNode {
     private Expression expression;
     private List<StatementListItem> statements;
 

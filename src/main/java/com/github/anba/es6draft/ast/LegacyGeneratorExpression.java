@@ -14,7 +14,7 @@ import java.util.List;
  * <li>14.4 Generator Functions Definitions
  * </ul>
  */
-public class LegacyGeneratorExpression extends GeneratorExpression {
+public final class LegacyGeneratorExpression extends GeneratorExpression {
     public LegacyGeneratorExpression(long beginPosition, long endPosition, FunctionScope scope,
             BindingIdentifier identifier, FormalParameterList parameters,
             List<StatementListItem> statements, boolean superReference, String headerSource,

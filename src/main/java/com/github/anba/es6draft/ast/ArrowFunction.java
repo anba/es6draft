@@ -14,7 +14,7 @@ import java.util.List;
  * <li>14.2 Arrow Function Definitions
  * </ul>
  */
-public class ArrowFunction extends Expression implements FunctionNode {
+public final class ArrowFunction extends Expression implements FunctionNode {
     private FunctionScope scope;
     private FormalParameterList parameters;
     private List<StatementListItem> statements;

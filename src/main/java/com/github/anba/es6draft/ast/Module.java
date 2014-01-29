@@ -16,7 +16,7 @@ import com.github.anba.es6draft.runtime.internal.CompatibilityOption;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.3 Modules</h2>
  */
-public class Module extends AstNode implements TopLevelNode, ScopedNode {
+public final class Module extends AstNode implements TopLevelNode, ScopedNode {
     private String sourceFile;
     private ModuleScope scope;
     private List<ModuleItem> statements;

@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.9 Template Literals
  * </ul>
  */
-public class TemplateCharacters extends Expression {
+public final class TemplateCharacters extends Expression {
     private String value;
     private String rawValue;
 

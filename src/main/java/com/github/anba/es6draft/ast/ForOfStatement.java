@@ -16,7 +16,7 @@ import java.util.Set;
  * <li>13.6.4 The for-in and for-of Statements
  * </ul>
  */
-public class ForOfStatement extends IterationStatement implements ScopedNode {
+public final class ForOfStatement extends IterationStatement implements ScopedNode {
     private BlockScope scope;
     private EnumSet<Abrupt> abrupt;
     private Node head;

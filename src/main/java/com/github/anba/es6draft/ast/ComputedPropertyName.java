@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.5 Object Initialiser
  * </ul>
  */
-public class ComputedPropertyName extends AstNode implements PropertyName {
+public final class ComputedPropertyName extends AstNode implements PropertyName {
     private Expression expression;
 
     public ComputedPropertyName(long beginPosition, long endPosition, Expression expression) {

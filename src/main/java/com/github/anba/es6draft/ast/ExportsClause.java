@@ -12,7 +12,7 @@ import java.util.List;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.3 Modules</h2>
  */
-public class ExportsClause extends AstNode {
+public final class ExportsClause extends AstNode {
     private List<ExportSpecifier> exports;
 
     public ExportsClause(long beginPosition, long endPosition, List<ExportSpecifier> exports) {

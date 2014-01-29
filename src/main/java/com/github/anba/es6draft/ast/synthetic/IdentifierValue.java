@@ -16,7 +16,7 @@ import com.github.anba.es6draft.ast.NodeVisitor;
  * <li>12.1.2 Identifier Reference
  * </ul>
  */
-public class IdentifierValue extends Identifier {
+public final class IdentifierValue extends Identifier {
     public IdentifierValue(long beginPosition, long endPosition, String name) {
         super(beginPosition, endPosition, name);
     }

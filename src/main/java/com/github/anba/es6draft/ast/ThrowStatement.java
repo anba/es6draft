@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.13 The throw Statement
  * </ul>
  */
-public class ThrowStatement extends Statement {
+public final class ThrowStatement extends Statement {
     private Expression expression;
 
     public ThrowStatement(long beginPosition, long endPosition, Expression expression) {

@@ -16,7 +16,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.2.4 Destructuring Binding Patterns
  * </ul>
  */
-public class BindingProperty extends AstNode {
+public final class BindingProperty extends AstNode {
     private PropertyName propertyName;
     private Binding binding;
     private Expression initialiser;

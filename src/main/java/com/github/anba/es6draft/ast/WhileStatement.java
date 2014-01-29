@@ -16,7 +16,7 @@ import java.util.Set;
  * <li>13.6.2 The while Statement
  * </ul>
  */
-public class WhileStatement extends IterationStatement {
+public final class WhileStatement extends IterationStatement {
     private EnumSet<Abrupt> abrupt;
     private Set<String> labelSet;
     private Expression test;

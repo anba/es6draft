@@ -15,7 +15,7 @@ import java.util.Set;
  * <li>13.12 Labelled Statements
  * </ul>
  */
-public class LabelledStatement extends Statement implements AbruptNode {
+public final class LabelledStatement extends Statement implements AbruptNode {
     private EnumSet<Abrupt> abrupt;
     private Set<String> labels;
     private Statement statement;

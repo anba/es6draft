@@ -14,7 +14,7 @@ import java.util.List;
  * <li>14.1 Function Definitions
  * </ul>
  */
-public class FunctionExpression extends Expression implements FunctionDefinition {
+public final class FunctionExpression extends Expression implements FunctionDefinition {
     private FunctionScope scope;
     private BindingIdentifier identifier;
     private String functionName;

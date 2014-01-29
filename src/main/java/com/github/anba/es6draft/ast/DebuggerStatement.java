@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.15 The debugger statement
  * </ul>
  */
-public class DebuggerStatement extends Statement {
+public final class DebuggerStatement extends Statement {
     public DebuggerStatement(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
     }

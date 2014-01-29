@@ -14,7 +14,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.4.1 Array Literal
  * </ul>
  */
-public class Elision extends Expression implements AssignmentElementItem {
+public final class Elision extends Expression implements AssignmentElementItem {
     public Elision(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
     }

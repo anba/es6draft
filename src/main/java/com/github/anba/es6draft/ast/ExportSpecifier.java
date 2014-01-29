@@ -10,7 +10,7 @@ package com.github.anba.es6draft.ast;
  * <h1>15 ECMAScript Language: Scripts and Modules</h1><br>
  * <h2>15.3 Modules</h2>
  */
-public class ExportSpecifier extends AstNode {
+public final class ExportSpecifier extends AstNode {
     private final String importName;
     private final String localName;
     private final String exportName;

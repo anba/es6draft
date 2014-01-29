@@ -15,7 +15,7 @@ import java.util.List;
  * <li>13.2.2 Variable Statement
  * </ul>
  */
-public class VariableStatement extends Statement {
+public final class VariableStatement extends Statement {
     private List<VariableDeclaration> elements;
 
     public VariableStatement(long beginPosition, long endPosition,

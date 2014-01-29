@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.1 The this Keyword
  * </ul>
  */
-public class ThisExpression extends Expression {
+public final class ThisExpression extends Expression {
     public ThisExpression(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
     }

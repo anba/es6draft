@@ -16,7 +16,7 @@ import java.util.Set;
  * <li>Extension: 'for-each' statement
  * </ul>
  */
-public class ForEachStatement extends IterationStatement implements ScopedNode {
+public final class ForEachStatement extends IterationStatement implements ScopedNode {
     private BlockScope scope;
     private EnumSet<Abrupt> abrupt;
     private Set<String> labelSet;

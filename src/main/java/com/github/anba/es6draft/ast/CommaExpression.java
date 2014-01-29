@@ -14,7 +14,7 @@ import java.util.List;
  * <li>12.14 Comma Operator ( , )
  * </ul>
  */
-public class CommaExpression extends Expression {
+public final class CommaExpression extends Expression {
     private List<Expression> operands;
 
     public CommaExpression(List<Expression> operands) {

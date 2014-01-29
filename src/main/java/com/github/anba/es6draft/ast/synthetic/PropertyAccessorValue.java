@@ -17,7 +17,7 @@ import com.github.anba.es6draft.ast.PropertyAccessor;
  * <li>12.2.1 Property Accessors
  * </ul>
  */
-public class PropertyAccessorValue extends PropertyAccessor {
+public final class PropertyAccessorValue extends PropertyAccessor {
     public PropertyAccessorValue(long beginPosition, long endPosition, Expression base, String name) {
         super(beginPosition, endPosition, base, name);
     }

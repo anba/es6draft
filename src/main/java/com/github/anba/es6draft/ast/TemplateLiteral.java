@@ -15,7 +15,7 @@ import java.util.List;
  * <li>12.1.9 Template Literals
  * </ul>
  */
-public class TemplateLiteral extends Expression {
+public final class TemplateLiteral extends Expression {
     private List<Expression> elements;
     private boolean tagged;
 

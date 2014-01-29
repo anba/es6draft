@@ -15,7 +15,7 @@ import java.util.List;
  * <li>12.2.3 Function Calls
  * </ul>
  */
-public class CallExpression extends Expression {
+public final class CallExpression extends Expression {
     private Expression base;
     private List<Expression> arguments;
 

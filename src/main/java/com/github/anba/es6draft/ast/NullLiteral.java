@@ -13,7 +13,7 @@ package com.github.anba.es6draft.ast;
  * <li>12.1.3 Literals
  * </ul>
  */
-public class NullLiteral extends Literal {
+public final class NullLiteral extends Literal {
     public NullLiteral(long beginPosition, long endPosition) {
         super(beginPosition, endPosition);
     }

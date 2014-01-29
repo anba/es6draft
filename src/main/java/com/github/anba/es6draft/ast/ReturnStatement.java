@@ -12,7 +12,7 @@ package com.github.anba.es6draft.ast;
  * <li>13.9 The return Statement
  * </ul>
  */
-public class ReturnStatement extends Statement {
+public final class ReturnStatement extends Statement {
     private Expression expression;
 
     public ReturnStatement(long beginPosition, long endPosition, Expression expression) {

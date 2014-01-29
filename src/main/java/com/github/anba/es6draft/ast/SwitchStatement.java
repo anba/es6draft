@@ -16,7 +16,7 @@ import java.util.Set;
  * <li>13.11 The switch Statement
  * </ul>
  */
-public class SwitchStatement extends BreakableStatement implements ScopedNode {
+public final class SwitchStatement extends BreakableStatement implements ScopedNode {
     private BlockScope scope;
     private EnumSet<Abrupt> abrupt;
     private Set<String> labelSet;

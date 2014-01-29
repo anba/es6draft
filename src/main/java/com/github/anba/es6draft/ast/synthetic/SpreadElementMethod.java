@@ -12,7 +12,7 @@ import com.github.anba.es6draft.ast.SpreadElement;
 /**
  * {@link SpreadElement} as an external Java method
  */
-public class SpreadElementMethod extends SpreadElement {
+public final class SpreadElementMethod extends SpreadElement {
     public SpreadElementMethod(SpreadArrayLiteral array) {
         super(array.getBeginPosition(), array.getEndPosition(), array);
     }
