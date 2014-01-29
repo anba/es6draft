@@ -40,7 +40,7 @@ public class ExoticProxy implements ScriptObject {
     /** [[ProxyHandler]] */
     private ScriptObject proxyHandler;
 
-    public ExoticProxy(ScriptObject target, ScriptObject handler) {
+    protected ExoticProxy(ScriptObject target, ScriptObject handler) {
         this.proxyTarget = target;
         this.proxyHandler = handler;
     }

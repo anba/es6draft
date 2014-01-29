@@ -35,7 +35,7 @@ public class ExoticBoundFunction extends OrdinaryObject implements Callable {
     /** [[BoundArguments]] */
     private Object[] boundArguments;
 
-    private static class ConstructorExoticBoundFunction extends ExoticBoundFunction implements
+    private static final class ConstructorExoticBoundFunction extends ExoticBoundFunction implements
             Constructor {
         public ConstructorExoticBoundFunction(Realm realm) {
             super(realm);

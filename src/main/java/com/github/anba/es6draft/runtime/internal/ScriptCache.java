@@ -30,7 +30,7 @@ import com.github.anba.es6draft.parser.ParserException;
 /**
  * Simple cache for compiled js-files
  */
-public class ScriptCache {
+public final class ScriptCache {
     private static final int MAX_SIZE = 10;
 
     @SuppressWarnings("serial")

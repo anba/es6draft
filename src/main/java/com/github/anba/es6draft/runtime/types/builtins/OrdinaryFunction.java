@@ -34,7 +34,7 @@ public class OrdinaryFunction extends FunctionObject {
         super(realm);
     }
 
-    private static class OrdinaryConstructorFunction extends OrdinaryFunction implements
+    private static final class OrdinaryConstructorFunction extends OrdinaryFunction implements
             Constructor {
         public OrdinaryConstructorFunction(Realm realm) {
             super(realm);
@@ -204,7 +204,7 @@ public class OrdinaryFunction extends FunctionObject {
     /**
      * 9.2.8 The %ThrowTypeError% Function Object
      */
-    private static class TypeErrorThrower extends BuiltinFunction {
+    private static final class TypeErrorThrower extends BuiltinFunction {
         TypeErrorThrower(Realm realm) {
             super(realm, "ThrowTypeError");
         }

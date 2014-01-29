@@ -30,7 +30,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.4.2 Array Exotic Objects
  * </ul>
  */
-public class ExoticArray extends OrdinaryObject {
+public final class ExoticArray extends OrdinaryObject {
     /** [[ArrayInitialisationState]] */
     private boolean initialisationState = false;
 

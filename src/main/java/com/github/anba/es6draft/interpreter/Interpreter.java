@@ -42,7 +42,7 @@ import com.github.anba.es6draft.runtime.types.builtins.ExoticArray;
 /**
  * Simple interpreter to speed-up `eval` evaluation
  */
-public class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
+public final class Interpreter extends DefaultNodeVisitor<Object, ExecutionContext> {
     /**
      * Returns a new {@link InterpretedScript} if the supplied {@code script} can be interpreted,
      * otherwise returns {@code null}

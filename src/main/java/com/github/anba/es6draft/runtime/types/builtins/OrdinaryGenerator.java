@@ -28,7 +28,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>9.2 ECMAScript Function Objects
  * </ul>
  */
-public class OrdinaryGenerator extends FunctionObject implements Constructor {
+public final class OrdinaryGenerator extends FunctionObject implements Constructor {
     public OrdinaryGenerator(Realm realm) {
         super(realm);
     }
@@ -133,7 +133,7 @@ public class OrdinaryGenerator extends FunctionObject implements Constructor {
         return g;
     }
 
-    private static class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
+    private static final class GeneratorObjectAllocator implements ObjectAllocator<GeneratorObject> {
         static final ObjectAllocator<GeneratorObject> INSTANCE = new GeneratorObjectAllocator();
 
         @Override

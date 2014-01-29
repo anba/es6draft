@@ -251,7 +251,7 @@ public class ExoticArguments extends OrdinaryObject {
     /**
      * An {@link ExoticArguments} object with 'special' behaviour for legacy use
      */
-    private static class ExoticLegacyArguments extends ExoticArguments {
+    private static final class ExoticLegacyArguments extends ExoticArguments {
         public ExoticLegacyArguments(Realm realm) {
             super(realm, true);
         }

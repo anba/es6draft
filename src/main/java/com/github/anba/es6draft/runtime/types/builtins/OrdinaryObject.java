@@ -702,7 +702,7 @@ public class OrdinaryObject implements ScriptObject {
         return new ArrayList<>(__keys__());
     }
 
-    private static class DefaultAllocator implements ObjectAllocator<OrdinaryObject> {
+    private static final class DefaultAllocator implements ObjectAllocator<OrdinaryObject> {
         static final ObjectAllocator<OrdinaryObject> INSTANCE = new DefaultAllocator();
 
         @Override
