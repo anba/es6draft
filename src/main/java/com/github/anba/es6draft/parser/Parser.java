@@ -31,7 +31,7 @@ import com.github.anba.es6draft.runtime.objects.FunctionPrototype;
  * <li>15 ECMAScript Language: Modules and Scripts
  * </ul>
  */
-public class Parser {
+public final class Parser {
     private static final boolean DEBUG = false;
 
     private static final int MAX_ARGUMENTS = FunctionPrototype.getMaxArguments();

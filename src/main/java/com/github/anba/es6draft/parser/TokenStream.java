@@ -20,7 +20,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
 /**
  * Lexer for ECMAScript 6 source code
  */
-public class TokenStream {
+public final class TokenStream {
     private static final boolean DEBUG = false;
 
     private final Parser parser;

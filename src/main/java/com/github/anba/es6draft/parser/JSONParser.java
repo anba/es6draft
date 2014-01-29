@@ -26,7 +26,7 @@ import com.github.anba.es6draft.runtime.types.ScriptObject;
  * <li>24.3.1.2 The JSON Syntactic Grammar
  * </ul>
  */
-public class JSONParser {
+public final class JSONParser {
     private static final boolean DEBUG = false;
 
     private boolean parseCalled = false;

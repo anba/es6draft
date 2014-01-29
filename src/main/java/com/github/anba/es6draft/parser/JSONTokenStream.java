@@ -21,7 +21,7 @@ import com.github.anba.es6draft.runtime.internal.Messages;
  * <li>24.3.1.1 The JSON Lexical Grammar
  * </ul>
  */
-public class JSONTokenStream {
+public final class JSONTokenStream {
     private static final boolean DEBUG = false;
 
     private final TokenStreamInput input;
