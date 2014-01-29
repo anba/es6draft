@@ -13,7 +13,7 @@ import com.github.anba.es6draft.ast.synthetic.ExpressionMethod;
  * Replaces the left and/or right branch of a {@link BinaryExpression} with an
  * {@link ExpressionMethod} element
  */
-class BinaryExpressionSubMethod extends SubMethod<BinaryExpression> {
+final class BinaryExpressionSubMethod extends SubMethod<BinaryExpression> {
     @Override
     int processNode(BinaryExpression node, int oldSize) {
         CodeSizeVisitor visitor = new CodeSizeVisitor();

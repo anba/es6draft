@@ -156,7 +156,7 @@ abstract class SubMethod<NODE extends Node> {
     /**
      * {@link CodeSizeHandler} which performs no further action
      */
-    protected static class EmptyHandler implements CodeSizeHandler {
+    protected static final class EmptyHandler implements CodeSizeHandler {
         @Override
         public int reportSize(Node node, int size) {
             return size;
@@ -171,7 +171,7 @@ abstract class SubMethod<NODE extends Node> {
     /**
      * {@link CodeSizeHandler} which saves code size for further re-use
      */
-    protected static class MemorizingHandler implements CodeSizeHandler {
+    protected static final class MemorizingHandler implements CodeSizeHandler {
         Map<StatementListItem, Integer> codeSizes = new HashMap<>();
 
         @Override

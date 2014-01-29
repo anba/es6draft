@@ -21,7 +21,7 @@ import com.github.anba.es6draft.ast.*;
  * Analyzes code size and possibly splits statements or expressions into sub-methods to avoid
  * compilation errors due to excess byte code size. Byte code size is limited to 64K.
  */
-public class CodeSizeAnalysis implements AutoCloseable {
+public final class CodeSizeAnalysis implements AutoCloseable {
     private static final int MAX_SIZE = 65535;
     private static final int MAX_SIZE_ALLOWED = MAX_SIZE / 2;
 
@@ -73,7 +73,7 @@ public class CodeSizeAnalysis implements AutoCloseable {
         }
     }
 
-    private class Entry implements Callable<Integer> {
+    private final class Entry implements Callable<Integer> {
         private TopLevelNode node;
         private List<? extends Node> children;
 
@@ -90,7 +90,7 @@ public class CodeSizeAnalysis implements AutoCloseable {
         }
     }
 
-    private class CodeSizeHandlerImpl extends DefaultNodeVisitor<Integer, Integer> implements
+    private final class CodeSizeHandlerImpl extends DefaultNodeVisitor<Integer, Integer> implements
             CodeSizeHandler {
         private final TopLevelNode topLevelNode;
 

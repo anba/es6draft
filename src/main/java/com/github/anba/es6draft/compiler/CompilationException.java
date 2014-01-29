@@ -16,7 +16,7 @@ import com.github.anba.es6draft.runtime.internal.ScriptException;
  * Exception for compilation errors
  */
 @SuppressWarnings("serial")
-public class CompilationException extends InternalException {
+public final class CompilationException extends InternalException {
     public CompilationException(String message) {
         super(message);
     }

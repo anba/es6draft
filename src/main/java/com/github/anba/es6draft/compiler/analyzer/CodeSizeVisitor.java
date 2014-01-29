@@ -24,7 +24,7 @@ import com.github.anba.es6draft.ast.synthetic.SuperExpressionValue;
 /**
  * Returns the estimated byte code size for a {@link Node}
  */
-class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
+final class CodeSizeVisitor implements NodeVisitor<Integer, CodeSizeHandler> {
     public int startAnalyze(Node node, List<? extends Node> children, CodeSizeHandler value) {
         return analyze(node, children, 0, 0, value);
     }

@@ -255,7 +255,7 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
         protected abstract void aconst(MethodVisitor mv, String cst, int index);
     }
 
-    final static class InlineConstantPool extends ConstantPool {
+    static final class InlineConstantPool extends ConstantPool {
         private static final int INLINE_CONSTANTS_LIMIT = 0x2000;
 
         InlineConstantPool(Code code) {
@@ -298,7 +298,7 @@ class ConstantPoolMethodVisitor extends MethodVisitor {
         }
     }
 
-    final static class ExternConstantPool extends ConstantPool {
+    static final class ExternConstantPool extends ConstantPool {
         private static final int EXTERN_CONSTANTS_LIMIT = 0x6000;
         private static final int METHOD_LIMIT = 0x400;
         private final ClassCode classCode;
