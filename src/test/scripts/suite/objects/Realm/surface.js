@@ -51,3 +51,4 @@ assertCreateFunctionProperty(Realm, Symbol.create);
 assertConstructorProperty(Realm.prototype);
 assertGetterProperty(Realm.prototype, "global");
 assertFunctionProperty(Realm.prototype, "eval");
+assertDataProperty(Realm.prototype, Symbol.toStringTag, {value: "Realm", writable: false, enumerable: false, configurable: true});
