@@ -121,7 +121,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
         int sourceLine = 1;
         boolean noScriptRval = false;
         boolean catchTermination = false;
-        GlobalObject global = getRealm().getGlobalThis();
+        GlobalObject global = cx.getRealm().getGlobalThis();
         if (Type.isObject(options)) {
             ScriptObject opts = Type.objectValue(options);
 
@@ -275,12 +275,12 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code decompileBody(function)} */
     @Function(name = "decompileBody", arity = 1)
-    public Object decompileBody(Object function) {
+    public Object decompileBody(ExecutionContext cx, Object function) {
         if (!(function instanceof Callable)) {
             return UNDEFINED;
         }
         String source = ((Callable) function).toSource();
-        Parser parser = new Parser("<decompileBody>", 1, getRealm().getOptions());
+        Parser parser = new Parser("<decompileBody>", 1, cx.getRealm().getOptions());
         com.github.anba.es6draft.ast.Script parsedScript = parser.parseScript("(" + source + ")");
         ExpressionStatement expr = (ExpressionStatement) parsedScript.getStatements().get(0);
         FunctionNode fnode = (FunctionNode) expr.getExpression();
@@ -305,7 +305,7 @@ public final class MozShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code newGlobal()} */
     @Function(name = "newGlobal", arity = 0)
     public GlobalObject newGlobal(ExecutionContext cx) {
-        MozShellGlobalObject global = (MozShellGlobalObject) getRealm().getWorld().newGlobal();
+        MozShellGlobalObject global = (MozShellGlobalObject) cx.getRealm().getWorld().newGlobal();
         try {
             global.executeInitialisation();
         } catch (ParserException | CompilationException | IOException e) {

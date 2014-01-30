@@ -59,7 +59,7 @@ public final class SimpleShellGlobalObject extends ShellGlobalObject {
     /** shell-function: {@code parseModule(source)} */
     @Function(name = "parseModule", arity = 1)
     public String parseModule(ExecutionContext cx, String source) {
-        Parser parser = new Parser("<module>", 1, getRealm().getOptions());
+        Parser parser = new Parser("<module>", 1, cx.getRealm().getOptions());
         try {
             parser.parseModule(source);
         } catch (ParserException e) {

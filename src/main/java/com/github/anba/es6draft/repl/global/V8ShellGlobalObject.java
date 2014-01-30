@@ -90,13 +90,13 @@ public final class V8ShellGlobalObject extends ShellGlobalObject {
 
     /** shell-function: {@code getDefaultLocale()} */
     @Function(name = "getDefaultLocale", arity = 0)
-    public String getDefaultLocale() {
-        return IntlAbstractOperations.DefaultLocale(getRealm());
+    public String getDefaultLocale(ExecutionContext cx) {
+        return IntlAbstractOperations.DefaultLocale(cx.getRealm());
     }
 
     /** shell-function: {@code getDefaultTimeZone()} */
     @Function(name = "getDefaultTimeZone", arity = 0)
-    public String getDefaultTimeZone() {
-        return IntlAbstractOperations.DefaultTimeZone(getRealm());
+    public String getDefaultTimeZone(ExecutionContext cx) {
+        return IntlAbstractOperations.DefaultTimeZone(cx.getRealm());
     }
 }
