@@ -22,7 +22,6 @@ import com.github.anba.es6draft.compiler.DefaultCodeGenerator.ValType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodDesc;
 import com.github.anba.es6draft.compiler.InstructionVisitor.MethodType;
 import com.github.anba.es6draft.compiler.InstructionVisitor.Variable;
-import com.github.anba.es6draft.runtime.LexicalEnvironment;
 
 /**
  * <h1>14 ECMAScript Language: Functions and Classes</h1><br>
@@ -48,11 +47,6 @@ final class BindingInitialisationGenerator {
         static final MethodDesc EnvironmentRecord_initialiseBinding = MethodDesc.create(
                 MethodType.Interface, Types.EnvironmentRecord, "initialiseBinding",
                 Type.getMethodType(Type.VOID_TYPE, Types.String, Types.Object));
-
-        // class: LexicalEnvironment
-        static final MethodDesc LexicalEnvironment_getEnvRec = MethodDesc.create(
-                MethodType.Virtual, Types.LexicalEnvironment, "getEnvRec",
-                Type.getMethodType(Types.EnvironmentRecord));
 
         // class: Reference
         static final MethodDesc Reference_putValue = MethodDesc.create(MethodType.Virtual,
@@ -118,7 +112,7 @@ final class BindingInitialisationGenerator {
     }
 
     private enum EnvironmentType {
-        NoEnvironment, EnvironmentFromStack, EnvironmentFromParameter
+        NoEnvironment, EnvironmentFromStack
     }
 
     private abstract static class RuntimeSemantics<R, V> extends DefaultNodeVisitor<R, V> {
@@ -265,21 +259,7 @@ final class BindingInitialisationGenerator {
          */
         @Override
         public Void visit(BindingIdentifier node, Void _) {
-            if (environment == EnvironmentType.EnvironmentFromParameter) {
-                // stack: [value] -> [value, envRec, id]
-                assert false : "unused";
-
-                mv.loadParameter(2, LexicalEnvironment.class);
-                mv.invoke(Methods.LexicalEnvironment_getEnvRec);
-                mv.aconst(node.getName());
-
-                // [value, envRec, id] -> [envRec, id, value]
-                mv.dup2X1();
-                mv.pop2();
-
-                // stack: [envRec, id, value] -> []
-                mv.invoke(Methods.EnvironmentRecord_initialiseBinding);
-            } else if (environment == EnvironmentType.EnvironmentFromStack) {
+            if (environment == EnvironmentType.EnvironmentFromStack) {
                 // stack: [envRec, value] -> [envRec, id, value]
                 mv.aconst(node.getName());
                 mv.swap();
