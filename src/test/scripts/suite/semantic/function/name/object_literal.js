@@ -18,7 +18,6 @@ function assertClassName(c, name) {
   return assertSame(name, c.name);
 }
 
-// TODO: __proto__ and .name
 
 // anonymous function/generator/arrow/class expression in object literal
 {

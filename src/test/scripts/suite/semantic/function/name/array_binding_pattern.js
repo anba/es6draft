@@ -18,7 +18,6 @@ function assertClassName(c, name) {
   return assertSame(name, c.name);
 }
 
-// TODO: assignment destructuring
 
 // anonymous function/generator/arrow/class expression
 (function() {
